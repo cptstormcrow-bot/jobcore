@@ -58,7 +58,7 @@ Also extend `app/tsconfig.json` references to add `ui`, `apps/mobile`, and `modu
 
 ## 4. Non-negotiables (hold across all of P1)
 
-1. **Website backend out of scope** — no phase touches sdassemblypro.com PHP/forms/DB.
+1. **Website backend out of scope** — there is a local copy of sdassemblypro.com as a testbed that can be edited. That backend can be developed, but stay away from the deployed site entirely. PHP/forms/DB.
 2. **Analytics stays Google** — never add/change/remove GTM/GA4.
 3. **Zero PCI scope** — no card data in app/DB/handoff.
 4. **No review gating** — same review links for every customer regardless of rating.
