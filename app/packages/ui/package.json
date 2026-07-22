@@ -1,0 +1,21 @@
+{
+  "name": "@jobcore/ui",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jobcore shared UI primitives — brand tokens and React Native components.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  }
+}
