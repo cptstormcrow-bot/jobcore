@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@jobcore/module-sdk": ["packages/module-sdk/src/index.ts"],
+      "@jobcore/module-sdk/*": ["packages/module-sdk/src/*"],
+      "@jobcore/ui": ["packages/ui/src/index.ts"],
+      "@jobcore/ui/*": ["packages/ui/src/*"],
+      "@jobcore/core": ["packages/core/src/index.ts"],
+      "@jobcore/core/*": ["packages/core/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "**/dist", "**/.expo"]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "jobcore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Jobcore — modular cross-platform field-service scheduling app (SD Assembly Pros).",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "modules/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc --build --verbose",
+    "typecheck:clean": "tsc --build --clean",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}

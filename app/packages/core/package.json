@@ -1,0 +1,17 @@
+{
+  "name": "@jobcore/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jobcore shared domain types — job state machine, data types, offline queue, sync.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build"
+  }
+}

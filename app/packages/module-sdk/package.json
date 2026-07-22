@@ -1,0 +1,20 @@
+{
+  "name": "@jobcore/module-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Jobcore module contract — the plug-in interface (types + compile-time registration API).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "@jobcore/core": "*"
+  }
+}

@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output / TS incremental
+dist/
+*.tsbuildinfo
+
+# Expo
+.expo/
+.expo-shared/
+web-build/
+
+# Env — never commit real secrets; .env.example is the tracked template
+.env
+.env.*.local
+
+# EAS / native
+ios/
+android/
+*.keystore
+
+# OS / editor
+.DS_Store
+Thumbs.db
