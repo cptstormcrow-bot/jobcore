@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
@@ -70,17 +70,36 @@ export function toOrganization(row: OrganizationRow): Organization {
 export type SessionState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
+  | { status: 'disabled'; profile: Profile }
+  | { status: 'error'; message: string; retry: () => void }
   | { status: 'authenticated'; session: Session; profile: Profile; organization: Organization };
 
 const SessionContext = createContext<SessionState | null>(null);
 
 /**
- * Resolve a raw auth session into the full authenticated state.
- * Fails closed: any missing/failed profile or organization row yields
- * `unauthenticated` rather than a partially-populated authenticated state.
+ * Outcome of a single resolve attempt. Deliberately distinct from
+ * `SessionState`: a `failed` outcome does not by itself mean the UI should
+ * show the error screen — the provider decides that by weighing it against
+ * whatever state came before (see `applyOutcome` below).
  */
-async function resolveSession(session: Session | null): Promise<SessionState> {
-  if (!session) return { status: 'unauthenticated' };
+type ResolveOutcome =
+  | { kind: 'unauthenticated' }
+  | { kind: 'disabled'; profile: Profile }
+  | { kind: 'failed'; message: string }
+  | { kind: 'authenticated'; session: Session; profile: Profile; organization: Organization };
+
+/**
+ * Resolve a raw auth session into a `ResolveOutcome`.
+ *
+ * A `null` session (no local session at all) and a profile row that simply
+ * doesn't exist both resolve to `unauthenticated` — those are definitive,
+ * not transient. Anything that looks like a request failure (query error,
+ * unrecognized role, missing org row behind an otherwise-valid profile)
+ * resolves to `failed` instead, so the caller can distinguish "this account
+ * doesn't exist" from "we couldn't tell right now."
+ */
+async function resolveSession(session: Session | null): Promise<ResolveOutcome> {
+  if (!session) return { kind: 'unauthenticated' };
 
   const profileResult = await supabase
     .from('profiles')
@@ -88,16 +107,17 @@ async function resolveSession(session: Session | null): Promise<SessionState> {
     .eq('id', session.user.id)
     .maybeSingle<ProfileRow>();
 
-  if (profileResult.error || !profileResult.data) return { status: 'unauthenticated' };
+  if (profileResult.error) return { kind: 'failed', message: profileResult.error.message };
+  if (!profileResult.data) return { kind: 'unauthenticated' };
 
   let profile: Profile;
   try {
     profile = toProfile(profileResult.data);
-  } catch {
-    return { status: 'unauthenticated' };
+  } catch (err) {
+    return { kind: 'failed', message: err instanceof Error ? err.message : 'Unrecognized account role.' };
   }
 
-  if (!profile.active) return { status: 'unauthenticated' };
+  if (!profile.active) return { kind: 'disabled', profile };
 
   const orgResult = await supabase
     .from('organizations')
@@ -105,10 +125,11 @@ async function resolveSession(session: Session | null): Promise<SessionState> {
     .eq('id', profile.organizationId)
     .maybeSingle<OrganizationRow>();
 
-  if (orgResult.error || !orgResult.data) return { status: 'unauthenticated' };
+  if (orgResult.error) return { kind: 'failed', message: orgResult.error.message };
+  if (!orgResult.data) return { kind: 'failed', message: 'Organization record not found.' };
 
   return {
-    status: 'authenticated',
+    kind: 'authenticated',
     session,
     profile,
     organization: toOrganization(orgResult.data),
@@ -121,37 +142,65 @@ export interface SessionProviderProps {
 
 export function SessionProvider({ children }: SessionProviderProps) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
 
-    const apply = (next: SessionState) => {
-      if (!cancelled) setState(next);
+    // Cold-start failure (no session established yet) shows the error screen.
+    // Warm failure (we already have a good authenticated session) is swallowed —
+    // the last-known-good state is retained and the next successful check
+    // reconciles it silently. Only `authenticated` counts as "last-good";
+    // `disabled` and `unauthenticated` are definitive, not something to fall
+    // back to.
+    const applyOutcome = (outcome: ResolveOutcome) => {
+      if (cancelledRef.current) return;
+      setState((prev) => {
+        if (outcome.kind === 'failed') {
+          if (prev.status === 'authenticated') return prev;
+          return { status: 'error', message: outcome.message, retry: runCheck };
+        }
+        if (outcome.kind === 'unauthenticated') return { status: 'unauthenticated' };
+        if (outcome.kind === 'disabled') return { status: 'disabled', profile: outcome.profile };
+        return {
+          status: 'authenticated',
+          session: outcome.session,
+          profile: outcome.profile,
+          organization: outcome.organization,
+        };
+      });
     };
 
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => resolveSession(data.session))
-      .then(apply)
-      .catch(() => apply({ status: 'unauthenticated' }));
+    const toFailure = (err: unknown): ResolveOutcome => ({
+      kind: 'failed',
+      message: err instanceof Error ? err.message : 'Unable to reach the server.',
+    });
+
+    function runCheck() {
+      void supabase.auth
+        .getSession()
+        .then(({ data }) => resolveSession(data.session))
+        .then(applyOutcome)
+        .catch((err) => applyOutcome(toFailure(err)));
+    }
+
+    runCheck();
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       // Re-resolve from scratch on every auth transition; the listener fires for
       // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED and USER_UPDATED alike.
       void resolveSession(session)
-        .then(apply)
-        .catch(() => apply({ status: 'unauthenticated' }));
+        .then(applyOutcome)
+        .catch((err) => applyOutcome(toFailure(err)));
     });
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       subscription.subscription.unsubscribe();
     };
   }, []);
 
-  const value = useMemo(() => state, [state]);
-
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  return <SessionContext.Provider value={state}>{children}</SessionContext.Provider>;
 }
 
 export function useSession(): SessionState {

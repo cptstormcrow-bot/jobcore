@@ -3,13 +3,15 @@ import { View, StyleSheet } from 'react-native';
 import { Redirect, Stack, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { LoadingState, colors } from '@jobcore/ui';
+import { LoadingState, ErrorState, EmptyState, Button, colors, spacing } from '@jobcore/ui';
 
-import { SessionProvider, useSession } from '../src/lib/session';
+import { SessionProvider, useSession, signOut } from '../src/lib/session';
 
 /**
  * Auth gate. Reads the session state and decides what the router may render:
  *   loading         → centered spinner
+ *   error           → cold-start failure: message + retry
+ *   disabled        → account deactivated: message + sign-out
  *   unauthenticated → redirect to /sign-in (unless already there)
  *   authenticated   → the Stack
  */
@@ -22,6 +24,26 @@ function AuthGate() {
     return (
       <View style={styles.center}>
         <LoadingState label="Loading…" />
+      </View>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <View style={styles.center}>
+        <ErrorState message={state.message} onRetry={state.retry} />
+      </View>
+    );
+  }
+
+  if (state.status === 'disabled') {
+    return (
+      <View style={styles.center}>
+        <EmptyState
+          title="Account deactivated"
+          message="Your account has been deactivated. Contact your admin for help."
+        />
+        <Button label="Sign out" variant="outline" onPress={() => void signOut()} style={styles.signOut} />
       </View>
     );
   }
@@ -55,5 +77,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.offWhite,
+  },
+  signOut: {
+    marginTop: spacing.md,
   },
 });
