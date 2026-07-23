@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "jsx": "react-jsx",
+    "types": ["react", "expo"]
+  },
+  "include": ["app/**/*", "src/**/*", "*.ts", "*.tsx"],
+  "exclude": ["node_modules", "dist", ".expo"],
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/ui" },
+    { "path": "../../packages/module-sdk" }
+  ]
+}

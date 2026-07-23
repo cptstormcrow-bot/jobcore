@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/core" },
     { "path": "packages/module-sdk" },
-    { "path": "packages/ui" }
+    { "path": "packages/ui" },
+    { "path": "apps/mobile" }
   ]
 }

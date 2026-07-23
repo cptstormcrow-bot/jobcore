@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Jobcore",
+    "slug": "jobcore",
+    "scheme": "jobcore",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "com.sdassemblypros.jobcore",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.sdassemblypros.jobcore"
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
