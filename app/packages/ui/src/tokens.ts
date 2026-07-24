@@ -21,13 +21,13 @@ export const colors = {
   textMuted: '#868E96',
   border: '#E9ECEF',
   overlay: 'rgba(27, 42, 74, 0.85)',
-  // PLACEHOLDER — semantic status colors are NOT defined in the brand CSS.
-  // These are reasonable defaults harmonized with the navy/orange brand;
-  // confirm or replace before shipping status UI.
-  success: '#2E7D32', // PLACEHOLDER
-  danger: '#C62828',  // PLACEHOLDER
-  warning: '#F5A623', // PLACEHOLDER — reuses brand accent
-  info: '#2C4066',    // PLACEHOLDER — reuses primaryLight
+  // Semantic status colors — NOT defined in the brand CSS (source has no status
+  // UI). Each is a distinct hue harmonized with the navy/orange brand, chosen so
+  // no status color collides with an existing brand/accent token.
+  success: '#2E7D32', // harmonized green
+  danger: '#C62828',  // harmonized red
+  warning: '#D97706', // amber — distinct from secondary (brand orange)
+  info: '#1976D2',    // blue — distinct from primary/primaryLight (navy)
 } as const;
 
 export const typography = {
