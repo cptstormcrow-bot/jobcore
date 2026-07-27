@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "@jobcore/core": "*"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12"
   }
 }

@@ -9,8 +9,11 @@
     "ios": "expo run:ios"
   },
   "dependencies": {
+    "@jobcore/admin-finance": "*",
     "@jobcore/core": "*",
+    "@jobcore/field-tech": "*",
     "@jobcore/module-sdk": "*",
+    "@jobcore/sales-marketing": "*",
     "@jobcore/ui": "*",
     "@supabase/supabase-js": "^2.45.0",
     "expo": "~52.0.0",

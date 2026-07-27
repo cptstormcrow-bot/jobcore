@@ -10,15 +10,24 @@
  * adding a module is a build; enabling one is a config change.
  */
 
+import type { ComponentType } from 'react';
 import type { Organization, Role } from '@jobcore/core';
 
 // --- Supporting types -------------------------------------------------------
 // §11 references these without full definitions; minimal correct shapes below.
 
-/** A screen a module contributes to the navigator. */
+/**
+ * A screen a module contributes to the navigator.
+ *
+ * `component` is the real React component, not a string name: React Native has no
+ * runtime string→component resolver and Expo Router's `typedRoutes` cannot mint route
+ * files for dynamically-registered paths. Nav is therefore "static file + dynamic
+ * segment" — one real route file `app/m/[moduleId].tsx` resolves the module from the
+ * registry and renders this component directly.
+ */
 export interface ModuleRoute {
   path: string;
-  component: string;
+  component: ComponentType;
 }
 
 /** A navigation entry: icon, label, and sort order (§11: "icon, label, sort order"). */

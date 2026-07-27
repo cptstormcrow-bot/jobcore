@@ -11,7 +11,8 @@ workspace dependencies.
 app/            expo-router routes (file-based)
   _layout.tsx   root layout: SafeAreaProvider → SessionProvider → auth gate → <Stack>
   sign-in.tsx   email + password sign-in
-  index.tsx     placeholder authenticated home (S5 replaces with registry-driven nav)
+  index.tsx     registry-driven launcher: getEnabledModules() -> flattened, order-sorted navEntries -> /m/<moduleId>
+  m/[moduleId].tsx  resolves moduleId against the registry, renders the module's first route component
 src/lib/
   supabase.ts   Supabase client, SecureStore-backed auth storage
   session.tsx   SessionProvider / useSession / signIn / signOut + row→domain mappers
@@ -45,16 +46,15 @@ Then press `i` (iOS simulator), `a` (Android emulator), or scan the QR code with
 a development build. Native modules (`expo-secure-store`) require a development build rather
 than stock Expo Go on some SDK combinations.
 
-## Status — dependencies are UNVERIFIED
+## Status — dependencies are installed
 
-**No `npm install` has been run for this workspace.** Every file here was authored from the
-spec; the dependency versions in `package.json` have not been resolved, installed, or
-type-checked against their real type definitions. Before trusting anything in this workspace:
+**`npm install` has been run from `Jobcore/app/`.** `node_modules` and `package-lock.json`
+exist, and the three workspace symlinks (`@jobcore/admin-finance`, `@jobcore/field-tech`,
+`@jobcore/sales-marketing`) are materialized. If `node_modules` is missing (e.g. after a fresh
+clone), run `npm install` from `Jobcore/app/` to restore it.
 
-1. Run `npm install` at the monorepo root (npm workspaces hoists into the root `node_modules`).
+1. Run `npm install` from `Jobcore/app/` if `node_modules` is missing (npm workspaces hoists
+   into the root `node_modules`).
 2. Run `npx tsc --build` from the root — `types: ["react", "expo"]` in this workspace's
-   `tsconfig.json` will not resolve until the packages exist on disk.
+   `tsconfig.json` resolves against the installed packages.
 3. Run `npx expo-doctor` to confirm the SDK 52 version alignment of the Expo packages.
-
-Expect version drift to surface at step 1 or 3; treat the pins as a starting point, not a
-verified lockfile.

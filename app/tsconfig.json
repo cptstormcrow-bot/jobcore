@@ -4,6 +4,9 @@
     { "path": "packages/core" },
     { "path": "packages/module-sdk" },
     { "path": "packages/ui" },
+    { "path": "modules/admin-finance" },
+    { "path": "modules/field-tech" },
+    { "path": "modules/sales-marketing" },
     { "path": "apps/mobile" }
   ]
 }

@@ -39,6 +39,14 @@ internal layout is satisfied inside it). Do **not** re-create what section 3 lis
   `registerModule` (throws on duplicate id); `getEnabledModules(org, role)` (filters by BOTH
   `org.enabledModules` AND `requiredRoles`, fail-closed on empty roles, sorted by nav order);
   WHY-no-runtime-loading comment. **This is build-item #5 — treat it as done; do not rewrite it.**
+  Wiring is now complete: `apps/mobile/src/modules.ts` exists and calls `registerModule()` for
+  all three modules, fired via a side-effect import in `app/_layout.tsx`. Also note
+  `ModuleRoute.component` is now `React.ComponentType` (was `string`) — there was never a
+  string→component resolver.
+- **Registry-driven nav shell** — built: `app/index.tsx` launcher (calls `getEnabledModules()`,
+  flattens `navEntries`, sorts by `order`, pushes `/m/<moduleId>`) + `app/m/[moduleId].tsx`
+  dynamic segment. Zero hardcoded module refs.
+- **Three module stub packages** — built at `Jobcore/app/modules/{admin-finance,field-tech,sales-marketing}/`.
 
 ### Still to build (this is your actual P1 work)
 | # | Item | Notes |
@@ -46,13 +54,12 @@ internal layout is satisfied inside it). Do **not** re-create what section 3 lis
 | 2 | `apps/mobile` Expo shell | Expo managed + Expo Router, EAS iOS+Android, brand name as config in `app.json`. |
 | 3 | `supabase/0001_foundation.sql` | `organizations` / `profiles` / `audit_log`; RLS on all three; `current_org_id()` helper used in every policy. |
 | 4 | Auth | Email/password, `SessionProvider` + `useSession()`, SecureStore persistence, explicit loading/unauth states. |
-| 6 | Nav shell | Tab/drawer built **entirely** from the registry; **zero** hardcoded module refs; empty state. |
-| 7 | Three module stubs | `modules/admin-finance`, `modules/field-tech`, `modules/sales-marketing` — each a valid `JobcoreModule` (id, requiredRoles, one placeholder screen). |
 | 8 | `packages/ui` | Tokens + `Button/Card/ListItem/EmptyState/LoadingState/ErrorState`, styled to match sdassemblypro.com. |
 | 9 | `supabase/seed.sql` | One org + one user per role. |
-| — | `apps/mobile/src/modules.ts` | Compile-time wiring: import each module package, call `registerModule`. |
 
-Also extend `app/tsconfig.json` references to add `ui`, `apps/mobile`, and `modules/*` as they land.
+The three module references, the three `apps/mobile/tsconfig.json` references, the six
+`tsconfig.base.json` paths entries, and the three `apps/mobile/package.json` deps are all now
+in place, and `tsc --build` passes across all 8 projects.
 
 ---
 

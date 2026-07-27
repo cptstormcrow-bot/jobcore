@@ -1,0 +1,27 @@
+{
+  "name": "@jobcore/admin-finance",
+  "version": "0.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "@jobcore/core": "*",
+    "@jobcore/module-sdk": "*",
+    "@jobcore/ui": "*"
+  },
+  "peerDependencies": {
+    "react": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12"
+  }
+}

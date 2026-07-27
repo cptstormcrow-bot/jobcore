@@ -12,6 +12,9 @@
   "references": [
     { "path": "../../packages/core" },
     { "path": "../../packages/ui" },
-    { "path": "../../packages/module-sdk" }
+    { "path": "../../packages/module-sdk" },
+    { "path": "../../modules/admin-finance" },
+    { "path": "../../modules/field-tech" },
+    { "path": "../../modules/sales-marketing" }
   ]
 }

@@ -71,6 +71,7 @@ export type SessionState =
   | { status: 'loading' }
   | { status: 'unauthenticated' }
   | { status: 'disabled'; profile: Profile }
+  | { status: 'unprovisioned'; session: Session }
   | { status: 'error'; message: string; retry: () => void }
   | { status: 'authenticated'; session: Session; profile: Profile; organization: Organization };
 
@@ -84,6 +85,7 @@ const SessionContext = createContext<SessionState | null>(null);
  */
 type ResolveOutcome =
   | { kind: 'unauthenticated' }
+  | { kind: 'unprovisioned'; session: Session }
   | { kind: 'disabled'; profile: Profile }
   | { kind: 'failed'; message: string }
   | { kind: 'authenticated'; session: Session; profile: Profile; organization: Organization };
@@ -108,7 +110,10 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
     .maybeSingle<ProfileRow>();
 
   if (profileResult.error) return { kind: 'failed', message: profileResult.error.message };
-  if (!profileResult.data) return { kind: 'unauthenticated' };
+  // An auth user with no matching `profiles` row is a provisioning gap, not a
+  // signed-out user; collapsing it into `unauthenticated` created an invisible
+  // sign-in -> redirect -> sign-in loop with no error message and no way out.
+  if (!profileResult.data) return { kind: 'unprovisioned', session };
 
   let profile: Profile;
   try {
@@ -161,6 +166,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
           return { status: 'error', message: outcome.message, retry: runCheck };
         }
         if (outcome.kind === 'unauthenticated') return { status: 'unauthenticated' };
+        if (outcome.kind === 'unprovisioned') return { status: 'unprovisioned', session: outcome.session };
         if (outcome.kind === 'disabled') return { status: 'disabled', profile: outcome.profile };
         return {
           status: 'authenticated',

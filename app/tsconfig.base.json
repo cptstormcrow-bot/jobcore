@@ -25,7 +25,13 @@
       "@jobcore/ui": ["packages/ui/src/index.ts"],
       "@jobcore/ui/*": ["packages/ui/src/*"],
       "@jobcore/core": ["packages/core/src/index.ts"],
-      "@jobcore/core/*": ["packages/core/src/*"]
+      "@jobcore/core/*": ["packages/core/src/*"],
+      "@jobcore/admin-finance": ["modules/admin-finance/src/index.ts"],
+      "@jobcore/admin-finance/*": ["modules/admin-finance/src/*"],
+      "@jobcore/field-tech": ["modules/field-tech/src/index.ts"],
+      "@jobcore/field-tech/*": ["modules/field-tech/src/*"],
+      "@jobcore/sales-marketing": ["modules/sales-marketing/src/index.ts"],
+      "@jobcore/sales-marketing/*": ["modules/sales-marketing/src/*"]
     }
   },
   "exclude": ["node_modules", "**/dist", "**/.expo"]
