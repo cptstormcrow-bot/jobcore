@@ -12,7 +12,10 @@ S3 is unverified by construction.
 | File | Purpose |
 |------|---------|
 | `0001_foundation.sql` | Types, tables (`organizations`, `profiles`, `audit_log`), the `current_org_id()` tenancy helper, RLS + every policy |
-| `seed.sql` | One organization with all three modules enabled + one user per role |
+| `0002_profiles_role_column_guard.sql` | Column-level `revoke update (role)` — closes the self-escalation gap that 4.4 below probes |
+| `0003_invitations_and_signup.sql` | `invitations` table + RLS, `signup_attempts` (RLS on, no policies), and the `handle_new_user()` signup trigger that turns a pending invitation into a profile |
+| `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
+| `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 6 service areas (placeholder — Master Spec §4 names 26 San Diego County communities but none are enumerated yet), 6 customers, 4 leads, 5 jobs, 3 job assignments |
 
 ## Apply order
 
@@ -20,16 +23,28 @@ Order is not cosmetic — each step depends on the previous one existing.
 
 1. **`0001_foundation.sql`** — creates the enum, the three tables, the `security definer` helper, and
    enables RLS. Run it first; `seed.sql` inserts into tables it creates.
-2. **Create the four auth users.**
+2. **`0002_profiles_role_column_guard.sql`** — revokes `update (role)` from `authenticated`. A
+   column-level `REVOKE` can only be issued against a column that exists, so it must follow 0001.
+3. **`0003_invitations_and_signup.sql`** — the `invitations` table and the `on_auth_user_created`
+   trigger. Depends on `public.user_role` and `public.current_org_id()` from 0001.
+   **Apply this before creating any auth user below** — the trigger only provisions profiles for
+   users created *after* it exists.
+4. **Create the four auth users.**
    - *Local dev (`supabase start`)*: skip this step. `seed.sql` inserts the `auth.users` rows itself.
    - *Hosted project*: create four users via the Auth dashboard or the Auth Admin API
      (`owner@` / `admin@` / `tech@` / `sales@sdassemblypro.com`), then replace the four
      `00000000-0000-4000-8000-0000000001NN` ids in `seed.sql` §2/§3 with the real UUIDs and **delete
      the `insert into auth.users` block** — direct writes to `auth.users` are not supported against a
      hosted project.
-3. **`seed.sql`** — org, then profiles. Re-runnable (`on conflict do nothing`).
+5. **`0004_scheduling.sql`** — the P2 scheduling core. Depends on `public.organizations` and
+   `public.current_org_id()` from 0001; must follow 0003 (no ordering dependency on 0002).
+6. **`seed.sql`** — org, then profiles, then the scheduling data (services, service areas,
+   customers, leads, jobs, job assignments). Re-runnable (`on conflict do nothing`).
 
-Applying `seed.sql` before step 2 on a hosted project fails on the `profiles.id → auth.users(id)`
+`0004_scheduling.sql` is authored but not yet applied or verified against a database — no live
+Supabase project exists yet.
+
+Applying `seed.sql` before step 4 on a hosted project fails on the `profiles.id → auth.users(id)`
 foreign key. That failure is correct behavior, not a bug in the seed.
 
 ## Test protocol — AC-3 / AC-4 / AC-5
@@ -57,7 +72,7 @@ cross-tenant leakage when only one org exists.
 | 4.1 | `tech@` | `update organizations set name = 'x'` | 0 rows affected — only `owner` may update the org |
 | 4.2 | `owner@` | `update organizations set name = 'SD Assembly Pros'` | 1 row affected |
 | 4.3 | `tech@` | `update profiles set full_name = 'Renamed' where id = <tech id>` | 1 row — self-edit is allowed to every role |
-| 4.4 | `tech@` | `update profiles set role = 'owner' where id = <tech id>` | **must be reviewed — see Known gap below** |
+| 4.4 | `tech@` | `update profiles set role = 'owner' where id = <tech id>` | denied — `0002` revokes `update (role)` from `authenticated`; the error is a *permission* error, not 0 rows |
 | 4.5 | `sales@` | `update profiles set full_name='x' where id = <tech id>` | 0 rows — not self, not admin |
 | 4.6 | `admin@` | same as 4.5 | 1 row — `profiles_update_admin` |
 | 4.7 | `admin@` | insert a profile with `organization_id` = another org's id | denied by `WITH CHECK` |
@@ -79,11 +94,46 @@ through `current_org_id()`, step 3.2 will fail with
 `infinite recursion detected in policy for relation "profiles"`. That error is the canary for having
 broken the `security definer` indirection; it is why every policy is expressed through the helper.
 
-## Known gap — self-service role escalation (4.4)
+## Closed gap — self-service role escalation (4.4)
 
 `profiles_update_self` permits a user to update their own row, and its `WITH CHECK` constrains `id`
-and `organization_id` but **not `role`**. As written, a `tech` can in principle promote themselves.
-Postgres RLS cannot express a per-column check, so closing this requires either a `BEFORE UPDATE`
-trigger that rejects a `role` change unless the caller is owner/admin, or column-level `GRANT`s
-revoking `update(role)` from `authenticated`. Deliberately **not** fixed in S3 — it is a schema
-addition, and 4.4 above exists to make it fail loudly rather than quietly.
+and `organization_id` but **not `role`** — as written, a `tech` could promote themselves. Postgres
+RLS cannot express a per-column check, so the fix lives one layer down in the privilege system:
+`0002_profiles_role_column_guard.sql` issues a column-level `revoke update (role) on public.profiles
+from authenticated`. Column privileges are checked *before* RLS, so the write is refused regardless
+of what any policy would have permitted.
+
+Role changes are therefore service-role or admin-portal operations only. Test 4.4 above still exists
+as the regression probe: if it ever starts succeeding, 0002 was not applied.
+
+## Signup provisioning (0003)
+
+There is no self-serve signup. An owner/admin creates an `invitations` row from the admin portal;
+when that person signs up, the `on_auth_user_created` trigger matches the invitation by
+lower-cased email, inserts the profile with the invited org and role, and stamps `consumed_at`.
+`handle_new_user()` is `security definer` with `search_path = ''` for the same reason as
+`current_org_id()` — the new user satisfies none of the insert policies, and an elevated function
+must not inherit a caller-controlled resolution path.
+
+### Uninvited signup — `signup_attempts`
+
+An address with no pending invitation still becomes an `auth.users` row: the trigger returns `new`
+rather than raising, because a `raise exception` inside an AFTER INSERT trigger rolls the auth user
+back and Supabase surfaces only a raw "Database error saving new user" — nothing an admin can act
+on later. Instead the trigger writes one `signup_attempts` row (`user_id`, `email`, `attempted_at`)
+so an admin can see who tried and extend a real invitation.
+
+`signup_attempts` has RLS enabled and **deliberately no policies**. It has no `organization_id` —
+an unmatched signup belongs to no org — so there is no tenant predicate to write, and under RLS the
+absence of a policy is a denial. The table is therefore opaque to every authenticated client and is
+read with the service role only, the same shape as `audit_log`'s missing UPDATE/DELETE policies.
+`handle_new_user()` can still insert into it because `security definer` runs as the owner.
+
+**Client contract:** a signed-in user with no `profiles` row is the orphan state. `current_org_id()`
+returns NULL for them and every policy denies, so the app must detect the missing profile at session
+start and route to an explanatory screen — not an empty dashboard.
+
+Verify after applying: sign up an invited address and confirm the profile lands with the invited
+org + role and the invitation is stamped consumed; then sign up an *uninvited* address and confirm
+the auth user exists, **no** `profiles` row was created, and exactly one `signup_attempts` row is
+present for that user id.

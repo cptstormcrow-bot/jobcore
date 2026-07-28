@@ -39,7 +39,8 @@ actually hit the requested slot.
 
 ### 2. The job state machine — `packages/core/src/state-machine.ts`
 
-Implement Master Spec §10 as **one declarative transition table**:
+Implement Master Spec §10 as **one declarative transition table**. The canonical status list and
+transition table live in `00-MASTER-SPEC.md` §10 — **not in this file**; read them there.
 
 ```ts
 type Transition = {
