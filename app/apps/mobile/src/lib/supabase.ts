@@ -11,25 +11,72 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
  * Storage adapter backing the Supabase auth session with Expo SecureStore
  * (Keychain on iOS, EncryptedSharedPreferences on Android).
  *
- * KNOWN LIMIT: SecureStore enforces a ~2048-byte ceiling per value on Android.
- * A Supabase session blob is a JSON envelope around an access JWT + refresh
- * token; a JWT carrying large custom claims (wide `app_metadata`, many roles)
- * can push the serialized session past that ceiling, at which point
- * `setItemAsync` warns and the write is lost — the user silently fails to stay
- * signed in. The known mitigation is chunking: split the value across
- * `${key}.0`, `${key}.1`, … under the limit and reassemble on read. Not
- * implemented here because the current claim set is small; implement it the
- * moment a session-persistence bug appears on Android.
+ * SecureStore enforces a ~2048-byte ceiling per value on Android. A Supabase
+ * session blob is a JSON envelope around an access JWT + refresh token; a JWT
+ * carrying large custom claims (wide `app_metadata`, many roles) can push the
+ * serialized session past that ceiling, at which point `setItemAsync` warns and
+ * the write is lost — the user silently fails to stay signed in.
+ *
+ * Mitigation implemented here is CHUNKING, not encryption-to-AsyncStorage:
+ * the value is split across `${key}.0 … ${key}.N-1` and `key` itself holds a
+ * chunk-count record. Everything stays inside the Keychain/EncryptedSharedPrefs
+ * trust boundary and no crypto dependency is added.
+ *
+ * `getItem` tolerates a plain (pre-chunking) value written by the old adapter,
+ * so an app upgrade does not sign existing users out.
  */
+
+// Chosen below the ~2048 ceiling with headroom: the platform limit applies to
+// the encrypted payload, which is larger than the plaintext we measure here.
+const CHUNK_SIZE = 1800;
+const COUNT_PREFIX = '__chunks__:';
+
 const secureStoreAdapter = {
-  getItem(key: string): Promise<string | null> {
-    return SecureStore.getItemAsync(key);
+  async getItem(key: string): Promise<string | null> {
+    const head = await SecureStore.getItemAsync(key);
+    if (head === null) return null;
+    if (!head.startsWith(COUNT_PREFIX)) return head; // legacy unchunked value
+
+    const count = Number(head.slice(COUNT_PREFIX.length));
+    if (!Number.isInteger(count) || count < 1) return null;
+
+    const parts = await Promise.all(
+      Array.from({ length: count }, (_, i) => SecureStore.getItemAsync(`${key}.${i}`)),
+    );
+    // A missing chunk means a torn write: treat the whole value as absent
+    // rather than handing supabase-js a truncated session it would half-trust.
+    if (parts.some((p) => p === null)) return null;
+    return parts.join('');
   },
-  setItem(key: string, value: string): Promise<void> {
-    return SecureStore.setItemAsync(key, value);
+
+  async setItem(key: string, value: string): Promise<void> {
+    // Clear any prior chunks first so a shrinking value cannot leave stale
+    // tail chunks that a later, longer write would silently reuse.
+    await secureStoreAdapter.removeItem(key);
+
+    const chunks: string[] = [];
+    for (let i = 0; i < value.length; i += CHUNK_SIZE) {
+      chunks.push(value.slice(i, i + CHUNK_SIZE));
+    }
+    await Promise.all(
+      chunks.map((chunk, i) => SecureStore.setItemAsync(`${key}.${i}`, chunk)),
+    );
+    // Count record written LAST: until it lands, getItem sees no key and
+    // reports "signed out" rather than reading a partially-written set.
+    await SecureStore.setItemAsync(key, `${COUNT_PREFIX}${chunks.length}`);
   },
-  removeItem(key: string): Promise<void> {
-    return SecureStore.deleteItemAsync(key);
+
+  async removeItem(key: string): Promise<void> {
+    const head = await SecureStore.getItemAsync(key);
+    if (head !== null && head.startsWith(COUNT_PREFIX)) {
+      const count = Number(head.slice(COUNT_PREFIX.length));
+      if (Number.isInteger(count) && count > 0) {
+        await Promise.all(
+          Array.from({ length: count }, (_, i) => SecureStore.deleteItemAsync(`${key}.${i}`)),
+        );
+      }
+    }
+    await SecureStore.deleteItemAsync(key);
   },
 };
 

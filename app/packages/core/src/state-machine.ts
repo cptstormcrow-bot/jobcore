@@ -6,10 +6,14 @@
  * scattered `if` — every UI affordance asks `canTransition` instead.
  *
  * Scope note (Master Spec §10 / 02-P2-scheduling-core.md §2 and §3): this file
- * covers the P2b.2 transition table plus the three named preconditions and the
- * three lifecycle-timestamp stamps. It deliberately does NOT write `audit_log`
- * rows or the dual `occurred_at`/`synced_at` clocks — that is P2c and out of
- * scope here.
+ * covers the P2b.2 transition table plus the three named preconditions, the
+ * three lifecycle-timestamp stamps, and dual-stamps both the `occurredAt`/
+ * `syncedAt` clocks while evaluating skew (P2c.1 / P2c.2b). It emits exactly
+ * one insert-only `audit_log` row per transition through the OPTIONAL
+ * `ctx.writeAudit` sink — optional-shaped so `packages/core` stays
+ * zero-dependency and never learns what Supabase is. `from_state`/`to_state`
+ * and both clocks ride in the `metadata` jsonb column; the shipped
+ * `audit_log` table has no columns for them.
  *
  * Zero imports outside `packages/core/src` — `core` never depends on the P4
  * (checklists) or P5 (payments) packages. The `Ctx` probes below are the
@@ -17,6 +21,8 @@
  */
 
 import type { Ctx, Job, JobStatus, PreconditionResult, Role } from './index';
+import type { ClockPair } from './clocks';
+import { evaluateSkew } from './clocks';
 
 /**
  * Role table caveat: Master Spec §10 gives the status graph and the three
@@ -187,7 +193,11 @@ export function canTransition(job: Job, to: JobStatus, ctx: Ctx): PreconditionRe
  * Applies a transition after checking `canTransition`. Rejects with the
  * exact reason string on failure. Never mutates the input `job`; returns a
  * new object with `status` updated and the matching lifecycle timestamp
- * stamped from `ctx.now()`. Does not write audit rows or dual clocks — P2c.
+ * stamped from the DEVICE clock (`occurredAt`) — the device clock is the
+ * payroll input, not the server clock. Writes exactly one insert-only
+ * `audit_log` row per transition via the optional `ctx.writeAudit` sink,
+ * awaited so a failing sink rejects the transition; when no sink is wired
+ * up, no row is written and nothing throws.
  */
 export async function applyTransition(job: Job, to: JobStatus, ctx: Ctx): Promise<Job> {
   const result = canTransition(job, to, ctx);
@@ -195,16 +205,48 @@ export async function applyTransition(job: Job, to: JobStatus, ctx: Ctx): Promis
     throw new Error(result.reason);
   }
 
-  const timestamp = ctx.now();
+  // P2c.1: dual-stamp both clocks. `occurredAt` is the device clock (used for
+  // the lifecycle fields below, since that is the payroll-relevant input);
+  // `syncedAt` falls back to `occurredAt` when no server clock is wired up.
+  const occurredAt = ctx.now();
+  const syncedAt = ctx.serverNow ? ctx.serverNow() : occurredAt;
+  const clockPair: ClockPair = { occurredAt, syncedAt };
+  // P2c.2b: evaluate skew against the caller's threshold (`ctx.clockConfig`), or
+  // `DEFAULT_CLOCK_CONFIG` when none is wired up. `fromState` is captured BEFORE
+  // the spread below so the audit row records the PRE-transition status.
+  const skew = evaluateSkew(clockPair, ctx.clockConfig);
+  const fromState = job.status;
+
   const next: Job = { ...job, status: to };
 
   if (to === 'en_route') {
-    next.enRouteAt = timestamp;
+    next.enRouteAt = occurredAt;
   } else if (to === 'in_progress') {
-    next.inProgressAt = timestamp;
+    next.inProgressAt = occurredAt;
   } else if (to === 'completed') {
-    next.completedAt = timestamp;
+    next.completedAt = occurredAt;
   }
+
+  // P2c.2b: exactly one insert-only audit row per transition (02-P2 AC-6). The
+  // sink is optional-shaped, so a caller that wires up no `writeAudit` writes no
+  // row and nothing throws. Awaited: a failing sink rejects the transition rather
+  // than silently dropping the row. Rows are INSERT-only and never UPDATEd.
+  // `fromState`/`toState` and both clocks ride in `metadata` — the shipped
+  // audit_log table (supabase/0001_foundation.sql L45-56) has no columns for them.
+  await ctx.writeAudit?.({
+    organizationId: job.organizationId,
+    entity: 'job',
+    entityId: job.id,
+    action: `job.transition.${to}`,
+    metadata: {
+      fromState,
+      toState: to,
+      occurredAt,
+      syncedAt,
+      skewMs: skew.skewMs,
+      skewed: skew.skewed,
+    },
+  });
 
   return next;
 }

@@ -16,7 +16,7 @@ shared calendar and job-detail screens, and the offline queue. Still no module-s
 
 ## Build this
 
-### 1. Domain schema — `0002_scheduling.sql`
+### 1. Domain schema — `0004_scheduling.sql`
 
 `customers` · `services` · `service_areas` · `leads` · `jobs` · `job_assignments`.
 

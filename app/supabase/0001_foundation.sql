@@ -71,14 +71,16 @@ create index audit_log_organization_id_created_at_idx
 --
 -- stable lets the planner evaluate it once per statement instead of once per row.
 --
--- search_path is pinned because security definer functions otherwise inherit
--- the caller's search_path, which is a privilege-escalation surface.
+-- search_path is pinned EMPTY because security definer functions otherwise
+-- inherit the caller's search_path, which is a privilege-escalation surface.
+-- An empty path resolves nothing implicitly, so every reference in the body
+-- must be schema-qualified (public.profiles, and auth.uid() below).
 create or replace function public.current_org_id()
 returns uuid
 language sql
 security definer
 stable
-set search_path = public
+set search_path = ''
 as $$
   select organization_id from public.profiles where id = auth.uid();
 $$;
