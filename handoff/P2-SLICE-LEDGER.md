@@ -16,6 +16,13 @@ Rule 8 build report per slice group · Glob is hook-gated — use PowerShell `Te
 `Get-ChildItem` · Master Spec §2 prohibitions stay in force (no sdassemblypro.com PHP/backend,
 no GTM/GA4 changes, no review gating, zero PCI scope).
 
+**Slice-sizing rule (added 2026-07-27).** A microslice row qualifies only if all four hold:
+(1) it names **one** primary file — a second may ride along only for a Rule 31 docs-ride fix;
+(2) it answers **one** question stateable in a single sentence;
+(3) it needs no more than ~150 lines of pre-read context;
+(4) verification, commit, and build-report work never shares a row with authoring work.
+IDs decompose by suffix (`P2d.2` → `P2d.2a/b/c`); no existing ID is ever renamed or deleted.
+
 **Two tracks (Rule 15 R-A).** No live Supabase project exists, so every SQL-side acceptance
 criterion is unverified by construction. SQL rows below are authored and committed on schedule;
 their verification lines go into the build report's DEFERRED table and are re-run in one pass once
@@ -60,34 +67,51 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2c.1 | Dual `occurred_at` / `synced_at` + configurable skew threshold + skew flag | TODO ← next | | | `en_route_at → completed_at` is the paid-hours surface |
-| P2c.2 | `applyTransition` writes exactly one insert-only `audit_log` row per transition | TODO | | | audit rows are never UPDATEd |
-| P2c.3 | 45-minute skew test + audit-row count check (GATED) + commit + build report | TODO | | | count check deferred to the gated pass |
+| P2c.1 | Dual `occurred_at` / `synced_at` + configurable skew threshold + skew flag | DONE a7650b3 | | | `en_route_at → completed_at` is the paid-hours surface |
+| P2c.2a | `packages/core/src/index.ts` — add the optional audit-sink member to `Ctx` (types only) | DONE a7650b3 | | | optional-shaped like `serverNow?` — existing callers keep compiling |
+| P2c.2b | `state-machine.ts` — import `evaluateSkew`, replace `void clockPair;`, emit exactly one insert-only row | DONE a7650b3 | | | audit rows are never UPDATEd |
+| P2c.2c | Rule 31 docs-ride — `state-machine.ts` L8–12 header note, the L192 "does not write audit rows" line, and `02-P2-scheduling-core.md:19`'s stale `0002_scheduling.sql` pointer | DONE a7650b3 | | | none |
+| P2c.3a | 45-minute skew check | DONE a7650b3 | | | none |
+| P2c.3b | Audit-row count check, recorded OPEN (Supabase-gated) | DONE a7650b3 | | | count check deferred to the gated pass |
+| P2c.3c | Commit + Tier-A build report | DONE a7650b3 | | | report also covers the 2026-07-27 ledger-refactor doc hygiene |
 
 ## P2-d — offline queue (ungated)
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2d.1 | `npx expo install expo-sqlite` + queue table schema (`id, op, payload, occurred_at, status, attempts`) | TODO | | | expo-sqlite is in-SDK; MMKV rejected (bare native module forces a dev-client build) |
-| P2d.2 | `packages/core/src/offline/` — optimistic apply, replay, client-generated idempotency key | TODO | | | conflict rule: server wins on scheduling fields, device wins on `occurred_at` |
-| P2d.3 | `useSyncStatus()` + persistent "N pending" indicator | TODO | | | none |
-| P2d.4 | Airplane-mode replay test + commit + build report | TODO | | | none |
+| P2d.1a | `npx expo install expo-sqlite` | TODO | | | expo-sqlite is in-SDK; MMKV rejected (bare native module forces a dev-client build) |
+| P2d.1b | Queue table schema (`id, op, payload, occurred_at, status, attempts`) | TODO | | | schema is the contract P2d.2a's types mirror |
+| P2d.2a | `packages/core/src/offline/` — queue types + client-generated idempotency key | TODO | | | key is client-generated, never server-assigned |
+| P2d.2b | Optimistic apply | TODO | | | goes through `applyTransition`; must not re-decide legality |
+| P2d.2c | Replay + conflict rule | TODO | | | server wins on scheduling fields, device wins on `occurred_at` |
+| P2d.3a | `useSyncStatus()` | TODO | | | none |
+| P2d.3b | Persistent "N pending" indicator | TODO | | | none |
+| P2d.4a | Airplane-mode replay test | TODO | | | none |
+| P2d.4b | Commit + build report | TODO | | | none |
 
 ## P2-e — Calendar + Job Detail (ungated)
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2e.1 | `npm install date-fns` + `(tabs)` group shell | TODO | | | `@react-navigation/bottom-tabs@7.18.13` already resolvable via expo-router 4.0.22 — no install |
-| P2e.2 | Calendar — day + week, colour-coded by `job_status`, role-aware | TODO | | | `typography.lineHeight` values are MULTIPLIERS, not px |
-| P2e.3 | Job Detail — shared canvas, actions from the registry's `jobActions` | TODO | | | hard AC: `JobDetail.tsx` imports NOTHING from `modules/` |
-| P2e.4 | Airplane-mode day-view render + commit + build report | TODO | | | any new UI primitive goes into `packages/ui`, never inlined |
+| P2e.1a | `npm install date-fns` | TODO | | | `@react-navigation/bottom-tabs@7.18.13` already resolvable via expo-router 4.0.22 — no install |
+| P2e.1b | `(tabs)` group shell | TODO | | | none |
+| P2e.2a | Calendar — day view | TODO | | | `typography.lineHeight` values are MULTIPLIERS, not px |
+| P2e.2b | Calendar — week view | TODO | | | none |
+| P2e.2c | `job_status` colour map + role gate | TODO | | | colour map keys must match the 13-member `JobStatus` union exactly |
+| P2e.3a | Job Detail — shared canvas | TODO | | | hard AC: `JobDetail.tsx` imports NOTHING from `modules/` |
+| P2e.3b | `jobActions` registry wiring | TODO | | | actions arrive from the registry only; any new UI primitive goes into `packages/ui` |
+| P2e.4a | Airplane-mode day-view render test | TODO | | | none |
+| P2e.4b | Commit + build report | TODO | | | none |
 
 ## P2-f — assertion suite + phase close (GATED)
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2f.1 | `supabase/tests/0004_scheduling_rls.test.sql` — hand-applied `do $$ … end $$;` assertions + README registration | TODO | | | org isolation, tech-sees-own-jobs, audit immutability, recursion canary |
-| P2f.2 | Full P2 AC sweep + phase build report + ledger close-out | TODO | | | P2 declared COMPLETE only here |
+| P2f.1a | `supabase/tests/0004_scheduling_rls.test.sql` — org-isolation + tech-sees-own-jobs assertions | TODO | | | hand-applied `do $$ … end $$;` form |
+| P2f.1b | Audit-immutability + recursion-canary assertions | TODO | | | audit rows are never UPDATEd (asserted here) |
+| P2f.1c | `supabase/README.md` test registration | TODO | | | none |
+| P2f.2a | Full P2 AC sweep | TODO | | | gated ACs reported OPEN, never PASSED |
+| P2f.2b | Phase build report + ledger close-out | TODO | | | P2 declared COMPLETE only here |
 
 ---
 
