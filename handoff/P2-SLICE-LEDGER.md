@@ -40,27 +40,27 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2a.1 | `app/supabase/0004_scheduling.sql` — sections 1 Types + 2 Tables + indexes | DONE | | | enum value list is the state machine's source of truth (P2b.1) |
-| P2a.2 | `0004_scheduling.sql` section 3 — RLS policies | DONE | | | tech-sees-own-jobs rule asserted in P2f.1 |
-| P2a.3 | `app/supabase/seed.sql` — customers/services/service_areas/leads/jobs/job_assignments rows | DONE | | | UUID blocks 02NN–07NN reserved |
-| P2a.4 | Enum-pointer fix — the state-machine table lives in `00-MASTER-SPEC.md` §10, not in the P2 spec; correct both `02-P2-scheduling-core.md` and `.claude\checkpoints\2026-07-27_162410_checkpoint.md` | DONE | | | §10 is the sole enum source for P2b.1 |
-| P2a.5 | Ledger hygiene — cap every forward-contract cell at 3 lines | DONE | | | none |
-| P2a.6 | Ledger hygiene — compact rows S5.1–S5.8 to one sentence each | DONE | | | none |
-| P2a.7 | `supabase/README.md` Files table + Apply order + commit + build report | TODO ← next | | | none |
+| P2a.1 | `app/supabase/0004_scheduling.sql` — sections 1 Types + 2 Tables + indexes | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | enum value list is the state machine's source of truth (P2b.1) |
+| P2a.2 | `0004_scheduling.sql` section 3 — RLS policies | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | tech-sees-own-jobs rule asserted in P2f.1 |
+| P2a.3 | `app/supabase/seed.sql` — customers/services/service_areas/leads/jobs/job_assignments rows | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | UUID blocks 02NN–07NN reserved |
+| P2a.4 | Enum-pointer fix — the state-machine table lives in `00-MASTER-SPEC.md` §10, not in the P2 spec; correct both `02-P2-scheduling-core.md` and `.claude\checkpoints\2026-07-27_162410_checkpoint.md` | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | §10 is the sole enum source for P2b.1 |
+| P2a.5 | Ledger hygiene — cap every forward-contract cell at 3 lines | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | none |
+| P2a.6 | Ledger hygiene — compact rows S5.1–S5.8 to one sentence each | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | none |
+| P2a.7 | `supabase/README.md` Files table + Apply order + commit + build report | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | none |
 
 ## P2-b — domain types + state machine (ungated)
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2b.1 | `packages/core/src/index.ts` — `JobStatus`, `Job`, `Ctx`, `PreconditionResult` | TODO | | | `JobStatus` must match the P2a.1 enum exactly |
-| P2b.2 | `packages/core/src/state-machine.ts` — declarative transition table + `canTransition` / `applyTransition` | TODO | | | preconditions are ctx-injected; core must not know about checklists (P4) or payments (P5) |
-| P2b.3 | AC sweep `grep -rn "status ===" apps modules` → no hits · typecheck · commit · build report | TODO | | | none |
+| P2b.1 | `packages/core/src/index.ts` — `JobStatus`, `Job`, `Ctx`, `PreconditionResult` | DONE | e451d6e | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2b-domain-types-state-machine.md | `JobStatus` must match the P2a.1 enum exactly |
+| P2b.2 | `packages/core/src/state-machine.ts` — declarative transition table + `canTransition` / `applyTransition` | DONE | e451d6e | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2b-domain-types-state-machine.md | preconditions are ctx-injected; core must not know about checklists (P4) or payments (P5) |
+| P2b.3 | AC sweep `grep -rn "status ===" apps modules` → no hits · typecheck · commit · build report | DONE | e451d6e | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2b-domain-types-state-machine.md | roles arrays in TRANSITIONS are an inference (Master Spec §10 has no from→to→roles table); unit suite OPEN — no test runner wired |
 
 ## P2-c — payroll-grade clocks + immutable audit (partly gated)
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2c.1 | Dual `occurred_at` / `synced_at` + configurable skew threshold + skew flag | TODO | | | `en_route_at → completed_at` is the paid-hours surface |
+| P2c.1 | Dual `occurred_at` / `synced_at` + configurable skew threshold + skew flag | TODO ← next | | | `en_route_at → completed_at` is the paid-hours surface |
 | P2c.2 | `applyTransition` writes exactly one insert-only `audit_log` row per transition | TODO | | | audit rows are never UPDATEd |
 | P2c.3 | 45-minute skew test + audit-row count check (GATED) + commit + build report | TODO | | | count check deferred to the gated pass |
 
