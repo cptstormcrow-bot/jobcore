@@ -94,15 +94,15 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2e.1a | `npm install date-fns` | TODO | | | `@react-navigation/bottom-tabs@7.18.13` already resolvable via expo-router 4.0.22 — no install |
-| P2e.1b | `(tabs)` group shell | TODO | | | none |
-| P2e.2a | Calendar — day view | TODO | | | `typography.lineHeight` values are MULTIPLIERS, not px |
-| P2e.2b | Calendar — week view | TODO | | | none |
-| P2e.2c | `job_status` colour map + role gate | TODO | | | colour map keys must match the 13-member `JobStatus` union exactly |
-| P2e.3a | Job Detail — shared canvas | TODO | | | hard AC: `JobDetail.tsx` imports NOTHING from `modules/` |
-| P2e.3b | `jobActions` registry wiring | TODO | | | actions arrive from the registry only; any new UI primitive goes into `packages/ui` |
-| P2e.4a | Airplane-mode day-view render test | TODO | | | none |
-| P2e.4b | Commit + build report | TODO | | | none |
+| P2e.1a | `npm install date-fns` | DONE d29581b | | | `@react-navigation/bottom-tabs@7.18.13` already resolvable via expo-router 4.0.22 — no install |
+| P2e.1b | `(tabs)` group shell | DONE d29581b | | | none |
+| P2e.2a | Calendar — day view | DONE d29581b | | | `typography.lineHeight` values are MULTIPLIERS, not px |
+| P2e.2b | Calendar — week view | DONE d29581b | | | none |
+| P2e.2c | `job_status` colour map + role gate | DONE d29581b | | | colour map keys must match the 13-member `JobStatus` union exactly |
+| P2e.3a | Job Detail — shared canvas | DONE d29581b | | | hard AC: `JobDetail.tsx` imports NOTHING from `modules/` |
+| P2e.3b | `jobActions` registry wiring | DONE d29581b | | | actions arrive from the registry only; any new UI primitive goes into `packages/ui` |
+| P2e.4a | Airplane-mode day-view render test | DONE d29581b | | | none |
+| P2e.4b | Commit + build report | DONE d29581b | | | none |
 
 ## P2-f — assertion suite + phase close (GATED)
 
