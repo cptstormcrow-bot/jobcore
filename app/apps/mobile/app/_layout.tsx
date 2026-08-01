@@ -76,6 +76,7 @@ function AuthGate() {
     <View style={styles.flex}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="m/[moduleId]" />
       </Stack>

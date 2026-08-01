@@ -16,6 +16,7 @@
     "@jobcore/sales-marketing": "*",
     "@jobcore/ui": "*",
     "@supabase/supabase-js": "^2.45.0",
+    "date-fns": "^4.4.0",
     "expo": "~52.0.0",
     "expo-constants": "~17.0.0",
     "expo-linking": "~7.0.0",
