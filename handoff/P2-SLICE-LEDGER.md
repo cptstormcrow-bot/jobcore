@@ -79,15 +79,16 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2d.1a | `npx expo install expo-sqlite` | TODO | | | expo-sqlite is in-SDK; MMKV rejected (bare native module forces a dev-client build) |
-| P2d.1b | Queue table schema (`id, op, payload, occurred_at, status, attempts`) | TODO | | | schema is the contract P2d.2a's types mirror |
-| P2d.2a | `packages/core/src/offline/` — queue types + client-generated idempotency key | TODO | | | key is client-generated, never server-assigned |
-| P2d.2b | Optimistic apply | TODO | | | goes through `applyTransition`; must not re-decide legality |
-| P2d.2c | Replay + conflict rule | TODO | | | server wins on scheduling fields, device wins on `occurred_at` |
-| P2d.3a | `useSyncStatus()` | TODO | | | none |
-| P2d.3b | Persistent "N pending" indicator | TODO | | | none |
-| P2d.4a | Airplane-mode replay test | TODO | | | none |
-| P2d.4b | Commit + build report | TODO | | | none |
+| P2d.1a | `npx expo install expo-sqlite` | DONE 9bcb019 | | | expo-sqlite is in-SDK; MMKV rejected (bare native module forces a dev-client build) |
+| P2d.1b | Queue table schema (`id, op, payload, occurred_at, status, attempts`) | DONE 9bcb019 | | | schema is the contract P2d.2a's types mirror |
+| P2d.2a | `packages/core/src/offline/` — queue types + client-generated idempotency key | DONE 9bcb019 | | | key is client-generated, never server-assigned |
+| P2d.2b | Optimistic apply | DONE 9bcb019 | | | goes through `applyTransition`; must not re-decide legality |
+| P2d.2c | Replay + conflict rule | DONE 9bcb019 | | | server wins on scheduling fields, device wins on `occurred_at` |
+| P2d.3a | `useSyncStatus()` | DONE 9bcb019 | | | none |
+| P2d.3b | Persistent "N pending" indicator | DONE 9bcb019 | | | none |
+| P2d.3c | Mount `SyncStatusProvider` in `app\_layout.tsx` + expo-sqlite adapter supplying `countPending` | DONE 9bcb019 | | | prerequisite for P2d.4a; P2d.3b's AC word "persistent" needs an app-wide mount, and no existing row covered the sqlite adapter that implements `countPending` |
+| P2d.4a | Airplane-mode replay test | DONE 9bcb019 | | | blocked until P2d.3c lands a real sqlite-backed queue |
+| P2d.4b | Commit + build report | DONE 9bcb019 | | | none |
 
 ## P2-e — Calendar + Job Detail (ungated)
 
