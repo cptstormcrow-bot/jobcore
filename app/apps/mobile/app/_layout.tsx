@@ -6,6 +6,9 @@ import { StatusBar } from 'expo-status-bar';
 import { LoadingState, ErrorState, EmptyState, Button, colors, spacing } from '@jobcore/ui';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
+import { SyncStatusProvider } from '../src/lib/sync-status';
+import { SyncIndicator } from '../src/components/SyncIndicator';
+import { countPending } from '../src/lib/offline-db';
 
 // Side-effect import: registers every compiled-in module exactly once, before any
 // screen calls getEnabledModules(). This is the only import of this file in the app.
@@ -70,11 +73,20 @@ function AuthGate() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="sign-in" />
-      <Stack.Screen name="m/[moduleId]" />
-    </Stack>
+    <View style={styles.flex}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="sign-in" />
+        <Stack.Screen name="m/[moduleId]" />
+      </Stack>
+      {/* headerShown: false means this app has no navigation header to hang a badge
+          on, so the sync indicator is an absolutely-positioned overlay instead.
+          pointerEvents="box-none" keeps the overlay from swallowing touches meant
+          for the screen beneath it. */}
+      <View pointerEvents="box-none" style={styles.syncOverlay}>
+        <SyncIndicator />
+      </View>
+    </View>
   );
 }
 
@@ -82,8 +94,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SessionProvider>
-        <StatusBar style="auto" />
-        <AuthGate />
+        {/* Mounted at the root so the sync indicator is app-wide ("persistent")
+            across every screen. `replay` is deliberately left unwired here until
+            a Supabase transport exists. */}
+        <SyncStatusProvider countPending={countPending}>
+          <StatusBar style="auto" />
+          <AuthGate />
+        </SyncStatusProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );
@@ -98,5 +115,15 @@ const styles = StyleSheet.create({
   },
   signOut: {
     marginTop: spacing.md,
+  },
+  flex: {
+    flex: 1,
+  },
+  syncOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: spacing.lg,
+    alignItems: 'center',
   },
 });

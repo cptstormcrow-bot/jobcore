@@ -2,6 +2,16 @@
 import type { ClockConfig } from './clocks';
 export type { ClockPair, ClockConfig, SkewEvaluation } from './clocks';
 export { DEFAULT_CLOCK_CONFIG, evaluateSkew } from './clocks';
+// P2d.2a: re-export the offline queue schema constants and types.
+export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA } from './offline/schema';
+export type { QueuedMutationStatus, QueuedMutation, NewQueuedMutation } from './offline/queue';
+export { makeIdempotencyKey } from './offline/queue';
+// P2d.2b: re-export the optimistic-apply helper.
+export type { OptimisticApplyOptions, OptimisticApplyResult } from './offline/apply';
+export { applyOptimistic } from './offline/apply';
+// P2d.2c: re-export the replay + conflict-resolution helpers.
+export type { ReplayOptions, ReplayResult } from './offline/replay';
+export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } from './offline/replay';
 
 export type Role = 'owner' | 'admin' | 'tech' | 'sales';
 
