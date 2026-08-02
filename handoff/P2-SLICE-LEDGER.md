@@ -108,11 +108,11 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2f.1a | `supabase/tests/0004_scheduling_rls.test.sql` — org-isolation + tech-sees-own-jobs assertions | TODO | | | hand-applied `do $$ … end $$;` form |
-| P2f.1b | Audit-immutability + recursion-canary assertions | TODO | | | audit rows are never UPDATEd (asserted here) |
-| P2f.1c | `supabase/README.md` test registration | TODO | | | none |
-| P2f.2a | Full P2 AC sweep | TODO | | | gated ACs reported OPEN, never PASSED |
-| P2f.2b | Phase build report + ledger close-out | TODO | | | P2 declared COMPLETE only here |
+| P2f.1a | `supabase/tests/0004_scheduling_rls.test.sql` — org-isolation + tech-sees-own-jobs assertions | DONE 18793a4 | | | hand-applied `do $$ … end $$;` form |
+| P2f.1b | Audit-immutability + recursion-canary assertions | DONE 18793a4 | | | audit rows are never UPDATEd (asserted here) |
+| P2f.1c | `supabase/README.md` test registration | DONE 18793a4 | | | none |
+| P2f.2a | Full P2 AC sweep | DONE 18793a4 | | | gated ACs reported OPEN, never PASSED |
+| P2f.2b | Phase build report + ledger close-out | DONE 18793a4 | | | P2 declared COMPLETE only here |
 
 ---
 
