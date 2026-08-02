@@ -16,6 +16,8 @@ S3 is unverified by construction.
 | `0003_invitations_and_signup.sql` | `invitations` table + RLS, `signup_attempts` (RLS on, no policies), and the `handle_new_user()` signup trigger that turns a pending invitation into a profile |
 | `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
 | `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 6 service areas (placeholder — Master Spec §4 names 26 San Diego County communities but none are enumerated yet), 6 customers, 4 leads, 5 jobs, 3 job assignments |
+| `tests/0001_foundation_rls.test.sql` | Foundation assertions — `audit_log` immutability (5.3 / 5.4 below) and the profiles recursion canary. Wrapped in `begin; … rollback;` |
+| `tests/0004_scheduling_rls.test.sql` | Scheduling assertions — org isolation (3.1 / 3.5) and a tech seeing only their own assigned jobs (AC-7). Wrapped in `begin; … rollback;` |
 
 ## Apply order
 
@@ -40,6 +42,8 @@ Order is not cosmetic — each step depends on the previous one existing.
    `public.current_org_id()` from 0001; must follow 0003 (no ordering dependency on 0002).
 6. **`seed.sql`** — org, then profiles, then the scheduling data (services, service areas,
    customers, leads, jobs, job assignments). Re-runnable (`on conflict do nothing`).
+7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
+   and rolls itself back, so the database is unchanged either way.
 
 `0004_scheduling.sql` is authored but not yet applied or verified against a database — no live
 Supabase project exists yet.
@@ -51,6 +55,23 @@ foreign key. That failure is correct behavior, not a bug in the seed.
 
 Run each as the named user (an authenticated session, **not** the service role — the service role
 bypasses RLS entirely and will make every check below pass vacuously).
+
+### Automated assertions — `tests/`
+
+The checks below are also encoded as runnable SQL under `tests/`, so they can be executed as a suite
+instead of by hand:
+
+| Test file | Covers |
+|-----------|--------|
+| `tests/0001_foundation_rls.test.sql` | 5.2 (append still permitted), 5.3, 5.4, and the recursion smoke test — from both an owner and a tech session |
+| `tests/0004_scheduling_rls.test.sql` | 3.1, 3.5, and AC-7 (a tech sees only their assigned jobs) |
+
+Each file opens `begin;`, sets `role authenticated` plus `request.jwt.claims` per block, raises an
+exception naming the failed criterion on any mismatch, and closes `rollback;`. The same service-role
+warning applies: run them as an authenticated session or every assertion passes vacuously.
+
+Neither suite has been executed — no live Supabase project exists yet, so these assertions are
+authored but unverified.
 
 ### AC-3 — tenant isolation
 
