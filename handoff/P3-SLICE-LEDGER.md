@@ -2,7 +2,7 @@
 
 Goal slug: `jobcore-p3-admin-finance`
 Spec of record: `03-P3-admin-finance.md` (179 lines) + `00-MASTER-SPEC.md` §9 / §12.
-Plan of record: `E:\Jeff\.claude\plans\twinkly-gliding-reef.md` (approved 2026-08-01).
+Plan of record: `E:\Jeff\.claude\plans\jobcore-p3-admin-finance.md` (approved 2026-08-01).
 
 > Sizing rule, rolling-context protocol, close-out ritual, spec corrections, the 26 communities, and the phase decisions live in [P3-CONTEXT-PROTOCOL.md](P3-CONTEXT-PROTOCOL.md). Read it once per phase, not per slice.
 
