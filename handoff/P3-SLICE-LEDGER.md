@@ -18,12 +18,12 @@ Plan of record: `E:\Jeff\.claude\plans\twinkly-gliding-reef.md` (approved 2026-0
 - `jobs.requested_window` is untyped `text` (`0004_scheduling.sql:98`) with no format constraint.
 - Only `routes[0]` ever renders (`app/apps/mobile/app/m/[moduleId].tsx:52`).
 
-## Blocker (Rule 15 R-A) — Jeff's action, does not gate the whole phase
+## Blocker (Rule 15 R-A) — CLEARED 2026-08-01
 
-No live Supabase project exists (`app/supabase/README.md` L44-45). Jeff creates the project and
-populates `apps/mobile/.env` from `.env.example`. This gates ACs 1-3, 5, 7, 10 and verification steps
-1-7. It does NOT gate ACs 6, 8, 9 — pure functions over fixtures. Gated items are reported **OPEN,
-never PASSED**. P3-c is the ungated parallel track and runs alongside P3-a.
+Hosted Supabase project live (ref `vogkxkcceahtwyovpxsg`, `README.md` L6-9): four migrations applied,
+four auth users created, `seed.hosted.sql` applied, both hosted RLS suites executed and PASSED,
+`apps/mobile/.env` populated and verified. Nothing external gates P3. `(EXEC-GATED)` below now means
+"needs the live DB to verify", not "blocked". P3-c is still the parallel track alongside P3-a.
 
 ---
 
@@ -45,9 +45,9 @@ never PASSED**. P3-c is the ungated parallel track and runs alongside P3-a.
 | # | Microslice | Status | Commit | Build report | Context in | Context out | Forward contracts |
 |---|---|---|---|---|---|---|---|
 | P3b.1 | `0006_job_service_area.sql` — nullable `jobs.service_area_id` FK, own migration so it can revert independently | TODO | | | `0004_scheduling.sql:52-57,89-108` | | |
-| P3b.2 | `seed.sql` additive reseed — keep ids `...0401`-`...0406`, append 20 rows `...0407`-`...041a`, no existing id rewritten | TODO | | | `seed.sql:105-127`; the 26 names | | |
-| P3b.3 | `app/supabase/README.md` ride (Rule 31) — register `0005` and `0006` | TODO | | | `README.md` migration section | | |
-| P3b.4 | Verify — 26 distinct rows, zero id collisions, `on conflict (id) do nothing` still truthful | TODO | | | P3b.2 file only | | |
+| P3b.2 | Additive reseed of BOTH `seed.sql` and `seed.hosted.sql` — keep ids `...0401`-`...0406`, append 20 rows `...0407`-`...041a`, no existing id rewritten; the hosted rows are ALREADY APPLIED to the live DB, so the append must be idempotent against it (`on conflict (id) do nothing`, plus a guarded `update ... where id = ... and <col> is null` for any correction — mirror the `converted_job_id` guard near the end of `seed.sql`) | TODO | | | `seed.sql:105-127`; `seed.hosted.sql` §5; the 26 names | | |
+| P3b.3 | `app/supabase/README.md` ride (Rule 31) — register `0005` and `0006`; ALSO fix the stale L19 "6 service areas (placeholder … none are enumerated yet)" note, add the three unlisted `.hosted.` files (`seed.hosted.sql`, `tests/0001_foundation_rls.hosted.test.sql`, `tests/0004_scheduling_rls.hosted.test.sql`) to the Files table, and correct the stale L3-4 "No Supabase client lives here" claim | TODO | | | `README.md` L3-4, L11-21 | | |
+| P3b.4 | Verify — 26 distinct service-area rows in EACH seed file (count via the `8000-0000000004` uuid pattern; baseline is 6 in both), zero id collisions, `on conflict (id) do nothing` still truthful | TODO | | | P3b.2 files only | | |
 | P3b.5 | Commit + Tier-A report | TODO | | | | | |
 
 ## P3-c — Money core, pure TS (UNGATED — the R-A parallel track)
