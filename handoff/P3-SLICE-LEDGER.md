@@ -54,14 +54,14 @@ four auth users created, `seed.hosted.sql` applied, both hosted RLS suites execu
 
 | # | Microslice | Status | Commit | Build report | Context in | Context out | Forward contracts |
 |---|---|---|---|---|---|---|---|
-| P3c.1 | `money/types.ts` — `CommissionLine`, `PeriodPayResult`, `BonusResult`, `UnpaidSpanPolicy`. `CommissionLine` has NO reimbursement-shaped field (AC-9 compile-time half) | TODO | | | spec L100-122 quoted here; `state-machine.ts:63` | | |
-| P3c.2 | `money/commission.ts` — `calculateCommission(job, priceSheet, policy)`; REJECTS any sheet whose `status !== 'published'` with a reason string; pure, reads no global | TODO | | | P3c.1 types; spec L73-80 | | |
-| P3c.3 | `money/billable-hours.ts` — `deriveBillableHours`, summing `en_route_at -> completed_at`; emits `unpaidSpans` so travel/idle exclusion is a named policy field, not a query artifact | TODO | | | P3c.1 types; spec L113-116 | | |
-| P3c.4 | `money/bonus.ts` — `BonusRule.evaluate(period, tech, jobs[])` + `NullBonusRule` (amount 0, reason string). Invent NO bonus formula; mark the seam | TODO | | | P3c.1 types; spec L117-120 | | |
-| P3c.5 | `money/rollup.ts` — `rollUpPeriodPay`; breakdown only, `total` derived over the parts, never a single number | TODO | | | P3c.2-P3c.4 signatures; spec L106-111 | | |
-| P3c.6 | Test-runner wiring — `"test": "node --test ..."` in `app/package.json` + `money/__assertions__/rollup.assert.ts` | TODO | | | `app/package.json:11-16,29` | | |
-| P3c.7 | Verify AC-8 (2 jobs 2.0h+1.5h, base 25, commissions 40+60, receipt 18.75, NullBonus -> total 206.25 itemized), AC-9 (byte-identical with and without the receipt), AC-6 pure half (v1 rate 100 -> line; publish v2 rate 200; recompute from the snapshot id -> identical to the cent) | TODO | | | P3c.6 assertions only | | |
-| P3c.8 | Commit + Tier-A report | TODO | | | | | |
+| P3c.1 | `money/types.ts` — `CommissionLine`, `PeriodPayResult`, `BonusResult`, `UnpaidSpanPolicy`. `CommissionLine` has NO reimbursement-shaped field (AC-9 compile-time half) | DONE ee4a4f8 | | | spec L100-122 quoted here; `state-machine.ts:63` | | |
+| P3c.2 | `money/commission.ts` — `calculateCommission(job, priceSheet, policy)`; REJECTS any sheet whose `status !== 'published'` with a reason string; pure, reads no global | DONE ee4a4f8 | | | P3c.1 types; spec L73-80 | | |
+| P3c.3 | `money/billable-hours.ts` — `deriveBillableHours`, summing `en_route_at -> completed_at`; emits `unpaidSpans` so travel/idle exclusion is a named policy field, not a query artifact | DONE ee4a4f8 | | | P3c.1 types; spec L113-116 | | |
+| P3c.4 | `money/bonus.ts` — `BonusRule.evaluate(period, tech, jobs[])` + `NullBonusRule` (amount 0, reason string). Invent NO bonus formula; mark the seam | DONE ee4a4f8 | | | P3c.1 types; spec L117-120 | | |
+| P3c.5 | `money/rollup.ts` — `rollUpPeriodPay`; breakdown only, `total` derived over the parts, never a single number | DONE ee4a4f8 | | | P3c.2-P3c.4 signatures; spec L106-111 | | |
+| P3c.6 | Test-runner wiring — `"test": "node --test ..."` in `app/package.json` + `money/__assertions__/rollup.assert.ts` | DONE ee4a4f8 | | | `app/package.json:11-16,29` | | |
+| P3c.7 | Verify AC-8 (2 jobs 2.0h+1.5h, base 25, commissions 40+60, receipt 18.75, NullBonus -> total 206.25 itemized), AC-9 (byte-identical with and without the receipt), AC-6 pure half (v1 rate 100 -> line; publish v2 rate 200; recompute from the snapshot id -> identical to the cent) | DONE ee4a4f8 | | | P3c.6 assertions only | | |
+| P3c.8 | Commit + Tier-A report | DONE ee4a4f8 | | | | | |
 
 ## P3-d — Module shell (ungated)
 
