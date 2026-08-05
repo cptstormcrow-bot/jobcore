@@ -67,12 +67,12 @@ four auth users created, `seed.hosted.sql` applied, both hosted RLS suites execu
 
 | # | Microslice | Status | Commit | Build report | Context in | Context out | Forward contracts |
 |---|---|---|---|---|---|---|---|
-| P3d.1 | `src/data/ports.ts` — every repo interface; `JobSchedulingPatch = Partial<Pick<Job,'assignedTechId'|'scheduledStart'|'scheduledEnd'|'requestedWindow'>>` so `{status: ...}` is a TS excess-property error (AC-4 mechanism 1) | TODO | | | `state-machine.ts:202-220`; `packages/core` Job type | | |
-| P3d.2 | `src/lib/module-session.ts` — returns a pre-narrowed `{org, role, userId} \| null` so no `status ===` discriminant ever appears (AC-4 grep-trap fix) | TODO | | | `module-sdk/src/index.ts:65-78` | | |
-| P3d.3 | `src/screens/AdminFinanceRoot.tsx` — the ONE route; internal state-driven switcher, because only `routes[0]` renders | TODO | | | `app/apps/mobile/app/m/[moduleId].tsx:52-58`; `packages/ui/src/index.ts:1-7` | | |
-| P3d.4 | `src/index.ts` manifest fill — `routes: [AdminFinanceRoot]`, nav entries, `jobActions`, `migrations: ['0005_money.sql','0006_job_service_area.sql']` | TODO | | | `src/index.ts:52-54` (61-line stub) | | |
-| P3d.5 | Verify — `npm run typecheck` exit 0, `npm run lint` clean, AC-3 static half (`grep -rn "admin-finance" app/apps/mobile/app app/apps/mobile/src` returns exactly one hit, `modules.ts:12`) | TODO | | | P3d.1-P3d.4 files only | | |
-| P3d.6 | Commit + Tier-A report | TODO | | | | | |
+| P3d.1 | `src/data/ports.ts` — every repo interface; `JobSchedulingPatch = Partial<Pick<Job,'assignedTechId'|'scheduledStart'|'scheduledEnd'|'requestedWindow'>>` so `{status: ...}` is a TS excess-property error (AC-4 mechanism 1) | DONE 705613f | | | `state-machine.ts:202-220`; `packages/core` Job type | | |
+| P3d.2 | `src/lib/module-session.ts` — returns a pre-narrowed `{org, role, userId} \| null` so no `status ===` discriminant ever appears (AC-4 grep-trap fix) | DONE 705613f | | | `module-sdk/src/index.ts:65-78` | | |
+| P3d.3 | `src/screens/AdminFinanceRoot.tsx` — the ONE route; internal state-driven switcher, because only `routes[0]` renders | DONE 705613f | | | `app/apps/mobile/app/m/[moduleId].tsx:52-58`; `packages/ui/src/index.ts:1-7` | | |
+| P3d.4 | `src/index.ts` manifest fill — `routes: [AdminFinanceRoot]`, nav entries, `jobActions`, `migrations: ['0005_money.sql','0006_job_service_area.sql']` | DONE 705613f | | | `src/index.ts:52-54` (61-line stub) | | |
+| P3d.5 | Verify — `npm run typecheck` exit 0, `npm run lint` clean, AC-3 static half (`grep -rn "admin-finance" app/apps/mobile/app app/apps/mobile/src` returns exactly one hit, `modules.ts:12`) | DONE 705613f | | | P3d.1-P3d.4 files only | | |
+| P3d.6 | Commit + Tier-A report | DONE 705613f | | | | | |
 
 ## P3-e — Lead inbox (ungated)
 
