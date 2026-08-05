@@ -1,44 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import type { JobcoreModule } from '@jobcore/module-sdk';
-import { colors, spacing, typography } from '@jobcore/ui';
-
-/**
- * P1 placeholder screen for the admin-finance module (build item 7).
- * Real screens land in P3/P5 — this exists to prove the registry contract:
- * the shell renders whatever `routes[0].component` is, with zero knowledge of
- * which module it belongs to.
- */
-function AdminFinanceScreen() {
-  return React.createElement(
-    View,
-    { style: styles.screen },
-    React.createElement(Text, { style: styles.title }, 'Admin & Finance'),
-    React.createElement(Text, { style: styles.body }, 'Placeholder screen. Built out in a later phase.')
-  );
-}
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.offWhite,
-  },
-  title: {
-    color: colors.primary,
-    fontSize: typography.size.h3,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.bold,
-  },
-  body: {
-    color: colors.textMuted,
-    fontSize: typography.size.label,
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
-});
+import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 
 /**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
@@ -53,8 +14,13 @@ export const adminFinanceModule: JobcoreModule = {
   id: 'admin-finance',
   displayName: 'Admin & Finance',
   requiredRoles: ['owner', 'admin'],
-  routes: [{ path: 'admin-finance', component: AdminFinanceScreen }],
+  routes: [{ path: 'admin-finance', component: AdminFinanceRoot }],
   navEntries: [{ icon: 'stats-chart', label: 'Admin & Finance', order: 10 }],
+  jobActions: [
+    { id: 'view-price-sheet', label: 'View Price Sheet' },
+    { id: 'add-pay-period-note', label: 'Add Pay Period Note' },
+  ],
+  migrations: ['0005_money.sql', '0006_job_service_area.sql'],
 };
 
 export default adminFinanceModule;
