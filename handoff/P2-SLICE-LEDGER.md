@@ -87,7 +87,7 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 | P2d.3a | `useSyncStatus()` | DONE 9bcb019 | | | none |
 | P2d.3b | Persistent "N pending" indicator | DONE 9bcb019 | | | none |
 | P2d.3c | Mount `SyncStatusProvider` in `app\_layout.tsx` + expo-sqlite adapter supplying `countPending` | DONE 9bcb019 | | | prerequisite for P2d.4a; P2d.3b's AC word "persistent" needs an app-wide mount, and no existing row covered the sqlite adapter that implements `countPending` |
-| P2d.4a | Airplane-mode replay test | DONE 9bcb019 | | | blocked until P2d.3c lands a real sqlite-backed queue |
+| P2d.4a | Airplane-mode replay test | DONE 2724914 (headless assertion) | | | headless replay assertion DONE, Node-runnable, 5/5 passing, at `modules/admin-finance/src/data/__assertions__/replay.assert.ts`; on-device airplane-mode portion DEFERRED pending Jeff's manual run of `handoff\P2D-AIRPLANE-MODE-TEST.md` |
 | P2d.4b | Commit + build report | DONE 9bcb019 | | | none |
 
 ## P2-e — Calendar + Job Detail (ungated)
