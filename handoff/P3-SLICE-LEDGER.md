@@ -31,14 +31,14 @@ four auth users created, `seed.hosted.sql` applied, both hosted RLS suites execu
 
 | # | Microslice | Status | Commit | Build report | Context in | Context out | Forward contracts |
 |---|---|---|---|---|---|---|---|
-| P3a.1 | Enums (`publication_status`, `reimbursement_status`, `payout_batch_status`) + `public.is_org_admin()` helper, `security definer / stable / search_path=''` | TODO | | | `0001_foundation.sql:74-89,111-117`; enum doctrine `0004_scheduling.sql:8-10` | | |
-| P3a.2 | `price_sheets` + `price_sheet_rates` tables; `unique (organization_id, version)`, partial `unique (organization_id) where status='published'`; INTRODUCES the `attach_timing` CHECK (not enum) — `0004_scheduling.sql:78,97` declare it as unconstrained `text`, so nothing exists to byte-match; the set is authored here and MUST admit spec pair `at_purchase`/`after_the_fact` PLUS the seeded literal `before_start`, and MUST permit NULL (hero_quick lead) | TODO | | | P3a.1 output; `0004_scheduling.sql:43-48,78,97`; `00-MASTER-SPEC.md:125`; `seed.sql:172` | | |
-| P3a.3 | `compensation_policies` + `commissions`; both snapshot FKs `not null` and `on delete restrict`; `commissions_one_per_job_idx` partial unique on `(job_id) where voided_at is null` | TODO | | | P3a.2 output; spec L43-44 | | |
-| P3a.4 | `reimbursements` + `payout_batches` + `payout_lines`; `check (total_amount = hours_amount + commission_amount + bonus_amount + reimbursement_amount)` | TODO | | | P3a.3 output; spec L45-46, L106-111 | | |
-| P3a.5 | Four immutability triggers: `price_sheets`, `price_sheet_rates`, `commissions`, `payout_lines` | TODO | | | P3a.2-P3a.4 output | | |
-| P3a.6 | `publish_price_sheet(uuid)` RPC — must ship with P3a.5 or publishing is impossible | TODO | | | P3a.5 trigger predicate | | |
-| P3a.7 | RLS enable + policies on all 7 tables via `is_org_admin()`; read-back proving `0005` adds NO policy to `audit_log` | TODO | | | P3a.1 helper; `0001_foundation.sql:159-176` | | |
-| P3a.8 | Verify (structural SQL: balanced `$$`, pure ASCII, CHECK values byte-matched), commit, Tier-A report | TODO | | | P3a.1-P3a.7 file only | | |
+| P3a.1 | Enums (`publication_status`, `reimbursement_status`, `payout_batch_status`) + `public.is_org_admin()` helper, `security definer / stable / search_path=''` | DONE 426e368 | | | `0001_foundation.sql:74-89,111-117`; enum doctrine `0004_scheduling.sql:8-10` | | |
+| P3a.2 | `price_sheets` + `price_sheet_rates` tables; `unique (organization_id, version)`, partial `unique (organization_id) where status='published'`; INTRODUCES the `attach_timing` CHECK (not enum) — `0004_scheduling.sql:78,97` declare it as unconstrained `text`, so nothing exists to byte-match; the set is authored here and MUST admit spec pair `at_purchase`/`after_the_fact` PLUS the seeded literal `before_start`, and MUST permit NULL (hero_quick lead) | DONE 426e368 | | | P3a.1 output; `0004_scheduling.sql:43-48,78,97`; `00-MASTER-SPEC.md:125`; `seed.sql:172` | | |
+| P3a.3 | `compensation_policies` + `commissions`; both snapshot FKs `not null` and `on delete restrict`; `commissions_one_per_job_idx` partial unique on `(job_id) where voided_at is null` | DONE 426e368 | | | P3a.2 output; spec L43-44 | | |
+| P3a.4 | `reimbursements` + `payout_batches` + `payout_lines`; `check (total_amount = hours_amount + commission_amount + bonus_amount + reimbursement_amount)` | DONE 426e368 | | | P3a.3 output; spec L45-46, L106-111 | | |
+| P3a.5 | Four immutability triggers: `price_sheets`, `price_sheet_rates`, `commissions`, `payout_lines` | DONE 426e368 | | | P3a.2-P3a.4 output | | |
+| P3a.6 | `publish_price_sheet(uuid)` RPC — must ship with P3a.5 or publishing is impossible | DONE 426e368 | | | P3a.5 trigger predicate | | |
+| P3a.7 | RLS enable + policies on all 7 tables via `is_org_admin()`; read-back proving `0005` adds NO policy to `audit_log` | DONE 426e368 | | | P3a.1 helper; `0001_foundation.sql:159-176` | | |
+| P3a.8 | Verify (structural SQL: balanced `$$`, pure ASCII, CHECK values byte-matched), commit, Tier-A report | DONE 426e368 | | | P3a.1-P3a.7 file only | | |
 
 ## P3-b — `0006_job_service_area.sql` + 26-community reseed (EXEC-GATED)
 
