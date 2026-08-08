@@ -127,7 +127,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3h.4a | `flows/close-out-job.ts` — successful `completed -> paid` transition; ctx: P3c.2 signature — DONE |
 | P3h.4b | `flows/close-out-job.ts` — write exactly ONE `commissions` row carrying both snapshot ids and who closed it; not contingent on any review; ctx: P3h.4a; P3a.3 columns; spec L68-80 — DONE |
 | P3h.5 | Verify — AC-5 structural half (the partial unique index is the enforcement, not app code); DB half OPEN pending Supabase; ctx: P3h.4a-P3h.4b file only — STRUCTURAL PASS; DB half OPEN (Supabase-gated) |
-| P3h.6 | Commit + Tier-A report — TODO |
+| P3h.6 | Commit + Tier-A report — DONE e52edaf (code); three Tier-A reports (domain, screens, flows) committed in admin repo fd9afb8 |
 ## P3-i — Price-sheet editor (split: pure half ungated, publish gated)
 | # | Row (text — status) |
 |---|---|
