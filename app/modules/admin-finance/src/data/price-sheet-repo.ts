@@ -8,7 +8,7 @@
  * no React/React Native live here.
  */
 
-import type { PriceSheet, PriceSheetRate, PriceSheetStatus } from '../money/types';
+import type { PriceSheet, PriceSheetRate, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PublishPlan } from '../money/publish-plan';
 
 /* ------------------------------------------------------------------ *
@@ -119,9 +119,58 @@ export interface PriceSheetRepo {
   /**
    * Applies a `PublishPlan` produced by `planPublish`.
    *
-   * DECLARED ONLY — implemented in P3i.2b via the `publish_price_sheet` RPC
-   * (`app/supabase/0005_money.sql`'s `publish_price_sheet(uuid)` function).
-   * No implementation belongs in this file.
+   * The concrete `applyPublishPlanViaRpc` below (P3i.2b) is the
+   * `publish_price_sheet` RPC-backed implementation; a `PriceSheetRepo`
+   * adapter wires this method to that function.
    */
   applyPublishPlan(organizationId: string, plan: PublishPlan): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * applyPublishPlan — Supabase RPC implementation (P3i.2b)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Minimal shape of the Supabase client surface this file depends on — just
+ * `rpc`, not the full `SupabaseClient` type, so this module stays free of a
+ * hard `@supabase/supabase-js` import.
+ */
+export interface SupabaseRpcClient {
+  rpc(
+    fn: string,
+    args: Record<string, unknown>,
+  ): Promise<{ data: unknown; error: { message: string } | null }>;
+}
+
+/**
+ * Applies a `PublishPlan` (`../money/publish-plan.ts`'s `planPublish`) by
+ * invoking the `publish_price_sheet(uuid)` RPC (`app/supabase/0005_money.sql`,
+ * line 395). The RPC re-derives the organization's prior-published sheet and
+ * performs the demote/promote pair itself, inside one `security definer`
+ * transaction — it only needs the draft's id
+ * (`plan.toPublish.priceSheetId`), never the plan's full contents, and
+ * `organizationId` is not passed either: the RPC scopes to
+ * `public.current_org_id()` from the caller's session.
+ *
+ * VOCABULARY NOTE: the RPC body is what writes the DB `publication_status`
+ * enum value `'superseded'` (never the app-side `'archived'` — see the
+ * file-top note on `PriceSheetRow`) when it demotes the prior published
+ * sheet. That write happens entirely server-side inside the RPC; no
+ * argument passed from this function ever carries `'superseded'` or
+ * `'archived'`.
+ *
+ * Returns a `CalculationResult<void>` rather than throwing, matching every
+ * other failable function in `money/` (`CalculationResult`, `../money/types.ts`).
+ */
+export async function applyPublishPlanViaRpc(
+  client: SupabaseRpcClient,
+  plan: PublishPlan,
+): Promise<CalculationResult<void>> {
+  const { error } = await client.rpc('publish_price_sheet', {
+    p_price_sheet_id: plan.toPublish.priceSheetId,
+  });
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: undefined };
 }
