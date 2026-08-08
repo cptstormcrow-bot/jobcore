@@ -82,10 +82,10 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3e.3 | (batch 1) `fixtures/leads.ts` — including the hero lead with null `preferred_date` and null `address`; ctx: P3e.1-P3e.2 — created `app/modules/admin-finance/src/fixtures/leads.ts` (`heroLead` with null `preferred_date`/`address`, `bookingLead`, `addressMissingLead`) — DONE |
 | P3e.6a | (batch 1) verify batch 1 — AC-1 `classifyLead(heroLead) === 'needs_info'`, `missingFields` deep-equals `['preferredDate','address']`; ctx: P3e.2-P3e.3 only — AC-1 verified via `npm test` — `classifyLead(heroLead) === 'needs_info'`, `missingFields` deep-equals `['preferredDate','address']` — 14/14 tests pass — DONE |
 | P3e.7a | (batch 1) commit batch 1 — committed `1689bf0` "feat(p3e): lead domain, readiness classifier, fixtures — batch 1" — DONE |
-| P3e.4 | (batch 2) `components/LeadRow.tsx` — three axis fields visible, `needs info` badge; ctx: P3e.2; `packages/ui` primitives — TODO |
-| P3e.5 | (batch 2) `screens/LeadInboxScreen.tsx` — unconverted leads, newest first, props-in / callbacks-out against `ports.ts`; ctx: P3d.1 ports; P3e.3-P3e.4 — TODO |
-| P3e.6b | (batch 2) verify batch 2 — row renders (not filtered); ctx: P3e.4-P3e.5 only — TODO |
-| P3e.7b | (batch 2) commit batch 2 + Tier-A report — TODO |
+| P3e.4 | (batch 2) `components/LeadRow.tsx` — three axis fields visible, `needs info` badge; ctx: P3e.2; `packages/ui` primitives — created `app/modules/admin-finance/src/components/LeadRow.tsx` (three axis fields + needs-info badge, `@jobcore/ui` primitives only, zero raw color literals) — DONE |
+| P3e.5 | (batch 2) `screens/LeadInboxScreen.tsx` — unconverted leads, newest first, props-in / callbacks-out against `ports.ts`; ctx: P3d.1 ports; P3e.3-P3e.4 — created `app/modules/admin-finance/src/screens/LeadInboxScreen.tsx` + `domain/lead-inbox.ts` (`selectInboxLeads`), props-in/callbacks-out against `ports.ts` (added `LeadRepository` interface) — DONE |
+| P3e.6b | (batch 2) verify batch 2 — row renders (not filtered); ctx: P3e.4-P3e.5 only — verified via `npm test` — 17/17 pass; needs_info hero lead present in inbox (not filtered), newest-first ordering confirmed, converted leads excluded — DONE |
+| P3e.7b | (batch 2) commit batch 2 + Tier-A report — committed `0e2a3d7` "feat(p3e): LeadRow + LeadInboxScreen — batch 2"; Tier-A build report `2026-08-08_p3-e-lead-inbox.md` delivered to Desktop; forward contracts recorded (LeadInboxScreen not yet wired into navigation/routes — deferred to a later group; AC-11 raw-color sweep re-run needed at P3-n close) — DONE |
 ## P3-f — Qualify (authoring ungated)
 | # | Row (text — status) |
 |---|---|
