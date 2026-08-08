@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, colors } from '@jobcore/ui';
+import { setModuleSession, clearModuleSession } from '@jobcore/admin-finance';
 
 import { useSession } from '../../src/lib/session';
 
@@ -23,6 +24,31 @@ export default function ModuleScreen() {
   const { moduleId } = useLocalSearchParams<{ moduleId: string }>();
   const state = useSession();
 
+  const module =
+    state.status === 'authenticated'
+      ? getEnabledModules(state.organization, state.profile.role).find((m) => m.id === moduleId)
+      : undefined;
+
+  // Host-side injection for the admin-finance module's session seam (P3e.1a,
+  // the forward contract `module-session.ts` left open at P3d.2). admin-finance
+  // cannot read the host's session union directly (see that file's doc
+  // comment), so this is the ONLY place that narrows it and hands the module
+  // an already-resolved `ModuleSession`. Cleared on unmount / module switch so
+  // a stale session never lingers once this screen is no longer showing
+  // admin-finance. Runs unconditionally (rules-of-hooks) — it's a no-op
+  // whenever `state` isn't authenticated or the module isn't admin-finance.
+  useEffect(() => {
+    if (state.status === 'authenticated' && module?.id === 'admin-finance') {
+      setModuleSession({
+        org: state.organization,
+        role: state.profile.role,
+        userId: state.profile.id,
+      });
+      return () => clearModuleSession();
+    }
+    return undefined;
+  }, [state, module?.id]);
+
   // The root layout gates on status, so this branch is defensive only.
   if (state.status !== 'authenticated') {
     return (
@@ -31,8 +57,6 @@ export default function ModuleScreen() {
       </View>
     );
   }
-
-  const module = getEnabledModules(state.organization, state.profile.role).find((m) => m.id === moduleId);
 
   if (!module) {
     return (

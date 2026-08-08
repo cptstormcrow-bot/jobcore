@@ -1,6 +1,12 @@
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 
+// Re-exported so the host (apps/mobile) can inject the session (P3e.1a) without
+// a deep import into this package's internal file layout. See
+// `./lib/module-session.ts` for the seam's full contract.
+export type { ModuleSession } from './lib/module-session';
+export { setModuleSession, clearModuleSession } from './lib/module-session';
+
 /**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
