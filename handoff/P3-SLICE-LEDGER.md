@@ -76,12 +76,12 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 ## P3-e — Lead inbox (ungated)
 | # | Row (text — status) |
 |---|---|
-| P3e.1 | (batch 1) `domain/lead.ts` — `Lead` type mirroring `leads` (`attach_timing` is plain text); ctx: `0004_scheduling.sql:64-82` — TODO |
-| P3e.1a | (batch 1, NEW) host-side `setModuleSession` wiring in `apps/mobile` (forward contract 1 residue); ctx: P3d.2 — TODO |
-| P3e.2 | (batch 1) `domain/lead-readiness.ts` — `classifyLead` / `missingFields`. Incomplete leads are first-class: never hidden, never defaulted; ctx: P3e.1 type; spec L50-53 — TODO |
-| P3e.3 | (batch 1) `fixtures/leads.ts` — including the hero lead with null `preferred_date` and null `address`; ctx: P3e.1-P3e.2 — TODO |
-| P3e.6a | (batch 1) verify batch 1 — AC-1 `classifyLead(heroLead) === 'needs_info'`, `missingFields` deep-equals `['preferredDate','address']`; ctx: P3e.2-P3e.3 only — TODO |
-| P3e.7a | (batch 1) commit batch 1 — TODO |
+| P3e.1 | (batch 1) `domain/lead.ts` — `Lead` type mirroring `leads` (`attach_timing` is plain text); ctx: `0004_scheduling.sql:64-82` — created `app/modules/admin-finance/src/domain/lead.ts` (`LeadRow`/`Lead` types + `toLead` mapper, `attach_timing` plain text per `0004_scheduling.sql:64-82`) — DONE |
+| P3e.1a | (batch 1, NEW) host-side `setModuleSession` wiring in `apps/mobile` (forward contract 1 residue); ctx: P3d.2 — no generic host-side session-injection mechanism existed; wired `setModuleSession`/`clearModuleSession` call site in `app/apps/mobile/app/m/[moduleId].tsx` keyed on `module?.id === 'admin-finance'`, plus re-exported `ModuleSession`/`setModuleSession`/`clearModuleSession` from `modules/admin-finance/src/index.ts` — DONE |
+| P3e.2 | (batch 1) `domain/lead-readiness.ts` — `classifyLead` / `missingFields`. Incomplete leads are first-class: never hidden, never defaulted; ctx: P3e.1 type; spec L50-53 — created `app/modules/admin-finance/src/domain/lead-readiness.ts` (`classifyLead`/`missingFields`) — DONE |
+| P3e.3 | (batch 1) `fixtures/leads.ts` — including the hero lead with null `preferred_date` and null `address`; ctx: P3e.1-P3e.2 — created `app/modules/admin-finance/src/fixtures/leads.ts` (`heroLead` with null `preferred_date`/`address`, `bookingLead`, `addressMissingLead`) — DONE |
+| P3e.6a | (batch 1) verify batch 1 — AC-1 `classifyLead(heroLead) === 'needs_info'`, `missingFields` deep-equals `['preferredDate','address']`; ctx: P3e.2-P3e.3 only — AC-1 verified via `npm test` — `classifyLead(heroLead) === 'needs_info'`, `missingFields` deep-equals `['preferredDate','address']` — 14/14 tests pass — DONE |
+| P3e.7a | (batch 1) commit batch 1 — committed `1689bf0` "feat(p3e): lead domain, readiness classifier, fixtures — batch 1" — DONE |
 | P3e.4 | (batch 2) `components/LeadRow.tsx` — three axis fields visible, `needs info` badge; ctx: P3e.2; `packages/ui` primitives — TODO |
 | P3e.5 | (batch 2) `screens/LeadInboxScreen.tsx` — unconverted leads, newest first, props-in / callbacks-out against `ports.ts`; ctx: P3d.1 ports; P3e.3-P3e.4 — TODO |
 | P3e.6b | (batch 2) verify batch 2 — row renders (not filtered); ctx: P3e.4-P3e.5 only — TODO |
