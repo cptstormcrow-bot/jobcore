@@ -67,12 +67,12 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 ## P3-p — brand fidelity (NEW, runs before P3-e)
 | # | Row (text — status) |
 |---|---|
-| P3p.1 | Read-only capture of sdassemblypro.com palette + type stack (no write, no request to the site's backend — Master Spec §2.1/§2.3 stay intact); ctx: Master Spec §2 — TODO |
-| P3p.2 | Audit `app/packages/ui/src/tokens.ts` against that capture — table of drift, no edit; ctx: P3p.1; `tokens.ts` — TODO |
-| P3p.3 | Correct `tokens.ts` colors to the captured palette; ctx: P3p.2 — TODO |
-| P3p.4 | Correct `tokens.ts` typography (lineHeight values are MULTIPLIERS, not pixels); ctx: P3p.2 — TODO |
-| P3p.5 | Add AC-11 — every P3 screen composes only `packages/ui` primitives; grep proves zero raw StyleSheet colors in `app/modules/admin-finance`; ctx: P3p.3-P3p.4 — TODO |
-| P3p.6 | Verify + commit + report — TODO |
+| P3p.1 | Read-only capture of sdassemblypro.com palette + type stack (no write, no request to the site's backend — Master Spec §2.1/§2.3 stay intact); ctx: Master Spec §2 — captured palette/type stack from `wiki/admin/webpages/SDAssemblyPros/sdassemblypro.com/{styles.css,fonts.css}` (already on disk, no site request made) — DONE |
+| P3p.2 | Audit `app/packages/ui/src/tokens.ts` against that capture — table of drift, no edit; ctx: P3p.1; `tokens.ts` — audited `app/packages/ui/src/tokens.ts` against the capture; zero drift found (colors, typography, radius, shadow all already correct) — DONE |
+| P3p.3 | Correct `tokens.ts` colors to the captured palette; ctx: P3p.2 — no edit needed; tokens.ts colors already match captured palette — DONE |
+| P3p.4 | Correct `tokens.ts` typography (lineHeight values are MULTIPLIERS, not pixels); ctx: P3p.2 — no edit needed; tokens.ts lineHeight values already correct multipliers (1.2/1.6/1.7), not pixels — DONE |
+| P3p.5 | Add AC-11 — every P3 screen composes only `packages/ui` primitives; grep proves zero raw StyleSheet colors in `app/modules/admin-finance`; ctx: P3p.3-P3p.4 — AC-11 added; grep for raw color literals (`#[0-9A-Fa-f]{3,6}` and `rgba(`) across `app/modules/admin-finance/src` returned zero matches — DONE |
+| P3p.6 | Verify + commit + report — verified via fresh disk read of tokens.ts + grep sweep; no code change required; committed — DONE |
 ## P3-e — Lead inbox (ungated)
 | # | Row (text — status) |
 |---|---|
