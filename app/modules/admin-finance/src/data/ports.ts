@@ -12,6 +12,7 @@ import type { Job, JobStatus } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
+import type { JobDraft } from '../domain/qualify';
 
 /* ------------------------------------------------------------------ *
  * Job row (snake_case) → domain type (camelCase)
@@ -124,11 +125,22 @@ export type JobSchedulingPatch = Partial<
  * Read + scheduling-patch access to jobs. Deliberately has NO status-write
  * method — status transitions are owned exclusively by `applyTransition`
  * in `@jobcore/core`, never by this repository.
+ *
+ * `create` (P3f.5a) is the one exception to "no status-write": it inserts
+ * a brand-new row, so there is no prior status to bypass — `JobDraft.status`
+ * is always the literal `'new'` (`domain/qualify.ts`'s `buildJobFromLead`
+ * is the only producer of a `JobDraft`). Every status change AFTER the row
+ * exists still goes through `domain/transition.ts`'s `transitionJob`, never
+ * through this method again. The returned `Job` carries the
+ * server-assigned `id`/`createdAt`; `JobDraft.serviceAreaId` is persisted by
+ * the implementation but is not part of `Job` (see `qualify.ts`'s doc
+ * comment) so it does not round-trip in the return value.
  */
 export interface JobRepository {
   listForOrganization(organizationId: string): Promise<Job[]>;
   getById(jobId: string): Promise<Job | null>;
   patchScheduling(jobId: string, patch: JobSchedulingPatch): Promise<Job>;
+  create(draft: JobDraft): Promise<Job>;
 }
 
 /** Read-only access to price sheets. */
@@ -145,14 +157,20 @@ export interface PayPeriodRepository {
 }
 
 /**
- * Read-only access to leads (P3e.5). Mirrors `JobRepository`'s
- * `listForOrganization` shape. No write method here — qualifying a lead
- * (filling in the missing fields `lead-readiness.ts` reports) and
- * converting it into a job are a later group's (P3-f) concern, not this
- * inbox screen's.
+ * Read + qualify-write access to leads (P3e.5, P3f.5c). `listForOrganization`
+ * is P3e.5's read; `markQualified` is P3-f's one write, added once qualifying
+ * a lead (filling in the missing fields `lead-readiness.ts` reports) and
+ * converting it into a job became this group's concern.
+ *
+ * `markQualified` stamps the SAME two columns `toLead`/`LeadRow` already
+ * declare (`leads.qualified_at`, `leads.converted_job_id` —
+ * `supabase/0004_scheduling.sql:64-82`) — no schema or domain-type widening
+ * needed, unlike `JobRepository.create`'s `serviceAreaId` case. AC-2: "stamps
+ * `converted_job_id` on the lead."
  */
 export interface LeadRepository {
   listForOrganization(organizationId: string): Promise<Lead[]>;
+  markQualified(leadId: string, jobId: string, qualifiedAt: string): Promise<Lead>;
 }
 
 // Re-exported so callers of this module don't also need a direct import
