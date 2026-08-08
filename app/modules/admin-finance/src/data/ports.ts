@@ -11,6 +11,7 @@
 import type { Job, JobStatus } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
+import type { Lead } from '../domain/lead';
 
 /* ------------------------------------------------------------------ *
  * Job row (snake_case) → domain type (camelCase)
@@ -141,6 +142,17 @@ export interface PriceSheetRepository {
 export interface PayPeriodRepository {
   listForOrganization(organizationId: string): Promise<PayPeriod[]>;
   getById(payPeriodId: string): Promise<PayPeriod | null>;
+}
+
+/**
+ * Read-only access to leads (P3e.5). Mirrors `JobRepository`'s
+ * `listForOrganization` shape. No write method here — qualifying a lead
+ * (filling in the missing fields `lead-readiness.ts` reports) and
+ * converting it into a job are a later group's (P3-f) concern, not this
+ * inbox screen's.
+ */
+export interface LeadRepository {
+  listForOrganization(organizationId: string): Promise<Lead[]>;
 }
 
 // Re-exported so callers of this module don't also need a direct import
