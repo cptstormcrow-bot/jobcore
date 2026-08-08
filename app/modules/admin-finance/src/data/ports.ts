@@ -173,6 +173,47 @@ export interface LeadRepository {
   markQualified(leadId: string, jobId: string, qualifiedAt: string): Promise<Lead>;
 }
 
+/* ------------------------------------------------------------------ *
+ * Tech + assignment ports (P3g.6a — additive, supporting the assignment
+ * board's assign-job flow; not part of the original P3d.1 port list).
+ * ------------------------------------------------------------------ */
+
+/**
+ * The tech shape the assignment board / assign-job flow needs. `@jobcore/core`
+ * has no dedicated `Tech` type — a tech is a `Profile` with `role: 'tech'` —
+ * this port takes the same narrow structural slice `TechColumn.tsx`'s
+ * `TechColumnTech` already declares, rather than depending on the full
+ * `Profile` shape.
+ */
+export interface Tech {
+  id: string;
+  fullName: string;
+}
+
+/** Read-only access to the active tech roster. */
+export interface TechRepository {
+  /** Active techs (`role === 'tech' && active === true`) for the org. */
+  listActiveTechs(organizationId: string): Promise<Tech[]>;
+}
+
+/**
+ * Fields needed to insert one `job_assignments` row
+ * (`app/supabase/0004_scheduling.sql`: `id`, `organization_id`, `job_id`,
+ * `tech_id`, `assigned_at`, `created_at` — `id`/`organization_id`/
+ * `created_at` are implementation-assigned, so this draft carries only the
+ * caller-supplied fields).
+ */
+export interface JobAssignmentDraft {
+  jobId: string;
+  techId: string;
+  assignedAt: string;
+}
+
+/** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
+export interface JobAssignmentRepository {
+  create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
+}
+
 // Re-exported so callers of this module don't also need a direct import
 // from `../money/types` just to name the status union.
 export type { PriceSheetStatus };
