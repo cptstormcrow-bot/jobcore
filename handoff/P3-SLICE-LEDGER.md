@@ -28,13 +28,13 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 ## P3-b — `0006_job_service_area.sql` + 31-community reseed (EXEC-GATED)
 | # | Row (text — status) |
 |---|---|
-| P3b.1 | `0006_job_service_area.sql` — nullable `jobs.service_area_id` FK, own migration so it can revert independently; ctx: `0004_scheduling.sql:52-57,89-108` — TODO |
-| P3b.2a | Additive reseed of `seed.sql` — keep ids `...0401`-`...0406`, append 25 rows `...0407`-`...041f`, no existing id rewritten; ctx: `seed.sql:105-127`; 31 communities total — TODO |
-| P3b.2b | Additive reseed of `seed.hosted.sql`, idempotent against the LIVE applied DB (`on conflict (id) do nothing` + guarded update mirroring the `converted_job_id` guard); ctx: `seed.hosted.sql` §5 — TODO |
-| P3b.3a | `app/supabase/README.md` ride (Rule 31) — register `0005`/`0006`; fix stale L19 "6 service areas (placeholder... none enumerated)" note; ctx: `README.md` L3-4, L11-21 — TODO |
-| P3b.3b | `README.md` ride — add the three unlisted `.hosted.` files to the Files table; correct stale L3-4 "No Supabase client lives here" claim; ctx: `README.md` L3-4 — TODO |
-| P3b.4a | Verify `seed.sql` — 31 distinct service-area rows (uuid pattern `8000-0000000004`, 25 new + 6 baseline), zero id collisions; ctx: P3b.2a file only — TODO |
-| P3b.4b | Verify `seed.hosted.sql` — same 26-row count, `on conflict do nothing` still truthful against live DB; ctx: P3b.2b file only — TODO |
+| P3b.1 | `0006_job_service_area.sql` — nullable `jobs.service_area_id` FK, own migration so it can revert independently; ctx: `0004_scheduling.sql:52-57,89-108` — DONE |
+| P3b.2a | Additive reseed of `seed.sql` — keep ids `...0401`-`...0406`, append 25 rows `...0407`-`...041f`, no existing id rewritten; ctx: `seed.sql:105-127`; 31 communities total — DONE |
+| P3b.2b | Additive reseed of `seed.hosted.sql`, idempotent against the LIVE applied DB (`on conflict (id) do nothing` + guarded update mirroring the `converted_job_id` guard); ctx: `seed.hosted.sql` §5 — DONE |
+| P3b.3a | `app/supabase/README.md` ride (Rule 31) — register `0005`/`0006`; fix stale L19 "6 service areas (placeholder... none enumerated)" note; ctx: `README.md` L3-4, L11-21 — DONE |
+| P3b.3b | `README.md` ride — add the three unlisted `.hosted.` files to the Files table; correct stale L3-4 "No Supabase client lives here" claim; ctx: `README.md` L3-4 — DONE |
+| P3b.4a | Verify `seed.sql` — 31 distinct service-area rows (uuid pattern `8000-0000000004`, 25 new + 6 baseline), zero id collisions; ctx: P3b.2a file only — DONE |
+| P3b.4b | Verify `seed.hosted.sql` — same 31-row count, `on conflict do nothing` still truthful against live DB; ctx: P3b.2b file only — DONE |
 | P3b.5 | Commit + Tier-A report — TODO |
 ## P3-o — jobs RLS narrowing (NEW, EXEC-GATED, after P3-b before P3-m)
 | # | Row (text — status) |

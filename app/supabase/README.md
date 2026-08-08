@@ -3,9 +3,11 @@
 SQL only. No Supabase **client** lives here — `src/lib/supabase.ts` (with the Expo SecureStore
 storage adapter) is S4's work, not S3's.
 
-**No live Supabase project exists yet.** Nothing in this directory has been executed against a real
-database. Everything below is the protocol to run *once a project is provisioned*; until then all of
-S3 is unverified by construction.
+**A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). Six migrations
+(`0001_foundation.sql` through `0006_job_service_area.sql`) live in this directory; the first four
+(`0001_foundation.sql`, `0002_profiles_role_column_guard.sql`, `0003_invitations_and_signup.sql`,
+`0004_scheduling.sql`) have been applied to it, the four auth users have been created, and
+`seed.hosted.sql` has been applied (`public.profiles` holds 4 rows). Both hosted RLS suites have been run against it and both passed.
 
 ## Files
 
@@ -15,7 +17,12 @@ S3 is unverified by construction.
 | `0002_profiles_role_column_guard.sql` | Column-level `revoke update (role)` — closes the self-escalation gap that 4.4 below probes |
 | `0003_invitations_and_signup.sql` | `invitations` table + RLS, `signup_attempts` (RLS on, no policies), and the `handle_new_user()` signup trigger that turns a pending invitation into a profile |
 | `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
-| `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 6 service areas (placeholder — Master Spec §4 names 26 San Diego County communities but none are enumerated yet), 6 customers, 4 leads, 5 jobs, 3 job assignments |
+| `0005_money.sql` | P3 admin/finance money core — `publication_status`, `reimbursement_status`, `payout_batch_status` enums, the `is_org_admin()` tenancy helper, and the rate-publication / reimbursement / payout-batch schema with RLS |
+| `0006_job_service_area.sql` | Adds a nullable `service_area_id` FK (+ index) on `jobs` referencing `service_areas`, `on delete set null` |
+| `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
+| `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
+| `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
+| `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 31 service areas (real San Diego County community rows per Master Spec §4), 6 customers, 4 leads, 5 jobs, 3 job assignments |
 | `tests/0001_foundation_rls.test.sql` | Foundation assertions — `audit_log` immutability (5.3 / 5.4 below) and the profiles recursion canary. Wrapped in `begin; … rollback;` |
 | `tests/0004_scheduling_rls.test.sql` | Scheduling assertions — org isolation (3.1 / 3.5) and a tech seeing only their own assigned jobs (AC-7). Wrapped in `begin; … rollback;` |
 
@@ -35,18 +42,24 @@ Order is not cosmetic — each step depends on the previous one existing.
    - *Local dev (`supabase start`)*: skip this step. `seed.sql` inserts the `auth.users` rows itself.
    - *Hosted project*: create four users via the Auth dashboard or the Auth Admin API
      (`owner@` / `admin@` / `tech@` / `sales@sdassemblypro.com`), then replace the four
-     `00000000-0000-4000-8000-0000000001NN` ids in `seed.sql` §2/§3 with the real UUIDs and **delete
-     the `insert into auth.users` block** — direct writes to `auth.users` are not supported against a
-     hosted project.
+     `00000000-0000-4000-8000-0000000001NN` ids **globally across the whole file** (every section, not
+     just §2/§3 — the tech id `...0103` also appears in §8 `jobs.assigned_tech_id` and §9
+     `job_assignments.tech_id`) with the real UUIDs and **delete the `insert into auth.users` block** —
+     direct writes to `auth.users` are not supported against a hosted project. This has already been
+     done: `seed.hosted.sql` is the prepared hosted variant with the auth.users block removed and all
+     four uuids substituted globally — apply that file instead of `seed.sql` on a hosted project, and
+     leave `seed.sql` untouched for local dev.
 5. **`0004_scheduling.sql`** — the P2 scheduling core. Depends on `public.organizations` and
    `public.current_org_id()` from 0001; must follow 0003 (no ordering dependency on 0002).
 6. **`seed.sql`** — org, then profiles, then the scheduling data (services, service areas,
-   customers, leads, jobs, job assignments). Re-runnable (`on conflict do nothing`).
+   customers, leads, jobs, job assignments). Re-runnable (`on conflict do nothing`). Leads insert with `converted_job_id` set to null; a
+   guarded `update` placed after the jobs section sets the one real link, because
+   `leads.converted_job_id` references `jobs(id)` and the forward reference cannot be satisfied
+   while the leads section runs.
 7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
    and rolls itself back, so the database is unchanged either way.
 
-`0004_scheduling.sql` is authored but not yet applied or verified against a database — no live
-Supabase project exists yet.
+`0004_scheduling.sql` has been applied to the hosted project (ref `vogkxkcceahtwyovpxsg`).
 
 Applying `seed.sql` before step 4 on a hosted project fails on the `profiles.id → auth.users(id)`
 foreign key. That failure is correct behavior, not a bug in the seed.
@@ -70,8 +83,8 @@ Each file opens `begin;`, sets `role authenticated` plus `request.jwt.claims` pe
 exception naming the failed criterion on any mismatch, and closes `rollback;`. The same service-role
 warning applies: run them as an authenticated session or every assertion passes vacuously.
 
-Neither suite has been executed — no live Supabase project exists yet, so these assertions are
-authored but unverified.
+Both suites have been executed against the hosted project and both passed. On a hosted project, run
+the `.hosted.test.sql` variants (which carry the real auth uuids), not the placeholder-id originals.
 
 ### AC-3 — tenant isolation
 

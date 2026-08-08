@@ -103,11 +103,8 @@ values
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
--- 5. Service areas — Master Spec §4 states "26 San Diego County communities"
--- but does not enumerate them anywhere in the spec or repo (verified: no
--- match for community names in Jobcore or the sibling website tree). Seeding
--- a modest subset of real, well-documented San Diego County communities as a
--- placeholder; replace with the full 26-name list once it is sourced.
+-- 5. Service areas — 31 San Diego County communities seeded (6 original
+-- placeholder communities plus 25 additional communities appended below).
 -- ---------------------------------------------------------------------------
 
 insert into public.service_areas (id, organization_id, name, created_at)
@@ -123,7 +120,57 @@ values
   ('00000000-0000-4000-8000-000000000405', '00000000-0000-4000-8000-000000000001',
    'Carlsbad',     now()),
   ('00000000-0000-4000-8000-000000000406', '00000000-0000-4000-8000-000000000001',
-   'El Cajon',     now())
+   'El Cajon',     now()),
+  ('00000000-0000-4000-8000-000000000407', '00000000-0000-4000-8000-000000000001',
+   'San Diego',    now()),
+  ('00000000-0000-4000-8000-000000000408', '00000000-0000-4000-8000-000000000001',
+   'Pacific Beach', now()),
+  ('00000000-0000-4000-8000-000000000409', '00000000-0000-4000-8000-000000000001',
+   'Rancho Bernardo', now()),
+  ('00000000-0000-4000-8000-00000000040a', '00000000-0000-4000-8000-000000000001',
+   'Carmel Valley', now()),
+  ('00000000-0000-4000-8000-00000000040b', '00000000-0000-4000-8000-000000000001',
+   'National City', now()),
+  ('00000000-0000-4000-8000-00000000040c', '00000000-0000-4000-8000-000000000001',
+   'Imperial Beach', now()),
+  ('00000000-0000-4000-8000-00000000040d', '00000000-0000-4000-8000-000000000001',
+   'Coronado',     now()),
+  ('00000000-0000-4000-8000-00000000040e', '00000000-0000-4000-8000-000000000001',
+   'La Mesa',      now()),
+  ('00000000-0000-4000-8000-00000000040f', '00000000-0000-4000-8000-000000000001',
+   'Santee',       now()),
+  ('00000000-0000-4000-8000-000000000410', '00000000-0000-4000-8000-000000000001',
+   'Lemon Grove',  now()),
+  ('00000000-0000-4000-8000-000000000411', '00000000-0000-4000-8000-000000000001',
+   'Del Mar',      now()),
+  ('00000000-0000-4000-8000-000000000412', '00000000-0000-4000-8000-000000000001',
+   'Solana Beach', now()),
+  ('00000000-0000-4000-8000-000000000413', '00000000-0000-4000-8000-000000000001',
+   'Oceanside',    now()),
+  ('00000000-0000-4000-8000-000000000414', '00000000-0000-4000-8000-000000000001',
+   'Escondido',    now()),
+  ('00000000-0000-4000-8000-000000000415', '00000000-0000-4000-8000-000000000001',
+   'San Marcos',   now()),
+  ('00000000-0000-4000-8000-000000000416', '00000000-0000-4000-8000-000000000001',
+   'Vista',        now()),
+  ('00000000-0000-4000-8000-000000000417', '00000000-0000-4000-8000-000000000001',
+   'Ramona',       now()),
+  ('00000000-0000-4000-8000-000000000418', '00000000-0000-4000-8000-000000000001',
+   'Alpine',       now()),
+  ('00000000-0000-4000-8000-000000000419', '00000000-0000-4000-8000-000000000001',
+   'Lakeside',     now()),
+  ('00000000-0000-4000-8000-00000000041a', '00000000-0000-4000-8000-000000000001',
+   'Bonsall',      now()),
+  ('00000000-0000-4000-8000-00000000041b', '00000000-0000-4000-8000-000000000001',
+   'Spring Valley', now()),
+  ('00000000-0000-4000-8000-00000000041c', '00000000-0000-4000-8000-000000000001',
+   'Hillcrest',    now()),
+  ('00000000-0000-4000-8000-00000000041d', '00000000-0000-4000-8000-000000000001',
+   'North Park',   now()),
+  ('00000000-0000-4000-8000-00000000041e', '00000000-0000-4000-8000-000000000001',
+   'Mission Valley', now()),
+  ('00000000-0000-4000-8000-00000000041f', '00000000-0000-4000-8000-000000000001',
+   'Scripps Ranch', now())
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -178,7 +225,7 @@ values
    'booking', 'Karen Whitfield', '+16195550201', 'karen.whitfield@example.com',
    'Furniture Assembly', '2026-07-30', 'morning', '412 Prospect St, La Jolla, CA 92037',
    'Assemble two wardrobe units', 'website', 'customer', 'before_start', now(),
-   '00000000-0000-4000-8000-000000000601', now())
+   null, now())
 on conflict (id) do nothing;
 
 -- ---------------------------------------------------------------------------
@@ -225,6 +272,14 @@ values
    null, null, '1901 State St, Carlsbad, CA 92008',
    'Assemble patio storage shed', null, null, null, null, now())
 on conflict (id) do nothing;
+
+-- Deferred link: lead ...0504 converted into job ...0601. Applied here, after section 8,
+-- because leads.converted_job_id references jobs(id) -- the foreign key cannot be satisfied
+-- while section 7 runs. Re-runnable: the `is null` guard makes a second run a no-op.
+update public.leads
+   set converted_job_id = '00000000-0000-4000-8000-000000000601'
+ where id = '00000000-0000-4000-8000-000000000504'
+   and converted_job_id is null;
 
 -- ---------------------------------------------------------------------------
 -- 9. Job assignments
