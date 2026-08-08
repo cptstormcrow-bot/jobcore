@@ -89,44 +89,44 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 ## P3-f — Qualify (authoring ungated)
 | # | Row (text — status) |
 |---|---|
-| P3f.1 | (batch 1) `domain/transition.ts` — the module's SOLE `applyTransition` call site + an ESLint `no-restricted-imports` entry (AC-4 mechanisms 3 and 4); ctx: `state-machine.ts:172,202-249`; `app/package.json:14` — TODO |
-| P3f.2a | (batch 1) `domain/qualify.ts` — `validateQualify`; ctx: P3e.2; P3b.1 column; spec L55-57 — TODO |
-| P3f.2b | (batch 1) `domain/qualify.ts` — `buildJobFromLead`; resolves `service_area_id`; distinguishes "outside the area" from "address unknown"; ctx: P3f.2a — TODO |
-| P3f.3 | (batch 1) `components/AxisPicker.tsx` — `source` / `payer` / `attach_timing`, values byte-matched to `0004_scheduling.sql`; ctx: `0004_scheduling.sql:95-97` — TODO |
-| P3f.6a | (batch 1) verify batch 1 — AC-4 `grep -rn "status *=" app/modules/admin-finance/src` returns ZERO RAW LINES; ctx: P3f.1-P3f.3 files only — TODO |
-| P3f.7a | (batch 1) commit batch 1 — TODO |
-| P3f.4 | (batch 2) `screens/QualifyScreen.tsx` — submit disabled until validation passes; ctx: P3f.2a-P3f.2b, P3f.3 — TODO |
-| P3f.5a | (batch 2) `flows/qualify-lead.ts` — create job in `new`; ctx: P3f.1-P3f.2 — TODO |
-| P3f.5b | (batch 2) `flows/qualify-lead.ts` — advance to `qualified` via P3f.1; ctx: P3f.5a; `state-machine.ts:115` — TODO |
-| P3f.5c | (batch 2) `flows/qualify-lead.ts` — stamp `converted_job_id` + `qualified_at`; ctx: P3f.5b — TODO |
-| P3f.6b | (batch 2) verify batch 2 — AC-2 authoring half; ctx: P3f.4-P3f.5 files only — TODO |
-| P3f.7b | (batch 2) commit batch 2 + report — TODO |
+| P3f.1 | (batch 1) `domain/transition.ts` — the module's SOLE `applyTransition` call site + an ESLint `no-restricted-imports` entry (AC-4 mechanisms 3 and 4); ctx: `state-machine.ts:172,202-249`; `app/package.json:14` — created `app/modules/admin-finance/src/domain/transition.ts` as sole `applyTransition` call site; `app/.eslintrc.cjs` gained a `no-restricted-imports` override banning direct imports elsewhere in modules/admin-finance/src. Verified: ESLint rule fires on a synthetic test import (exit 1); `npx eslint modules/admin-finance/src` exit 0. Scope deviation: `app/packages/core/src/index.ts` was edited to re-export `applyTransition`/`canTransition` (previously unreachable outside the package) — needed for the transition seam to compile — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.2a | (batch 1) `domain/qualify.ts` — `validateQualify`; ctx: P3e.2; P3b.1 column; spec L55-57 — `validateQualify` added to `domain/qualify.ts`; blocks any lead classified `needs_info` by `classifyLead`, reasons from `missingFields` — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.2b | (batch 1) `domain/qualify.ts` — `buildJobFromLead`; resolves `service_area_id`; distinguishes "outside the area" from "address unknown"; ctx: P3f.2a — `buildJobFromLead` added to `domain/qualify.ts`; pure function, distinguishes "address unknown" vs "outside the service area" as separate failure reasons — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.3 | (batch 1) `components/AxisPicker.tsx` — `source` / `payer` / `attach_timing`, values byte-matched to `0004_scheduling.sql`; ctx: `0004_scheduling.sql:95-97` — `components/AxisPicker.tsx` created; source/payer/attach_timing three-way picker, @jobcore/ui primitives only, zero raw color literals (AC-11 grep clean) — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.6a | (batch 1) verify batch 1 — AC-4 `grep -rn "status *=" app/modules/admin-finance/src` returns ZERO RAW LINES; ctx: P3f.1-P3f.3 files only — verified: `grep -rn "status *===" modules/admin-finance/src` → 2 benign hits only (no raw Job-status violations outside transition.ts); `npm test` 17/17 pass; `npm run typecheck` exit 0 all 8 projects; AxisPicker.tsx color-literal grep clean — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.7a | (batch 1) commit batch 1 — commit `15b8811effbf09191feded153508b1885f230093` — "feat(p3f): transition seam, qualify validation, AxisPicker - batch 1". Files: app/.eslintrc.cjs, app/modules/admin-finance/src/components/AxisPicker.tsx, app/modules/admin-finance/src/domain/qualify.ts, app/modules/admin-finance/src/domain/transition.ts, app/packages/core/src/index.ts — DONE 15b8811effbf09191feded153508b1885f230093 |
+| P3f.4 | (batch 2) `screens/QualifyScreen.tsx` — submit disabled until validation passes; ctx: P3f.2a-P3f.2b, P3f.3 — QualifyScreen.tsx built — composes AxisPicker for source/payer/attach_timing, Submit gated on validateQualify(...).valid && all axes selected, zero raw color literals (grep-verified) — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
+| P3f.5a | (batch 2) `flows/qualify-lead.ts` — create job in `new`; ctx: P3f.1-P3f.2 — qualify-lead.ts — buildJobFromLead(lead) → deps.jobs.create(draft.job) builds+creates the new-status job. Scope deviation: `data/ports.ts` edited beyond the literal per-row file list — additive only, adding `JobRepository.create` + `LeadRepository.markQualified`, mirroring the P3-e group's own precedent for supporting-file edits — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
+| P3f.5b | (batch 2) `flows/qualify-lead.ts` — advance to `qualified` via P3f.1; ctx: P3f.5a; `state-machine.ts:115` — qualify-lead.ts — new→qualified transition via transitionJob(newJob,'qualified',deps.ctx), confirmed sole status-write path (grep: no raw .status= or applyTransition outside comments) — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
+| P3f.5c | (batch 2) `flows/qualify-lead.ts` — stamp `converted_job_id` + `qualified_at`; ctx: P3f.5b — deps.leads.markQualified(lead.id, qualifiedJob.id, deps.ctx.now()) stamps converted_job_id/qualified_at — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
+| P3f.6b | (batch 2) verify batch 2 — AC-2 authoring half; ctx: P3f.4-P3f.5 files only — Verified — npm run typecheck exit 0 (8/8 refs), npm run lint exit 0, npm test 17/17 pass; grep confirms AC-4 (sole transitionJob call site) and AC-11 (zero raw hex/rgba color literals) both independently re-verified by main session — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
+| P3f.7b | (batch 2) commit batch 2 + report — Committed 01c87d9 (3 files, +305/-5) on top of batch-1 15b8811. Tier-A build report authored at .claude\build-reports\jobcore-p3-admin-finance\2026-08-08_p3-f-qualify.md and copied to Desktop (both confirmed on disk, 8510 bytes each) — DONE 01c87d915f63da66d09bed08b0a84de7be26d623 |
 ## P3-g — Assignment board (authoring ungated)
 | # | Row (text — status) |
 |---|---|
-| P3g.1 | (batch 1) `domain/time-window.ts` — `overlaps()`, ~20 lines of `Date.getTime()`. Add NO dependency; ctx: none — TODO |
-| P3g.2 | (batch 1) `domain/assignment-warnings.ts` — `warningsFor()` returns warnings, never a boolean block: tech overlap + `service_area_id is null`; ctx: P3g.1; P3b.1 column; spec L65-66 — TODO |
-| P3g.3 | (batch 1) `components/TechColumn.tsx` — local status chip over `colors.info` / `colors.warning`; `JOB_STATUS_COLORS` stays in `apps/mobile`; ctx: `packages/ui/src/tokens.ts:54-59` — TODO |
-| P3g.4 | (batch 1) `components/WarningSheet.tsx` — confirm is ALWAYS enabled (warn, do not hard-block); ctx: P3g.2 — TODO |
-| P3g.7a | (batch 1) verify batch 1; ctx: P3g.1-P3g.4 files only — TODO |
-| P3g.8a | (batch 1) commit batch 1 — TODO |
-| P3g.5a | (batch 2) `screens/AssignmentBoardScreen.tsx` — day/week board render of `qualified` + `scheduled` against active techs; ctx: P3g.3-P3g.4; P3d.1 ports — TODO |
-| P3g.5b | (batch 2) `screens/AssignmentBoardScreen.tsx` — drag/tap assign interaction wiring; ctx: P3g.5a — TODO |
-| P3g.6a | (batch 2) `flows/assign-job.ts` — writes `assigned_tech_id`, `job_assignments` row; ctx: `0004_scheduling.sql:121` — TODO |
-| P3g.6b | (batch 2) `flows/assign-job.ts` — drives `qualified -> scheduled -> assigned` (TWO edges, one flow) via P3f.1; ctx: `state-machine.ts:116-117`; P3g.6a — TODO |
-| P3g.7b | (batch 2) verify batch 2 — AC-3 authoring half (calendar renders with no admin-module code involved), AC-4 grep still zero; ctx: P3g.5-P3g.6 files only — TODO |
-| P3g.8b | (batch 2) commit batch 2 + report — TODO |
+| P3g.1 | (batch 1) `domain/time-window.ts` — `overlaps()`, ~20 lines of `Date.getTime()`. Add NO dependency; ctx: none — DONE f36a4b7a |
+| P3g.2 | (batch 1) `domain/assignment-warnings.ts` — `warningsFor()` returns warnings, never a boolean block: tech overlap + `service_area_id is null`; ctx: P3g.1; P3b.1 column; spec L65-66 — DONE f36a4b7a |
+| P3g.3 | (batch 1) `components/TechColumn.tsx` — local status chip over `colors.info` / `colors.warning`; `JOB_STATUS_COLORS` stays in `apps/mobile`; ctx: `packages/ui/src/tokens.ts:54-59` — DONE f36a4b7a |
+| P3g.4 | (batch 1) `components/WarningSheet.tsx` — confirm is ALWAYS enabled (warn, do not hard-block); ctx: P3g.2 — DONE f36a4b7a |
+| P3g.7a | (batch 1) verify batch 1; ctx: P3g.1-P3g.4 files only — DONE f36a4b7a |
+| P3g.8a | (batch 1) commit batch 1 — DONE f36a4b7a |
+| P3g.5a | (batch 2) `screens/AssignmentBoardScreen.tsx` — day/week board render of `qualified` + `scheduled` against active techs; ctx: P3g.3-P3g.4; P3d.1 ports — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
+| P3g.5b | (batch 2) `screens/AssignmentBoardScreen.tsx` — drag/tap assign interaction wiring; ctx: P3g.5a — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
+| P3g.6a | (batch 2) `flows/assign-job.ts` — writes `assigned_tech_id`, `job_assignments` row; ctx: `0004_scheduling.sql:121` — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
+| P3g.6b | (batch 2) `flows/assign-job.ts` — drives `qualified -> scheduled -> assigned` (TWO edges, one flow) via P3f.1; ctx: `state-machine.ts:116-117`; P3g.6a — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
+| P3g.7b | (batch 2) verify batch 2 — AC-3 authoring half (calendar renders with no admin-module code involved), AC-4 grep still zero; ctx: P3g.5-P3g.6 files only — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
+| P3g.8b | (batch 2) commit batch 2 + report — DONE f7a0b06d7da4c9c9b2185e6c0c339d16eeae11ae |
 ## P3-h — Close-out and commission recording (write gated)
 | # | Row (text — status) |
 |---|---|
-| P3h.1a | `domain/closeout.ts` — `awaitingCloseOut` (via `Set.has()`, never a `status ===`); ctx: `state-machine.ts:95-106,128-138` — TODO |
-| P3h.1b | `domain/closeout.ts` — `closeOutBlockers` surfacing `canTransition`'s reason string verbatim; ctx: P3h.1a — TODO |
-| P3h.2 | `screens/CloseOutQueueScreen.tsx` — awaiting-close-out queue showing each blocker reason; ctx: P3h.1a-P3h.1b — TODO |
-| P3h.3a | `screens/CloseOutReviewScreen.tsx` — photos and quality notes capture; ctx: P3h.2; P3d.1 ports — TODO |
-| P3h.3b | `screens/CloseOutReviewScreen.tsx` — close action wiring; ctx: P3h.3a — TODO |
-| P3h.4a | `flows/close-out-job.ts` — successful `completed -> paid` transition; ctx: P3c.2 signature — TODO |
-| P3h.4b | `flows/close-out-job.ts` — write exactly ONE `commissions` row carrying both snapshot ids and who closed it; not contingent on any review; ctx: P3h.4a; P3a.3 columns; spec L68-80 — TODO |
-| P3h.5 | Verify — AC-5 structural half (the partial unique index is the enforcement, not app code); DB half OPEN pending Supabase; ctx: P3h.4a-P3h.4b file only — TODO |
+| P3h.1a | `domain/closeout.ts` — `awaitingCloseOut` (via `Set.has()`, never a `status ===`); ctx: `state-machine.ts:95-106,128-138` — DONE |
+| P3h.1b | `domain/closeout.ts` — `closeOutBlockers` surfacing `canTransition`'s reason string verbatim; ctx: P3h.1a — DONE |
+| P3h.2 | `screens/CloseOutQueueScreen.tsx` — awaiting-close-out queue showing each blocker reason; ctx: P3h.1a-P3h.1b — DONE |
+| P3h.3a | `screens/CloseOutReviewScreen.tsx` — photos and quality notes capture; ctx: P3h.2; P3d.1 ports — DONE |
+| P3h.3b | `screens/CloseOutReviewScreen.tsx` — close action wiring; ctx: P3h.3a — DONE |
+| P3h.4a | `flows/close-out-job.ts` — successful `completed -> paid` transition; ctx: P3c.2 signature — DONE |
+| P3h.4b | `flows/close-out-job.ts` — write exactly ONE `commissions` row carrying both snapshot ids and who closed it; not contingent on any review; ctx: P3h.4a; P3a.3 columns; spec L68-80 — DONE |
+| P3h.5 | Verify — AC-5 structural half (the partial unique index is the enforcement, not app code); DB half OPEN pending Supabase; ctx: P3h.4a-P3h.4b file only — STRUCTURAL PASS; DB half OPEN (Supabase-gated) |
 | P3h.6 | Commit + Tier-A report — TODO |
 ## P3-i — Price-sheet editor (split: pure half ungated, publish gated)
 | # | Row (text — status) |

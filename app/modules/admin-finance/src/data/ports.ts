@@ -13,6 +13,7 @@ import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
 import type { JobDraft } from '../domain/qualify';
+import type { CommissionLine } from '../money/types';
 
 /* ------------------------------------------------------------------ *
  * Job row (snake_case) → domain type (camelCase)
@@ -212,6 +213,28 @@ export interface JobAssignmentDraft {
 /** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Commission port (P3h.4b — supporting close-out-job.ts's commission
+ * write; not part of the original P3d.1 port list).
+ * ------------------------------------------------------------------ */
+
+/**
+ * Write access to `commissions` (`app/supabase/0005_money.sql`). Insert-only —
+ * a commission is immutable once written (`commissions_immutable_trg`); the
+ * one correction path is voiding, which is a separate concern for a later
+ * slice, not this port.
+ *
+ * `line` is the `CommissionLine` produced by `money/commission.ts`'s
+ * `calculateCommission` — it already snapshots `priceSheetId` and
+ * `compensationPolicyId` per `commissions_one_per_job_idx`/P3a.3's not-null,
+ * on-delete-restrict snapshot columns. `closedByUserId` is passed separately
+ * because it identifies WHO closed the job (`commissions.user_id`), not the
+ * commission earner captured inside `CommissionLine` itself.
+ */
+export interface CommissionRepository {
+  create(organizationId: string, line: CommissionLine, closedByUserId: string): Promise<void>;
 }
 
 // Re-exported so callers of this module don't also need a direct import
