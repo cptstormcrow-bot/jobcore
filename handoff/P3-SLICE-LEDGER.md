@@ -35,7 +35,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3b.3b | `README.md` ride — add the three unlisted `.hosted.` files to the Files table; correct stale L3-4 "No Supabase client lives here" claim; ctx: `README.md` L3-4 — DONE |
 | P3b.4a | Verify `seed.sql` — 31 distinct service-area rows (uuid pattern `8000-0000000004`, 25 new + 6 baseline), zero id collisions; ctx: P3b.2a file only — DONE |
 | P3b.4b | Verify `seed.hosted.sql` — same 31-row count, `on conflict do nothing` still truthful against live DB; ctx: P3b.2b file only — DONE |
-| P3b.5 | Commit + Tier-A report — TODO |
+| P3b.5 | Commit + Tier-A report — DONE |
 ## P3-o — jobs RLS narrowing (NEW, EXEC-GATED, after P3-b before P3-m)
 | # | Row (text — status) |
 |---|---|
