@@ -16,7 +16,7 @@
     "format": "prettier --write ."
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.6"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.8.0",
