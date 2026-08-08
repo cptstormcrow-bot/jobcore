@@ -12,6 +12,15 @@ export { applyOptimistic } from './offline/apply';
 // P2d.2c: re-export the replay + conflict-resolution helpers.
 export type { ReplayOptions, ReplayResult } from './offline/replay';
 export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } from './offline/replay';
+// P3f.1: re-export the state-machine surface. Previously `state-machine.ts`
+// was only reachable inside `packages/core` itself (e.g. `offline/apply.ts`'s
+// relative import) — nothing outside this package could import
+// `applyTransition`/`canTransition` at all, and `package.json`'s `exports`
+// map only opens the `.` subpath, so a deep `@jobcore/core/state-machine`
+// import is not resolvable. This re-export is what lets
+// `modules/admin-finance/src/domain/transition.ts` be the module's sole
+// `applyTransition` call site via a plain `@jobcore/core` import.
+export { canTransition, applyTransition } from './state-machine';
 
 export type Role = 'owner' | 'admin' | 'tech' | 'sales';
 

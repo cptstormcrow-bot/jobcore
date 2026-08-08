@@ -26,4 +26,30 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
   },
+  overrides: [
+    // P3f.1 (AC-4): admin-finance/src/domain/transition.ts is the module's
+    // sole `applyTransition` call site — everything else under
+    // modules/admin-finance/src must go through `transitionJob` instead of
+    // importing the state machine directly, so job-status changes never
+    // scatter into raw `status === '...'` comparisons.
+    {
+      files: ['modules/admin-finance/src/**/*.{ts,tsx}'],
+      excludedFiles: ['modules/admin-finance/src/domain/transition.ts'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            paths: [
+              {
+                name: '@jobcore/core',
+                importNames: ['applyTransition'],
+                message:
+                  'Import transitionJob from modules/admin-finance/src/domain/transition.ts instead — it is the sole applyTransition call site (P3f.1, AC-4).',
+              },
+            ],
+          },
+        ],
+      },
+    },
+  ],
 };
