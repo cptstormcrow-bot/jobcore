@@ -1,3 +1,9 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "Jobcore P3 — context protocol and conventions"
+origin: Codespace/SDAssemblyPros/Jobcore/handoff/P3-CONTEXT-PROTOCOL.md
+tags: [sdassemblypros, jobcore]
+---
 # Jobcore P3 — context protocol and conventions
 
 > Pointer back: see [P3-SLICE-LEDGER.md](P3-SLICE-LEDGER.md) for the goal, spec pointers, the
@@ -19,9 +25,11 @@
 5. Build item 4 needs an out-of-area warning but `jobs` has no `service_area_id`
    (`0004_scheduling.sql:89-108`). Added as a nullable FK in `0006_job_service_area.sql` (P3-b).
 
-Settled input: **26 community names, flat, all under San Diego County.** No hierarchy; the existing
+Settled input: **31 community names, flat, all under San Diego County.** No hierarchy; the existing
 4-column `service_areas` shape is correct. All 6 current placeholders (`seed.sql:113-127`) are members
-of the 26, so the reseed is purely additive and `on conflict (id) do nothing` stays truthful.
+of the 31, so the reseed is purely additive and `on conflict (id) do nothing` stays truthful. Count
+corrected from 26 after live-site verification of sdassemblypro.com (sitemap + /about/ + /contact/ +
+/faq/ cross-check), merge approved by Jeff.
 
 ## Sizing rule (measured from P2: 49 sub-rows, +3550/-118, mean 72 insertions per row, band 57-94)
 
@@ -106,3 +114,50 @@ All commits go to the NESTED repo `E:\Jeff\Codespace\SDAssemblyPros\Jobcore`, ne
 
 P3-c runs in parallel with P3-a (ungated R-A track). P3-d through P3-h run in order. P3-i, P3-j, P3-k
 and P3-l are independent of each other once P3-c and P3-d land. P3-m follows P3-a. P3-n last.
+
+## Ledger preamble (moved from P3-SLICE-LEDGER.md, Rule 21 preamble/row split)
+
+- Goal slug: `jobcore-p3-admin-finance`.
+- Spec of record: `Jobcore\handoff\03-P3-admin-finance.md` (see Spec corrections above — do not
+  build from it literally).
+- Plan of record: `E:\Jeff\.claude\plans\jobcore-p3-admin-finance-execution.md`.
+
+## P2 contracts still binding
+
+- `JobStatus` union lives in `packages/core`; the module imports it, never redeclares it.
+- `applyTransition` / `canTransition` are the ONLY legal state-machine entry points (P3f.1 is P3's
+  sole call site).
+- `packages/core` owns the money boundary types; the module's `money/types.ts` extends, never
+  duplicates.
+- `audit_log`'s immutability is policy-ABSENCE, not a policy — P3-a's RLS row (P3a.7) must prove
+  `0005` adds NO policy to `audit_log` (verified by the canary in P3m.4a).
+- `tokens.typography.lineHeight` values are MULTIPLIERS, not pixels (carried into P3-p).
+- `jobs.requested_window` is untyped text — reporting (P3-l) treats unparseable values as `unknown`,
+  never a hit or a miss.
+- Only `routes[0]` renders for a module — `AdminFinanceRoot` (P3d.3) is the module's ONE route.
+
+## Blocker (Rule 15 R-A) — CLEARED 2026-08-01
+
+Hosted Supabase project ref `vogkxkcceahtwyovpxsg` confirmed reachable; EXEC-GATED rows (P3-a, P3-b,
+P3-o, P3-j, P3-m) may run against it via the SQL Editor per the close-out ritual. This note is
+historical — the blocker is cleared, not a live condition to re-check.
+
+## Carried decisions (P3-0 wrapper group)
+
+**Batch concept** (P3-0.1/P3-0.2): A *batch* is <= 9 sub-rows, <= 6 files, one code commit staged by
+explicit pathspec. A group may run as N sequential batches, each closing with its own verification
+row and its own commit row. Group letters and row IDs are untouched — a batch is a run boundary, not
+an identifier. This supersedes the old "one code commit per group" framing in the Sizing rule above;
+the group-level cap in that section (<= 8 sub-rows, <= 10 files) is superseded by this batch cap for
+any group that now exceeds 8 sub-rows.
+
+**Test runner decision** (P3-0.3, folds in plan row P3-0.3): Keep `node:test`. Keep the data-URI
+loader shim (`app/package.json` — it resolves extensionless relative `.ts` imports, which
+type-stripping does not cover). Raise `engines.node` to `>=22.6`. No new dependencies added. This
+supersedes the "Test runner" bullet under Decisions carried into the rows above, which still names
+the old `">=20"` floor without the shim.
+
+**P3a.2 correction, historical**: `P3a.2b` (`price_sheet_rates.attach_timing`) INTRODUCES the
+canonical value-set CHECK — it does not byte-match `0004_scheduling.sql:97` as an earlier draft
+claimed. Corrected on disk by commit `b25c99e`; P3-a is now terminal DONE, so this is history, not a
+live instruction.
