@@ -17,7 +17,11 @@
   "dependencies": {
     "@jobcore/core": "*",
     "@jobcore/module-sdk": "*",
-    "@jobcore/ui": "*"
+    "@jobcore/ui": "*",
+    "expo-clipboard": "~7.0.0",
+    "expo-file-system": "~18.0.6",
+    "expo-media-library": "~17.0.3",
+    "expo-sharing": "~13.0.0"
   },
   "peerDependencies": {
     "react": "18.3.1"

@@ -1,15 +1,34 @@
+/**
+ * sales-marketing module registration (P6).
+ *
+ * Mirrors `modules/field-tech/src/index.ts`'s layering: this file only
+ * assembles the `JobcoreModule` object and exports it — the host
+ * (`apps/mobile/src/modules.ts`) is the sole caller of `registerModule`,
+ * exactly as it is for `fieldTechModule`/`adminFinanceModule`.
+ *
+ * Supersedes the P1 placeholder (`SalesMarketingScreen`). Real screens
+ * (Review Library, Pitch Picker, Composer, Reporting) have not landed yet —
+ * they are a later pass. Importing `./screens/SalesMarketingRoot`,
+ * `./screens/ReviewLibrary`, `./screens/PitchPicker`, `./screens/Composer`,
+ * or `./screens/Reporting` directly here would hard-fail the build before
+ * those files exist, so this file keeps a placeholder root in their place.
+ * When the screens land, replace `SalesMarketingPlaceholder` with a real
+ * import of `./screens/SalesMarketingRoot`, following field-tech's
+ * direct-import pattern exactly.
+ */
+
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import { colors, spacing, typography } from '@jobcore/ui';
 
 /**
- * P1 placeholder screen for the sales-marketing module (build item 7).
- * Real screens land in P3/P6 — this exists to prove the registry contract:
- * the shell renders whatever `routes[0].component` is, with zero knowledge of
- * which module it belongs to.
+ * Placeholder root, standing in for `./screens/SalesMarketingRoot` until
+ * S-series work lands Review Library / Pitch Picker / Composer / Reporting.
+ * Replace with a real import once those screens exist — do not add logic
+ * here; this component is scaffolding only.
  */
-function SalesMarketingScreen() {
+function SalesMarketingPlaceholder() {
   return React.createElement(
     View,
     { style: styles.screen },
@@ -44,17 +63,17 @@ const styles = StyleSheet.create({
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
- * displayName / requiredRoles / navEntries are NOT specified by 00-MASTER-SPEC.md
- * or 01-P1-foundation.md. These values are a documented assumption chosen so that
- * all four seeded roles resolve to DIFFERENT nav sets (P1 AC-3) and a tech sees no
- * Admin entry (P1 verification step 2).
+ * requiredRoles gates sales-marketing to sales, admin, and owner — a tech
+ * sees no Sales & Marketing entry, mirroring field-tech's role-gating
+ * approach (P1 AC-3 / verification step 2).
  */
 export const salesMarketingModule: JobcoreModule = {
   id: 'sales-marketing',
   displayName: 'Sales & Marketing',
-  requiredRoles: ['owner', 'sales'],
-  routes: [{ path: 'sales-marketing', component: SalesMarketingScreen }],
+  requiredRoles: ['sales', 'admin', 'owner'],
+  routes: [{ path: 'sales-marketing', component: SalesMarketingPlaceholder }],
   navEntries: [{ icon: 'megaphone', label: 'Sales & Marketing', order: 30 }],
+  migrations: [],
 };
 
 export default salesMarketingModule;
