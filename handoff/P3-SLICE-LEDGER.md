@@ -138,7 +138,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3i.3b | `screens/PriceSheetListScreen.tsx` — draft / published / superseded grouping render; ctx: P3i.3a — DONE 7534bf8 |
 | P3i.4a | `screens/PriceSheetEditorScreen.tsx` — grid, rows = services, columns = `attach_timing`; ctx: P3i.2a-P3i.2b; spec L82-85 — DONE 070e7e3 |
 | P3i.4b | `screens/PriceSheetEditorScreen.tsx` — editable ONLY while draft gating; ctx: P3i.4a — DONE 9bf26ef |
-| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — DONE 9090c40 |
+| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — STRUCTURAL PASS; DB half OPEN (Supabase-gated) 9090c40 |
 | P3i.6 | Commit + Tier-A report — TODO |
 ## P3-j — Edge Function `price-sheet-current` (EXEC-GATED)
 | # | Row (text — status) |
