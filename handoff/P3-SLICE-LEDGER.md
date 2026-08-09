@@ -131,14 +131,14 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 ## P3-i — Price-sheet editor (split: pure half ungated, publish gated)
 | # | Row (text — status) |
 |---|---|
-| P3i.1 | `money/publish-plan.ts` — pure `planPublish(sheet, priorPublished, now): PublishPlan`. Version is assigned AT DRAFT CREATION (`max(version)+1`), not at publish, or the row mutates against `unique (organization_id, version)`; ctx: P3a.2 constraints; P3a.6 RPC — TODO |
-| P3i.2a | `data/price-sheet-repo.ts` — `PriceSheetRepo` interface; ctx: P3i.1; P3d.1 ports — TODO |
-| P3i.2b | `data/price-sheet-repo.ts` — `publish_price_sheet` RPC call; ctx: P3i.2a — TODO |
-| P3i.3a | `screens/PriceSheetListScreen.tsx` — list query; ctx: P3i.2a-P3i.2b — TODO |
-| P3i.3b | `screens/PriceSheetListScreen.tsx` — draft / published / superseded grouping render; ctx: P3i.3a — TODO |
-| P3i.4a | `screens/PriceSheetEditorScreen.tsx` — grid, rows = services, columns = `attach_timing`; ctx: P3i.2a-P3i.2b; spec L82-85 — TODO |
-| P3i.4b | `screens/PriceSheetEditorScreen.tsx` — editable ONLY while draft gating; ctx: P3i.4a — TODO |
-| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — TODO |
+| P3i.1 | `money/publish-plan.ts` — pure `planPublish(sheet, priorPublished, now): PublishPlan`. Version is assigned AT DRAFT CREATION (`max(version)+1`), not at publish, or the row mutates against `unique (organization_id, version)`; ctx: P3a.2 constraints; P3a.6 RPC — DONE 6ca63c6 |
+| P3i.2a | `data/price-sheet-repo.ts` — `PriceSheetRepo` interface; ctx: P3i.1; P3d.1 ports — DONE ddf5a4c |
+| P3i.2b | `data/price-sheet-repo.ts` — `publish_price_sheet` RPC call; ctx: P3i.2a — DONE 9f4c492 |
+| P3i.3a | `screens/PriceSheetListScreen.tsx` — list query; ctx: P3i.2a-P3i.2b — DONE 0b2e8bf |
+| P3i.3b | `screens/PriceSheetListScreen.tsx` — draft / published / superseded grouping render; ctx: P3i.3a — DONE 7534bf8 |
+| P3i.4a | `screens/PriceSheetEditorScreen.tsx` — grid, rows = services, columns = `attach_timing`; ctx: P3i.2a-P3i.2b; spec L82-85 — DONE 070e7e3 |
+| P3i.4b | `screens/PriceSheetEditorScreen.tsx` — editable ONLY while draft gating; ctx: P3i.4a — DONE 9bf26ef |
+| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — DONE 9090c40 |
 | P3i.6 | Commit + Tier-A report — TODO |
 ## P3-j — Edge Function `price-sheet-current` (EXEC-GATED)
 | # | Row (text — status) |
