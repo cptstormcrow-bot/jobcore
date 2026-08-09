@@ -175,7 +175,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3l.4a | `screens/ReportsScreen.tsx` — layout, no charting dependency; ctx: P3l.1-P3l.3 — DONE 74b3ee2 |
 | P3l.4b | `screens/ReportsScreen.tsx` — data wiring to `reporting/*`; ctx: P3l.4a — DONE 74b3ee2 |
 | P3l.5 | Verify — fixture assertions for all three pure modules incl. the unparseable-window case; ctx: P3l.1-P3l.3 only — DONE 5b5db49 |
-| P3l.6 | Commit + Tier-A report — TODO |
+| P3l.6 | Commit + Tier-A report — DONE 5544fed |
 ## P3-m — `app/supabase/tests/0005_money_rls.test.sql` (EXEC-GATED)
 | # | Row (text — status) |
 |---|---|
