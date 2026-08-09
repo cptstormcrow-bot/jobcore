@@ -160,21 +160,21 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3k.3 | (batch 1) `screens/ReimbursementQueueScreen.tsx`; ctx: P3k.2a — DONE 2c60af2 |
 | P3k.6a | (batch 1) verify batch 1; ctx: P3k.1-P3k.3 files only — DONE <this-commit-short-hash> |
 | P3k.7a | (batch 1) commit batch 1 — DONE <this-commit-short-hash> |
-| P3k.4 | (batch 2) `screens/PayoutBatchScreen.tsx` — carries the literal banner "Records only - this app does not move money"; ctx: P3k.1-P3k.2; spec L124-128 — TODO |
-| P3k.5 | (batch 2) `money/__assertions__/payout-freeze.assert.ts` — a frozen line survives a later rate change unchanged; ctx: P3k.1 — TODO |
-| P3k.6b | (batch 2) verify batch 2 — the freeze assertion passes; AC-9 re-checked (no negative adjustment reaches any commission line); ctx: P3k.5 only — TODO |
-| P3k.7b | (batch 2) commit batch 2 + report — TODO |
+| P3k.4 | (batch 2) `screens/PayoutBatchScreen.tsx` — carries the literal banner "Records only - this app does not move money"; ctx: P3k.1-P3k.2; spec L124-128 — DONE 872b859 |
+| P3k.5 | (batch 2) `money/__assertions__/payout-freeze.assert.ts` — a frozen line survives a later rate change unchanged; ctx: P3k.1 — DONE 872b859 |
+| P3k.6b | (batch 2) verify batch 2 — the freeze assertion passes; AC-9 re-checked (no negative adjustment reaches any commission line); ctx: P3k.5 only — DONE 872b859 |
+| P3k.7b | (batch 2) commit batch 2 + report — DONE 872b859 |
 ## P3-l — Reporting (ungated)
 | # | Row (text — status) |
 |---|---|
-| P3l.1a | `reporting/group-by.ts` — `byStatus` / `bySource`, pure; ctx: `0004_scheduling.sql:95-97`; spec L130-133 — TODO |
-| P3l.1b | `reporting/group-by.ts` — `byAttachTiming`, pure; ctx: P3l.1a — TODO |
-| P3l.2 | `reporting/slot-hit-rate.ts` — `requested_window` is untyped text, so an unparseable value counts as `unknown`, NEVER a hit or a miss; ctx: `0004_scheduling.sql:86-88,98` — TODO |
-| P3l.3a | `reporting/revenue.ts` — revenue by service and period, read from `commissions` SNAPSHOT amounts; ctx: P3a.3 columns — TODO |
-| P3l.3b | `reporting/revenue.ts` — commission by service and period, never recomputed; ctx: P3l.3a — TODO |
-| P3l.4a | `screens/ReportsScreen.tsx` — layout, no charting dependency; ctx: P3l.1-P3l.3 — TODO |
-| P3l.4b | `screens/ReportsScreen.tsx` — data wiring to `reporting/*`; ctx: P3l.4a — TODO |
-| P3l.5 | Verify — fixture assertions for all three pure modules incl. the unparseable-window case; ctx: P3l.1-P3l.3 only — TODO |
+| P3l.1a | `reporting/group-by.ts` — `byStatus` / `bySource`, pure; ctx: `0004_scheduling.sql:95-97`; spec L130-133 — DONE e2b283a |
+| P3l.1b | `reporting/group-by.ts` — `byAttachTiming`, pure; ctx: P3l.1a — DONE e2b283a |
+| P3l.2 | `reporting/slot-hit-rate.ts` — `requested_window` is untyped text, so an unparseable value counts as `unknown`, NEVER a hit or a miss; ctx: `0004_scheduling.sql:86-88,98` — DONE f32d65f |
+| P3l.3a | `reporting/revenue.ts` — revenue by service and period, read from `commissions` SNAPSHOT amounts; ctx: P3a.3 columns — DONE 163a93b |
+| P3l.3b | `reporting/revenue.ts` — commission by service and period, never recomputed; ctx: P3l.3a — DONE 163a93b |
+| P3l.4a | `screens/ReportsScreen.tsx` — layout, no charting dependency; ctx: P3l.1-P3l.3 — DONE 74b3ee2 |
+| P3l.4b | `screens/ReportsScreen.tsx` — data wiring to `reporting/*`; ctx: P3l.4a — DONE 74b3ee2 |
+| P3l.5 | Verify — fixture assertions for all three pure modules incl. the unparseable-window case; ctx: P3l.1-P3l.3 only — DONE 5b5db49 |
 | P3l.6 | Commit + Tier-A report — TODO |
 ## P3-m — `app/supabase/tests/0005_money_rls.test.sql` (EXEC-GATED)
 | # | Row (text — status) |
