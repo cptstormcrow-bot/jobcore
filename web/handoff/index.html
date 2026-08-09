@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="index">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/web/handoff/index.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Jobcore Handoff</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #f5f5f7;
+      color: #1c1c1e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+    h1 { font-size: 1.25rem; margin: 0 0 16px; }
+    p { line-height: 1.5; }
+    .provider-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .provider-button {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      font-size: 1rem;
+      border: 1px solid #d1d1d6;
+      border-radius: 12px;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+    .provider-button:active { background: #ececec; }
+    .state-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6e6e73;
+      margin-bottom: 8px;
+    }
+    .error-box {
+      border: 1px solid #d70015;
+      color: #d70015;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./dist/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "jobcore-handoff-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone mobile-first handoff page (Jobcore P5.S7a) — reads a handoff_token from the URL and walks the payer through awaiting_payment/confirming/review/done. NOT part of app/apps/*, NOT deployed to sdassemblypro.com.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
