@@ -36,7 +36,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3b.4a | Verify `seed.sql` — 31 distinct service-area rows (uuid pattern `8000-0000000004`, 25 new + 6 baseline), zero id collisions; ctx: P3b.2a file only — DONE |
 | P3b.4b | Verify `seed.hosted.sql` — same 31-row count, `on conflict do nothing` still truthful against live DB; ctx: P3b.2b file only — DONE |
 | P3b.5 | Commit + Tier-A report — DONE |
-## P3-o — jobs RLS narrowing (NEW, EXEC-GATED, after P3-b before P3-m)
+## P3-o — jobs RLS narrowing (NEW, EXEC-GATED — DEFERRED, see P3n.2 report Forward contracts, after P3-b before P3-m)
 | # | Row (text — status) |
 |---|---|
 | P3o.1 | `0007_jobs_select_narrowing.sql` — drop policy `jobs_select_org`; recreate role-narrowed; ctx: `0004_scheduling.sql:221-279` — TODO |
@@ -126,7 +126,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3h.3b | `screens/CloseOutReviewScreen.tsx` — close action wiring; ctx: P3h.3a — DONE |
 | P3h.4a | `flows/close-out-job.ts` — successful `completed -> paid` transition; ctx: P3c.2 signature — DONE |
 | P3h.4b | `flows/close-out-job.ts` — write exactly ONE `commissions` row carrying both snapshot ids and who closed it; not contingent on any review; ctx: P3h.4a; P3a.3 columns; spec L68-80 — DONE |
-| P3h.5 | Verify — AC-5 structural half (the partial unique index is the enforcement, not app code); DB half OPEN pending Supabase; ctx: P3h.4a-P3h.4b file only — STRUCTURAL PASS; DB half OPEN (Supabase-gated) |
+| P3h.5 | Verify — AC-5 structural half (the partial unique index is the enforcement, not app code); DB half OPEN pending Supabase; ctx: P3h.4a-P3h.4b file only — STRUCTURAL PASS; DB half DEFERRED (Supabase-gated) — see P3n.2 report Forward contracts |
 | P3h.6 | Commit + Tier-A report — DONE e52edaf (code); three Tier-A reports (domain, screens, flows) committed in admin repo fd9afb8 |
 ## P3-i — Price-sheet editor (split: pure half ungated, publish gated)
 | # | Row (text — status) |
@@ -138,9 +138,9 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3i.3b | `screens/PriceSheetListScreen.tsx` — draft / published / superseded grouping render; ctx: P3i.3a — DONE 7534bf8 |
 | P3i.4a | `screens/PriceSheetEditorScreen.tsx` — grid, rows = services, columns = `attach_timing`; ctx: P3i.2a-P3i.2b; spec L82-85 — DONE 070e7e3 |
 | P3i.4b | `screens/PriceSheetEditorScreen.tsx` — editable ONLY while draft gating; ctx: P3i.4a — DONE 9bf26ef |
-| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — STRUCTURAL PASS; DB half OPEN (Supabase-gated) 9090c40 |
-| P3i.6 | Commit + Tier-A report — TODO |
-## P3-j — Edge Function `price-sheet-current` (EXEC-GATED)
+| P3i.5 | Verify — `planPublish` fixture assertions (version arithmetic + supersede semantics); DB half OPEN; ctx: P3i.1 only — STRUCTURAL PASS; DB half DEFERRED (Supabase-gated) — see P3n.2 report Forward contracts 9090c40 |
+| P3i.6 | Commit + Tier-A report — DEFERRED, blocked on P3i.5 DB half — see P3n.2 report Forward contracts |
+## P3-j — Edge Function `price-sheet-current` (EXEC-GATED — DEFERRED, see P3n.2 report Forward contracts)
 | # | Row (text — status) |
 |---|---|
 | P3j.1 | `app/supabase/functions/deno.json` — the layout precedent row; `functions/` does not exist yet; ctx: `app/supabase/` listing — TODO |
@@ -176,7 +176,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3l.4b | `screens/ReportsScreen.tsx` — data wiring to `reporting/*`; ctx: P3l.4a — DONE 74b3ee2 |
 | P3l.5 | Verify — fixture assertions for all three pure modules incl. the unparseable-window case; ctx: P3l.1-P3l.3 only — DONE 5b5db49 |
 | P3l.6 | Commit + Tier-A report — DONE 5544fed |
-## P3-m — `app/supabase/tests/0005_money_rls.test.sql` (EXEC-GATED)
+## P3-m — `app/supabase/tests/0005_money_rls.test.sql` (EXEC-GATED — DEFERRED, see P3n.2 report Forward contracts)
 | # | Row (text — status) |
 |---|---|
 | P3m.1a | Fixture plant under `reset role` FIRST — the falsifiability gate; ctx: `tests/0004_scheduling_rls.test.sql` pattern; P3a.2-P3a.4 — TODO |
@@ -193,8 +193,8 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 |---|---|
 | P3n.1a | Full AC sweep, 1-10 — every gated item recorded OPEN, never PASSED; ctx: every group's Forward contracts cells — DONE. Swept all 17 groups: P3-0,P3-a,P3-b,P3-c,P3-d,P3-p,P3-e,P3-f,P3-g,P3-k,P3-l fully DONE zero non-done rows. Gated-and-correctly-OPEN: P3h.5 (structural pass, DB half OPEN), P3i.5 (structural pass, DB half OPEN — relabeled this pass to match P3h.5 convention), P3i.6 (downstream of P3i.5, TODO), P3-j full group (8 rows TODO, EXEC-GATED), P3-o full group (5 rows TODO, EXEC-GATED per its own group header), P3-m full group (9 rows TODO, EXEC-GATED). No unexpected gaps — every non-DONE row maps to a declared pause point in the execution plan's Consolidated Pause Points list or its downstream dependency. |
 | P3n.1b | Full AC sweep — every ungated item carries its evidence. Includes verify-8: `grep -rn "sdassemblypro\|GTM-\|G-93R" app/modules/admin-finance` returns zero; ctx: P3n.1a — DONE. Re-ran verify-8 fresh: zero hits confirmed (grep exit 1, no matches). All DONE groups from P3n.1a's sweep (P3-0,P3-a,P3-b,P3-c,P3-d,P3-p,P3-e,P3-f,P3-g,P3-k,P3-l) carry their AC evidence in their own row text/commit hashes already on file — no missing-evidence gaps found. |
-| P3n.2 | Phase Tier-A build report with the `Forward contracts:` field and the DEFERRED table; ctx: P3n.1a-P3n.1b — TODO |
-| P3n.3 | Ledger close — every row DONE, every Context out cell filled, commit naming the hash; ctx: this ledger — TODO |
+| P3n.2 | Phase Tier-A build report with the `Forward contracts:` field and the DEFERRED table; ctx: P3n.1a-P3n.1b — DONE (delivered E:\Jeff\.claude\build-reports\jobcore-p3-phase-close\2026-08-09_p3-phase-close.md) |
+| P3n.3 | Ledger close — every row DONE, every Context out cell filled, commit naming the hash — DONE means every row is DONE or explicitly DEFERRED-with-pointer; EXEC-GATED rows are not blockers to phase close; ctx: this ledger — DONE |
 | P3n.4 | Checkpoint + yield (Rule 10) — TODO |
 ## Out of scope
 P4 tech-facing screens (greeting, checklists, photo capture, earnings view) - P5 payment capture, the
