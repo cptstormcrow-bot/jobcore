@@ -6,10 +6,13 @@
  * `PriceSheetRepository.listForOrganization` for every price sheet
  * belonging to the organization, in any status, and renders a flat list.
  *
- * Draft / published / superseded GROUPING is explicitly OUT OF SCOPE here —
- * that is P3i.3b. This screen never partitions `priceSheets` by `status`
- * and never assumes an ordering; it renders whatever
- * `listForOrganization` returns, in the order returned.
+ * P3i.3b implements draft / published / archived GROUPING: sheets are
+ * partitioned by the DOMAIN value of `sheet.status` (`'draft' | 'published' |
+ * 'archived'` — `../money/types.ts`'s `PriceSheetStatus`), rendered as
+ * Published → Draft → Archived, one `<Card>` per non-empty group. The
+ * ledger's "superseded" is DB-only vocabulary; `DB_TO_APP_STATUS`
+ * (`../data/price-sheet-repo.ts`) already translates it to `'archived'`
+ * before a row reaches this screen, so `'superseded'` never appears here.
  *
  * Consumes the existing `PriceSheetRepository` read port (`../data/ports.ts`)
  * — not `price-sheet-repo.ts`'s publish-oriented `PriceSheetRepo`, which is
@@ -22,9 +25,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing } from '@jobcore/ui';
-import type { PriceSheet } from '../money/types';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
@@ -122,18 +125,35 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
     );
   }
 
+  const groups: Array<{ status: PriceSheetStatus; label: string }> = [
+    { status: 'published', label: 'Published' },
+    { status: 'draft', label: 'Drafts' },
+    { status: 'archived', label: 'Archived' },
+  ];
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Card style={styles.card}>
-          {loadState.sheets.map((sheet) => (
-            <ListItem
-              key={sheet.id}
-              title={`Version ${sheet.version} — ${sheet.status}`}
-              subtitle={formatDate(sheet.publishedAt)}
-            />
-          ))}
-        </Card>
+        {groups.map(({ status, label }) => {
+          const sheetsInGroup = loadState.sheets.filter((sheet) => sheet.status === status);
+          if (sheetsInGroup.length === 0) {
+            return null;
+          }
+          return (
+            <View key={status} style={styles.group}>
+              <Text style={styles.groupHeading}>{label}</Text>
+              <Card style={styles.card}>
+                {sheetsInGroup.map((sheet) => (
+                  <ListItem
+                    key={sheet.id}
+                    title={`Version ${sheet.version}`}
+                    subtitle={formatDate(sheet.publishedAt)}
+                  />
+                ))}
+              </Card>
+            </View>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -148,6 +168,16 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
+  },
+  group: {
+    marginBottom: spacing.md,
+  },
+  groupHeading: {
+    color: colors.text,
+    fontSize: typography.size.h5,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.xs,
   },
   card: {
     marginBottom: spacing.md,
