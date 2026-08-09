@@ -6,9 +6,21 @@
  * port (`../data/ports.ts`), selects the one matching `priceSheetId`, and
  * renders its version, status and published date as READ-ONLY fields.
  *
- * Explicitly NOT in scope at P3i.4a:
- * - Save / publish wiring. That is P3i.4b; this screen performs no writes and
- *   never touches `price-sheet-repo.ts`'s publish port.
+ * P3i.4b adds the SAVE / PUBLISH wiring on top of that scaffold:
+ * - `onSave` is a callback-out prop. No port in `ports.ts` or
+ *   `price-sheet-repo.ts` exposes a draft-update write, so the screen does not
+ *   invent one — the host supplies the persistence and returns a
+ *   `CalculationResult<void>` (`../money/types.ts`), never a thrown error.
+ * - Publish runs the real seam: `getPublished(orgId)` on the publish port
+ *   (`PriceSheetRepo`, `../data/price-sheet-repo.ts`) supplies
+ *   `planPublish`'s `priorPublished`, `planPublish` (`../money/publish-plan.ts`)
+ *   validates and describes the transition, and `applyPublishPlan` applies it.
+ *   `planPublish` emitting `'archived'` for the demoted sheet is CORRECT — the
+ *   RPC writes the DB's "superseded" server-side; no such literal exists here.
+ * - Both actions are gated: absent props disable the button, and publish is
+ *   offered only while the sheet is still `'draft'`.
+ *
+ * Explicitly NOT in scope:
  * - Rate rows. `PriceSheetRepository` (the read port) exposes only
  *   `listForOrganization` and `getActive` — there is no rates method to call,
  *   so rate editing cannot be scaffolded honestly here.
@@ -25,15 +37,36 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
-import type { PriceSheet, PriceSheetStatus } from '../money/types';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
+import type { PriceSheetRepo } from '../data/price-sheet-repo';
+import { planPublish } from '../money/publish-plan';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PriceSheetEditorScreenProps {
   priceSheets?: PriceSheetRepository;
   priceSheetId?: string;
+  /**
+   * Publish-flow port. Absent in read-only hosts — the publish button is
+   * disabled rather than hidden so the affordance stays honest.
+   */
+  publishRepo?: PriceSheetRepo;
+  /**
+   * Host-supplied persistence for the draft. Returns a `CalculationResult`
+   * rather than throwing, matching every failable path in `money/`.
+   */
+  onSave?: (sheet: PriceSheet) => Promise<CalculationResult<void>>;
+  /** Fired after a successful publish so the host can refresh or navigate. */
+  onPublished?: (priceSheetId: string) => void;
 }
+
+/** Save/publish action state. Independent of the sheet's own load state. */
+type ActionState =
+  | { kind: 'idle' }
+  | { kind: 'working' }
+  | { kind: 'failed'; message: string }
+  | { kind: 'done'; message: string };
 
 type LoadState =
   | { kind: 'idle' }
@@ -57,8 +90,9 @@ const STATUS_LABEL: Record<PriceSheetStatus, string> = {
 };
 
 export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) {
-  const { priceSheets: priceSheetRepository, priceSheetId } = props;
+  const { priceSheets: priceSheetRepository, priceSheetId, publishRepo, onSave, onPublished } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
 
   const session = getModuleSession();
 
@@ -142,6 +176,42 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) 
   }
 
   const sheet = loadState.sheet;
+  const busy = actionState.kind === 'working';
+
+  async function handleSave(target: PriceSheet): Promise<void> {
+    if (!onSave) return;
+    setActionState({ kind: 'working' });
+    try {
+      const result = await onSave(target);
+      setActionState(
+        result.ok
+          ? { kind: 'done', message: 'Saved.' }
+          : { kind: 'failed', message: result.reason },
+      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the price sheet.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function handlePublish(target: PriceSheet): Promise<void> {
+    if (!publishRepo) return;
+    setActionState({ kind: 'working' });
+    try {
+      const priorPublished = await publishRepo.getPublished(target.organizationId);
+      const planned = planPublish(target, priorPublished, new Date().toISOString());
+      if (!planned.ok) {
+        setActionState({ kind: 'failed', message: planned.reason });
+        return;
+      }
+      await publishRepo.applyPublishPlan(target.organizationId, planned.value);
+      setActionState({ kind: 'done', message: 'Published.' });
+      onPublished?.(target.id);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not publish the price sheet.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
 
   return (
     <View style={styles.screen}>
@@ -152,8 +222,32 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) 
           <ListItem title="Status" subtitle={STATUS_LABEL[sheet.status]} />
           <ListItem title="Published" subtitle={formatDate(sheet.publishedAt)} />
         </Card>
+
+        <Button
+          label={busy ? 'Saving...' : 'Save'}
+          onPress={() => {
+            void handleSave(sheet);
+          }}
+          disabled={!onSave || busy}
+          style={styles.action}
+        />
+        {sheet.status === 'draft' ? (
+          <Button
+            label={busy ? 'Publishing...' : 'Publish'}
+            variant="secondary"
+            onPress={() => {
+              void handlePublish(sheet);
+            }}
+            disabled={!publishRepo || busy}
+            style={styles.action}
+          />
+        ) : null}
+
+        {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+        {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+
         <Text style={styles.note}>
-          Rate rows and editing are not available yet. Saving and publishing arrive in a later slice.
+          Rate rows are not editable yet — the read port exposes no rates method.
         </Text>
       </ScrollView>
     </View>
@@ -179,6 +273,9 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  action: {
+    marginBottom: spacing.sm,
   },
   note: {
     color: colors.textMuted,
