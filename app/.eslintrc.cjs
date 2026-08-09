@@ -27,6 +27,30 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
   },
   overrides: [
+    // S0.4: field-tech/src/domain/transition.ts is the module's sole
+    // `applyTransition` call site (see S0.5) — everything else under
+    // modules/field-tech/src must go through `transitionJob` instead of
+    // importing the state machine directly, so job-status changes never
+    // scatter into raw `status === '...'` comparisons.
+    {
+      files: ['modules/field-tech/src/**/*.{ts,tsx}'],
+      excludedFiles: ['modules/field-tech/src/domain/transition.ts'],
+      rules: {
+        'no-restricted-imports': [
+          'error',
+          {
+            paths: [
+              {
+                name: '@jobcore/core',
+                importNames: ['applyTransition'],
+                message:
+                  'field-tech must call transitionJob() from domain/transition.ts, not applyTransition directly — see Master Spec state machine isolation rule.',
+              },
+            ],
+          },
+        ],
+      },
+    },
     // P3f.1 (AC-4): admin-finance/src/domain/transition.ts is the module's
     // sole `applyTransition` call site — everything else under
     // modules/admin-finance/src must go through `transitionJob` instead of
