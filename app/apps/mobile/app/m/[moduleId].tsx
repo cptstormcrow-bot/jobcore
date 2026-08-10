@@ -4,8 +4,14 @@ import { useLocalSearchParams } from 'expo-router';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, colors } from '@jobcore/ui';
 import { setModuleSession, clearModuleSession } from '@jobcore/admin-finance';
+import {
+  setModuleSession as setFieldTechModuleSession,
+  clearModuleSession as clearFieldTechModuleSession,
+} from '../../../../modules/field-tech/src/lib/module-session';
+import { setModulePorts as setFieldTechModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
 
 import { useSession } from '../../src/lib/session';
+import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 
 /**
  * Static route file + dynamic segment.
@@ -45,6 +51,29 @@ export default function ModuleScreen() {
         userId: state.profile.id,
       });
       return () => clearModuleSession();
+    }
+    return undefined;
+  }, [state, module?.id]);
+
+  // Host-side injection for the field-tech module's session + ports seams
+  // (P4.S2.2, the forward contracts `module-session.ts`/`module-ports.ts` left
+  // open at P4.S1.2/S1.3). field-tech cannot read the host's session union or
+  // construct its own repositories directly (module-isolation contract), so
+  // this is the ONLY place that narrows the session and builds the Supabase-
+  // backed ports (P4.S2.1) before handing both to the module. Cleared on
+  // unmount / module switch so a stale session/ports set never lingers once
+  // this screen is no longer showing field-tech. Runs unconditionally
+  // (rules-of-hooks) — it's a no-op whenever `state` isn't authenticated or
+  // the module isn't field-tech.
+  useEffect(() => {
+    if (state.status === 'authenticated' && module?.id === 'field-tech') {
+      setFieldTechModuleSession({
+        org: state.organization,
+        role: state.profile.role,
+        userId: state.profile.id,
+      });
+      setFieldTechModulePorts(buildFieldTechPorts());
+      return () => clearFieldTechModuleSession();
     }
     return undefined;
   }, [state, module?.id]);

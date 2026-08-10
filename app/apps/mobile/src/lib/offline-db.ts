@@ -15,6 +15,7 @@ import type {
   NewQueuedMutation,
   ReplayResult,
 } from '@jobcore/core';
+import { logSyncFailure } from './log';
 
 export const OFFLINE_DB_NAME = 'jobcore-offline.db';
 
@@ -44,14 +45,19 @@ export async function countPending(): Promise<number> {
 }
 
 export async function enqueue(mutation: NewQueuedMutation): Promise<void> {
-  const db = await getOfflineDb();
-  await db.runAsync(
-    `insert into ${OFFLINE_QUEUE_TABLE} (id, op, payload, occurred_at) values (?, ?, ?, ?)`,
-    mutation.id,
-    mutation.op,
-    mutation.payload,
-    mutation.occurredAt
-  );
+  try {
+    const db = await getOfflineDb();
+    await db.runAsync(
+      `insert into ${OFFLINE_QUEUE_TABLE} (id, op, payload, occurred_at) values (?, ?, ?, ?)`,
+      mutation.id,
+      mutation.op,
+      mutation.payload,
+      mutation.occurredAt
+    );
+  } catch (err) {
+    logSyncFailure('offline-db.enqueue', err instanceof Error ? err.message : String(err), { mutation });
+    throw err;
+  }
 }
 
 interface OfflineQueueRow {

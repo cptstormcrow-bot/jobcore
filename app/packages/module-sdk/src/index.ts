@@ -11,7 +11,7 @@
  */
 
 import type { ComponentType } from 'react';
-import type { Organization, Role } from '@jobcore/core';
+import type { Job, Organization, Role } from '@jobcore/core';
 
 // --- Supporting types -------------------------------------------------------
 // §11 references these without full definitions; minimal correct shapes below.
@@ -41,6 +41,8 @@ export interface NavEntry {
 export interface JobAction {
   id: string;
   label: string;
+  /** Optional invoke-time side effect hook: runs a module's custom logic when this action fires (distinct from any navigation/routing the action may already declare). */
+  onInvoke?(job: Job): void | Promise<void>;
 }
 
 /** Module-owned settings contract (minimal shape — §11 leaves it unspecified). */

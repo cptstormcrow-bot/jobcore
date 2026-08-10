@@ -13,6 +13,7 @@ import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
 import type { JobDraft } from '../domain/qualify';
+import type { NewLeadDraft } from '../domain/intake-normalize';
 import type { CommissionLine } from '../money/types';
 
 /* ------------------------------------------------------------------ *
@@ -172,6 +173,15 @@ export interface PayPeriodRepository {
 export interface LeadRepository {
   listForOrganization(organizationId: string): Promise<Lead[]>;
   markQualified(leadId: string, jobId: string, qualifiedAt: string): Promise<Lead>;
+  /**
+   * Inserts a new lead row from an intake-normalized draft (P7 Slice A —
+   * `domain/intake-normalize.ts`'s `normalizeRawLead` is the only producer
+   * of a `NewLeadDraft`). The returned `Lead` carries the server-assigned
+   * `id`/`createdAt`; `qualifiedAt`/`convertedJobId` are `null` on a
+   * freshly created lead, matching `toLead`'s row mapping for an
+   * unqualified lead.
+   */
+  create(draft: NewLeadDraft): Promise<Lead>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -235,6 +245,83 @@ export interface JobAssignmentRepository {
  */
 export interface CommissionRepository {
   create(organizationId: string, line: CommissionLine, closedByUserId: string): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Audit log port (P7 Slice B — read-only surface over the shipped
+ * `audit_log` table; entries are written by `@jobcore/core`'s
+ * `applyTransition` via `ctx.writeAudit`, never by this module).
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the Supabase `audit_log` table (`id`, `organization_id`,
+ * `actor_id`, `action`, `entity`, `entity_id`, `metadata` jsonb,
+ * `created_at`). `actor_id` is nullable because some rows are written by
+ * system/background processes rather than an authenticated user.
+ * `metadata` is untyped `Record<string, unknown>` at the row boundary —
+ * its shape varies by `action` (see `state-machine.ts`'s
+ * `job.transition.*` metadata shape as one example).
+ */
+export interface AuditLogRow {
+  id: string;
+  organization_id: string;
+  actor_id: string | null;
+  action: string;
+  entity: string;
+  entity_id: string;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one audit log row. */
+export interface AuditLogEntry {
+  id: string;
+  organizationId: string;
+  actorId: string | null;
+  action: string;
+  entity: string;
+  entityId: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+/** Maps an `audit_log` row to its domain shape. Pure, no validation needed — every column is already well-typed at the wire boundary. */
+export function toAuditLogEntry(row: AuditLogRow): AuditLogEntry {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    actorId: row.actor_id,
+    action: row.action,
+    entity: row.entity,
+    entityId: row.entity_id,
+    metadata: row.metadata,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Optional narrowing filters for `AuditLogRepository.listForOrganization`.
+ * All fields are AND-combined when present; an absent field applies no
+ * filter on that dimension.
+ */
+export interface AuditLogFilter {
+  entity?: string;
+  entityId?: string;
+  action?: string;
+  /** Inclusive lower bound on `createdAt` (ISO 8601). */
+  fromDate?: string;
+  /** Inclusive upper bound on `createdAt` (ISO 8601). */
+  toDate?: string;
+}
+
+/**
+ * Read-only access to the audit log. Insert-only at the schema level —
+ * this module never writes a row; writes are owned exclusively by
+ * `@jobcore/core`'s `applyTransition` (`ctx.writeAudit`) and by
+ * `apps/mobile/src/lib/field-tech-repos.ts`'s `writeAudit`.
+ */
+export interface AuditLogRepository {
+  listForOrganization(organizationId: string, filter?: AuditLogFilter): Promise<AuditLogEntry[]>;
 }
 
 // Re-exported so callers of this module don't also need a direct import

@@ -21,6 +21,9 @@ export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } 
 // `modules/admin-finance/src/domain/transition.ts` be the module's sole
 // `applyTransition` call site via a plain `@jobcore/core` import.
 export { canTransition, applyTransition } from './state-machine';
+// S3.7-prereq: re-export the payroll/earnings types.
+export type { PayPeriod, BonusRule, Commission, Reimbursement, DerivedHours, CloseOut } from './payroll';
+export { NullBonusRule } from './payroll';
 
 export type Role = 'owner' | 'admin' | 'tech' | 'sales';
 
@@ -105,6 +108,18 @@ export interface Job {
  * (AC-1: "each illegal transition is rejected with a reason string").
  */
 export type PreconditionResult = { ok: true } | { ok: false; reason: string };
+
+/**
+ * P7 Slice B: a general-purpose success/failure result envelope for
+ * operations that need to carry a typed success value alongside a
+ * human-readable failure reason and an optional underlying cause — the
+ * `logSyncFailure` call sites in `apps/mobile/src/lib/log.ts` are the
+ * primary consumer, wrapping sync/write failures without throwing across
+ * the offline-queue boundary.
+ */
+export type OperationResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; reason: string; cause?: unknown };
 
 /**
  * P2c.2b: the `metadata` jsonb payload of a job-transition audit row.

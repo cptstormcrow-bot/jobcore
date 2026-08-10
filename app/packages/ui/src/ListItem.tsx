@@ -11,8 +11,17 @@ export interface ListItemProps {
 }
 
 export function ListItem({ title, subtitle, onPress, right, style }: ListItemProps) {
+  // A static (non-interactive) row gets no button role/label — only rows
+  // with an onPress are announced as actionable, matching RN's own
+  // guidance that accessibilityRole="button" implies tappability.
+  const interactiveProps = onPress
+    ? {
+        accessibilityRole: 'button' as const,
+        accessibilityLabel: subtitle ? `${title}, ${subtitle}` : title,
+      }
+    : {};
   return (
-    <Pressable onPress={onPress} style={[styles.row, style]}>
+    <Pressable onPress={onPress} {...interactiveProps} style={[styles.row, style]}>
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -27,6 +36,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
+    minHeight: 44,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },

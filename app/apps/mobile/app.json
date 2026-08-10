@@ -3,16 +3,19 @@
     "name": "Jobcore",
     "slug": "jobcore",
     "scheme": "jobcore",
-    "version": "0.1.0",
+    "owner": "sdassemblypros",
+    "version": "0.1.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.sdassemblypros.jobcore",
+      "buildNumber": "1",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.sdassemblypros.jobcore"
+      "package": "com.sdassemblypros.jobcore",
+      "versionCode": 1
     },
     "plugins": [
       "expo-router",
@@ -21,6 +24,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
     }
   }
 }
