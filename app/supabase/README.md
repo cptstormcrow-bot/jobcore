@@ -12,10 +12,10 @@ storage adapter) is S4's work, not S3's.
 **A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). All twelve migrations
 (`0001_foundation.sql` through `0012_marketing.sql`) live in this directory and have been applied to
 it, the four auth users have been created, and `seed.hosted.sql` has been applied (`public.profiles`
-holds 4 rows). Both hosted RLS suites have been run against it and both passed — but that coverage
-is limited to `0001_foundation` and `0004_scheduling`; the newer RLS-bearing migrations (`0005` money,
-`0008` field-tech-jobs, `0012` marketing) do not yet have hosted test suites, which is tracked as
-separate follow-on work.
+holds 4 rows). Both hosted RLS suites have been run against it and both passed — that coverage now also
+includes `0008_field_tech_jobs_rls` (test files authored, not yet executed against the hosted
+project); `0005` money and `0012` marketing test files have also now been authored (not yet
+executed against the hosted project).
 
 ## Files
 
@@ -36,9 +36,22 @@ separate follow-on work.
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
+| `tests/0005_money_rls.hosted.test.sql` | Hosted variant of `tests/0005_money_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
+| `tests/0008_field_tech_jobs_rls.hosted.test.sql` | Hosted variant of `tests/0008_field_tech_jobs_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 31 service areas (real San Diego County community rows per Master Spec §4), 6 customers, 4 leads, 5 jobs, 3 job assignments |
 | `tests/0001_foundation_rls.test.sql` | Foundation assertions — `audit_log` immutability (5.3 / 5.4 below) and the profiles recursion canary. Wrapped in `begin; … rollback;` |
 | `tests/0004_scheduling_rls.test.sql` | Scheduling assertions — org isolation (3.1 / 3.5) and a tech seeing only their own assigned jobs (AC-7). Wrapped in `begin; … rollback;` |
+| `tests/0005_money_rls.test.sql` | Money-core assertions (P3m.1–P3m.4) — fixture plant under `reset role`, owner-sees-N on all 7 money tables, tech/sales zero-row negative probes (bulk + PK lookup), `reimbursements_select_own`/`insert_own` own-row positive and cross-user negative, trigger-denial probes under `reset role` and as authenticated owner, `::text` survival probes, and the `audit_log` policy-count canary. Wrapped in `begin; … rollback;` |
+| `tests/0003_invitations_rls.test.sql` | Invitations assertions (AC-INV.1–AC-INV.5b) — cross-org synthetic-row isolation on `invitations_select_own_org` (bulk + PK lookup), `invitations_insert_admin` positive plus non-admin-role and cross-org negatives, `invitations_update_admin` positive plus non-admin-role and cross-org 0-row-affected negatives, `invitations_delete_admin` positive plus non-admin-role 0-row-affected negative, and the `signup_attempts` no-policy-is-denial canary. Wrapped in `begin; … rollback;` |
+| `tests/0008_field_tech_jobs_rls.test.sql` | Field-tech assertions — `jobs_update_tech` column-whitelist trigger (AC-8.1/8.2/8.3: own-assigned-job column update, non-whitelisted column rejected, unassigned job rejected) and `commissions_select_own` (AC-8.4/8.5: own row, other-row zero-count + PK lookup). Wrapped in `begin; … rollback;` |
+| `tests/0012_marketing_rls.hosted.test.sql` | Hosted variant of `tests/0012_marketing_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids. Covers every sales-role policy from `0012_marketing.sql` (`marketing_assets_all_sales`, `post_drafts_all_sales`, `post_draft_assets_all_sales`, `post_targets_all_sales`, `campaign_log_select_sales`/`insert_sales`, `job_photos_select_sales`, `reviews_select_sales`/`update_sort_sales`, `social_providers_admin_all`/`select_sales`), each with a positive (own-org) and negative (cross-role/cross-org) probe, plus a `social_provider_credentials` absence-of-policy canary. Also the S5.4 fold-in — the deferred field-tech negative-access probe folded into this suite per the Slice-3 plan. |
+| `tests/0012_marketing_rls.test.sql` | Local-dev twin of `tests/0012_marketing_rls.hosted.test.sql`, using placeholder seed uuids (owner `...0101`, admin `...0102`, tech `...0103`, sales `...0104`) and fixture ids `...0301`–`...030d`. Wrapped in `begin; … rollback;` |
+| `tests/0003_invitations_rls.hosted.test.sql` | Hosted variant of `tests/0003_invitations_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids. Covers every policy on `0003_invitations_and_signup.sql`'s `invitations` table (`invitations_select_own_org` with a cross-org synthetic-row positive/negative pair, `invitations_insert_admin` positive plus non-admin-role and cross-org negatives, `invitations_update_admin` positive plus non-admin-role and cross-org 0-row-affected negatives, `invitations_delete_admin` positive plus non-admin-role 0-row-affected negative), plus a `signup_attempts` absence-of-policy canary and a planted-row invisibility probe. |
+| `tests/0003_invitations_rls.test.sql` | Local-dev twin of `tests/0003_invitations_rls.hosted.test.sql`, using placeholder seed uuids (owner `...0101`, admin `...0102`, tech `...0103`, sales `...0104`) and fixture ids `...0401`–`...0406`. Wrapped in `begin; … rollback;` |
+| `tests/0010_payment_review_rls.hosted.test.sql` | Hosted variant of `tests/0010_payment_review_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids. Covers every policy on `0010_payment_review.sql` (`payment_providers_admin_all`; `payments_admin_all`/`select_tech`/`update_tech` plus the `payments_tech_confirm_whitelist_trg` column-whitelist trigger; `handoff_tokens_admin_all`; `reviews_admin_all` and `reviews_insert_anon` including an `anon`-role probe; `review_requests_admin_all`), each with admin-positive and tech/anon negative probes (bulk count + PK point lookup). Covers only 0010's own admin/anon `reviews` policies — the 0012 sales-facing `reviews_select_sales`/`update_sort_sales` layer is asserted by `tests/0012_marketing_rls.hosted.test.sql` instead. |
+| `tests/0010_payment_review_rls.test.sql` | Local-dev twin of `tests/0010_payment_review_rls.hosted.test.sql`, using placeholder seed uuids (owner `...0101`, admin `...0102`, tech `...0103`) and fixture ids `...0801`–`...0808`. Wrapped in `begin; … rollback;` |
+| `tests/0007_field_tech_tables_rls.hosted.test.sql` | Hosted variant of `tests/0007_field_tech_tables_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids. Covers every policy on `0007_field_tech_tables.sql`'s six tables (`checklist_templates`, `checklist_instances`, `checklist_items`, `job_photos`, `time_off_requests`, `job_notes`), each `*_admin_all` plus its tech-scoped `select`/`insert` pair, with positive (own-job/own-row), negative (different-user-same-org, bulk + PK lookup), and negative (cross-org, bulk + PK lookup) probes, plus an `admin_all` cross-table visibility canary. Covers only 0007's tech-facing `job_photos` policies (`job_photos_select_tech`/`insert_tech`) — the 0012 sales-facing `job_photos_select_sales` layer is asserted by `tests/0012_marketing_rls.hosted.test.sql` instead. |
+| `tests/0007_field_tech_tables_rls.test.sql` | Local-dev twin of `tests/0007_field_tech_tables_rls.hosted.test.sql`, using placeholder seed uuids (owner `...0101`, admin `...0102`, tech `...0103`, sales `...0104`) and fixture ids `...0900`–`...0921` plus org B `...0000000000b7`. Wrapped in `begin; … rollback;` |
 
 ## Apply order
 
@@ -93,6 +106,7 @@ instead of by hand:
 |-----------|--------|
 | `tests/0001_foundation_rls.test.sql` | 5.2 (append still permitted), 5.3, 5.4, and the recursion smoke test — from both an owner and a tech session |
 | `tests/0004_scheduling_rls.test.sql` | 3.1, 3.5, and AC-7 (a tech sees only their assigned jobs) |
+| `tests/0005_money_rls.test.sql` | P3m.1–P3m.4 (money-core RLS: owner-sees-N, tech/sales negative probes, reimbursement own-row rules, trigger-denial, survival probes, audit_log canary) |
 
 Each file opens `begin;`, sets `role authenticated` plus `request.jwt.claims` per block, raises an
 exception naming the failed criterion on any mismatch, and closes `rollback;`. The same service-role
