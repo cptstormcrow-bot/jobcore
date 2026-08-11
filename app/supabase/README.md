@@ -1,13 +1,21 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "Jobcore — Supabase foundation (P1 · S3)"
+origin: Codespace/SDAssemblyPros/Jobcore/app/supabase/README.md
+tags: [sdassemblypros, jobcore]
+---
 # Jobcore — Supabase foundation (P1 · S3)
 
 SQL only. No Supabase **client** lives here — `src/lib/supabase.ts` (with the Expo SecureStore
 storage adapter) is S4's work, not S3's.
 
-**A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). Six migrations
-(`0001_foundation.sql` through `0006_job_service_area.sql`) live in this directory; the first four
-(`0001_foundation.sql`, `0002_profiles_role_column_guard.sql`, `0003_invitations_and_signup.sql`,
-`0004_scheduling.sql`) have been applied to it, the four auth users have been created, and
-`seed.hosted.sql` has been applied (`public.profiles` holds 4 rows). Both hosted RLS suites have been run against it and both passed.
+**A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). All twelve migrations
+(`0001_foundation.sql` through `0012_marketing.sql`) live in this directory and have been applied to
+it, the four auth users have been created, and `seed.hosted.sql` has been applied (`public.profiles`
+holds 4 rows). Both hosted RLS suites have been run against it and both passed — but that coverage
+is limited to `0001_foundation` and `0004_scheduling`; the newer RLS-bearing migrations (`0005` money,
+`0008` field-tech-jobs, `0012` marketing) do not yet have hosted test suites, which is tracked as
+separate follow-on work.
 
 ## Files
 
@@ -19,6 +27,12 @@ storage adapter) is S4's work, not S3's.
 | `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
 | `0005_money.sql` | P3 admin/finance money core — `publication_status`, `reimbursement_status`, `payout_batch_status` enums, the `is_org_admin()` tenancy helper, and the rate-publication / reimbursement / payout-batch schema with RLS |
 | `0006_job_service_area.sql` | Adds a nullable `service_area_id` FK (+ index) on `jobs` referencing `service_areas`, `on delete set null` |
+| `0007_field_tech_tables.sql` | P4 field-tech job-execution tables + RLS |
+| `0008_field_tech_jobs_rls.sql` | Tech `UPDATE` policy on `jobs` (column-whitelisted via trigger), plus a commissions tech self-select policy |
+| `0009_idempotency_keys.sql` | Adds `idempotency_key` columns + unique partial indexes to `audit_log` and `job_photos` for offline-queue replay dedup |
+| `0010_payment_review.sql` | P5 payment + review — org-level `payment_providers` config plus the payment/review schema, RLS |
+| `0011_handoff_token_issue.sql` | P5.S5 handoff token issuance — `issue_handoff_token(p_job_id uuid)`, a signed, expiring, single-job-scoped token inserted into `public.handoff_tokens` (0010) |
+| `0012_marketing.sql` | Adds `reviews.sort_order` + index, `job_photos.customer_consent`; creates `marketing_assets`, `post_drafts`, `post_draft_assets`, `post_targets`, `campaign_log`, `social_providers`, `social_provider_credentials` tables with RLS; dual-consent trigger on `post_draft_assets` |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
@@ -59,7 +73,8 @@ Order is not cosmetic — each step depends on the previous one existing.
 7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
    and rolls itself back, so the database is unchanged either way.
 
-`0004_scheduling.sql` has been applied to the hosted project (ref `vogkxkcceahtwyovpxsg`).
+All migrations through `0012_marketing.sql` have been applied to the hosted project (ref
+`vogkxkcceahtwyovpxsg`), in the order `0001` → `0012` per each file's own "apply after" header.
 
 Applying `seed.sql` before step 4 on a hosted project fails on the `profiles.id → auth.users(id)`
 foreign key. That failure is correct behavior, not a bug in the seed.

@@ -1,12 +1,13 @@
----
+﻿---
 title: Jobcore Mobile Build Toolchain (Android + iOS)
 type: project
 status: reference
 created: 2026-08-04
 updated: 2026-08-04
-classification: admin/project
 comments: "How Jobcore gets compiled for Android and iOS, and when"
-origin: wiki/admin/projects/jobcore-mobile-build-toolchain.md
+classification: sdassemblypros/jobcore
+origin: Codespace/SDAssemblyPros/Jobcore/jobcore-mobile-build-toolchain.md
+tags: [sdassemblypros, jobcore]
 ---
 
 # Jobcore Mobile Build Toolchain (Android + iOS)
@@ -43,7 +44,7 @@ Reasons specific to this project:
 | iOS bundle id | OK `com.sdassemblypros.jobcore` | `app.json` |
 | EAS profiles | OK `development` / `preview` / `production` | `eas.json` |
 | Expo SDK / RN | OK Expo ~52.0.0, RN 0.76.5, New Arch on | `package.json`, `app.json` |
-| Backend | OK hosted Supabase `vogkxkcceahtwyovpxsg` live, RLS suites PASSED | P3 slice ledger |
+| Backend | OK hosted Supabase `vogkxkcceahtwyovpxsg` live, migrations 0001-0012 confirmed applied; RLS suites PASSED for `0001_foundation`/`0004_scheduling` only, `0005`/`0008`/`0012` suites not yet authored/run | P3 slice ledger, `app\supabase\README.md` |
 | Native `android/` dir | absent - EAS prebuilds it | — |
 
 The `eas.json` profiles are platform-agnostic; the same three cover Android and iOS.
