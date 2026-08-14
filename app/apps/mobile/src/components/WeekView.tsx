@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
-import { JOB_STATUS_COLORS } from '../lib/job-status-colors';
+import { JOB_STATUS_COLORS } from '@jobcore/ui';
 
 export interface WeekViewProps {
   jobs: Job[];

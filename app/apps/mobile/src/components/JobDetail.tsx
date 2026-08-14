@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Job } from '@jobcore/core';
 import type { JobAction } from '@jobcore/module-sdk';
 import { colors, spacing, typography, radius } from '@jobcore/ui';
-import { JOB_STATUS_COLORS } from '../lib/job-status-colors';
+import { JOB_STATUS_COLORS } from '@jobcore/ui';
 
 export interface JobDetailProps {
   job: Job;

@@ -1,0 +1,391 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="jobcore basics front matter">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/app/docs/jobcore-basics-front-matter.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+<meta charset="UTF-8">
+<title>JobCore Basics — Front Matter, Chapter 1 &amp; Chapter 2</title>
+<link rel="stylesheet" href="jobcore-basics-shared.css">
+<script src="jobcore-basics-shared.js" defer></script>
+</head>
+<body>
+<nav class="jc-toc" id="jc-toc">
+  <h2>JobCore Basics</h2>
+  <ul>
+    <li><a href="jobcore-basics-front-matter.html" aria-current="page" class="jc-toc-current">Front Matter, Ch. 1 &amp; Ch. 2</a></li>
+    <li><a href="jobcore-basics-admin-finance.html">Chapter 3 — Admin &amp; Finance</a></li>
+    <li><a href="jobcore-basics-field-tech.html">Chapter 4 — Field Tech</a></li>
+    <li><a href="jobcore-basics-sales-payments.html">Chapter 5 &amp; 6 — Sales, Marketing &amp; Payments</a></li>
+    <li><a href="jobcore-basics-appendices.html">Chapter 7 &amp; Appendices</a></li>
+  </ul>
+</nav>
+<main class="jc-content" id="jc-content">
+
+<section class="jc-chapter" id="front-matter">
+  <header class="jc-titlepage" id="title-page">
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="jobcore basics front matter">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/app/docs/jobcore-basics-front-matter.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+    <h1 id="title-page-heading">JobCore Basics</h1>
+    <p class="jc-subtitle">A working guide to the multi-tenant field-service platform — what's built, what's wired, and what's still a roadmap item.</p>
+  </header>
+
+  <h2 id="how-to-use-this-manual">How to Use This Manual</h2>
+  <p>
+    Each chapter in Part II (The Modules) is written from one of three lenses, chosen to fit what
+    that module actually needs explained:
+  </p>
+  <ul class="jc-lens-list">
+    <li><strong>Task lens</strong> — walks a specific job the reader is trying to get done, step by step, screen by screen.</li>
+    <li><strong>Feature lens</strong> — walks a screen or subsystem's capabilities without assuming a specific task in progress.</li>
+    <li><strong>Informational lens</strong> — describes architecture, status, and constraints for content that has no day-in-the-life to walk (Chapter 6 is the clearest example).</li>
+  </ul>
+  <p>
+    Chapters 3 through 5 additionally open with an "A Typical Day" persona walkthrough — a
+    narrative that follows one real role (Admin, Accountant, Service Technician, Sales/Marketing)
+    through the module's real screens in the order a working day actually uses them. These
+    walkthroughs cross-reference the job lifecycle states introduced in
+    <a href="#ch2">Chapter 2</a> by name, rather than re-explaining the state machine each time.
+  </p>
+  <p class="jc-note">
+    <strong>Note:</strong> Training is a roadmap item, not a chapter in this manual — there is no
+    dedicated onboarding/training module or content to document yet.
+  </p>
+
+  <h2 id="badge-legend">Badge System</h2>
+  <p>Every feature, screen, and capability referenced in this manual carries one of five status badges:</p>
+  <table class="jc-badge-legend" id="badge-legend-table">
+    <thead>
+      <tr><th>Badge</th><th>Meaning</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="jc-badge jc-badge--live">🟢 Built &amp; Live</td><td>Working, reachable, verified in the app today</td></tr>
+      <tr><td class="jc-badge jc-badge--unwired">🟡 Built, Not Wired</td><td>Code exists, not yet registered/routed</td></tr>
+      <tr><td class="jc-badge jc-badge--unverified">🟠 Built, Unverified</td><td>Code exists, not yet verified end-to-end</td></tr>
+      <tr><td class="jc-badge jc-badge--unreachable">🔴 Not Reachable</td><td>Built but inaccessible from the running app (Chapter 6's status)</td></tr>
+      <tr><td class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</td><td>Not built yet; spec'd or implied only</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="jc-chapter" id="ch1">
+  <h1 id="ch1-heading">Chapter 1 — What Is JobCore?</h1>
+  <p>
+    JobCore is a multi-tenant field-service platform: one codebase, one app, many independent
+    organizations. Every organization's data is isolated at the database layer (Postgres row-level
+    security keyed on <code>organization_id</code>), and every organization can turn on a different
+    combination of feature modules without anyone shipping a new build just for them.
+  </p>
+  <p class="jc-badge jc-badge--live">🟢 Built &amp; Live — multi-tenant core, RLS isolation, job lifecycle</p>
+
+  <h2 id="the-module-contract">The <code>JobcoreModule</code> Contract</h2>
+  <p>
+    Every feature area in JobCore — Admin &amp; Finance, Field Tech, Sales &amp; Marketing, Payment
+    &amp; Review — is a self-contained module implementing one shared TypeScript interface,
+    <code>JobcoreModule</code> (defined in <code>packages/module-sdk/src/index.ts</code>):
+  </p>
+  <ul class="jc-contract-fields">
+    <li><code>id</code> — the module's stable identifier, e.g. <code>'admin-finance'</code></li>
+    <li><code>displayName</code> — human-readable name shown in the app</li>
+    <li><code>requiredRoles</code> — the <code>Role[]</code> that gates visibility and is mirrored in RLS policy</li>
+    <li><code>routes</code> — the screens (real React components, not string names) the module contributes to the navigator</li>
+    <li><code>navEntries</code> — icon, label, and sort order for each navigation entry</li>
+    <li><code>jobActions</code> <em>(optional)</em> — buttons the module injects into the shared Job Detail screen</li>
+    <li><code>hooks</code> <em>(optional)</em> — <code>onJobStatusChange</code> / <code>onJobCompleted</code> side-effect callbacks</li>
+    <li><code>migrations</code> <em>(optional)</em> — module-owned Supabase tables</li>
+    <li><code>settings</code> <em>(optional)</em> — a module-owned settings schema</li>
+  </ul>
+
+  <h2 id="why-compile-time-only">Why Modules Are Compile-Time-Only</h2>
+  <p>
+    JobCore describes itself as "pluggable," but that word has an honest limit here: React Native
+    cannot load or execute new native code at runtime, and both the App Store and Play Store forbid
+    downloading and running new code after install. So "pluggable" means
+    <strong>compile-time registration + runtime toggle</strong> — a module is a workspace package
+    compiled directly into the app binary and added to a registry, and it is then enabled or
+    disabled per organization through a config value, never through a runtime download. Adding a
+    module is a build. Enabling one is a config change.
+  </p>
+
+  <h2 id="the-four-modules">The Four Modules</h2>
+  <p>JobCore has four modules today, all built:</p>
+  <ol class="jc-module-list">
+    <li><strong>Admin &amp; Finance</strong> — see <a href="#ch3">Chapter 3</a></li>
+    <li><strong>Field Tech</strong> — see <a href="#ch4">Chapter 4</a></li>
+    <li><strong>Sales &amp; Marketing</strong> — see <a href="#ch5">Chapter 5</a></li>
+    <li><strong>Payment &amp; Review</strong> — see <a href="#ch6">Chapter 6</a></li>
+  </ol>
+
+  <h2 id="two-axis-gating">Two Independent Gating Axes</h2>
+  <p>
+    Whether a module is reachable in the running app depends on two <em>independent</em> gates, and
+    both must pass:
+  </p>
+  <h3 id="axis-1-compile-time-registration">Axis 1 — Compile-Time Registration</h3>
+  <p>
+    A module must be imported and registered in
+    <code>apps/mobile/src/modules.ts</code> (lines 11–18) — the one file in
+    <code>apps/mobile</code> permitted to name a specific module by id. As of this writing, three
+    modules are registered there: <code>admin-finance</code>, <code>field-tech</code>, and
+    <code>sales-marketing</code>. <strong>The fourth module, <code>payment-review</code>, is built
+    but is NOT registered</strong> — its code exists and compiles, but
+    <code>registerModule()</code> is never called for it, so it cannot appear in the app no matter
+    what any organization enables. This is exactly Chapter 6's status.
+  </p>
+  <h3 id="axis-2-runtime-enablement">Axis 2 — Runtime Per-Org Enablement</h3>
+  <p>
+    Independently of registration, each organization carries an
+    <code>enabled_modules text[]</code> column (<code>organizations.enabled_modules</code>,
+    <code>supabase/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
+    includes a module only if <em>both</em> the org's <code>enabled_modules</code> list contains the
+    module's id <em>and</em> the requesting user's role is in the module's
+    <code>requiredRoles</code> — fail-closed on both counts, so an empty <code>requiredRoles</code>
+    list hides a module from everyone.
+  </p>
+  <p>
+    A module is only reachable by a given user when it clears <em>both</em> axes: registered at
+    compile time, and enabled for that user's org and role at runtime. <a href="#ch6">Chapter 6</a>
+    is the concrete, worked example of a module that is built and would pass Axis 2 but fails
+    Axis 1 today.
+  </p>
+</section>
+
+<section class="jc-chapter" id="ch2">
+<h1 id="ch2-title">Chapter 2 — The Job Lifecycle &amp; Platform Foundations</h1>
+
+<p class="jc-lede">Every job in JobCore is a single state machine. One declarative
+transition table — <code>TRANSITIONS</code> in
+<code>packages/core/src/state-machine.ts</code> — is the <strong>only</strong> place
+transition legality is decided. No screen, module, or hook reimplements this logic
+with a scattered <code>if</code>; every UI affordance asks <code>canTransition</code>
+instead. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+
+<h2 id="ch2-spine">The Job Spine</h2>
+<p>The main line runs:</p>
+<p class="jc-spine">
+<a href="#state-new">new</a> →
+<a href="#state-qualified">qualified</a> →
+<a href="#state-scheduled">scheduled</a> →
+<a href="#state-assigned">assigned</a> →
+<a href="#state-accepted">accepted</a> →
+<a href="#state-en_route">en_route</a> →
+<a href="#state-in_progress">in_progress</a> →
+<a href="#state-completed">completed</a> →
+<a href="#state-paid">paid</a> →
+<a href="#state-closed">closed</a>
+</p>
+<p>Three branches leave the main line: <a href="#state-declined">declined</a>
+(a rejected field assignment, routed back to the office),
+<a href="#state-needs_reschedule">needs_reschedule</a> (raised from any pre-field
+state and resolved back to <code>scheduled</code>), and
+<a href="#state-cancelled">cancelled</a> (office-only, from any state before field
+work starts).</p>
+
+<h2 id="ch2-states">The States, in Lifecycle Order</h2>
+
+<h3 id="state-new">new</h3>
+<p>A job's starting state. Entered when a lead is captured; the office qualifies it
+next.</p>
+
+<h3 id="state-qualified">qualified</h3>
+<p>The office has vetted the lead as a real, schedulable job.</p>
+
+<h3 id="state-scheduled">scheduled</h3>
+<p>The office has put the job on the calendar. This is also the state that
+<code>declined</code> and <code>needs_reschedule</code> both resolve back to.</p>
+
+<h3 id="state-assigned">assigned</h3>
+<p>The office has assigned the job to a field tech. From here the field side takes
+over: the tech can move the job to <code>accepted</code> or <code>declined</code>.</p>
+
+<h3 id="state-accepted">accepted</h3>
+<p>The assigned tech has accepted the job.</p>
+
+<h3 id="state-en_route">en_route</h3>
+<p>The tech has started driving to the job. <strong>This is also the last state from
+which the office can still cancel the job</strong> — see
+<a href="#ch2-cancellation-window">Cancellation Window Closes at en_route</a> below.</p>
+
+<h3 id="state-in_progress">in_progress</h3>
+<p>The tech is on site and working. Entering this state requires the
+<a href="#ch2-preconditions">start-checklist precondition</a> to be satisfied first.</p>
+
+<h3 id="state-completed">completed</h3>
+<p>The tech has finished the work. Entering this state requires the
+<a href="#ch2-preconditions">completion-evidence precondition</a> (after-photos and
+quality notes) to be satisfied first.</p>
+
+<h3 id="state-paid">paid</h3>
+<p>The office has recorded payment. Entering this state requires the
+<a href="#ch2-preconditions">payment-settled precondition</a> when the customer is
+the payer.</p>
+
+<h3 id="state-closed">closed</h3>
+<p>The job is fully closed out. Terminal state on the main line.</p>
+
+<h3 id="state-declined">declined</h3>
+<p>A field tech has declined an assigned job. Routes back to <code>scheduled</code>
+for office reassignment — it does not return to <code>assigned</code> directly.</p>
+
+<h3 id="state-needs_reschedule">needs_reschedule</h3>
+<p>Raised by the field side from <code>scheduled</code>, <code>assigned</code>, or
+<code>accepted</code> when the existing schedule no longer works. The office resolves
+it back to <code>scheduled</code>.</p>
+
+<h3 id="state-cancelled">cancelled</h3>
+<p>Office-only. Reachable from <code>new</code>, <code>qualified</code>,
+<code>scheduled</code>, <code>assigned</code>, or <code>accepted</code> — i.e. any
+state <em>before</em> the tech goes en route. Once the job reaches
+<code>en_route</code>, it can no longer be cancelled through this table.</p>
+
+<h2 id="ch2-transitions-table">The TRANSITIONS Table</h2>
+<p>Reproduced from <code>packages/core/src/state-machine.ts</code>. "Role" is the
+gate checked by <code>canTransition</code>; see
+<a href="#ch2-role-gating">Role Gating</a> for what OFFICE/FIELD mean.</p>
+<table class="jc-table" id="ch2-transitions-table-body">
+<thead><tr><th>From</th><th>To</th><th>Role</th><th>Precondition</th></tr></thead>
+<tbody>
+<tr><td>new</td><td>qualified</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>qualified</td><td>scheduled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>scheduled</td><td>assigned</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>assigned</td><td>accepted</td><td>FIELD</td><td>—</td></tr>
+<tr><td>assigned</td><td>declined</td><td>FIELD</td><td>—</td></tr>
+<tr><td>accepted</td><td>en_route</td><td>FIELD</td><td>—</td></tr>
+<tr><td>en_route</td><td>in_progress</td><td>FIELD</td><td>start checklist submitted</td></tr>
+<tr><td>in_progress</td><td>completed</td><td>FIELD</td><td>after-photo + quality notes</td></tr>
+<tr><td>completed</td><td>paid</td><td>OFFICE</td><td>payment record, if payer is customer</td></tr>
+<tr><td>paid</td><td>closed</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>declined</td><td>scheduled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>scheduled</td><td>needs_reschedule</td><td>FIELD</td><td>—</td></tr>
+<tr><td>assigned</td><td>needs_reschedule</td><td>FIELD</td><td>—</td></tr>
+<tr><td>accepted</td><td>needs_reschedule</td><td>FIELD</td><td>—</td></tr>
+<tr><td>needs_reschedule</td><td>scheduled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>new</td><td>cancelled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>qualified</td><td>cancelled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>scheduled</td><td>cancelled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>assigned</td><td>cancelled</td><td>OFFICE</td><td>—</td></tr>
+<tr><td>accepted</td><td>cancelled</td><td>OFFICE</td><td>—</td></tr>
+</tbody>
+</table>
+
+<h2 id="ch2-role-gating">Role Gating: OFFICE vs. FIELD</h2>
+<p><code>OFFICE</code> = <code>owner</code>, <code>admin</code>. <code>FIELD</code> =
+<code>owner</code>, <code>admin</code>, <code>tech</code> (office roles retain
+oversight over every field-side transition). A <code>sales</code> role has no
+job-transition authority in this table at all — Sales &amp; Marketing's role in the
+lifecycle is upstream of it (see Chapter 5).</p>
+<p class="jc-callout jc-callout--note">The source file is explicit that this role
+table is <strong>not published verbatim in the Master Spec</strong> — it is a
+reasonable inference from who performs which lifecycle step, called out in code
+rather than presented silently as spec text. If it's ever wrong, the fix is additive:
+adjust the <code>roles</code> array on the affected row; the table stays the single
+source of legality.</p>
+
+<h2 id="ch2-preconditions">The Three Preconditions</h2>
+<dl class="jc-deflist">
+<dt id="ch2-precondition-start-checklist">Start checklist (<code>en_route → in_progress</code>)</dt>
+<dd>Fails closed with "in_progress requires a submitted start checklist" unless
+<code>ctx.hasSubmittedStartChecklist</code> reads true.</dd>
+<dt id="ch2-precondition-completion-evidence">Completion evidence (<code>in_progress → completed</code>)</dt>
+<dd>Requires both an after-photo (<code>ctx.hasAfterPhotos</code>) and quality notes
+(<code>ctx.hasQualityNotes</code>); either missing fails closed with a distinct
+reason string.</dd>
+<dt id="ch2-precondition-payment-settled">Payment settled (<code>completed → paid</code>)</dt>
+<dd>Only enforced when <code>job.payer === 'customer'</code> — in that case
+<code>ctx.hasPaymentRecord</code> must read true, or the transition fails closed
+with "paid requires a payment record when payer is the customer". Non-customer
+payers pass through with no check.</dd>
+</dl>
+<p>All three probes are synchronous by contract: a probe that returns a
+<code>Promise</code> is treated as unsatisfied (fail closed), the same as an
+undefined probe — <code>canTransition</code> never awaits.</p>
+
+<h2 id="ch2-cancellation-window" class="jc-anchor-target">Cancellation Window Closes at en_route</h2>
+<p>The <code>cancelled</code> branch is reachable only from
+<code>new</code>, <code>qualified</code>, <code>scheduled</code>,
+<code>assigned</code>, or <code>accepted</code>. There is no
+<code>en_route → cancelled</code> row in the table, and none for any state after it.
+Once a tech has gone en route, the office can no longer cancel the job through the
+state machine — the operational read is that dispatch is treated as committed the
+moment the tech starts driving.</p>
+
+<h2 id="ch2-payroll-stamping">Device-Clock Payroll Stamping</h2>
+<p>On every <code>applyTransition</code> call the state machine dual-stamps two
+clocks: <code>occurredAt</code> from the device clock
+(<code>ctx.now()</code>) and <code>syncedAt</code> from the server clock
+(<code>ctx.serverNow()</code>), falling back to <code>occurredAt</code> when no
+server clock is wired up. <strong><code>occurredAt</code> — the device clock — is
+the payroll-relevant input</strong>, not the server clock. Three lifecycle
+timestamps are stamped from it directly onto the job record:
+<code>enRouteAt</code>, <code>inProgressAt</code>, and <code>completedAt</code>, set
+respectively when the job transitions into <code>en_route</code>,
+<code>in_progress</code>, or <code>completed</code>. Clock skew between the two
+stamps is evaluated against a configurable threshold
+(<code>ctx.clockConfig</code>, defaulting to <code>DEFAULT_CLOCK_CONFIG</code>) and
+recorded, not enforced as a blocker.</p>
+
+<h2 id="ch2-audit-log">Audit Log and the metadata Workaround</h2>
+<p>Every successful transition writes exactly one insert-only <code>audit_log</code>
+row through the optional <code>ctx.writeAudit</code> sink — optional so that
+<code>packages/core</code> stays zero-dependency and never learns what Supabase is.
+When no sink is wired up, no row is written and nothing throws; when a sink
+<em>is</em> wired up, the write is awaited, so a failing sink rejects the whole
+transition rather than silently dropping the row.</p>
+<p>The row records <code>fromState</code>, <code>toState</code>,
+<code>occurredAt</code>, <code>syncedAt</code>, <code>skewMs</code>, and
+<code>skewed</code> — but the shipped <code>audit_log</code> table
+(<code>supabase/0001_foundation.sql</code>, lines 45–56) has no dedicated columns
+for any of them. All five ride inside the table's existing <code>metadata</code>
+jsonb column instead. Rows are insert-only and never updated.
+<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+
+<h2 id="ch2-rls">Platform Foundation: Tenant Isolation (RLS) Hardening</h2>
+<p>The job-lifecycle table above sits on top of Postgres Row Level Security, and that
+layer was independently verified and hardened on 2026-08-13. This section reproduces
+the verified findings; it does not re-derive them.</p>
+
+<h3 id="ch2-rls-suite">8-Suite Hosted Verification Run</h3>
+<p>A full 8-suite RLS test run was executed against the live production Supabase
+project <code>vogkxkcceahtwyovpxsg</code>. Source:
+<code>E:\Jeff\.claude\build-reports\jobcore-p2-supabase-hosted\2026-08-13_hosted-rls-8-suite-verification.md</code>.
+Four suites failed on that run: <code>AC-7</code>, <code>AC-8.2</code> (genuine
+RLS/trigger defect), <code>AC-RV-2</code> (genuine RLS/grant defect), and
+<code>AC-12.1c</code> (a test-authoring gap, not a production defect).</p>
+
+<h3 id="ch2-rls-fixes">Same-Day Fixes</h3>
+<p>Source:
+<code>E:\Jeff\.claude\build-reports\jobcore-p2-supabase-hosted\2026-08-13_rls-defect-fixes.md</code>.
+Three genuine production defects were fixed via
+<code>supabase/0013_rls_fixes.sql</code> (idempotent, standalone-runnable, 55 lines):</p>
+<ol>
+<li><code>jobs_select_org</code> SELECT policy — now requires both
+<code>organization_id = current_org_id()</code> <strong>and</strong>
+<code>is_org_sales_or_above()</code>.</li>
+<li><code>jobs_update_org</code> UPDATE policy — now requires both
+<code>organization_id = current_org_id()</code> <strong>and</strong>
+<code>is_org_admin()</code> on both <code>using</code> and <code>with check</code>.</li>
+<li>A new <code>job_exists_in_org()</code> security-definer function now backs a
+fixed <code>reviews_insert_anon</code> policy.</li>
+</ol>
+
+<h3 id="ch2-rls-acrv2">AC-RV-2 Re-Examined</h3>
+<p><code>AC-RV-2</code>'s original failure was re-diagnosed after the fix as a
+test-file ordering bug — a <code>reset role;</code> statement at line 405 of
+<code>tests\0010_payment_review_rls.hosted.test.sql</code> runs one statement too
+late. No production defect remains for <code>AC-RV-2</code>; this is informational
+only and does not block the manual's claims about the payment/review module.</p>
+
+<h3 id="ch2-rls-reverified">Reverification Status</h3>
+<p>All four suites were reverified against production on 2026-08-13:
+<code>AC-7</code> PASS, <code>AC-8.2</code> PASS, <code>AC-RV-2</code> diagnosed
+(no defect), <code>AC-12.1c</code> PASS.
+<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+
+</section>
+
+</main>
+</body>
+</html>

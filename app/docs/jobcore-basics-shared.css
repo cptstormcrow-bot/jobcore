@@ -1,0 +1,400 @@
+/* JobCore Basics Manual — Shared Stylesheet
+   Self-contained. No external imports/CDNs. Used by all 5 manual HTML pages. */
+
+:root {
+  --jc-color-primary: #1B2A4A;
+  --jc-color-primary-light: #2C4066;
+  --jc-color-primary-dark: #0F1A2E;
+  --jc-color-secondary: #E8740C;
+  --jc-color-secondary-light: #F5921A;
+  --jc-color-secondary-dark: #C46000;
+  --jc-color-accent: #F5A623;
+  --jc-color-white: #FFFFFF;
+  --jc-color-off-white: #F8F9FA;
+  --jc-color-surface: #FFFFFF;
+  --jc-color-surface-alt: #F1F3F5;
+  --jc-color-text: #212529;
+  --jc-color-text-light: #495057;
+  --jc-color-text-muted: #868E96;
+  --jc-color-border: #E9ECEF;
+  --jc-color-overlay: rgba(27, 42, 74, 0.85);
+  --jc-color-success: #2E7D32;
+  --jc-color-danger: #C62828;
+  --jc-color-warning: #D97706;
+  --jc-color-info: #1976D2;
+
+  --jc-font-heading: 'Poppins', sans-serif;
+  --jc-font-body: 'Inter', sans-serif;
+
+  --jc-weight-regular: 400;
+  --jc-weight-medium: 500;
+  --jc-weight-semibold: 600;
+  --jc-weight-bold: 700;
+  --jc-weight-extrabold: 800;
+
+  --jc-size-h1: 40px;
+  --jc-size-h2: 32px;
+  --jc-size-h3: 24px;
+  --jc-size-h4: 20px;
+  --jc-size-h5: 18px;
+  --jc-size-h6: 16px;
+  --jc-size-body: 16px;
+  --jc-size-label: 14px;
+  --jc-size-small: 13px;
+
+  --jc-line-heading: 1.2;
+  --jc-line-body: 1.6;
+  --jc-line-relaxed: 1.7;
+
+  --jc-space-xs: 4px;
+  --jc-space-sm: 8px;
+  --jc-space-md: 16px;
+  --jc-space-lg: 24px;
+  --jc-space-xl: 32px;
+  --jc-space-xxl: 48px;
+
+  --jc-radius-sm: 6px;
+  --jc-radius-md: 10px;
+  --jc-radius-lg: 16px;
+  --jc-radius-xl: 24px;
+  --jc-radius-pill: 999px;
+
+  --jc-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --jc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --jc-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --jc-shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------------------------------------------------------------------
+   Reset & base
+--------------------------------------------------------------------- */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--jc-font-body);
+  font-size: var(--jc-size-body);
+  font-weight: var(--jc-weight-regular);
+  line-height: var(--jc-line-body);
+  color: var(--jc-color-text);
+  background: var(--jc-color-off-white);
+}
+
+img, svg {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--jc-color-secondary-dark);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------
+   Page layout — left sidebar rail + main content
+--------------------------------------------------------------------- */
+
+.jc-layout {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+.jc-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 260px;
+  flex: 0 0 260px;
+  overflow-y: auto;
+  background: var(--jc-color-primary);
+  color: var(--jc-color-white);
+  padding: var(--jc-space-lg) var(--jc-space-md);
+  box-shadow: var(--jc-shadow-md);
+}
+
+.jc-sidebar-brand {
+  font-family: var(--jc-font-heading);
+  font-weight: var(--jc-weight-bold);
+  font-size: var(--jc-size-h5);
+  color: var(--jc-color-white);
+  margin-bottom: var(--jc-space-lg);
+  padding-bottom: var(--jc-space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.jc-sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.jc-sidebar-nav li {
+  margin-bottom: var(--jc-space-xs);
+}
+
+.jc-sidebar-nav a {
+  display: block;
+  padding: var(--jc-space-sm) var(--jc-space-sm);
+  border-radius: var(--jc-radius-sm);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--jc-size-label);
+  font-weight: var(--jc-weight-medium);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.jc-sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--jc-color-white);
+  text-decoration: none;
+}
+
+.jc-sidebar-nav a.jc-active {
+  background: var(--jc-color-secondary);
+  color: var(--jc-color-white);
+  font-weight: var(--jc-weight-semibold);
+}
+
+.jc-sidebar-nav a.jc-active:hover {
+  background: var(--jc-color-secondary-light);
+}
+
+.jc-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--jc-space-xxl) var(--jc-space-xl);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .jc-layout {
+    flex-direction: column;
+  }
+  .jc-sidebar {
+    position: relative;
+    height: auto;
+    width: 100%;
+    flex: none;
+  }
+  .jc-main {
+    padding: var(--jc-space-lg) var(--jc-space-md);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Typography
+--------------------------------------------------------------------- */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--jc-font-heading);
+  font-weight: var(--jc-weight-bold);
+  line-height: var(--jc-line-heading);
+  color: var(--jc-color-primary);
+  margin-top: var(--jc-space-xl);
+  margin-bottom: var(--jc-space-md);
+}
+
+h1 { font-size: var(--jc-size-h1); font-weight: var(--jc-weight-extrabold); }
+h2 { font-size: var(--jc-size-h2); }
+h3 { font-size: var(--jc-size-h3); }
+h4 { font-size: var(--jc-size-h4); font-weight: var(--jc-weight-semibold); }
+h5 { font-size: var(--jc-size-h5); font-weight: var(--jc-weight-semibold); }
+h6 { font-size: var(--jc-size-h6); font-weight: var(--jc-weight-semibold); }
+
+p, li {
+  font-family: var(--jc-font-body);
+  font-size: var(--jc-size-body);
+  line-height: var(--jc-line-relaxed);
+  color: var(--jc-color-text);
+}
+
+small, .jc-text-small {
+  font-size: var(--jc-size-small);
+  color: var(--jc-color-text-muted);
+}
+
+.jc-text-muted {
+  color: var(--jc-color-text-muted);
+}
+
+.jc-label {
+  font-size: var(--jc-size-label);
+  font-weight: var(--jc-weight-medium);
+  color: var(--jc-color-text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ---------------------------------------------------------------------
+   Badge legend (5-tier)
+--------------------------------------------------------------------- */
+
+.jc-badge-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jc-space-sm);
+  margin: var(--jc-space-lg) 0;
+  padding: var(--jc-space-md);
+  background: var(--jc-color-surface-alt);
+  border-radius: var(--jc-radius-md);
+  border: 1px solid var(--jc-color-border);
+}
+
+.jc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jc-space-xs);
+  padding: var(--jc-space-xs) var(--jc-space-md);
+  border-radius: var(--jc-radius-pill);
+  font-size: var(--jc-size-small);
+  font-weight: var(--jc-weight-semibold);
+  color: var(--jc-color-white);
+  white-space: nowrap;
+}
+
+/* 5 tiers, per crib § 3 Badge Legend */
+.jc-badge-built-live {
+  background: var(--jc-color-success);
+}
+
+.jc-badge-not-wired {
+  background: var(--jc-color-warning);
+}
+
+.jc-badge-unverified {
+  background: var(--jc-color-warning);
+  filter: brightness(0.92);
+}
+
+.jc-badge-not-reachable {
+  background: var(--jc-color-danger);
+}
+
+.jc-badge-open-gap {
+  background: var(--jc-color-text-muted);
+}
+
+.jc-badge-info {
+  background: var(--jc-color-info);
+}
+
+/* ---------------------------------------------------------------------
+   Tables
+--------------------------------------------------------------------- */
+
+table.jc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--jc-space-lg) 0;
+  font-size: var(--jc-size-label);
+  box-shadow: var(--jc-shadow-sm);
+  border-radius: var(--jc-radius-md);
+  overflow: hidden;
+}
+
+table.jc-table th,
+table.jc-table td {
+  padding: var(--jc-space-sm) var(--jc-space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--jc-color-border);
+}
+
+table.jc-table th {
+  background: var(--jc-color-primary);
+  color: var(--jc-color-white);
+  font-family: var(--jc-font-heading);
+  font-weight: var(--jc-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: var(--jc-size-small);
+}
+
+table.jc-table tbody tr:nth-child(even) {
+  background: var(--jc-color-surface-alt);
+}
+
+table.jc-table tbody tr:hover {
+  background: rgba(232, 116, 12, 0.08);
+}
+
+/* ---------------------------------------------------------------------
+   Code blocks
+--------------------------------------------------------------------- */
+
+code, .jc-code-inline {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+  background: var(--jc-color-surface-alt);
+  color: var(--jc-color-primary-dark);
+  padding: 2px 6px;
+  border-radius: var(--jc-radius-sm);
+  border: 1px solid var(--jc-color-border);
+}
+
+pre.jc-code-block {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: var(--jc-size-small);
+  line-height: var(--jc-line-body);
+  background: var(--jc-color-primary-dark);
+  color: var(--jc-color-off-white);
+  padding: var(--jc-space-md) var(--jc-space-lg);
+  border-radius: var(--jc-radius-md);
+  overflow-x: auto;
+  margin: var(--jc-space-lg) 0;
+  box-shadow: var(--jc-shadow-sm);
+}
+
+pre.jc-code-block code {
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Misc content components
+--------------------------------------------------------------------- */
+
+.jc-card {
+  background: var(--jc-color-surface);
+  border: 1px solid var(--jc-color-border);
+  border-radius: var(--jc-radius-lg);
+  padding: var(--jc-space-lg);
+  box-shadow: var(--jc-shadow-sm);
+  margin: var(--jc-space-lg) 0;
+}
+
+.jc-callout {
+  border-left: 4px solid var(--jc-color-secondary);
+  background: var(--jc-color-surface-alt);
+  padding: var(--jc-space-md) var(--jc-space-lg);
+  border-radius: 0 var(--jc-radius-md) var(--jc-radius-md) 0;
+  margin: var(--jc-space-lg) 0;
+}
+
+.jc-callout-warning {
+  border-left-color: var(--jc-color-warning);
+}
+
+.jc-callout-danger {
+  border-left-color: var(--jc-color-danger);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--jc-color-border);
+  margin: var(--jc-space-xl) 0;
+}

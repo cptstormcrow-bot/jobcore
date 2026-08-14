@@ -5,7 +5,7 @@
  * "A day/week board of `qualified` and `scheduled` jobs against the roster
  * of active techs"). Each job shows a local status chip styled from
  * `colors.info`/`colors.warning` — a NEW, admin-finance-local chip, not the
- * `JOB_STATUS_COLORS` constant in `apps/mobile/src/lib/job-status-colors.ts`,
+ * `JOB_STATUS_COLORS` constant in `packages/ui/src/job-status-colors.ts` (exported as `@jobcore/ui`),
  * which stays scoped to `apps/mobile` (P3g.3 keeps this module's styling
  * self-contained, same reasoning `LeadRow.tsx`'s badge already follows).
  *
@@ -44,6 +44,9 @@ export interface TechColumnProps {
  * everything else — `needs_reschedule`, `declined`, `cancelled` — reads as
  * "needs attention" (warning chip). This is a display grouping only, not a
  * gate: every status still renders, nothing is hidden or blocked.
+ * Verified 2026-08-14 against the current 13-value `JobStatus` union
+ * (`packages/core/src/index.ts`): all 13 statuses are covered (3 attention +
+ * 10 info), so this coarser 2-bucket grouping is still complete and correct.
  */
 const ATTENTION_STATUSES: ReadonlySet<Job['status']> = new Set([
   'needs_reschedule',

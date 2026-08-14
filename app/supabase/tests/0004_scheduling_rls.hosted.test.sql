@@ -44,8 +44,8 @@ begin
   -- authenticated session established below.
   reset role;
 
-  insert into public.organizations (id, name)
-  values ('00000000-0000-4000-8000-0000000000b2', 'Org B - isolation probe')
+  insert into public.organizations (id, name, slug)
+  values ('00000000-0000-4000-8000-0000000000b2', 'Org B - isolation probe', 'org-b-isolation-probe')
   on conflict (id) do nothing;
 
   insert into public.jobs (id, organization_id, status)

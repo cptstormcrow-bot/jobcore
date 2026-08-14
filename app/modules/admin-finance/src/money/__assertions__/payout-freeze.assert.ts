@@ -43,6 +43,7 @@ test('AC: a frozen line survives a later rate change unchanged (value copy, not 
   if (!result.ok) return;
 
   const frozenLine = result.value.lines[0];
+  assert.ok(frozenLine);
 
   // Capture a snapshot of the frozen line's values before the source
   // mutates, so the post-mutation comparison below is against a fixed

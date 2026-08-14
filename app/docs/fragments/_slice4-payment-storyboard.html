@@ -1,0 +1,144 @@
+<section id="payment-storyboard" aria-label="Payment-Collection Storyboard (internal crib fragment)">
+  <p style="background:var(--jc-color-warning-bg,#fff3cd);padding:var(--jc-space-sm,0.5rem);border-radius:var(--jc-radius-sm,4px);">
+    <strong>Internal crib fragment — not a manual chapter.</strong> Consumed by Slice 5 (Chapter 3
+    Admin payment-provider-setup callout) and Slice 6 (Chapter 4 "Collecting Payment from the
+    Homeowner"). Cited narrowly by Chapter 2 (already written, no changes needed there).
+  </p>
+
+  <h2 id="storyboard-sequence">Sequence: <code>completed</code> → <code>paid</code></h2>
+  <p>
+    The state machine's <code>requirePaymentSettled</code> precondition
+    (<code>packages/core/src/state-machine.ts</code>) gates the <a href="#state-completed">state-completed</a>
+    → <a href="#state-paid">state-paid</a> transition: if <code>job.payer !== 'customer'</code> the
+    precondition passes automatically (partner-paid jobs need no payment record); otherwise it
+    requires a <code>payments</code> row confirmed via <code>hasSettledPaymentForJob</code>. The
+    <code>paid</code> → <a href="#state-closed">state-closed</a> step that follows is a plain
+    OFFICE-role transition with no precondition.
+  </p>
+  <ol>
+    <li>Tech finishes the job on the <strong>Completion</strong> screen
+      (<code>modules/field-tech/src/screens/Completion.tsx</code>) — after-photo + quality notes
+      required client-side, then <code>transitionJob(job, 'completed', ctx)</code> fires. Job is now
+      <a href="#state-completed">state-completed</a>. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></li>
+    <li>Customer is handed off via a signed, expiring, single-job-scoped QR token
+      (<code>issue_handoff_token</code> RPC, <code>modules/payment-review/src/domain/handoff.ts</code>)
+      to the public handoff web app at <code>web/handoff/</code>. QR *rendering* is explicitly out of
+      scope for this slice per the file's own TODO — only the token/URL is issued.
+      <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></li>
+    <li>Customer picks a payment method on the handoff site; the state machine settles into
+      <a href="#state-paid">state-paid</a> once a <code>payments</code> row reaches
+      <code>confirmed</code> (webhook) or <code>manual_confirmed</code> (tech/office manual entry).</li>
+    <li><em>Storyboarded, not built</em> — a homeowner-satisfaction confirmation gate ahead of payment
+      capture. No such gate exists in <code>state-machine.ts</code>, the payment-review module, or the
+      handoff screens read for this slice. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span></li>
+    <li>Office marks the job <a href="#state-paid">state-paid</a> → <a href="#state-closed">state-closed</a>
+      (plain OFFICE transition, no precondition).</li>
+  </ol>
+
+  <h2 id="storyboard-mark-paid-not-registered">"Mark Paid" is not registered in the mobile app</h2>
+  <p>
+    <strong>Mark Paid</strong> is a <code>jobAction</code> (id <code>mark-paid</code>) defined on
+    <code>paymentReviewModule</code> in <code>modules/payment-review/src/index.ts</code>, restricted to
+    <code>requiredRoles: ['owner', 'admin']</code> (OFFICE) — its <code>onInvoke</code> calls
+    <code>transitionJob(job, 'paid', ctx)</code>. Confirmed by direct search: this module is
+    <strong>NOT YET registered</strong> in <code>apps/mobile/src/modules.ts</code> — no reference to
+    <code>payment-review</code> or <code>paymentReviewModule</code> exists in that file. The module,
+    its screen, and this jobAction are unreachable from the running mobile app today.
+    <span class="jc-badge jc-badge-not-reachable">🔴 Not Reachable</span> — see Chapter 6 for full
+    architecture/status detail.
+  </p>
+
+  <h2 id="storyboard-methods">The four payment methods</h2>
+  <table>
+    <thead><tr><th>Method</th><th>Provider file</th><th>Settlement path</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Card (Stripe)</td>
+        <td><code>supabase/functions/stripe-webhook/index.ts</code></td>
+        <td>Deno edge function verifies the <code>Stripe-Signature</code> header via manual
+          HMAC-SHA256 (stripe-node unavailable in Deno edge), then on
+          <code>checkout.session.completed</code> or <code>payment_intent.succeeded</code> updates the
+          matching <code>payments</code> row (looked up by <code>external_ref</code>) to
+          <code>status='confirmed'</code>. No card data (PAN/CVV/card_number) is ever read or logged.</td>
+        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+      </tr>
+      <tr>
+        <td>Card (PayPal)</td>
+        <td><code>supabase/functions/paypal-webhook/index.ts</code></td>
+        <td>Deno edge function verifies via PayPal's server-side "Verify webhook signature" API
+          (transmission-id/time/cert-url/auth-algo/sig headers + OAuth2 client-credentials token),
+          then on <code>PAYMENT.CAPTURE.COMPLETED</code> or <code>CHECKOUT.ORDER.APPROVED</code>
+          updates the matching <code>payments</code> row to <code>status='confirmed'</code>.</td>
+        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+      </tr>
+      <tr>
+        <td>Cash</td>
+        <td><code>modules/payment-review/src/domain/providers/cash.ts</code></td>
+        <td>Not webhook-capable by design — <code>buildHandoffAction</code> returns <code>null</code>
+          (no customer-facing handoff to drive). A tech confirms receipt in person; the resulting
+          <code>manual_confirmed</code> status and <code>confirmed_by</code> are set elsewhere, in the
+          tech-confirm UI flow (governed by the <code>payments_tech_confirm_whitelist</code> trigger,
+          0010_payment_review.sql, which restricts a non-admin caller to setting only
+          <code>status='manual_confirmed'</code>, <code>confirmed_at</code>, <code>confirmed_by</code>).</td>
+        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+      </tr>
+      <tr>
+        <td>Check</td>
+        <td><code>modules/payment-review/src/domain/providers/check.ts</code></td>
+        <td>Identical pattern to Cash — no <code>confirm</code> method, <code>buildHandoffAction</code>
+          returns <code>null</code>, manual tech/office confirmation via the same whitelist trigger.</td>
+        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+      </tr>
+      <tr>
+        <td>P2P link (Venmo / CashApp / Zelle)</td>
+        <td><code>modules/payment-review/src/domain/providers/p2p-link.ts</code></td>
+        <td>Not webhook-capable — <code>createP2PLinkProvider(config)</code> builds a
+          <code>HandoffAction</code> of kind <code>link</code> from an org-configured handle/URL
+          (<code>P2PLinkConfig</code>); the bare <code>P2PLinkProvider</code> export has no config bound
+          and always returns <code>null</code> — a caller needing a real handoff must use the factory.
+          Settlement is manual confirmation, same whitelist-trigger path as Cash/Check.</td>
+        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="storyboard-admin-enablement">Per-org provider enablement ("flip the switch in advance")</h2>
+  <p>
+    Which methods a given organization offers is controlled by the <code>payment_providers</code> table
+    (<code>supabase/0010_payment_review.sql</code>): <code>organization_id</code>, <code>provider_id</code>,
+    <code>enabled</code> boolean, and a client-safe <code>config</code> jsonb (a handle, a publishable
+    key — <strong>never</strong> a secret key or any card data, enforced by naming convention plus a
+    repo-wide grep check). RLS on this table is <strong>admin-only</strong> (<code>payment_providers_admin_all</code>
+    policy: <code>organization_id = current_org_id() AND is_org_admin()</code>) — provider
+    enablement/config is an organization-settings concern, never tech- or customer-facing. This is the
+    fact Chapter 3's Admin persona cites for the payment-provider-setup callout: an admin flips these
+    switches in advance, before any job reaches <a href="#state-completed">state-completed</a>.
+  </p>
+
+  <h2 id="storyboard-handoff-screens">Web handoff screens (as-built)</h2>
+  <p>
+    Four screens exist today under <code>web/handoff/src/screens/</code>, sequenced by the
+    <code>review_requests.state</code> column (<code>0010_payment_review.sql</code>, check constraint
+    <code>awaiting_payment | confirming | review | done</code>):
+  </p>
+  <ol>
+    <li><code>awaitingPayment.ts</code> — lists the org's enabled providers; picking one requests that
+      provider's <code>HandoffAction</code> — <code>link</code>/<code>qr</code> navigates the browser to
+      <code>action.url</code>, <code>in_app</code> advances straight to <code>confirming</code> (mobile
+      app takes over from there). Shown only when <code>job.payer === 'customer'</code> — a
+      partner-paid job's router skips this screen entirely.</li>
+    <li><code>confirming.ts</code> — plain-text "waiting for confirmation" explainer, deliberately no
+      polling/spinner in this slice; a later slice may add polling to auto-advance once settled.</li>
+    <li><code>review.ts</code> — reached after payment confirms (or via the partner-paid skip): 1-5 star
+      rating, optional comment, explicit default-unchecked publish-consent checkbox, POSTs to
+      <code>/api/handoff/{token}/review</code>, then two static public-review-platform links (Google,
+      Facebook). Acceptance criterion: rendered copy/links are byte-identical regardless of rating —
+      the rating is captured, never used to branch what's shown.</li>
+    <li><code>done.ts</code> — terminal thank-you screen with static business contact details.</li>
+  </ol>
+  <p>
+    Cross-reference: Appendix B (Handoff &amp; Deep Links) covers the as-built token/path handling and
+    the stale <code>/j/{token}</code> callout in full; this section only sequences the four screens for
+    the payment-collection storyboard's purposes.
+  </p>
+</section>

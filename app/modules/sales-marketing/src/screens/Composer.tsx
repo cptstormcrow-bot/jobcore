@@ -49,13 +49,15 @@ import type { MarketingAsset } from '../data/ports';
 
 const META_PROVIDER_ID = 'meta-publish';
 
-/** Per-platform caption/aspect-ratio guidance shown to the tech before export. */
-const PLATFORM_GUIDANCE: ReadonlyArray<{
+interface PlatformGuidance {
   platform: string;
   label: string;
   maxCaptionChars: number;
   aspectRatio: string;
-}> = [
+}
+
+/** Per-platform caption/aspect-ratio guidance shown to the tech before export. */
+const PLATFORM_GUIDANCE: readonly [PlatformGuidance, PlatformGuidance] = [
   { platform: 'facebook', label: 'Facebook', maxCaptionChars: 500, aspectRatio: '1:1 or 4:5' },
   { platform: 'instagram', label: 'Instagram', maxCaptionChars: 2200, aspectRatio: '1:1 or 4:5' },
 ];

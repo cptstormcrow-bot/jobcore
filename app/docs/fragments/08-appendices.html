@@ -1,0 +1,106 @@
+<section class="jc-chapter" id="appendices">
+  <h1 id="appendices-title">Appendices</h1>
+
+  <section class="jc-appendix" id="appendix-a-platform-notes">
+    <h2 id="appendix-a-platform-notes">Appendix A: Platform Notes</h2>
+    <p>
+      <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>
+      JobCore's mobile app workstream targets iOS first. An Android build is a tracked
+      workstream, not yet delivered — there is no Android-specific screen inventory to
+      document in this manual. Field Techs, Sales/Marketing staff, and Admin/Accountant
+      personas described in Part II are all written against the iOS app as built today.
+    </p>
+    <p>
+      When the Android workstream lands, this appendix is the place platform-specific
+      deltas (permissions handling, deep-link registration, push-notification setup) get
+      recorded — see Chapter 7's roadmap section for the tracked-gap list this item
+      belongs to.
+    </p>
+  </section>
+
+  <section class="jc-appendix" id="appendix-b-handoff-deep-links">
+    <h2 id="appendix-b-handoff-deep-links">Appendix B: Handoff &amp; Deep Links</h2>
+    <p>
+      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      The customer-facing handoff page (`web/handoff`) is where a homeowner lands to pay
+      or review a job outside the mobile app. Token resolution is implemented in
+      <code>router.ts</code>'s <code>readTokenFromLocation()</code>:
+    </p>
+    <ul>
+      <li>Path form: <code>/handoff/{token}</code> — the token is the last non-empty path
+        segment, provided it isn't the literal segment <code>handoff</code>.</li>
+      <li>Query form: <code>?token=...</code> — checked first; if present it wins over the
+        path segment.</li>
+    </ul>
+    <p class="jc-callout jc-callout--warning">
+      <strong>Stale reference:</strong> <code>00-MASTER-SPEC.md</code> documents the
+      handoff URL as <code>/j/{token}</code>. That path does not match the as-built
+      router. The working form is <code>/handoff/{token}</code> (or the <code>?token=</code>
+      query form). Treat the master spec's <code>/j/{token}</code> reference as
+      superseded by this appendix until the spec itself is corrected.
+    </p>
+    <p>
+      <code>router.ts</code>'s <code>initialState()</code> also carries a payer-skip rule:
+      a partner-paid job (<code>job.payer !== 'customer'</code>) opens directly at the
+      <code>review</code> state and never shows the payment picker — this mirrors the same
+      <code>job.payer !== 'customer'</code> skip the Payment &amp; Review module's
+      <code>buildTransitionCtx</code> applies for <code>hasPaymentRecord</code> (see
+      Chapter 6). The <code>review</code> and <code>done</code> handoff states are valid,
+      reachable router targets but are unbuilt screens as of this slice.
+    </p>
+    <h3 id="appendix-b-awaiting-payment-screen">The awaiting_payment screen</h3>
+    <p>
+      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      For a customer-paid job, the handoff page opens at <code>awaiting_payment</code>,
+      rendered by <code>awaitingPayment.ts</code>'s <code>renderAwaitingPayment()</code>.
+      This is the real, on-site payment-provider picker: it lists the job's enabled
+      providers (<code>job.providers</code>) as buttons, and on selection requests that
+      provider's <code>HandoffAction</code> via <code>requestHandoffAction()</code>. The
+      action is then followed by kind:
+    </p>
+    <ul>
+      <li><code>link</code> / <code>qr</code> — the page navigates away to
+        <code>action.url</code> (the provider's hosted checkout or a QR-code target URL).</li>
+      <li><code>in_app</code> — there is nothing further this page can do; it advances to
+        a <code>confirming</code> state and hands off to the mobile app.</li>
+    </ul>
+    <p class="jc-callout jc-callout--forward-ref">
+      <strong>Forward cross-reference (resolved in Slice 11):</strong> Chapter 4's
+      "Collecting Payment from the Homeowner" subsection walks the Field Tech's side of
+      this same flow. This appendix documents the handoff page's own provider-picker
+      mechanics; Slice 11 wires an explicit link from Chapter 4's payment-collection
+      subsection back to this appendix section (<code>#appendix-b-awaiting-payment-screen</code>)
+      once that subsection exists as an assembled fragment.
+    </p>
+  </section>
+
+  <section class="jc-appendix" id="appendix-c-component-reference">
+    <h2 id="appendix-c-component-reference">Appendix C: Component Reference</h2>
+    <p>
+      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      JobCore's shared UI package (<code>packages/ui</code>) is the mockup/component
+      catalog used across the mobile app's module screens. As built today, it exports:
+    </p>
+    <ul>
+      <li><code>tokens</code> — the design-token source (see Chapter 7's token
+        translation reference).</li>
+      <li><code>Button</code></li>
+      <li><code>Card</code></li>
+      <li><code>ListItem</code></li>
+      <li><code>EmptyState</code></li>
+      <li><code>LoadingState</code></li>
+      <li><code>ErrorState</code></li>
+      <li><code>TextField</code></li>
+      <li><code>DatePicker</code></li>
+    </ul>
+    <p class="jc-footnote" id="appendix-c-footnote-barrel-export">
+      <span class="jc-badge jc-badge--built-not-wired">🟡 Built, Not Wired</span>
+      <strong>Footnote:</strong> <code>Checkbox.tsx</code> and <code>Toggle.tsx</code>
+      exist as component source in <code>packages/ui/src</code> and are compiled to
+      <code>dist/Checkbox.js</code> and <code>dist/Toggle.js</code>, but neither is
+      re-exported from the package's barrel file (<code>src/index.ts</code>). A consumer
+      importing from the package root cannot reach them today; they must be imported by
+      their own module path, or the barrel export must be added.
+    </p>
+  </section>
+</section>

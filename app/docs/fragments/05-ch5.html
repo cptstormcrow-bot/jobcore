@@ -1,0 +1,126 @@
+<section class="jc-chapter" id="ch5">
+<h1 id="ch5-title">Chapter 5 — Sales &amp; Marketing</h1>
+
+<p class="jc-lede">The Sales &amp; Marketing module (<code>modules/sales-marketing</code>)
+covers review curation, marketing-post composition, and organic-post reporting. It
+registers with <code>requiredRoles: ['sales', 'admin', 'owner']</code> — a field tech
+sees no Sales &amp; Marketing entry. <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>
+— the module's four real screens exist and are code-complete, but
+<code>modules/sales-marketing/src/index.ts</code> currently registers a placeholder
+root (<code>SalesMarketingPlaceholder</code>) instead of importing
+<code>./screens/SalesMarketingRoot</code>, so none of the walkthrough below is reachable
+from the running app today.</p>
+
+<h2 id="ch5-scope-note">What This Module Is, and Is Not</h2>
+<p>Despite the chapter title suggesting a full sales pipeline, this module does not
+implement lead intake, lead qualification, or scheduling screens. There is no UI here
+for driving a job through <a href="#state-new">new</a> → <a href="#state-qualified">qualified</a>
+→ <a href="#state-scheduled">scheduled</a> → <a href="#state-assigned">assigned</a> —
+those state transitions exist on the job spine (Chapter 2) and are exercised by other
+parts of the app (office/admin job creation and scheduling), not by anything in
+<code>modules/sales-marketing</code>. <span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span>
+A dedicated lead-pipeline UI inside this module is not built. What this module
+<em>does</em> build is the marketing side of the business: curating published customer
+reviews, composing social posts from real job evidence, and reporting on organic
+posting activity. The persona walkthrough below reflects that reality, not the
+pipeline language in this chapter's working title.</p>
+
+<h2 id="ch5-typical-day">A Typical Day — Sales/Marketing</h2>
+<p>Dana runs sales and marketing for a two-truck outfit. Once
+<code>SalesMarketingRoot</code> is wired into <code>index.ts</code>'s routes, Dana's day
+inside JobCore looks like this. Each stop below cross-references the real screen file
+and the job-lifecycle states in play, by name, per Chapter 2.</p>
+
+<h3 id="ch5-day-review-library">Morning: Review Library</h3>
+<p>Dana opens <strong>Review Library</strong>
+(<code>screens/ReviewLibrary.tsx</code>) <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>
+to see which customer reviews from recently <a href="#state-closed">closed</a> jobs are
+worth featuring. The list only ever shows reviews the office has already marked
+<code>publish_ok = true</code> — the screen has no code path to display an unpublished
+review, since <code>ReviewLibraryRepository.list</code> is scoped server-side by the
+<code>reviews_select_sales</code> policy (0012). Dana filters by minimum star rating,
+service id, and community id, and can nudge a strong review up the display order with
+the ↑/↓ reorder controls — the only write this screen performs
+(<code>ReviewLibraryRepository.reorder</code>, matching the
+<code>reviews_sales_sort_whitelist_trg</code> whitelist). Each row shows the reviewer's
+display name (or "Anonymous"), star rating, platform, and the linked job id — no
+commission, price-sheet, or payout data ever appears here, by construction, since
+<code>Review</code> exposes none of those fields.</p>
+
+<h3 id="ch5-day-pitch-picker">Mid-Morning: Pitch Picker</h3>
+<p>Dana wants to build a post and opens <strong>Pitch Picker</strong>
+(<code>screens/PitchPicker.tsx</code>) <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>,
+which presents four pitch angles: Service line, Community, Seasonal, and Before/after.
+Picking one hands the angle straight to Composer as a pre-filter for candidate assets —
+no navigator is involved; <code>SalesMarketingRoot</code> wires all four screens as
+state-driven sibling tabs (matching Field Tech's <code>FieldTechRoot</code> pattern from
+Chapter 4), so "navigate to Composer" here means a caller-supplied
+<code>onNavigateToComposer</code> prop switching the active tab.</p>
+
+<h3 id="ch5-day-composer">Composing the Post</h3>
+<p>In <strong>Composer</strong> (<code>screens/Composer.tsx</code>)
+<span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>, Dana works
+through several honest guardrails:</p>
+<ul>
+<li><strong>Suggested caption is a template, not a claim.</strong> The suggestion is
+built from the pitch angle string alone — <code>buildSuggestedCaption</code> never reads
+a review's body or author name, so it can never fabricate a customer quote or a claim
+about work that wasn't done. It's always prefixed "Draft suggestion — edit before
+posting."</li>
+<li><strong>Asset selection is never trusted client-side.</strong> Every
+<code>handleToggleAsset</code> call round-trips through
+<code>postDraftAssets.attach</code>, which the database rejects unless the asset is
+<code>approved_for_public = true</code> and — for a review-backed asset — the
+underlying review is <code>publish_ok = true</code> (<code>post_draft_assets_consent_check_trg</code>,
+0012). The screen only ever reflects what that trigger allowed.</li>
+<li><strong>Nothing posts before an explicit approve step.</strong>
+<code>handleApprove</code> saves the caption and calls
+<code>postDrafts.approve</code>; both export paths below stay disabled until
+<code>approved</code> is true.</li>
+<li><strong>Manual export (default, always available).</strong> Dana exports the
+selected images to the camera roll, copies the caption to the clipboard, opens the OS
+share sheet, then the screen logs the post intent to <code>campaign_log</code> with
+channel <code>'manual'</code>. No API dependency, no App Review requirement.</li>
+<li><strong>Direct post (conditional).</strong> Only appears when the org has enabled
+the <code>meta-publish</code> social provider (an org-level config flag, default OFF).
+With the flag off, no provider resolves and zero network calls to the Meta Edge
+Function — or to <code>graph.facebook.com</code> — ever occur; the screen states plainly
+that direct posting is unavailable rather than showing a broken button. <span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span>
+Direct publishing additionally depends on Meta App Review approval for
+<code>pages_manage_posts</code> and <code>instagram_content_publish</code> — a multi-week
+external process this codebase cannot shorten (see
+<code>modules/sales-marketing/README.md</code>).</li>
+</ul>
+
+<h3 id="ch5-day-reporting">End of Day: Reporting</h3>
+<p>Dana checks <strong>Reporting</strong> (<code>screens/Reporting.tsx</code>)
+<span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span> for three
+client-side aggregations pulled from real ports: posts by platform and month (from
+<code>campaign_log</code>), assets used vs. total marketing assets (from
+<code>marketing_assets</code>, counting <code>approved_for_public</code>), and reviews
+collected grouped by platform (from <code>reviews</code>). The screen carries a fixed
+notice: paid-ads reporting is out of scope for this module and additionally blocked
+until a Meta Pixel is installed on the website — installing the Pixel is the website
+owner's task, and this app must never install one itself. No query on this screen ever
+touches <code>commissions</code>, <code>price_sheets</code>, or <code>payout_batches</code>
+— this module's ports never expose those tables, so no such figure can appear here by
+construction.</p>
+
+<h2 id="ch5-provider-extensibility">Provider Extensibility</h2>
+<p>The <code>SocialProvider</code> interface (<code>domain/providers/types.ts</code>) is
+registered through a barrel (<code>domain/providers/index.ts</code>) that Composer and
+Reporting resolve through — never a concrete provider import. Today the barrel carries
+one provider, <code>MetaPublishProvider</code> (<code>domain/providers/meta.ts</code>).
+<span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span> A future LinkedIn,
+Nextdoor, or Google Business Profile provider is a new registered file, not a composer
+refactor — none of those exist yet.</p>
+
+<h2 id="ch5-token-storage">Token Storage</h2>
+<p><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span> Long-lived Meta Page
+access tokens are stored server-side in Supabase only, in a table with zero
+authenticated-role RLS policies — reachable only by the <code>meta-publish</code> Edge
+Function's service-role key. They are never present in the app bundle and never stored
+in any client-visible or client-readable table; this module's own ports
+(<code>SocialProviderRepository</code>) deliberately expose only the org-level
+<code>enabled</code> flag, never a credential.</p>
+</section>

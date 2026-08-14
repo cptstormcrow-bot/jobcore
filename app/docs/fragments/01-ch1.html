@@ -1,0 +1,81 @@
+<section class="jc-chapter" id="ch1">
+  <h1 id="ch1-heading">Chapter 1 — What Is JobCore?</h1>
+  <p>
+    JobCore is a multi-tenant field-service platform: one codebase, one app, many independent
+    organizations. Every organization's data is isolated at the database layer (Postgres row-level
+    security keyed on <code>organization_id</code>), and every organization can turn on a different
+    combination of feature modules without anyone shipping a new build just for them.
+  </p>
+  <p class="jc-badge jc-badge--live">🟢 Built &amp; Live — multi-tenant core, RLS isolation, job lifecycle</p>
+
+  <h2 id="the-module-contract">The <code>JobcoreModule</code> Contract</h2>
+  <p>
+    Every feature area in JobCore — Admin &amp; Finance, Field Tech, Sales &amp; Marketing, Payment
+    &amp; Review — is a self-contained module implementing one shared TypeScript interface,
+    <code>JobcoreModule</code> (defined in <code>packages/module-sdk/src/index.ts</code>):
+  </p>
+  <ul class="jc-contract-fields">
+    <li><code>id</code> — the module's stable identifier, e.g. <code>'admin-finance'</code></li>
+    <li><code>displayName</code> — human-readable name shown in the app</li>
+    <li><code>requiredRoles</code> — the <code>Role[]</code> that gates visibility and is mirrored in RLS policy</li>
+    <li><code>routes</code> — the screens (real React components, not string names) the module contributes to the navigator</li>
+    <li><code>navEntries</code> — icon, label, and sort order for each navigation entry</li>
+    <li><code>jobActions</code> <em>(optional)</em> — buttons the module injects into the shared Job Detail screen</li>
+    <li><code>hooks</code> <em>(optional)</em> — <code>onJobStatusChange</code> / <code>onJobCompleted</code> side-effect callbacks</li>
+    <li><code>migrations</code> <em>(optional)</em> — module-owned Supabase tables</li>
+    <li><code>settings</code> <em>(optional)</em> — a module-owned settings schema</li>
+  </ul>
+
+  <h2 id="why-compile-time-only">Why Modules Are Compile-Time-Only</h2>
+  <p>
+    JobCore describes itself as "pluggable," but that word has an honest limit here: React Native
+    cannot load or execute new native code at runtime, and both the App Store and Play Store forbid
+    downloading and running new code after install. So "pluggable" means
+    <strong>compile-time registration + runtime toggle</strong> — a module is a workspace package
+    compiled directly into the app binary and added to a registry, and it is then enabled or
+    disabled per organization through a config value, never through a runtime download. Adding a
+    module is a build. Enabling one is a config change.
+  </p>
+
+  <h2 id="the-four-modules">The Four Modules</h2>
+  <p>JobCore has four modules today, all built:</p>
+  <ol class="jc-module-list">
+    <li><strong>Admin &amp; Finance</strong> — see <a href="#ch3">Chapter 3</a></li>
+    <li><strong>Field Tech</strong> — see <a href="#ch4">Chapter 4</a></li>
+    <li><strong>Sales &amp; Marketing</strong> — see <a href="#ch5">Chapter 5</a></li>
+    <li><strong>Payment &amp; Review</strong> — see <a href="#ch6">Chapter 6</a></li>
+  </ol>
+
+  <h2 id="two-axis-gating">Two Independent Gating Axes</h2>
+  <p>
+    Whether a module is reachable in the running app depends on two <em>independent</em> gates, and
+    both must pass:
+  </p>
+  <h3 id="axis-1-compile-time-registration">Axis 1 — Compile-Time Registration</h3>
+  <p>
+    A module must be imported and registered in
+    <code>apps/mobile/src/modules.ts</code> (lines 11–18) — the one file in
+    <code>apps/mobile</code> permitted to name a specific module by id. As of this writing, three
+    modules are registered there: <code>admin-finance</code>, <code>field-tech</code>, and
+    <code>sales-marketing</code>. <strong>The fourth module, <code>payment-review</code>, is built
+    but is NOT registered</strong> — its code exists and compiles, but
+    <code>registerModule()</code> is never called for it, so it cannot appear in the app no matter
+    what any organization enables. This is exactly Chapter 6's status.
+  </p>
+  <h3 id="axis-2-runtime-enablement">Axis 2 — Runtime Per-Org Enablement</h3>
+  <p>
+    Independently of registration, each organization carries an
+    <code>enabled_modules text[]</code> column (<code>organizations.enabled_modules</code>,
+    <code>supabase/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
+    includes a module only if <em>both</em> the org's <code>enabled_modules</code> list contains the
+    module's id <em>and</em> the requesting user's role is in the module's
+    <code>requiredRoles</code> — fail-closed on both counts, so an empty <code>requiredRoles</code>
+    list hides a module from everyone.
+  </p>
+  <p>
+    A module is only reachable by a given user when it clears <em>both</em> axes: registered at
+    compile time, and enabled for that user's org and role at runtime. <a href="#ch6">Chapter 6</a>
+    is the concrete, worked example of a module that is built and would pass Axis 2 but fails
+    Axis 1 today.
+  </p>
+</section>

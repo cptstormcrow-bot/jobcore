@@ -231,16 +231,35 @@ create policy reviews_admin_all
   using (organization_id = public.current_org_id() and public.is_org_admin())
   with check (organization_id = public.current_org_id() and public.is_org_admin());
 
+-- Returns true when a job with the given id exists under the given
+-- organization. security definer bypasses RLS on `jobs` for this one read
+-- â€” required because reviews_insert_anon runs as `anon`, which has no
+-- SELECT policy on `jobs` at all, so an inline EXISTS subquery under RLS
+-- always saw zero rows and rejected every anon review insert (AC-RV-2).
+-- Mirrors public.current_org_id() (0001_foundation.sql): security definer,
+-- stable, search_path pinned empty for the same privilege-escalation
+-- reasons documented there.
+create or replace function public.job_exists_in_org(p_job_id uuid, p_organization_id uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.jobs
+    where id = p_job_id and organization_id = p_organization_id
+  );
+$$;
+
+revoke all on function public.job_exists_in_org(uuid, uuid) from public;
+grant execute on function public.job_exists_in_org(uuid, uuid) to anon, authenticated;
+
 create policy reviews_insert_anon
   on public.reviews for insert
   to anon
   with check (
-    exists (
-      select 1
-      from public.jobs j
-      where j.id = reviews.job_id
-        and j.organization_id = reviews.organization_id
-    )
+    public.job_exists_in_org(reviews.job_id, reviews.organization_id)
   );
 
 -- review_requests: admin-only. State transitions through the handoff flow

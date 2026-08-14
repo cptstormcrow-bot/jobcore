@@ -42,6 +42,7 @@ import type {
   JobNoteDraft,
   TechJobRepository,
 } from '../../../../modules/field-tech/src/data/ports';
+import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
 import {
   toChecklistTemplate,
   toChecklistInstance,
@@ -433,5 +434,19 @@ export function createTechJobRepository(): TechJobRepository {
       }
       return data ? toJob(data as never) : null;
     },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * ModulePorts aggregator
+ * ------------------------------------------------------------------ */
+
+export function buildFieldTechPorts(): ModulePorts {
+  return {
+    checklist: createChecklistRepository(),
+    photos: createJobPhotoRepository(),
+    timeOff: createTimeOffRepository(),
+    notes: createJobNoteRepository(),
+    jobs: createTechJobRepository(),
   };
 }

@@ -217,10 +217,24 @@ create policy leads_delete_org on public.leads
   for delete to authenticated
   using (organization_id = public.current_org_id());
 
--- jobs: org staff have full read/write within their own organization.
+-- jobs: org admin/office staff (owner, admin, sales) have full read within
+-- their own organization. Deliberately excludes tech — a tech's read
+-- visibility is scoped through jobs_select_tech below (assigned jobs only);
+-- if this predicate is loosened to include tech, jobs_select_tech becomes a
+-- no-op, since Postgres OR's together multiple permissive policies on the
+-- same table/command/role. Expressed as an inline role check rather than
+-- public.is_org_sales_or_above() because that helper isn't defined until
+-- 0012_marketing.sql, later than this file — see 0013_rls_fixes.sql for the
+-- helper-based production patch.
 create policy jobs_select_org on public.jobs
   for select to authenticated
-  using (organization_id = public.current_org_id());
+  using (
+    organization_id = public.current_org_id()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('owner', 'admin', 'sales')
+    )
+  );
 
 -- jobs: a tech sees only jobs they are assigned to, resolved through
 -- job_assignments, still bounded to their own organization.
@@ -240,10 +254,30 @@ create policy jobs_insert_org on public.jobs
   for insert to authenticated
   with check (organization_id = public.current_org_id());
 
+-- jobs: admin-only update within the org. Deliberately narrower than
+-- jobs_select_org — sales may view all org jobs but has no legitimate
+-- write path here; tech writes go exclusively through jobs_update_tech
+-- (0008), which is column-whitelisted by jobs_tech_update_whitelist_trg.
+-- Was previously unrestricted to any authenticated org member, which let a
+-- tech's UPDATE on an unassigned job reach the whitelist trigger instead of
+-- being excluded by RLS (AC-8.2). Inline role check for the same
+-- forward-reference reason as jobs_select_org above.
 create policy jobs_update_org on public.jobs
   for update to authenticated
-  using (organization_id = public.current_org_id())
-  with check (organization_id = public.current_org_id());
+  using (
+    organization_id = public.current_org_id()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('owner', 'admin')
+    )
+  )
+  with check (
+    organization_id = public.current_org_id()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('owner', 'admin')
+    )
+  );
 
 -- jobs: techs have no insert/update/delete policy — the absence denies all
 -- writes; a tech's status transitions (en_route/in_progress/completed) go

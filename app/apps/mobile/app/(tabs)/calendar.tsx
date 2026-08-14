@@ -5,7 +5,7 @@ import { colors, typography, spacing, radius } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import { addDays, format } from 'date-fns';
 import { WeekView } from '../../src/components/WeekView';
-import { JOB_STATUS_COLORS } from '../../src/lib/job-status-colors';
+import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { useSession } from '../../src/lib/session';
 
 // No job data source exists in the app yet (src/lib has no job cache, only an

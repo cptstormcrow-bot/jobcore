@@ -90,6 +90,9 @@ export function ReviewLibrary(): React.ReactElement {
         return;
       }
       const target = reviews[targetIndex];
+      if (target === undefined) {
+        return;
+      }
 
       const { reviews: reviewsRepository } = getModulePorts();
       Promise.all([

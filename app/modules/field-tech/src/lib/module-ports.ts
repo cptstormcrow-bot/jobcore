@@ -21,11 +21,11 @@ import type {
   JobPhotoRepository,
   TimeOffRepository,
   JobNoteRepository,
-  JobRepository,
+  TechJobRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
-  jobs: JobRepository;
+  jobs: TechJobRepository;
   checklist: ChecklistRepository;
   photos: JobPhotoRepository;
   timeOff: TimeOffRepository;

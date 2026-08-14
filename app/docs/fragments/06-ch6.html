@@ -1,0 +1,90 @@
+<section class="jc-chapter" id="ch6-payment-review">
+  <h1 id="ch6-title">Chapter 6 — Payment &amp; Review</h1>
+
+  <div class="jc-callout jc-callout--gap" role="note">
+    <span class="jc-badge jc-badge--not-reachable">⚪ Open Gap (Not Registered)</span>
+    <p>
+      The <code>payment-review</code> module is <strong>built but not reachable</strong> in the
+      running mobile app today. Its domain logic, payment providers, and the
+      <code>mark-paid</code> job action all exist in the codebase — but the module is not
+      compile-time registered in <code>apps/mobile/src/modules.ts</code>, so JobCore's module
+      system never loads it. No screen, route, or nav entry from this module appears anywhere
+      in the app as currently built.
+    </p>
+  </div>
+
+  <p>
+    This is a deliberate consequence of the two-axis gating model introduced in
+    <a href="02-ch1.html#ch1-gating-axes">Chapter 1, "What Is JobCore?"</a>: a module must clear
+    <em>axis 1 (compile-time registration)</em> before axis 2 (runtime per-organization
+    enablement) is even relevant. <code>apps/mobile/src/modules.ts</code> is the single file
+    permitted to name a specific module and currently imports and registers exactly three:
+    <code>adminFinanceModule</code>, <code>fieldTechModule</code>, and
+    <code>salesMarketingModule</code>. <code>paymentReviewModule</code> is absent from that list.
+    An organization could set <code>payment-review</code> in its
+    <code>enabled_modules</code> config and it would still not appear — axis 1 fails before axis 2
+    is ever checked. Because there is nothing to walk in the running app, this chapter is
+    architecture-and-status only: no "A Typical Day" persona narrative and no "Try It" section, per
+    the pattern set in Chapters 3–5.
+  </p>
+
+  <h2 id="ch6-what-it-contains">What the Module Contains</h2>
+  <p>
+    Despite being inert today, <code>modules/payment-review/src/</code> is a substantially built
+    module, not a stub. It exposes:
+  </p>
+  <ul>
+    <li>
+      <strong>Payment method providers</strong> — <code>domain/providers/</code> implements
+      <code>cash.ts</code>, <code>check.ts</code>, <code>p2p-link.ts</code> (Venmo-style peer
+      transfer), <code>paypal.ts</code>, and <code>stripe-link.ts</code> (card). This is the same
+      card / cash / check / P2P method set introduced in the payment-collection storyboard
+      referenced from Chapter 4's "Collecting Payment from the Homeowner" subsection — that
+      subsection documents the technician-facing side of collection; this module holds the
+      admin-facing provider implementations behind it.
+    </li>
+    <li>
+      <strong>A <code>mark-paid</code> job action</strong> — <code>src/index.ts</code> registers
+      <code>paymentReviewModule.jobActions</code> with a single action, id <code>mark-paid</code>,
+      whose <code>onInvoke</code> calls <code>transitionJob(job, 'paid', ctx)</code>. This is the
+      mechanism that would fire the
+      <a href="02-ch2.html#state-completed">completed</a> →
+      <a href="02-ch2.html#state-paid">paid</a> lifecycle transition from Chapter 2's state
+      machine, gated by a <code>hasPaymentRecord</code> precondition: a partner-paid job
+      (<code>job.payer !== 'customer'</code>) is satisfied automatically, while a customer-paid
+      job requires a settled row in the <code>payments</code> table
+      (<code>hasSettledPaymentForJob</code>).
+    </li>
+    <li>
+      <strong>Handoff logic</strong> — <code>domain/handoff.ts</code> supports the deep-link
+      handoff mechanics documented in
+      <a href="10-appendices.html#appendix-b-handoff">Appendix B, "Handoff &amp; Deep Links."</a>
+    </li>
+    <li>
+      <strong>A reconciliation screen</strong> — <code>screens/ReconciliationView.tsx</code>
+      exists as a built component, though with no route registered to reach it (the module's
+      <code>routes</code> array currently points only at a placeholder root screen).
+    </li>
+  </ul>
+
+  <h2 id="ch6-honest-status">Honest Status Summary</h2>
+  <table class="jc-status-table">
+    <thead>
+      <tr><th>Piece</th><th>Status</th><th>Badge</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Domain logic (<code>transition.ts</code>, providers)</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td><code>mark-paid</code> job action</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td>Handoff wiring</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td>Reconciliation screen</td><td>Built, no route</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td>Compile-time registration in <code>apps/mobile/src/modules.ts</code></td><td>Not done</td><td><span class="jc-badge jc-badge--gap">⚪ Open Gap</span></td></tr>
+    </tbody>
+  </table>
+  <p>
+    Registering this module is a one-line, build-time change (adding the import and
+    <code>registerModule(paymentReviewModule)</code> call), not a rewrite — but until it happens,
+    every capability in this chapter remains code-complete and unreachable. See
+    <a href="09-ch7.html#ch7-roadmap">Chapter 7's open-gap roadmap</a> for this item's tracking
+    entry.
+  </p>
+</section>

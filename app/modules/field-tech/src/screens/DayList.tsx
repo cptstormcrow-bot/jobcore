@@ -18,7 +18,7 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-nativ
 import type { Job } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS } from '../../../../apps/mobile/src/lib/job-status-colors';
+import { JOB_STATUS_COLORS } from '@jobcore/ui';
 
 export function DayList(): React.ReactElement {
   const session = getModuleSession();
@@ -40,7 +40,7 @@ export function DayList(): React.ReactElement {
 
     jobsRepository
       .listAssignedToTech(session.userId)
-      .then((result) => {
+      .then((result: Job[]) => {
         if (!cancelled) {
           setJobs(result);
         }

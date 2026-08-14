@@ -1,7 +1,9 @@
-// P2e.2c - job_status colour map. Lives in apps/mobile (not packages/ui) because
-// packages/ui declares no @jobcore/core dependency and must stay presentation-only.
+// P2e.2c - job_status colour map. Moved into packages/ui so both apps/mobile
+// and modules/field-tech can import it via @jobcore/ui instead of a deep
+// cross-app relative path. packages/ui now declares a real @jobcore/core
+// dependency (see package.json) to support the JobStatus type import below.
 import type { JobStatus } from '@jobcore/core';
-import { colors } from '@jobcore/ui';
+import { colors } from './tokens';
 
 /**
  * Every JobStatus gets a distinct colour. The Record<JobStatus, string> annotation

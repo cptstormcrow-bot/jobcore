@@ -63,12 +63,16 @@ test('AC: bySource groups a null source under the literal key "unknown"', () => 
 
   const groups = bySource([jobWithSource, jobWithoutSource]);
 
+  const webGroup = groups.web;
+  assert.ok(webGroup);
   assert.deepEqual(
-    groups.web.map((j) => j.id),
+    webGroup.map((j) => j.id),
     ['job-a'],
   );
+  const unknownGroup = groups.unknown;
+  assert.ok(unknownGroup);
   assert.deepEqual(
-    groups.unknown.map((j) => j.id),
+    unknownGroup.map((j) => j.id),
     ['job-b'],
   );
 });
@@ -79,12 +83,16 @@ test('AC: byAttachTiming groups a null attachTiming under the literal key "unkno
 
   const groups = byAttachTiming([jobWithTiming, jobWithoutTiming]);
 
+  const sameDayGroup = groups.same_day;
+  assert.ok(sameDayGroup);
   assert.deepEqual(
-    groups.same_day.map((j) => j.id),
+    sameDayGroup.map((j) => j.id),
     ['job-a'],
   );
+  const unknownGroup = groups.unknown;
+  assert.ok(unknownGroup);
   assert.deepEqual(
-    groups.unknown.map((j) => j.id),
+    unknownGroup.map((j) => j.id),
     ['job-b'],
   );
 });

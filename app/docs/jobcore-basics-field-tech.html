@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="jobcore basics field tech">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/app/docs/jobcore-basics-field-tech.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobCore Basics — Chapter 4: Field Tech</title>
+<link rel="stylesheet" href="jobcore-basics-shared.css">
+<script src="jobcore-basics-shared.js" defer></script>
+</head>
+<body>
+<div class="jc-layout">
+<nav class="jc-toc" aria-label="Manual navigation">
+<h2 class="jc-toc-title">JobCore Basics</h2>
+<ul>
+<li><a href="jobcore-basics-front-matter.html">Front Matter + Ch1 + Ch2</a></li>
+<li><a href="jobcore-basics-admin-finance.html">Ch3 — Admin &amp; Finance</a></li>
+<li><a href="jobcore-basics-field-tech.html" class="jc-toc-current" aria-current="page">Ch4 — Field Tech</a></li>
+<li><a href="jobcore-basics-sales-payments.html">Ch5 + Ch6 — Sales &amp; Payments</a></li>
+<li><a href="jobcore-basics-appendices.html">Ch7 + Appendices</a></li>
+</ul>
+</nav>
+<main class="jc-content">
+
+<section class="jc-chapter" id="ch4">
+<h1 id="ch4-title">Chapter 4 — Field Tech</h1>
+
+<p class="jc-lede">The Field Tech module (<code>modules/field-tech</code>) is where the
+job spine actually gets driven: a tech's day physically walks
+<a href="#state-assigned">assigned</a> → <a href="#state-accepted">accepted</a> →
+<a href="#state-en_route">en_route</a> → <a href="#state-in_progress">in_progress</a> →
+<a href="#state-completed">completed</a> → <a href="#state-paid">paid</a>. It registers
+with <code>requiredRoles: ['owner', 'admin', 'tech']</code> and
+<code>navEntries: [{ icon: 'construct', label: 'Field Tech', order: 20 }]</code>
+(<code>modules/field-tech/src/index.ts</code>). Every screen in this module is ZERO
+financial fields by construction — hours, commissions, reimbursements, and bonus live
+only on the <a href="#ch4-day-earnings">Earnings</a> stop below, never on the job-detail
+or completion screens. <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span></p>
+
+<h2 id="ch4-typical-day">A Typical Day — Service Technician</h2>
+<p>Marcus is a field tech for a two-truck outfit. This is the fullest persona
+walkthrough in the manual because his day is the one that actually moves a job's
+status, stop by stop, through <code>transitionJob</code> calls that this module's own
+<code>domain/transition.ts</code> is the sole call site for (a field-tech ESLint
+override forbids importing <code>applyTransition</code> directly from
+<code>@jobcore/core</code> anywhere else in this module).</p>
+
+<h3 id="ch4-day-daylist">Morning: Day List</h3>
+<p>Marcus opens the app and lands on <strong>DayList</strong>
+(<code>screens/DayList.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+the module's default route when no per-job flow is active
+(<code>FieldTechRoot</code>'s <code>subView === 'jobs'</code> tab). The list shows only
+jobs assigned to Marcus — not by any client-side filter, but purely because
+<code>TechJobRepository.listAssignedToTech</code> is scoped server-side by RLS on the
+<code>jobs</code>/<code>job_assignments</code> tables. Each row is color-coded via the
+shared <code>JOB_STATUS_COLORS</code> map, so a newly <a href="#state-assigned">assigned</a>
+job stands out from one already <a href="#state-accepted">accepted</a> or
+<a href="#state-en_route">en_route</a>.</p>
+
+<h3 id="ch4-day-greeting">First Stop: Greeting</h3>
+<p>Tapping a freshly assigned job opens <strong>Greeting</strong>
+(<code>screens/Greeting.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+offering Marcus accept/decline on a job in <a href="#state-assigned">state-assigned</a>.
+Decline requires a non-empty reason — the screen writes a <code>job_notes</code> row
+(<code>kind='decline_reason'</code>) before calling
+<code>transitionJob(job, 'declined', ctx)</code>, routing the job back to the office
+(see Chapter 2's <a href="#state-declined">declined</a> branch). Accept is deliberately
+passive: silence leaves status untouched, so Greeting just dismisses and lets Marcus
+proceed — there is no explicit "accept" transition call here, because
+<a href="#state-accepted">state-accepted</a> is reached by the tech simply moving
+forward, not by a dedicated button firing its own transition.</p>
+
+<h3 id="ch4-day-onmyway">Heading Out: On My Way</h3>
+<p>From <strong>StartChecklist</strong> (<code>screens/StartChecklist.tsx</code>)
+<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span> Marcus taps
+"On my way," which fires <code>transitionJob(job, 'en_route', ctx)</code> — this is the
+same <code>jobActions</code> entry (<code>id: 'on-my-way'</code>) the shared Job Detail
+action bar exposes, registered in <code>fieldTechModule.jobActions</code>. The job is
+now <a href="#state-en_route">state-en_route</a>. Chapter 2's cancellation-window rule
+applies exactly here: <code>en_route</code> is the last state from which the office can
+still cancel the job out from under Marcus — once he taps Start, that window is closed.</p>
+
+<h3 id="ch4-day-start">On Site: Start Checklist</h3>
+<p>Still on <strong>StartChecklist</strong>, Marcus works through the start checklist
+and captures before-photos, each recorded through the offline mutation primitives in
+<code>@jobcore/core</code>'s <code>offline/queue</code> (<code>makeIdempotencyKey</code>,
+queued mutations) so a dead-zone driveway doesn't lose the record. Submitting the
+checklist calls <code>ChecklistRepository.submitInstance</code>, then records the
+submission in the module's sync-readable singleton (so
+<code>ctx.hasSubmittedStartChecklist</code> reads synchronously true), then calls
+<code>transitionJob(job, 'in_progress', ctx)</code> — the state-completed precondition
+Chapter 2 calls the <a href="#ch2-preconditions">start-checklist precondition</a>. Job is
+now <a href="#state-in_progress">state-in_progress</a>.
+<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span></p>
+
+<h3 id="ch4-day-jobdetail">Mid-Job: Field Job Detail</h3>
+<p>Marcus can check job specifics any time on <strong>FieldJobDetail</strong>
+(<code>screens/FieldJobDetail.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+a module-local detail screen — deliberately not the shared <code>apps/mobile</code>
+<code>JobDetail.tsx</code>, since field-tech's isolation rule forbids importing
+anything from <code>apps/mobile</code>. Tap-to-call uses a caller-supplied
+<code>customerPhone</code> prop; ZERO financial fields render here, by the same
+construction rule as every other screen in this module.</p>
+
+<h3 id="ch4-day-completion">Finishing Up: Completion</h3>
+<p>When the work is done, Marcus opens <strong>Completion</strong>
+(<code>screens/Completion.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>.
+He checks off the completion checklist, captures at least one after-photo
+(<code>ports.photos.create</code>, kind <code>'after'</code>), and types quality notes —
+the submit button stays disabled until all three are satisfied. Ordering here is
+load-bearing: the quality-notes <code>job_notes</code> row is written and the in-memory
+sync probe updated <em>before</em> <code>transitionJob(job, 'completed', ctx)</code>
+runs, so <code>ctx.hasAfterPhotos</code>/<code>ctx.hasQualityNotes</code> read
+synchronously true when the core's <code>completed</code> precondition
+(<code>packages/core/src/state-machine.ts</code>) evaluates them. If Marcus's job has a
+non-customer payer (a partner-billed job), <code>ctx.hasPaymentRecord</code> is
+satisfied automatically — field-tech never records a payment itself, by design. The job
+is now <a href="#state-completed">state-completed</a>.</p>
+
+<h2 id="ch4-payment-collection">Collecting Payment from the Homeowner</h2>
+<p>For a customer-paid job, <a href="#state-completed">completed</a> does not by itself
+reach <a href="#state-paid">paid</a> — the <code>requirePaymentSettled</code>
+precondition in <code>packages/core/src/state-machine.ts</code> gates that transition.
+Here is the full sequence, honest about what's built, what's unverified, and what's
+still a gap.</p>
+
+<h3 id="ch4-payment-handoff">Handing Off to the Homeowner</h3>
+<p>Once Marcus submits Completion, the customer is handed off via a signed, expiring,
+single-job-scoped QR token (<code>issue_handoff_token</code> RPC,
+<code>modules/payment-review/src/domain/handoff.ts</code>) to the public handoff web app
+at <code>web/handoff/</code>. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span>
+QR code <em>rendering</em> is explicitly out of scope here — only the token/URL is
+issued today; Marcus hands the phone to the homeowner or the homeowner scans a code
+Marcus doesn't yet have a screen to display.</p>
+
+<h3 id="ch4-payment-satisfaction-gate">The Missing Satisfaction Gate</h3>
+<p><em>Storyboarded, not built</em> — a homeowner-satisfaction confirmation step ahead
+of payment capture, the moment where the homeowner would sign off on the work before
+being asked to pay. No such gate exists in <code>state-machine.ts</code>, the
+payment-review module, or the handoff screens. <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>
+Today the homeowner goes straight from Marcus's handoff into picking a payment method.</p>
+
+<h3 id="ch4-payment-methods">The Four Payment Methods</h3>
+<p>On the handoff site, the homeowner picks from whichever methods the organization has
+enabled (Chapter 3's Admin persona flips these switches in advance, before any job
+reaches <a href="#state-completed">state-completed</a>):</p>
+<ul>
+<li><strong>Card (Stripe)</strong> — <code>supabase/functions/stripe-webhook/index.ts</code>
+confirms the matching <code>payments</code> row via signature-verified webhook. No card
+data is ever read or logged. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+<li><strong>Card (PayPal)</strong> — <code>supabase/functions/paypal-webhook/index.ts</code>
+confirms via PayPal's server-side signature-verification API.
+<span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+<li><strong>Cash</strong> — <code>modules/payment-review/src/domain/providers/cash.ts</code>,
+not webhook-capable by design; Marcus (or the office) confirms receipt in person, which
+sets <code>status='manual_confirmed'</code> under a whitelist trigger that restricts a
+non-admin caller to only that status/confirmed-at/confirmed-by. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+<li><strong>Check</strong> — <code>modules/payment-review/src/domain/providers/check.ts</code>,
+same manual-confirmation pattern as Cash. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+<li><strong>P2P link (Venmo / CashApp / Zelle)</strong> — <code>modules/payment-review/src/domain/providers/p2p-link.ts</code>,
+an org-configured handle/URL the homeowner pays to directly, settled by the same manual
+confirmation as Cash/Check. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+</ul>
+<p>Once a <code>payments</code> row reaches <code>confirmed</code> (webhook) or
+<code>manual_confirmed</code> (manual entry), the job settles into
+<a href="#state-paid">state-paid</a>.</p>
+
+<h3 id="ch4-payment-mark-paid-gap">The Mark Paid Gap Marcus Never Sees</h3>
+<p>There's a screen for manually marking a job paid — a <code>jobAction</code>
+(id <code>mark-paid</code>) on <code>paymentReviewModule</code>
+(<code>modules/payment-review/src/index.ts</code>) — but it is restricted to
+<code>requiredRoles: ['owner', 'admin']</code> (OFFICE), not <code>tech</code>, so
+Marcus would never see it even if it were reachable. It isn't: confirmed by direct
+search, the <code>payment-review</code> module is NOT registered in
+<code>apps/mobile/src/modules.ts</code> today — no reference to it exists there. The
+module, its screen, and this jobAction are unreachable from the running mobile app.
+<span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span> See Chapter 6 for
+the module's full architecture/status detail.</p>
+
+<h3 id="ch4-payment-closing">Office Closes It Out</h3>
+<p>The final step, <a href="#state-paid">paid</a> → <a href="#state-closed">closed</a>,
+is a plain OFFICE-role transition with no precondition — it happens back at the office,
+after Marcus has already moved on to his next job. His own visible arc on this job ends
+at <a href="#state-completed">completed</a>; everything from the QR handoff onward runs
+outside his screens.</p>
+
+<h2 id="ch4-day-earnings">End of Day: Earnings</h2>
+<p>Marcus checks <strong>Earnings</strong> (<code>screens/Earnings.tsx</code>)
+<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span> — the one screen
+in this module that's allowed to show money. Derived hours use
+<code>job.inProgressAt</code>/<code>job.completedAt</code>, the device-clock
+<code>occurred_at</code> stamps written by <code>applyTransition</code> — never
+<code>synced_at</code>, which can lag behind under the offline queue and would silently
+shift a tech's hours if used for payroll math. Commissions, reimbursements, and bonus
+render alongside (bonus always shows a real dollar figure, even $0.00, via a
+null-object <code>NullBonusRule</code> when no rule applies). If Marcus disagrees with a
+figure, he can file a dispute — a note-only <code>job_notes</code> row
+(<code>kind='dispute'</code>) that never calls <code>transitionJob</code> or
+<code>canTransitionJob</code>; filing a dispute cannot change job status.</p>
+
+<h2 id="ch4-8hour-note">The 8-Hour-Day Efficiency Note</h2>
+<p>Every screen above deliberately does one thing: DayList lists, Greeting
+accepts/declines, StartChecklist starts, FieldJobDetail informs, Completion completes,
+Earnings reports. None of them cross into another's job — Completion never shows pay
+figures, Earnings never fires a transition, FieldJobDetail never renders a financial
+field. For a tech running four to six jobs in an eight-hour day, that narrowness is the
+point: each screen answers exactly the one question Marcus has open at that moment, with
+nothing else competing for his attention between doors.</p>
+
+</section>
+
+</main>
+</div>
+</body>
+</html>

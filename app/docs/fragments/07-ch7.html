@@ -1,0 +1,91 @@
+<section id="ch7-design-security-roadmap" class="jc-chapter" data-chapter="7">
+  <h1 id="ch7-title">Chapter 7 — Design System, Security Posture &amp; Roadmap</h1>
+  <p class="jc-lens jc-lens--informational">Lens: informational. This chapter is reference material — it does not narrate a persona's day. It documents how the app's visual language maps to this manual's CSS, recaps the verified Row-Level Security (RLS) hardening work, and lays out the honest open-gap roadmap.</p>
+
+  <h2 id="ch7-token-reference">Design Token Reference</h2>
+  <p>JobCore's shared UI package (<code>packages/ui/src/tokens.ts</code>) defines the brand's design tokens as plain JS objects for React Native consumption — no CSS custom properties in the source. This manual translates those token <em>categories</em> into the <code>--jc-*</code> CSS custom property convention below. Names are stable now; actual values resolve in Slice 11 of this manual's build.</p>
+
+  <h3 id="ch7-token-colors">Color Tokens</h3>
+  <p>Source category: <code>colors</code> — includes brand tones (<code>primary</code>, <code>primaryLight</code>, <code>primaryDark</code>, <code>secondary</code>, <code>secondaryLight</code>, <code>secondaryDark</code>, <code>accent</code>), neutrals (<code>white</code>, <code>offWhite</code>, <code>surface</code>, <code>surfaceAlt</code>, <code>text</code>, <code>textLight</code>, <code>textMuted</code>, <code>border</code>, <code>overlay</code>), and semantic status colors (<code>success</code>, <code>danger</code>, <code>warning</code>, <code>info</code>) added for this app — the source brand CSS has no status UI of its own.</p>
+  <pre class="jc-token-block"><code>--jc-color-primary: /* TBD, Slice 11 */;
+--jc-color-primary-light: /* TBD, Slice 11 */;
+--jc-color-primary-dark: /* TBD, Slice 11 */;
+--jc-color-secondary: /* TBD, Slice 11 */;
+--jc-color-secondary-light: /* TBD, Slice 11 */;
+--jc-color-secondary-dark: /* TBD, Slice 11 */;
+--jc-color-accent: /* TBD, Slice 11 */;
+--jc-color-surface: /* TBD, Slice 11 */;
+--jc-color-surface-alt: /* TBD, Slice 11 */;
+--jc-color-text: /* TBD, Slice 11 */;
+--jc-color-text-light: /* TBD, Slice 11 */;
+--jc-color-text-muted: /* TBD, Slice 11 */;
+--jc-color-border: /* TBD, Slice 11 */;
+--jc-color-success: /* TBD, Slice 11 */;
+--jc-color-danger: /* TBD, Slice 11 */;
+--jc-color-warning: /* TBD, Slice 11 */;
+--jc-color-info: /* TBD, Slice 11 */;</code></pre>
+
+  <h3 id="ch7-token-typography">Typography Tokens</h3>
+  <p>Source category: <code>typography</code> — font families (<code>heading</code>: Poppins, <code>body</code>: Inter, <code>accent</code>: DancingScript, declared-but-unused), weight scale (<code>regular</code> through <code>extrabold</code>), and a fixed size scale (<code>h1</code>–<code>h6</code>, <code>body</code>, <code>label</code>, <code>small</code>) collapsed from the source's fluid <code>clamp()</code> values since React Native has no viewport units.</p>
+  <p class="jc-note">This manual's CSS does not define <code>--jc-font-*</code> variables in this fragment — typography is carried by the shared stylesheet's base rules, not per-fragment tokens.</p>
+
+  <h3 id="ch7-token-spacing">Spacing Tokens</h3>
+  <p>Source category: <code>spacing</code> — a named scale (<code>xs</code> 4 · <code>sm</code> 8 · <code>md</code> 16 · <code>lg</code> 24 · <code>xl</code> 32 · <code>xxl</code> 48) derived from the recurring rem values in the original brand CSS, which had no <code>--space-*</code> tokens of its own.</p>
+  <pre class="jc-token-block"><code>--jc-space-xs: /* TBD, Slice 11 */;
+--jc-space-sm: /* TBD, Slice 11 */;
+--jc-space-md: /* TBD, Slice 11 */;
+--jc-space-lg: /* TBD, Slice 11 */;
+--jc-space-xl: /* TBD, Slice 11 */;
+--jc-space-xxl: /* TBD, Slice 11 */;</code></pre>
+
+  <h3 id="ch7-token-radius">Radius Tokens</h3>
+  <p>Source category: <code>radius</code> — <code>sm</code> 6 · <code>md</code> 10 · <code>lg</code> 16 · <code>xl</code> 24 · <code>pill</code> 999.</p>
+  <pre class="jc-token-block"><code>--jc-radius-sm: /* TBD, Slice 11 */;
+--jc-radius-md: /* TBD, Slice 11 */;
+--jc-radius-lg: /* TBD, Slice 11 */;
+--jc-radius-xl: /* TBD, Slice 11 */;
+--jc-radius-pill: /* TBD, Slice 11 */;</code></pre>
+
+  <h3 id="ch7-token-shadow">Shadow / Elevation Tokens</h3>
+  <p>Source category: <code>shadow</code> — <code>sm</code>, <code>md</code>, <code>lg</code>, <code>xl</code>. Each source token is a platform-split object (iOS <code>shadowColor</code>/<code>shadowOffset</code>/<code>shadowOpacity</code>/<code>shadowRadius</code>; Android <code>elevation</code>), translated here into a single flattened <code>box-shadow</code>-style custom property per tier.</p>
+  <pre class="jc-token-block"><code>--jc-shadow-sm: /* TBD, Slice 11 */;
+--jc-shadow-md: /* TBD, Slice 11 */;
+--jc-shadow-lg: /* TBD, Slice 11 */;
+--jc-shadow-xl: /* TBD, Slice 11 */;</code></pre>
+
+  <h2 id="ch7-badge-legend">Badge Legend</h2>
+  <p>Every screen and feature reference in this manual carries one of five status badges. This is the reconciled, authoritative legend for the whole manual:</p>
+  <table class="jc-badge-table">
+    <thead><tr><th>Badge</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></td><td>Working, reachable, verified in the app today</td></tr>
+      <tr><td><span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span></td><td>Code exists, not yet registered/routed</td></tr>
+      <tr><td><span class="jc-badge jc-badge--unverified">🟠 Built, Unverified</span></td><td>Code exists, not yet verified end-to-end</td></tr>
+      <tr><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td><td>Built but inaccessible from the running app (Chapter 6's status)</td></tr>
+      <tr><td><span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span></td><td>Not built yet; spec'd or implied only</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="ch7-rls-hardening">Security Posture — RLS Hardening Evidence</h2>
+  <p>Row-Level Security (RLS) tenant-isolation hardening was verified against the live production Supabase project on 2026-08-13, in two passes:</p>
+  <ul>
+    <li>An 8-suite hosted RLS run found 4 failing suites: AC-7, AC-8.2 (genuine RLS/trigger defect), AC-RV-2 (genuine RLS/grant defect), and AC-12.1c (a test-authoring gap, not a production defect).</li>
+    <li>A same-day follow-up fixed 3 genuine production defects via migration <code>supabase/0013_rls_fixes.sql</code> (idempotent, standalone-runnable):
+      <ol>
+        <li><code>jobs_select_org</code> SELECT policy — now requires both <code>organization_id = current_org_id()</code> AND <code>is_org_sales_or_above()</code>.</li>
+        <li><code>jobs_update_org</code> UPDATE policy — now requires both <code>organization_id = current_org_id()</code> AND <code>is_org_admin()</code> on both <code>using</code>/<code>with check</code>.</li>
+        <li>A new <code>job_exists_in_org()</code> security-definer function backing a fixed <code>reviews_insert_anon</code> policy.</li>
+      </ol>
+    </li>
+    <li>AC-RV-2 was re-examined post-fix and traced to a test-file ordering bug (a stray <code>reset role;</code> running one statement too late) — no production defect remains; informational only.</li>
+    <li>All 4 suites were reverified against production on 2026-08-13: AC-7 PASS, AC-8.2 PASS, AC-RV-2 diagnosed (test-file issue, not app), AC-12.1c PASS.</li>
+  </ul>
+
+  <h2 id="ch7-roadmap">Open-Gap Roadmap</h2>
+  <p>The following are known gaps at time of writing, tracked here rather than scattered across chapters:</p>
+  <ul>
+    <li>Chapter 6 (Payment &amp; Review) module — built but not registered in the mobile app; carries the <span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span> badge throughout until it is wired in.</li>
+    <li>Payment-collection flow's satisfaction-confirmation gate — <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>, not yet built.</li>
+    <li>Training — <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>, a future module.</li>
+  </ul>
+</section>

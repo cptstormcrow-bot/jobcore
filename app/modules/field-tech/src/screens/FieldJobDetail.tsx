@@ -186,7 +186,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
         {adminNotes.length === 0 ? (
           <Text style={styles.value}>No admin notes.</Text>
         ) : (
-          adminNotes.map((note) => (
+          adminNotes.map((note: JobNote) => (
             <View key={note.id} style={styles.noteRow}>
               <Text style={styles.noteTimestamp}>{formatDateTime(note.occurredAt)}</Text>
               <Text style={styles.value}>{note.body}</Text>

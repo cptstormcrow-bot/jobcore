@@ -1,0 +1,171 @@
+<section id="ch3-admin-finance" aria-label="Chapter 3: Admin & Finance">
+  <h1 id="ch3-title">Chapter 3 — Admin &amp; Finance</h1>
+  <p>
+    The <code>admin-finance</code> module (<code>modules/admin-finance/</code>) is registered with
+    <code>requiredRoles: ['owner', 'admin']</code> — only the Admin/Owner roles see its nav entry, per
+    <code>modules/admin-finance/src/index.ts</code>. It carries two personas in this manual: <strong>Admin</strong>,
+    who runs the organization day to day, and <strong>Accountant</strong> (Finance), who reviews closed-out
+    money. Both personas share the same module and the same registered screen; the module's source tree
+    also contains a much larger set of lead, assignment, payout, and reporting screens that are
+    <strong>not yet part of the registered route</strong> — called out honestly below rather than presented
+    as reachable today.
+  </p>
+
+  <h2 id="ch3-what-is-wired">What Is Actually Wired</h2>
+  <p>
+    <code>adminFinanceModule.routes</code> registers exactly one route, <code>admin-finance</code>, pointed at
+    <code>AdminFinanceRoot</code> (<code>modules/admin-finance/src/screens/AdminFinanceRoot.tsx</code>). Its
+    single <code>navEntries</code> item, "Admin &amp; Finance", is what an Admin/Owner sees in the app's nav.
+    <code>AdminFinanceRoot</code> is a small internal tab-switcher — <strong>Overview</strong> and
+    <strong>Jobs</strong> — reading jobs for the signed-in org through an injected <code>JobRepository</code>
+    port; it is explicitly documented in its own file header as read-only: "this screen never writes a
+    job's stage. It has no access to any write path for that field at all."
+    <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
+  </p>
+  <p>
+    The module also declares two <code>jobActions</code>: <code>view-price-sheet</code> ("View Price Sheet")
+    and <code>add-pay-period-note</code> ("Add Pay Period Note"). These are registered on the module object
+    and available to the host's job-action menu wiring, but this slice did not trace their end-to-end
+    invocation path from a job card into a working screen, so they're marked
+    <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span> rather than Built &amp; Live.
+  </p>
+  <p>
+    Everything else under <code>modules/admin-finance/src/screens/</code> —
+    <code>LeadInboxScreen</code>, <code>QualifyScreen</code>, <code>AssignmentBoardScreen</code>,
+    <code>CloseOutQueueScreen</code>, <code>CloseOutReviewScreen</code>, <code>PayoutBatchScreen</code>,
+    <code>PriceSheetListScreen</code>, <code>PriceSheetEditorScreen</code>,
+    <code>ReimbursementQueueScreen</code>, <code>ReportsScreen</code>, and <code>AuditLogScreen</code> — is
+    real, substantial code (lead intake/normalization, qualify/assign/close-out flows, payout batches,
+    price sheets, reimbursements, reporting, an audit log) sitting behind a rich domain and money layer
+    (<code>src/domain/</code>, <code>src/money/</code>, <code>src/reporting/</code>, <code>src/flows/</code>).
+    None of it appears in <code>adminFinanceModule.routes</code> or <code>navEntries</code>, so none of it is
+    reachable by navigating the running app today. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    The walkthroughs below narrate this fuller screen set as the module's intended day-to-day shape, with
+    every screen name honestly badged for its current reachability.
+  </p>
+
+  <h2 id="ch3-admin-typical-day">Admin's Typical Day</h2>
+  <p>
+    The Admin persona opens the app to the <strong>Admin &amp; Finance</strong> nav entry and lands on
+    <code>AdminFinanceRoot</code>'s Overview tab <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>,
+    a one-line job count for the organization. Switching to the Jobs tab lists every job on file with its
+    scheduled date, but with no filter, search, or action beyond viewing the list.
+  </p>
+  <ol>
+    <li>
+      <strong>Set up payment providers in advance.</strong> Before any job can reach
+      <a href="#state-completed">state-completed</a>, an Admin flips on the org's accepted payment methods
+      in the <code>payment_providers</code> table (<code>supabase/0010_payment_review.sql</code>) —
+      per-organization <code>enabled</code> flags plus client-safe config (a handle, a publishable key,
+      never a secret). RLS on this table is admin-only
+      (<code>payment_providers_admin_all</code>: <code>organization_id = current_org_id() AND
+      is_org_admin()</code>), so this is exclusively an Admin setup task, done ahead of time rather than
+      in the moment a job needs it. There is no dedicated in-app screen for this in the traced source —
+      it is a direct data-setup task today. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
+      for a proper Settings UI; the underlying table and RLS policy are
+      <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>.
+    </li>
+    <li>
+      <strong>Triage new leads.</strong> <code>LeadInboxScreen</code> would surface leads normalized by
+      <code>domain/intake-normalize.ts</code> from <code>data/intake-adapter.ts</code> /
+      <code>mock-feed-adapter.ts</code> / <code>manual-entry-adapter.ts</code>, moving a lead toward
+      <a href="#state-qualified">state-qualified</a> via <code>flows/qualify-lead.ts</code> and
+      <code>QualifyScreen</code>. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Assign the job.</strong> <code>AssignmentBoardScreen</code>, backed by
+      <code>flows/assign-job.ts</code> and <code>domain/assignment-warnings.ts</code>, would drive
+      <a href="#state-scheduled">state-scheduled</a> → <a href="#state-assigned">state-assigned</a>, cross-
+      checking the <code>AxisPicker</code>/<code>TechColumn</code> components and surfacing conflicts via
+      <code>WarningSheet</code>. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Resolve a reschedule.</strong> When a tech or the state machine reports
+      <a href="#state-needs_reschedule">state-needs_reschedule</a>, an Admin is the role positioned to
+      re-run assignment and force the job back onto the board. The traced source has no dedicated
+      reschedule-resolution screen; this is currently folded into the general assignment flow rather than
+      a distinct UI. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
+    </li>
+    <li>
+      <strong>Watch jobs across the board.</strong> Because Admin holds the broadest role, an Admin's
+      Jobs-tab view (today, in <code>AdminFinanceRoot</code>) and the intended
+      <code>AssignmentBoardScreen</code> are where every state in the lifecycle — from
+      <a href="#state-new">state-new</a> through <a href="#state-closed">state-closed</a>, including
+      <a href="#state-declined">state-declined</a> and <a href="#state-cancelled">state-cancelled</a>
+      branches — is visible in one place, even though only the read-only Jobs list is reachable today.
+    </li>
+    <li>
+      <strong>Close out and pay.</strong> <code>CloseOutQueueScreen</code> and
+      <code>CloseOutReviewScreen</code> (backed by <code>flows/close-out-job.ts</code> and
+      <code>domain/closeout.ts</code>) would be where an Admin reviews jobs sitting at
+      <a href="#state-completed">state-completed</a> / <a href="#state-paid">state-paid</a> and pushes them
+      to <a href="#state-closed">state-closed</a> — the same plain OFFICE transition Chapter 2 documents,
+      with no precondition on that specific step.
+      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Maintain price sheets.</strong> <code>PriceSheetListScreen</code> /
+      <code>PriceSheetEditorScreen</code>, over <code>data/price-sheet-repo.ts</code> and
+      <code>data/price-sheet-feed.ts</code>, are the intended home for the <code>view-price-sheet</code>
+      jobAction's underlying data. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Check the audit trail.</strong> <code>AuditLogScreen</code>, over
+      <code>fixtures/audit-log.ts</code>, is the intended record of who changed what — useful for
+      confirming who forced a transition like a reschedule resolution or a manual close-out.
+      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+  </ol>
+
+  <h2 id="ch3-accountant-typical-day">Accountant's Typical Day</h2>
+  <p>
+    The Finance/Accountant persona shares the Admin role's app access but works the money layer rather
+    than the operational one. Their day centers on jobs that have already reached
+    <a href="#state-completed">state-completed</a> or <a href="#state-paid">state-paid</a>.
+  </p>
+  <ol>
+    <li>
+      <strong>Review reimbursements.</strong> <code>ReimbursementQueueScreen</code>, over
+      <code>data/reimbursement-repo.ts</code>, is where tech-submitted expense reimbursements would be
+      reviewed and approved. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Run payout batches.</strong> <code>PayoutBatchScreen</code>, over
+      <code>data/payout-batch-repo.ts</code> and the <code>money/</code> domain
+      (<code>billable-hours.ts</code>, <code>bonus.ts</code>, <code>commission.ts</code>,
+      <code>payout-batch.ts</code>, <code>publish-plan.ts</code>, <code>rollup.ts</code>), is where pay
+      periods roll up billable hours, bonuses, and commission into a batch a tech gets paid from. The
+      money-layer test coverage (<code>money/__assertions__/</code>: payout-freeze, publish-plan, rollup)
+      suggests the calculation logic itself is more mature than its screen's reachability.
+      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Confirm cash/check/P2P payments an Admin or tech reported.</strong> Jobs reaching
+      <a href="#state-paid">state-paid</a> via a non-webhook method (cash, check, or a P2P link) settle
+      through a tech/office manual-confirm path governed by the
+      <code>payments_tech_confirm_whitelist</code> trigger — an Accountant's review role here is to spot-
+      check those manual confirmations against the job record, not to re-run the confirmation itself.
+    </li>
+    <li>
+      <strong>Pull reports.</strong> <code>ReportsScreen</code>, over <code>reporting/revenue.ts</code>,
+      <code>reporting/group-by.ts</code>, and <code>reporting/slot-hit-rate.ts</code>, is the intended
+      revenue/utilization reporting surface. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    </li>
+    <li>
+      <strong>Add a pay-period note.</strong> The <code>add-pay-period-note</code> jobAction is the
+      per-job hook into this reconciliation work, though — as with <code>view-price-sheet</code> — this
+      slice did not verify its end-to-end wiring from a job card.
+      <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span>
+    </li>
+  </ol>
+
+  <h2 id="ch3-honesty-summary">Honesty Summary</h2>
+  <p>
+    Today, the Admin &amp; Finance module gives an Admin or Accountant exactly one reachable screen — a
+    read-only Overview/Jobs view — plus two unverified jobActions and a fully admin-gated
+    <code>payment_providers</code> setup table. The lead-to-close-out-to-payout pipeline described above is
+    real, tested code sitting one routing step away from being reachable: registering the remaining
+    screens in <code>adminFinanceModule.routes</code>/<code>navEntries</code> (or in per-screen sub-
+    navigation inside <code>AdminFinanceRoot</code>) is the open gap between "built" and "usable."
+  </p>
+</section>
