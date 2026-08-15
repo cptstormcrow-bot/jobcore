@@ -94,6 +94,7 @@ instead of by hand:
 |-----------|--------|
 | `tests/0001_foundation_rls.test.sql` | 5.2 (append still permitted), 5.3, 5.4, and the recursion smoke test — from both an owner and a tech session |
 | `tests/0004_scheduling_rls.test.sql` | 3.1, 3.5, and AC-7 (a tech sees only their assigned jobs) |
+| `tests/0013_rls_fixes_rls.test.sql` | jobs_select_org (supersedes 0004's AC-7/AC-7b/AC-7c under the stricter is_org_sales_or_above() policy), jobs_update_org (net-new — admin-only update, no prior local suite covered this policy), reviews_insert_anon (supersedes 0010's AC-RV-2/AC-RV-2b/AC-RV-2c under the new job_exists_in_org() SECURITY DEFINER helper) |
 
 Each file opens `begin;`, sets `role authenticated` plus `request.jwt.claims` per block, raises an
 exception naming the failed criterion on any mismatch, and closes `rollback;`. The same service-role
@@ -101,6 +102,14 @@ warning applies: run them as an authenticated session or every assertion passes 
 
 Both suites have been executed against the hosted project and both passed. On a hosted project, run
 the `.hosted.test.sql` variants (which carry the real auth uuids), not the placeholder-id originals.
+
+`tests/0013_rls_fixes_rls.test.sql` / `.hosted.test.sql` has NOT yet been executed against the
+hosted project (tooling blocked as of `.crib/a3-verify-unblock-brief.md`); treat as a manual/deferred
+verification step until that's resolved.
+
+No dedicated suite exists (or is needed) for `0002_profiles_role_column_guard` — already covered by
+`0001_foundation_rls.test.sql`'s AC-4.4. `0006_job_service_area` and `0009_idempotency_keys` add no
+RLS policies (service-role-only internal tables) and need no suite either.
 
 ### AC-3 — tenant isolation
 
