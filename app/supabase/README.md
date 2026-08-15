@@ -9,8 +9,8 @@ tags: [sdassemblypros, jobcore]
 SQL only. No Supabase **client** lives here — `src/lib/supabase.ts` (with the Expo SecureStore
 storage adapter) is S4's work, not S3's.
 
-**A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). All twelve migrations
-(`0001_foundation.sql` through `0012_marketing.sql`) live in this directory and have been applied to
+**A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). All thirteen migrations
+(`0001_foundation.sql` through `0013_rls_fixes.sql`) live in this directory and have been applied to
 it, the four auth users have been created, and `seed.hosted.sql` has been applied (`public.profiles`
 holds 4 rows). Both hosted RLS suites have been run against it and both passed — but that coverage
 is limited to `0001_foundation` and `0004_scheduling`; the newer RLS-bearing migrations (`0005` money,
@@ -33,6 +33,7 @@ separate follow-on work.
 | `0010_payment_review.sql` | P5 payment + review — org-level `payment_providers` config plus the payment/review schema, RLS |
 | `0011_handoff_token_issue.sql` | P5.S5 handoff token issuance — `issue_handoff_token(p_job_id uuid)`, a signed, expiring, single-job-scoped token inserted into `public.handoff_tokens` (0010) |
 | `0012_marketing.sql` | Adds `reviews.sort_order` + index, `job_photos.customer_consent`; creates `marketing_assets`, `post_drafts`, `post_draft_assets`, `post_targets`, `campaign_log`, `social_providers`, `social_provider_credentials` tables with RLS; dual-consent trigger on `post_draft_assets` |
+| `0013_rls_fixes.sql` | RLS defect fixes for hosted-suite findings (0004 AC-7, 0008 AC-8.2, 0010 AC-RV-2) — supersedes `jobs_select_org`, `jobs_update_org`, and `reviews_insert_anon`; adds `job_exists_in_org()` helper; idempotent, apply after `0012_marketing.sql` |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
@@ -73,8 +74,8 @@ Order is not cosmetic — each step depends on the previous one existing.
 7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
    and rolls itself back, so the database is unchanged either way.
 
-All migrations through `0012_marketing.sql` have been applied to the hosted project (ref
-`vogkxkcceahtwyovpxsg`), in the order `0001` → `0012` per each file's own "apply after" header.
+All migrations through `0013_rls_fixes.sql` have been applied to the hosted project (ref
+`vogkxkcceahtwyovpxsg`), in the order `0001` → `0013` per each file's own "apply after" header.
 
 Applying `seed.sql` before step 4 on a hosted project fails on the `profiles.id → auth.users(id)`
 foreign key. That failure is correct behavior, not a bug in the seed.
@@ -186,3 +187,11 @@ Verify after applying: sign up an invited address and confirm the profile lands 
 org + role and the invitation is stamped consumed; then sign up an *uninvited* address and confirm
 the auth user exists, **no** `profiles` row was created, and exactly one `signup_attempts` row is
 present for that user id.
+
+## Edge Functions
+
+### price-sheet-current
+Public price feed for the current published price sheet per organization. Reads via the service-role client only (price_sheets_admin_all / price_sheet_rates_admin_all RLS is admin-only in every direction, so no anon/authenticated read path exists). Deploy REQUIRES --no-verify-jwt (verify_jwt = false) — see functions/price-sheet-current/DEPLOY.md.
+
+### handoff-resolve
+Token-based payment-handoff resolution API for the review/handoff flow (GET /:token, POST /:token/providers/:providerId/handoff). Service-role client only, no Supabase auth session. Deploy REQUIRES --no-verify-jwt (verify_jwt = false) — see functions/handoff-resolve/DEPLOY.md.
