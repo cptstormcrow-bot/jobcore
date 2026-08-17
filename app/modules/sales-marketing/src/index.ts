@@ -16,6 +16,11 @@ import type { JobcoreModule } from '@jobcore/module-sdk';
 
 import { SalesMarketingRoot } from './screens/SalesMarketingRoot';
 
+export type { ModuleSession } from './lib/module-session';
+export { setModuleSession, clearModuleSession } from './lib/module-session';
+export type { ModulePorts } from './lib/module-ports';
+export { setModulePorts, getModulePorts } from './lib/module-ports';
+
 /**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.

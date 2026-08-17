@@ -17,9 +17,10 @@ import { View, StyleSheet } from 'react-native';
 import { Button } from '@jobcore/ui';
 
 import { ReviewLibrary } from './ReviewLibrary';
-import { PitchPicker } from './PitchPicker';
+import { PitchPicker, type PitchAngle } from './PitchPicker';
 import { Composer } from './Composer';
 import { Reporting } from './Reporting';
+import { getModuleSession } from '../lib/module-session';
 
 type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting';
 
@@ -32,15 +33,44 @@ const TABS: Array<{ key: SubView; label: string }> = [
 
 export function SalesMarketingRoot(): React.ReactElement {
   const [subView, setSubView] = React.useState<SubView>('reviewLibrary');
+  const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
+  // No service/service-area picker exists yet anywhere in this module —
+  // these stay null until one lands; Composer already treats both as
+  // nullable (`serviceId: string | null` / `serviceAreaId: string | null`).
+  const [serviceId] = React.useState<string | null>(null);
+  const [serviceAreaId] = React.useState<string | null>(null);
+
+  const handleNavigateToComposer = React.useCallback((angle: PitchAngle) => {
+    setPitchAngle(angle);
+    setSubView('composer');
+  }, []);
 
   let content: React.ReactElement;
   switch (subView) {
     case 'pitchPicker':
-      content = React.createElement(PitchPicker, null);
+      content = React.createElement(PitchPicker, { onNavigateToComposer: handleNavigateToComposer });
       break;
-    case 'composer':
-      content = React.createElement(Composer, null);
+    case 'composer': {
+      const session = getModuleSession();
+      content =
+        session !== null && pitchAngle !== null
+          ? React.createElement(Composer, {
+              organizationId: session.org.id,
+              pitchAngle,
+              serviceId,
+              serviceAreaId,
+              onDone: () => setSubView('pitchPicker'),
+            })
+          : React.createElement(
+              View,
+              null,
+              // No session or no pitch angle selected yet — Composer
+              // requires both required props to be real values, so fall
+              // back to Pitch Picker's own tab rather than mounting
+              // Composer with placeholder/invalid props.
+            );
       break;
+    }
     case 'reporting':
       content = React.createElement(Reporting, null);
       break;

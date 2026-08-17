@@ -12,7 +12,9 @@ import { registerModule } from '@jobcore/module-sdk';
 import { adminFinanceModule } from '@jobcore/admin-finance';
 import { fieldTechModule } from '@jobcore/field-tech';
 import { salesMarketingModule } from '@jobcore/sales-marketing';
+import { paymentReviewModule } from '@jobcore/payment-review';
 
 registerModule(adminFinanceModule);
 registerModule(fieldTechModule);
 registerModule(salesMarketingModule);
+registerModule(paymentReviewModule);

@@ -29,29 +29,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, ListItem, EmptyState, LoadingState, ErrorState } from '@jobcore/ui';
 
-import type { PaymentRow } from '../data/ports';
-
-/**
- * Minimal query surface this screen depends on: `select(...).in(...)`
- * against one table, matching `data/ports.ts`'s `SupabaseSelectClient`
- * minimal-surface discipline. Kept local to this screen (rather than
- * widening `SupabaseSelectClient`) because this screen's query shape has no
- * `.eq()` step — it filters `status` directly with `.in()`.
- */
-export interface ReconciliationQueryClient {
-  from(table: string): {
-    select(columns: string): {
-      in(
-        column: string,
-        values: readonly string[],
-      ): Promise<{ data: PaymentRow[] | null; error: { message: string } | null }>;
-    };
-  };
-}
+import type { PaymentRow, SupabaseSelectClient } from '../data/ports';
 
 export interface ReconciliationViewProps {
   /** Injected query client — the host is the sole source, mirroring `index.ts`'s `setSupabaseClient`. */
-  client: ReconciliationQueryClient;
+  client: SupabaseSelectClient;
 }
 
 const NEEDS_ATTENTION_STATUSES: readonly string[] = ['pending', 'failed'];

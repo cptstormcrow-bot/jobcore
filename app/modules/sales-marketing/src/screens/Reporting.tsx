@@ -35,6 +35,7 @@
 import * as React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review } from '../data/ports';
 
 interface PlatformPeriodCount {
@@ -86,6 +87,7 @@ function buildReviewsByPlatform(reviews: readonly Review[]): PlatformCount[] {
 }
 
 export function Reporting(): React.ReactElement {
+  const session = getModuleSession();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -96,15 +98,21 @@ export function Reporting(): React.ReactElement {
   const [reviewsTotalCount, setReviewsTotalCount] = React.useState(0);
 
   const load = React.useCallback(() => {
+    if (session === null) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const { campaignLog, marketingAssets, reviews } = getModulePorts();
+    const organizationId = session.org.id;
 
     Promise.all([
-      campaignLog.listForOrganization(''),
-      marketingAssets.list(''),
-      reviews.list(''),
+      campaignLog.listForOrganization(organizationId),
+      marketingAssets.list(organizationId),
+      reviews.list(organizationId),
     ])
       .then(([logEntries, assets, publishedReviews]: [CampaignLogEntry[], MarketingAsset[], Review[]]) => {
         setPostsByPlatformPeriod(buildPostsByPlatformAndPeriod(logEntries));
@@ -121,7 +129,7 @@ export function Reporting(): React.ReactElement {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [session]);
 
   React.useEffect(() => {
     load();

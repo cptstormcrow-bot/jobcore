@@ -1,10 +1,19 @@
 /**
  * Route component for the admin-finance module (P3d.3).
  *
- * The host renders this with zero props (`<Screen />`) — every prop here is
- * optional and the component must render a truthful empty view when nothing
- * is injected. Ports are handed in by the host via `AdminFinanceRootProps`;
- * the session is read through the injected seam in `../lib/module-session`.
+ * The host renders this with zero props (`<Screen />`) — ports are injected
+ * by the host into the module-scope seam in `../lib/module-ports` (via
+ * `setModulePorts`) synchronously in its own render body, BEFORE this
+ * component's render body runs (see `apps\mobile\app\m\[moduleId].tsx`'s
+ * admin-finance block for why that ordering is guaranteed). This component
+ * therefore calls `getModulePorts()` directly, with no null-guard around it,
+ * the same pattern `Reporting.tsx` (sales-marketing) uses for its ports —
+ * `getModulePorts()` is fail-closed and will throw if that guarantee is ever
+ * broken, which is the correct behavior (caught by the per-module Error
+ * Boundary) rather than silently rendering with no data.
+ *
+ * The session is still read through the injected seam in `../lib/module-session`,
+ * unchanged from before.
  *
  * This is an internal state-driven sub-view switcher, not a navigator —
  * `route.path` is never read here. Read-only: this screen never writes a
@@ -15,14 +24,8 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
-import type { JobRepository, PriceSheetRepository, PayPeriodRepository } from '../data/ports';
-import { getModuleSession } from '../lib/module-session';
-
-export interface AdminFinanceRootProps {
-  jobs?: JobRepository;
-  priceSheets?: PriceSheetRepository;
-  payPeriods?: PayPeriodRepository;
-}
+import { getModulePorts } from '../lib/module-ports';
+import { useModuleSession } from '../lib/module-session';
 
 type SubView = 'overview' | 'jobs';
 
@@ -40,16 +43,16 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
-export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
-  const { jobs: jobRepository } = props;
+export function AdminFinanceRoot() {
   const [subView, setSubView] = useState<SubView>('overview');
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
-  const session = getModuleSession();
+  const session = useModuleSession();
+  const { jobs: jobRepository } = getModulePorts();
 
   useEffect(() => {
-    if (!session || !jobRepository) {
-      return;
+    if (!session) {
+      return undefined;
     }
     let cancelled = false;
     setLoadState({ kind: 'loading' });
@@ -82,34 +85,11 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
     );
   }
 
-  if (!jobRepository) {
-    return (
-      <View style={styles.screen}>
-        <EmptyState
-          title="Admin & Finance"
-          message="No data source is connected for this module yet."
-        />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.screen}>
       <View style={styles.tabRow}>
-        <Button
-          label="Overview"
-          variant={subView === 'overview' ? 'primary' : 'outline'}
-          size="sm"
-          onPress={() => setSubView('overview')}
-          style={styles.tabButton}
-        />
-        <Button
-          label="Jobs"
-          variant={subView === 'jobs' ? 'primary' : 'outline'}
-          size="sm"
-          onPress={() => setSubView('jobs')}
-          style={styles.tabButton}
-        />
+        <Button label="Overview" variant={subView === 'overview' ? 'primary' : 'outline'} size="sm" onPress={() => setSubView('overview')} style={styles.tabButton} />
+        <Button label="Jobs" variant={subView === 'jobs' ? 'primary' : 'outline'} size="sm" onPress={() => setSubView('jobs')} style={styles.tabButton} />
       </View>
 
       {loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -129,11 +109,7 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
           ) : (
             <Card style={styles.card}>
               {loadState.jobs.map((job) => (
-                <ListItem
-                  key={job.id}
-                  title={job.address ?? job.description ?? job.id}
-                  subtitle={formatDate(job.scheduledStart)}
-                />
+                <ListItem key={job.id} title={job.address ?? job.description ?? job.id} subtitle={formatDate(job.scheduledStart)} />
               ))}
             </Card>
           )}
@@ -146,22 +122,9 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
 export default AdminFinanceRoot;
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.offWhite,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  tabButton: {
-    borderRadius: radius.md,
-  },
-  content: {
-    padding: spacing.md,
-  },
-  card: {
-    marginBottom: spacing.md,
-  },
+  screen: { flex: 1, backgroundColor: colors.offWhite },
+  tabRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.sm },
+  tabButton: { borderRadius: radius.md },
+  content: { padding: spacing.md },
+  card: { marginBottom: spacing.md },
 });

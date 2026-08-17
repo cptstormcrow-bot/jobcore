@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, ErrorState, colors, spacing, typography, radius } from '@jobcore/ui';
 
@@ -11,6 +11,7 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const canSubmit = email.length > 0 && password.length > 0 && !busy;
 
@@ -32,7 +33,7 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.body}>
-        <Text style={styles.title}>Jobcore</Text>
+        <Text style={styles.title}>JobCore©</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
 
         <Card style={styles.card}>
@@ -51,21 +52,29 @@ export default function SignInScreen() {
           />
 
           <Text style={styles.label}>Password</Text>
-          <TextInput
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-            autoComplete="current-password"
-            textContentType="password"
-            secureTextEntry
-            placeholder="••••••••"
-            placeholderTextColor={colors.textMuted}
-            style={styles.input}
-            editable={!busy}
-            onSubmitEditing={() => {
-              if (canSubmit) void handleSubmit();
-            }}
-          />
+          <View style={styles.passwordWrap}>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              autoComplete="current-password"
+              textContentType="password"
+              secureTextEntry={!showPassword}
+              placeholder="••••••••"
+              placeholderTextColor={colors.textMuted}
+              style={[styles.input, styles.passwordInput]}
+              editable={!busy}
+              onSubmitEditing={() => {
+                if (canSubmit) void handleSubmit();
+              }}
+            />
+            <Pressable
+              style={styles.passwordToggle}
+              onPress={() => setShowPassword((prev) => !prev)}
+            >
+              <Text style={styles.passwordToggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
+            </Pressable>
+          </View>
 
           <Button
             label={busy ? 'Signing in…' : 'Sign in'}
@@ -116,4 +125,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   submit: { marginTop: spacing.lg },
+  passwordWrap: { position: 'relative', justifyContent: 'center' },
+  passwordInput: { paddingRight: spacing.lg * 2 },
+  passwordToggle: {
+    position: 'absolute',
+    right: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+  passwordToggleText: {
+    color: colors.primary,
+    fontSize: typography.size.label,
+    fontWeight: typography.weight.semibold,
+  },
 });

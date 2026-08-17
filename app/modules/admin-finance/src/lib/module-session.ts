@@ -25,9 +25,30 @@ export interface ModuleSession {
   userId: string;
 }
 
+import { useSyncExternalStore } from 'react';
 import type { Organization, Role } from '@jobcore/core';
 
 let current: ModuleSession | null = null;
+
+const listeners = new Set<() => void>();
+
+function notify(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/**
+ * Subscribes to changes in the injected session. Returns an unsubscribe
+ * function. Intended for use via `useModuleSession` below; exposed
+ * directly for any non-hook consumer that needs it.
+ */
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
 
 /**
  * Injection point for the host. Pass an already-narrowed `ModuleSession`
@@ -36,6 +57,7 @@ let current: ModuleSession | null = null;
  */
 export function setModuleSession(session: ModuleSession | null): void {
   current = session;
+  notify();
 }
 
 /**
@@ -51,4 +73,14 @@ export function getModuleSession(): ModuleSession | null {
 /** Convenience wrapper — equivalent to `setModuleSession(null)`. */
 export function clearModuleSession(): void {
   current = null;
+  notify();
+}
+
+/**
+ * React hook form of `getModuleSession`. Subscribes the calling component
+ * to session changes via `useSyncExternalStore` so it re-renders when the
+ * host injects (or clears) a session after this component's first commit.
+ */
+export function useModuleSession(): ModuleSession | null {
+  return useSyncExternalStore(subscribe, getModuleSession);
 }

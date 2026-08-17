@@ -141,6 +141,27 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
   };
 }
 
+/**
+ * Wraps a promise with a timeout so a hung native call (observed: SecureStore /
+ * getSession() occasionally never resolving on some devices) degrades to the
+ * existing 'error' state instead of leaving the UI on an infinite spinner.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 export interface SessionProviderProps {
   children: React.ReactNode;
 }
@@ -151,6 +172,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
 
   useEffect(() => {
     cancelledRef.current = false;
+    console.log('[JOBCORE-DIAG] SessionProvider effect mounted');
 
     // Cold-start failure (no session established yet) shows the error screen.
     // Warm failure (we already have a good authenticated session) is swallowed —
@@ -159,6 +181,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
     // `disabled` and `unauthenticated` are definitive, not something to fall
     // back to.
     const applyOutcome = (outcome: ResolveOutcome) => {
+      console.log('[JOBCORE-DIAG] applyOutcome called, kind=', outcome.kind, 'cancelled=', cancelledRef.current);
       if (cancelledRef.current) return;
       setState((prev) => {
         if (outcome.kind === 'failed') {
@@ -183,16 +206,31 @@ export function SessionProvider({ children }: SessionProviderProps) {
     });
 
     function runCheck() {
-      void supabase.auth
-        .getSession()
-        .then(({ data }) => resolveSession(data.session))
-        .then(applyOutcome)
-        .catch((err) => applyOutcome(toFailure(err)));
+      console.log('[JOBCORE-DIAG] runCheck() called');
+      void withTimeout(
+        supabase.auth.getSession(),
+        15000,
+        'Timed out reaching the server. Check your connection and retry.',
+      )
+        .then(({ data }) => {
+          console.log('[JOBCORE-DIAG] getSession() resolved');
+          return resolveSession(data.session);
+        })
+        .then((outcome) => {
+          console.log('[JOBCORE-DIAG] resolveSession() resolved, kind=', outcome.kind);
+          applyOutcome(outcome);
+        })
+        .catch((err) => {
+          console.log('[JOBCORE-DIAG] runCheck() caught error:', err instanceof Error ? err.message : String(err));
+          applyOutcome(toFailure(err));
+        });
     }
 
+    console.log('[JOBCORE-DIAG] about to invoke runCheck() from effect');
     runCheck();
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('[JOBCORE-DIAG] onAuthStateChange fired, event=', _event, 'hasSession=', !!session);
       // Re-resolve from scratch on every auth transition; the listener fires for
       // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED and USER_UPDATED alike.
       void resolveSession(session)
@@ -224,13 +262,30 @@ export function useSession(): SessionState {
 /**
  * Sign in with email + password. Returns an error message on failure and
  * `null` on success; the provider's auth listener drives the state change.
+ *
+ * Wrapped in withTimeout() for the same reason as getSession() in runCheck():
+ * signInWithPassword() persists the new session via the SecureStore chunking
+ * adapter (see supabase.ts), and a hung native SecureStore call would
+ * otherwise leave the UI stuck on "Signing in..." forever with no error path.
  */
 export async function signIn(email: string, password: string): Promise<string | null> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-  return error ? error.message : null;
+  console.log('[JOBCORE-DIAG] signIn() called');
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    console.log('[JOBCORE-DIAG] signIn() resolved, error=', error ? error.message : null);
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
+    console.log('[JOBCORE-DIAG] signIn() threw/timed out:', message);
+    return message;
+  }
 }
 
 /** Sign out. Returns an error message on failure, `null` on success. */

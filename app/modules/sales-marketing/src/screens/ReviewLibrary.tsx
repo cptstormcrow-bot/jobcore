@@ -36,11 +36,14 @@
 import * as React from 'react';
 import { View, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
 
 const RATING_OPTIONS: readonly number[] = [0, 1, 2, 3, 4, 5];
 
 export function ReviewLibrary(): React.ReactElement {
+  const session = getModuleSession();
+
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -50,6 +53,11 @@ export function ReviewLibrary(): React.ReactElement {
   const [communityId, setCommunityId] = React.useState<string>('');
 
   const load = React.useCallback(() => {
+    if (session === null) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -76,7 +84,7 @@ export function ReviewLibrary(): React.ReactElement {
       .finally(() => {
         setLoading(false);
       });
-  }, [minRating, serviceId, communityId]);
+  }, [session, minRating, serviceId, communityId]);
 
   React.useEffect(() => {
     load();
@@ -93,6 +101,9 @@ export function ReviewLibrary(): React.ReactElement {
       if (target === undefined) {
         return;
       }
+      if (session === null) {
+        return;
+      }
 
       const { reviews: reviewsRepository } = getModulePorts();
       Promise.all([
@@ -104,8 +115,16 @@ export function ReviewLibrary(): React.ReactElement {
           setError(err instanceof Error ? err.message : 'Failed to reorder review.');
         });
     },
-    [reviews, load],
+    [session, reviews, load],
   );
+
+  if (session === null) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

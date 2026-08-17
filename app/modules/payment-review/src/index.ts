@@ -10,12 +10,13 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { LoadingState } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Ctx, Job } from '@jobcore/core';
 
 import { transitionJob } from './domain/transition';
 import { hasSettledPaymentForJob, type SupabaseSelectClient } from './data/ports';
+import { ReconciliationView } from './screens/ReconciliationView';
 
 /**
  * Injection seam for the Supabase client `hasSettledPaymentForJob` queries.
@@ -38,22 +39,18 @@ function getSupabaseClient(): SupabaseSelectClient | null {
 }
 
 /**
- * Placeholder root screen for the payment-review route. Real screens
- * (handoff QR view, provider confirmation, review capture) are S3+ work.
+ * Root screen for the payment-review route: renders the real
+ * `ReconciliationView` once a Supabase client has been injected via
+ * `setSupabaseClient`, falling back to `@jobcore/ui`'s `LoadingState`
+ * before that.
  */
-function PaymentReviewRoot(): React.ReactElement {
-  return React.createElement(
-    View,
-    { style: styles.screen },
-    React.createElement(Text, null, 'Payment & Review'),
-  );
+function PaymentReviewScreen(): React.ReactElement {
+  const client = getSupabaseClient();
+  if (client === null) {
+    return React.createElement(LoadingState);
+  }
+  return React.createElement(ReconciliationView, { client });
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-});
 
 /**
  * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.
@@ -102,7 +99,7 @@ export const paymentReviewModule: JobcoreModule = {
   id: 'payment-review',
   displayName: 'Payment & Review',
   requiredRoles: ['owner', 'admin'],
-  routes: [{ path: 'payment-review', component: PaymentReviewRoot }],
+  routes: [{ path: 'payment-review', component: PaymentReviewScreen }],
   navEntries: [{ icon: 'card', label: 'Payment & Review', order: 30 }],
   jobActions: [
     {
