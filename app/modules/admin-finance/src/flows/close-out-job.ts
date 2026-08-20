@@ -28,10 +28,17 @@ import { transitionJob } from '../domain/transition';
 import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
 import { calculateCommission } from '../money/commission';
 import type { CommissionLine, CompensationPolicy, PriceSheetRate } from '../money/types';
-import type { CommissionRepository, PriceSheetRepository } from '../data/ports';
+import type { CalendarEventRepository, CloseOutFailureRepository, CommissionRepository, JobRepository, PriceSheetRepository } from '../data/ports';
 
 export interface CloseOutJobDeps {
   ctx: Ctx;
+  /**
+   * Workstream E (`app/supabase/0014_calendar_events.sql`) — persists the
+   * `completed` -> `paid` transition below (`transitionJob` never writes to
+   * the repository — see its doc comment) and logs it as a calendar event.
+   */
+  jobs: JobRepository;
+  calendarEvents: CalendarEventRepository;
   /** Resolves the org's active `published` price sheet (P3a.3's `getActive`). */
   priceSheetRepository: PriceSheetRepository;
   /**
@@ -45,6 +52,8 @@ export interface CloseOutJobDeps {
   commissionRepository: CommissionRepository;
   /** Who closed the job — `Ctx` has no actor identity field to read this from. */
   closedByUserId: string;
+  /** Optional — records close-out failures/attempts for operator visibility and retry. */
+  closeOutFailures?: CloseOutFailureRepository;
 }
 
 export type CloseOutJobResult =
@@ -71,24 +80,23 @@ const READY_FOR_PAID_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>(['com
  */
 export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<CloseOutJobResult> {
   if (!awaitingCloseOut(job) || !READY_FOR_PAID_STATUSES.has(job.status)) {
-    return {
-      ok: false,
-      reason: `Job ${job.id} is not ready for the completed -> paid transition (status "${job.status}").`,
-    };
+    const reason = `Job ${job.id} is not ready for the completed -> paid transition (status "${job.status}").`;
+    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'not_ready', reason);
+    return { ok: false, reason };
   }
 
   const blockers = closeOutBlockers(job, deps.ctx);
   const firstBlocker = blockers[0];
   if (firstBlocker !== undefined) {
+    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'blocked', firstBlocker);
     return { ok: false, reason: firstBlocker };
   }
 
   const activePriceSheet = await deps.priceSheetRepository.getActive(job.organizationId);
   if (!activePriceSheet) {
-    return {
-      ok: false,
-      reason: `No active price sheet for organization ${job.organizationId}; cannot write the commission for job ${job.id}.`,
-    };
+    const reason = `No active price sheet for organization ${job.organizationId}; cannot write the commission for job ${job.id}.`;
+    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'no_price_sheet', reason);
+    return { ok: false, reason };
   }
 
   const commissionResult = calculateCommission(
@@ -98,16 +106,47 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
     deps.rates,
   );
   if (!commissionResult.ok) {
+    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'commission_calc', commissionResult.reason);
     return { ok: false, reason: commissionResult.reason };
   }
 
-  const paidJob = await transitionJob(job, 'paid', deps.ctx);
+  try {
+    const transitionedJob = await transitionJob(job, 'paid', deps.ctx);
 
-  await deps.commissionRepository.create(
-    paidJob.organizationId,
-    commissionResult.value,
-    deps.closedByUserId,
-  );
+    // Workstream E: persist the computed status (transitionJob never writes to
+    // the repository) and log the transition as a calendar event.
+    const paidJob = await deps.jobs.updateStatus(transitionedJob.id, transitionedJob.status);
+    await deps.calendarEvents.logTransition(paidJob.organizationId, paidJob.id, job.status, paidJob.status);
 
-  return { ok: true, job: paidJob, commission: commissionResult.value };
+    await deps.commissionRepository.create(
+      paidJob.organizationId,
+      commissionResult.value,
+      deps.closedByUserId,
+    );
+
+    await deps.closeOutFailures?.resolve(job.id, 'resolved_retry', deps.closedByUserId);
+
+    return { ok: true, job: paidJob, commission: commissionResult.value };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'write', reason);
+    return { ok: false, reason: `close-out write failed for job ${job.id}: ${reason}` };
+  }
+}
+
+/**
+ * Operator-triggered retry of a previously failed close-out. Records the
+ * retry attempt (if a `closeOutFailures` repository is configured) and then
+ * re-invokes `closeOutJob` unchanged. `maxAttempts` is accepted for future
+ * use but is not enforced in this pass — retry is operator-triggered only,
+ * no auto-retry loop.
+ */
+export async function retryCloseOut(
+  job: Job,
+  deps: CloseOutJobDeps,
+  maxAttempts = 5,
+): Promise<CloseOutJobResult> {
+  void maxAttempts;
+  await deps.closeOutFailures?.recordAttempt(job.id);
+  return closeOutJob(job, deps);
 }
