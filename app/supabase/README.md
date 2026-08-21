@@ -34,6 +34,21 @@ separate follow-on work.
 | `0011_handoff_token_issue.sql` | P5.S5 handoff token issuance — `issue_handoff_token(p_job_id uuid)`, a signed, expiring, single-job-scoped token inserted into `public.handoff_tokens` (0010) |
 | `0012_marketing.sql` | Adds `reviews.sort_order` + index, `job_photos.customer_consent`; creates `marketing_assets`, `post_drafts`, `post_draft_assets`, `post_targets`, `campaign_log`, `social_providers`, `social_provider_credentials` tables with RLS; dual-consent trigger on `post_draft_assets` |
 | `0013_rls_fixes.sql` | RLS defect fixes for hosted-suite findings (0004 AC-7, 0008 AC-8.2, 0010 AC-RV-2) — supersedes `jobs_select_org`, `jobs_update_org`, and `reviews_insert_anon`; adds `job_exists_in_org()` helper; idempotent, apply after `0012_marketing.sql` |
+| `0014_calendar_events.sql` | Calendar events core table + RLS |
+| `0015_job_detail_extensions.sql` | Job-detail extension columns/tables |
+| `0016_job_status_backfill.sql` | Backfills `job_status` data for pre-existing rows |
+| `0017_sales_callback_status.sql` | Sales callback status tracking |
+| `0018_job_notes_gotcha_kind.sql` | Adds a `gotcha` kind to job notes |
+| `0018_beta_test_jobs.sql` | Adds `jobs.is_beta boolean NOT NULL DEFAULT false` — backs the "Spawn Test Jobs" feature |
+| `0019_time_off_auto_decide.sql` | Time-off requests auto-decided at insert (no admin approve/deny step); adds `decide_time_off_request()` trigger function and `cancel_time_off_request(uuid)` RPC |
+| `0020_job_detail_extensions_read_access.sql` | Read-access RLS for job-detail extensions |
+| `0022_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy + area pricing schema |
+| `0022_close_out_failures.sql` | Close-out failure tracking |
+| `0023_close_out_override_rpcs.sql` | Admin override RPCs for close-out |
+| `0023_field_ops_segway_and_estimating.sql` | Field-ops segway + estimating schema |
+| `0024_time_tracking_and_variance.sql` | Time tracking + variance schema |
+| `0026_close_out_write_rpc.sql` | Close-out write RPC |
+| `0027_beta_test_source.sql` | Widens `jobs_source_check` to allow `'beta-test'` — unblocks the "Spawn Test Jobs" feature's synthetic-row insert. |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
@@ -74,8 +89,31 @@ Order is not cosmetic — each step depends on the previous one existing.
 7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
    and rolls itself back, so the database is unchanged either way.
 
-All migrations through `0013_rls_fixes.sql` have been applied to the hosted project (ref
-`vogkxkcceahtwyovpxsg`), in the order `0001` → `0013` per each file's own "apply after" header.
+All migrations through `0026_close_out_write_rpc.sql` have been applied to the hosted project (ref
+`vogkxkcceahtwyovpxsg`). Files `0001`-`0013` were applied in order per each file's own "apply after"
+header. Files `0014`-`0026` were applied in this order: `0014`, `0015`, `0016`, `0017`,
+`0018_job_notes_gotcha_kind`, `0018_beta_test_jobs`, `0019_time_off_auto_decide`,
+`0020_job_detail_extensions_read_access`, `0022_referrer_taxonomy_and_area_pricing`,
+`0022_close_out_failures`, `0023_close_out_override_rpcs`, `0023_field_ops_segway_and_estimating`,
+`0024_time_tracking_and_variance`, `0026_close_out_write_rpc`.
+
+Two gaps in the numbering are known and resolved: `0022_close_out_failures.sql` and
+`0026_close_out_write_rpc.sql` each carry a header comment naming a dependency (`0021`, `0025`
+respectively) that never existed on disk or in git history — resolved as apply-after-previous-in-chain,
+i.e. `0022_close_out_failures` applied immediately after `0022_referrer_taxonomy_and_area_pricing`, and
+`0026_close_out_write_rpc` applied immediately after `0024_time_tracking_and_variance`.
+
+`0027_beta_test_source.sql` was applied after `0026_close_out_write_rpc.sql` via the same
+`supabase db query --file <path> --linked` command, to fix a `jobs_source_check` violation
+discovered during live verification of Spawn Test Jobs.
+
+Applied via the Supabase CLI: `npx -y supabase@latest db query --file <path> --linked` (not `db push`
+or `db execute`, which do not apply to this repo's non-timestamped `supabase/*.sql` file layout).
+`0019_time_off_auto_decide.sql` required a workaround to apply: its dollar-quoted function bodies use a
+bare `$` delimiter (`as $ ... $;`) instead of the conventional `$tag$`, which the CLI's `db query --file`
+Management-API path mis-parses as a syntax error. It was applied from a scratchpad copy with the bare
+`$` swapped to `$body$` (semantically identical dollar-quoting) — the tracked source file on disk was
+never modified. No other file in `0014`-`0026` carries this pattern.
 
 Applying `seed.sql` before step 4 on a hosted project fails on the `profiles.id → auth.users(id)`
 foreign key. That failure is correct behavior, not a bug in the seed.
