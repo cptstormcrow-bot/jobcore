@@ -55,9 +55,18 @@ export function subscribe(listener: () => void): () => void {
  * once the host has resolved its own session, or `null` to clear it
  * (e.g. on sign-out). This is the ONLY function that may write `current`.
  */
+function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.org.id === b.org.id && a.role === b.role && a.userId === b.userId;
+}
+
 export function setModuleSession(session: ModuleSession | null): void {
+  const changed = !sessionsEqual(current, session);
   current = session;
-  notify();
+  if (changed) {
+    notify();
+  }
 }
 
 /**

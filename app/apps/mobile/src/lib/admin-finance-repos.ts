@@ -43,6 +43,7 @@ import type {
   CalendarEventRepository,
   CalendarEventDraft,
   TechServiceAreaRepository,
+  ServiceAreaRepository,
   CustomerRow,
   Customer,
   CustomerRepository,
@@ -84,6 +85,7 @@ import type {
 } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { toTimeOffRequestAdmin } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { listTechServiceAreas } from '../../../../modules/admin-finance/src/data/tech-service-area-repo';
+import { listServiceAreas } from '../../../../modules/admin-finance/src/data/service-area-repo';
 
 /**
  * Builds a nonce for `makeIdempotencyKey` without depending on a uuid
@@ -1098,6 +1100,48 @@ export function createTechServiceAreaRepository(): TechServiceAreaRepository {
       }
       return result.value;
     },
+
+    async assignToTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void> {
+      const { error } = await supabase.from('tech_service_areas').upsert(
+        {
+          organization_id: organizationId,
+          tech_id: techId,
+          service_area_id: serviceAreaId,
+        },
+        { onConflict: 'tech_id,service_area_id' }
+      );
+      if (error) {
+        throw new Error(`assignToTech failed: ${error.message}`);
+      }
+    },
+
+    async removeFromTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void> {
+      const { error } = await supabase
+        .from('tech_service_areas')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('tech_id', techId)
+        .eq('service_area_id', serviceAreaId);
+      if (error) {
+        throw new Error(`removeFromTech failed: ${error.message}`);
+      }
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * ServiceAreaRepository
+ * ------------------------------------------------------------------ */
+
+export function createServiceAreaRepository(): ServiceAreaRepository {
+  return {
+    async listForOrganization(organizationId: string) {
+      const result = await listServiceAreas(supabase, organizationId);
+      if (!result.ok) {
+        throw new Error(`listForOrganization failed: ${result.reason}`);
+      }
+      return result.value;
+    },
   };
 }
 
@@ -1268,8 +1312,13 @@ export function createCustomerRepository(): CustomerRepository {
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
+let cachedPorts: ModulePorts | null = null;
+
 export function buildAdminFinancePorts(): ModulePorts {
-  return {
+  if (cachedPorts) {
+    return cachedPorts;
+  }
+  cachedPorts = {
     jobs: createJobRepository(),
     priceSheets: createPriceSheetRepository(),
     payPeriods: createPayPeriodRepository(),
@@ -1289,6 +1338,8 @@ export function buildAdminFinancePorts(): ModulePorts {
     calendarEvents: createCalendarEventRepository(),
     timeOffAdmin: createTimeOffAdminRepository(),
     techServiceAreas: createTechServiceAreaRepository(),
+    serviceAreas: createServiceAreaRepository(),
     customers: createCustomerRepository(),
   };
+  return cachedPorts;
 }

@@ -20,9 +20,9 @@
  * job's stage. It has no access to any write path for that field at all.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
@@ -44,7 +44,7 @@ import { EmployeeRosterScreen } from './EmployeeRosterScreen';
 import { EmployeeEditorScreen } from './EmployeeEditorScreen';
 import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
-import type { CloseOutPhoto, TechServiceArea } from '../data/ports';
+import type { CloseOutPhoto, TechServiceArea, ServiceArea } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { qualifyLead } from '../flows/qualify-lead';
@@ -68,7 +68,7 @@ type SubView =
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[] }
+  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[] }
   | { kind: 'failed'; message: string };
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
@@ -90,8 +90,10 @@ export function AdminFinanceRoot() {
   const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
+  const [qualifyError, setQualifyError] = useState<string | null>(null);
 
   const session = useModuleSession();
+  const orgId = session?.org.id ?? null;
   const ports = getModulePorts();
   const {
     jobs: jobRepository,
@@ -110,21 +112,42 @@ export function AdminFinanceRoot() {
     });
   }
 
+  function refreshJobs() {
+    if (!orgId) {
+      return;
+    }
+    void jobRepository.listForOrganization(orgId).then((jobs) => {
+      setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, jobs } : prev));
+    });
+  }
+
+  const hasFocusedOnceRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasFocusedOnceRef.current) {
+        hasFocusedOnceRef.current = true;
+        return;
+      }
+      refreshJobs();
+    }, [orgId, jobRepository])
+  );
+
   useEffect(() => {
-    if (!session) {
+    if (!orgId) {
       return undefined;
     }
     let cancelled = false;
     setLoadState({ kind: 'loading' });
     Promise.all([
-      jobRepository.listForOrganization(session.org.id),
-      employeeRepository.listEmployees(session.org.id),
-      commissionRepository.listForOrganization(session.org.id),
-      techServiceAreaRepository.listForOrganization(session.org.id),
+      jobRepository.listForOrganization(orgId),
+      employeeRepository.listEmployees(orgId),
+      commissionRepository.listForOrganization(orgId),
+      techServiceAreaRepository.listForOrganization(orgId),
+      ports.serviceAreas.listForOrganization(orgId),
     ])
-      .then(([jobs, employees, commissions, techServiceAreas]) => {
+      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas]) => {
         if (!cancelled) {
-          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas });
+          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas });
         }
       })
       .catch((error: unknown) => {
@@ -136,7 +159,7 @@ export function AdminFinanceRoot() {
     return () => {
       cancelled = true;
     };
-  }, [session, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository]);
+  }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository]);
 
   function handleAssign(job: Job, techId: string) {
     if (!session) {
@@ -181,12 +204,17 @@ export function AdminFinanceRoot() {
       return;
     }
     const qualifiedLead: Lead = { ...selectedLead, ...selection };
-    void qualifyLead(qualifiedLead, null, {
+    setQualifyError(null);
+    void qualifyLead(qualifiedLead, selection.serviceAreaId, {
       jobs: jobRepository,
       leads: ports.leads,
       calendarEvents: ports.calendarEvents,
       ctx: { role: session.role, now: () => new Date().toISOString() },
-    }).then(() => {
+    }).then((result) => {
+      if (!result.ok) {
+        setQualifyError(result.reason);
+        return;
+      }
       setSelectedLead(null);
       setSubView('leadInbox');
     });
@@ -194,6 +222,7 @@ export function AdminFinanceRoot() {
 
   function handleQualifyCancel() {
     setSelectedLead(null);
+    setQualifyError(null);
     setSubView('leadInbox');
   }
 
@@ -365,7 +394,15 @@ export function AdminFinanceRoot() {
         <LeadInboxScreen leads={ports.leads} onSelectLead={handleSelectLead} />
       ) : subView === 'qualify' ? (
         selectedLead ? (
-          <QualifyScreen lead={selectedLead} onSubmit={handleQualifySubmit} onCancel={handleQualifyCancel} />
+          <>
+            {qualifyError && <ErrorState message={qualifyError} />}
+            <QualifyScreen
+              lead={selectedLead}
+              serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
+              onSubmit={handleQualifySubmit}
+              onCancel={handleQualifyCancel}
+            />
+          </>
         ) : (
           <View style={styles.screen}>
             <EmptyState title="Qualify lead" message="No lead selected." />
@@ -480,6 +517,8 @@ export function AdminFinanceRoot() {
         <EmployeeEditorScreen
           employees={employeeRepository}
           invitations={ports.invitations}
+          serviceAreas={ports.serviceAreas}
+          techServiceAreas={ports.techServiceAreas}
           profile={selectedEmployee ?? undefined}
           onSaved={handleEmployeeEditorSaved}
           onCancel={handleEmployeeEditorCancel}
