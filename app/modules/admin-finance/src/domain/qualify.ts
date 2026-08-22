@@ -68,6 +68,11 @@ export interface JobDraft {
   description: string | null;
   assignedTechId: string | null;
   serviceAreaId: string | null;
+  permitStatus?: string | null;
+  parkingAvailable?: string | null;
+  rooms?: string[] | null;
+  panelInfo?: string | null;
+  considerations?: string | null;
 }
 
 export type BuildJobFromLeadResult =
@@ -125,6 +130,11 @@ export function buildJobFromLead(lead: Lead, serviceAreaId: string | null): Buil
       description: lead.projectDetails,
       assignedTechId: null,
       serviceAreaId,
+      permitStatus: null,
+      parkingAvailable: null,
+      rooms: null,
+      panelInfo: null,
+      considerations: null,
     },
   };
 }
