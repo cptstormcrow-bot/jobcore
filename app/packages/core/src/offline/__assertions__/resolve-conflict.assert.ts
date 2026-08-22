@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { resolveConflict, replayQueue, SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS } from '../replay';
-import type { Job } from '../../index';
-import type { QueuedMutation } from '../queue';
+import { resolveConflict, replayQueue, SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS } from '../replay.js';
+import type { Job } from '../../index.js';
+import type { QueuedMutation } from '../queue.js';
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
@@ -25,6 +25,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     inProgressAt: null,
     completedAt: null,
     createdAt: '2026-01-01T00:00:00.000Z',
+    isBeta: false,
     ...overrides,
   };
 }

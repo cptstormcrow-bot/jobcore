@@ -25,7 +25,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button, colors, spacing, radius, typography } from '@jobcore/ui';
 
-export const SOURCE_VALUES = ['direct', 'home_depot', 'wayfair', 'other_partner'] as const;
+export const SOURCE_VALUES = ['direct', 'home_depot', 'wayfair', 'other_partner', 'costco', 'ikea', 'owm'] as const;
 export const PAYER_VALUES = ['customer', 'partner'] as const;
 export const ATTACH_TIMING_VALUES = ['at_purchase', 'after_the_fact'] as const;
 

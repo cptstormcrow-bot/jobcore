@@ -206,7 +206,7 @@ export function Earnings({
 
       <section>
         <h3>Dispute</h3>
-        <p>Filing a dispute records a note only — it does not change this job's status.</p>
+        <p>Filing a dispute records a note only — it does not change this job&apos;s status.</p>
         <textarea
           value={disputeText}
           onChange={(e) => setDisputeText(e.target.value)}

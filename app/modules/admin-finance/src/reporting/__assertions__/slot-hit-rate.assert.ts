@@ -33,6 +33,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     inProgressAt: '2026-08-01T13:30:00.000Z',
     completedAt: '2026-08-01T15:30:00.000Z',
     createdAt: '2026-08-01T12:00:00.000Z',
+    isBeta: false,
     ...overrides,
   };
 }

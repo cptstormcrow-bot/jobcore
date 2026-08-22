@@ -43,9 +43,13 @@ export interface FrozenPayoutLine {
 
 /** A batch of frozen pay lines for one organization's pay period. */
 export interface PayoutBatch {
+  /** Absent before this batch has been persisted (assigned by the DB on insert). */
+  id?: string;
   organizationId: string;
   periodStart: string;
   periodEnd: string;
+  /** Absent before this batch has been persisted; `'draft' | 'approved' | 'paid'` per the DB enum once persisted. */
+  status?: string;
   lines: FrozenPayoutLine[];
 }
 

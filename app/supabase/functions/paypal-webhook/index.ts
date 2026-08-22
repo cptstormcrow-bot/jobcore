@@ -102,7 +102,7 @@ async function verifyPayPalWebhook(
  * Extract the external reference (order id or capture id) from a PayPal
  * webhook event resource.
  */
-function extractExternalRef(event: any): string | null {
+function extractExternalRef(event: { resource?: { id?: string } }): string | null {
   const resource = event?.resource;
   if (!resource) return null;
   // PAYMENT.CAPTURE.COMPLETED -> capture id; CHECKOUT.ORDER.APPROVED -> order id.
@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
 
   const rawBody = await req.text();
 
-  let event: any;
+  let event: { resource?: { id?: string } };
   try {
     event = JSON.parse(rawBody);
   } catch {

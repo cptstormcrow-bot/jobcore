@@ -20,10 +20,10 @@
  * Zero imports outside `packages/core/src` — `core` stays zero-dependency.
  */
 
-import type { Job, JobStatus, Ctx } from '../index';
-import { applyTransition } from '../state-machine';
-import { makeIdempotencyKey } from './queue';
-import type { NewQueuedMutation } from './queue';
+import type { Job, JobStatus, Ctx } from '../index.js';
+import { applyTransition } from '../state-machine.js';
+import { makeIdempotencyKey } from './queue.js';
+import type { NewQueuedMutation } from './queue.js';
 
 /**
  * Options for `applyOptimistic`.

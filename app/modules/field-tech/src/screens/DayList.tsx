@@ -16,15 +16,20 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
+import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, Toggle } from '@jobcore/ui';
 
 export function DayList(): React.ReactElement {
   const session = getModuleSession();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
+  // rows spawned by sales-marketing's "Spawn Test Jobs" flow.
+  const [showBeta, setShowBeta] = useState(false);
+  const visibleJobs = jobs.filter((job) => isBetaVisible(job, showBeta));
 
   useEffect(() => {
     if (session === null) {
@@ -85,29 +90,29 @@ export function DayList(): React.ReactElement {
     );
   }
 
-  if (jobs.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyText}>No jobs scheduled.</Text>
-      </View>
-    );
-  }
-
   return (
-    <FlatList
-      data={jobs}
-      keyExtractor={(job) => job.id}
-      contentContainerStyle={styles.listContent}
-      renderItem={({ item }) => (
-        <View style={styles.row}>
-          <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
-          <View style={styles.rowBody}>
-            <Text style={styles.address}>{item.address ?? 'No address'}</Text>
-            <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
-          </View>
+    <View style={styles.listContent}>
+      <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
+      {visibleJobs.length === 0 ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No jobs scheduled.</Text>
         </View>
+      ) : (
+        <FlatList
+          data={visibleJobs}
+          keyExtractor={(job) => job.id}
+          renderItem={({ item }) => (
+            <View style={styles.row}>
+              <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
+              <View style={styles.rowBody}>
+                <Text style={styles.address}>{item.address ?? 'No address'}</Text>
+                <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
+              </View>
+            </View>
+          )}
+        />
       )}
-    />
+    </View>
   );
 }
 

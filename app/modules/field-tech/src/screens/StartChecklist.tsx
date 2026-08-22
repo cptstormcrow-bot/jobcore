@@ -245,7 +245,18 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
 
           <div>
             <p>Before photos captured: {beforePhotoCount}</p>
-            <button type="button" onClick={() => handleCaptureBeforePhoto(`before-${beforePhotoCount + 1}.jpg`)}>
+            <button
+              type="button"
+              onClick={() => {
+                void (async () => {
+                  const ports = getModulePorts();
+                  const captured = await ports.camera.capturePhoto('before');
+                  if (captured) {
+                    await handleCaptureBeforePhoto(captured.storagePath);
+                  }
+                })();
+              }}
+            >
               Capture before-photo
             </button>
           </div>

@@ -13,6 +13,7 @@
  * pattern already established elsewhere in the app.
  */
 
+import * as ImagePicker from 'expo-image-picker';
 import { supabase } from './supabase';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
@@ -41,6 +42,10 @@ import type {
   JobNoteRow,
   JobNoteDraft,
   TechJobRepository,
+  CalendarEventRepository,
+  CalendarEventDraft,
+  CameraRepository,
+  PhotoCapture,
 } from '../../../../modules/field-tech/src/data/ports';
 import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
 import {
@@ -361,6 +366,13 @@ export function createTimeOffRepository(): TimeOffRepository {
       }
       return toTimeOffRequest(data as TimeOffRequestRow);
     },
+
+    async cancel(requestId: string): Promise<void> {
+      const { error } = await supabase.rpc('cancel_time_off_request', { p_request_id: requestId });
+      if (error) {
+        throw new Error(`cancel time off request failed: ${error.message}`);
+      }
+    },
   };
 }
 
@@ -434,6 +446,109 @@ export function createTechJobRepository(): TechJobRepository {
       }
       return data ? toJob(data as never) : null;
     },
+
+    async updateStatusAsTech(jobId: string, techId: string, status) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job.updateStatusAsTech', occurredAt, { jobId, techId, status });
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .update({ status })
+        .eq('id', jobId)
+        .eq('job_assignments.tech_id', techId)
+        .select('*, job_assignments!inner(tech_id)')
+        .single();
+      if (error) {
+        logSyncFailure('field-tech-repos.updateStatusAsTech', error.message, { jobId, techId, status });
+        throw new Error(`updateStatusAsTech failed: ${error.message}`);
+      }
+      return toJob(data as never);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * CalendarEventRepository
+ * ------------------------------------------------------------------ */
+
+export function createCalendarEventRepository(): CalendarEventRepository {
+  return {
+    async create(organizationId: string, draft: CalendarEventDraft): Promise<void> {
+      await enqueueMutation('calendar_event.create', draft.eventTime, { organizationId, ...draft });
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        throw new Error(`create calendar event failed to resolve current user: ${userError?.message ?? 'no session'}`);
+      }
+
+      const { error } = await supabase.from('calendar_events').insert({
+        organization_id: organizationId,
+        job_id: draft.jobId,
+        kind: draft.kind,
+        title: draft.title ?? null,
+        description: draft.description ?? null,
+        event_time: draft.eventTime,
+        created_by: userData.user.id,
+      });
+      if (error) {
+        logSyncFailure('field-tech-repos.createCalendarEvent', error.message, { organizationId, draft });
+        throw new Error(`create calendar event failed: ${error.message}`);
+      }
+    },
+
+    async logOwnTransition(
+      organizationId: string,
+      jobId: string,
+      fromStatus,
+      toStatus,
+    ): Promise<void> {
+      await this.create(organizationId, {
+        jobId,
+        kind: 'status_change',
+        title: `${fromStatus} -> ${toStatus}`,
+        description: null,
+        eventTime: new Date().toISOString(),
+      });
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * CameraRepository
+ * ------------------------------------------------------------------ */
+
+const JOB_PHOTOS_BUCKET = 'job-photos';
+
+export function createCameraRepository(): CameraRepository {
+  return {
+    async capturePhoto(kind: 'before' | 'after'): Promise<PhotoCapture | null> {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        return null;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+      if (result.canceled) {
+        return null;
+      }
+
+      const asset = result.assets[0];
+      if (!asset) {
+        return null;
+      }
+      const path = `${kind}/${Date.now()}.jpg`;
+      const blob = await (await fetch(asset.uri)).blob();
+
+      const { error } = await supabase.storage
+        .from(JOB_PHOTOS_BUCKET)
+        .upload(path, blob, { contentType: 'image/jpeg' });
+      if (error) {
+        logSyncFailure('field-tech-repos.capturePhoto', error.message, { kind, path });
+        throw new Error(`capturePhoto upload failed: ${error.message}`);
+      }
+
+      return { storagePath: path, lat: null, lng: null };
+    },
   };
 }
 
@@ -448,5 +563,7 @@ export function buildFieldTechPorts(): ModulePorts {
     timeOff: createTimeOffRepository(),
     notes: createJobNoteRepository(),
     jobs: createTechJobRepository(),
+    calendarEvents: createCalendarEventRepository(),
+    camera: createCameraRepository(),
   };
 }

@@ -140,6 +140,27 @@ function buildTransitionCtx(): Ctx {
 }
 
 /**
+ * Persists a `transitionJob` result and logs the transition to the
+ * calendar, mirroring admin-finance's `qualify-lead.ts` flow pattern
+ * (transition -> persist status -> log calendar event). `getModulePorts()`
+ * is safe to call again here — it just returns the already-injected
+ * singleton, not a fresh construction.
+ */
+async function persistTransition(originalJob: Job, transitionedJob: Job): Promise<void> {
+  const session = getModuleSession();
+  const ports = getModulePorts();
+  const techId = session ? session.userId : originalJob.assignedTechId ?? '';
+
+  await ports.jobs.updateStatusAsTech(transitionedJob.id, techId, transitionedJob.status);
+  await ports.calendarEvents.logOwnTransition(
+    transitionedJob.organizationId,
+    transitionedJob.id,
+    originalJob.status,
+    transitionedJob.status,
+  );
+}
+
+/**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
@@ -160,7 +181,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'On my way',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'en_route', ctx);
+        const transitioned = await transitionJob(job, 'en_route', ctx);
+        await persistTransition(job, transitioned);
       },
     },
     {
@@ -168,7 +190,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'Start',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'in_progress', ctx);
+        const transitioned = await transitionJob(job, 'in_progress', ctx);
+        await persistTransition(job, transitioned);
       },
     },
     {
@@ -176,7 +199,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'Complete',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'completed', ctx);
+        const transitioned = await transitionJob(job, 'completed', ctx);
+        await persistTransition(job, transitioned);
       },
     },
   ],

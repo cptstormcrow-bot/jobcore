@@ -4,8 +4,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { Job, JobStatus } from '@jobcore/core';
+import { isBetaVisible } from '@jobcore/core';
 import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
-import { colors, EmptyState, spacing } from '@jobcore/ui';
+import { colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -30,6 +31,7 @@ interface JobRow {
   in_progress_at: string | null;
   completed_at: string | null;
   created_at: string;
+  is_beta: boolean;
 }
 
 function toJob(row: JobRow): Job {
@@ -52,13 +54,14 @@ function toJob(row: JobRow): Job {
     inProgressAt: row.in_progress_at,
     completedAt: row.completed_at,
     createdAt: row.created_at,
+    isBeta: row.is_beta,
   };
 }
 
 const JOB_ROW_COLUMNS =
   'id, organization_id, status, customer_id, service_id, source, payer, attach_timing, ' +
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
-  'en_route_at, in_progress_at, completed_at, created_at';
+  'en_route_at, in_progress_at, completed_at, created_at, is_beta';
 
 export default function JobsScreen() {
   const session = useSession();
@@ -74,6 +77,7 @@ export default function JobsScreen() {
   }, [org, role]);
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showBeta, setShowBeta] = useState(false);
 
   // Tech job query: fetch the signed-in tech's assigned job(s) via RLS
   // (jobs_select_tech / job_assignments join, per plan §Stale P4-spec prose).
@@ -115,9 +119,10 @@ export default function JobsScreen() {
     [actions, selectedJob],
   );
 
-  if (!selectedJob) {
+  if (!selectedJob || !isBetaVisible(selectedJob, showBeta)) {
     return (
       <View style={styles.center}>
+        <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
         <EmptyState title="Jobs" message="No job selected. The job list lands in a later slice." />
       </View>
     );
@@ -125,6 +130,7 @@ export default function JobsScreen() {
 
   return (
     <View style={styles.root}>
+      <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       <JobDetail job={selectedJob} actions={actions} onAction={dispatchInvoke} />
     </View>
   );

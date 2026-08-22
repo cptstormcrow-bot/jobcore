@@ -46,13 +46,25 @@ do $$
 begin
   reset role;
 
-  insert into public.organizations (id, name)
-  values ('00000000-0000-4000-8000-0000000000b2', 'Org B - isolation probe')
+  insert into public.organizations (id, name, slug)
+  values ('00000000-0000-4000-8000-0000000000b2', 'Org B - isolation probe', 'org-b-isolation-probe')
   on conflict (id) do nothing;
 
   insert into public.jobs (id, organization_id, status)
   values ('00000000-0000-4000-8000-0000000006b2', '00000000-0000-4000-8000-0000000000b2', 'new')
   on conflict (id) do nothing;
+
+  -- This suite impersonates the seed admin/tech/sales users via request.jwt.claims.
+  -- The live hosted DB already has real, pre-existing auth.users/public.profiles rows
+  -- for admin@/tech@/sales@sdassemblypro.com (created 2026-08-02, confirmed live) under
+  -- real Supabase-assigned UUIDs distinct from the synthetic
+  -- 00000000-0000-4000-8000-0000000001XX pattern used elsewhere in this suite's
+  -- fixtures. Those real profiles already carry the exact org/role shape this suite
+  -- needs (organization_id = ...0001, role admin/tech/sales), so the JWT sub claims
+  -- below impersonate those real ids directly instead of planting synthetic ones -
+  -- inserting synthetic rows with these emails would collide with the real accounts
+  -- on auth.users' email uniqueness constraint, which an id-scoped ON CONFLICT cannot
+  -- suppress.
 end $$;
 
 -- ---------------------------------------------------------------------------
@@ -62,14 +74,18 @@ end $$;
 do $$
 declare
   visible integer;
+  expected integer;
 begin
+  reset role;
+  select count(*) into expected from public.jobs where organization_id = '00000000-0000-4000-8000-000000000001';
+
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000104","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"cff3db85-9535-45c7-ac36-3a78ac161a4b","role":"authenticated"}';
 
   select count(*) into visible from public.jobs where organization_id = '00000000-0000-4000-8000-000000000001';
 
-  if visible <> 5 then
-    raise exception 'AC-13.1 FAILED: sales@ sees % org jobs, expected exactly 5 - is_org_sales_or_above() is not gating jobs_select_org', visible;
+  if visible <> expected then
+    raise exception 'AC-13.1 FAILED: sales@ sees % org jobs, expected % (all org jobs, computed pre-impersonation) - is_org_sales_or_above() is not gating jobs_select_org', visible, expected;
   end if;
 end $$;
 
@@ -84,7 +100,7 @@ declare
   leaked integer;
 begin
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000103","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"d59e3bc7-691d-4ada-8959-e86f40c1e344","role":"authenticated"}';
 
   select count(*) into leaked
   from public.jobs
@@ -104,7 +120,7 @@ declare
   new_status text;
 begin
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000102","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"a143fac2-4806-42ed-9283-b45275b6c53a","role":"authenticated"}';
 
   update public.jobs set status = 'in_progress' where id = '00000000-0000-4000-8000-000000000603';
 
@@ -124,7 +140,7 @@ declare
   affected integer;
 begin
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000103","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"d59e3bc7-691d-4ada-8959-e86f40c1e344","role":"authenticated"}';
 
   update public.jobs set status = 'cancelled' where id = '00000000-0000-4000-8000-000000000605';
 
@@ -143,7 +159,7 @@ declare
   affected integer;
 begin
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000104","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"cff3db85-9535-45c7-ac36-3a78ac161a4b","role":"authenticated"}';
 
   update public.jobs set status = 'cancelled' where id = '00000000-0000-4000-8000-000000000605';
 
@@ -163,7 +179,7 @@ declare
   affected integer;
 begin
   set local role authenticated;
-  set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000102","role":"authenticated"}';
+  set local request.jwt.claims = '{"sub":"a143fac2-4806-42ed-9283-b45275b6c53a","role":"authenticated"}';
 
   update public.jobs set status = 'cancelled' where id = '00000000-0000-4000-8000-0000000006b2';
 

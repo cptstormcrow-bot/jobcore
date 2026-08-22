@@ -9,7 +9,7 @@
  * laying down the shapes `Earnings.tsx` (S3.7) will consume.
  */
 
-import type { Job } from './index';
+import type { Job } from './index.js';
 
 /**
  * The start/end boundary of one pay period. Timestamps are ISO strings,

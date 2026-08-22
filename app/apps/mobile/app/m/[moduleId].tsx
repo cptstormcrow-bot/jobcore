@@ -5,7 +5,6 @@ import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, colors } from '@jobcore/ui';
 import { setModuleSession, clearModuleSession } from '@jobcore/admin-finance';
 import { setModulePorts as setAdminFinanceModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
-import { setSupabaseClient as setPaymentReviewSupabaseClient } from '@jobcore/payment-review';
 import {
   setModuleSession as setFieldTechModuleSession,
   clearModuleSession as clearFieldTechModuleSession,
@@ -21,7 +20,6 @@ import { useSession } from '../../src/lib/session';
 import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 import { buildSalesMarketingPorts } from '../../src/lib/sales-marketing-repos';
-import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
 /**
@@ -112,26 +110,6 @@ export default function ModuleScreen() {
   useEffect(() => {
     if (module?.id !== 'sales-marketing') return undefined;
     return () => clearSalesMarketingModuleSession();
-  }, [module?.id]);
-
-  // Host-side injection for the payment-review module's Supabase client seam.
-  // payment-review has no module-session of its own (see its index.ts — only
-  // setSupabaseClient/getSupabaseClient are exported), so this effect wires
-  // just the client, not a session object. See the admin-finance block above
-  // for why this runs synchronously in render rather than in a `useEffect`.
-  if (state.status === 'authenticated' && module?.id === 'payment-review') {
-    // Cast through unknown: the real Supabase client's PostgrestFilterBuilder is a deeply
-    // generic, self-referential type that fails structural comparison against payment-review's
-    // intentionally narrow SupabaseSelectClient interface (TS2589 excessively deep / TS2345).
-    // The real client is verified compatible at runtime — Postgrest's builder is thenable and
-    // resolves to { data, error } exactly as the narrow interface expects.
-    setPaymentReviewSupabaseClient(
-      supabase as unknown as Parameters<typeof setPaymentReviewSupabaseClient>[0],
-    );
-  }
-  useEffect(() => {
-    if (module?.id !== 'payment-review') return undefined;
-    return () => setPaymentReviewSupabaseClient(null);
   }, [module?.id]);
 
   // The root layout gates on status, so this branch is defensive only.

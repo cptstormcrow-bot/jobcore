@@ -17,8 +17,6 @@ import '../src/modules';
 
 installGlobalErrorHandler();
 
-console.log('[JOBCORE-DIAG] _layout.tsx module evaluated');
-
 /**
  * Auth gate. Reads the session state and decides what the router may render:
  *   loading         → centered spinner
@@ -31,11 +29,9 @@ console.log('[JOBCORE-DIAG] _layout.tsx module evaluated');
 function AuthGate() {
   const state = useSession();
   const segments = useSegments();
-  const onSignIn = segments[0] === 'sign-in';
+  const onSignIn = segments[0] === 'sign-in' || segments[0] === 'sign-up';
   const rootNavigationState = useRootNavigationState();
   const navigationReady = !!rootNavigationState?.key;
-
-  console.log('[JOBCORE-DIAG] AuthGate render: rootNavKey=', rootNavigationState?.key, 'sessionStatus=', state.status);
 
   // The Stack must always mount unconditionally — expo-router's root navigation
   // state only becomes ready AFTER a navigator (this Stack) has mounted and
@@ -49,14 +45,12 @@ function AuthGate() {
   let overlay = null;
 
   if (!navigationReady) {
-    console.log('[JOBCORE-DIAG] AuthGate: navigation not ready yet, showing overlay');
     overlay = (
       <View style={styles.center}>
         <LoadingState label="Loading…" />
       </View>
     );
   } else if (state.status === 'loading') {
-    console.log('[JOBCORE-DIAG] AuthGate: blocked on session loading gate');
     overlay = (
       <View style={styles.center}>
         <LoadingState label="Loading…" />
@@ -91,7 +85,6 @@ function AuthGate() {
   } else if (state.status === 'unauthenticated' && !onSignIn) {
     overlay = <Redirect href="/sign-in" />;
   } else if (state.status === 'authenticated' && onSignIn) {
-    console.log('[JOBCORE-DIAG] AuthGate: authenticated while on sign-in, redirecting to /');
     overlay = <Redirect href="/" />;
   }
 
@@ -106,6 +99,7 @@ function AuthGate() {
         <Stack.Screen name="index" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sign-in" />
+        <Stack.Screen name="sign-up" />
         <Stack.Screen name="m/[moduleId]" />
       </Stack>
       {overlay && !isRedirect ? (

@@ -26,7 +26,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import { Card, EmptyState, colors, spacing, typography } from '@jobcore/ui';
 import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
@@ -34,6 +34,8 @@ import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
 export interface CloseOutQueueScreenProps {
   jobs: Job[];
   ctx: Ctx;
+  /** Fired when a queue entry is selected, mirrors `LeadInboxScreen.tsx`'s `onSelectLead`. */
+  onSelectJob?: (job: Job) => void;
 }
 
 interface QueueEntry {
@@ -41,7 +43,7 @@ interface QueueEntry {
   blockers: string[];
 }
 
-export function CloseOutQueueScreen({ jobs, ctx }: CloseOutQueueScreenProps) {
+export function CloseOutQueueScreen({ jobs, ctx, onSelectJob }: CloseOutQueueScreenProps) {
   const queue = useMemo<QueueEntry[]>(
     () =>
       jobs
@@ -62,19 +64,21 @@ export function CloseOutQueueScreen({ jobs, ctx }: CloseOutQueueScreenProps) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         {queue.map(({ job, blockers }) => (
-          <Card key={job.id} style={styles.card}>
-            <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
-            <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
-            {blockers.length === 0 ? (
-              <Text style={styles.ready}>Ready to advance.</Text>
-            ) : (
-              blockers.map((reason, index) => (
-                <Text key={index} style={styles.blocker}>
-                  {reason}
-                </Text>
-              ))
-            )}
-          </Card>
+          <Pressable key={job.id} onPress={() => onSelectJob?.(job)}>
+            <Card style={styles.card}>
+              <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
+              <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
+              {blockers.length === 0 ? (
+                <Text style={styles.ready}>Ready to advance.</Text>
+              ) : (
+                blockers.map((reason, index) => (
+                  <Text key={index} style={styles.blocker}>
+                    {reason}
+                  </Text>
+                ))
+              )}
+            </Card>
+          </Pressable>
         ))}
       </ScrollView>
     </View>

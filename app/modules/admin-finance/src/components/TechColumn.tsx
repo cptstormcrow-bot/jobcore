@@ -30,6 +30,33 @@ import { Card, colors, spacing, radius, typography } from '@jobcore/ui';
 export interface TechColumnTech {
   id: string;
   fullName: string;
+  /**
+   * Mirrors `profiles.is_test` — marks techs spawned for testing so the
+   * board can hide them unless the viewer opts in via `isTestVisible`/
+   * "Show Test Employees", same convention `Job.isBeta`/"Show Test Jobs"
+   * already follows.
+   */
+  isTest: boolean;
+  /**
+   * Computed availability for the board's current job window (Workstream
+   * G) — `true` when the tech has no `approved` `time_off_requests` row
+   * overlapping that window. Optional/`undefined` means "not computed for
+   * this render" (no job window selected yet, or the caller has not wired
+   * time-off data), which renders identically to `true` (no chip shown) so
+   * existing callers that never set this field keep behaving exactly as
+   * before.
+   */
+  isAvailable?: boolean;
+  /**
+   * Segway/service-area coverage flag (P3 §3, `domain/segway-candidates.ts`'s
+   * `candidatesFor`) for the board's currently selected job — `false` when
+   * this tech has no `tech_service_areas` row matching that job's resolved
+   * service area. Optional/`undefined` means "not computed for this render"
+   * (no job selected yet, or the caller has not wired coverage data), which
+   * renders identically to `true` (no chip shown), same convention
+   * `isAvailable` already follows.
+   */
+  coversServiceArea?: boolean;
 }
 
 export interface TechColumnProps {
@@ -66,6 +93,16 @@ export function TechColumn({ tech, jobs, onSelectJob, style }: TechColumnProps) 
   return (
     <View style={[styles.column, style]}>
       <Text style={styles.techName}>{tech.fullName}</Text>
+      {tech.isAvailable === false ? (
+        <View style={[styles.chip, styles.chipWarning, styles.unavailableChip]}>
+          <Text style={styles.chipLabel}>Unavailable</Text>
+        </View>
+      ) : null}
+      {tech.coversServiceArea === false ? (
+        <View style={[styles.chip, styles.chipWarning, styles.unavailableChip]}>
+          <Text style={styles.chipLabel}>Outside service area</Text>
+        </View>
+      ) : null}
       {jobs.length === 0 ? (
         <Text style={styles.empty}>No jobs assigned</Text>
       ) : (
@@ -117,6 +154,10 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   jobCard: {
+    marginBottom: spacing.sm,
+  },
+  unavailableChip: {
+    alignSelf: 'flex-start',
     marginBottom: spacing.sm,
   },
   jobAddress: {

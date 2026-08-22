@@ -52,6 +52,9 @@ export function ReviewLibrary(): React.ReactElement {
   const [serviceId, setServiceId] = React.useState<string>('');
   const [communityId, setCommunityId] = React.useState<string>('');
 
+  const [curatedIds, setCuratedIds] = React.useState<ReadonlySet<string>>(new Set());
+  const [curateError, setCurateError] = React.useState<string | null>(null);
+
   const load = React.useCallback(() => {
     if (session === null) {
       setLoading(false);
@@ -118,6 +121,25 @@ export function ReviewLibrary(): React.ReactElement {
     [session, reviews, load],
   );
 
+  const handleCurate = React.useCallback(
+    (review: Review) => {
+      if (session === null || curatedIds.has(review.id)) {
+        return;
+      }
+      setCurateError(null);
+      const { marketingAssets } = getModulePorts();
+      marketingAssets
+        .create(session.org.id, { jobPhotoId: null, reviewId: review.id })
+        .then(() => {
+          setCuratedIds((prev) => new Set(prev).add(review.id));
+        })
+        .catch((err: unknown) => {
+          setCurateError(err instanceof Error ? err.message : 'Failed to curate review as testimonial.');
+        });
+    },
+    [session, curatedIds],
+  );
+
   if (session === null) {
     return (
       <View style={styles.centered}>
@@ -178,6 +200,8 @@ export function ReviewLibrary(): React.ReactElement {
         </View>
       )}
 
+      {curateError !== null && <Text style={styles.errorText}>{curateError}</Text>}
+
       {!loading && error === null && reviews.length === 0 && (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>No published reviews match these filters.</Text>
@@ -216,6 +240,16 @@ export function ReviewLibrary(): React.ReactElement {
                 <Text style={styles.meta}>
                   {item.platform} · job {item.jobId} · {item.submittedAt}
                 </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={curatedIds.has(item.id)}
+                  onPress={() => handleCurate(item)}
+                  style={[styles.curateButton, curatedIds.has(item.id) && styles.curateButtonDisabled]}
+                >
+                  <Text style={styles.curateButtonText}>
+                    {curatedIds.has(item.id) ? 'Curated as testimonial' : 'Curate as testimonial'}
+                  </Text>
+                </Pressable>
               </View>
             </View>
           )}
@@ -328,6 +362,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     marginTop: 4,
+  },
+  curateButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#eee',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  curateButtonDisabled: {
+    opacity: 0.5,
+  },
+  curateButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

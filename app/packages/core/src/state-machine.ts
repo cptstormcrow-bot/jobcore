@@ -20,9 +20,9 @@
  * injection seam those later phases fill in.
  */
 
-import type { Ctx, Job, JobStatus, PreconditionResult, Role } from './index';
-import type { ClockPair } from './clocks';
-import { evaluateSkew } from './clocks';
+import type { Ctx, Job, JobStatus, PreconditionResult, Role } from './index.js';
+import type { ClockPair } from './clocks.js';
+import { evaluateSkew } from './clocks.js';
 
 /**
  * Role table caveat: Master Spec §10 gives the status graph and the three

@@ -32,6 +32,7 @@ export interface PayoutBatchRow {
   organization_id: string;
   period_start: string;
   period_end: string;
+  status: string;
   created_at: string;
 }
 
@@ -80,9 +81,11 @@ export function toFrozenPayoutLine(row: PayoutLineRow): FrozenPayoutLine {
  */
 export function toPayoutBatch(row: PayoutBatchRow, lineRows: PayoutLineRow[]): PayoutBatch {
   return {
+    id: row.id,
     organizationId: row.organization_id,
     periodStart: row.period_start,
     periodEnd: row.period_end,
+    status: row.status,
     lines: lineRows.map(toFrozenPayoutLine),
   };
 }
@@ -101,6 +104,23 @@ export interface PayoutBatchRepo {
 
   /** A single payout batch by id, or `null` if it doesn't exist. */
   getById(batchId: string): Promise<PayoutBatch | null>;
+
+  /**
+   * Marks a batch approved (`status` transitions to `'approved'` per the
+   * Supabase `payout_batch_status` enum, `app/supabase/0005_money.sql`).
+   * Mirrors `ReimbursementRepo.approve`'s shape so `PayoutBatchScreen.tsx`
+   * can follow the same per-row approve pattern as
+   * `ReimbursementQueueScreen.tsx`.
+   */
+  approve(batchId: string): Promise<CalculationResult<PayoutBatch>>;
+
+  /**
+   * Marks a batch paid (`status` transitions to `'paid'` per the Supabase
+   * `payout_batch_status` enum, `app/supabase/0005_money.sql`). Mirrors
+   * `approve`'s shape so `PayoutBatchScreen.tsx` can follow the same
+   * per-row mark-paid pattern as the approve action.
+   */
+  markPaid(batchId: string): Promise<CalculationResult<PayoutBatch>>;
 
   /**
    * Persists a newly built `PayoutBatch` (`buildPayoutBatch`,

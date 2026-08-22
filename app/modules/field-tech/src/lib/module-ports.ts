@@ -22,6 +22,8 @@ import type {
   TimeOffRepository,
   JobNoteRepository,
   TechJobRepository,
+  CalendarEventRepository,
+  CameraRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -30,6 +32,8 @@ export interface ModulePorts {
   photos: JobPhotoRepository;
   timeOff: TimeOffRepository;
   notes: JobNoteRepository;
+  calendarEvents: CalendarEventRepository;
+  camera: CameraRepository;
 }
 
 let current: ModulePorts | null = null;

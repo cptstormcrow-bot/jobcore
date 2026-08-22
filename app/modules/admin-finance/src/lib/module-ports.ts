@@ -19,21 +19,51 @@ import type {
   PriceSheetRepository,
   PayPeriodRepository,
   LeadRepository,
-  TechRepository,
+  EmployeeRepository,
+  InvitationRepository,
   JobAssignmentRepository,
   CommissionRepository,
   AuditLogRepository,
+  JobPhotoRepository,
+  JobNoteRepository,
+  PaymentsRepository,
+  CalendarEventRepository,
+  TechServiceAreaRepository,
 } from '../data/ports';
+import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
+import type { CalculationResult } from '../money/types';
+import type { ReimbursementRepo } from '../data/reimbursement-repo';
+import type { PayoutBatchRepo } from '../data/payout-batch-repo';
+import type { TimeOffAdminRepo } from '../data/time-off-repo';
 
 export interface ModulePorts {
   jobs: JobRepository;
   priceSheets: PriceSheetRepository;
   payPeriods: PayPeriodRepository;
   leads: LeadRepository;
-  techs: TechRepository;
+  employees: EmployeeRepository;
+  invitations: InvitationRepository;
+  techServiceAreas: TechServiceAreaRepository;
   jobAssignments: JobAssignmentRepository;
   commissions: CommissionRepository;
   auditLog: AuditLogRepository;
+  priceSheetPublish: PriceSheetRepo;
+  priceSheetAreaAdjustments: {
+    list(priceSheetId: string): Promise<CalculationResult<PriceSheetAreaAdjustment[]>>;
+    save(
+      priceSheetId: string,
+      serviceAreaId: string,
+      adjustmentType: 'percent' | 'flat',
+      adjustmentValue: number
+    ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
+  };
+  reimbursements: ReimbursementRepo;
+  payoutBatches: PayoutBatchRepo;
+  closeOutPhotos: JobPhotoRepository;
+  closeOutNotes: JobNoteRepository;
+  payments: PaymentsRepository;
+  calendarEvents: CalendarEventRepository;
+  timeOffAdmin: TimeOffAdminRepo;
 }
 
 let current: ModulePorts | null = null;

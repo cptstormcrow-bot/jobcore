@@ -113,13 +113,9 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
   try {
     const transitionedJob = await transitionJob(job, 'paid', deps.ctx);
 
-    // Workstream E: persist the computed status (transitionJob never writes to
-    // the repository) and log the transition as a calendar event.
-    const paidJob = await deps.jobs.updateStatus(transitionedJob.id, transitionedJob.status);
-    await deps.calendarEvents.logTransition(paidJob.organizationId, paidJob.id, job.status, paidJob.status);
-
-    await deps.commissionRepository.create(
-      paidJob.organizationId,
+    const paidJob = await deps.jobs.closeOutWrite(
+      transitionedJob.id,
+      job.status,
       commissionResult.value,
       deps.closedByUserId,
     );

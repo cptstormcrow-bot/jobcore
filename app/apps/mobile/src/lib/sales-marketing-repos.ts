@@ -43,6 +43,10 @@ import type {
   SocialProviderRepository,
   SocialProviderConfig,
   SocialProviderRow,
+  TestJobsRepository,
+  CallbackTaskRepository,
+  CallbackTask,
+  CallbackTaskRow,
 } from '../../../../modules/sales-marketing/src/data/ports';
 import type { ModulePorts } from '../../../../modules/sales-marketing/src/lib/module-ports';
 import {
@@ -53,6 +57,7 @@ import {
   toPostTarget,
   toCampaignLogEntry,
   toSocialProviderConfig,
+  toCallbackTask,
 } from '../../../../modules/sales-marketing/src/data/ports';
 
 /* ------------------------------------------------------------------ *
@@ -368,6 +373,143 @@ export function createSocialProviderRepository(): SocialProviderRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * TestJobsRepository — "Spawn Test Jobs" (Workstream K)
+ *
+ * Reset-then-insert, idempotent per the doc contract on
+ * `TestJobsRepository` in `modules/sales-marketing/src/data/ports.ts`:
+ * delete any existing `is_beta = true` rows for this org, then insert
+ * exactly 3 new `jobs` rows at `status = 'new'` (the job lifecycle's
+ * intake/sales-handoff stage — `packages/core/src/index.ts`'s `JobStatus`
+ * union, `supabase/0004_scheduling.sql`'s `jobs` table default) with
+ * `is_beta = true` and placeholder address/description text only. No
+ * customer/service/financial rows are created — `customer_id`/`service_id`
+ * stay null (both nullable) and no `commissions`/`price_sheets`/
+ * `payout_batches` row is ever touched here, per the scope-fence note on
+ * `TestJobsRepository`.
+ * ------------------------------------------------------------------ */
+
+export function createTestJobsRepository(): TestJobsRepository {
+  return {
+    async spawnTestJobs(organizationId: string): Promise<void> {
+      const { error: deleteError } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('is_beta', true);
+      if (deleteError) {
+        throw new Error(`spawnTestJobs reset failed: ${deleteError.message}`);
+      }
+
+      const rows = [1, 2, 3].map((n) => ({
+        organization_id: organizationId,
+        status: 'new' as const,
+        is_beta: true,
+        description: `BETA TEST ${n}`,
+        address: `BETA TEST ${n} — placeholder address`,
+        source: 'beta-test',
+      }));
+
+      const { error: insertError } = await supabase.from('jobs').insert(rows);
+      if (insertError) {
+        throw new Error(`spawnTestJobs insert failed: ${insertError.message}`);
+      }
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * CallbackTaskRepository — "Sales callback task from completed jobs"
+ * (Workstream J)
+ *
+ * `listOpen` reads completed jobs LEFT JOINed against
+ * `sales_callback_status`; customer name/phone live on `customers`
+ * (joined via `jobs.customer_id`), not on `jobs` itself — see
+ * `CallbackTaskRow`'s doc comment in `data/ports.ts`. Supabase's nested
+ * embed (`customers(name, phone)`) plus the left-joined
+ * `sales_callback_status(called_back_at, called_back_by)` gives one row
+ * per completed job; a task is "open" when there is no
+ * `sales_callback_status` row, or its `called_back_at` is null. That
+ * filter can't be expressed server-side against an embedded 0..1 table
+ * with plain `.eq`/`.is`, so it's applied client-side after the fetch,
+ * mirroring how `TestJobsRepository` above keeps its query simple and
+ * pushes shaping into JS.
+ * ------------------------------------------------------------------ */
+
+interface CallbackTaskFetchRow {
+  id: string;
+  organization_id: string;
+  address: string | null;
+  completed_at: string | null;
+  is_beta: boolean;
+  customers: { name: string | null; phone: string | null } | null;
+  sales_callback_status: { called_back_at: string | null; called_back_by: string | null } | null;
+}
+
+function toCallbackTaskRow(row: CallbackTaskFetchRow): CallbackTaskRow {
+  return {
+    job_id: row.id,
+    organization_id: row.organization_id,
+    customer_name: row.customers?.name ?? null,
+    customer_phone: row.customers?.phone ?? null,
+    address: row.address,
+    completed_at: row.completed_at,
+    is_beta: row.is_beta,
+    called_back_at: row.sales_callback_status?.called_back_at ?? null,
+    called_back_by: row.sales_callback_status?.called_back_by ?? null,
+  };
+}
+
+export function createCallbackTaskRepository(): CallbackTaskRepository {
+  return {
+    async listOpen(organizationId: string): Promise<CallbackTask[]> {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, organization_id, address, completed_at, is_beta, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
+        .eq('organization_id', organizationId)
+        .eq('status', 'completed');
+      if (error) {
+        throw new Error(`listOpen callback tasks failed: ${error.message}`);
+      }
+      const rows = (data ?? []) as unknown as CallbackTaskFetchRow[];
+      return rows
+        .map(toCallbackTaskRow)
+        .filter((row) => row.called_back_at === null)
+        .map(toCallbackTask);
+    },
+
+    async markCalledBack(
+      jobId: string,
+      organizationId: string,
+      calledBackBy: string,
+      calledBackAt: string,
+    ): Promise<CallbackTask> {
+      const { error: upsertError } = await supabase.from('sales_callback_status').upsert(
+        {
+          job_id: jobId,
+          organization_id: organizationId,
+          called_back_at: calledBackAt,
+          called_back_by: calledBackBy,
+        },
+        { onConflict: 'job_id' },
+      );
+      if (upsertError) {
+        throw new Error(`markCalledBack upsert failed: ${upsertError.message}`);
+      }
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, organization_id, address, completed_at, is_beta, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
+        .eq('id', jobId)
+        .single();
+      if (error) {
+        throw new Error(`markCalledBack refetch failed: ${error.message}`);
+      }
+      return toCallbackTask(toCallbackTaskRow(data as unknown as CallbackTaskFetchRow));
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -380,5 +522,7 @@ export function buildSalesMarketingPorts(): ModulePorts {
     postTargets: createPostTargetRepository(),
     campaignLog: createCampaignLogRepository(),
     socialProviders: createSocialProviderRepository(),
+    testJobs: createTestJobsRepository(),
+    callbackTasks: createCallbackTaskRepository(),
   };
 }

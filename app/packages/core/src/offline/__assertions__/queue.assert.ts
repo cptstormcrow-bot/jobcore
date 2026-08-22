@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { makeIdempotencyKey } from '../queue';
+import { makeIdempotencyKey } from '../queue.js';
 
 test('makeIdempotencyKey: builds a deterministic key from op/occurredAt/nonce', () => {
   const key = makeIdempotencyKey('job.transition.en_route', '2026-01-01T00:00:00.000Z', 'nonce-1');

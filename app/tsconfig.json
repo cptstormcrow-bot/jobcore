@@ -7,7 +7,6 @@
     { "path": "modules/admin-finance" },
     { "path": "modules/field-tech" },
     { "path": "modules/sales-marketing" },
-    { "path": "modules/payment-review" },
     { "path": "apps/mobile" }
   ]
 }

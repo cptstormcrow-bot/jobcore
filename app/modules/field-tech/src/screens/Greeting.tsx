@@ -93,7 +93,7 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
   if (showDeclineForm) {
     return (
       <div>
-        <p>Please tell us why you're declining this job.</p>
+        <p>Please tell us why you&apos;re declining this job.</p>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -121,7 +121,7 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
 
   return (
     <div>
-      <p>You've been assigned a new job.</p>
+      <p>You&apos;ve been assigned a new job.</p>
       <button type="button" onClick={handleAccept}>
         Accept
       </button>

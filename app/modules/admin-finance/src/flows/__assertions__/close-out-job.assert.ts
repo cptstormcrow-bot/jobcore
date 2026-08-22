@@ -116,6 +116,12 @@ function makeJobs(overrides: Partial<JobRepository> = {}): JobRepository {
     async patchScheduling(_jobId, _patch) {
       throw new Error('not implemented');
     },
+    async updateDetails(_jobId, _patch) {
+      throw new Error('not implemented');
+    },
+    async closeOutWrite(_jobId, _fromStatus, _commission, _closedByUserId) {
+      throw new Error('not implemented');
+    },
     async create() {
       throw new Error('not implemented');
     },
@@ -237,7 +243,14 @@ test('closeOutJob: commission-calc failure records recordFailure with stage "com
 test('closeOutJob: happy path calls closeOutFailures.resolve with "resolved_retry"', async () => {
   const closeOutFailures = makeCloseOutFailures();
   const job = makeJob();
-  const deps = makeDeps({ closeOutFailures });
+  const deps = makeDeps({
+    closeOutFailures,
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, _commission, _closedByUserId) {
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
 
   const result = await closeOutJob(job, deps);
 
@@ -254,7 +267,7 @@ test('closeOutJob: a thrown error during the final write sequence is caught, rec
   const deps = makeDeps({
     closeOutFailures,
     jobs: makeJobs({
-      async updateStatus() {
+      async closeOutWrite(_jobId, _fromStatus, _commission, _closedByUserId) {
         throw new Error('boom: write failed');
       },
     }),
@@ -273,7 +286,14 @@ test('closeOutJob: a thrown error during the final write sequence is caught, rec
 test('retryCloseOut: calls closeOutFailures.recordAttempt then delegates to closeOutJob', async () => {
   const closeOutFailures = makeCloseOutFailures();
   const job = makeJob();
-  const deps = makeDeps({ closeOutFailures });
+  const deps = makeDeps({
+    closeOutFailures,
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, _commission, _closedByUserId) {
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
 
   const result = await retryCloseOut(job, deps);
 

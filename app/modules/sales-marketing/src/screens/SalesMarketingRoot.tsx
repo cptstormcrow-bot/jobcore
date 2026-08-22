@@ -20,15 +20,18 @@ import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
 import { Composer } from './Composer';
 import { Reporting } from './Reporting';
+import { CallbackTasks } from './CallbackTasks';
 import { getModuleSession } from '../lib/module-session';
+import { getModulePorts } from '../lib/module-ports';
 
-type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting';
+type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
 const TABS: Array<{ key: SubView; label: string }> = [
   { key: 'reviewLibrary', label: 'Review Library' },
   { key: 'pitchPicker', label: 'Pitch Picker' },
   { key: 'composer', label: 'Composer' },
   { key: 'reporting', label: 'Reporting' },
+  { key: 'callbackTasks', label: 'Callback Tasks' },
 ];
 
 export function SalesMarketingRoot(): React.ReactElement {
@@ -43,6 +46,26 @@ export function SalesMarketingRoot(): React.ReactElement {
   const handleNavigateToComposer = React.useCallback((angle: PitchAngle) => {
     setPitchAngle(angle);
     setSubView('composer');
+  }, []);
+
+  // Workstream K: "Spawn Test Jobs". No dedicated lead-intake entry point
+  // exists in this module (lead intake actually lives in admin-finance's
+  // LeadInboxScreen) — this button rides the module's top-level tab row
+  // instead, as the closest analog to "next to the existing entry point".
+  // spawnTestJobs is reset-then-insert/idempotent per the TestJobsRepository
+  // contract (data/ports.ts); no host-side port implementation is wired yet.
+  const [spawningTestJobs, setSpawningTestJobs] = React.useState(false);
+  const handleSpawnTestJobs = React.useCallback(async () => {
+    const session = getModuleSession();
+    if (session === null) {
+      return;
+    }
+    setSpawningTestJobs(true);
+    try {
+      await getModulePorts().testJobs.spawnTestJobs(session.org.id);
+    } finally {
+      setSpawningTestJobs(false);
+    }
   }, []);
 
   let content: React.ReactElement;
@@ -74,6 +97,9 @@ export function SalesMarketingRoot(): React.ReactElement {
     case 'reporting':
       content = React.createElement(Reporting, null);
       break;
+    case 'callbackTasks':
+      content = React.createElement(CallbackTasks, null);
+      break;
     case 'reviewLibrary':
     default:
       content = React.createElement(ReviewLibrary, null);
@@ -96,6 +122,15 @@ export function SalesMarketingRoot(): React.ReactElement {
           style: styles.tabButton,
         }),
       ),
+      React.createElement(Button, {
+        key: 'spawnTestJobs',
+        label: spawningTestJobs ? 'Spawning…' : 'Spawn Test Jobs',
+        variant: 'outline',
+        size: 'sm',
+        disabled: spawningTestJobs,
+        onPress: handleSpawnTestJobs,
+        style: styles.tabButton,
+      }),
     ),
     content,
   );

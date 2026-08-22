@@ -159,7 +159,15 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
       <div>
         <button
           type="button"
-          onClick={() => void handleCaptureAfterPhoto(`after-photo-${Date.now()}`)}
+          onClick={() => {
+            void (async () => {
+              const ports = getModulePorts();
+              const captured = await ports.camera.capturePhoto('after');
+              if (captured) {
+                await handleCaptureAfterPhoto(captured.storagePath);
+              }
+            })();
+          }}
           disabled={submitting}
         >
           Capture after-photo

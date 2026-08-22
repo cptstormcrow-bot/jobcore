@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { canTransition, applyTransition, TRANSITIONS } from '../state-machine';
-import type { Ctx, Job } from '../index';
+import { canTransition, applyTransition, TRANSITIONS } from '../state-machine.js';
+import type { Ctx, Job } from '../index.js';
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
@@ -24,6 +24,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     inProgressAt: null,
     completedAt: null,
     createdAt: '2026-01-01T00:00:00.000Z',
+    isBeta: false,
     ...overrides,
   };
 }
