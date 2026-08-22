@@ -8,7 +8,7 @@
  * No sqlite, no fetch, no fixtures, no React live here.
  */
 
-import type { Job, JobStatus, Commission } from '@jobcore/core';
+import type { Job, JobStatus, Commission, Profile, Role } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
@@ -44,6 +44,13 @@ export interface JobRow {
   in_progress_at: string | null;
   completed_at: string | null;
   created_at: string;
+  is_beta: boolean | null;
+  house_age_years: number | null;
+  permit_status: string | null;
+  parking_available: string | null;
+  rooms: string[] | null;
+  panel_info: string | null;
+  considerations: string | null;
 }
 
 /**
@@ -100,7 +107,8 @@ export function toJob(row: JobRow): Job {
     inProgressAt: row.in_progress_at,
     completedAt: row.completed_at,
     createdAt: row.created_at,
-    isBeta: false,
+    isBeta: row.is_beta ?? false,
+    houseAgeYears: row.house_age_years ?? null,
   };
 }
 
@@ -119,6 +127,24 @@ export function toJob(row: JobRow): Job {
 export type JobSchedulingPatch = Partial<
   Pick<Job, 'assignedTechId' | 'scheduledStart' | 'scheduledEnd' | 'requestedWindow'>
 >;
+
+/**
+ * AC-4-style mechanism for the job's editable descriptive fields. `status`
+ * is deliberately absent, same invariant as `JobSchedulingPatch` above —
+ * status changes only move through `applyTransition`/`transitionJob`,
+ * never through this data seam.
+ *
+ * `houseAgeYears` now folds into the `Pick<Job, ...>` list like the rest
+ * of this patch — `@jobcore/core`'s `Job` type declares
+ * `houseAgeYears?: number | null`.
+ */
+export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'houseAgeYears'>> & {
+  permitStatus?: string | null;
+  parkingAvailable?: string | null;
+  rooms?: string[] | null;
+  panelInfo?: string | null;
+  considerations?: string | null;
+};
 
 /* ------------------------------------------------------------------ *
  * Repository ports
@@ -143,6 +169,13 @@ export interface JobRepository {
   listForOrganization(organizationId: string): Promise<Job[]>;
   getById(jobId: string): Promise<Job | null>;
   patchScheduling(jobId: string, patch: JobSchedulingPatch): Promise<Job>;
+  /**
+   * Patches a job's editable descriptive fields (`JobDetailsPatch`) via the
+   * same `.select().single()` + `toJob()` remap pattern `patchScheduling`
+   * uses. Deliberately excludes `status` — see `JobDetailsPatch`'s doc
+   * comment above.
+   */
+  updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job>;
   create(draft: JobDraft): Promise<Job>;
   /**
    * Persists the result of an in-memory `applyTransition`/`transitionJob`
@@ -155,6 +188,24 @@ export interface JobRepository {
    * `JobStatus` `applyTransition` already computed.
    */
   updateStatus(jobId: string, status: JobStatus): Promise<Job>;
+  /**
+   * Third sanctioned status-write exception (alongside `create` and
+   * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
+   * logs the transition, writes its one commission row, and resolves any
+   * open/retrying close_out_failures row — via the `close_out_job_write`
+   * Postgres RPC (supabase/0026_close_out_write_rpc.sql). Replaces the three
+   * separate non-atomic writes previously issued from
+   * flows/close-out-job.ts (updateStatus + calendarEvents.logTransition +
+   * commissions.create). Called only from the close-out flow, after its own
+   * precondition checks have already run — the RPC re-validates the status
+   * guard server-side regardless.
+   */
+  closeOutWrite(
+    jobId: string,
+    fromStatus: JobStatus,
+    commission: CommissionLine,
+    closedByUserId: string,
+  ): Promise<Job>;
 }
 
 /** Read-only access to price sheets. */
@@ -220,6 +271,36 @@ export interface TechRepository {
 }
 
 /**
+ * Minimal local `Invitation` type — `@jobcore/core` has no dedicated
+ * `Invitation` export, so this mirrors the Supabase `invitations` table
+ * (`app/supabase/0003_invitations_and_signup.sql`) at the domain-field
+ * level this module needs, rather than defining a shared type upstream.
+ */
+export interface Invitation {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+}
+
+/** Read/write access to organization employees (`Profile` rows). */
+export interface EmployeeRepository {
+  listEmployees(organizationId: string): Promise<Profile[]>;
+  getEmployee(profileId: string): Promise<Profile | null>;
+  updateEmployee(profileId: string, updates: { fullName?: string; phone?: string | null; isTest?: boolean }): Promise<void>;
+  deactivateEmployee(profileId: string): Promise<void>;
+  reactivateEmployee(profileId: string): Promise<void>;
+  setEmployeeRole(profileId: string, role: Role): Promise<void>;
+}
+
+/** Write + read access to pending organization invitations. */
+export interface InvitationRepository {
+  createInvitation(organizationId: string, email: string, role: Role): Promise<void>;
+  listPendingInvitations(organizationId: string): Promise<Invitation[]>;
+}
+
+/**
  * Mirrors the Supabase `tech_service_areas` table
  * (`app/supabase/0020_field_ops_segway_and_estimating.sql`). Snake_case wire
  * shape consumed by `domain/segway-candidates.ts`'s `candidatesFor` after
@@ -279,6 +360,69 @@ export interface JobAssignmentDraft {
 /** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Customer row (snake_case) → domain type (camelCase)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the Supabase `customers` table. Snake_case wire shape of
+ * `Customer`, same convention as `JobRow`.
+ */
+export interface CustomerRow {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  organization_id: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `customers` row. */
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  organizationId: string;
+  createdAt: string;
+}
+
+/**
+ * Map a `customers` row to the domain `Customer`. Pure, no validation
+ * needed — every column is already well-typed at the wire boundary, same
+ * as `toJob`'s non-status fields.
+ */
+export function toCustomer(row: CustomerRow): Customer {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    email: row.email,
+    address: row.address,
+    organizationId: row.organization_id,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Fields needed to insert or patch a `customers` row. `id`/`organizationId`/
+ * `createdAt` are implementation-assigned on `create`, same invariant as
+ * `JobAssignmentDraft`.
+ */
+export type CustomerCreateInput = Pick<Customer, 'name' | 'phone' | 'email' | 'address'>;
+
+/** Patch shape for `CustomerRepository.update` — same `Partial<Pick<...>>` convention as `JobSchedulingPatch`. */
+export type CustomerPatch = Partial<Pick<Customer, 'name' | 'phone' | 'email' | 'address'>>;
+
+/** Read/write access to customers. */
+export interface CustomerRepository {
+  getById(id: string): Promise<Customer | null>;
+  create(input: CustomerCreateInput): Promise<Customer>;
+  update(id: string, patch: CustomerPatch): Promise<Customer>;
 }
 
 /* ------------------------------------------------------------------ *
