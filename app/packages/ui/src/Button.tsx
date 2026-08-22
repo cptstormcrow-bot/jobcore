@@ -6,13 +6,15 @@ export interface ButtonProps {
   label: string;
   onPress?: () => void;
   variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'tab';
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-const paddingBySize = { sm: spacing.sm, md: spacing.md, lg: spacing.lg } as const;
-const fontBySize = { sm: typography.size.label, md: typography.size.body, lg: typography.size.h6 } as const;
+const paddingBySize = { sm: spacing.sm, md: spacing.md, lg: spacing.lg, tab: spacing.sm } as const;
+const fontBySize = { sm: typography.size.label, md: typography.size.body, lg: typography.size.h6, tab: typography.size.label } as const;
+const minHeightBySize = { sm: 44, md: 44, lg: 44, tab: 32 } as const;
+const paddingHorizontalBySize = { sm: spacing.lg, md: spacing.lg, lg: spacing.lg, tab: spacing.sm } as const;
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, style }: ButtonProps) {
   const isOutline = variant === 'outline';
@@ -34,7 +36,12 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
       hitSlop={8}
       style={[
         styles.base,
-        { backgroundColor: bg, paddingVertical: paddingBySize[size] },
+        {
+          backgroundColor: bg,
+          paddingVertical: paddingBySize[size],
+          minHeight: minHeightBySize[size],
+          paddingHorizontal: paddingHorizontalBySize[size],
+        },
         isOutline && styles.outline,
         disabled && styles.disabled,
         style,
@@ -48,14 +55,19 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
 const styles = StyleSheet.create({
   // minHeight 44 meets the WCAG 2.5.5 / RN-recommended minimum touch target
   // at every size; sm/md/lg still differ by padding and font size above it.
+  // borderWidth is reserved on `base` (not just `outline`) so toggling variant
+  // never changes the rendered box size — only borderColor toggles, including
+  // to 'transparent' when there's no visible border to draw.
   base: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
     minHeight: 44,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  outline: { borderWidth: 1, borderColor: colors.secondary },
+  outline: { borderColor: colors.secondary },
   disabled: { opacity: 0.5 },
   label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold },
 });
