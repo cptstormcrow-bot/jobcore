@@ -51,9 +51,9 @@ export function subscribe(listener: () => void): () => void {
 }
 
 /**
- * Injection point for the host. Pass an already-narrowed `ModuleSession`
- * once the host has resolved its own session, or `null` to clear it
- * (e.g. on sign-out). This is the ONLY function that may write `current`.
+ * Structural equality check for `ModuleSession` — gates `notify()` in
+ * `setModuleSession` so re-injecting an unchanged session doesn't trigger
+ * a re-render (Fix A, commit 8530377).
  */
 function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolean {
   if (a === b) return true;
@@ -61,6 +61,11 @@ function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolea
   return a.org.id === b.org.id && a.role === b.role && a.userId === b.userId;
 }
 
+/**
+ * Injection point for the host. Pass an already-narrowed `ModuleSession`
+ * once the host has resolved its own session, or `null` to clear it
+ * (e.g. on sign-out). This is the ONLY function that may write `current`.
+ */
 export function setModuleSession(session: ModuleSession | null): void {
   const changed = !sessionsEqual(current, session);
   current = session;
@@ -81,8 +86,7 @@ export function getModuleSession(): ModuleSession | null {
 
 /** Convenience wrapper — equivalent to `setModuleSession(null)`. */
 export function clearModuleSession(): void {
-  current = null;
-  notify();
+  setModuleSession(null);
 }
 
 /**
