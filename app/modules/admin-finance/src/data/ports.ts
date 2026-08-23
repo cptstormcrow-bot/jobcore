@@ -8,7 +8,7 @@
  * No sqlite, no fetch, no fixtures, no React live here.
  */
 
-import type { Job, JobStatus, Commission, Profile, Role } from '@jobcore/core';
+import type { Job, JobStatus, Commission, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
@@ -51,6 +51,7 @@ export interface JobRow {
   rooms: string[] | null;
   panel_info: string | null;
   considerations: string | null;
+  service_area_id: string | null;
 }
 
 /**
@@ -109,6 +110,7 @@ export function toJob(row: JobRow): Job {
     createdAt: row.created_at,
     isBeta: row.is_beta ?? false,
     houseAgeYears: row.house_age_years ?? null,
+    service_area_id: row.service_area_id,
   };
 }
 
@@ -284,11 +286,42 @@ export interface Invitation {
   createdAt: string;
 }
 
+/**
+ * The full `VehicleStatus` union, restated as a runtime tuple so callers can
+ * validate an untrusted wire value against it. Same idiom as `JOB_STATUSES`/
+ * `isJobStatus` above. Exported (unlike `isJobStatus`) because the row→domain
+ * mapper for `Profile` lives outside this file, in
+ * `apps/mobile/src/lib/admin-finance-repos.ts`'s `toProfile`.
+ */
+export const VEHICLE_STATUSES: readonly VehicleStatus[] = ['assigned', 'unassigned', 'in_maintenance'];
+
+export function isVehicleStatus(value: string): value is VehicleStatus {
+  return (VEHICLE_STATUSES as readonly string[]).includes(value);
+}
+
+/** The full `ToolStatus` union, restated as a runtime tuple. Same idiom and export rationale as `VEHICLE_STATUSES` above. */
+export const TOOL_STATUSES: readonly ToolStatus[] = ['issued', 'not_issued', 'needs_replacement'];
+
+export function isToolStatus(value: string): value is ToolStatus {
+  return (TOOL_STATUSES as readonly string[]).includes(value);
+}
+
 /** Read/write access to organization employees (`Profile` rows). */
 export interface EmployeeRepository {
   listEmployees(organizationId: string): Promise<Profile[]>;
   getEmployee(profileId: string): Promise<Profile | null>;
-  updateEmployee(profileId: string, updates: { fullName?: string; phone?: string | null; isTest?: boolean }): Promise<void>;
+  updateEmployee(
+    profileId: string,
+    updates: {
+      fullName?: string;
+      phone?: string | null;
+      isTest?: boolean;
+      address?: string | null;
+      driversLicenseNumber?: string | null;
+      vehicleStatus?: VehicleStatus | null;
+      toolStatus?: ToolStatus | null;
+    }
+  ): Promise<void>;
   deactivateEmployee(profileId: string): Promise<void>;
   reactivateEmployee(profileId: string): Promise<void>;
   setEmployeeRole(profileId: string, role: Role): Promise<void>;
@@ -335,13 +368,93 @@ export function toTechServiceArea(row: TechServiceAreaRow): TechServiceArea {
 }
 
 /**
- * Read-only access to tech service-area coverage. Feeds
+ * Read + coverage-write access to tech service-area assignments. Feeds
  * `domain/segway-candidates.ts`'s `candidatesFor` for the assignment
- * board's coverage flag — this module never writes `tech_service_areas`
- * (coverage management is out of scope for this group, per plan §3).
+ * board's coverage flag, and now also backs the employee-editor checkbox
+ * UI's `assignToTech`/`removeFromTech` toggles.
  */
 export interface TechServiceAreaRepository {
   listForOrganization(organizationId: string): Promise<TechServiceArea[]>;
+  assignToTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void>;
+  removeFromTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void>;
+}
+
+/**
+ * Mirrors the Supabase `tech_skills` table
+ * (`app/supabase/0031_employee_profile_fields.sql`). Snake_case wire shape of
+ * `TechSkill`, mirroring `TechServiceAreaRow` above.
+ */
+export interface TechSkillRow {
+  id: string;
+  organization_id: string;
+  tech_id: string;
+  skill: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `tech_skills` row. */
+export interface TechSkill {
+  id: string;
+  organizationId: string;
+  techId: string;
+  skill: string;
+  createdAt: string;
+}
+
+/** Maps a `tech_skills` row to its domain shape. Pure, no validation needed — mirrors `toTechServiceArea`. */
+export function toTechSkill(row: TechSkillRow): TechSkill {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    skill: row.skill,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Read + toggle-write access to tech skill assignments, backing the
+ * employee-editor's Skills picker UI — same `listForOrganization` +
+ * assign/remove toggle shape as `TechServiceAreaRepository`.
+ */
+export interface TechSkillRepository {
+  listForOrganization(organizationId: string): Promise<TechSkill[]>;
+  assignToTech(organizationId: string, techId: string, skill: string): Promise<void>;
+  removeFromTech(organizationId: string, techId: string, skill: string): Promise<void>;
+}
+
+/**
+ * Mirrors the Supabase `service_areas` table. Snake_case wire shape,
+ * same convention as `TechServiceAreaRow`.
+ */
+export interface ServiceAreaRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `service_areas` row. */
+export interface ServiceArea {
+  id: string;
+  organizationId: string;
+  name: string;
+  createdAt: string;
+}
+
+/** Maps a `service_areas` row to its domain shape. Pure, no validation needed — every column is already well-typed at the wire boundary, same as `toTechServiceArea`. */
+export function toServiceArea(row: ServiceAreaRow): ServiceArea {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    name: row.name,
+    createdAt: row.created_at,
+  };
+}
+
+/** Read-only access to the org's service areas. */
+export interface ServiceAreaRepository {
+  listForOrganization(organizationId: string): Promise<ServiceArea[]>;
 }
 
 /**

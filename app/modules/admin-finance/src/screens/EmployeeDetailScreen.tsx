@@ -31,6 +31,8 @@ export interface EmployeeDetailScreenProps {
   employee: Profile;
   /** This employee's assigned + completed jobs, already filtered by the caller. */
   jobs: Job[];
+  /** This employee's assigned skills, already filtered by the caller — same pattern as `jobs`. */
+  skills?: string[];
   onEdit: () => void;
   onBack: () => void;
   onSelectJob: (job: Job) => void;
@@ -46,8 +48,15 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
+/** Masks a driver's license number to its last 4 characters, e.g. "•••• 1234". Full value is only ever shown in the editor. */
+function maskDriversLicense(value: string | null): string {
+  if (!value) return 'Not on file';
+  if (value.length <= 4) return value;
+  return `•••• ${value.slice(-4)}`;
+}
+
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
-  const { employee, jobs, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
+  const { employee, jobs, skills, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
 
   return (
     <View style={styles.screen}>
@@ -59,6 +68,19 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <ListItem title="Role" subtitle={employee.role} />
           <ListItem title="Status" subtitle={employee.active ? 'Active' : 'Inactive'} />
           {employee.isTest ? <ListItem title="Test Employee" subtitle="Yes" /> : null}
+          <ListItem title="Address" subtitle={employee.address ?? 'Not on file'} />
+          <ListItem title="Driver's License" subtitle={maskDriversLicense(employee.driversLicenseNumber)} />
+          <ListItem title="Vehicle Status" subtitle={employee.vehicleStatus ?? 'Not set'} />
+          <ListItem title="Tool Status" subtitle={employee.toolStatus ?? 'Not set'} />
+        </Card>
+
+        <Text style={styles.heading}>Skills</Text>
+        <Card style={styles.card}>
+          {skills && skills.length > 0 ? (
+            skills.map((skill) => <ListItem key={skill} title={skill} />)
+          ) : (
+            <Text style={styles.note}>No skills on file for this employee.</Text>
+          )}
         </Card>
 
         <Text style={styles.heading}>Schedule</Text>
@@ -66,7 +88,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <WeekView jobs={jobs} anchorDay={new Date()} onSelectJob={onSelectJob} />
         </Card>
 
-        <Text style={styles.heading}>Jobs</Text>
+        <Text style={styles.heading}>Job History</Text>
         <Card style={styles.card}>
           {jobs.length > 0 ? (
             jobs.map((job) => (

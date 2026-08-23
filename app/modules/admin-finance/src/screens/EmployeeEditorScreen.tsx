@@ -18,16 +18,27 @@
  * moment a different role is picked, independent of the main save.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, ErrorState, Toggle, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, ErrorState, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
-import type { EmployeeRepository, InvitationRepository } from '../data/ports';
+import type {
+  EmployeeRepository,
+  InvitationRepository,
+  ServiceAreaRepository,
+  TechServiceAreaRepository,
+  TechSkillRepository,
+  ServiceArea,
+} from '../data/ports';
+import { isVehicleStatus, isToolStatus } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface EmployeeEditorScreenProps {
   employees?: EmployeeRepository;
   invitations?: InvitationRepository;
+  serviceAreas?: ServiceAreaRepository;
+  techServiceAreas?: TechServiceAreaRepository;
+  techSkills?: TechSkillRepository;
   /** Existing employee — absent means create mode, present means edit mode. */
   profile?: Profile;
   /** Fired after a successful save (either mode). */
@@ -38,6 +49,26 @@ export interface EmployeeEditorScreenProps {
 
 const ROLES: readonly Role[] = ['owner', 'admin', 'tech', 'sales'];
 
+const SKILLS = [
+  'installation',
+  'service_repair',
+  'electrical',
+  'segway_investigation',
+  'estimating',
+  'customer_service',
+] as const;
+
+const VEHICLE_STATUS_OPTIONS = [
+  { label: 'Assigned', value: 'assigned' },
+  { label: 'Unassigned', value: 'unassigned' },
+  { label: 'In Maintenance', value: 'in_maintenance' },
+];
+const TOOL_STATUS_OPTIONS = [
+  { label: 'Issued', value: 'issued' },
+  { label: 'Not Issued', value: 'not_issued' },
+  { label: 'Needs Replacement', value: 'needs_replacement' },
+];
+
 /** Save/role-change action state. */
 type ActionState =
   | { kind: 'idle' }
@@ -46,7 +77,16 @@ type ActionState =
   | { kind: 'done'; message: string };
 
 export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
-  const { employees: employeeRepository, invitations: invitationRepository, profile, onSaved, onCancel } = props;
+  const {
+    employees: employeeRepository,
+    invitations: invitationRepository,
+    serviceAreas: serviceAreaRepository,
+    techServiceAreas: techServiceAreaRepository,
+    techSkills: techSkillRepository,
+    profile,
+    onSaved,
+    onCancel,
+  } = props;
   const isEditMode = !!profile;
 
   const [fullNameInput, setFullNameInput] = useState(profile?.fullName ?? '');
@@ -58,7 +98,46 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
 
+  const [serviceAreaList, setServiceAreaList] = useState<ServiceArea[]>([]);
+  const [assignedServiceAreaIds, setAssignedServiceAreaIds] = useState<Set<string>>(new Set());
+  const [serviceAreaActionState, setServiceAreaActionState] = useState<Record<string, ActionState>>({});
+
+  const [addressInput, setAddressInput] = useState((profile as unknown as { address?: string })?.address ?? '');
+  const [driversLicenseInput, setDriversLicenseInput] = useState((profile as unknown as { driversLicenseNumber?: string })?.driversLicenseNumber ?? '');
+  const [vehicleStatusInput, setVehicleStatusInput] = useState<string | null>((profile as unknown as { vehicleStatus?: string })?.vehicleStatus ?? null);
+  const [toolStatusInput, setToolStatusInput] = useState<string | null>((profile as unknown as { toolStatus?: string })?.toolStatus ?? null);
+
+  const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
+  const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
+
   const session = getModuleSession();
+
+  useEffect(() => {
+    if (!isEditMode || !profile || !serviceAreaRepository || !techServiceAreaRepository || !session) return;
+    let cancelled = false;
+    async function load() {
+      const [areas, coverage, skills] = await Promise.all([
+        serviceAreaRepository!.listForOrganization(session!.org.id),
+        techServiceAreaRepository!.listForOrganization(session!.org.id),
+        techSkillRepository ? techSkillRepository.listForOrganization(session!.org.id) : Promise.resolve([]),
+      ]);
+      if (cancelled) return;
+      setServiceAreaList(areas);
+      const ids = coverage
+        .filter((row) => row.techId === profile!.id)
+        .map((row) => row.serviceAreaId);
+      setAssignedServiceAreaIds(new Set(ids));
+      const skillIds = skills
+        .filter((row) => row.techId === profile!.id)
+        .map((row) => row.skill);
+      setAssignedSkillIds(new Set(skillIds));
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, serviceAreaRepository, techServiceAreaRepository, techSkillRepository]);
 
   if (!session) {
     return (
@@ -105,6 +184,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         fullName: fullNameInput,
         phone: phoneInput || null,
         isTest: isTestInput,
+        address: addressInput || null,
+        driversLicenseNumber: driversLicenseInput || null,
+        vehicleStatus: vehicleStatusInput && isVehicleStatus(vehicleStatusInput) ? vehicleStatusInput : null,
+        toolStatus: toolStatusInput && isToolStatus(toolStatusInput) ? toolStatusInput : null,
       });
       setActionState({ kind: 'done', message: 'Saved.' });
       onSaved?.();
@@ -124,6 +207,56 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not update the role.';
       setRoleActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function handleServiceAreaToggle(serviceAreaId: string, nextChecked: boolean): Promise<void> {
+    if (!techServiceAreaRepository || !profile) return;
+    setServiceAreaActionState((prev) => ({ ...prev, [serviceAreaId]: { kind: 'working' } }));
+    try {
+      if (nextChecked) {
+        await techServiceAreaRepository.assignToTech(session!.org.id, profile.id, serviceAreaId);
+      } else {
+        await techServiceAreaRepository.removeFromTech(session!.org.id, profile.id, serviceAreaId);
+      }
+      setAssignedServiceAreaIds((prev) => {
+        const next = new Set(prev);
+        if (nextChecked) {
+          next.add(serviceAreaId);
+        } else {
+          next.delete(serviceAreaId);
+        }
+        return next;
+      });
+      setServiceAreaActionState((prev) => ({ ...prev, [serviceAreaId]: { kind: 'done', message: 'Updated.' } }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not update the service area.';
+      setServiceAreaActionState((prev) => ({ ...prev, [serviceAreaId]: { kind: 'failed', message } }));
+    }
+  }
+
+  async function handleSkillToggle(skill: string, nextChecked: boolean): Promise<void> {
+    if (!techSkillRepository || !profile) return;
+    setSkillActionState((prev) => ({ ...prev, [skill]: { kind: 'working' } }));
+    try {
+      if (nextChecked) {
+        await techSkillRepository.assignToTech(session!.org.id, profile.id, skill);
+      } else {
+        await techSkillRepository.removeFromTech(session!.org.id, profile.id, skill);
+      }
+      setAssignedSkillIds((prev) => {
+        const next = new Set(prev);
+        if (nextChecked) {
+          next.add(skill);
+        } else {
+          next.delete(skill);
+        }
+        return next;
+      });
+      setSkillActionState((prev) => ({ ...prev, [skill]: { kind: 'done', message: 'Updated.' } }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not update the skill.';
+      setSkillActionState((prev) => ({ ...prev, [skill]: { kind: 'failed', message } }));
     }
   }
 
@@ -148,12 +281,40 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           />
 
           {isEditMode ? (
-            <Toggle
-              label="Test Employee"
-              value={isTestInput}
-              onChange={setIsTestInput}
-              style={styles.action}
-            />
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Address"
+                value={addressInput}
+                onChangeText={setAddressInput}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Driver's License #"
+                value={driversLicenseInput}
+                onChangeText={setDriversLicenseInput}
+              />
+              <Select
+                label="Vehicle Status"
+                value={vehicleStatusInput}
+                options={VEHICLE_STATUS_OPTIONS}
+                onChange={setVehicleStatusInput}
+                placeholder="Select status"
+              />
+              <Select
+                label="Tool Status"
+                value={toolStatusInput}
+                options={TOOL_STATUS_OPTIONS}
+                onChange={setToolStatusInput}
+                placeholder="Select status"
+              />
+              <Toggle
+                label="Test Employee"
+                value={isTestInput}
+                onChange={setIsTestInput}
+                style={styles.action}
+              />
+            </>
           ) : (
             <>
               <TextInput
@@ -200,6 +361,56 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             <Text style={styles.note}>{roleActionState.message}</Text>
           ) : null}
         </Card>
+
+        {isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Service Areas</Text>
+            {serviceAreaList.length === 0 ? (
+              <Text style={styles.note}>No service areas are configured.</Text>
+            ) : (
+              serviceAreaList.map((area) => {
+                const rowState = serviceAreaActionState[area.id] ?? { kind: 'idle' };
+                return (
+                  <View key={area.id}>
+                    <Toggle
+                      label={area.name}
+                      value={assignedServiceAreaIds.has(area.id)}
+                      onChange={(newValue) => {
+                        void handleServiceAreaToggle(area.id, newValue);
+                      }}
+                      disabled={rowState.kind === 'working'}
+                      style={styles.action}
+                    />
+                    {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
+                  </View>
+                );
+              })
+            )}
+          </Card>
+        ) : null}
+
+        {isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Skills</Text>
+            {SKILLS.map((skill) => {
+              const rowState = skillActionState[skill] ?? { kind: 'idle' };
+              return (
+                <View key={skill}>
+                  <Toggle
+                    label={skill}
+                    value={assignedSkillIds.has(skill)}
+                    onChange={(newValue) => {
+                      void handleSkillToggle(skill, newValue);
+                    }}
+                    disabled={rowState.kind === 'working'}
+                    style={styles.action}
+                  />
+                  {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
+                </View>
+              );
+            })}
+          </Card>
+        ) : null}
 
         <Button
           label={busy ? 'Saving...' : 'Save'}

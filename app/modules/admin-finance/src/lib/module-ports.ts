@@ -10,7 +10,7 @@
  * repository set to render anything meaningful at all. There is no hook —
  * screens call `getModulePorts()` directly.
  *
- * The eight fields are typed against the repository interfaces declared in
+ * The fields are typed against the repository interfaces declared in
  * `modules/admin-finance/src/data/ports.ts`.
  */
 
@@ -29,6 +29,9 @@ import type {
   PaymentsRepository,
   CalendarEventRepository,
   TechServiceAreaRepository,
+  TechSkillRepository,
+  ServiceAreaRepository,
+  CustomerRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { CalculationResult } from '../money/types';
@@ -38,12 +41,15 @@ import type { TimeOffAdminRepo } from '../data/time-off-repo';
 
 export interface ModulePorts {
   jobs: JobRepository;
+  customers: CustomerRepository;
   priceSheets: PriceSheetRepository;
   payPeriods: PayPeriodRepository;
   leads: LeadRepository;
   employees: EmployeeRepository;
   invitations: InvitationRepository;
   techServiceAreas: TechServiceAreaRepository;
+  serviceAreas: ServiceAreaRepository;
+  techSkills: TechSkillRepository;
   jobAssignments: JobAssignmentRepository;
   commissions: CommissionRepository;
   auditLog: AuditLogRepository;

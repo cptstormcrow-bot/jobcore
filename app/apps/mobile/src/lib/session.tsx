@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
 import { supabase } from './supabase';
+import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
 /* ------------------------------------------------------------------ *
  * DB row shapes (snake_case) → domain types (camelCase)
@@ -17,6 +18,10 @@ export interface ProfileRow {
   active: boolean;
   created_at: string;
   is_test: boolean;
+  address: string | null;
+  drivers_license_number: string | null;
+  vehicle_status: string | null;
+  tool_status: string | null;
 }
 
 export interface OrganizationRow {
@@ -51,6 +56,10 @@ export function toProfile(row: ProfileRow): Profile {
     active: row.active,
     createdAt: row.created_at,
     isTest: row.is_test,
+    address: row.address,
+    driversLicenseNumber: row.drivers_license_number,
+    vehicleStatus: row.vehicle_status && isVehicleStatus(row.vehicle_status) ? row.vehicle_status : null,
+    toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
   };
 }
 
@@ -107,7 +116,7 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
 
   const profileResult = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name, phone, role, active, created_at, is_test')
+    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status')
     .eq('id', session.user.id)
     .maybeSingle<ProfileRow>();
 

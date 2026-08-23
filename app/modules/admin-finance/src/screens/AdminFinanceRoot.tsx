@@ -44,7 +44,7 @@ import { EmployeeRosterScreen } from './EmployeeRosterScreen';
 import { EmployeeEditorScreen } from './EmployeeEditorScreen';
 import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
-import type { CloseOutPhoto, TechServiceArea, ServiceArea } from '../data/ports';
+import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { qualifyLead } from '../flows/qualify-lead';
@@ -68,7 +68,7 @@ type SubView =
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[] }
+  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[] }
   | { kind: 'failed'; message: string };
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
@@ -144,10 +144,11 @@ export function AdminFinanceRoot() {
       commissionRepository.listForOrganization(orgId),
       techServiceAreaRepository.listForOrganization(orgId),
       ports.serviceAreas.listForOrganization(orgId),
+      ports.techSkills.listForOrganization(orgId),
     ])
-      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas]) => {
+      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills]) => {
         if (!cancelled) {
-          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas });
+          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills });
         }
       })
       .catch((error: unknown) => {
@@ -159,7 +160,7 @@ export function AdminFinanceRoot() {
     return () => {
       cancelled = true;
     };
-  }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository]);
+  }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills]);
 
   function handleAssign(job: Job, techId: string) {
     if (!session) {
@@ -502,6 +503,11 @@ export function AdminFinanceRoot() {
                 ? loadState.jobs.filter((job) => job.assignedTechId === selectedEmployee.id)
                 : []
             }
+            skills={
+              loadState.kind === 'loaded'
+                ? loadState.techSkills.filter((s) => s.techId === selectedEmployee.id).map((s) => s.skill)
+                : []
+            }
             onEdit={handleEditEmployee}
             onBack={handleBackToRoster}
             onSelectJob={handleSelectEmployeeJob}
@@ -519,6 +525,7 @@ export function AdminFinanceRoot() {
           invitations={ports.invitations}
           serviceAreas={ports.serviceAreas}
           techServiceAreas={ports.techServiceAreas}
+          techSkills={ports.techSkills}
           profile={selectedEmployee ?? undefined}
           onSaved={handleEmployeeEditorSaved}
           onCancel={handleEmployeeEditorCancel}

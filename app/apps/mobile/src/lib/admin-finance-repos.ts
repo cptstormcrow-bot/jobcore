@@ -18,7 +18,7 @@ import { supabase } from './supabase';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
 import { makeIdempotencyKey } from '@jobcore/core';
-import type { NewQueuedMutation, Job, Commission, JobStatus, Profile, Role } from '@jobcore/core';
+import type { NewQueuedMutation, Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
 import type {
   JobRepository,
   JobRow,
@@ -52,8 +52,9 @@ import type {
   EmployeeRepository,
   InvitationRepository,
   Invitation,
+  TechSkillRepository,
 } from '../../../../modules/admin-finance/src/data/ports';
-import { toJob, toAuditLogEntry, toPayment, toCustomer } from '../../../../modules/admin-finance/src/data/ports';
+import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import type { PriceSheet } from '../../../../modules/admin-finance/src/money/types';
@@ -85,6 +86,7 @@ import type {
 } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { toTimeOffRequestAdmin } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { listTechServiceAreas } from '../../../../modules/admin-finance/src/data/tech-service-area-repo';
+import { listTechSkills } from '../../../../modules/admin-finance/src/data/tech-skill-repo';
 import { listServiceAreas } from '../../../../modules/admin-finance/src/data/service-area-repo';
 
 /**
@@ -450,6 +452,10 @@ function toProfile(row: {
   active: boolean;
   is_test: boolean;
   created_at: string;
+  address: string | null;
+  drivers_license_number: string | null;
+  vehicle_status: string | null;
+  tool_status: string | null;
 }): Profile {
   return {
     id: row.id,
@@ -460,6 +466,10 @@ function toProfile(row: {
     active: row.active,
     isTest: row.is_test,
     createdAt: row.created_at,
+    address: row.address,
+    driversLicenseNumber: row.drivers_license_number,
+    vehicleStatus: row.vehicle_status && isVehicleStatus(row.vehicle_status) ? row.vehicle_status : null,
+    toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
   };
 }
 
@@ -491,7 +501,15 @@ export function createEmployeeRepository(): EmployeeRepository {
 
     async updateEmployee(
       profileId: string,
-      updates: { fullName?: string; phone?: string | null; isTest?: boolean },
+      updates: {
+        fullName?: string;
+        phone?: string | null;
+        isTest?: boolean;
+        address?: string | null;
+        driversLicenseNumber?: string | null;
+        vehicleStatus?: VehicleStatus | null;
+        toolStatus?: ToolStatus | null;
+      },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('employee.update', occurredAt, { profileId, updates });
@@ -505,6 +523,18 @@ export function createEmployeeRepository(): EmployeeRepository {
       }
       if (updates.isTest !== undefined) {
         patch.is_test = updates.isTest;
+      }
+      if (updates.address !== undefined) {
+        patch.address = updates.address;
+      }
+      if (updates.driversLicenseNumber !== undefined) {
+        patch.drivers_license_number = updates.driversLicenseNumber;
+      }
+      if (updates.vehicleStatus !== undefined) {
+        patch.vehicle_status = updates.vehicleStatus;
+      }
+      if (updates.toolStatus !== undefined) {
+        patch.tool_status = updates.toolStatus;
       }
 
       const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
@@ -1129,6 +1159,42 @@ export function createTechServiceAreaRepository(): TechServiceAreaRepository {
   };
 }
 
+function createTechSkillRepository(): TechSkillRepository {
+  return {
+    async listForOrganization(organizationId: string) {
+      const result = await listTechSkills(supabase, organizationId);
+      if (!result.ok) {
+        throw new Error(result.reason);
+      }
+      return result.value;
+    },
+    async assignToTech(organizationId: string, techId: string, skill: string) {
+      const { error } = await supabase.from('tech_skills').upsert(
+        {
+          organization_id: organizationId,
+          tech_id: techId,
+          skill,
+        },
+        { onConflict: 'tech_id,skill' }
+      );
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+    async removeFromTech(organizationId: string, techId: string, skill: string) {
+      const { error } = await supabase
+        .from('tech_skills')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('tech_id', techId)
+        .eq('skill', skill);
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * ServiceAreaRepository
  * ------------------------------------------------------------------ */
@@ -1338,6 +1404,7 @@ export function buildAdminFinancePorts(): ModulePorts {
     calendarEvents: createCalendarEventRepository(),
     timeOffAdmin: createTimeOffAdminRepository(),
     techServiceAreas: createTechServiceAreaRepository(),
+    techSkills: createTechSkillRepository(),
     serviceAreas: createServiceAreaRepository(),
     customers: createCustomerRepository(),
   };

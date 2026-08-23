@@ -40,6 +40,9 @@ export interface Organization {
   createdAt: string;
 }
 
+export type VehicleStatus = 'assigned' | 'unassigned' | 'in_maintenance';
+export type ToolStatus = 'issued' | 'not_issued' | 'needs_replacement';
+
 /**
  * Mirrors the Supabase `profiles` table.
  * `organizationId` ↔ `organization_id`, `fullName` ↔ `full_name`, `createdAt` ↔ `created_at`.
@@ -53,6 +56,10 @@ export interface Profile {
   active: boolean;
   isTest: boolean;
   createdAt: string;
+  address: string | null;
+  driversLicenseNumber: string | null;
+  vehicleStatus: VehicleStatus | null;
+  toolStatus: ToolStatus | null;
 }
 
 /**

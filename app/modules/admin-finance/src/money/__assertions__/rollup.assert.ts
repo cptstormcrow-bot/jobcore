@@ -54,6 +54,10 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     active: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     isTest: false,
+    address: null,
+    driversLicenseNumber: null,
+    vehicleStatus: null,
+    toolStatus: null,
     ...overrides,
   };
 }
