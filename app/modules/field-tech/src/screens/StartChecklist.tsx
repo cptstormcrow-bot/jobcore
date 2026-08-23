@@ -39,6 +39,7 @@ import { useCallback, useState } from 'react';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
 import type { NewQueuedMutation } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -224,6 +225,7 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
 
   return (
     <div>
+      <ScreenTitle title="Start Checklist" />
       <p>Job {job.id}</p>
       {error !== null ? <p role="alert">{error}</p> : null}
 

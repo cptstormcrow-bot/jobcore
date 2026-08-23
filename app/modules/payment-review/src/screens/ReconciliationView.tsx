@@ -27,7 +27,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle } from '@jobcore/ui';
 
 import type { PaymentRow, SupabaseSelectClient } from '../data/ports';
 
@@ -121,6 +121,7 @@ export function ReconciliationView({ client }: ReconciliationViewProps): React.R
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Reconciliation" />
       <Text style={styles.heading}>Needs attention</Text>
       {needsAttention.length === 0 ? (
         <EmptyState title="Nothing pending" message="No pending or failed payments." />

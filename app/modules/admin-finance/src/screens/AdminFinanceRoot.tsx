@@ -23,7 +23,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, radius } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
@@ -347,6 +347,7 @@ export function AdminFinanceRoot() {
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Admin & Finance" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabRow}>
         {TOP_LEVEL_TABS.map(({ key, label }) => (
           <Button

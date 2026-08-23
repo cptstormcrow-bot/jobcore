@@ -19,7 +19,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, colors, spacing } from '@jobcore/ui';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
@@ -119,6 +119,7 @@ export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenP
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Payments" />
         <Text style={styles.heading}>Needs attention</Text>
         {loadState.needsAttention.length === 0 ? (
           <EmptyState title="Nothing pending" message="No pending or failed payments." />

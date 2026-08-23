@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, ErrorState, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import type {
   EmployeeRepository,
@@ -262,9 +262,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title={isEditMode ? 'Edit Employee' : 'Add Employee'} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>{isEditMode ? 'Edit Employee' : 'Add Employee'}</Text>
-
         <Card style={styles.card}>
           <TextInput
             style={styles.input}

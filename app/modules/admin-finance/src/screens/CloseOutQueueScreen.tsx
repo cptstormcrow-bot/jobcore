@@ -28,7 +28,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Card, EmptyState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
 
 export interface CloseOutQueueScreenProps {
@@ -62,6 +62,7 @@ export function CloseOutQueueScreen({ jobs, ctx, onSelectJob }: CloseOutQueueScr
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Close-Out Queue" />
       <ScrollView contentContainerStyle={styles.content}>
         {queue.map(({ job, blockers }) => (
           <Pressable key={job.id} onPress={() => onSelectJob?.(job)}>

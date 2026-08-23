@@ -31,6 +31,7 @@ import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-na
 
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest } from '../data/ports';
+import { ScreenTitle } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -207,6 +208,7 @@ export function TimeOff(): React.ReactElement {
 
   return (
     <View style={styles.container}>
+      <ScreenTitle title="Time Off" />
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Upcoming assignments</Text>
         {upcomingLoading ? (

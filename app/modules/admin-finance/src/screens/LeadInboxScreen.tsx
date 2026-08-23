@@ -15,7 +15,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, colors, spacing } from '@jobcore/ui';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { selectInboxLeads } from '../domain/lead-inbox';
 import type { LeadRepository } from '../data/ports';
@@ -96,6 +96,7 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead }: LeadInb
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Lead Inbox" />
         {inboxLeads.length === 0 ? (
           <EmptyState title="No leads" message="This organization has no unconverted leads." />
         ) : (

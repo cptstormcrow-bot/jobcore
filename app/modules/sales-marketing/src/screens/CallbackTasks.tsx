@@ -19,7 +19,7 @@
 import * as React from 'react';
 import { View, Text, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { Toggle } from '@jobcore/ui';
+import { ScreenTitle, Toggle } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
@@ -97,7 +97,7 @@ export function CallbackTasks(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Callback tasks</Text>
+      <ScreenTitle title="Callback Tasks" />
 
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
 
@@ -154,11 +154,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   centered: {
     flex: 1,

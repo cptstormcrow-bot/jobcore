@@ -55,6 +55,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
+import { ScreenTitle } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -349,10 +350,10 @@ export function Composer({
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <ScreenTitle title="Compose Post" />
       <View style={styles.badge}>
         <Text style={styles.badgeText}>Pitch angle: {pitchAngle}</Text>
       </View>
-      <Text style={styles.title}>Compose post</Text>
 
       <Text style={styles.suggestedCaption}>{suggestedCaption}</Text>
 
@@ -502,11 +503,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#333',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
   },
   suggestedCaption: {
     fontSize: 14,

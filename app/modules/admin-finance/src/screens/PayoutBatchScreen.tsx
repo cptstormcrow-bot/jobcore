@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -192,6 +192,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
     return (
       <View style={styles.screen}>
         {banner}
+        <ScreenTitle title="Payout Batches" />
         <EmptyState title="Payout Batches" message="No payout batches have been recorded yet." />
       </View>
     );
@@ -201,6 +202,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
     <View style={styles.screen}>
       {banner}
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Payout Batches" />
         <Text style={styles.groupHeading}>Payout Batches</Text>
         {loadState.batches.map((batch, batchIndex) => {
           const batchTotal = batch.lines.reduce((sum, line) => sum + line.totalAmount, 0);

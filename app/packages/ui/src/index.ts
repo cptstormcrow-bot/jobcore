@@ -12,3 +12,4 @@ export * from './job-status-colors';
 export * from './Toggle';
 export * from './WeekView';
 export * from './Checkbox';
+export * from './ScreenTitle';

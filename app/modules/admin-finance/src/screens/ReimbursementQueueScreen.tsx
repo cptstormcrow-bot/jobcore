@@ -26,7 +26,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
 
@@ -195,6 +195,7 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Reimbursements" />
         <Text style={styles.groupHeading}>Pending Review</Text>
         <Card style={styles.card}>
           {pending.map((item) => {

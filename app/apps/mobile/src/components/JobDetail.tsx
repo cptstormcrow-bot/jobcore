@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { Job } from '@jobcore/core';
 import type { JobAction } from '@jobcore/module-sdk';
-import { colors, spacing, typography, radius } from '@jobcore/ui';
+import { colors, spacing, typography, radius, ScreenTitle } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { supabase } from '../lib/supabase';
 
@@ -140,6 +140,7 @@ export function JobDetail({ job, actions, onAction }: JobDetailProps) {
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <ScreenTitle title="Job Details" subtitle={job.address ?? undefined} />
       <View style={[styles.statusBar, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
       <Text style={styles.status}>{job.status}</Text>
       {job.isBeta ? (

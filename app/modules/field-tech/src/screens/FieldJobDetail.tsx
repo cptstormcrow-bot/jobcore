@@ -19,6 +19,7 @@ import * as React from 'react';
 import { View, Text, Pressable, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -144,6 +145,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
   return (
     <View style={styles.container}>
+      <ScreenTitle title="Field Job Detail" subtitle={job.address ?? undefined} />
       <Text style={styles.title}>Job {job.id}</Text>
       <Text style={styles.status}>{job.status}</Text>
 

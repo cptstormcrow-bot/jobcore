@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 
 export interface EmployeeJobDetailScreenProps {
@@ -37,10 +37,10 @@ export function EmployeeJobDetailScreen(props: EmployeeJobDetailScreenProps) {
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Job Details" subtitle={job.address ?? undefined} />
       <ScrollView contentContainerStyle={styles.content}>
         <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
 
-        <Text style={styles.heading}>Job Details</Text>
         <Card style={styles.card}>
           <ListItem title="Status" subtitle={job.status} />
           <ListItem title="Address" subtitle={job.address ?? 'No address'} />
@@ -61,13 +61,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-  },
-  heading: {
-    color: colors.text,
-    fontSize: typography.size.h5,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
   },
   card: {
     marginBottom: spacing.md,

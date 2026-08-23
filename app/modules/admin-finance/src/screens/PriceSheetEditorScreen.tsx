@@ -37,7 +37,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
@@ -292,7 +292,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Price Sheet</Text>
+        <ScreenTitle title="Price Sheet Editor" />
         <Card style={styles.card}>
           <ListItem title="Version" subtitle={String(sheet.version)} />
           <ListItem title="Status" subtitle={STATUS_LABEL[sheet.status]} />

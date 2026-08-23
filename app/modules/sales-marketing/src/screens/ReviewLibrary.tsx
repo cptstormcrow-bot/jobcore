@@ -35,6 +35,7 @@
 
 import * as React from 'react';
 import { View, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { ScreenTitle } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
@@ -150,7 +151,7 @@ export function ReviewLibrary(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Review library</Text>
+      <ScreenTitle title="Review Library" />
 
       <View style={styles.filters}>
         <Text style={styles.filterLabel}>Minimum rating</Text>
@@ -263,11 +264,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   filters: {
     marginBottom: 16,

@@ -14,7 +14,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Text } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, colors, spacing } from '@jobcore/ui';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { AuditLogEntry, AuditLogFilter, AuditLogRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
@@ -91,6 +91,7 @@ export function AuditLogScreen({ auditLog: auditLogRepository, filter }: AuditLo
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Audit Log" />
       <ScrollView contentContainerStyle={styles.content}>
         {entries.length === 0 ? (
           <EmptyState title="No audit entries" message="Nothing has been recorded for this organization yet." />

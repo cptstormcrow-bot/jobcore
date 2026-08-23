@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button } from '@jobcore/ui';
+import { Button, EmptyState, ScreenTitle } from '@jobcore/ui';
 
 import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
@@ -84,14 +84,10 @@ export function SalesMarketingRoot(): React.ReactElement {
               serviceAreaId,
               onDone: () => setSubView('pitchPicker'),
             })
-          : React.createElement(
-              View,
-              null,
-              // No session or no pitch angle selected yet — Composer
-              // requires both required props to be real values, so fall
-              // back to Pitch Picker's own tab rather than mounting
-              // Composer with placeholder/invalid props.
-            );
+          : React.createElement(EmptyState, {
+              title: 'Compose Post',
+              message: 'Select a pitch angle to start composing a post.',
+            });
       break;
     }
     case 'reporting':
@@ -109,6 +105,7 @@ export function SalesMarketingRoot(): React.ReactElement {
   return React.createElement(
     View,
     { style: styles.screen },
+    React.createElement(ScreenTitle, { title: 'Sales & Marketing' }),
     React.createElement(
       View,
       { style: styles.tabRow },

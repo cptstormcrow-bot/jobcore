@@ -33,6 +33,7 @@
 
 import { useState } from 'react';
 import type { Job, PayPeriod, BonusRule, Commission, Reimbursement, CloseOut, DerivedHours } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -147,6 +148,7 @@ export function Earnings({
 
   return (
     <div>
+      <ScreenTitle title="Earnings" />
       <p>Earnings for {period.start} – {period.end}</p>
 
       <section>

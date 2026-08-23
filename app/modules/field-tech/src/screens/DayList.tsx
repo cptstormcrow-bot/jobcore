@@ -19,7 +19,7 @@ import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, Toggle } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, Toggle, ScreenTitle } from '@jobcore/ui';
 
 export function DayList(): React.ReactElement {
   const session = getModuleSession();
@@ -92,6 +92,7 @@ export function DayList(): React.ReactElement {
 
   return (
     <View style={styles.listContent}>
+      <ScreenTitle title="Today's Jobs" />
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       {visibleJobs.length === 0 ? (
         <View style={styles.centered}>

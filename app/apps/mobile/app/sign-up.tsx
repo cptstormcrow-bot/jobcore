@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, ErrorState, colors, spacing, typography, radius } from '@jobcore/ui';
+import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius } from '@jobcore/ui';
 
 import { signUp } from '../src/lib/session';
 
@@ -33,8 +33,7 @@ export default function SignUpScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.body}>
-        <Text style={styles.title}>JobCore©</Text>
-        <Text style={styles.subtitle}>Create an account</Text>
+        <ScreenTitle title="Sign Up" subtitle="Create an account" />
 
         <Card style={styles.card}>
           <Text style={styles.label}>Email</Text>
@@ -93,20 +92,6 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   body: { flex: 1, justifyContent: 'center', padding: spacing.lg },
-  title: {
-    color: colors.primary,
-    fontSize: typography.size.h1,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.bold,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: typography.size.body,
-    textAlign: 'center',
-    marginTop: spacing.xs,
-    marginBottom: spacing.lg,
-  },
   card: { gap: spacing.xs },
   label: {
     color: colors.textLight,

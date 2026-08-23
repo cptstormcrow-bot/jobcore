@@ -39,7 +39,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Toggle, Button, Select, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, EmptyState, Toggle, Button, Select, ScreenTitle, colors, spacing, radius, typography } from '@jobcore/ui';
 import { TechColumn, type TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -209,6 +209,8 @@ export function AssignmentBoardScreen({
         jobsByTech.get(pending.tech.id) ?? [],
         resolveServiceAreaId(pending.job),
         resolveTimeOffForTech ? resolveTimeOffForTech(pending.tech.id) : [],
+        pending.tech.id,
+        techServiceAreas ?? [],
       )
     : [];
 
@@ -222,6 +224,7 @@ export function AssignmentBoardScreen({
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Assignment Board" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Unassigned</Text>

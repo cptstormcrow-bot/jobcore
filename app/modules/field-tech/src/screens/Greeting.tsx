@@ -22,6 +22,7 @@
 
 import { useState } from 'react';
 import type { Job } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -121,6 +122,7 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
 
   return (
     <div>
+      <ScreenTitle title="New Job Assigned" />
       <p>You&apos;ve been assigned a new job.</p>
       <button type="button" onClick={handleAccept}>
         Accept

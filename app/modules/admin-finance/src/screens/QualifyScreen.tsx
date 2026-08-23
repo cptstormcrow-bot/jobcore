@@ -25,9 +25,10 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { validateQualify } from '../domain/qualify';
+import type { ServiceArea } from '../data/ports';
 import {
   AxisPicker,
   SOURCE_VALUES,
@@ -42,10 +43,13 @@ export interface QualifyAxisSelection {
   source: SourceValue;
   payer: PayerValue;
   attachTiming: AttachTimingValue;
+  serviceAreaId: string | null;
 }
 
 export interface QualifyScreenProps {
   lead: Lead;
+  /** Service areas offered by the org for the "Service Area" picker; defaults to none when absent. */
+  serviceAreas?: ServiceArea[];
   onSubmit?: (selection: QualifyAxisSelection) => void;
   onCancel?: () => void;
 }
@@ -54,12 +58,13 @@ function asAxisValue<T extends string>(values: readonly T[], value: string | nul
   return value !== null && (values as readonly string[]).includes(value) ? (value as T) : null;
 }
 
-export function QualifyScreen({ lead, onSubmit, onCancel }: QualifyScreenProps) {
+export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: QualifyScreenProps) {
   const [source, setSource] = useState<SourceValue | null>(() => asAxisValue(SOURCE_VALUES, lead.source));
   const [payer, setPayer] = useState<PayerValue | null>(() => asAxisValue(PAYER_VALUES, lead.payer));
   const [attachTiming, setAttachTiming] = useState<AttachTimingValue | null>(() =>
     asAxisValue(ATTACH_TIMING_VALUES, lead.attachTiming)
   );
+  const [serviceAreaId, setServiceAreaId] = useState<string | null>(null);
 
   const validation = useMemo(
     () =>
@@ -72,7 +77,12 @@ export function QualifyScreen({ lead, onSubmit, onCancel }: QualifyScreenProps) 
     [lead, source, payer, attachTiming]
   );
 
-  const axesSelected = source !== null && payer !== null && attachTiming !== null;
+  const areaRequired = serviceAreas.length > 0;
+  const axesSelected =
+    source !== null &&
+    payer !== null &&
+    attachTiming !== null &&
+    (!areaRequired || serviceAreaId !== null);
   const canSubmit = validation.valid && axesSelected;
 
   const blockingReasons = [
@@ -80,20 +90,21 @@ export function QualifyScreen({ lead, onSubmit, onCancel }: QualifyScreenProps) 
     ...(source === null ? ['Missing required field: source'] : []),
     ...(payer === null ? ['Missing required field: payer'] : []),
     ...(attachTiming === null ? ['Missing required field: attach_timing'] : []),
+    ...(areaRequired && serviceAreaId === null ? ['Missing required field: service area'] : []),
   ];
 
   function handleSubmit() {
     if (!canSubmit || !onSubmit) {
       return;
     }
-    onSubmit({ source, payer, attachTiming } as QualifyAxisSelection);
+    onSubmit({ source, payer, attachTiming, serviceAreaId } as QualifyAxisSelection);
   }
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Qualify Lead" />
         <Card style={styles.card}>
-          <Text style={styles.title}>Qualify lead</Text>
           <Text style={styles.subtitle}>{lead.name}</Text>
 
           {lead.address ? (
@@ -118,6 +129,24 @@ export function QualifyScreen({ lead, onSubmit, onCancel }: QualifyScreenProps) 
             selected={attachTiming}
             onSelect={setAttachTiming}
           />
+
+          {serviceAreas.length > 0 && (
+            <View style={styles.axisContainer}>
+              <Text style={styles.axisLabel}>Service Area</Text>
+              <View style={styles.axisRow}>
+                {serviceAreas.map((area) => (
+                  <Button
+                    key={area.id}
+                    label={area.name}
+                    variant={serviceAreaId === area.id ? 'primary' : 'outline'}
+                    onPress={() => setServiceAreaId(area.id)}
+                    size="sm"
+                    style={styles.action}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
 
           {blockingReasons.length > 0 && (
             <View style={styles.reasons}>
@@ -161,13 +190,6 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.md,
   },
-  title: {
-    color: colors.text,
-    fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.bold,
-    marginBottom: spacing.xs,
-  },
   subtitle: {
     color: colors.text,
     fontSize: typography.size.body,
@@ -186,6 +208,21 @@ const styles = StyleSheet.create({
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.xs,
+  },
+  axisContainer: {
+    marginBottom: spacing.md,
+  },
+  axisLabel: {
+    color: colors.text,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.xs,
+  },
+  axisRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
   },
   reasons: {
     marginTop: spacing.sm,

@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
 
@@ -112,6 +112,7 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Time Off" />
         <Text style={styles.groupHeading}>Pending Review</Text>
         <Card style={styles.card}>
           {pending.map((item) => {

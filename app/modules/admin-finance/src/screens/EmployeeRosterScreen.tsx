@@ -13,7 +13,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, Toggle, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Toggle, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -106,9 +106,8 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Employee Roster" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Employee Roster</Text>
-
         <Button
           label="Add Employee"
           onPress={() => onAddEmployee?.()}
@@ -157,13 +156,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-  },
-  heading: {
-    color: colors.text,
-    fontSize: typography.size.h5,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
   },
   card: {
     marginBottom: spacing.md,

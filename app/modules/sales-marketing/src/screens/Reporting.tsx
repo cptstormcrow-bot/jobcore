@@ -37,6 +37,7 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review } from '../data/ports';
+import { ScreenTitle } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
   platform: string;
@@ -137,7 +138,7 @@ export function Reporting(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Marketing reporting</Text>
+      <ScreenTitle title="Marketing Reporting" />
 
       <View style={styles.notice} accessibilityRole="text">
         <Text style={styles.noticeTitle}>Paid-ads reporting: out of scope</Text>
@@ -211,11 +212,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   notice: {
     backgroundColor: '#fff4e5',
