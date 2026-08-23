@@ -71,6 +71,21 @@ export interface AssignmentBoardScreenProps {
   techServiceAreas?: TechServiceAreaCoverage[];
   /** Fired once the assignment is confirmed (warnings shown, never blocking). */
   onAssign?: (job: Job, techId: string) => void;
+  /**
+   * Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
+   * rows spawned by sales-marketing's "Spawn Test Jobs" flow. Lifted to the
+   * caller (`AdminFinanceRoot`) so the value survives this screen unmounting
+   * on a `subView` switch.
+   */
+  showTestJobs: boolean;
+  onShowTestJobsChange: (value: boolean) => void;
+  /**
+   * "Show Test Employees" toggle, default OFF — hides profiles.is_test rows
+   * via `isTestVisible`, mirroring `showTestJobs`/`isBetaVisible` above. Also
+   * lifted to the caller for the same unmount-survival reason.
+   */
+  showTestEmployees: boolean;
+  onShowTestEmployeesChange: (value: boolean) => void;
 }
 
 interface PendingAssignment {
@@ -85,16 +100,14 @@ export function AssignmentBoardScreen({
   resolveTimeOffForTech,
   techServiceAreas,
   onAssign,
+  showTestJobs,
+  onShowTestJobsChange,
+  showTestEmployees,
+  onShowTestEmployeesChange,
 }: AssignmentBoardScreenProps) {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
-  // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
-  // rows spawned by sales-marketing's "Spawn Test Jobs" flow.
-  const [showBeta, setShowBeta] = useState(false);
-  // "Show Test Employees" toggle, default OFF — hides profiles.is_test rows
-  // via isTestVisible, mirroring showBeta/isBetaVisible above.
-  const [showTestEmployees, setShowTestEmployees] = useState(false);
 
   const visibleTechs = useMemo(
     () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
@@ -102,8 +115,8 @@ export function AssignmentBoardScreen({
   );
 
   const unassignedJobs = useMemo(
-    () => jobs.filter((job) => !job.assignedTechId && isBetaVisible(job, showBeta)),
-    [jobs, showBeta]
+    () => jobs.filter((job) => !job.assignedTechId && isBetaVisible(job, showTestJobs)),
+    [jobs, showTestJobs]
   );
 
   const jobsByTech = useMemo(() => {
@@ -111,11 +124,11 @@ export function AssignmentBoardScreen({
     for (const tech of visibleTechs) {
       map.set(
         tech.id,
-        jobs.filter((job) => job.assignedTechId === tech.id && isBetaVisible(job, showBeta))
+        jobs.filter((job) => job.assignedTechId === tech.id && isBetaVisible(job, showTestJobs))
       );
     }
     return map;
-  }, [jobs, visibleTechs, showBeta]);
+  }, [jobs, visibleTechs, showTestJobs]);
 
   const selectedJob = selectedJobId ? jobs.find((job) => job.id === selectedJobId) ?? null : null;
 
@@ -212,8 +225,8 @@ export function AssignmentBoardScreen({
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Unassigned</Text>
-          <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-          <Toggle label="Show Test Employees" value={showTestEmployees} onChange={setShowTestEmployees} />
+          <Toggle label="Show Test Jobs" value={showTestJobs} onChange={onShowTestJobsChange} />
+          <Toggle label="Show Test Employees" value={showTestEmployees} onChange={onShowTestEmployeesChange} />
           {unassignedJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
