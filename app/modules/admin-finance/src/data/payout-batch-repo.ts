@@ -43,14 +43,16 @@ export interface PayoutBatchRow {
  */
 export interface PayoutLineRow {
   id: string;
-  batch_id: string;
+  organization_id: string;
+  payout_batch_id: string;
   user_id: string;
-  hours_amount_cents: number;
-  commission_amount_cents: number;
-  bonus_amount_cents: number;
-  reimbursement_amount_cents: number;
-  total_amount_cents: number;
-  frozen_at: string;
+  hours_amount: number;
+  commission_amount: number;
+  bonus_amount: number;
+  reimbursement_amount: number;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
   source_hash: string;
 }
 
@@ -62,12 +64,12 @@ export interface PayoutLineRow {
 export function toFrozenPayoutLine(row: PayoutLineRow): FrozenPayoutLine {
   return {
     userId: row.user_id,
-    hoursAmount: row.hours_amount_cents,
-    commissionAmount: row.commission_amount_cents,
-    bonusAmount: row.bonus_amount_cents,
-    reimbursementAmount: row.reimbursement_amount_cents,
-    totalAmount: row.total_amount_cents,
-    frozenAt: row.frozen_at,
+    hoursAmount: row.hours_amount,
+    commissionAmount: row.commission_amount,
+    bonusAmount: row.bonus_amount,
+    reimbursementAmount: row.reimbursement_amount,
+    totalAmount: row.total_amount,
+    frozenAt: row.created_at,
     sourceHash: row.source_hash,
   };
 }

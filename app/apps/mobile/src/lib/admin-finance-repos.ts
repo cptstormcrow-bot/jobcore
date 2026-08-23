@@ -851,7 +851,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
     if (batchIds.length === 0) {
       return [];
     }
-    const { data, error } = await supabase.from('payout_lines').select('*').in('batch_id', batchIds);
+    const { data, error } = await supabase.from('payout_lines').select('*').in('payout_batch_id', batchIds);
     if (error) {
       throw new Error(`fetchLinesForBatchIds failed: ${error.message}`);
     }
@@ -873,7 +873,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
       return batchRows.map((batchRow) =>
         toPayoutBatch(
           batchRow,
-          lineRows.filter((lineRow) => lineRow.batch_id === batchRow.id),
+          lineRows.filter((lineRow) => lineRow.payout_batch_id === batchRow.id),
         ),
       );
     },

@@ -22,11 +22,13 @@
 
 import type { Job } from '@jobcore/core';
 import { overlaps, type TimeWindow } from './time-window';
+import { candidatesFor, type TechServiceAreaCoverage } from './segway-candidates';
 
 export type AssignmentWarningCode =
   | 'tech_schedule_overlap'
   | 'missing_service_area'
-  | 'time_off_conflict';
+  | 'time_off_conflict'
+  | 'tech_outside_service_area';
 
 export interface AssignmentWarning {
   code: AssignmentWarningCode;
@@ -65,12 +67,19 @@ export interface AssignmentTimeOffRequest {
  *   stronger message (the board is warn-only everywhere, so this still never
  *   hard-blocks — see this file's own module doc comment) and `pending`
  *   produces a softer one.
+ * - `tech_outside_service_area`: `techId` is provided, `serviceAreaId` is
+ *   non-null, and `segway-candidates.ts`'s `candidatesFor` (given `techId`,
+ *   `serviceAreaId`, and `techServiceAreas`) reports that tech as not
+ *   covering the job's service area. Skipped entirely when `techId` is
+ *   omitted (optional — existing callers unaffected).
  */
 export function warningsFor(
   job: Job,
   techJobs: Job[],
   serviceAreaId: string | null,
   techTimeOffRequests: AssignmentTimeOffRequest[] = [],
+  techId?: string,
+  techServiceAreas: TechServiceAreaCoverage[] = [],
 ): AssignmentWarning[] {
   const warnings: AssignmentWarning[] = [];
 
@@ -117,6 +126,16 @@ export function warningsFor(
       warnings.push({
         code: 'time_off_conflict',
         message: 'This tech has a pending time-off request during this window.',
+      });
+    }
+  }
+
+  if (serviceAreaId !== null && techId !== undefined) {
+    const [candidate] = candidatesFor([techId], serviceAreaId, techServiceAreas);
+    if (candidate && !candidate.coversServiceArea) {
+      warnings.push({
+        code: 'tech_outside_service_area',
+        message: "This technician does not cover this job's service area.",
       });
     }
   }
