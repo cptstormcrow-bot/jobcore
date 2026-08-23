@@ -11,3 +11,4 @@ export * from './Select';
 export * from './job-status-colors';
 export * from './Toggle';
 export * from './WeekView';
+export * from './Checkbox';
