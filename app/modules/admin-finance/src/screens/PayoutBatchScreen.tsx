@@ -24,6 +24,7 @@ import { getModuleSession } from '../lib/module-session';
 
 export interface PayoutBatchScreenProps {
   payoutBatches?: PayoutBatchRepo;
+  onSelectBatch?: (batch: PayoutBatch) => void;
 }
 
 type LoadState =
@@ -43,7 +44,7 @@ function formatAmount(amountCents: number): string {
 }
 
 export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
-  const { payoutBatches: payoutBatchRepository } = props;
+  const { payoutBatches: payoutBatchRepository, onSelectBatch } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [approveActions, setApproveActions] = useState<Record<string, ApproveActionState>>({});
 
@@ -212,6 +213,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
               <ListItem
                 title={`${batch.periodStart} to ${batch.periodEnd}`}
                 subtitle={`${batch.lines.length} line(s) - ${formatAmount(batchTotal)} total`}
+                onPress={() => onSelectBatch?.(batch)}
               />
               {approveState?.kind === 'failed' && <Text style={styles.rowError}>{approveState.message}</Text>}
               {canApprove && (

@@ -25,6 +25,7 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
+import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { LeadInboxScreen } from './LeadInboxScreen';
@@ -32,6 +33,7 @@ import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { ReimbursementQueueScreen } from './ReimbursementQueueScreen';
 import { TimeOffQueueScreen } from './TimeOffQueueScreen';
 import { PayoutBatchScreen } from './PayoutBatchScreen';
+import { PayoutBatchDetailScreen } from './PayoutBatchDetailScreen';
 import { AuditLogScreen } from './AuditLogScreen';
 import { PaymentsScreen } from './PaymentsScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
@@ -60,6 +62,7 @@ type SubView =
   | 'reimbursementQueue'
   | 'timeOffQueue'
   | 'payoutBatch'
+  | 'payoutBatch-detail'
   | 'reports'
   | 'auditLog'
   | 'payments'
@@ -83,12 +86,15 @@ export function AdminFinanceRoot() {
   const router = useRouter();
   const [subView, setSubView] = useState<SubView>('overview');
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const [showTestJobs, setShowTestJobs] = useState(false);
+  const [showTestEmployees, setShowTestEmployees] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedCloseOutJob, setSelectedCloseOutJob] = useState<Job | null>(null);
   const [selectedPriceSheetId, setSelectedPriceSheetId] = useState<string | null>(null);
   const [closeOutPhotos, setCloseOutPhotos] = useState<CloseOutPhoto[]>([]);
   const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
+  const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
 
@@ -263,6 +269,15 @@ export function AdminFinanceRoot() {
   function handlePublished() {
     setSelectedPriceSheetId(null);
     setSubView('priceSheetList');
+  }
+
+  function handleSelectPayoutBatch(batch: PayoutBatch) {
+    setSelectedPayoutBatch(batch);
+    setSubView('payoutBatch-detail');
+  }
+
+  function handleBackToPayoutBatches() {
+    setSubView('payoutBatch');
   }
 
   function handleSelectEmployee(profile: Profile) {
@@ -455,7 +470,15 @@ export function AdminFinanceRoot() {
       ) : subView === 'timeOffQueue' ? (
         <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} />
       ) : subView === 'payoutBatch' ? (
-        <PayoutBatchScreen payoutBatches={ports.payoutBatches} />
+        <PayoutBatchScreen payoutBatches={ports.payoutBatches} onSelectBatch={handleSelectPayoutBatch} />
+      ) : subView === 'payoutBatch-detail' ? (
+        selectedPayoutBatch ? (
+          <PayoutBatchDetailScreen batch={selectedPayoutBatch} onBack={handleBackToPayoutBatches} />
+        ) : (
+          <View style={styles.screen}>
+            <EmptyState title="Payout Batch" message="No payout batch selected." />
+          </View>
+        )
       ) : subView === 'auditLog' ? (
         <AuditLogScreen auditLog={ports.auditLog} />
       ) : subView === 'payments' ? (
@@ -478,6 +501,10 @@ export function AdminFinanceRoot() {
             resolveServiceAreaId={(job) => job.service_area_id ?? null}
             techServiceAreas={loadState.techServiceAreas}
             onAssign={handleAssign}
+            showTestJobs={showTestJobs}
+            onShowTestJobsChange={setShowTestJobs}
+            showTestEmployees={showTestEmployees}
+            onShowTestEmployeesChange={setShowTestEmployees}
           />
         )
       ) : subView === 'reports' ? (
