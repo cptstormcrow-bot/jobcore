@@ -23,7 +23,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, TabBar, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, radius } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
@@ -334,6 +334,13 @@ export function AdminFinanceRoot() {
     setSubView('employee-detail');
   }
 
+  const currentScreenLabel =
+    subView === 'employee-editor'
+      ? selectedEmployee
+        ? 'Edit Employee'
+        : 'Add Employee'
+      : SUBVIEW_LABELS[subView];
+
   if (!session) {
     return (
       <View style={styles.screen}>
@@ -347,19 +354,8 @@ export function AdminFinanceRoot() {
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title="Admin & Finance" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabRow}>
-        {TOP_LEVEL_TABS.map(({ key, label }) => (
-          <Button
-            key={key}
-            label={label}
-            variant={subView === key ? 'primary' : 'outline'}
-            size="tab"
-            onPress={() => setSubView(key)}
-            style={styles.tabButton}
-          />
-        ))}
-      </ScrollView>
+      <ScreenTitle title={`Admin & Finance > ${currentScreenLabel}`} />
+      <TabBar items={TOP_LEVEL_TABS} activeKey={subView} onSelect={setSubView} />
 
       {subView === 'overview' || subView === 'jobs' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -379,6 +375,7 @@ export function AdminFinanceRoot() {
               label="Add Job"
               variant="primary"
               size="sm"
+              fullWidth
               onPress={() => router.push('/job/new')}
             />
           </ScrollView>
@@ -388,6 +385,7 @@ export function AdminFinanceRoot() {
               label="Add Job"
               variant="primary"
               size="sm"
+              fullWidth
               onPress={() => router.push('/job/new')}
               style={styles.card}
             />
@@ -575,6 +573,28 @@ export function AdminFinanceRoot() {
   );
 }
 
+const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
+  overview: 'Overview',
+  jobs: 'Jobs',
+  leadInbox: 'Leads',
+  qualify: 'Qualify Lead',
+  assignmentBoard: 'Assignment Board',
+  closeOutQueue: 'Close-Outs',
+  closeOutReview: 'Close-Out Review',
+  priceSheetList: 'Price Sheets',
+  priceSheetEditor: 'Price Sheet Editor',
+  reimbursementQueue: 'Reimbursements',
+  timeOffQueue: 'Time Off',
+  payoutBatch: 'Payout Batches',
+  'payoutBatch-detail': 'Payout Batch Detail',
+  reports: 'Reports',
+  auditLog: 'Audit Log',
+  payments: 'Payment & Review',
+  'employee-roster': 'Employees',
+  'employee-detail': 'Employee Detail',
+  'employee-job-detail': 'Employee Job Detail',
+};
+
 const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
   { key: 'overview', label: 'Overview' },
   { key: 'jobs', label: 'Jobs' },
@@ -595,8 +615,6 @@ export default AdminFinanceRoot;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
-  tabRow: { flexDirection: 'row', padding: spacing.md, gap: spacing.xs },
-  tabButton: { borderRadius: radius.md, marginHorizontal: 0 },
   content: { padding: spacing.md },
   card: { marginBottom: spacing.md },
 });

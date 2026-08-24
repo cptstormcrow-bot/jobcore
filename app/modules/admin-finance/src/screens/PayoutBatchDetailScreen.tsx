@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 
 export interface PayoutBatchDetailScreenProps {
@@ -32,6 +32,7 @@ export function PayoutBatchDetailScreen({ batch, onBack }: PayoutBatchDetailScre
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Payout Batch Detail" />
         <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
 
         <Card style={styles.card}>
