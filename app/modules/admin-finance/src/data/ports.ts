@@ -12,6 +12,8 @@ import type { Job, JobStatus } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
+export type { LeadRow } from '../domain/lead';
+export { toLead } from '../domain/lead';
 import type { JobDraft } from '../domain/qualify';
 import type { NewLeadDraft } from '../domain/intake-normalize';
 import type { CommissionLine } from '../money/types';
@@ -145,11 +147,21 @@ export interface JobRepository {
   create(draft: JobDraft): Promise<Job>;
 }
 
-/** Read-only access to price sheets. */
+/**
+ * Mirrors `NewLeadDraft`'s role for `LeadRepository.create`: the caller
+ * supplies only these fields when creating a new price sheet. `id` is
+ * server-assigned; `status` is NOT caller-supplied — the implementation
+ * always creates the row with `status: 'draft'`; `publishedAt` starts `null`
+ * and is only set later by the publish action, not at creation.
+ */
+export type PriceSheetDraft = Omit<PriceSheet, 'id' | 'status' | 'publishedAt'>;
+
+/** Read + create access to price sheets. */
 export interface PriceSheetRepository {
   listForOrganization(organizationId: string): Promise<PriceSheet[]>;
   /** The single `published` price sheet currently in effect, if any. */
   getActive(organizationId: string): Promise<PriceSheet | null>;
+  create(draft: PriceSheetDraft): Promise<PriceSheet>;
 }
 
 /** Read-only access to pay periods. */

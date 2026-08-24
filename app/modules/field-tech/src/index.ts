@@ -31,6 +31,8 @@ import { Greeting } from './screens/Greeting';
 import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
+import { Overview } from './screens/Overview';
+import { Reimbursements } from './screens/Reimbursements';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import { transitionJob } from './domain/transition';
@@ -49,10 +51,10 @@ export { setModulePorts } from './lib/module-ports';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'jobs' | 'timeOff';
+type SubView = 'overview' | 'jobs' | 'timeOff' | 'reimbursements';
 
 function FieldTechRoot(): React.ReactElement {
-  const [subView, setSubView] = React.useState<SubView>('jobs');
+  const [subView, setSubView] = React.useState<SubView>('overview');
   const session = getModuleSession();
 
   if (!session) {
@@ -70,6 +72,13 @@ function FieldTechRoot(): React.ReactElement {
       View,
       { style: styles.tabRow },
       React.createElement(Button, {
+        label: 'Overview',
+        variant: subView === 'overview' ? 'primary' : 'outline',
+        size: 'sm',
+        onPress: () => setSubView('overview'),
+        style: styles.tabButton,
+      }),
+      React.createElement(Button, {
         label: 'Jobs',
         variant: subView === 'jobs' ? 'primary' : 'outline',
         size: 'sm',
@@ -83,8 +92,21 @@ function FieldTechRoot(): React.ReactElement {
         onPress: () => setSubView('timeOff'),
         style: styles.tabButton,
       }),
+      React.createElement(Button, {
+        label: 'Reimbursements',
+        variant: subView === 'reimbursements' ? 'primary' : 'outline',
+        size: 'sm',
+        onPress: () => setSubView('reimbursements'),
+        style: styles.tabButton,
+      }),
     ),
-    subView === 'jobs' ? React.createElement(DayList, null) : React.createElement(TimeOff, null),
+    subView === 'overview'
+      ? React.createElement(Overview, null)
+      : subView === 'jobs'
+        ? React.createElement(DayList, null)
+        : subView === 'timeOff'
+          ? React.createElement(TimeOff, null)
+          : React.createElement(Reimbursements, null),
   );
 }
 
@@ -106,7 +128,7 @@ const styles = StyleSheet.create({
 // (e.g. a job-flow navigator wiring Greeting -> StartChecklist -> Completion,
 // or a pay-period view wiring Earnings) without a deep import into this
 // package's internal file layout.
-export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, FieldJobDetail };
+export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, FieldJobDetail, Overview, Reimbursements };
 
 /**
  * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.

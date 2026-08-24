@@ -532,3 +532,110 @@ export interface TechJobRepository {
   listAssignedToTech(techId: string): Promise<Job[]>;
   getById(jobId: string, techId: string): Promise<Job | null>;
 }
+
+/* ------------------------------------------------------------------ *
+ * reimbursement_requests
+ * ------------------------------------------------------------------ */
+
+/**
+ * `ReimbursementRequest*` here is a tech-submitted expense request against
+ * `reimbursement_requests` — distinct from `@jobcore/core`'s `payroll.ts`
+ * `Reimbursement { jobId, amount }`, which is a computed payroll rollup
+ * line, not a row a tech creates. The `Request` suffix throughout this
+ * block exists specifically to avoid colliding with that unrelated type.
+ */
+
+/**
+ * The full `ReimbursementRequestStatus` union, restated as a runtime tuple
+ * so `toReimbursementRequest` can validate an untrusted row's `status`
+ * string against it. Mirrors `reimbursement_requests_status_check` in the
+ * migration.
+ */
+export type ReimbursementRequestStatus = 'pending' | 'approved' | 'rejected';
+
+const REIMBURSEMENT_REQUEST_STATUSES: readonly ReimbursementRequestStatus[] = [
+  'pending',
+  'approved',
+  'rejected',
+];
+
+function isReimbursementRequestStatus(value: string): value is ReimbursementRequestStatus {
+  return (REIMBURSEMENT_REQUEST_STATUSES as readonly string[]).includes(value);
+}
+
+/** Mirrors `reimbursement_requests`. `status` is `string` — untrusted wire data until `toReimbursementRequest` validates it. */
+export interface ReimbursementRequestRow {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  job_id: string | null;
+  amount_cents: number;
+  description: string | null;
+  receipt_photo_path: string | null;
+  status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Domain shape of a reimbursement request. */
+export interface ReimbursementRequest {
+  id: string;
+  organizationId: string;
+  userId: string;
+  jobId: string | null;
+  amountCents: number;
+  description: string | null;
+  receiptPhotoPath: string | null;
+  status: ReimbursementRequestStatus;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Map a `reimbursement_requests` row to the domain `ReimbursementRequest`.
+ * Throws on an unrecognized `status` rather than widening the union —
+ * fail closed instead of letting an unknown status slip past approve/reject
+ * gating logic elsewhere.
+ */
+export function toReimbursementRequest(row: ReimbursementRequestRow): ReimbursementRequest {
+  if (!isReimbursementRequestStatus(row.status)) {
+    throw new Error(`Unknown reimbursement request status "${row.status}" on request ${row.id}`);
+  }
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    userId: row.user_id,
+    jobId: row.job_id,
+    amountCents: row.amount_cents,
+    description: row.description,
+    receiptPhotoPath: row.receipt_photo_path,
+    status: row.status,
+    approvedBy: row.approved_by,
+    approvedAt: row.approved_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/** Fields needed to insert one `reimbursement_requests` row. `status` always starts `'pending'` (see migration comment), so it is not a caller-supplied field. */
+export interface ReimbursementRequestDraft {
+  jobId?: string | null;
+  amountCents: number;
+  description?: string;
+  receiptPhotoPath?: string;
+}
+
+/**
+ * Read + insert access to a tech's own reimbursement requests. Deliberately
+ * has NO status-write/approve/reject method — RLS gives non-admins
+ * select+insert only on this table; admin-only UPDATE is a separate
+ * module's concern.
+ */
+export interface ReimbursementRequestRepository {
+  listForTech(techId: string): Promise<ReimbursementRequest[]>;
+  create(organizationId: string, techId: string, draft: ReimbursementRequestDraft): Promise<ReimbursementRequest>;
+}

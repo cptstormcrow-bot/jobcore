@@ -4,6 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, colors } from '@jobcore/ui';
 import { setModuleSession, clearModuleSession } from '@jobcore/admin-finance';
+import { setModulePorts as setAdminFinanceModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import {
   setModuleSession as setFieldTechModuleSession,
   clearModuleSession as clearFieldTechModuleSession,
@@ -12,6 +13,7 @@ import { setModulePorts as setFieldTechModulePorts } from '../../../../modules/f
 
 import { useSession } from '../../src/lib/session';
 import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
+import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 
 /**
  * Static route file + dynamic segment.
@@ -50,6 +52,7 @@ export default function ModuleScreen() {
         role: state.profile.role,
         userId: state.profile.id,
       });
+      setAdminFinanceModulePorts(buildAdminFinancePorts());
       return () => clearModuleSession();
     }
     return undefined;

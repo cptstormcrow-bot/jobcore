@@ -3,28 +3,36 @@
  *
  * The host renders this with zero props (`<Screen />`) — every prop here is
  * optional and the component must render a truthful empty view when nothing
- * is injected. Ports are handed in by the host via `AdminFinanceRootProps`;
- * the session is read through the injected seam in `../lib/module-session`.
+ * is injected. Ports are read through the injected seam in
+ * `../lib/module-ports` (`getModulePorts`); the session is read through the
+ * injected seam in `../lib/module-session`.
  *
  * This is an internal state-driven sub-view switcher, not a navigator —
  * `route.path` is never read here. Read-only: this screen never writes a
  * job's stage. It has no access to any write path for that field at all.
+ *
+ * `leads`/`priceSheets` sub-views render `LeadInboxScreen`/
+ * `PriceSheetListScreen` (both props-driven, not ports-driven — this screen
+ * passes the repository down) plus an owned "+ New" action that switches to
+ * `leadCreate`/`priceSheetCreate`, rendering `LeadCreateScreen`/
+ * `PriceSheetCreateScreen` (both self-inject via `getModulePorts()`) with
+ * `onCreated`/`onCancel` returning to the list. Neither list screen embeds
+ * its own create affordance, so this screen owns it (P4 Batch 5 plan,
+ * "+ New" action pattern — avoids growing an already-crowded tab row).
  */
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
-import type { JobRepository, PriceSheetRepository, PayPeriodRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
+import { getModulePorts } from '../lib/module-ports';
+import LeadInboxScreen from './LeadInboxScreen';
+import PriceSheetListScreen from './PriceSheetListScreen';
+import LeadCreateScreen from './LeadCreateScreen';
+import PriceSheetCreateScreen from './PriceSheetCreateScreen';
 
-export interface AdminFinanceRootProps {
-  jobs?: JobRepository;
-  priceSheets?: PriceSheetRepository;
-  payPeriods?: PayPeriodRepository;
-}
-
-type SubView = 'overview' | 'jobs';
+type SubView = 'overview' | 'jobs' | 'leads' | 'priceSheets' | 'leadCreate' | 'priceSheetCreate';
 
 type LoadState =
   | { kind: 'idle' }
@@ -40,17 +48,17 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
-export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
-  const { jobs: jobRepository } = props;
+export function AdminFinanceRoot() {
   const [subView, setSubView] = useState<SubView>('overview');
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
   const session = getModuleSession();
 
   useEffect(() => {
-    if (!session || !jobRepository) {
+    if (!session) {
       return;
     }
+    const { jobs: jobRepository } = getModulePorts();
     let cancelled = false;
     setLoadState({ kind: 'loading' });
     jobRepository
@@ -69,7 +77,7 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [session, jobRepository]);
+  }, [session]);
 
   if (!session) {
     return (
@@ -82,16 +90,7 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
     );
   }
 
-  if (!jobRepository) {
-    return (
-      <View style={styles.screen}>
-        <EmptyState
-          title="Admin & Finance"
-          message="No data source is connected for this module yet."
-        />
-      </View>
-    );
-  }
+  const ports = getModulePorts();
 
   return (
     <View style={styles.screen}>
@@ -110,9 +109,44 @@ export function AdminFinanceRoot(props: AdminFinanceRootProps = {}) {
           onPress={() => setSubView('jobs')}
           style={styles.tabButton}
         />
+        <Button
+          label="Leads"
+          variant={subView === 'leads' ? 'primary' : 'outline'}
+          size="sm"
+          onPress={() => setSubView('leads')}
+          style={styles.tabButton}
+        />
+        <Button
+          label="Price Sheets"
+          variant={subView === 'priceSheets' ? 'primary' : 'outline'}
+          size="sm"
+          onPress={() => setSubView('priceSheets')}
+          style={styles.tabButton}
+        />
       </View>
 
-      {loadState.kind === 'loading' || loadState.kind === 'idle' ? (
+      {subView === 'leadCreate' ? (
+        <LeadCreateScreen onCreated={() => setSubView('leads')} onCancel={() => setSubView('leads')} />
+      ) : subView === 'priceSheetCreate' ? (
+        <PriceSheetCreateScreen
+          onCreated={() => setSubView('priceSheets')}
+          onCancel={() => setSubView('priceSheets')}
+        />
+      ) : subView === 'leads' ? (
+        <View style={styles.subScreen}>
+          <View style={styles.newActionRow}>
+            <Button label="+ New" variant="primary" size="sm" onPress={() => setSubView('leadCreate')} />
+          </View>
+          <LeadInboxScreen leads={ports.leads} />
+        </View>
+      ) : subView === 'priceSheets' ? (
+        <View style={styles.subScreen}>
+          <View style={styles.newActionRow}>
+            <Button label="+ New" variant="primary" size="sm" onPress={() => setSubView('priceSheetCreate')} />
+          </View>
+          <PriceSheetListScreen priceSheets={ports.priceSheets} />
+        </View>
+      ) : loadState.kind === 'loading' || loadState.kind === 'idle' ? (
         <LoadingState label="Loading jobs..." />
       ) : loadState.kind === 'failed' ? (
         <ErrorState message={loadState.message} />
@@ -157,6 +191,15 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     borderRadius: radius.md,
+  },
+  subScreen: {
+    flex: 1,
+  },
+  newActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
   },
   content: {
     padding: spacing.md,
