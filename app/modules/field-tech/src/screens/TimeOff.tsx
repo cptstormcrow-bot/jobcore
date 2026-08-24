@@ -27,11 +27,11 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest } from '../data/ports';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, Button } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -255,14 +255,12 @@ export function TimeOff(): React.ReactElement {
           multiline
         />
         {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={submitting ? 'Submitting…' : 'Submit request'}
           disabled={!canSubmit}
           onPress={handleSubmit}
-          style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-        >
-          <Text style={styles.submitButtonText}>{submitting ? 'Submitting…' : 'Submit request'}</Text>
-        </Pressable>
+          style={styles.submitButton}
+        />
       </View>
 
       <View style={styles.section}>
@@ -291,14 +289,13 @@ export function TimeOff(): React.ReactElement {
                   <Text style={styles.requestStatus}>{item.status}</Text>
                   {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
                   {cancellable ? (
-                    <Pressable
-                      accessibilityRole="button"
+                    <Button
+                      label={cancelling ? 'Cancelling…' : 'Cancel'}
+                      variant="outline"
                       disabled={cancelling}
                       onPress={() => handleCancel(item.id)}
-                      style={[styles.cancelButton, cancelling && styles.submitButtonDisabled]}
-                    >
-                      <Text style={styles.cancelButtonText}>{cancelling ? 'Cancelling…' : 'Cancel'}</Text>
-                    </Pressable>
+                      style={styles.cancelButton}
+                    />
                   ) : null}
                 </View>
               );
@@ -346,18 +343,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     marginTop: 12,
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 14,
   },
   requestRow: {
     paddingVertical: 8,
@@ -378,16 +364,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   cancelButton: {
-    backgroundColor: '#eee',
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
     marginTop: 6,
     alignSelf: 'flex-start',
-  },
-  cancelButtonText: {
-    fontSize: 12,
-    color: '#b00020',
   },
   emptyText: {
     color: '#666',

@@ -28,6 +28,7 @@ import type { Commission, Job, Profile } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
+import { awaitingCloseOut } from '../domain/closeout';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { ReimbursementQueueScreen } from './ReimbursementQueueScreen';
@@ -73,6 +74,9 @@ type LoadState =
   | { kind: 'loading' }
   | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[] }
   | { kind: 'failed'; message: string };
+
+const PREF_KEY_SHOW_TEST_JOBS = 'admin-finance.assignment-board.show-test-jobs';
+const PREF_KEY_SHOW_TEST_EMPLOYEES = 'admin-finance.assignment-board.show-test-employees';
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
 function formatDate(iso: string | null): string {
@@ -167,6 +171,32 @@ export function AdminFinanceRoot() {
       cancelled = true;
     };
   }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const [jobs, employees] = await Promise.all([
+        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
+        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, false),
+      ]);
+      if (cancelled) return;
+      setShowTestJobs(jobs);
+      setShowTestEmployees(employees);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function handleShowTestJobsChange(value: boolean) {
+    setShowTestJobs(value);
+    void ports.localPrefs.setBool(PREF_KEY_SHOW_TEST_JOBS, value);
+  }
+
+  function handleShowTestEmployeesChange(value: boolean) {
+    setShowTestEmployees(value);
+    void ports.localPrefs.setBool(PREF_KEY_SHOW_TEST_EMPLOYEES, value);
+  }
 
   function handleAssign(job: Job, techId: string) {
     if (!session) {
@@ -366,18 +396,39 @@ export function AdminFinanceRoot() {
           <ScrollView contentContainerStyle={styles.content}>
             <Card style={styles.card}>
               <ListItem
+                title="Leads"
+                subtitle="View leads"
+                onPress={() => setSubView('leadInbox')}
+              />
+            </Card>
+            <Card style={styles.card}>
+              <ListItem
                 title="Jobs"
                 subtitle={`${loadState.jobs.length} on file for this organization`}
                 onPress={() => setSubView('jobs')}
               />
             </Card>
-            <Button
-              label="Add Job"
-              variant="primary"
-              size="sm"
-              fullWidth
-              onPress={() => router.push('/job/new')}
-            />
+            <Card style={styles.card}>
+              <ListItem
+                title="Assignments"
+                subtitle={`${loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length} qualified or scheduled`}
+                onPress={() => setSubView('assignmentBoard')}
+              />
+            </Card>
+            <Card style={styles.card}>
+              <ListItem
+                title="Close-Outs"
+                subtitle={`${loadState.jobs.filter(awaitingCloseOut).length} awaiting close-out`}
+                onPress={() => setSubView('closeOutQueue')}
+              />
+            </Card>
+            <Card style={styles.card}>
+              <ListItem
+                title="Payouts"
+                subtitle="View payout batches"
+                onPress={() => setSubView('payoutBatch')}
+              />
+            </Card>
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
@@ -501,9 +552,9 @@ export function AdminFinanceRoot() {
             techServiceAreas={loadState.techServiceAreas}
             onAssign={handleAssign}
             showTestJobs={showTestJobs}
-            onShowTestJobsChange={setShowTestJobs}
+            onShowTestJobsChange={handleShowTestJobsChange}
             showTestEmployees={showTestEmployees}
-            onShowTestEmployeesChange={setShowTestEmployees}
+            onShowTestEmployeesChange={handleShowTestEmployeesChange}
           />
         )
       ) : subView === 'reports' ? (
@@ -578,7 +629,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
   jobs: 'Jobs',
   leadInbox: 'Leads',
   qualify: 'Qualify Lead',
-  assignmentBoard: 'Assignment Board',
+  assignmentBoard: 'Assignments',
   closeOutQueue: 'Close-Outs',
   closeOutReview: 'Close-Out Review',
   priceSheetList: 'Price Sheets',
@@ -597,9 +648,9 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
 
 const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
   { key: 'overview', label: 'Overview' },
-  { key: 'jobs', label: 'Jobs' },
   { key: 'leadInbox', label: 'Leads' },
-  { key: 'assignmentBoard', label: 'Assignment Board' },
+  { key: 'jobs', label: 'Jobs' },
+  { key: 'assignmentBoard', label: 'Assignments' },
   { key: 'closeOutQueue', label: 'Close-Outs' },
   { key: 'priceSheetList', label: 'Price Sheets' },
   { key: 'reimbursementQueue', label: 'Reimbursements' },

@@ -17,6 +17,7 @@
 import { supabase } from './supabase';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
+import { getBoolPref, setBoolPref } from './local-prefs';
 import { makeIdempotencyKey } from '@jobcore/core';
 import type { NewQueuedMutation, Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
 import type {
@@ -1407,6 +1408,10 @@ export function buildAdminFinancePorts(): ModulePorts {
     techSkills: createTechSkillRepository(),
     serviceAreas: createServiceAreaRepository(),
     customers: createCustomerRepository(),
+    localPrefs: {
+      getBool: getBoolPref,
+      setBool: setBoolPref,
+    },
   };
   return cachedPorts;
 }

@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button } from '@jobcore/ui';
+import { TabBar } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -66,24 +66,14 @@ function FieldTechRoot(): React.ReactElement {
   return React.createElement(
     View,
     { style: styles.screen },
-    React.createElement(
-      View,
-      { style: styles.tabRow },
-      React.createElement(Button, {
-        label: 'Jobs',
-        variant: subView === 'jobs' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('jobs'),
-        style: styles.tabButton,
-      }),
-      React.createElement(Button, {
-        label: 'Time Off',
-        variant: subView === 'timeOff' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('timeOff'),
-        style: styles.tabButton,
-      }),
-    ),
+    React.createElement(TabBar, {
+      items: [
+        { key: 'jobs', label: 'Jobs' },
+        { key: 'timeOff', label: 'Time Off' },
+      ],
+      activeKey: subView,
+      onSelect: setSubView,
+    }),
     subView === 'jobs' ? React.createElement(DayList, null) : React.createElement(TimeOff, null),
   );
 }
@@ -91,14 +81,6 @@ function FieldTechRoot(): React.ReactElement {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    padding: 12,
-    gap: 8,
-  },
-  tabButton: {
-    borderRadius: 6,
   },
 });
 

@@ -425,7 +425,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         />
         <Button
           label="Cancel"
-          variant="secondary"
+          variant="outline"
           onPress={() => onCancel?.()}
           disabled={!onCancel}
           style={styles.action}

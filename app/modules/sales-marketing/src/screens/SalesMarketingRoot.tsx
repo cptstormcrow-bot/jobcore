@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, EmptyState, ScreenTitle } from '@jobcore/ui';
+import { Button, EmptyState, ScreenTitle, TabBar } from '@jobcore/ui';
 
 import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
@@ -108,17 +108,13 @@ export function SalesMarketingRoot(): React.ReactElement {
     React.createElement(ScreenTitle, { title: 'Sales & Marketing' }),
     React.createElement(
       View,
-      { style: styles.tabRow },
-      ...TABS.map((tab) =>
-        React.createElement(Button, {
-          key: tab.key,
-          label: tab.label,
-          variant: subView === tab.key ? 'primary' : 'outline',
-          size: 'sm',
-          onPress: () => setSubView(tab.key),
-          style: styles.tabButton,
-        }),
-      ),
+      { style: styles.header },
+      React.createElement(TabBar, {
+        items: TABS,
+        activeKey: subView,
+        onSelect: setSubView,
+        style: styles.tabBar,
+      }),
       React.createElement(Button, {
         key: 'spawnTestJobs',
         label: spawningTestJobs ? 'Spawning…' : 'Spawn Test Jobs',
@@ -126,7 +122,6 @@ export function SalesMarketingRoot(): React.ReactElement {
         size: 'sm',
         disabled: spawningTestJobs,
         onPress: handleSpawnTestJobs,
-        style: styles.tabButton,
       }),
     ),
     content,
@@ -137,13 +132,12 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  tabRow: {
+  header: {
     flexDirection: 'row',
-    padding: 12,
-    gap: 8,
+    alignItems: 'center',
   },
-  tabButton: {
-    borderRadius: 6,
+  tabBar: {
+    flex: 1,
   },
 });
 

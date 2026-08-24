@@ -70,6 +70,16 @@ export interface ModulePorts {
   payments: PaymentsRepository;
   calendarEvents: CalendarEventRepository;
   timeOffAdmin: TimeOffAdminRepo;
+  /**
+   * Durable on-device key/value boolean preference storage — persists across
+   * in-app navigation, app restarts, and logout/login. Backed by SecureStore
+   * on native and localStorage on web (see local-prefs.ts / local-prefs.web.ts
+   * in the host app).
+   */
+  localPrefs: {
+    getBool(key: string, defaultValue: boolean): Promise<boolean>;
+    setBool(key: string, value: boolean): Promise<void>;
+  };
 }
 
 let current: ModulePorts | null = null;
