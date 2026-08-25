@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button } from '@jobcore/ui';
+import { Button, ScreenTitle } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -33,7 +33,7 @@ import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
 import { Overview } from './screens/Overview';
 import { Reimbursements } from './screens/Reimbursements';
-import { getModuleSession } from './lib/module-session';
+import { getModuleSession, useModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import { transitionJob } from './domain/transition';
 
@@ -53,21 +53,32 @@ export { setModulePorts } from './lib/module-ports';
  */
 type SubView = 'overview' | 'jobs' | 'timeOff' | 'reimbursements';
 
+const SUBVIEW_LABELS: Record<SubView, string> = {
+  overview: 'Overview',
+  jobs: 'Jobs',
+  timeOff: 'Time Off',
+  reimbursements: 'Reimbursements',
+};
+
 function FieldTechRoot(): React.ReactElement {
   const [subView, setSubView] = React.useState<SubView>('overview');
-  const session = getModuleSession();
+  const session = useModuleSession();
 
   if (!session) {
     return React.createElement(
       View,
       { style: styles.screen },
+      React.createElement(ScreenTitle, { title: 'Field Tech' }),
       React.createElement(DayList, null),
     );
   }
 
+  const currentScreenLabel = SUBVIEW_LABELS[subView];
+
   return React.createElement(
     View,
     { style: styles.screen },
+    React.createElement(ScreenTitle, { title: `Field Tech > ${currentScreenLabel}` }),
     React.createElement(
       View,
       { style: styles.tabRow },

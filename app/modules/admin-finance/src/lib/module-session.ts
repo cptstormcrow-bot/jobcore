@@ -25,9 +25,15 @@ export interface ModuleSession {
   userId: string;
 }
 
+import { useSyncExternalStore } from 'react';
 import type { Organization, Role } from '@jobcore/core';
 
 let current: ModuleSession | null = null;
+const listeners = new Set<() => void>();
+
+function notify(): void {
+  listeners.forEach((listener) => listener());
+}
 
 /**
  * Injection point for the host. Pass an already-narrowed `ModuleSession`
@@ -36,6 +42,7 @@ let current: ModuleSession | null = null;
  */
 export function setModuleSession(session: ModuleSession | null): void {
   current = session;
+  notify();
 }
 
 /**
@@ -51,4 +58,25 @@ export function getModuleSession(): ModuleSession | null {
 /** Convenience wrapper — equivalent to `setModuleSession(null)`. */
 export function clearModuleSession(): void {
   current = null;
+  notify();
+}
+
+/**
+ * Reactive companion to `getModuleSession()`. Plain module-level state isn't
+ * part of React's reactivity system, so a component that calls
+ * `getModuleSession()` during render can render once before the host's
+ * `useEffect` (see `app/m/[moduleId].tsx`) calls `setModuleSession()`, and
+ * then never re-render even after the session becomes available. This hook
+ * subscribes the calling component to the store so it re-renders whenever
+ * `setModuleSession`/`clearModuleSession` fire.
+ */
+export function useModuleSession(): ModuleSession | null {
+  return useSyncExternalStore(
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getModuleSession,
+    getModuleSession,
+  );
 }
