@@ -29,10 +29,36 @@ import { useSyncExternalStore } from 'react';
 import type { Organization, Role } from '@jobcore/core';
 
 let current: ModuleSession | null = null;
+
 const listeners = new Set<() => void>();
 
 function notify(): void {
-  listeners.forEach((listener) => listener());
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+/**
+ * Subscribes to changes in the injected session. Returns an unsubscribe
+ * function. Intended for use via `useModuleSession` below; exposed
+ * directly for any non-hook consumer that needs it.
+ */
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/**
+ * Structural equality check for `ModuleSession` — gates `notify()` in
+ * `setModuleSession` so re-injecting an unchanged session doesn't trigger
+ * a re-render (Fix A, commit 8530377).
+ */
+function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.org.id === b.org.id && a.role === b.role && a.userId === b.userId;
 }
 
 /**
@@ -41,8 +67,11 @@ function notify(): void {
  * (e.g. on sign-out). This is the ONLY function that may write `current`.
  */
 export function setModuleSession(session: ModuleSession | null): void {
+  const changed = !sessionsEqual(current, session);
   current = session;
-  notify();
+  if (changed) {
+    notify();
+  }
 }
 
 /**
@@ -57,26 +86,14 @@ export function getModuleSession(): ModuleSession | null {
 
 /** Convenience wrapper — equivalent to `setModuleSession(null)`. */
 export function clearModuleSession(): void {
-  current = null;
-  notify();
+  setModuleSession(null);
 }
 
 /**
- * Reactive companion to `getModuleSession()`. Plain module-level state isn't
- * part of React's reactivity system, so a component that calls
- * `getModuleSession()` during render can render once before the host's
- * `useEffect` (see `app/m/[moduleId].tsx`) calls `setModuleSession()`, and
- * then never re-render even after the session becomes available. This hook
- * subscribes the calling component to the store so it re-renders whenever
- * `setModuleSession`/`clearModuleSession` fire.
+ * React hook form of `getModuleSession`. Subscribes the calling component
+ * to session changes via `useSyncExternalStore` so it re-renders when the
+ * host injects (or clears) a session after this component's first commit.
  */
 export function useModuleSession(): ModuleSession | null {
-  return useSyncExternalStore(
-    (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    getModuleSession,
-    getModuleSession,
-  );
+  return useSyncExternalStore(subscribe, getModuleSession);
 }

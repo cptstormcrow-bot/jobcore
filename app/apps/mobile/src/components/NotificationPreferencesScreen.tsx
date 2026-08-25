@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { View, ScrollView, StyleSheet, Text, Switch } from 'react-native';
-import { Card, colors, spacing } from '@jobcore/ui';
+import { Card, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { NotificationEventType, NotificationPreferences } from '../lib/notifications';
 
 const EVENT_LABELS: Record<NotificationEventType, string> = {
@@ -41,6 +41,7 @@ export function NotificationPreferencesScreen({ preferences, onChange }: Notific
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Notification Preferences" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           {EVENT_ORDER.map((eventType) => (

@@ -3,6 +3,7 @@
 // the WHATWG URL API, which Hermes does not ship.
 import 'react-native-url-polyfill/auto';
 
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -101,7 +102,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureStoreAdapter,
+    storage: Platform.OS === 'web' ? undefined : secureStoreAdapter,
     autoRefreshToken: true,
     persistSession: true,
     // No URL-based session detection on native: there is no browser redirect

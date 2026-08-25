@@ -22,6 +22,7 @@
 
 import { useState } from 'react';
 import type { Job } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -93,7 +94,7 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
   if (showDeclineForm) {
     return (
       <div>
-        <p>Please tell us why you're declining this job.</p>
+        <p>Please tell us why you&apos;re declining this job.</p>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
@@ -121,7 +122,8 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
 
   return (
     <div>
-      <p>You've been assigned a new job.</p>
+      <ScreenTitle title="New Job Assigned" />
+      <p>You&apos;ve been assigned a new job.</p>
       <button type="button" onClick={handleAccept}>
         Accept
       </button>

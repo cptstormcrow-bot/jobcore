@@ -25,6 +25,7 @@
 
 import * as React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { ScreenTitle } from '@jobcore/ui';
 
 /** The four pitch angles a sales rep can build a post around (spec § Pitch picker and composer). */
 export type PitchAngle = 'service_line' | 'community' | 'seasonal' | 'before_after';
@@ -85,7 +86,7 @@ export function PitchPicker({ onNavigateToComposer }: PitchPickerProps): React.R
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Pick a pitch angle</Text>
+      <ScreenTitle title="Pick a Pitch Angle" />
       <Text style={styles.subtitle}>
         Choose an angle to build a post around — Composer will pre-filter matching assets and reviews.
       </Text>
@@ -111,10 +112,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
   },
   subtitle: {
     fontSize: 14,

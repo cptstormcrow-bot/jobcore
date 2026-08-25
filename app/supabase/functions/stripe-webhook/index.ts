@@ -85,7 +85,7 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 /** Extract the external reference (session id or payment intent id) from a Stripe event. */
-function extractExternalRef(event: any): string | null {
+function extractExternalRef(event: { data?: { object?: { id?: string } } }): string | null {
   const obj = event?.data?.object;
   if (!obj) return null;
   // checkout.session.completed -> session id; payment_intent.succeeded -> PI id.
@@ -105,7 +105,7 @@ Deno.serve(async (req: Request) => {
     return new Response("Invalid signature", { status: 400 });
   }
 
-  let event: any;
+  let event: { data?: { object?: { id?: string } } };
   try {
     event = JSON.parse(rawBody);
   } catch {

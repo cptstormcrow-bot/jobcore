@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, ScreenTitle } from '@jobcore/ui';
+import { TabBar } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -31,9 +31,7 @@ import { Greeting } from './screens/Greeting';
 import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
-import { Overview } from './screens/Overview';
-import { Reimbursements } from './screens/Reimbursements';
-import { getModuleSession, useModuleSession } from './lib/module-session';
+import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import { transitionJob } from './domain/transition';
 
@@ -51,73 +49,32 @@ export { setModulePorts } from './lib/module-ports';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'overview' | 'jobs' | 'timeOff' | 'reimbursements';
-
-const SUBVIEW_LABELS: Record<SubView, string> = {
-  overview: 'Overview',
-  jobs: 'Jobs',
-  timeOff: 'Time Off',
-  reimbursements: 'Reimbursements',
-};
+type SubView = 'jobs' | 'timeOff';
 
 function FieldTechRoot(): React.ReactElement {
-  const [subView, setSubView] = React.useState<SubView>('overview');
-  const session = useModuleSession();
+  const [subView, setSubView] = React.useState<SubView>('jobs');
+  const session = getModuleSession();
 
   if (!session) {
     return React.createElement(
       View,
       { style: styles.screen },
-      React.createElement(ScreenTitle, { title: 'Field Tech' }),
       React.createElement(DayList, null),
     );
   }
 
-  const currentScreenLabel = SUBVIEW_LABELS[subView];
-
   return React.createElement(
     View,
     { style: styles.screen },
-    React.createElement(ScreenTitle, { title: `Field Tech > ${currentScreenLabel}` }),
-    React.createElement(
-      View,
-      { style: styles.tabRow },
-      React.createElement(Button, {
-        label: 'Overview',
-        variant: subView === 'overview' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('overview'),
-        style: styles.tabButton,
-      }),
-      React.createElement(Button, {
-        label: 'Jobs',
-        variant: subView === 'jobs' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('jobs'),
-        style: styles.tabButton,
-      }),
-      React.createElement(Button, {
-        label: 'Time Off',
-        variant: subView === 'timeOff' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('timeOff'),
-        style: styles.tabButton,
-      }),
-      React.createElement(Button, {
-        label: 'Reimbursements',
-        variant: subView === 'reimbursements' ? 'primary' : 'outline',
-        size: 'sm',
-        onPress: () => setSubView('reimbursements'),
-        style: styles.tabButton,
-      }),
-    ),
-    subView === 'overview'
-      ? React.createElement(Overview, null)
-      : subView === 'jobs'
-        ? React.createElement(DayList, null)
-        : subView === 'timeOff'
-          ? React.createElement(TimeOff, null)
-          : React.createElement(Reimbursements, null),
+    React.createElement(TabBar, {
+      items: [
+        { key: 'jobs', label: 'Jobs' },
+        { key: 'timeOff', label: 'Time Off' },
+      ],
+      activeKey: subView,
+      onSelect: setSubView,
+    }),
+    subView === 'jobs' ? React.createElement(DayList, null) : React.createElement(TimeOff, null),
   );
 }
 
@@ -125,21 +82,13 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  tabRow: {
-    flexDirection: 'row',
-    padding: 12,
-    gap: 8,
-  },
-  tabButton: {
-    borderRadius: 6,
-  },
 });
 
 // Re-exported for any caller that needs the individual screens directly
 // (e.g. a job-flow navigator wiring Greeting -> StartChecklist -> Completion,
 // or a pay-period view wiring Earnings) without a deep import into this
 // package's internal file layout.
-export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, FieldJobDetail, Overview, Reimbursements };
+export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, FieldJobDetail };
 
 /**
  * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.
@@ -173,6 +122,27 @@ function buildTransitionCtx(): Ctx {
 }
 
 /**
+ * Persists a `transitionJob` result and logs the transition to the
+ * calendar, mirroring admin-finance's `qualify-lead.ts` flow pattern
+ * (transition -> persist status -> log calendar event). `getModulePorts()`
+ * is safe to call again here — it just returns the already-injected
+ * singleton, not a fresh construction.
+ */
+async function persistTransition(originalJob: Job, transitionedJob: Job): Promise<void> {
+  const session = getModuleSession();
+  const ports = getModulePorts();
+  const techId = session ? session.userId : originalJob.assignedTechId ?? '';
+
+  await ports.jobs.updateStatusAsTech(transitionedJob.id, techId, transitionedJob.status);
+  await ports.calendarEvents.logOwnTransition(
+    transitionedJob.organizationId,
+    transitionedJob.id,
+    originalJob.status,
+    transitionedJob.status,
+  );
+}
+
+/**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
@@ -193,7 +163,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'On my way',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'en_route', ctx);
+        const transitioned = await transitionJob(job, 'en_route', ctx);
+        await persistTransition(job, transitioned);
       },
     },
     {
@@ -201,7 +172,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'Start',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'in_progress', ctx);
+        const transitioned = await transitionJob(job, 'in_progress', ctx);
+        await persistTransition(job, transitioned);
       },
     },
     {
@@ -209,7 +181,8 @@ export const fieldTechModule: JobcoreModule = {
       label: 'Complete',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        await transitionJob(job, 'completed', ctx);
+        const transitioned = await transitionJob(job, 'completed', ctx);
+        await persistTransition(job, transitioned);
       },
     },
   ],

@@ -35,7 +35,9 @@
 import * as React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review } from '../data/ports';
+import { ScreenTitle } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
   platform: string;
@@ -86,6 +88,7 @@ function buildReviewsByPlatform(reviews: readonly Review[]): PlatformCount[] {
 }
 
 export function Reporting(): React.ReactElement {
+  const session = getModuleSession();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -96,15 +99,21 @@ export function Reporting(): React.ReactElement {
   const [reviewsTotalCount, setReviewsTotalCount] = React.useState(0);
 
   const load = React.useCallback(() => {
+    if (session === null) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     const { campaignLog, marketingAssets, reviews } = getModulePorts();
+    const organizationId = session.org.id;
 
     Promise.all([
-      campaignLog.listForOrganization(''),
-      marketingAssets.list(''),
-      reviews.list(''),
+      campaignLog.listForOrganization(organizationId),
+      marketingAssets.list(organizationId),
+      reviews.list(organizationId),
     ])
       .then(([logEntries, assets, publishedReviews]: [CampaignLogEntry[], MarketingAsset[], Review[]]) => {
         setPostsByPlatformPeriod(buildPostsByPlatformAndPeriod(logEntries));
@@ -121,7 +130,7 @@ export function Reporting(): React.ReactElement {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [session]);
 
   React.useEffect(() => {
     load();
@@ -129,7 +138,7 @@ export function Reporting(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Marketing reporting</Text>
+      <ScreenTitle title="Marketing Reporting" />
 
       <View style={styles.notice} accessibilityRole="text">
         <Text style={styles.noticeTitle}>Paid-ads reporting: out of scope</Text>
@@ -203,11 +212,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   notice: {
     backgroundColor: '#fff4e5',

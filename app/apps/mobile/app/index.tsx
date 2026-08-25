@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getEnabledModules } from '@jobcore/module-sdk';
-import { Button, ListItem, EmptyState, LoadingState, colors, spacing, typography } from '@jobcore/ui';
+import { Button, ListItem, EmptyState, LoadingState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 
 import { useSession, signOut } from '../src/lib/session';
 
@@ -45,6 +45,7 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <ScreenTitle title="Home" />
       <View style={styles.header}>
         <Text style={styles.org}>{organization.name}</Text>
         <Text style={styles.who}>

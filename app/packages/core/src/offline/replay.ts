@@ -9,8 +9,8 @@
  * wins a field-level conflict.
  */
 
-import type { Job } from '../index';
-import type { QueuedMutation } from './queue';
+import type { Job } from '../index.js';
+import type { QueuedMutation } from './queue.js';
 
 /**
  * Fields on which the SERVER is authoritative during conflict resolution.

@@ -32,6 +32,7 @@ export interface PayoutBatchRow {
   organization_id: string;
   period_start: string;
   period_end: string;
+  status: string;
   created_at: string;
 }
 
@@ -42,14 +43,16 @@ export interface PayoutBatchRow {
  */
 export interface PayoutLineRow {
   id: string;
-  batch_id: string;
+  organization_id: string;
+  payout_batch_id: string;
   user_id: string;
-  hours_amount_cents: number;
-  commission_amount_cents: number;
-  bonus_amount_cents: number;
-  reimbursement_amount_cents: number;
-  total_amount_cents: number;
-  frozen_at: string;
+  hours_amount: number;
+  commission_amount: number;
+  bonus_amount: number;
+  reimbursement_amount: number;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
   source_hash: string;
 }
 
@@ -61,12 +64,12 @@ export interface PayoutLineRow {
 export function toFrozenPayoutLine(row: PayoutLineRow): FrozenPayoutLine {
   return {
     userId: row.user_id,
-    hoursAmount: row.hours_amount_cents,
-    commissionAmount: row.commission_amount_cents,
-    bonusAmount: row.bonus_amount_cents,
-    reimbursementAmount: row.reimbursement_amount_cents,
-    totalAmount: row.total_amount_cents,
-    frozenAt: row.frozen_at,
+    hoursAmount: row.hours_amount,
+    commissionAmount: row.commission_amount,
+    bonusAmount: row.bonus_amount,
+    reimbursementAmount: row.reimbursement_amount,
+    totalAmount: row.total_amount,
+    frozenAt: row.created_at,
     sourceHash: row.source_hash,
   };
 }
@@ -80,9 +83,11 @@ export function toFrozenPayoutLine(row: PayoutLineRow): FrozenPayoutLine {
  */
 export function toPayoutBatch(row: PayoutBatchRow, lineRows: PayoutLineRow[]): PayoutBatch {
   return {
+    id: row.id,
     organizationId: row.organization_id,
     periodStart: row.period_start,
     periodEnd: row.period_end,
+    status: row.status,
     lines: lineRows.map(toFrozenPayoutLine),
   };
 }
@@ -101,6 +106,23 @@ export interface PayoutBatchRepo {
 
   /** A single payout batch by id, or `null` if it doesn't exist. */
   getById(batchId: string): Promise<PayoutBatch | null>;
+
+  /**
+   * Marks a batch approved (`status` transitions to `'approved'` per the
+   * Supabase `payout_batch_status` enum, `app/supabase/0005_money.sql`).
+   * Mirrors `ReimbursementRepo.approve`'s shape so `PayoutBatchScreen.tsx`
+   * can follow the same per-row approve pattern as
+   * `ReimbursementQueueScreen.tsx`.
+   */
+  approve(batchId: string): Promise<CalculationResult<PayoutBatch>>;
+
+  /**
+   * Marks a batch paid (`status` transitions to `'paid'` per the Supabase
+   * `payout_batch_status` enum, `app/supabase/0005_money.sql`). Mirrors
+   * `approve`'s shape so `PayoutBatchScreen.tsx` can follow the same
+   * per-row mark-paid pattern as the approve action.
+   */
+  markPaid(batchId: string): Promise<CalculationResult<PayoutBatch>>;
 
   /**
    * Persists a newly built `PayoutBatch` (`buildPayoutBatch`,

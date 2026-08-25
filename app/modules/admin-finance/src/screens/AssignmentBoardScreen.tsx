@@ -36,11 +36,15 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { Card, EmptyState, colors, spacing, radius, typography } from '@jobcore/ui';
+import { isBetaVisible, isTestVisible } from '@jobcore/core';
+import { Card, EmptyState, Toggle, Button, Select, ScreenTitle, colors, spacing, radius, typography } from '@jobcore/ui';
 import { TechColumn, type TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
-import { warningsFor } from '../domain/assignment-warnings';
+import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
+import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
+import { overlaps, type TimeWindow } from '../domain/time-window';
 
 export interface AssignmentBoardScreenProps {
   /** Jobs in `qualified` or `scheduled` status — the board's whole scope. */
@@ -48,8 +52,40 @@ export interface AssignmentBoardScreenProps {
   techs: TechColumnTech[];
   /** Resolves a job's seeded `service_areas` id, or `null` if unresolved. */
   resolveServiceAreaId: (job: Job) => string | null;
+  /**
+   * Resolves a tech's `time_off_requests` rows (Workstream G) — caller-
+   * supplied, same "screen never touches Supabase directly" rule
+   * `resolveServiceAreaId` already follows. Optional so existing callers
+   * that have not wired time-off data keep working unchanged (availability
+   * then renders as "all available").
+   */
+  resolveTimeOffForTech?: (techId: string) => AssignmentTimeOffRequest[];
+  /**
+   * All `tech_service_areas` coverage rows for the org (P3 §3,
+   * `domain/segway-candidates.ts`'s `candidatesFor`) — caller-supplied, same
+   * "screen never touches Supabase directly" rule `resolveServiceAreaId`/
+   * `resolveTimeOffForTech` already follow. Optional so existing callers
+   * that have not wired coverage data keep working unchanged (every tech
+   * then renders as covered, no chip).
+   */
+  techServiceAreas?: TechServiceAreaCoverage[];
   /** Fired once the assignment is confirmed (warnings shown, never blocking). */
   onAssign?: (job: Job, techId: string) => void;
+  /**
+   * Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
+   * rows spawned by sales-marketing's "Spawn Test Jobs" flow. Lifted to the
+   * caller (`AdminFinanceRoot`) so the value survives this screen unmounting
+   * on a `subView` switch.
+   */
+  showTestJobs: boolean;
+  onShowTestJobsChange: (value: boolean) => void;
+  /**
+   * "Show Test Employees" toggle, default OFF — hides profiles.is_test rows
+   * via `isTestVisible`, mirroring `showTestJobs`/`isBetaVisible` above. Also
+   * lifted to the caller for the same unmount-survival reason.
+   */
+  showTestEmployees: boolean;
+  onShowTestEmployeesChange: (value: boolean) => void;
 }
 
 interface PendingAssignment {
@@ -61,25 +97,85 @@ export function AssignmentBoardScreen({
   jobs,
   techs,
   resolveServiceAreaId,
+  resolveTimeOffForTech,
+  techServiceAreas,
   onAssign,
+  showTestJobs,
+  onShowTestJobsChange,
+  showTestEmployees,
+  onShowTestEmployeesChange,
 }: AssignmentBoardScreenProps) {
+  const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
 
-  const unassignedJobs = useMemo(() => jobs.filter((job) => !job.assignedTechId), [jobs]);
+  const visibleTechs = useMemo(
+    () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
+    [techs, showTestEmployees]
+  );
+
+  const unassignedJobs = useMemo(
+    () => jobs.filter((job) => !job.assignedTechId && isBetaVisible(job, showTestJobs)),
+    [jobs, showTestJobs]
+  );
 
   const jobsByTech = useMemo(() => {
     const map = new Map<string, Job[]>();
-    for (const tech of techs) {
+    for (const tech of visibleTechs) {
       map.set(
         tech.id,
-        jobs.filter((job) => job.assignedTechId === tech.id)
+        jobs.filter((job) => job.assignedTechId === tech.id && isBetaVisible(job, showTestJobs))
       );
     }
     return map;
-  }, [jobs, techs]);
+  }, [jobs, visibleTechs, showTestJobs]);
 
   const selectedJob = selectedJobId ? jobs.find((job) => job.id === selectedJobId) ?? null : null;
+
+  /**
+   * Availability (Workstream G) is computed against the SELECTED job's
+   * window only — the board has no other notion of "the job's window"
+   * until a job is chosen from the unassigned pool, mirroring how
+   * `pendingWarnings` below is likewise only meaningful once a job is
+   * selected. Techs render with `isAvailable: undefined` (no chip) when no
+   * job is selected or `resolveTimeOffForTech` was not supplied.
+   */
+  const techsWithAvailability: TechColumnTech[] = useMemo(() => {
+    let result = visibleTechs;
+
+    if (selectedJob && selectedJob.scheduledStart && selectedJob.scheduledEnd && resolveTimeOffForTech) {
+      const window: TimeWindow = { start: selectedJob.scheduledStart, end: selectedJob.scheduledEnd };
+      result = result.map((tech) => {
+        const requests = resolveTimeOffForTech(tech.id);
+        const hasApprovedConflict = requests.some(
+          (request) =>
+            request.status === 'approved' && overlaps(window, { start: request.startDate, end: request.endDate }),
+        );
+        return { ...tech, isAvailable: !hasApprovedConflict };
+      });
+    }
+
+    if (selectedJob && techServiceAreas) {
+      const candidates = candidatesFor(
+        result.map((tech) => tech.id),
+        resolveServiceAreaId(selectedJob),
+        techServiceAreas,
+      );
+      const coverageByTechId = new Map(candidates.map((c) => [c.techId, c.coversServiceArea]));
+      result = result.map((tech) => ({
+        ...tech,
+        coversServiceArea: coverageByTechId.get(tech.id),
+      }));
+    }
+
+    return result;
+  }, [selectedJob, visibleTechs, resolveTimeOffForTech, techServiceAreas, resolveServiceAreaId]);
+
+  const availableCount = useMemo(
+    () => techsWithAvailability.filter((tech) => tech.isAvailable !== false).length,
+    [techsWithAvailability],
+  );
+  const showAvailabilitySummary = selectedJob !== null && Boolean(resolveTimeOffForTech);
 
   function handleSelectUnassignedJob(job: Job) {
     setSelectedJobId(job.id === selectedJobId ? null : job.id);
@@ -108,10 +204,17 @@ export function AssignmentBoardScreen({
   }
 
   const pendingWarnings = pending
-    ? warningsFor(pending.job, jobsByTech.get(pending.tech.id) ?? [], resolveServiceAreaId(pending.job))
+    ? warningsFor(
+        pending.job,
+        jobsByTech.get(pending.tech.id) ?? [],
+        resolveServiceAreaId(pending.job),
+        resolveTimeOffForTech ? resolveTimeOffForTech(pending.tech.id) : [],
+        pending.tech.id,
+        techServiceAreas ?? [],
+      )
     : [];
 
-  if (jobs.length === 0 && techs.length === 0) {
+  if (jobs.length === 0 && visibleTechs.length === 0) {
     return (
       <View style={styles.screen}>
         <EmptyState title="Assignment board" message="No jobs or techs to show." />
@@ -121,9 +224,12 @@ export function AssignmentBoardScreen({
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Assignment Board" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Unassigned</Text>
+          <Toggle label="Show Test Jobs" value={showTestJobs} onChange={onShowTestJobsChange} />
+          <Toggle label="Show Test Employees" value={showTestEmployees} onChange={onShowTestEmployeesChange} />
           {unassignedJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
@@ -132,8 +238,31 @@ export function AssignmentBoardScreen({
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
-                    <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
-                    <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
+                    <View style={styles.poolRowInfo}>
+                      <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
+                      <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
+                    </View>
+                    {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
+                        priority keeps this tap from also firing the row's
+                        select-for-assignment Pressable above. */}
+                    <Select
+                      options={techs.map((tech) => ({ label: tech.fullName, value: tech.id }))}
+                      value={null}
+                      placeholder="Assign to..."
+                      onChange={(techId) => {
+                        const tech = techs.find((t) => t.id === techId);
+                        if (tech) {
+                          setPending({ job, tech });
+                        }
+                      }}
+                      style={styles.assignSelect}
+                    />
+                    <Button
+                      label="View"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => router.push('/job/' + job.id)}
+                    />
                   </View>
                 </Pressable>
               );
@@ -144,10 +273,21 @@ export function AssignmentBoardScreen({
           )}
         </Card>
 
+        {showAvailabilitySummary ? (
+          <Text style={styles.availabilitySummary}>
+            {availableCount} of {techsWithAvailability.length} techs available
+          </Text>
+        ) : null}
+
         <ScrollView horizontal contentContainerStyle={styles.board}>
-          {techs.map((tech) => (
+          {techsWithAvailability.map((tech) => (
             <Pressable key={tech.id} onPress={() => handleSelectTech(tech)}>
-              <TechColumn tech={tech} jobs={jobsByTech.get(tech.id) ?? []} style={styles.column} />
+              <TechColumn
+                tech={tech}
+                jobs={jobsByTech.get(tech.id) ?? []}
+                style={styles.column}
+                onSelectJob={(job) => router.push('/job/' + job.id)}
+              />
             </Pressable>
           ))}
         </ScrollView>
@@ -210,10 +350,18 @@ const styles = StyleSheet.create({
   poolRowSelected: {
     backgroundColor: colors.info,
   },
+  poolRowInfo: {
+    flexShrink: 1,
+    marginRight: spacing.sm,
+  },
   poolRowText: {
     color: colors.text,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
+  },
+  assignSelect: {
+    width: 140,
+    marginRight: spacing.sm,
   },
   poolRowStatus: {
     color: colors.textMuted,
@@ -226,6 +374,12 @@ const styles = StyleSheet.create({
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     marginTop: spacing.sm,
+  },
+  availabilitySummary: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.sm,
   },
   board: {
     flexDirection: 'row',

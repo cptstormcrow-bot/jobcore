@@ -22,8 +22,13 @@
 
 import type { Job } from '@jobcore/core';
 import { overlaps, type TimeWindow } from './time-window';
+import { candidatesFor, type TechServiceAreaCoverage } from './segway-candidates';
 
-export type AssignmentWarningCode = 'tech_schedule_overlap' | 'missing_service_area';
+export type AssignmentWarningCode =
+  | 'tech_schedule_overlap'
+  | 'missing_service_area'
+  | 'time_off_conflict'
+  | 'tech_outside_service_area';
 
 export interface AssignmentWarning {
   code: AssignmentWarningCode;
@@ -31,20 +36,50 @@ export interface AssignmentWarning {
 }
 
 /**
+ * The narrow slice of a `time_off_requests` row (mirrors
+ * `modules/field-tech/src/data/ports.ts`'s `TimeOffRequest`) this check
+ * needs — start/end date plus status. Declared locally rather than
+ * importing the field-tech module's type, matching this file's own
+ * precedent (`Job` aside) of taking narrow structural slices instead of
+ * cross-module type dependencies.
+ */
+export interface AssignmentTimeOffRequest {
+  startDate: string;
+  endDate: string;
+  status: 'pending' | 'approved' | 'denied';
+}
+
+/**
  * Warnings for assigning `job` to a tech who already has `techJobs` on
  * their board, in a job whose resolved service area is `serviceAreaId`
  * (`null` if the address did not resolve to a seeded `service_areas` row).
+ * `techTimeOffRequests` is that same tech's `time_off_requests` rows
+ * (caller-supplied — this module has no DB access, same reasoning
+ * `serviceAreaId` is caller-resolved per this file's own doc comment).
  *
  * - `tech_schedule_overlap`: `job`'s own `scheduledStart`/`scheduledEnd`
  *   overlaps (via `time-window.ts`'s `overlaps`) any OTHER job already on
  *   that tech's board with its own scheduled window. A job missing either
  *   scheduled timestamp cannot overlap anything and is skipped.
  * - `missing_service_area`: `serviceAreaId` is `null`.
+ * - `time_off_conflict`: `job`'s scheduled window overlaps a `time_off_requests`
+ *   row for this tech. `denied` requests are ignored; `approved` produces a
+ *   stronger message (the board is warn-only everywhere, so this still never
+ *   hard-blocks — see this file's own module doc comment) and `pending`
+ *   produces a softer one.
+ * - `tech_outside_service_area`: `techId` is provided, `serviceAreaId` is
+ *   non-null, and `segway-candidates.ts`'s `candidatesFor` (given `techId`,
+ *   `serviceAreaId`, and `techServiceAreas`) reports that tech as not
+ *   covering the job's service area. Skipped entirely when `techId` is
+ *   omitted (optional — existing callers unaffected).
  */
 export function warningsFor(
   job: Job,
   techJobs: Job[],
   serviceAreaId: string | null,
+  techTimeOffRequests: AssignmentTimeOffRequest[] = [],
+  techId?: string,
+  techServiceAreas: TechServiceAreaCoverage[] = [],
 ): AssignmentWarning[] {
   const warnings: AssignmentWarning[] = [];
 
@@ -68,6 +103,41 @@ export function warningsFor(
       code: 'missing_service_area',
       message: 'This job is outside a known service area.',
     });
+  }
+
+  if (job.scheduledStart && job.scheduledEnd) {
+    const window: TimeWindow = { start: job.scheduledStart, end: job.scheduledEnd };
+    const approvedConflict = techTimeOffRequests.some(
+      (request) =>
+        request.status === 'approved' &&
+        overlaps(window, { start: request.startDate, end: request.endDate }),
+    );
+    const pendingConflict = techTimeOffRequests.some(
+      (request) =>
+        request.status === 'pending' &&
+        overlaps(window, { start: request.startDate, end: request.endDate }),
+    );
+    if (approvedConflict) {
+      warnings.push({
+        code: 'time_off_conflict',
+        message: 'This tech has approved time off during this window.',
+      });
+    } else if (pendingConflict) {
+      warnings.push({
+        code: 'time_off_conflict',
+        message: 'This tech has a pending time-off request during this window.',
+      });
+    }
+  }
+
+  if (serviceAreaId !== null && techId !== undefined) {
+    const [candidate] = candidatesFor([techId], serviceAreaId, techServiceAreas);
+    if (candidate && !candidate.coversServiceArea) {
+      warnings.push({
+        code: 'tech_outside_service_area',
+        message: "This technician does not cover this job's service area.",
+      });
+    }
   }
 
   return warnings;

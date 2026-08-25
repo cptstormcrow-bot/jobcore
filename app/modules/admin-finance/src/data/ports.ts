@@ -8,7 +8,7 @@
  * No sqlite, no fetch, no fixtures, no React live here.
  */
 
-import type { Job, JobStatus } from '@jobcore/core';
+import type { Job, JobStatus, Commission, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
@@ -46,6 +46,14 @@ export interface JobRow {
   in_progress_at: string | null;
   completed_at: string | null;
   created_at: string;
+  is_beta: boolean | null;
+  house_age_years: number | null;
+  permit_status: string | null;
+  parking_available: string | null;
+  rooms: string[] | null;
+  panel_info: string | null;
+  considerations: string | null;
+  service_area_id: string | null;
 }
 
 /**
@@ -102,6 +110,9 @@ export function toJob(row: JobRow): Job {
     inProgressAt: row.in_progress_at,
     completedAt: row.completed_at,
     createdAt: row.created_at,
+    isBeta: row.is_beta ?? false,
+    houseAgeYears: row.house_age_years ?? null,
+    service_area_id: row.service_area_id,
   };
 }
 
@@ -120,6 +131,24 @@ export function toJob(row: JobRow): Job {
 export type JobSchedulingPatch = Partial<
   Pick<Job, 'assignedTechId' | 'scheduledStart' | 'scheduledEnd' | 'requestedWindow'>
 >;
+
+/**
+ * AC-4-style mechanism for the job's editable descriptive fields. `status`
+ * is deliberately absent, same invariant as `JobSchedulingPatch` above —
+ * status changes only move through `applyTransition`/`transitionJob`,
+ * never through this data seam.
+ *
+ * `houseAgeYears` now folds into the `Pick<Job, ...>` list like the rest
+ * of this patch — `@jobcore/core`'s `Job` type declares
+ * `houseAgeYears?: number | null`.
+ */
+export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'houseAgeYears'>> & {
+  permitStatus?: string | null;
+  parkingAvailable?: string | null;
+  rooms?: string[] | null;
+  panelInfo?: string | null;
+  considerations?: string | null;
+};
 
 /* ------------------------------------------------------------------ *
  * Repository ports
@@ -144,7 +173,43 @@ export interface JobRepository {
   listForOrganization(organizationId: string): Promise<Job[]>;
   getById(jobId: string): Promise<Job | null>;
   patchScheduling(jobId: string, patch: JobSchedulingPatch): Promise<Job>;
+  /**
+   * Patches a job's editable descriptive fields (`JobDetailsPatch`) via the
+   * same `.select().single()` + `toJob()` remap pattern `patchScheduling`
+   * uses. Deliberately excludes `status` — see `JobDetailsPatch`'s doc
+   * comment above.
+   */
+  updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job>;
   create(draft: JobDraft): Promise<Job>;
+  /**
+   * Persists the result of an in-memory `applyTransition`/`transitionJob`
+   * call to `jobs.status` (cross-cutting fix — job status was computed but
+   * never written back). Deliberately a separate method rather than
+   * widening `JobSchedulingPatch`'s `Pick<Job, ...>` — that type's exclusion
+   * of `status` is a documented invariant (see its doc comment above) that
+   * a caller cannot slip a status change through `patchScheduling`; this
+   * method is the one sanctioned status-write path, called only with the
+   * `JobStatus` `applyTransition` already computed.
+   */
+  updateStatus(jobId: string, status: JobStatus): Promise<Job>;
+  /**
+   * Third sanctioned status-write exception (alongside `create` and
+   * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
+   * logs the transition, writes its one commission row, and resolves any
+   * open/retrying close_out_failures row — via the `close_out_job_write`
+   * Postgres RPC (supabase/0026_close_out_write_rpc.sql). Replaces the three
+   * separate non-atomic writes previously issued from
+   * flows/close-out-job.ts (updateStatus + calendarEvents.logTransition +
+   * commissions.create). Called only from the close-out flow, after its own
+   * precondition checks have already run — the RPC re-validates the status
+   * guard server-side regardless.
+   */
+  closeOutWrite(
+    jobId: string,
+    fromStatus: JobStatus,
+    commission: CommissionLine,
+    closedByUserId: string,
+  ): Promise<Job>;
 }
 
 /**
@@ -220,6 +285,191 @@ export interface TechRepository {
 }
 
 /**
+ * Minimal local `Invitation` type — `@jobcore/core` has no dedicated
+ * `Invitation` export, so this mirrors the Supabase `invitations` table
+ * (`app/supabase/0003_invitations_and_signup.sql`) at the domain-field
+ * level this module needs, rather than defining a shared type upstream.
+ */
+export interface Invitation {
+  id: string;
+  organizationId: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+}
+
+/**
+ * The full `VehicleStatus` union, restated as a runtime tuple so callers can
+ * validate an untrusted wire value against it. Same idiom as `JOB_STATUSES`/
+ * `isJobStatus` above. Exported (unlike `isJobStatus`) because the row→domain
+ * mapper for `Profile` lives outside this file, in
+ * `apps/mobile/src/lib/admin-finance-repos.ts`'s `toProfile`.
+ */
+export const VEHICLE_STATUSES: readonly VehicleStatus[] = ['assigned', 'unassigned', 'in_maintenance'];
+
+export function isVehicleStatus(value: string): value is VehicleStatus {
+  return (VEHICLE_STATUSES as readonly string[]).includes(value);
+}
+
+/** The full `ToolStatus` union, restated as a runtime tuple. Same idiom and export rationale as `VEHICLE_STATUSES` above. */
+export const TOOL_STATUSES: readonly ToolStatus[] = ['issued', 'not_issued', 'needs_replacement'];
+
+export function isToolStatus(value: string): value is ToolStatus {
+  return (TOOL_STATUSES as readonly string[]).includes(value);
+}
+
+/** Read/write access to organization employees (`Profile` rows). */
+export interface EmployeeRepository {
+  listEmployees(organizationId: string): Promise<Profile[]>;
+  getEmployee(profileId: string): Promise<Profile | null>;
+  updateEmployee(
+    profileId: string,
+    updates: {
+      fullName?: string;
+      phone?: string | null;
+      isTest?: boolean;
+      address?: string | null;
+      driversLicenseNumber?: string | null;
+      vehicleStatus?: VehicleStatus | null;
+      toolStatus?: ToolStatus | null;
+    }
+  ): Promise<void>;
+  deactivateEmployee(profileId: string): Promise<void>;
+  reactivateEmployee(profileId: string): Promise<void>;
+  setEmployeeRole(profileId: string, role: Role): Promise<void>;
+}
+
+/** Write + read access to pending organization invitations. */
+export interface InvitationRepository {
+  createInvitation(organizationId: string, email: string, role: Role): Promise<void>;
+  listPendingInvitations(organizationId: string): Promise<Invitation[]>;
+}
+
+/**
+ * Mirrors the Supabase `tech_service_areas` table
+ * (`app/supabase/0020_field_ops_segway_and_estimating.sql`). Snake_case wire
+ * shape consumed by `domain/segway-candidates.ts`'s `candidatesFor` after
+ * mapping through `toTechServiceArea`.
+ */
+export interface TechServiceAreaRow {
+  id: string;
+  organization_id: string;
+  tech_id: string;
+  service_area_id: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `tech_service_areas` row. */
+export interface TechServiceArea {
+  id: string;
+  organizationId: string;
+  techId: string;
+  serviceAreaId: string;
+  createdAt: string;
+}
+
+/** Maps a `tech_service_areas` row to its domain shape. Pure, no validation needed — every column is already well-typed at the wire boundary, same as `toAuditLogEntry`. */
+export function toTechServiceArea(row: TechServiceAreaRow): TechServiceArea {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    serviceAreaId: row.service_area_id,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Read + coverage-write access to tech service-area assignments. Feeds
+ * `domain/segway-candidates.ts`'s `candidatesFor` for the assignment
+ * board's coverage flag, and now also backs the employee-editor checkbox
+ * UI's `assignToTech`/`removeFromTech` toggles.
+ */
+export interface TechServiceAreaRepository {
+  listForOrganization(organizationId: string): Promise<TechServiceArea[]>;
+  assignToTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void>;
+  removeFromTech(organizationId: string, techId: string, serviceAreaId: string): Promise<void>;
+}
+
+/**
+ * Mirrors the Supabase `tech_skills` table
+ * (`app/supabase/0031_employee_profile_fields.sql`). Snake_case wire shape of
+ * `TechSkill`, mirroring `TechServiceAreaRow` above.
+ */
+export interface TechSkillRow {
+  id: string;
+  organization_id: string;
+  tech_id: string;
+  skill: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `tech_skills` row. */
+export interface TechSkill {
+  id: string;
+  organizationId: string;
+  techId: string;
+  skill: string;
+  createdAt: string;
+}
+
+/** Maps a `tech_skills` row to its domain shape. Pure, no validation needed — mirrors `toTechServiceArea`. */
+export function toTechSkill(row: TechSkillRow): TechSkill {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    skill: row.skill,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Read + toggle-write access to tech skill assignments, backing the
+ * employee-editor's Skills picker UI — same `listForOrganization` +
+ * assign/remove toggle shape as `TechServiceAreaRepository`.
+ */
+export interface TechSkillRepository {
+  listForOrganization(organizationId: string): Promise<TechSkill[]>;
+  assignToTech(organizationId: string, techId: string, skill: string): Promise<void>;
+  removeFromTech(organizationId: string, techId: string, skill: string): Promise<void>;
+}
+
+/**
+ * Mirrors the Supabase `service_areas` table. Snake_case wire shape,
+ * same convention as `TechServiceAreaRow`.
+ */
+export interface ServiceAreaRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `service_areas` row. */
+export interface ServiceArea {
+  id: string;
+  organizationId: string;
+  name: string;
+  createdAt: string;
+}
+
+/** Maps a `service_areas` row to its domain shape. Pure, no validation needed — every column is already well-typed at the wire boundary, same as `toTechServiceArea`. */
+export function toServiceArea(row: ServiceAreaRow): ServiceArea {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    name: row.name,
+    createdAt: row.created_at,
+  };
+}
+
+/** Read-only access to the org's service areas. */
+export interface ServiceAreaRepository {
+  listForOrganization(organizationId: string): Promise<ServiceArea[]>;
+}
+
+/**
  * Fields needed to insert one `job_assignments` row
  * (`app/supabase/0004_scheduling.sql`: `id`, `organization_id`, `job_id`,
  * `tech_id`, `assigned_at`, `created_at` — `id`/`organization_id`/
@@ -235,6 +485,69 @@ export interface JobAssignmentDraft {
 /** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Customer row (snake_case) → domain type (camelCase)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the Supabase `customers` table. Snake_case wire shape of
+ * `Customer`, same convention as `JobRow`.
+ */
+export interface CustomerRow {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  organization_id: string;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `customers` row. */
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  organizationId: string;
+  createdAt: string;
+}
+
+/**
+ * Map a `customers` row to the domain `Customer`. Pure, no validation
+ * needed — every column is already well-typed at the wire boundary, same
+ * as `toJob`'s non-status fields.
+ */
+export function toCustomer(row: CustomerRow): Customer {
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    email: row.email,
+    address: row.address,
+    organizationId: row.organization_id,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Fields needed to insert or patch a `customers` row. `id`/`organizationId`/
+ * `createdAt` are implementation-assigned on `create`, same invariant as
+ * `JobAssignmentDraft`.
+ */
+export type CustomerCreateInput = Pick<Customer, 'name' | 'phone' | 'email' | 'address'>;
+
+/** Patch shape for `CustomerRepository.update` — same `Partial<Pick<...>>` convention as `JobSchedulingPatch`. */
+export type CustomerPatch = Partial<Pick<Customer, 'name' | 'phone' | 'email' | 'address'>>;
+
+/** Read/write access to customers. */
+export interface CustomerRepository {
+  getById(id: string): Promise<Customer | null>;
+  create(input: CustomerCreateInput): Promise<Customer>;
+  update(id: string, patch: CustomerPatch): Promise<Customer>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -257,6 +570,143 @@ export interface JobAssignmentRepository {
  */
 export interface CommissionRepository {
   create(organizationId: string, line: CommissionLine, closedByUserId: string): Promise<void>;
+  listForOrganization(organizationId: string): Promise<Commission[]>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Close-out failure port — tracks a job's close-out attempts that fail
+ * at any stage (readiness, price sheet lookup, commission calc, or the
+ * final write), so an admin can see and resolve stuck close-outs.
+ * ------------------------------------------------------------------ */
+
+export type CloseOutFailureStage =
+  | 'not_ready' | 'blocked' | 'no_price_sheet' | 'commission_calc' | 'write';
+
+export type CloseOutFailureStatus =
+  | 'open' | 'retrying' | 'resolved_retry' | 'resolved_manual' | 'ignored';
+
+/**
+ * Mirrors a `close_out_failures` row. `stage`/`status` are `string`, not the
+ * narrower unions, until `toCloseOutFailure` validates them.
+ */
+export interface CloseOutFailureRow {
+  id: string;
+  organization_id: string;
+  job_id: string;
+  stage: string;
+  reason: string;
+  status: string;
+  attempts: number;
+  last_attempted_at: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Domain (camelCase) shape of one close-out failure. */
+export interface CloseOutFailureRecord {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  stage: CloseOutFailureStage;
+  reason: string;
+  status: CloseOutFailureStatus;
+  attempts: number;
+  lastAttemptedAt: string | null;
+  resolvedBy: string | null;
+  resolvedAt: string | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const CLOSE_OUT_FAILURE_STAGES: readonly CloseOutFailureStage[] = [
+  'not_ready',
+  'blocked',
+  'no_price_sheet',
+  'commission_calc',
+  'write',
+];
+
+function isCloseOutFailureStage(value: string): value is CloseOutFailureStage {
+  return (CLOSE_OUT_FAILURE_STAGES as readonly string[]).includes(value);
+}
+
+const CLOSE_OUT_FAILURE_STATUSES: readonly CloseOutFailureStatus[] = [
+  'open',
+  'retrying',
+  'resolved_retry',
+  'resolved_manual',
+  'ignored',
+];
+
+function isCloseOutFailureStatus(value: string): value is CloseOutFailureStatus {
+  return (CLOSE_OUT_FAILURE_STATUSES as readonly string[]).includes(value);
+}
+
+/**
+ * Map a `close_out_failures` row to the domain `CloseOutFailureRecord`.
+ * Throws on an unrecognized stage or status rather than widening the union
+ * — fail closed, matching `toJob`'s and `toPayment`'s pattern above.
+ */
+export function toCloseOutFailure(row: CloseOutFailureRow): CloseOutFailureRecord {
+  if (!isCloseOutFailureStage(row.stage)) {
+    throw new Error(`Unknown stage "${row.stage}" on close-out failure ${row.id}`);
+  }
+  if (!isCloseOutFailureStatus(row.status)) {
+    throw new Error(`Unknown status "${row.status}" on close-out failure ${row.id}`);
+  }
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    jobId: row.job_id,
+    stage: row.stage,
+    reason: row.reason,
+    status: row.status,
+    attempts: row.attempts,
+    lastAttemptedAt: row.last_attempted_at,
+    resolvedBy: row.resolved_by,
+    resolvedAt: row.resolved_at,
+    resolutionNote: row.resolution_note,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/** Read/write access to close-out failures. */
+export interface CloseOutFailureRepository {
+  recordFailure(organizationId: string, jobId: string, stage: CloseOutFailureStage, reason: string): Promise<void>;
+  recordAttempt(jobId: string): Promise<void>;
+  resolve(jobId: string, resolution: 'resolved_retry' | 'resolved_manual', resolvedBy: string, note?: string): Promise<void>;
+  listNeedingAttention(organizationId: string): Promise<CloseOutFailureRecord[]>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Close-out photo/notes ports (Rule 38 Slice 1 — supporting
+ * `CloseOutReviewScreen`'s photos/notes props; thin wrappers over the
+ * already-shipped `job_photos`/`job_notes` tables,
+ * `app/supabase/0007_field_tech_tables.sql`).
+ * ------------------------------------------------------------------ */
+
+/** One close-out photo captured for a job. Mirrors `CloseOutReviewScreen.tsx`'s `CloseOutPhoto`. */
+export interface CloseOutPhoto {
+  id: string;
+  uri: string;
+}
+
+/** Read/write access to a job's close-out photos. */
+export interface JobPhotoRepository {
+  listForJob(jobId: string): Promise<CloseOutPhoto[]>;
+  add(jobId: string, uri: string): Promise<CloseOutPhoto>;
+  remove(photoId: string): Promise<void>;
+}
+
+/** Read/write access to a job's close-out notes. */
+export interface JobNoteRepository {
+  getForJob(jobId: string): Promise<string>;
+  upsert(jobId: string, notes: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -334,6 +784,128 @@ export interface AuditLogFilter {
  */
 export interface AuditLogRepository {
   listForOrganization(organizationId: string, filter?: AuditLogFilter): Promise<AuditLogEntry[]>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Calendar event port (Workstream E — `calendar_events` table,
+ * `app/supabase/0014_calendar_events.sql`). `writeAudit()` is confirmed
+ * dead code (zero call sites), so calendar-event logging is an explicit
+ * helper each transition call site invokes directly, not an optional
+ * `Ctx.writeCalendarEvent?` hook on `applyTransition`.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Fields needed to insert one `calendar_events` row
+ * (`app/supabase/0014_calendar_events.sql`: `id`, `organization_id`,
+ * `job_id`, `kind`, `title`, `description`, `event_time`, `created_by`,
+ * `created_at` — `id`/`created_at` are implementation-assigned, and
+ * `created_by` is stamped from the authenticated caller, not passed here).
+ */
+export interface CalendarEventDraft {
+  jobId: string | null;
+  kind: string;
+  title?: string | null;
+  description?: string | null;
+  eventTime: string;
+}
+
+/** Write access to `calendar_events`. Insert-only — no update/delete needed by this group. */
+export interface CalendarEventRepository {
+  create(organizationId: string, draft: CalendarEventDraft): Promise<void>;
+  /**
+   * Convenience wrapper over `create` for the common case: logging a job's
+   * status transition as a `kind: 'status_change'` calendar event. The four
+   * Workstream E call sites (`qualify-lead.ts`, `assign-job.ts`,
+   * `close-out-job.ts`) use this rather than building the draft by hand.
+   */
+  logTransition(organizationId: string, jobId: string, fromStatus: JobStatus, toStatus: JobStatus): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Payments port (Workstream D — folded in from the retired
+ * `payment-review` module's `modules/payment-review/src/data/ports.ts`.
+ * Mirrors `payments` table, `app/supabase/0010_payment_review.sql:32-45`.
+ * Replaces payment-review's raw prop-injected `SupabaseSelectClient` with
+ * admin-finance's richer ports seam, consistent with every other
+ * repository in this file.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the Supabase `payments` table (`id`, `organization_id`, `job_id`,
+ * `provider_id`, `amount`, `status`, `external_ref`, `confirmed_at`,
+ * `confirmed_by`, `created_at`). `status` is `string`, not `PaymentStatus`
+ * — it is untrusted wire data until `toPayment` validates it.
+ */
+export interface PaymentRow {
+  id: string;
+  organization_id: string;
+  job_id: string;
+  provider_id: string | null;
+  amount: number;
+  status: string;
+  external_ref: string | null;
+  confirmed_at: string | null;
+  confirmed_by: string | null;
+  created_at: string;
+}
+
+/** The full `payments.status` union, restated as a runtime tuple so `toPayment` can validate an untrusted row. */
+export const PAYMENT_STATUSES = ['pending', 'confirmed', 'failed', 'manual_confirmed'] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+function isPaymentStatus(value: string): value is PaymentStatus {
+  return (PAYMENT_STATUSES as readonly string[]).includes(value);
+}
+
+/** Statuses that satisfy a "payment settled" precondition (e.g. `hasPaymentRecord`). */
+export const SETTLED_PAYMENT_STATUSES: readonly PaymentStatus[] = ['confirmed', 'manual_confirmed'];
+
+/** Domain (camelCase) shape of one payment row. */
+export interface Payment {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  providerId: string | null;
+  amount: number;
+  status: PaymentStatus;
+  externalRef: string | null;
+  confirmedAt: string | null;
+  confirmedBy: string | null;
+  createdAt: string;
+}
+
+/**
+ * Map a `payments` row to the domain `Payment`. Throws on an unrecognized
+ * status rather than widening the union — fail closed, matching `toJob`'s
+ * pattern above.
+ */
+export function toPayment(row: PaymentRow): Payment {
+  if (!isPaymentStatus(row.status)) {
+    throw new Error(`Unknown status "${row.status}" on payment ${row.id}`);
+  }
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    jobId: row.job_id,
+    providerId: row.provider_id,
+    amount: row.amount,
+    status: row.status,
+    externalRef: row.external_ref,
+    confirmedAt: row.confirmed_at,
+    confirmedBy: row.confirmed_by,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Read access to payments, split into the two views the merged Payments
+ * tab renders — ported from `payment-review`'s `ReconciliationView.tsx`
+ * (needs-attention: `status in ('pending','failed')`; manually-confirmed:
+ * `status = 'manual_confirmed'`).
+ */
+export interface PaymentsRepository {
+  listNeedingAttention(organizationId: string): Promise<Payment[]>;
+  listManuallyConfirmed(organizationId: string): Promise<Payment[]>;
 }
 
 // Re-exported so callers of this module don't also need a direct import

@@ -16,6 +16,11 @@ import type { JobcoreModule } from '@jobcore/module-sdk';
 
 import { SalesMarketingRoot } from './screens/SalesMarketingRoot';
 
+export type { ModuleSession } from './lib/module-session';
+export { setModuleSession, clearModuleSession } from './lib/module-session';
+export type { ModulePorts } from './lib/module-ports';
+export { setModulePorts, getModulePorts } from './lib/module-ports';
+
 /**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
@@ -30,7 +35,7 @@ export const salesMarketingModule: JobcoreModule = {
   requiredRoles: ['sales', 'admin', 'owner'],
   routes: [{ path: 'sales-marketing', component: SalesMarketingRoot }],
   navEntries: [{ icon: 'megaphone', label: 'Sales & Marketing', order: 30 }],
-  migrations: [],
+  migrations: ['0017_sales_callback_status.sql', '0018_beta_test_jobs.sql'],
 };
 
 export default salesMarketingModule;

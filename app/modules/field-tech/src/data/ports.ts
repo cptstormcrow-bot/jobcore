@@ -273,6 +273,23 @@ export interface JobPhotoRepository {
   create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto>;
 }
 
+/** Result of a successful camera capture — the host-uploaded storage path plus optional geotag. */
+export interface PhotoCapture {
+  storagePath: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+/**
+ * Host-injected camera capture port. Lives in the host app (`apps/mobile`)
+ * behind this interface because module-isolation forbids `expo-*` imports
+ * under `modules/field-tech/src/**` — the module only ever sees this seam.
+ */
+export interface CameraRepository {
+  /** Returns `null` if the user cancels the picker rather than completing a capture. */
+  capturePhoto(kind: 'before' | 'after'): Promise<PhotoCapture | null>;
+}
+
 /* ------------------------------------------------------------------ *
  * time_off_requests
  * ------------------------------------------------------------------ */
@@ -354,6 +371,8 @@ export interface TimeOffRequestDraft {
 export interface TimeOffRepository {
   listForTech(techId: string): Promise<TimeOffRequest[]>;
   create(organizationId: string, techId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest>;
+  /** Cancels the caller's own existing time-off request, releasing the date. */
+  cancel(requestId: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -518,6 +537,7 @@ export function toJob(row: JobRow): Job {
     inProgressAt: row.in_progress_at,
     completedAt: row.completed_at,
     createdAt: row.created_at,
+    isBeta: false,
   };
 }
 
@@ -531,6 +551,52 @@ export function toJob(row: JobRow): Job {
 export interface TechJobRepository {
   listAssignedToTech(techId: string): Promise<Job[]>;
   getById(jobId: string, techId: string): Promise<Job | null>;
+  /**
+   * Persists the result of an in-memory `applyTransition`/`transitionJob`
+   * call to `jobs.status` for a job the calling tech is assigned to
+   * (cross-cutting fix — job status was computed but never written back).
+   * Mirrors `admin-finance/src/data/ports.ts`'s `JobRepository.updateStatus`
+   * — kept as a separate tech-scoped method rather than a shared export,
+   * matching this file's own precedent (`JOB_STATUSES`/`toJob` above) of
+   * restating admin-finance's shapes locally. Scoped by `techId` so the
+   * implementation can enforce "only the assigned tech may move their own
+   * job" the same way `getById` above already does.
+   */
+  updateStatusAsTech(jobId: string, techId: string, status: JobStatus): Promise<Job>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Calendar event port (Workstream E — `calendar_events` table,
+ * `app/supabase/0014_calendar_events.sql`). Mirrors
+ * `admin-finance/src/data/ports.ts`'s `CalendarEventRepository` —
+ * `writeAudit()` is confirmed dead code (zero call sites), so calendar-
+ * event logging is an explicit helper each transition call site invokes
+ * directly, not an optional `Ctx.writeCalendarEvent?` hook.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Fields needed to insert one `calendar_events` row
+ * (`app/supabase/0014_calendar_events.sql`) from a tech-facing call site.
+ * `id`/`created_at` are implementation-assigned, and `created_by` is
+ * stamped from the authenticated tech, not passed here.
+ */
+export interface CalendarEventDraft {
+  jobId: string | null;
+  kind: string;
+  title?: string | null;
+  description?: string | null;
+  eventTime: string;
+}
+
+/** Write access to `calendar_events` from the field-tech module. Insert-only — no update/delete needed by this group. */
+export interface CalendarEventRepository {
+  create(organizationId: string, draft: CalendarEventDraft): Promise<void>;
+  /**
+   * Convenience wrapper over `create` for the common case: a tech logging
+   * their own job's status transition as a `kind: 'status_change'`
+   * calendar event, attributed to the calling tech.
+   */
+  logOwnTransition(organizationId: string, jobId: string, fromStatus: JobStatus, toStatus: JobStatus): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *

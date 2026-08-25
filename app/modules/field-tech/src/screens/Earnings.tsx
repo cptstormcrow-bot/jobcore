@@ -33,6 +33,7 @@
 
 import { useState } from 'react';
 import type { Job, PayPeriod, BonusRule, Commission, Reimbursement, CloseOut, DerivedHours } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -147,6 +148,7 @@ export function Earnings({
 
   return (
     <div>
+      <ScreenTitle title="Earnings" />
       <p>Earnings for {period.start} – {period.end}</p>
 
       <section>
@@ -206,7 +208,7 @@ export function Earnings({
 
       <section>
         <h3>Dispute</h3>
-        <p>Filing a dispute records a note only — it does not change this job's status.</p>
+        <p>Filing a dispute records a note only — it does not change this job&apos;s status.</p>
         <textarea
           value={disputeText}
           onChange={(e) => setDisputeText(e.target.value)}

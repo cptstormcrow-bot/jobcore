@@ -35,12 +35,16 @@
 
 import * as React from 'react';
 import { View, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { ScreenTitle } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
 
 const RATING_OPTIONS: readonly number[] = [0, 1, 2, 3, 4, 5];
 
 export function ReviewLibrary(): React.ReactElement {
+  const session = getModuleSession();
+
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -49,7 +53,15 @@ export function ReviewLibrary(): React.ReactElement {
   const [serviceId, setServiceId] = React.useState<string>('');
   const [communityId, setCommunityId] = React.useState<string>('');
 
+  const [curatedIds, setCuratedIds] = React.useState<ReadonlySet<string>>(new Set());
+  const [curateError, setCurateError] = React.useState<string | null>(null);
+
   const load = React.useCallback(() => {
+    if (session === null) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -76,7 +88,7 @@ export function ReviewLibrary(): React.ReactElement {
       .finally(() => {
         setLoading(false);
       });
-  }, [minRating, serviceId, communityId]);
+  }, [session, minRating, serviceId, communityId]);
 
   React.useEffect(() => {
     load();
@@ -93,6 +105,9 @@ export function ReviewLibrary(): React.ReactElement {
       if (target === undefined) {
         return;
       }
+      if (session === null) {
+        return;
+      }
 
       const { reviews: reviewsRepository } = getModulePorts();
       Promise.all([
@@ -104,12 +119,39 @@ export function ReviewLibrary(): React.ReactElement {
           setError(err instanceof Error ? err.message : 'Failed to reorder review.');
         });
     },
-    [reviews, load],
+    [session, reviews, load],
   );
+
+  const handleCurate = React.useCallback(
+    (review: Review) => {
+      if (session === null || curatedIds.has(review.id)) {
+        return;
+      }
+      setCurateError(null);
+      const { marketingAssets } = getModulePorts();
+      marketingAssets
+        .create(session.org.id, { jobPhotoId: null, reviewId: review.id })
+        .then(() => {
+          setCuratedIds((prev) => new Set(prev).add(review.id));
+        })
+        .catch((err: unknown) => {
+          setCurateError(err instanceof Error ? err.message : 'Failed to curate review as testimonial.');
+        });
+    },
+    [session, curatedIds],
+  );
+
+  if (session === null) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Review library</Text>
+      <ScreenTitle title="Review Library" />
 
       <View style={styles.filters}>
         <Text style={styles.filterLabel}>Minimum rating</Text>
@@ -159,6 +201,8 @@ export function ReviewLibrary(): React.ReactElement {
         </View>
       )}
 
+      {curateError !== null && <Text style={styles.errorText}>{curateError}</Text>}
+
       {!loading && error === null && reviews.length === 0 && (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>No published reviews match these filters.</Text>
@@ -197,6 +241,16 @@ export function ReviewLibrary(): React.ReactElement {
                 <Text style={styles.meta}>
                   {item.platform} · job {item.jobId} · {item.submittedAt}
                 </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={curatedIds.has(item.id)}
+                  onPress={() => handleCurate(item)}
+                  style={[styles.curateButton, curatedIds.has(item.id) && styles.curateButtonDisabled]}
+                >
+                  <Text style={styles.curateButtonText}>
+                    {curatedIds.has(item.id) ? 'Curated as testimonial' : 'Curate as testimonial'}
+                  </Text>
+                </Pressable>
               </View>
             </View>
           )}
@@ -210,11 +264,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 12,
   },
   filters: {
     marginBottom: 16,
@@ -309,6 +358,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     marginTop: 4,
+  },
+  curateButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#eee',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  curateButtonDisabled: {
+    opacity: 0.5,
+  },
+  curateButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 

@@ -29,6 +29,7 @@
 import { useState } from 'react';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
+import { ScreenTitle } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -144,6 +145,7 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
 
   return (
     <div>
+      <ScreenTitle title="Complete Job" />
       <p>Complete this job.</p>
 
       <label>
@@ -159,7 +161,15 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
       <div>
         <button
           type="button"
-          onClick={() => void handleCaptureAfterPhoto(`after-photo-${Date.now()}`)}
+          onClick={() => {
+            void (async () => {
+              const ports = getModulePorts();
+              const captured = await ports.camera.capturePhoto('after');
+              if (captured) {
+                await handleCaptureAfterPhoto(captured.storagePath);
+              }
+            })();
+          }}
           disabled={submitting}
         >
           Capture after-photo

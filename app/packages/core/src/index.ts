@@ -1,17 +1,17 @@
 // Re-export the P2c.1 dual-clock/skew types and helpers alongside this package's own exports.
-import type { ClockConfig } from './clocks';
-export type { ClockPair, ClockConfig, SkewEvaluation } from './clocks';
-export { DEFAULT_CLOCK_CONFIG, evaluateSkew } from './clocks';
+import type { ClockConfig } from './clocks.js';
+export type { ClockPair, ClockConfig, SkewEvaluation } from './clocks.js';
+export { DEFAULT_CLOCK_CONFIG, evaluateSkew } from './clocks.js';
 // P2d.2a: re-export the offline queue schema constants and types.
-export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA } from './offline/schema';
-export type { QueuedMutationStatus, QueuedMutation, NewQueuedMutation } from './offline/queue';
-export { makeIdempotencyKey } from './offline/queue';
+export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA } from './offline/schema.js';
+export type { QueuedMutationStatus, QueuedMutation, NewQueuedMutation } from './offline/queue.js';
+export { makeIdempotencyKey } from './offline/queue.js';
 // P2d.2b: re-export the optimistic-apply helper.
-export type { OptimisticApplyOptions, OptimisticApplyResult } from './offline/apply';
-export { applyOptimistic } from './offline/apply';
+export type { OptimisticApplyOptions, OptimisticApplyResult } from './offline/apply.js';
+export { applyOptimistic } from './offline/apply.js';
 // P2d.2c: re-export the replay + conflict-resolution helpers.
-export type { ReplayOptions, ReplayResult } from './offline/replay';
-export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } from './offline/replay';
+export type { ReplayOptions, ReplayResult } from './offline/replay.js';
+export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } from './offline/replay.js';
 // P3f.1: re-export the state-machine surface. Previously `state-machine.ts`
 // was only reachable inside `packages/core` itself (e.g. `offline/apply.ts`'s
 // relative import) — nothing outside this package could import
@@ -20,10 +20,10 @@ export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } 
 // import is not resolvable. This re-export is what lets
 // `modules/admin-finance/src/domain/transition.ts` be the module's sole
 // `applyTransition` call site via a plain `@jobcore/core` import.
-export { canTransition, applyTransition } from './state-machine';
+export { canTransition, applyTransition } from './state-machine.js';
 // S3.7-prereq: re-export the payroll/earnings types.
-export type { PayPeriod, BonusRule, Commission, Reimbursement, DerivedHours, CloseOut } from './payroll';
-export { NullBonusRule } from './payroll';
+export type { PayPeriod, BonusRule, Commission, Reimbursement, DerivedHours, CloseOut } from './payroll.js';
+export { NullBonusRule } from './payroll.js';
 
 export type Role = 'owner' | 'admin' | 'tech' | 'sales';
 
@@ -40,6 +40,9 @@ export interface Organization {
   createdAt: string;
 }
 
+export type VehicleStatus = 'assigned' | 'unassigned' | 'in_maintenance';
+export type ToolStatus = 'issued' | 'not_issued' | 'needs_replacement';
+
 /**
  * Mirrors the Supabase `profiles` table.
  * `organizationId` ↔ `organization_id`, `fullName` ↔ `full_name`, `createdAt` ↔ `created_at`.
@@ -51,7 +54,12 @@ export interface Profile {
   phone: string | null;
   role: Role;
   active: boolean;
+  isTest: boolean;
   createdAt: string;
+  address: string | null;
+  driversLicenseNumber: string | null;
+  vehicleStatus: VehicleStatus | null;
+  toolStatus: ToolStatus | null;
 }
 
 /**
@@ -100,6 +108,37 @@ export interface Job {
   inProgressAt: string | null;
   completedAt: string | null;
   createdAt: string;
+  service_area_id?: string | null;
+  /**
+   * Workstream K (beta-test jobs): mirrors `jobs.is_beta`
+   * (`supabase/0018_beta_test_jobs.sql`). Marks rows spawned by the
+   * sales-marketing "Spawn Test Jobs" flow so every job-list site can hide
+   * them unless the viewer opts in via `isBetaVisible`/"Show Test Jobs".
+   */
+  isBeta: boolean;
+  houseAgeYears?: number | null;
+}
+
+/**
+ * Workstream K: shared job-list visibility filter for beta/test jobs.
+ * A job spawned by "Spawn Test Jobs" (`jobs.is_beta = true`) is hidden from
+ * every job-list site unless the viewer has switched on "Show Test Jobs"
+ * (`showBeta`), which defaults to `false`. Non-beta jobs are always visible.
+ * Apply as `jobs.filter((job) => isBetaVisible(job, showBeta))`.
+ */
+export function isBetaVisible(job: Pick<Job, 'isBeta'>, showBeta: boolean): boolean {
+  return showBeta || !job.isBeta;
+}
+
+/**
+ * Shared profile-list visibility filter for test profiles.
+ * A profile flagged `isTest` (`profiles.is_test = true`) is hidden from
+ * every profile-list site unless the viewer has switched on "Show Test"
+ * (`showTest`), which defaults to `false`. Non-test profiles are always visible.
+ * Apply as `profiles.filter((profile) => isTestVisible(profile, showTest))`.
+ */
+export function isTestVisible(profile: Pick<Profile, 'isTest'>, showTest: boolean): boolean {
+  return showTest || !profile.isTest;
 }
 
 /**

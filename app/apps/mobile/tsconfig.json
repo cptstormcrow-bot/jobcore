@@ -5,16 +5,42 @@
     "outDir": "dist",
     "rootDir": ".",
     "jsx": "react-jsx",
-    "types": ["react", "expo"]
+    "types": [
+      "react",
+      "expo"
+    ]
   },
-  "include": ["app/**/*", "src/**/*", "*.ts", "*.tsx"],
-  "exclude": ["node_modules", "dist", ".expo"],
+  "include": [
+    "app/**/*",
+    "src/**/*",
+    "*.ts",
+    "*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".expo"
+  ],
   "references": [
-    { "path": "../../packages/core" },
-    { "path": "../../packages/ui" },
-    { "path": "../../packages/module-sdk" },
-    { "path": "../../modules/admin-finance" },
-    { "path": "../../modules/field-tech" },
-    { "path": "../../modules/sales-marketing" }
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/ui"
+    },
+    {
+      "path": "../../packages/module-sdk"
+    },
+    {
+      "path": "../../modules/admin-finance"
+    },
+    {
+      "path": "../../modules/field-tech"
+    },
+    {
+      "path": "../../modules/sales-marketing"
+    }
   ]
 }

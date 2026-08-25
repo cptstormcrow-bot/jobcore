@@ -45,23 +45,29 @@ export interface PaymentRow {
 
 /**
  * Minimal shape of the Supabase client surface this file depends on — just
- * enough of the `from().select().eq().in()` chain to run the one query
- * `hasSettledPaymentForJob` needs, matching `reimbursement-repo.ts`'s
+ * enough of the `from().select().eq().in()` / `from().select().in()` chains
+ * to run both queries this module needs, matching `reimbursement-repo.ts`'s
  * `SupabaseRpcClient` minimal-surface discipline so this module stays free
  * of a hard `@supabase/supabase-js` import.
+ *
+ * `PaymentFilterChain` is a flat (non-recursive) shape shared by both call
+ * sites: `hasSettledPaymentForJob` calls `.eq(...).in(...)` (filters by one
+ * job), while `ReconciliationView` calls `.select(...).in(...)` directly
+ * (filters across all jobs by status). Exposing `in()` directly from
+ * `select()` — in addition to `eq()` — lets ONE type satisfy both call
+ * shapes without widening to the full `@supabase/supabase-js` generic
+ * client type.
  */
+type PaymentQueryResult = Promise<{ data: PaymentRow[] | null; error: { message: string } | null }>;
+
+interface PaymentFilterChain {
+  in(column: string, values: readonly string[]): PaymentQueryResult;
+}
+
 export interface SupabaseSelectClient {
   from(table: string): {
-    select(columns: string): {
-      eq(
-        column: string,
-        value: string,
-      ): {
-        in(
-          column: string,
-          values: readonly string[],
-        ): Promise<{ data: PaymentRow[] | null; error: { message: string } | null }>;
-      };
+    select(columns: string): PaymentFilterChain & {
+      eq(column: string, value: string): PaymentFilterChain;
     };
   };
 }

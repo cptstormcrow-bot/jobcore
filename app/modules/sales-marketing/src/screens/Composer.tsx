@@ -37,6 +37,14 @@
  */
 
 import { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
@@ -46,6 +54,8 @@ import { getModulePorts } from '../lib/module-ports';
 import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
+import type { PitchAngle } from './PitchPicker';
+import { ScreenTitle } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -78,8 +88,22 @@ function buildSuggestedCaption(pitchAngle: string): string {
 export interface ComposerProps {
   /** Org the draft belongs to. */
   organizationId: string;
-  /** The pitch angle selected upstream (e.g. a service or campaign theme). */
-  pitchAngle: string;
+  /**
+   * The pitch angle selected upstream by `PitchPicker` (one of
+   * `service_line` | `community` | `seasonal` | `before_after`). Typed
+   * against `PitchAngle` (`./PitchPicker.tsx`) so this screen and its
+   * caller (`SalesMarketingRoot`) always agree on the same union.
+   *
+   * NOTE: this field already existed on `ComposerProps` as a required
+   * `string` before this change — the dispatch asked for it to be added as
+   * an *optional* field, but it was already required and already
+   * consumed (by `buildSuggestedCaption`, the header badge below, and the
+   * `postDrafts.create` call in the mount effect). Removing that
+   * requirement would be a behavior change outside this change's scope, so
+   * it stays required; only its type was narrowed from `string` to
+   * `PitchAngle`.
+   */
+  pitchAngle: PitchAngle;
   serviceId: string | null;
   serviceAreaId: string | null;
   /** Called once the tech is done with this draft (either path, or cancel). */
@@ -118,8 +142,8 @@ export function Composer({
     let cancelled = false;
 
     async function init(): Promise<void> {
-      const ports = getModulePorts();
       try {
+        const ports = getModulePorts();
         const [assetList, metaConfig, draft] = await Promise.all([
           ports.marketingAssets.list(organizationId),
           ports.socialProviders.getByProviderId(organizationId, META_PROVIDER_ID),
@@ -325,98 +349,292 @@ export function Composer({
   const captionTooLong = caption.length > guidance.maxCaptionChars;
 
   return (
-    <div>
-      <p>Compose post — pitch angle: {pitchAngle}</p>
+    <ScrollView contentContainerStyle={styles.container}>
+      <ScreenTitle title="Compose Post" />
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>Pitch angle: {pitchAngle}</Text>
+      </View>
 
-      <p>
-        <em>{suggestedCaption}</em>
-      </p>
+      <Text style={styles.suggestedCaption}>{suggestedCaption}</Text>
 
-      <label>
-        Platform
-        <select value={platform} onChange={(e) => setPlatform(e.target.value)} disabled={approved}>
-          {PLATFORM_GUIDANCE.map((g) => (
-            <option key={g.platform} value={g.platform}>
+      <Text style={styles.label}>Platform</Text>
+      <View style={styles.platformRow}>
+        {PLATFORM_GUIDANCE.map((g) => (
+          <Pressable
+            key={g.platform}
+            accessibilityRole="button"
+            disabled={approved}
+            onPress={() => setPlatform(g.platform)}
+            style={[styles.platformChip, platform === g.platform && styles.platformChipActive]}
+          >
+            <Text
+              style={[
+                styles.platformChipText,
+                platform === g.platform && styles.platformChipTextActive,
+              ]}
+            >
               {g.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p>
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.guidanceText}>
         {guidance.label} guidance: up to {guidance.maxCaptionChars} characters, aspect ratio{' '}
         {guidance.aspectRatio}.
         {captionTooLong ? ' Caption exceeds this platform’s limit.' : ''}
-      </p>
+      </Text>
 
-      <textarea
+      <TextInput
+        style={styles.captionInput}
         value={caption}
-        onChange={(e) => setCaption(e.target.value)}
+        onChangeText={setCaption}
         onBlur={() => void handleSaveCaption()}
         placeholder="Caption"
-        disabled={approved}
+        editable={!approved}
+        multiline
       />
 
-      <div>
-        <p>Assets (only server-approved assets can be added):</p>
-        {assets.map((asset) => (
-          <label key={asset.id}>
-            <input
-              type="checkbox"
-              checked={selectedAssetIds.has(asset.id)}
-              onChange={() => void handleToggleAsset(asset)}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Assets (only server-approved assets can be added):</Text>
+        {assets.map((asset) => {
+          const selected = selectedAssetIds.has(asset.id);
+          return (
+            <Pressable
+              key={asset.id}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: selected, disabled: approved }}
               disabled={approved}
-            />
-            {asset.jobPhotoId !== null ? `Photo ${asset.jobPhotoId}` : `Review ${asset.reviewId}`}
-          </label>
-        ))}
-        {assetError !== null ? <p role="alert">{assetError}</p> : null}
-      </div>
+              onPress={() => void handleToggleAsset(asset)}
+              style={styles.assetRow}
+            >
+              <View style={[styles.checkbox, selected && styles.checkboxChecked]} />
+              <Text style={styles.assetLabel}>
+                {asset.jobPhotoId !== null ? `Photo ${asset.jobPhotoId}` : `Review ${asset.reviewId}`}
+              </Text>
+            </Pressable>
+          );
+        })}
+        {assetError !== null ? <Text style={styles.errorText}>{assetError}</Text> : null}
+      </View>
 
-      {error !== null ? <p role="alert">{error}</p> : null}
+      {error !== null ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {!approved ? (
-        <button type="button" onClick={() => void handleApprove()} disabled={busy || draftId === null}>
-          {busy ? 'Approving…' : 'Approve draft'}
-        </button>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void handleApprove()}
+          disabled={busy || draftId === null}
+          style={[styles.primaryButton, (busy || draftId === null) && styles.buttonDisabled]}
+        >
+          <Text style={styles.primaryButtonText}>{busy ? 'Approving…' : 'Approve draft'}</Text>
+        </Pressable>
       ) : (
-        <p>Draft approved — ready to post.</p>
+        <Text style={styles.approvedText}>Draft approved — ready to post.</Text>
       )}
 
-      <div>
-        <p>Manual export (always available)</p>
-        <button type="button" onClick={() => void handleManualExport()} disabled={!approved || busy}>
-          {busy ? 'Exporting…' : 'Export images, copy caption, share'}
-        </button>
-        {manualLogged ? <p>Logged to campaign log.</p> : null}
-      </div>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Manual export (always available)</Text>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void handleManualExport()}
+          disabled={!approved || busy}
+          style={[styles.secondaryButton, (!approved || busy) && styles.buttonDisabled]}
+        >
+          <Text style={styles.secondaryButtonText}>
+            {busy ? 'Exporting…' : 'Export images, copy caption, share'}
+          </Text>
+        </Pressable>
+        {manualLogged ? <Text style={styles.infoText}>Logged to campaign log.</Text> : null}
+      </View>
 
-      <div>
-        <p>Direct post</p>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Direct post</Text>
         {metaEnabled ? (
           <>
-            <button type="button" onClick={() => void handleDirectPost()} disabled={!approved || busy}>
-              {busy ? 'Posting…' : 'Post directly via Meta'}
-            </button>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void handleDirectPost()}
+              disabled={!approved || busy}
+              style={[styles.secondaryButton, (!approved || busy) && styles.buttonDisabled]}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {busy ? 'Posting…' : 'Post directly via Meta'}
+              </Text>
+            </Pressable>
             {directResult !== null && directResult.status === 'posted' ? (
-              <p>Posted. Platform post id: {directResult.platformPostId}</p>
+              <Text style={styles.infoText}>
+                Posted. Platform post id: {directResult.platformPostId}
+              </Text>
             ) : null}
             {directResult !== null && directResult.status === 'failed' ? (
-              <p role="alert">
+              <Text style={styles.errorText}>
                 Direct post failed: {directResult.error}. Use manual export above instead.
-              </p>
+              </Text>
             ) : null}
           </>
         ) : (
-          <p>Direct posting is unavailable — this organization has not enabled Meta posting.</p>
+          <Text style={styles.infoText}>
+            Direct posting is unavailable — this organization has not enabled Meta posting.
+          </Text>
         )}
-      </div>
+      </View>
 
-      <button type="button" onClick={onDone}>
-        Done
-      </button>
-    </div>
+      <Pressable accessibilityRole="button" onPress={onDone} style={styles.doneButton}>
+        <Text style={styles.doneButtonText}>Done</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#eee',
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: 8,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+  suggestedCaption: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#333',
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 4,
+  },
+  platformRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  platformChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#eee',
+  },
+  platformChipActive: {
+    backgroundColor: '#333',
+  },
+  platformChipText: {
+    fontSize: 13,
+    color: '#333',
+  },
+  platformChipTextActive: {
+    color: '#fff',
+  },
+  guidanceText: {
+    fontSize: 13,
+    color: '#555',
+    marginBottom: 12,
+  },
+  captionInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  assetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderRadius: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#888',
+    marginRight: 8,
+  },
+  checkboxChecked: {
+    backgroundColor: '#333',
+  },
+  assetLabel: {
+    fontSize: 14,
+    color: '#333',
+  },
+  errorText: {
+    color: '#b00020',
+    fontSize: 13,
+    marginTop: 4,
+  },
+  infoText: {
+    fontSize: 13,
+    color: '#555',
+    marginTop: 8,
+  },
+  approvedText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a7a1a',
+    marginBottom: 16,
+  },
+  primaryButton: {
+    backgroundColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#eee',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: '#333',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  doneButton: {
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+  },
+  doneButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+});
 
 /**
  * Resolves a marketing asset to a local file URI for `MediaLibrary`. Asset

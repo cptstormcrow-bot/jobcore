@@ -36,11 +36,12 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
+import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession } from '../lib/module-session';
 
@@ -59,6 +60,15 @@ export interface PriceSheetEditorScreenProps {
   onSave?: (sheet: PriceSheet) => Promise<CalculationResult<void>>;
   /** Fired after a successful publish so the host can refresh or navigate. */
   onPublished?: (priceSheetId: string) => void;
+  areaAdjustmentsRepo: {
+    list(priceSheetId: string): Promise<CalculationResult<PriceSheetAreaAdjustment[]>>;
+    save(
+      priceSheetId: string,
+      serviceAreaId: string,
+      adjustmentType: 'percent' | 'flat',
+      adjustmentValue: number
+    ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
+  };
 }
 
 /** Save/publish action state. Independent of the sheet's own load state. */
@@ -89,10 +99,22 @@ const STATUS_LABEL: Record<PriceSheetStatus, string> = {
   archived: 'Archived',
 };
 
-export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) {
-  const { priceSheets: priceSheetRepository, priceSheetId, publishRepo, onSave, onPublished } = props;
+export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
+  const {
+    priceSheets: priceSheetRepository,
+    priceSheetId,
+    publishRepo,
+    onSave,
+    onPublished,
+    areaAdjustmentsRepo,
+  } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
+  const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
+  const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
+  const [serviceAreaIdInput, setServiceAreaIdInput] = useState('');
+  const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
+  const [adjustmentValueInput, setAdjustmentValueInput] = useState('');
 
   const session = getModuleSession();
 
@@ -120,6 +142,32 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) 
       cancelled = true;
     };
   }, [session, priceSheetRepository, priceSheetId]);
+
+  useEffect(() => {
+    if (!areaAdjustmentsRepo || !priceSheetId) {
+      return undefined;
+    }
+    let cancelled = false;
+    areaAdjustmentsRepo
+      .list(priceSheetId)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.ok) {
+          setAreaAdjustments(result.value);
+        } else {
+          setAreaAdjustmentState({ kind: 'failed', message: result.reason });
+        }
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          const message = error instanceof Error ? error.message : 'Could not load area adjustments.';
+          setAreaAdjustmentState({ kind: 'failed', message });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [areaAdjustmentsRepo, priceSheetId]);
 
   if (!session) {
     return (
@@ -213,10 +261,38 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) 
     }
   }
 
+  async function handleSaveAreaAdjustment(
+    serviceAreaId: string,
+    adjustmentType: 'percent' | 'flat',
+    adjustmentValue: number
+  ): Promise<void> {
+    if (!areaAdjustmentsRepo || !priceSheetId) return;
+    setAreaAdjustmentState({ kind: 'working' });
+    try {
+      const result = await areaAdjustmentsRepo.save(priceSheetId, serviceAreaId, adjustmentType, adjustmentValue);
+      if (result.ok) {
+        const saved = result.value;
+        setAreaAdjustments((prev) => {
+          const idx = prev.findIndex((item) => item.serviceAreaId === saved.serviceAreaId);
+          if (idx === -1) return [...prev, saved];
+          const next = [...prev];
+          next[idx] = saved;
+          return next;
+        });
+        setAreaAdjustmentState({ kind: 'done', message: 'Saved.' });
+      } else {
+        setAreaAdjustmentState({ kind: 'failed', message: result.reason });
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the area adjustment.';
+      setAreaAdjustmentState({ kind: 'failed', message });
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Price Sheet</Text>
+        <ScreenTitle title="Price Sheet Editor" />
         <Card style={styles.card}>
           <ListItem title="Version" subtitle={String(sheet.version)} />
           <ListItem title="Status" subtitle={STATUS_LABEL[sheet.status]} />
@@ -245,6 +321,66 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps = {}) 
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+
+        {areaAdjustmentsRepo ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Area Adjustments</Text>
+            {areaAdjustments.length > 0
+              ? areaAdjustments.map((adjustment) => (
+                  <ListItem
+                    key={adjustment.id}
+                    title={adjustment.serviceAreaId}
+                    subtitle={
+                      adjustment.adjustmentType === 'percent'
+                        ? `${adjustment.adjustmentValue}%`
+                        : String(adjustment.adjustmentValue)
+                    }
+                  />
+                ))
+              : null}
+
+            <TextInput
+              style={styles.input}
+              placeholder="Service area ID"
+              value={serviceAreaIdInput}
+              onChangeText={setServiceAreaIdInput}
+            />
+            <View style={styles.action}>
+              <Button
+                label={adjustmentTypeInput === 'percent' ? 'Type: Percent' : 'Type: Flat'}
+                variant="outline"
+                size="sm"
+                onPress={() =>
+                  setAdjustmentTypeInput((prev) => (prev === 'percent' ? 'flat' : 'percent'))
+                }
+              />
+            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Adjustment value"
+              value={adjustmentValueInput}
+              onChangeText={setAdjustmentValueInput}
+              keyboardType="numeric"
+            />
+            <Button
+              label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save Adjustment'}
+              onPress={() => {
+                const value = Number(adjustmentValueInput);
+                if (!serviceAreaIdInput || Number.isNaN(value)) return;
+                void handleSaveAreaAdjustment(serviceAreaIdInput, adjustmentTypeInput, value);
+              }}
+              disabled={areaAdjustmentState.kind === 'working'}
+              style={styles.action}
+            />
+
+            {areaAdjustmentState.kind === 'failed' ? (
+              <ErrorState message={areaAdjustmentState.message} />
+            ) : null}
+            {areaAdjustmentState.kind === 'done' ? (
+              <Text style={styles.note}>{areaAdjustmentState.message}</Text>
+            ) : null}
+          </Card>
+        ) : null}
 
         <Text style={styles.note}>
           Rate rows are not editable yet — the read port exposes no rates method.
@@ -280,6 +416,15 @@ const styles = StyleSheet.create({
   note: {
     color: colors.textMuted,
     fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+    borderRadius: 4,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    color: colors.text,
     fontFamily: typography.fontFamily.body,
   },
 });

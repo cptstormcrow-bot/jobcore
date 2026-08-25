@@ -26,13 +26,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PriceSheetListScreenProps {
   priceSheets?: PriceSheetRepository;
+  /** Fired when a sheet row is selected, mirrors `LeadInboxScreen.tsx`'s `onSelectLead`. */
+  onSelectSheet?: (sheet: PriceSheet) => void;
 }
 
 type LoadState =
@@ -50,7 +52,7 @@ function formatDate(iso: string | null): string {
 }
 
 export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
-  const { priceSheets: priceSheetRepository } = props;
+  const { priceSheets: priceSheetRepository, onSelectSheet } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
   const session = getModuleSession();
@@ -134,6 +136,7 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Price Sheets" />
         {groups.map(({ status, label }) => {
           const sheetsInGroup = loadState.sheets.filter((sheet) => sheet.status === status);
           if (sheetsInGroup.length === 0) {
@@ -148,6 +151,7 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
                     key={sheet.id}
                     title={`Version ${sheet.version}`}
                     subtitle={formatDate(sheet.publishedAt)}
+                    onPress={onSelectSheet ? () => onSelectSheet(sheet) : undefined}
                   />
                 ))}
               </Card>

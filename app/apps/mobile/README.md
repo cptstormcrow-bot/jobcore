@@ -1,3 +1,9 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "@jobcore/mobile"
+origin: Codespace/SDAssemblyPros/Jobcore/app/apps/mobile/README.md
+tags: [sdassemblypros, jobcore]
+---
 # @jobcore/mobile
 
 The Expo (SDK 52 / React Native 0.76, New Architecture) client for Jobcore. This is the
@@ -45,6 +51,23 @@ npx expo start
 Then press `i` (iOS simulator), `a` (Android emulator), or scan the QR code with Expo Go /
 a development build. Native modules (`expo-secure-store`) require a development build rather
 than stock Expo Go on some SDK combinations.
+
+### Windows quick start/stop
+
+A `dev-server.bat` wrapper (repo root: `Jobcore/app/apps/mobile/dev-server.bat`) launches/stops
+the Expo dev server in its own titled window (`JobCore-Mobile-Dev-Server`) without needing to
+`cd` into this directory first. Invoke by full path from any PowerShell window:
+
+    & "E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\dev-server.bat" start
+    & "E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\dev-server.bat" stop
+
+If `start` reports port 8081 is in use, it's usually a stale `node.exe` from a previous session
+the `stop` command didn't catch (it only kills by window title). Identify and clear it before
+accepting the port-8082 fallback:
+
+    netstat -ano | findstr :8081
+    tasklist /FI "PID eq <PID from previous line>"
+    taskkill /PID <PID> /F
 
 ## Status — dependencies are installed
 

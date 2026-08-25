@@ -523,3 +523,96 @@ export interface SocialProviderRepository {
   listForOrganization(organizationId: string): Promise<SocialProviderConfig[]>;
   getByProviderId(organizationId: string, providerId: string): Promise<SocialProviderConfig | null>;
 }
+
+/* ------------------------------------------------------------------ *
+ * test jobs (Workstream K: "Spawn Test Jobs") — writes `jobs` directly
+ * ------------------------------------------------------------------ */
+
+/**
+ * Workstream K. Touches the core `jobs` table (`is_beta`,
+ * `app/supabase/0018_beta_test_jobs.sql`) rather than any table this module
+ * otherwise owns — an intentional, narrow exception to this file's usual
+ * reviews/marketing/post scope, kept here only because "Spawn Test Jobs"
+ * lives in this module's UI. No RLS change, no synthetic payment/commission
+ * rows — see the migration and the scope-fence note above.
+ *
+ * `spawnTestJobs` MUST be reset-then-insert and idempotent: delete any
+ * existing `is_beta = true` rows for the org first, then insert exactly 3
+ * new `jobs` rows (`status = 'new'`, `is_beta = true`) with placeholder
+ * customer/address data labeled "BETA TEST 1"/"BETA TEST 2"/"BETA TEST 3".
+ * Repeated calls must leave exactly 3 beta rows, never accumulate.
+ */
+export interface TestJobsRepository {
+  spawnTestJobs(organizationId: string): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * sales callback tasks (Workstream J) — queries `jobs`+`customers`
+ * joined against the new `sales_callback_status` table
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the composed row an open-callback-task query returns: `jobs`
+ * (`app/supabase/0004_scheduling.sql`) filtered to `status = 'completed'`,
+ * left-joined to `customers` for contact info and to the new
+ * `sales_callback_status` (`app/supabase/0017_sales_callback_status.sql`)
+ * for done/not-done state. Not a single-table row like this file's other
+ * `XxxRow` shapes — `jobs` is not otherwise queried by this module (it is
+ * not on the scope-fence list above; `commissions`/`price_sheets`/
+ * `payout_batches` remain off limits). `called_back_at`/`called_back_by`
+ * are `null` both when no `sales_callback_status` row exists yet and when
+ * one exists but hasn't been marked done — the implementation's LEFT JOIN
+ * makes both cases collapse to the same absent-value shape, matching this
+ * port's "open task" definition below.
+ */
+export interface CallbackTaskRow {
+  job_id: string;
+  organization_id: string;
+  customer_name: string | null;
+  customer_phone: string | null;
+  address: string | null;
+  completed_at: string | null;
+  is_beta: boolean;
+  called_back_at: string | null;
+  called_back_by: string | null;
+}
+
+/** Domain shape of one sales callback task. */
+export interface CallbackTask {
+  jobId: string;
+  organizationId: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  address: string | null;
+  completedAt: string | null;
+  isBeta: boolean;
+  calledBackAt: string | null;
+  calledBackBy: string | null;
+}
+
+export function toCallbackTask(row: CallbackTaskRow): CallbackTask {
+  return {
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    address: row.address,
+    completedAt: row.completed_at,
+    isBeta: row.is_beta,
+    calledBackAt: row.called_back_at,
+    calledBackBy: row.called_back_by,
+  };
+}
+
+/**
+ * Read + mark-done access to open sales callback tasks. `listOpen` returns
+ * only completed jobs where `called_back_at is null` (no row, or a row with
+ * a null timestamp) — the "open task" definition from the plan (Workstream
+ * J). `markCalledBack` upserts the `sales_callback_status` row, setting
+ * `called_back_at`/`called_back_by`; this is the only write this port
+ * exposes.
+ */
+export interface CallbackTaskRepository {
+  listOpen(organizationId: string): Promise<CallbackTask[]>;
+  markCalledBack(jobId: string, organizationId: string, calledBackBy: string, calledBackAt: string): Promise<CallbackTask>;
+}

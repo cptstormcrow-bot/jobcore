@@ -32,11 +32,18 @@ import type { Ctx, Job } from '@jobcore/core';
 import type { Lead } from '../domain/lead';
 import { buildJobFromLead } from '../domain/qualify';
 import { transitionJob } from '../domain/transition';
-import type { JobRepository, LeadRepository } from '../data/ports';
+import type { CalendarEventRepository, JobRepository, LeadRepository } from '../data/ports';
 
 export interface QualifyLeadDeps {
   jobs: JobRepository;
   leads: LeadRepository;
+  /**
+   * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs the
+   * `new` -> `qualified` transition below as a calendar event. Required,
+   * not optional: `writeAudit()` is confirmed dead code, so this explicit
+   * call is the only record of the transition outside `jobs.status`.
+   */
+  calendarEvents: CalendarEventRepository;
   ctx: Ctx;
 }
 
@@ -64,7 +71,13 @@ export async function qualifyLead(
   const newJob = await deps.jobs.create(draft.job);
 
   // P3f.5b: the ONLY approved path to `qualified` — never `newJob.status = ...`.
-  const qualifiedJob = await transitionJob(newJob, 'qualified', deps.ctx);
+  const transitionedJob = await transitionJob(newJob, 'qualified', deps.ctx);
+
+  // Workstream E: persist the computed status (transitionJob is a thin
+  // pass-through that never writes to the repository — see its doc
+  // comment) and log the transition as a calendar event.
+  const qualifiedJob = await deps.jobs.updateStatus(transitionedJob.id, transitionedJob.status);
+  await deps.calendarEvents.logTransition(qualifiedJob.organizationId, qualifiedJob.id, newJob.status, qualifiedJob.status);
 
   // P3f.5c: stamp the source lead's backlink + timestamp.
   const qualifiedAt = deps.ctx.now();

@@ -1,0 +1,102 @@
+/**
+ * Admin-facing data seam for time-off approve/deny (Workstream F, 4b).
+ *
+ * Interfaces only — NO Supabase implementation lives here, matching
+ * `reimbursement-repo.ts`'s discipline. Distinct from
+ * `modules/field-tech/src/data/ports.ts`'s `TimeOffRepository`, which is
+ * tech-scoped (`listForTech` / `create` only, no admin-wide list or
+ * approve/deny). This file owns the admin-wide row type, the row->domain
+ * mapper, and the repo port for organization-scoped time-off review.
+ *
+ * Mirrors `time_off_requests` (`app/supabase/0007_field_tech_tables.sql`
+ * L101-115): `status` starts `'pending'`, moves to `'approved'`/`'denied'`
+ * only via an org admin, enforced by the `time_off_requests_admin_all` RLS
+ * policy (L280-284 of the same migration) rather than by this file.
+ *
+ * Unlike reimbursements, there is no approve/deny RPC declared for
+ * time-off in any migration — the admin RLS policy already grants direct
+ * update access, so `approve`/`deny` here are plain table writes (mirrors
+ * `CalendarEventRepository.create`'s direct-insert discipline in
+ * `ports.ts`), not RPC-backed like `approveReimbursementViaRpc`.
+ */
+
+/* ------------------------------------------------------------------ *
+ * time_off_requests row (snake_case) -> domain type (camelCase)
+ * ------------------------------------------------------------------ */
+
+/** Mirrors `time_off_requests_status_check` (`app/supabase/0007_field_tech_tables.sql` L111-112). */
+export type TimeOffStatus = 'pending' | 'approved' | 'denied';
+
+const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied'];
+
+function isTimeOffStatus(value: string): value is TimeOffStatus {
+  return (TIME_OFF_STATUSES as readonly string[]).includes(value);
+}
+
+/** Mirrors the Supabase `time_off_requests` table. `status` is untrusted wire data until `toTimeOffRequestAdmin` validates it. */
+export interface TimeOffRequestAdminRow {
+  id: string;
+  organization_id: string;
+  tech_id: string;
+  start_date: string;
+  end_date: string;
+  reason: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Admin-facing domain shape of a time-off request. */
+export interface TimeOffRequestAdmin {
+  id: string;
+  organizationId: string;
+  techId: string;
+  startDate: string;
+  endDate: string;
+  reason: string | null;
+  status: TimeOffStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Map a `time_off_requests` row to the admin domain `TimeOffRequestAdmin`.
+ * Throws on an unrecognized status rather than widening the union, matching
+ * `reimbursement-repo.ts`'s `toReimbursement` discipline.
+ */
+export function toTimeOffRequestAdmin(row: TimeOffRequestAdminRow): TimeOffRequestAdmin {
+  if (!isTimeOffStatus(row.status)) {
+    throw new Error(`Unknown time off status "${row.status}" on request ${row.id}`);
+  }
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    startDate: row.start_date,
+    endDate: row.end_date,
+    reason: row.reason,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Repository port
+ * ------------------------------------------------------------------ */
+
+/**
+ * Admin-wide read + approve/deny access to time-off requests. Distinct from
+ * field-tech's `TimeOffRepository`, which only exposes `listForTech` /
+ * `create` for the requesting tech's own view.
+ *
+ * `approve` also creates a `calendar_events` row (non-job event, `job_id`
+ * null, `kind: 'time_off'`) so the approved range shows on the shared
+ * calendar — that second write happens in the host implementation
+ * (`apps/mobile/src/lib/admin-finance-repos.ts`), reusing the existing
+ * `CalendarEventRepository.create`, not duplicated here.
+ */
+export interface TimeOffAdminRepo {
+  /** All time-off requests for the organization, in any status. */
+  listForOrganization(organizationId: string): Promise<TimeOffRequestAdmin[]>;
+}

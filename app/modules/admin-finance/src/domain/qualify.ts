@@ -42,11 +42,8 @@ export function validateQualify(lead: Lead): QualifyValidation {
  * The `new`-status job payload `buildJobFromLead` produces. A structural
  * subset of `@jobcore/core`'s `Job` (id/createdAt/timestamps are
  * server-assigned, so they are not this function's concern) plus
- * `serviceAreaId`, which `@jobcore/core`'s `Job` type does not yet declare
- * (`supabase/0006_job_service_area.sql` added the column; the shared `Job`
- * type in `packages/core/src/index.ts` has not been widened for it — adding
- * that field here rather than editing `packages/core` keeps this change
- * inside admin-finance).
+ * `serviceAreaId`, which `@jobcore/core`'s `Job` type already declares as
+ * `service_area_id` (optional, nullable, in `packages/core/src/index.ts`).
  *
  * `serviceId` is deliberately `null`: `Lead.service` is free text captured at
  * intake, not a `services` table foreign key, and this function is pure (no
@@ -68,6 +65,11 @@ export interface JobDraft {
   description: string | null;
   assignedTechId: string | null;
   serviceAreaId: string | null;
+  permitStatus?: string | null;
+  parkingAvailable?: string | null;
+  rooms?: string[] | null;
+  panelInfo?: string | null;
+  considerations?: string | null;
 }
 
 export type BuildJobFromLeadResult =
@@ -90,6 +92,9 @@ export type BuildJobFromLeadResult =
  *   - "outside the service area" — the address IS known, but the caller
  *     could not resolve it to a `service_areas` row (passed `null`). This is
  *     the expected, everyday rejection case Qualify staff will actually see.
+ *     The hard reject below on `serviceAreaId === null` is intentional
+ *     business logic — a resolved service area is required before a job can
+ *     be created — not a workaround for a missing field on `Job`.
  */
 export function buildJobFromLead(lead: Lead, serviceAreaId: string | null): BuildJobFromLeadResult {
   const validation = validateQualify(lead);
@@ -125,6 +130,11 @@ export function buildJobFromLead(lead: Lead, serviceAreaId: string | null): Buil
       description: lead.projectDetails,
       assignedTechId: null,
       serviceAreaId,
+      permitStatus: null,
+      parkingAvailable: null,
+      rooms: null,
+      panelInfo: null,
+      considerations: null,
     },
   };
 }

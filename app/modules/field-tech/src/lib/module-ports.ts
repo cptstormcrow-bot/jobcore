@@ -9,7 +9,7 @@
  * rather than returning `null`, because every field-tech screen needs a
  * working repository set to render anything meaningful at all.
  *
- * The six fields are typed against the repository interfaces declared in
+ * The eight fields are typed against the repository interfaces declared in
  * `modules/field-tech/src/data/ports.ts` (sibling slice S1.1). If that file
  * has not landed yet, these names will not resolve until it does — the
  * import is written now, by exact name, so this file is correct output
@@ -23,6 +23,8 @@ import type {
   JobNoteRepository,
   TechJobRepository,
   ReimbursementRequestRepository,
+  CalendarEventRepository,
+  CameraRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -32,6 +34,8 @@ export interface ModulePorts {
   timeOff: TimeOffRepository;
   notes: JobNoteRepository;
   reimbursements: ReimbursementRequestRepository;
+  calendarEvents: CalendarEventRepository;
+  camera: CameraRepository;
 }
 
 let current: ModulePorts | null = null;

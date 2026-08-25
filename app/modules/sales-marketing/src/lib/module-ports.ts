@@ -23,6 +23,8 @@ import type {
   PostTargetRepository,
   CampaignLogRepository,
   SocialProviderRepository,
+  TestJobsRepository,
+  CallbackTaskRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -33,6 +35,10 @@ export interface ModulePorts {
   postTargets: PostTargetRepository;
   campaignLog: CampaignLogRepository;
   socialProviders: SocialProviderRepository;
+  /** Workstream K: "Spawn Test Jobs" — see `data/ports.ts`. */
+  testJobs: TestJobsRepository;
+  /** Workstream J: sales callback tasks from completed jobs — see `data/ports.ts`. */
+  callbackTasks: CallbackTaskRepository;
 }
 
 let current: ModulePorts | null = null;

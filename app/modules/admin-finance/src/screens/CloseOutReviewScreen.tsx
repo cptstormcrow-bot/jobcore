@@ -34,7 +34,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Card, EmptyState, Button, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, EmptyState, Button, ScreenTitle, colors, spacing, radius, typography } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
@@ -82,6 +82,7 @@ export function CloseOutReviewScreen({
 
   return (
     <View style={styles.screen}>
+      <ScreenTitle title="Close-Out Review" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.headerCard}>
           <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>

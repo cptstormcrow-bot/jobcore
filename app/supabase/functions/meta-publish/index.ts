@@ -194,7 +194,7 @@ Deno.serve(async (req: Request) => {
     return failAndRecord(admin, draftId, platform, message, 502);
   }
 
-  let graphBody: any;
+  let graphBody: { id?: string } | null | undefined;
   try {
     graphBody = await graphResponse.json();
   } catch {

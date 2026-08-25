@@ -42,11 +42,17 @@
 
 import type { Ctx, Job } from '@jobcore/core';
 import { transitionJob } from '../domain/transition';
-import type { JobRepository, JobAssignmentRepository } from '../data/ports';
+import type { CalendarEventRepository, JobRepository, JobAssignmentRepository } from '../data/ports';
 
 export interface AssignJobDeps {
   jobs: JobRepository;
   assignments: JobAssignmentRepository;
+  /**
+   * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs each
+   * transition below (`qualified` -> `scheduled` when it fires, and the
+   * unconditional `-> assigned`) as a calendar event.
+   */
+  calendarEvents: CalendarEventRepository;
   ctx: Ctx;
 }
 
@@ -87,11 +93,18 @@ export async function assignJob(
   // transition table entry and would throw.
   let scheduledJob = patchedJob;
   if (patchedJob.status === 'qualified') {
-    scheduledJob = await transitionJob(patchedJob, 'scheduled', deps.ctx);
+    const transitionedToScheduled = await transitionJob(patchedJob, 'scheduled', deps.ctx);
+    // Workstream E: persist (transitionJob never writes to the repository)
+    // and log the transition.
+    scheduledJob = await deps.jobs.updateStatus(transitionedToScheduled.id, transitionedToScheduled.status);
+    await deps.calendarEvents.logTransition(scheduledJob.organizationId, scheduledJob.id, patchedJob.status, scheduledJob.status);
   }
 
   // P3g.6b, edge 2 of 2 — always fires; 'scheduled' -> 'assigned' is always legal.
-  const assignedJob = await transitionJob(scheduledJob, 'assigned', deps.ctx);
+  const transitionedToAssigned = await transitionJob(scheduledJob, 'assigned', deps.ctx);
+  // Workstream E: persist + log this edge too.
+  const assignedJob = await deps.jobs.updateStatus(transitionedToAssigned.id, transitionedToAssigned.status);
+  await deps.calendarEvents.logTransition(assignedJob.organizationId, assignedJob.id, scheduledJob.status, assignedJob.status);
 
   return { ok: true, job: assignedJob };
 }

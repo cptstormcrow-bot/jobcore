@@ -16,9 +16,10 @@
  */
 
 import * as React from 'react';
-import { View, Text, Pressable, Linking, StyleSheet } from 'react-native';
+import { View, Text, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
+import { ScreenTitle, Button } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -144,6 +145,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
   return (
     <View style={styles.container}>
+      <ScreenTitle title="Field Job Detail" subtitle={job.address ?? undefined} />
       <Text style={styles.title}>Job {job.id}</Text>
       <Text style={styles.status}>{job.status}</Text>
 
@@ -161,24 +163,20 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Contact & location</Text>
-        <Pressable
-          accessibilityRole="button"
-          disabled={!customerPhone}
+        <Button
+          label={customerPhone ? `Call ${customerPhone}` : 'No phone on file'}
           onPress={handleCall}
-          style={[styles.actionButton, !customerPhone && styles.actionButtonDisabled]}
-        >
-          <Text style={styles.actionButtonText}>
-            {customerPhone ? `Call ${customerPhone}` : 'No phone on file'}
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={!job.address}
+          variant="primary"
+          size="sm"
+          disabled={!customerPhone}
+        />
+        <Button
+          label={job.address ?? 'No address on file'}
           onPress={handleMap}
-          style={[styles.actionButton, !job.address && styles.actionButtonDisabled]}
-        >
-          <Text style={styles.actionButtonText}>{job.address ?? 'No address on file'}</Text>
-        </Pressable>
+          variant="primary"
+          size="sm"
+          disabled={!job.address}
+        />
       </View>
 
       <View style={styles.section}>
@@ -230,19 +228,6 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   value: {
-    fontSize: 14,
-  },
-  actionButton: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-  },
-  actionButtonDisabled: {
-    opacity: 0.5,
-  },
-  actionButtonText: {
     fontSize: 14,
   },
   noteRow: {

@@ -92,6 +92,45 @@ export function toPriceSheetRate(row: PriceSheetRateRow): PriceSheetRate {
   };
 }
 
+export interface PriceSheetAreaAdjustmentRow {
+  id: string;
+  price_sheet_id: string;
+  service_area_id: string;
+  adjustment_type: string;
+  adjustment_value: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PriceSheetAreaAdjustment {
+  id: string;
+  priceSheetId: string;
+  serviceAreaId: string;
+  adjustmentType: 'percent' | 'flat';
+  adjustmentValue: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function isAreaAdjustmentType(value: string): value is 'percent' | 'flat' {
+  return value === 'percent' || value === 'flat';
+}
+
+export function toPriceSheetAreaAdjustment(row: PriceSheetAreaAdjustmentRow): PriceSheetAreaAdjustment {
+  if (!isAreaAdjustmentType(row.adjustment_type)) {
+    throw new Error(`Unrecognized adjustment_type: ${row.adjustment_type}`);
+  }
+  return {
+    id: row.id,
+    priceSheetId: row.price_sheet_id,
+    serviceAreaId: row.service_area_id,
+    adjustmentType: row.adjustment_type,
+    adjustmentValue: row.adjustment_value,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * Repository port
  * ------------------------------------------------------------------ */
@@ -173,4 +212,110 @@ export async function applyPublishPlanViaRpc(
     return { ok: false, reason: error.message };
   }
   return { ok: true, value: undefined };
+}
+
+// Minimal client seam matching the real Supabase query-builder's chainable
+// shape without importing @supabase/supabase-js's generics here (see
+// SupabaseRpcClient above).
+interface SupabaseAreaAdjustmentsClient {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+export async function listAreaAdjustments(
+  client: SupabaseAreaAdjustmentsClient,
+  priceSheetId: string
+): Promise<CalculationResult<PriceSheetAreaAdjustment[]>> {
+  const { data, error } = await client
+    .from('price_sheet_area_adjustments')
+    .select('*')
+    .eq('price_sheet_id', priceSheetId);
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: (data ?? []).map(toPriceSheetAreaAdjustment) };
+}
+
+export async function saveAreaAdjustment(
+  client: SupabaseAreaAdjustmentsClient,
+  priceSheetId: string,
+  serviceAreaId: string,
+  adjustmentType: 'percent' | 'flat',
+  adjustmentValue: number
+): Promise<CalculationResult<PriceSheetAreaAdjustment>> {
+  const { data, error } = await client
+    .from('price_sheet_area_adjustments')
+    .upsert(
+      {
+        price_sheet_id: priceSheetId,
+        service_area_id: serviceAreaId,
+        adjustment_type: adjustmentType,
+        adjustment_value: adjustmentValue,
+      },
+      { onConflict: 'price_sheet_id,service_area_id' }
+    )
+    .select('*')
+    .single();
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: toPriceSheetAreaAdjustment(data) };
+}
+
+/* ------------------------------------------------------------------ *
+ * Job classification — Standard / Engineered / Unclassified
+ * ------------------------------------------------------------------ */
+
+/**
+ * Vocabulary established by migration 0023's comment
+ * (`app/supabase/0023_field_ops_segway_and_estimating.sql`, lines 194-197):
+ * "Standard/Engineered/Unclassified classification itself is derived (not
+ * persisted) at query time from price_sheet_rates."
+ *
+ * THAT COMMENT'S CLAIM IS NOT BACKED BY ANY SCHEMA: `price_sheet_rates`
+ * carries no classification-relevant column, in its original definition
+ * (0005_money.sql) or in any later migration that touches it (0022 adds a
+ * sibling table, price_sheet_area_adjustments, not a column; 0024 adds
+ * estimated_minutes, an unrelated time-tracking field). The only
+ * classification-relevant schema anywhere is `jobs.house_age_years`
+ * (nullable integer, added by 0023 itself) and the
+ * `job_notes.kind = 're_estimate_flag'` flag it also added.
+ *
+ * There is therefore no concrete threshold or rule to extract from
+ * existing data — everything below is a NEW, minimal placeholder (not a
+ * port of pre-existing business logic), with a single named,
+ * easily-adjustable threshold standing in for a business decision that
+ * has not yet been made.
+ */
+export type JobClassification = 'standard' | 'engineered' | 'unclassified';
+
+/**
+ * PLACEHOLDER threshold — no concrete value exists anywhere in the
+ * codebase, plan docs, or migration comments (confirmed by reading
+ * 0005/0022/0023/0024 in full and searching plans-deliveries/). Set this
+ * once product supplies a real age-based (or other-attribute-based) rule
+ * for 'engineered'; until then it stays null and every classified job
+ * resolves to 'standard'.
+ */
+export const ENGINEERED_HOUSE_AGE_THRESHOLD_YEARS: number | null = null;
+
+/**
+ * Computes a job's Standard/Engineered/Unclassified classification from
+ * its `houseAgeYears` input (`jobs.house_age_years`, added by migration
+ * 0023). Pure and synchronous — matches the "derived, not persisted, at
+ * query time" intent from 0023's comment, even though that comment's
+ * specific claim of deriving from `price_sheet_rates` has no schema to
+ * back it (see the type-doc above).
+ */
+export function classifyJob(houseAgeYears: number | null): JobClassification {
+  if (houseAgeYears === null) {
+    return 'unclassified';
+  }
+  if (
+    ENGINEERED_HOUSE_AGE_THRESHOLD_YEARS !== null &&
+    houseAgeYears >= ENGINEERED_HOUSE_AGE_THRESHOLD_YEARS
+  ) {
+    return 'engineered';
+  }
+  return 'standard';
 }

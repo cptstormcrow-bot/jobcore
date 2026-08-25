@@ -24,3 +24,9 @@ android/
 .DS_Store
 Thumbs.db
 .idea/
+
+# Local build artifacts / dev scripts (untracked, machine-specific)
+apps/mobile/*.apk
+apps/mobile/dev-server.bat
+apps/mobile/Dev-server start.bat
+apps/mobile/Dev-server stop.bat

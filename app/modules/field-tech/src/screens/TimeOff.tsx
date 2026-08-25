@@ -15,14 +15,26 @@
  * Mirrors the house style of `Greeting.tsx` / `DayList.tsx` /
  * `FieldJobDetail.tsx`: session/ports resolved via `lib/module-session.ts`
  * and `lib/module-ports.ts`, never constructed locally.
+ *
+ * Workstream G also shows the tech's own upcoming assignments above the
+ * request form, via `TechJobRepository.listAssignedToTech` (already
+ * exposed on `ModulePorts.jobs`, same port `DayList.tsx` reads) — so a tech
+ * can see what they'd be requesting time off against before submitting.
+ * This does NOT violate the "never references the `jobs` table/type" rule
+ * above in spirit: that rule is about the job STATE MACHINE (transitions),
+ * not a read-only listing; `Job` is imported here purely to type that list,
+ * mirroring `DayList.tsx`'s own read-only use of the same type.
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
 
+import type { Job } from '@jobcore/core';
 import type { TimeOffRequest } from '../data/ports';
+import { ScreenTitle, Button } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { DateRangeCalendar } from './DateRangeCalendar';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -43,11 +55,18 @@ export function TimeOff(): React.ReactElement {
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
+  const [upcomingJobs, setUpcomingJobs] = React.useState<Job[]>([]);
+  const [upcomingLoading, setUpcomingLoading] = React.useState(true);
+  const [upcomingError, setUpcomingError] = React.useState<string | null>(null);
+
   const [startDate, setStartDate] = React.useState('');
   const [endDate, setEndDate] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+
+  const [cancellingId, setCancellingId] = React.useState<string | null>(null);
+  const [cancelError, setCancelError] = React.useState<string | null>(null);
 
   const loadRequests = React.useCallback(() => {
     if (session === null) {
@@ -89,6 +108,41 @@ export function TimeOff(): React.ReactElement {
     return cleanup;
   }, [loadRequests]);
 
+  React.useEffect(() => {
+    if (session === null) {
+      setUpcomingLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setUpcomingLoading(true);
+    setUpcomingError(null);
+
+    const { jobs } = getModulePorts();
+
+    jobs
+      .listAssignedToTech(session.userId)
+      .then((result) => {
+        if (!cancelled) {
+          setUpcomingJobs(result);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setUpcomingError(err instanceof Error ? err.message : 'Failed to load upcoming assignments.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setUpcomingLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
   const canSubmit = startDate.trim().length > 0 && endDate.trim().length > 0 && !submitting;
 
   async function handleSubmit(): Promise<void> {
@@ -125,6 +179,25 @@ export function TimeOff(): React.ReactElement {
     }
   }
 
+  async function handleCancel(requestId: string): Promise<void> {
+    if (cancellingId !== null) {
+      return;
+    }
+
+    setCancellingId(requestId);
+    setCancelError(null);
+
+    try {
+      const { timeOff } = getModulePorts();
+      await timeOff.cancel(requestId);
+      loadRequests();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'Failed to cancel time-off request.');
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   if (session === null) {
     return (
       <View style={styles.centered}>
@@ -135,23 +208,42 @@ export function TimeOff(): React.ReactElement {
 
   return (
     <View style={styles.container}>
+      <ScreenTitle title="Time Off" />
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Upcoming assignments</Text>
+        {upcomingLoading ? (
+          <Text style={styles.emptyText}>Loading…</Text>
+        ) : upcomingError !== null ? (
+          <Text style={styles.errorText}>{upcomingError}</Text>
+        ) : upcomingJobs.length === 0 ? (
+          <Text style={styles.emptyText}>No upcoming assignments.</Text>
+        ) : (
+          <FlatList
+            data={upcomingJobs}
+            keyExtractor={(job) => job.id}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <View style={styles.requestRow}>
+                <Text style={styles.requestDates}>
+                  {item.scheduledStart ? formatDate(item.scheduledStart) : 'Unscheduled'}
+                  {item.scheduledEnd ? ` – ${formatDate(item.scheduledEnd)}` : ''}
+                </Text>
+                <Text style={styles.requestStatus}>{item.address ?? 'No address on file'}</Text>
+              </View>
+            )}
+          />
+        )}
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Request time off</Text>
-        <Text style={styles.label}>Start date</Text>
-        <TextInput
-          style={styles.input}
-          value={startDate}
-          onChangeText={setStartDate}
-          placeholder="YYYY-MM-DD"
-          editable={!submitting}
-        />
-        <Text style={styles.label}>End date</Text>
-        <TextInput
-          style={styles.input}
-          value={endDate}
-          onChangeText={setEndDate}
-          placeholder="YYYY-MM-DD"
-          editable={!submitting}
+        <Text style={styles.label}>Date range</Text>
+        <DateRangeCalendar
+          startDate={startDate}
+          endDate={endDate}
+          onChangeStartDate={setStartDate}
+          onChangeEndDate={setEndDate}
+          disabled={submitting}
         />
         <Text style={styles.label}>Reason (optional)</Text>
         <TextInput
@@ -163,18 +255,17 @@ export function TimeOff(): React.ReactElement {
           multiline
         />
         {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={submitting ? 'Submitting…' : 'Submit request'}
           disabled={!canSubmit}
           onPress={handleSubmit}
-          style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-        >
-          <Text style={styles.submitButtonText}>{submitting ? 'Submitting…' : 'Submit request'}</Text>
-        </Pressable>
+          style={styles.submitButton}
+        />
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>My requests</Text>
+        {cancelError !== null ? <Text style={styles.errorText}>{cancelError}</Text> : null}
         {loading ? (
           <Text style={styles.emptyText}>Loading…</Text>
         ) : loadError !== null ? (
@@ -186,15 +277,29 @@ export function TimeOff(): React.ReactElement {
             data={requests}
             keyExtractor={(request) => request.id}
             scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View style={styles.requestRow}>
-                <Text style={styles.requestDates}>
-                  {formatDate(item.startDate)} – {formatDate(item.endDate)}
-                </Text>
-                <Text style={styles.requestStatus}>{item.status}</Text>
-                {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
-              </View>
-            )}
+            renderItem={({ item }) => {
+              const cancellable = item.status === 'pending' || item.status === 'approved';
+              const cancelling = cancellingId === item.id;
+
+              return (
+                <View style={styles.requestRow}>
+                  <Text style={styles.requestDates}>
+                    {formatDate(item.startDate)} – {formatDate(item.endDate)}
+                  </Text>
+                  <Text style={styles.requestStatus}>{item.status}</Text>
+                  {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
+                  {cancellable ? (
+                    <Button
+                      label={cancelling ? 'Cancelling…' : 'Cancel'}
+                      variant="outline"
+                      disabled={cancelling}
+                      onPress={() => handleCancel(item.id)}
+                      style={styles.cancelButton}
+                    />
+                  ) : null}
+                </View>
+              );
+            }}
           />
         )}
       </View>
@@ -238,18 +343,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#eee',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     marginTop: 12,
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 14,
   },
   requestRow: {
     paddingVertical: 8,
@@ -268,6 +362,10 @@ const styles = StyleSheet.create({
   requestReason: {
     fontSize: 13,
     marginTop: 2,
+  },
+  cancelButton: {
+    marginTop: 6,
+    alignSelf: 'flex-start',
   },
   emptyText: {
     color: '#666',

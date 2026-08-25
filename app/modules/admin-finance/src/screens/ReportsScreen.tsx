@@ -24,7 +24,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import { byStatus, bySource, byAttachTiming } from '../reporting/group-by';
 import { slotHitRate } from '../reporting/slot-hit-rate';
@@ -85,6 +85,7 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
     <View style={styles.screen}>
       {banner}
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title="Reports" />
         <Text style={styles.groupHeading}>By Status</Text>
         <Card style={styles.card}>
           {Object.entries(statusGroups).map(([status, groupJobs]) => (

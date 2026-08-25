@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
 import { supabase } from './supabase';
+import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
 /* ------------------------------------------------------------------ *
  * DB row shapes (snake_case) → domain types (camelCase)
@@ -16,6 +17,11 @@ export interface ProfileRow {
   role: string;
   active: boolean;
   created_at: string;
+  is_test: boolean;
+  address: string | null;
+  drivers_license_number: string | null;
+  vehicle_status: string | null;
+  tool_status: string | null;
 }
 
 export interface OrganizationRow {
@@ -49,6 +55,11 @@ export function toProfile(row: ProfileRow): Profile {
     role: row.role,
     active: row.active,
     createdAt: row.created_at,
+    isTest: row.is_test,
+    address: row.address,
+    driversLicenseNumber: row.drivers_license_number,
+    vehicleStatus: row.vehicle_status && isVehicleStatus(row.vehicle_status) ? row.vehicle_status : null,
+    toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
   };
 }
 
@@ -105,7 +116,7 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
 
   const profileResult = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name, phone, role, active, created_at')
+    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status')
     .eq('id', session.user.id)
     .maybeSingle<ProfileRow>();
 
@@ -139,6 +150,27 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
     profile,
     organization: toOrganization(orgResult.data),
   };
+}
+
+/**
+ * Wraps a promise with a timeout so a hung native call (observed: SecureStore /
+ * getSession() occasionally never resolving on some devices) degrades to the
+ * existing 'error' state instead of leaving the UI on an infinite spinner.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
 }
 
 export interface SessionProviderProps {
@@ -183,11 +215,20 @@ export function SessionProvider({ children }: SessionProviderProps) {
     });
 
     function runCheck() {
-      void supabase.auth
-        .getSession()
-        .then(({ data }) => resolveSession(data.session))
-        .then(applyOutcome)
-        .catch((err) => applyOutcome(toFailure(err)));
+      void withTimeout(
+        supabase.auth.getSession(),
+        15000,
+        'Timed out reaching the server. Check your connection and retry.',
+      )
+        .then(({ data }) => {
+          return resolveSession(data.session);
+        })
+        .then((outcome) => {
+          applyOutcome(outcome);
+        })
+        .catch((err) => {
+          applyOutcome(toFailure(err));
+        });
     }
 
     runCheck();
@@ -224,13 +265,53 @@ export function useSession(): SessionState {
 /**
  * Sign in with email + password. Returns an error message on failure and
  * `null` on success; the provider's auth listener drives the state change.
+ *
+ * Wrapped in withTimeout() for the same reason as getSession() in runCheck():
+ * signInWithPassword() persists the new session via the SecureStore chunking
+ * adapter (see supabase.ts), and a hung native SecureStore call would
+ * otherwise leave the UI stuck on "Signing in..." forever with no error path.
  */
 export async function signIn(email: string, password: string): Promise<string | null> {
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-  return error ? error.message : null;
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
+    return message;
+  }
+}
+
+/**
+ * Sign up with email + password. Returns an error message on failure and
+ * `null` on success; the provider's auth listener drives the state change.
+ *
+ * Wrapped in withTimeout() for the same reason as signIn() above: signUp()
+ * persists the new session via the SecureStore chunking adapter (see
+ * supabase.ts), and a hung native SecureStore call would otherwise leave the
+ * UI stuck on "Signing up..." forever with no error path.
+ */
+export async function signUp(email: string, password: string): Promise<string | null> {
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.signUp({
+        email: email.trim(),
+        password,
+      }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.';
+    return message;
+  }
 }
 
 /** Sign out. Returns an error message on failure, `null` on success. */
