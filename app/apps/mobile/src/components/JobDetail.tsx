@@ -26,10 +26,12 @@ function Row({ label, value }: { label: string; value: string }) {
 export function JobDetail({ job, actions, onAction }: JobDetailProps) {
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+      <Text style={styles.title}>{`Job #${job.id.slice(-4).toUpperCase()}`}</Text>
       <View style={[styles.statusBar, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
       <Text style={styles.status}>{job.status}</Text>
 
       <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Job Info</Text>
         <Row label="Address" value={job.address ?? 'No address'} />
         <Row label="Description" value={job.description ?? 'No description'} />
         <Row label="Scheduled" value={job.scheduledStart ?? 'Unscheduled'} />
@@ -58,6 +60,11 @@ export function JobDetail({ job, actions, onAction }: JobDetailProps) {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md, gap: spacing.md },
+  title: {
+    fontSize: typography.size.h5,
+    lineHeight: typography.size.h5 * typography.lineHeight.heading,
+    color: colors.text,
+  },
   statusBar: { height: 6, borderRadius: radius.pill },
   status: {
     fontSize: typography.size.h5,
@@ -72,10 +79,16 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     gap: spacing.sm,
   },
+  sectionTitle: {
+    fontSize: typography.size.label,
+    lineHeight: typography.size.label * typography.lineHeight.heading,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
   row: { gap: spacing.xs },
   rowLabel: {
     fontSize: typography.size.small,
-    lineHeight: typography.size.small * typography.lineHeight.body,
+    lineHeight: typography.size.small * typography.lineHeight.heading,
     color: colors.textMuted,
   },
   rowValue: {
