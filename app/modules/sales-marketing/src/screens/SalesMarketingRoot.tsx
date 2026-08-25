@@ -3,13 +3,14 @@
  *
  * Mirrors `field-tech/src/index.ts`'s `FieldTechRoot` state-driven tab
  * pattern (never a navigator — the host's single `path` segment is the
- * only route entry this module owns). Wires the module's four screens
- * (Review Library, Pitch Picker, Composer, Reporting) as sibling tabs.
+ * only route entry this module owns). Wires the module's five screens
+ * (Review Library, Pitch Picker, Composer, Reporting, Callback Tasks) as
+ * sibling tabs.
  *
- * `./ReviewLibrary`, `./PitchPicker`, `./Composer`, `./Reporting` do not
- * exist yet as of this pass — this file wires the import contract ahead
- * of their landing, same-pattern as field-tech importing its own screens
- * directly in `index.ts`.
+ * `./ReviewLibrary`, `./PitchPicker`, `./Composer`, `./Reporting`, and
+ * `./CallbackTasks` are all implemented and wired here as sibling tabs —
+ * same-pattern as field-tech importing its own screens directly in
+ * `index.ts`.
  */
 
 import * as React from 'react';

@@ -78,7 +78,7 @@ export function ReviewLibrary(): React.ReactElement {
     }
 
     reviewsRepository
-      .list('', filter)
+      .list(session.org.id, filter)
       .then((result) => {
         setReviews([...result].sort((a, b) => a.sortOrder - b.sortOrder));
       })
