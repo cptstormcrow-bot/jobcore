@@ -37,6 +37,10 @@ import type {
   TimeOffRequest,
   TimeOffRequestRow,
   TimeOffRequestDraft,
+  ReimbursementRequestRepository,
+  ReimbursementRequestRow,
+  ReimbursementRequestDraft,
+  ReimbursementRequest,
   JobNoteRepository,
   JobNote,
   JobNoteRow,
@@ -54,6 +58,7 @@ import {
   toChecklistItem,
   toJobPhoto,
   toTimeOffRequest,
+  toReimbursementRequest,
   toJobNote,
   toJob,
 } from '../../../../modules/field-tech/src/data/ports';
@@ -377,6 +382,52 @@ export function createTimeOffRepository(): TimeOffRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * ReimbursementRequestRepository
+ * ------------------------------------------------------------------ */
+
+export function createReimbursementRequestRepository(): ReimbursementRequestRepository {
+  return {
+    async listForTech(techId: string): Promise<ReimbursementRequest[]> {
+      const { data, error } = await supabase
+        .from('reimbursements')
+        .select('*')
+        .eq('user_id', techId);
+      if (error) {
+        throw new Error(`listForTech failed: ${error.message}`);
+      }
+      return ((data ?? []) as ReimbursementRequestRow[]).map(toReimbursementRequest);
+    },
+
+    async create(
+      organizationId: string,
+      techId: string,
+      draft: ReimbursementRequestDraft,
+    ): Promise<ReimbursementRequest> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('reimbursement.create', occurredAt, { organizationId, techId, ...draft });
+
+      const { data, error } = await supabase
+        .from('reimbursements')
+        .insert({
+          organization_id: organizationId,
+          user_id: techId,
+          job_id: draft.jobId ?? null,
+          amount_cents: draft.amountCents,
+          description: draft.description ?? null,
+          receipt_photo_path: draft.receiptPhotoPath ?? null,
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('field-tech-repos.createReimbursement', error.message, { organizationId, techId, draft });
+        throw new Error(`create reimbursement failed: ${error.message}`);
+      }
+      return toReimbursementRequest(data as ReimbursementRequestRow);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * JobNoteRepository
  * ------------------------------------------------------------------ */
 
@@ -562,6 +613,7 @@ export function buildFieldTechPorts(): ModulePorts {
     photos: createJobPhotoRepository(),
     timeOff: createTimeOffRepository(),
     notes: createJobNoteRepository(),
+    reimbursements: createReimbursementRequestRepository(),
     jobs: createTechJobRepository(),
     calendarEvents: createCalendarEventRepository(),
     camera: createCameraRepository(),

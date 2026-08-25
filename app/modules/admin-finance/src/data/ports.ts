@@ -908,6 +908,53 @@ export interface PaymentsRepository {
   listManuallyConfirmed(organizationId: string): Promise<Payment[]>;
 }
 
+/* ------------------------------------------------------------------ *
+ * Job planning ports (details + photos)
+ * ------------------------------------------------------------------ */
+
+export interface JobPlanningDetails {
+  jobId: string;
+  organizationId: string;
+  modelNumbers: string | null;
+  partsList: string | null;
+  measurements: string | null;
+  instructions: string | null;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export interface JobPlanningDetailsInput {
+  modelNumbers?: string | null;
+  partsList?: string | null;
+  measurements?: string | null;
+  instructions?: string | null;
+}
+
+export interface JobPlanningPhoto {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  storagePath: string;
+  caption: string | null;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export interface JobPlanningPhotoInput {
+  storagePath: string;
+  caption?: string | null;
+}
+
+export interface JobPlanningRepository {
+  getForJob(jobId: string): Promise<JobPlanningDetails | null>;
+  upsertForJob(jobId: string, details: JobPlanningDetailsInput): Promise<JobPlanningDetails>;
+}
+
+export interface JobPlanningPhotoRepository {
+  listForJob(jobId: string): Promise<JobPlanningPhoto[]>;
+  addForJob(jobId: string, photo: JobPlanningPhotoInput): Promise<JobPlanningPhoto>;
+}
+
 // Re-exported so callers of this module don't also need a direct import
 // from `../money/types` just to name the status union.
 export type { PriceSheetStatus };
