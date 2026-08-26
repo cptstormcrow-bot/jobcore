@@ -20,10 +20,10 @@
  * job's stage. It has no access to any write path for that field at all.
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, TabBar, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, colors, spacing, radius } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
@@ -43,6 +43,7 @@ import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { CloseOutQueueScreen } from './CloseOutQueueScreen';
 import { CloseOutReviewScreen } from './CloseOutReviewScreen';
 import { PriceSheetEditorScreen } from './PriceSheetEditorScreen';
+import { PriceSheetCreateScreen } from './PriceSheetCreateScreen';
 import { EmployeeRosterScreen } from './EmployeeRosterScreen';
 import { EmployeeEditorScreen } from './EmployeeEditorScreen';
 import { EmployeeDetailScreen } from './EmployeeDetailScreen';
@@ -59,7 +60,7 @@ type SubView =
   | 'leadInbox' | 'qualify'
   | 'assignmentBoard'
   | 'closeOutQueue' | 'closeOutReview'
-  | 'priceSheetList' | 'priceSheetEditor'
+  | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'reimbursementQueue'
   | 'timeOffQueue'
   | 'payoutBatch'
@@ -77,6 +78,7 @@ type LoadState =
 
 const PREF_KEY_SHOW_TEST_JOBS = 'admin-finance.assignment-board.show-test-jobs';
 const PREF_KEY_SHOW_TEST_EMPLOYEES = 'admin-finance.assignment-board.show-test-employees';
+const PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER = 'admin-finance.employee-roster.show-test-employees';
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
 function formatDate(iso: string | null): string {
@@ -92,6 +94,7 @@ export function AdminFinanceRoot() {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [showTestJobs, setShowTestJobs] = useState(false);
   const [showTestEmployees, setShowTestEmployees] = useState(false);
+  const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedCloseOutJob, setSelectedCloseOutJob] = useState<Job | null>(null);
   const [selectedPriceSheetId, setSelectedPriceSheetId] = useState<string | null>(null);
@@ -175,18 +178,26 @@ export function AdminFinanceRoot() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [jobs, employees] = await Promise.all([
+      const [jobs, employees, employeesRoster] = await Promise.all([
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, false),
+        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, false),
       ]);
       if (cancelled) return;
       setShowTestJobs(jobs);
       setShowTestEmployees(employees);
+      setShowTestEmployeesRoster(employeesRoster);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    void ports.localPrefs.setBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, showTestEmployeesRoster).catch((error) => {
+      console.error('Failed to persist show-test-employees-roster preference', error);
+    });
+  }, [showTestEmployeesRoster]);
 
   function handleShowTestJobsChange(value: boolean) {
     setShowTestJobs(value);
@@ -196,6 +207,15 @@ export function AdminFinanceRoot() {
   function handleShowTestEmployeesChange(value: boolean) {
     setShowTestEmployees(value);
     void ports.localPrefs.setBool(PREF_KEY_SHOW_TEST_EMPLOYEES, value);
+  }
+
+  async function handleShowTestEmployeesRosterChange(value: boolean) {
+    setShowTestEmployeesRoster(value);
+    try {
+      await ports.localPrefs.setBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, value);
+    } catch (error) {
+      console.error('Failed to persist show-test-employees-roster preference', error);
+    }
   }
 
   function handleAssign(job: Job, techId: string) {
@@ -296,7 +316,25 @@ export function AdminFinanceRoot() {
     setSubView('priceSheetEditor');
   }
 
+  function handleCreatePriceSheet() {
+    setSubView('priceSheetCreate');
+  }
+
+  function handlePriceSheetCreated(newSheet: { id: string }) {
+    setSelectedPriceSheetId(newSheet.id);
+    setSubView('priceSheetEditor');
+  }
+
+  function handleCancelPriceSheetCreate() {
+    setSubView('priceSheetList');
+  }
+
   function handlePublished() {
+    setSelectedPriceSheetId(null);
+    setSubView('priceSheetList');
+  }
+
+  function handleArchived() {
     setSelectedPriceSheetId(null);
     setSubView('priceSheetList');
   }
@@ -384,7 +422,21 @@ export function AdminFinanceRoot() {
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title={`Admin & Finance > ${currentScreenLabel}`} />
+      {subView === 'employee-detail' && selectedEmployee ? (
+        <Breadcrumb
+          segments={[
+            { label: 'Admin & Finance', onPress: () => setSubView('overview') },
+            { label: `${currentScreenLabel} > ${selectedEmployee.fullName}` },
+          ]}
+        />
+      ) : (
+        <Breadcrumb
+          segments={[
+            { label: 'Admin & Finance', onPress: () => setSubView('overview') },
+            { label: currentScreenLabel },
+          ]}
+        />
+      )}
       <TabBar items={TOP_LEVEL_TABS} activeKey={subView} onSelect={setSubView} />
 
       {subView === 'overview' || subView === 'jobs' ? (
@@ -450,6 +502,7 @@ export function AdminFinanceRoot() {
                     title={job.address ?? job.description ?? job.id}
                     subtitle={formatDate(job.scheduledStart)}
                     onPress={() => router.push('/job/' + job.id)}
+                    right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
                   />
                 ))}
               </Card>
@@ -478,14 +531,24 @@ export function AdminFinanceRoot() {
         <PriceSheetListScreen
           priceSheets={ports.priceSheets}
           onSelectSheet={(sheet) => handleSelectPriceSheet(sheet.id)}
+          onCreateNew={handleCreatePriceSheet}
+        />
+      ) : subView === 'priceSheetCreate' ? (
+        <PriceSheetCreateScreen
+          onCreated={handlePriceSheetCreated}
+          onCancel={handleCancelPriceSheetCreate}
         />
       ) : subView === 'priceSheetEditor' ? (
         <PriceSheetEditorScreen
           priceSheets={ports.priceSheets}
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
+          archiveRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
+          priceSheetRatesRepo={ports.priceSheetRates}
+          serviceTasksRepo={ports.serviceTasks}
           onPublished={handlePublished}
+          onArchived={handleArchived}
         />
       ) : subView === 'closeOutQueue' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -570,6 +633,8 @@ export function AdminFinanceRoot() {
           employees={employeeRepository}
           onSelectEmployee={handleSelectEmployee}
           onAddEmployee={handleAddEmployee}
+          showTest={showTestEmployeesRoster}
+          onShowTestChange={handleShowTestEmployeesRosterChange}
         />
       ) : subView === 'employee-detail' ? (
         selectedEmployee ? (
@@ -634,6 +699,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
   closeOutReview: 'Close-Out Review',
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',
+  priceSheetCreate: 'New Price Sheet',
   reimbursementQueue: 'Reimbursements',
   timeOffQueue: 'Time Off',
   payoutBatch: 'Payout Batches',

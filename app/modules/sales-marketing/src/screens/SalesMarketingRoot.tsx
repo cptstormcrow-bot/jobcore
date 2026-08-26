@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, EmptyState, ScreenTitle, TabBar } from '@jobcore/ui';
+import { Button, EmptyState, Breadcrumb, TabBar } from '@jobcore/ui';
 
 import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
@@ -106,16 +106,11 @@ export function SalesMarketingRoot(): React.ReactElement {
   return React.createElement(
     View,
     { style: styles.screen },
-    React.createElement(ScreenTitle, { title: 'Sales & Marketing' }),
+    React.createElement(Breadcrumb, { segments: [{ label: 'Sales & Marketing' }] }),
     React.createElement(
       View,
       { style: styles.header },
-      React.createElement(TabBar, {
-        items: TABS,
-        activeKey: subView,
-        onSelect: setSubView,
-        style: styles.tabBar,
-      }),
+      <TabBar items={TABS} activeKey={subView} onSelect={setSubView} style={styles.tabBar} />,
       React.createElement(Button, {
         key: 'spawnTestJobs',
         label: spawningTestJobs ? 'Spawning…' : 'Spawn Test Jobs',

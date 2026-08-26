@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TabBar } from '@jobcore/ui';
+import { TabBar, Breadcrumb } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -66,7 +66,8 @@ function FieldTechRoot(): React.ReactElement {
   return React.createElement(
     View,
     { style: styles.screen },
-    React.createElement(TabBar, {
+    React.createElement(Breadcrumb, { segments: [{ label: 'Field Tech' }] }),
+    React.createElement(TabBar<SubView>, {
       items: [
         { key: 'jobs', label: 'Jobs' },
         { key: 'timeOff', label: 'Time Off' },
