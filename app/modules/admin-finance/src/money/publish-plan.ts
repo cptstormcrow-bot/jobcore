@@ -102,3 +102,50 @@ export function planPublish(
 
   return { ok: true, value: plan };
 }
+
+/** One side of an archive plan: a price sheet's id, its target status, and its preserved publish timestamp. */
+export interface ArchivePlanEntry {
+  priceSheetId: string;
+  status: 'archived';
+  publishedAt: string | null;
+}
+
+/**
+ * The data description of an archive transition: the published sheet moving
+ * to `archived`. Unlike `PublishPlan`, this is a single-row, single-entry
+ * plan only — Archive never coordinates a second row.
+ */
+export interface ArchivePlan {
+  toArchive: ArchivePlanEntry;
+}
+
+/**
+ * Plans the archive of `sheet` given a caller-supplied `now`.
+ *
+ * Rejects (does not throw) when:
+ * - `sheet.status` is not `'published'`
+ *
+ * `publishedAt` is preserved unchanged from `sheet.publishedAt` — unlike
+ * `planPublish`, which stamps a fresh `now`, `planArchive` never touches it.
+ */
+export function planArchive(
+  sheet: PriceSheet,
+  now: string,
+): CalculationResult<ArchivePlan> {
+  if (sheet.status !== 'published') {
+    return {
+      ok: false,
+      reason: `price sheet ${sheet.id} is '${sheet.status}', not 'published'`,
+    };
+  }
+
+  const plan: ArchivePlan = {
+    toArchive: {
+      priceSheetId: sheet.id,
+      status: 'archived',
+      publishedAt: sheet.publishedAt,
+    },
+  };
+
+  return { ok: true, value: plan };
+}

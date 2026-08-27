@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import type { PriceSheet } from '../types';
-import { planPublish } from '../publish-plan';
+import { planPublish, planArchive } from '../publish-plan';
 
 function makeSheet(overrides: Partial<PriceSheet> = {}): PriceSheet {
   return {
@@ -109,6 +109,40 @@ test('AC: fails when priorPublished.version is not less than sheet.version', () 
 
   assert.equal(typeof result.reason, 'string');
   assert.match(result.reason, /version/);
+});
+
+test('AC (planArchive): fails when sheet.status is draft', () => {
+  const sheet = makeSheet({ status: 'draft', publishedAt: null });
+
+  const result = planArchive(sheet, now);
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+
+  assert.equal(typeof result.reason, 'string');
+  assert.match(result.reason, /published/);
+});
+
+test('AC (planArchive): fails when sheet.status is already archived', () => {
+  const sheet = makeSheet({ status: 'archived', publishedAt: '2026-07-01T00:00:00.000Z' });
+
+  const result = planArchive(sheet, now);
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+
+  assert.equal(typeof result.reason, 'string');
+  assert.match(result.reason, /published/);
+});
+
+test('AC (planArchive): published sheet archives, publishedAt unchanged from input', () => {
+  const sheet = makeSheet({ status: 'published', publishedAt: '2026-07-01T00:00:00.000Z' });
+
+  const result = planArchive(sheet, now);
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.value.toArchive.priceSheetId, sheet.id);
+  assert.equal(result.value.toArchive.status, 'archived');
+  assert.equal(result.value.toArchive.publishedAt, sheet.publishedAt);
 });
 
 test('AC-6: the whole suite runs with zero setup — no DB, no network, no env vars, no faked clock', () => {
