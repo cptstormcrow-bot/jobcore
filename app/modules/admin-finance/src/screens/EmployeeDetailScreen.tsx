@@ -24,7 +24,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography, WeekView } from '@jobcore/ui';
+import { Button, Card, ListItem, colors, spacing, typography, WeekView } from '@jobcore/ui';
 import type { Profile, Job } from '@jobcore/core';
 
 export interface EmployeeDetailScreenProps {
@@ -55,23 +55,32 @@ function maskDriversLicense(value: string | null): string {
   return `•••• ${value.slice(-4)}`;
 }
 
+/** Local label/value row for the identity-fields card — value dominant, label secondary (inverse of `ListItem`'s hierarchy), used only here. */
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
+}
+
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   const { employee, jobs, skills, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title="Employee Detail" subtitle={employee.fullName} />
       <ScrollView contentContainerStyle={styles.content}>
         <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
 
         <Card style={styles.card}>
-          <ListItem title="Role" subtitle={employee.role} />
-          <ListItem title="Status" subtitle={employee.active ? 'Active' : 'Inactive'} />
-          {employee.isTest ? <ListItem title="Test Employee" subtitle="Yes" /> : null}
-          <ListItem title="Address" subtitle={employee.address ?? 'Not on file'} />
-          <ListItem title="Driver's License" subtitle={maskDriversLicense(employee.driversLicenseNumber)} />
-          <ListItem title="Vehicle Status" subtitle={employee.vehicleStatus ?? 'Not set'} />
-          <ListItem title="Tool Status" subtitle={employee.toolStatus ?? 'Not set'} />
+          <InfoRow label="Role" value={employee.role} />
+          <InfoRow label="Status" value={employee.active ? 'Active' : 'Inactive'} />
+          {employee.isTest ? <InfoRow label="Test Employee" value="Yes" /> : null}
+          <InfoRow label="Address" value={employee.address ?? 'Not on file'} />
+          <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
+          <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
+          <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>
@@ -104,12 +113,14 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           )}
         </Card>
 
-        <Button label="Edit" onPress={onEdit} style={styles.action} />
-        {employee.active ? (
-          <Button label="Deactivate" variant="secondary" onPress={onDeactivate} style={styles.action} />
-        ) : (
-          <Button label="Reactivate" variant="secondary" onPress={onReactivate} style={styles.action} />
-        )}
+        <View style={styles.actionsRow}>
+          <Button label="Edit" onPress={onEdit} style={styles.actionInline} />
+          {employee.active ? (
+            <Button label="Deactivate" variant="secondary" onPress={onDeactivate} style={styles.actionInline} />
+          ) : (
+            <Button label="Reactivate" variant="secondary" onPress={onReactivate} style={styles.actionInline} />
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -133,10 +144,32 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   action: {
     marginBottom: spacing.sm,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionInline: {
+    flex: 1,
+  },
+  infoRow: {
+    paddingVertical: spacing.xs,
+  },
+  infoLabel: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: 2,
+  },
+  infoValue: {
+    color: colors.text,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
   },
   note: {
     color: colors.textMuted,

@@ -25,6 +25,10 @@ export interface EmployeeRosterScreenProps {
   onSelectEmployee?: (profile: Profile) => void;
   /** Fired when the "Add Employee" button is pressed. */
   onAddEmployee?: () => void;
+  /** Controlled "Show Test Employees" value; falls back to local state when omitted. */
+  showTest?: boolean;
+  /** Fired when the "Show Test Employees" toggle changes; falls back to local state when omitted. */
+  onShowTestChange?: (value: boolean) => void;
 }
 
 type LoadState =
@@ -34,9 +38,11 @@ type LoadState =
   | { kind: 'failed'; message: string };
 
 export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
-  const { employees: employeeRepository, onSelectEmployee, onAddEmployee } = props;
+  const { employees: employeeRepository, onSelectEmployee, onAddEmployee, showTest: showTestProp, onShowTestChange } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
-  const [showTest, setShowTest] = useState(false);
+  const [localShowTest, setLocalShowTest] = useState(false);
+  const showTest = showTestProp ?? localShowTest;
+  const handleShowTestChange = onShowTestChange ?? setLocalShowTest;
 
   const session = getModuleSession();
 
@@ -118,7 +124,7 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
         <Toggle
           label="Show Test Employees"
           value={showTest}
-          onChange={setShowTest}
+          onChange={handleShowTestChange}
           style={styles.action}
         />
 
