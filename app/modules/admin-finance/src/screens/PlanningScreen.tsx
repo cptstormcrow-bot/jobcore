@@ -32,11 +32,15 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
-import type { JobPlanningDetails, JobPlanningPhoto } from '../data/ports';
+import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
 
 export interface PlanningScreenProps {
   jobs: Job[];
+  jobPlanning?: JobPlanningRepository;
+  jobPlanningPhotos?: JobPlanningPhotoRepository;
+  initialSelectedJobId?: string;
+  onBack?: () => void;
 }
 
 type DetailsLoadState =
@@ -53,8 +57,8 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
-export function PlanningScreen({ jobs }: PlanningScreenProps) {
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanningPhotos: jobPlanningPhotosProp, initialSelectedJobId, onBack }: PlanningScreenProps) {
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(initialSelectedJobId ?? null);
   const [detailsLoadState, setDetailsLoadState] = useState<DetailsLoadState>({ kind: 'idle' });
   const [details, setDetails] = useState<JobPlanningDetails | null>(null);
 
@@ -74,7 +78,8 @@ export function PlanningScreen({ jobs }: PlanningScreenProps) {
     if (!selectedJobId) {
       return;
     }
-    const { jobPlanning, jobPlanningPhotos } = getModulePorts();
+    const jobPlanning = jobPlanningProp ?? getModulePorts().jobPlanning;
+    const jobPlanningPhotos = jobPlanningPhotosProp ?? getModulePorts().jobPlanningPhotos;
     let cancelled = false;
     setDetailsLoadState({ kind: 'loading' });
     setSaveError(null);
@@ -152,7 +157,7 @@ export function PlanningScreen({ jobs }: PlanningScreenProps) {
     if (!selectedJobId || saving) {
       return;
     }
-    const { jobPlanning } = getModulePorts();
+    const jobPlanning = jobPlanningProp ?? getModulePorts().jobPlanning;
     setSaving(true);
     setSaveError(null);
     try {
@@ -175,7 +180,7 @@ export function PlanningScreen({ jobs }: PlanningScreenProps) {
     if (!selectedJobId || addingPhoto) {
       return;
     }
-    const { jobPlanningPhotos } = getModulePorts();
+    const jobPlanningPhotos = jobPlanningPhotosProp ?? getModulePorts().jobPlanningPhotos;
     setAddingPhoto(true);
     setPhotosError(null);
     try {
@@ -201,7 +206,7 @@ export function PlanningScreen({ jobs }: PlanningScreenProps) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.backRow}>
-          <Button label="Back to job list" variant="outline" size="sm" onPress={() => setSelectedJobId(null)} />
+          <Button label={onBack ? 'Back to Job' : 'Back to job list'} variant="outline" size="sm" onPress={onBack ?? (() => setSelectedJobId(null))} />
         </View>
 
         <Card style={styles.card}>

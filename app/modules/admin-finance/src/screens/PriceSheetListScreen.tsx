@@ -26,7 +26,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -35,6 +35,8 @@ export interface PriceSheetListScreenProps {
   priceSheets?: PriceSheetRepository;
   /** Fired when a sheet row is selected, mirrors `LeadInboxScreen.tsx`'s `onSelectLead`. */
   onSelectSheet?: (sheet: PriceSheet) => void;
+  /** Fired when the "create new price sheet" action is pressed. Optional/no-op-safe. */
+  onCreateNew?: () => void;
 }
 
 type LoadState =
@@ -52,7 +54,7 @@ function formatDate(iso: string | null): string {
 }
 
 export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
-  const { priceSheets: priceSheetRepository, onSelectSheet } = props;
+  const { priceSheets: priceSheetRepository, onSelectSheet, onCreateNew } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
   const session = getModuleSession();
@@ -123,6 +125,9 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
     return (
       <View style={styles.screen}>
         <EmptyState title="Price Sheets" message="This organization has no price sheets on file." />
+        {onCreateNew && (
+          <Button label="Create price sheet" onPress={onCreateNew} style={styles.createButton} />
+        )}
       </View>
     );
   }
@@ -137,6 +142,11 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title="Price Sheets" />
+        {onCreateNew && (
+          <View style={styles.toolbar}>
+            <Button label="Create price sheet" onPress={onCreateNew} />
+          </View>
+        )}
         {groups.map(({ status, label }) => {
           const sheetsInGroup = loadState.sheets.filter((sheet) => sheet.status === status);
           if (sheetsInGroup.length === 0) {
@@ -185,5 +195,12 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  toolbar: {
+    alignItems: 'flex-end',
+    marginBottom: spacing.md,
+  },
+  createButton: {
+    marginTop: spacing.md,
   },
 });
