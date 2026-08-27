@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, TextInput, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { colors, spacing, radius, typography } from './tokens';
 
 export interface TextFieldProps {
@@ -11,6 +11,8 @@ export interface TextFieldProps {
   disabled?: boolean;
   error?: string;
   style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  inputStyle?: StyleProp<TextStyle>;
 }
 
 export function TextField({
@@ -22,11 +24,13 @@ export function TextField({
   disabled = false,
   error,
   style,
+  labelStyle,
+  inputStyle,
 }: TextFieldProps) {
   const hasError = !!error;
   return (
     <View style={[styles.base, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -43,6 +47,7 @@ export function TextField({
           multiline && styles.inputMultiline,
           hasError && styles.inputError,
           disabled && styles.disabled,
+          inputStyle,
         ]}
       />
       {hasError && <Text style={styles.errorText}>{error}</Text>}
@@ -56,7 +61,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
     fontSize: typography.size.label,
-    color: colors.text,
+    color: colors.textMuted,
     marginBottom: spacing.xs,
   },
   input: {

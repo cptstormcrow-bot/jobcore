@@ -4,7 +4,7 @@
 // @jobcore/module-sdk (the contract package), never from a module implementation.
 import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { Job } from '@jobcore/core';
+import type { Job, Role } from '@jobcore/core';
 import type { JobAction } from '@jobcore/module-sdk';
 import { colors, spacing, typography, radius, ScreenTitle } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
@@ -14,6 +14,7 @@ export interface JobDetailProps {
   job: Job;
   actions?: JobAction[];
   onAction?: (actionId: string) => void;
+  role?: Role;
 }
 
 interface JobMaterial {
@@ -60,7 +61,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function JobDetail({ job, actions, onAction }: JobDetailProps) {
+export function JobDetail({ job, actions, onAction, role }: JobDetailProps) {
   const [materials, setMaterials] = useState<JobMaterial[]>([]);
   const [links, setLinks] = useState<JobReferenceLink[]>([]);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
@@ -150,6 +151,23 @@ export function JobDetail({ job, actions, onAction }: JobDetailProps) {
         </View>
       ) : null}
 
+      {actions && actions.length > 0 ? (
+        <View style={styles.actions}>
+          {actions.map((action) => (
+            <Pressable
+              key={action.id}
+              style={[
+                styles.actionButton,
+                { backgroundColor: role === 'tech' ? colors.info : colors.secondaryDark },
+              ]}
+              onPress={() => onAction?.(action.id)}
+            >
+              <Text style={styles.actionLabel}>{action.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Job Info</Text>
         <Row label="Address" value={job.address ?? 'No address'} />
@@ -224,19 +242,6 @@ export function JobDetail({ job, actions, onAction }: JobDetailProps) {
         </View>
       ) : null}
 
-      {actions && actions.length > 0 ? (
-        <View style={styles.actions}>
-          {actions.map((action) => (
-            <Pressable
-              key={action.id}
-              style={styles.actionButton}
-              onPress={() => onAction?.(action.id)}
-            >
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
     </ScrollView>
   );
 }
@@ -280,18 +285,23 @@ const styles = StyleSheet.create({
     lineHeight: typography.size.body * typography.lineHeight.body,
     color: colors.text,
   },
-  actions: { gap: spacing.sm },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   actionButton: {
-    backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    flexGrow: 1,
+    flexBasis: '47%',
   },
   actionLabel: {
-    fontSize: typography.size.label,
-    lineHeight: typography.size.label * typography.lineHeight.body,
+    fontSize: typography.size.body,
+    lineHeight: typography.size.body * typography.lineHeight.body,
     color: colors.white,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   betaBadge: {
     alignSelf: 'flex-start',

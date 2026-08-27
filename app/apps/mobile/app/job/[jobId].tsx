@@ -3,11 +3,11 @@
 // the shared-canvas + actions-from-registry pattern from that same file. This
 // route does not modify JobDetail.tsx — it only consumes its existing props.
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
-import { Button, Checkbox, colors, EmptyState, ListItem, LoadingState, spacing, TextField } from '@jobcore/ui';
+import { Button, Checkbox, colors, EmptyState, ListItem, LoadingState, spacing, TextField, typography } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -17,11 +17,21 @@ import {
   createEmployeeRepository,
   createJobAssignmentRepository,
   createCalendarEventRepository,
+  createJobPlanningRepository,
+  createJobPlanningPhotoRepository,
+  createPriceSheetRepository,
+  createPriceSheetRatesRepository,
+  createPriceSheetAreaAdjustmentsRepository,
+  createServiceAreaRepository,
 } from '../../src/lib/admin-finance-repos';
 import type { JobDetailsPatch, CustomerPatch, CustomerCreateInput } from '../../../../modules/admin-finance/src/data/ports';
 import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qualify';
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
 import { classifyJob } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { PlanningScreen } from '../../../../modules/admin-finance/src/screens/PlanningScreen';
+import { PriceEstimatingScreen } from '../../../../modules/admin-finance/src/screens/PriceEstimatingScreen';
+import type { ServiceArea } from '../../../../modules/admin-finance/src/data/ports';
+import { setModuleSession } from '@jobcore/admin-finance';
 // NOTE (slice 5): the assignment data model has no `kind` column --
 // `job_assignments` (app/supabase/0004_scheduling.sql) is `job_id`/`tech_id`/
 // `assigned_at` only, `JobAssignmentDraft`/`JobAssignmentRepository.create`
@@ -141,11 +151,15 @@ const EMPTY_JOB_FORM: JobFormState = {
 };
 
 export default function JobDrilldownScreen() {
-  const { jobId } = useLocalSearchParams<{ jobId: string }>();
+  const { jobId, panel } = useLocalSearchParams<{ jobId: string; panel?: string }>();
   const router = useRouter();
   const session = useSession();
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
+
+  if (session.status === 'authenticated' && org && role) {
+    setModuleSession({ org, role, userId: session.profile.id });
+  }
 
   // Mode detection: the `new` route param means create-mode; any other
   // (real UUID) jobId means edit-mode. Later slices branch UI on `isCreate`.
@@ -155,6 +169,11 @@ export default function JobDrilldownScreen() {
     if (!org || !role) return [];
     return getEnabledModules(org, role).flatMap((m) => m.jobActions ?? []);
   }, [org, role]);
+
+  const priceEstimatingRates = useMemo(() => {
+    const repo = createPriceSheetRatesRepository();
+    return { list: (id: string) => repo.list(id).then((value) => ({ ok: true as const, value })) };
+  }, []);
 
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(!isCreate);
@@ -174,6 +193,7 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<'details' | 'plan' | 'estimate'>(panel === 'plan' ? 'plan' : 'details');
 
   useEffect(() => {
     if (!org?.id) {
@@ -189,6 +209,16 @@ export default function JobDrilldownScreen() {
     return () => {
       cancelled = true;
     };
+  }, [org?.id]);
+
+  const [serviceAreas, setServiceAreas] = useState<ServiceArea[]>([]);
+  useEffect(() => {
+    if (!org?.id) { setServiceAreas([]); return; }
+    let cancelled = false;
+    void createServiceAreaRepository().listForOrganization(org.id).then((list) => {
+      if (!cancelled) setServiceAreas(list);
+    });
+    return () => { cancelled = true; };
   }, [org?.id]);
 
   // Org-scoped lookup by id: jobs_select_org / jobs_select_tech RLS policies
@@ -445,18 +475,50 @@ export default function JobDrilldownScreen() {
     );
   }
 
+  if (!isCreate && job && activePanel === 'plan') {
+    return (
+      <View style={styles.root}>
+        <PlanningScreen
+          jobs={[job]}
+          initialSelectedJobId={job.id}
+          onBack={() => setActivePanel('details')}
+          jobPlanning={createJobPlanningRepository()}
+          jobPlanningPhotos={createJobPlanningPhotoRepository()}
+        />
+      </View>
+    );
+  }
+  if (!isCreate && job && activePanel === 'estimate') {
+    return (
+      <View style={styles.root}>
+        <View style={styles.field}>
+          <Button label="Back to Job" variant="outline" size="sm" onPress={() => setActivePanel('details')} />
+        </View>
+        <PriceEstimatingScreen
+          priceSheets={createPriceSheetRepository()}
+          priceSheetRates={priceEstimatingRates}
+          priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
+          serviceAreas={serviceAreas}
+        />
+      </View>
+    );
+  }
+
   if (isCreate) {
     // Create-mode shell: editable JobDetailsPatch fields (address, description,
     // houseAgeYears), bound to `form`/`setForm` (JobFormState). Local-state-only
     // for now -- no save handler yet (added in slice 5).
     return (
-      <View style={styles.root} testID={form.address ? undefined : 'job-create-shell'}>
+      <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
         <TextField
           label="Customer name"
           value={form.customerName}
           onChangeText={(value) => setForm((prev) => ({ ...prev, customerName: value }))}
           placeholder="Customer name"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Customer phone"
@@ -464,6 +526,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, customerPhone: value }))}
           placeholder="Customer phone"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Customer email"
@@ -471,6 +535,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, customerEmail: value }))}
           placeholder="Customer email"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Address"
@@ -478,6 +544,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, address: value }))}
           placeholder="Job address"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Description"
@@ -486,6 +554,8 @@ export default function JobDrilldownScreen() {
           placeholder="Job description"
           multiline
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="House age (years)"
@@ -493,6 +563,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, houseAgeYears: value }))}
           placeholder="e.g. 12"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Permit status"
@@ -500,6 +572,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, permitStatus: value }))}
           placeholder="e.g. Filed, pending, not required"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Parking availability"
@@ -507,9 +581,12 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, parkingAvailable: value }))}
           placeholder="e.g. Driveway, street only"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <View style={styles.field}>
           <Text style={styles.sectionLabel}>Rooms needing work</Text>
+          <View style={styles.roomsGrid}>
           {ROOM_OPTIONS.map((room) => (
             <Checkbox
               key={room}
@@ -521,8 +598,11 @@ export default function JobDrilldownScreen() {
                   rooms: checked ? [...prev.rooms, room] : prev.rooms.filter((r) => r !== room),
                 }))
               }
+              style={styles.roomCheckbox}
+              boxStyle={styles.roomCheckboxBox}
             />
           ))}
+          </View>
         </View>
         <TextField
           label="Main panel size/style"
@@ -530,6 +610,8 @@ export default function JobDrilldownScreen() {
           onChangeText={(value) => setForm((prev) => ({ ...prev, panelInfo: value }))}
           placeholder="e.g. 200A, Square D QO"
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         <TextField
           label="Considerations"
@@ -538,6 +620,8 @@ export default function JobDrilldownScreen() {
           placeholder="Anything else worth noting"
           multiline
           style={styles.field}
+          labelStyle={styles.fieldLabel}
+          inputStyle={styles.fieldInput}
         />
         {saveError ? (
           <EmptyState title="Save failed" message={saveError} />
@@ -548,7 +632,8 @@ export default function JobDrilldownScreen() {
           disabled={saving}
           style={styles.field}
         />
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -559,7 +644,10 @@ export default function JobDrilldownScreen() {
   // for this slice (create-mode shell above stays local-state-only).
   return (
     <View style={styles.root}>
-      <JobDetail job={job as Job} actions={actions} onAction={dispatchInvoke} />
+      <View style={styles.jobDetailPane}>
+        <JobDetail job={job as Job} actions={actions} onAction={dispatchInvoke} role={role} />
+      </View>
+      <ScrollView style={styles.formPane} contentContainerStyle={styles.scrollContent}>
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Classification</Text>
         <Text style={styles.subtitleText}>
@@ -572,6 +660,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, customerName: value }))}
         placeholder="Customer name"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Customer phone"
@@ -579,6 +669,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, customerPhone: value }))}
         placeholder="Customer phone"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Customer email"
@@ -586,6 +678,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, customerEmail: value }))}
         placeholder="Customer email"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Customer address"
@@ -593,6 +687,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, customerAddress: value }))}
         placeholder="Customer address"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Permit status"
@@ -600,6 +696,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, permitStatus: value }))}
         placeholder="e.g. Filed, pending, not required"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Parking availability"
@@ -607,9 +705,12 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, parkingAvailable: value }))}
         placeholder="e.g. Driveway, street only"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Rooms needing work</Text>
+        <View style={styles.roomsGrid}>
         {ROOM_OPTIONS.map((room) => (
           <Checkbox
             key={room}
@@ -621,8 +722,11 @@ export default function JobDrilldownScreen() {
                 rooms: checked ? [...prev.rooms, room] : prev.rooms.filter((r) => r !== room),
               }))
             }
+            style={styles.roomCheckbox}
+            boxStyle={styles.roomCheckboxBox}
           />
         ))}
+        </View>
       </View>
       <TextField
         label="Main panel size/style"
@@ -630,6 +734,8 @@ export default function JobDrilldownScreen() {
         onChangeText={(value) => setForm((prev) => ({ ...prev, panelInfo: value }))}
         placeholder="e.g. 200A, Square D QO"
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       <TextField
         label="Considerations"
@@ -638,6 +744,8 @@ export default function JobDrilldownScreen() {
         placeholder="Anything else worth noting"
         multiline
         style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={styles.fieldInput}
       />
       {saveError ? (
         <EmptyState title="Save failed" message={saveError} />
@@ -654,6 +762,8 @@ export default function JobDrilldownScreen() {
         disabled={saving}
         style={styles.field}
       />
+      <Button label="Plan" onPress={() => setActivePanel('plan')} disabled={saving} style={styles.field} />
+      <Button label="Estimate" onPress={() => setActivePanel('estimate')} disabled={saving} style={styles.field} />
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Assign tech</Text>
         {job?.assignedTechId ? (
@@ -677,12 +787,21 @@ export default function JobDrilldownScreen() {
           />
         ))}
       </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
+  scrollContent: { paddingBottom: spacing.xl },
+  jobDetailPane: { flex: 0.45 },
+  formPane: { flex: 1 },
+  fieldLabel: { color: colors.textLight },
+  fieldInput: { fontSize: typography.size.h5, fontWeight: typography.weight.semibold, color: colors.text },
+  roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
+  roomCheckbox: { width: '50%', minHeight: 32, marginBottom: spacing.xs },
+  roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   field: { marginHorizontal: spacing.md, marginTop: spacing.md },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.sm, color: colors.text },
   subtitleText: { color: colors.textMuted, marginBottom: spacing.sm },
