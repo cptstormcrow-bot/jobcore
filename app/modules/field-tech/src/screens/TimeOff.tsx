@@ -27,7 +27,7 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest } from '../data/ports';
@@ -209,6 +209,7 @@ export function TimeOff(): React.ReactElement {
   return (
     <View style={styles.container}>
       <ScreenTitle title="Time Off" />
+      <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Upcoming assignments</Text>
         {upcomingLoading ? (
@@ -218,20 +219,15 @@ export function TimeOff(): React.ReactElement {
         ) : upcomingJobs.length === 0 ? (
           <Text style={styles.emptyText}>No upcoming assignments.</Text>
         ) : (
-          <FlatList
-            data={upcomingJobs}
-            keyExtractor={(job) => job.id}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View style={styles.requestRow}>
-                <Text style={styles.requestDates}>
-                  {item.scheduledStart ? formatDate(item.scheduledStart) : 'Unscheduled'}
-                  {item.scheduledEnd ? ` – ${formatDate(item.scheduledEnd)}` : ''}
-                </Text>
-                <Text style={styles.requestStatus}>{item.address ?? 'No address on file'}</Text>
-              </View>
-            )}
-          />
+          upcomingJobs.map((item) => (
+            <View key={item.id} style={styles.requestRow}>
+              <Text style={styles.requestDates}>
+                {item.scheduledStart ? formatDate(item.scheduledStart) : 'Unscheduled'}
+                {item.scheduledEnd ? ` – ${formatDate(item.scheduledEnd)}` : ''}
+              </Text>
+              <Text style={styles.requestStatus}>{item.address ?? 'No address on file'}</Text>
+            </View>
+          ))
         )}
       </View>
 
@@ -273,36 +269,32 @@ export function TimeOff(): React.ReactElement {
         ) : requests.length === 0 ? (
           <Text style={styles.emptyText}>No time-off requests yet.</Text>
         ) : (
-          <FlatList
-            data={requests}
-            keyExtractor={(request) => request.id}
-            scrollEnabled={false}
-            renderItem={({ item }) => {
-              const cancellable = item.status === 'pending' || item.status === 'approved';
-              const cancelling = cancellingId === item.id;
+          requests.map((item) => {
+            const cancellable = item.status === 'pending' || item.status === 'approved';
+            const cancelling = cancellingId === item.id;
 
-              return (
-                <View style={styles.requestRow}>
-                  <Text style={styles.requestDates}>
-                    {formatDate(item.startDate)} – {formatDate(item.endDate)}
-                  </Text>
-                  <Text style={styles.requestStatus}>{item.status}</Text>
-                  {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
-                  {cancellable ? (
-                    <Button
-                      label={cancelling ? 'Cancelling…' : 'Cancel'}
-                      variant="outline"
-                      disabled={cancelling}
-                      onPress={() => handleCancel(item.id)}
-                      style={styles.cancelButton}
-                    />
-                  ) : null}
-                </View>
-              );
-            }}
-          />
+            return (
+              <View key={item.id} style={styles.requestRow}>
+                <Text style={styles.requestDates}>
+                  {formatDate(item.startDate)} – {formatDate(item.endDate)}
+                </Text>
+                <Text style={styles.requestStatus}>{item.status}</Text>
+                {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
+                {cancellable ? (
+                  <Button
+                    label={cancelling ? 'Cancelling…' : 'Cancel'}
+                    variant="outline"
+                    disabled={cancelling}
+                    onPress={() => handleCancel(item.id)}
+                    style={styles.cancelButton}
+                  />
+                ) : null}
+              </View>
+            );
+          })
         )}
       </View>
+      </ScrollView>
     </View>
   );
 }
@@ -310,6 +302,8 @@ export function TimeOff(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  content: {
     padding: 16,
   },
   centered: {
