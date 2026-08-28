@@ -7,7 +7,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
-import { Button, Checkbox, colors, EmptyState, ListItem, LoadingState, spacing, TextField, typography } from '@jobcore/ui';
+import { Breadcrumb, Button, Checkbox, colors, EmptyState, ListItem, LoadingState, spacing, TextField, typography } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -397,37 +397,6 @@ export default function JobDrilldownScreen() {
   };
 
   /**
-   * Edit-mode-only flag write: inserts a `job_notes` row with
-   * `kind: 're_estimate_flag'` (constraint widened in migration 0023) to
-   * flag the job for re-estimation. Mirrors the exact insert shape used by
-   * `createCloseOutNotesRepository().upsert()` in `admin-finance-repos.ts`
-   * (`organization_id`/`job_id`/`tech_id`/`kind`/`body`/`occurred_at`) —
-   * this is a flag write only, no pricing/estimate logic here.
-   */
-  const handleReestimate = async (): Promise<void> => {
-    if (!job || session.status !== 'authenticated') return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const { error } = await supabase.from('job_notes').insert({
-        organization_id: job.organizationId,
-        job_id: job.id,
-        tech_id: session.profile.id,
-        kind: 're_estimate_flag',
-        body: 'Re-estimate requested.',
-        occurred_at: new Date().toISOString(),
-      });
-      if (error) {
-        throw new Error(error.message);
-      }
-    } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Re-estimate flag failed.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  /**
    * Edit-mode-only tech assignment: reuses the exact `assignJob(job, techId,
    * deps)` call pattern from `AdminFinanceRoot.tsx`'s `handleAssign` (read
    * fresh at dispatch time) -- same three deps (`jobs`, `assignments`,
@@ -644,6 +613,27 @@ export default function JobDrilldownScreen() {
   // for this slice (create-mode shell above stays local-state-only).
   return (
     <View style={styles.root}>
+      <Breadcrumb
+        segments={[
+          { label: 'Jobs', onPress: () => router.back() },
+          { label: job?.address || 'Job Details' },
+        ]}
+      />
+      <View style={styles.actionsRow}>
+        <Button label="Plan" onPress={() => setActivePanel('plan')} disabled={saving} style={styles.actionInline} />
+        <Button label="Estimate" onPress={() => setActivePanel('estimate')} disabled={saving} style={styles.actionInline} />
+        <Button
+          label={saving ? 'Saving…' : 'Save'}
+          onPress={() => void handleSaveEdit()}
+          disabled={saving}
+          style={styles.actionInline}
+        />
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.subtitleText}>
+          Currently assigned: {job?.assignedTechId ? (techs.find((t) => t.id === job.assignedTechId)?.fullName ?? job.assignedTechId) : 'Unassigned'}
+        </Text>
+      </View>
       <View style={styles.jobDetailPane}>
         <JobDetail job={job as Job} actions={actions} onAction={dispatchInvoke} role={role} />
       </View>
@@ -750,27 +740,8 @@ export default function JobDrilldownScreen() {
       {saveError ? (
         <EmptyState title="Save failed" message={saveError} />
       ) : null}
-      <Button
-        label={saving ? 'Saving…' : 'Save'}
-        onPress={() => void handleSaveEdit()}
-        disabled={saving}
-        style={styles.field}
-      />
-      <Button
-        label="Re-estimate"
-        onPress={() => void handleReestimate()}
-        disabled={saving}
-        style={styles.field}
-      />
-      <Button label="Plan" onPress={() => setActivePanel('plan')} disabled={saving} style={styles.field} />
-      <Button label="Estimate" onPress={() => setActivePanel('estimate')} disabled={saving} style={styles.field} />
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Assign tech</Text>
-        {job?.assignedTechId ? (
-          <Text style={styles.subtitleText}>
-            Currently assigned: {techs.find((t) => t.id === job.assignedTechId)?.fullName ?? job.assignedTechId}
-          </Text>
-        ) : null}
         {assignError ? <EmptyState title="Assignment failed" message={assignError} /> : null}
         {techs.map((tech) => (
           <ListItem
@@ -805,6 +776,8 @@ const styles = StyleSheet.create({
   field: { marginHorizontal: spacing.md, marginTop: spacing.md },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.sm, color: colors.text },
   subtitleText: { color: colors.textMuted, marginBottom: spacing.sm },
+  actionsRow: { flexDirection: 'row', gap: spacing.sm, marginHorizontal: spacing.md, marginTop: spacing.md },
+  actionInline: { flex: 1 },
   center: {
     flex: 1,
     alignItems: 'center',
