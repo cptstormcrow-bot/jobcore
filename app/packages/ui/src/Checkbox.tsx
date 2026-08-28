@@ -8,9 +8,10 @@ export interface CheckboxProps {
   onChange?: (checked: boolean) => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  boxStyle?: StyleProp<ViewStyle>;
 }
 
-export function Checkbox({ label, checked, onChange, disabled = false, style }: CheckboxProps) {
+export function Checkbox({ label, checked, onChange, disabled = false, style, boxStyle }: CheckboxProps) {
   return (
     <Pressable
       onPress={() => onChange?.(!checked)}
@@ -21,7 +22,7 @@ export function Checkbox({ label, checked, onChange, disabled = false, style }: 
       hitSlop={8}
       style={[styles.base, disabled && styles.disabled, style]}
     >
-      <View style={[styles.box, checked && styles.boxChecked]}>
+      <View style={[styles.box, boxStyle, checked && styles.boxChecked]}>
         {checked && <View style={styles.checkMark} />}
       </View>
       <Text style={styles.label}>{label}</Text>

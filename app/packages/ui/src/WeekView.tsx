@@ -28,48 +28,53 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob }: W
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
-    <ScrollView horizontal style={styles.root} contentContainerStyle={styles.content}>
-      {days.map((day) => {
-        const dayJobs = jobs
-          .filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day))
-          .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
-        const dayTimeOff = timeOffEvents
-          .filter((t) => isSameDay(new Date(t.eventTime), day))
-          .sort((a, b) => new Date(a.eventTime).getTime() - new Date(b.eventTime).getTime());
-        const isAnchor = isSameDay(day, anchorDay);
+    <ScrollView style={styles.verticalRoot}>
+      <ScrollView horizontal style={styles.root} contentContainerStyle={styles.content}>
+        {days.map((day) => {
+          const dayJobs = jobs
+            .filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day))
+            .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
+          const dayTimeOff = timeOffEvents
+            .filter((t) => isSameDay(new Date(t.eventTime), day))
+            .sort((a, b) => new Date(a.eventTime).getTime() - new Date(b.eventTime).getTime());
+          const isAnchor = isSameDay(day, anchorDay);
 
-        return (
-          <View key={day.toISOString()} style={styles.column}>
-            <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
-              {format(day, 'EEE')}
-            </Text>
-            <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
-              {format(day, 'M/d')}
-            </Text>
-            {dayJobs.map((job) => (
-              <Pressable
-                key={job.id}
-                onPress={() => onSelectJob?.(job)}
-                style={[styles.card, { borderLeftWidth: 4, borderLeftColor: JOB_STATUS_COLORS[job.status] }]}
-              >
-                <Text style={styles.cardTime}>{format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
-                <Text style={styles.cardAddress}>{job.address ?? 'No address'}</Text>
-              </Pressable>
-            ))}
-            {dayTimeOff.map((event) => (
-              <View key={event.id} style={[styles.card, styles.timeOffCard]}>
-                <Text style={styles.cardTime}>{format(new Date(event.eventTime), 'h:mm a')}</Text>
-                <Text style={styles.cardAddress}>{event.title ?? 'Time off'}</Text>
-              </View>
-            ))}
-          </View>
-        );
-      })}
+          return (
+            <View key={day.toISOString()} style={styles.column}>
+              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
+                {format(day, 'EEE')}
+              </Text>
+              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
+                {format(day, 'M/d')}
+              </Text>
+              {dayJobs.map((job) => (
+                <Pressable
+                  key={job.id}
+                  onPress={() => onSelectJob?.(job)}
+                  style={[styles.card, { borderLeftWidth: 4, borderLeftColor: JOB_STATUS_COLORS[job.status] }]}
+                >
+                  <Text style={styles.cardTime}>{format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
+                  <Text style={styles.cardAddress}>{job.address ?? 'No address'}</Text>
+                </Pressable>
+              ))}
+              {dayTimeOff.map((event) => (
+                <View key={event.id} style={[styles.card, styles.timeOffCard]}>
+                  <Text style={styles.cardTime}>{format(new Date(event.eventTime), 'h:mm a')}</Text>
+                  <Text style={styles.cardAddress}>{event.title ?? 'Time off'}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })}
+      </ScrollView>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  verticalRoot: {
+    flex: 1,
+  },
   root: {
     backgroundColor: colors.offWhite,
   },

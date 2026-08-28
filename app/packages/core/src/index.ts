@@ -117,6 +117,11 @@ export interface Job {
    */
   isBeta: boolean;
   houseAgeYears?: number | null;
+  permitStatus?: string | null;
+  parkingAvailable?: string | null;
+  rooms?: string[] | null;
+  panelInfo?: string | null;
+  considerations?: string | null;
 }
 
 /**
