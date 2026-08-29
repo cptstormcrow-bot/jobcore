@@ -172,7 +172,7 @@ export default function JobDrilldownScreen() {
 
   const priceEstimatingRates = useMemo(() => {
     const repo = createPriceSheetRatesRepository();
-    return { list: (id: string) => repo.list(id).then((value) => ({ ok: true as const, value })) };
+    return { list: (id: string) => repo.list(id).then((value: unknown) => ({ ok: true as const, value })) };
   }, []);
 
   const [job, setJob] = useState<Job | null>(null);

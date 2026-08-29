@@ -87,7 +87,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
 
     jobPlanning
       .getForJob(selectedJobId)
-      .then((result) => {
+      .then((result: JobPlanningDetails | null) => {
         if (cancelled) {
           return;
         }
@@ -107,7 +107,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
 
     jobPlanningPhotos
       .listForJob(selectedJobId)
-      .then((result) => {
+      .then((result: JobPlanningPhoto[]) => {
         if (!cancelled) {
           setPhotos(result);
         }

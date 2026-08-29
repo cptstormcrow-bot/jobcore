@@ -12,12 +12,13 @@ import assert from 'node:assert/strict';
 
 import type { Ctx, Job } from '@jobcore/core';
 import { closeOutJob, retryCloseOut, type CloseOutJobDeps } from '../close-out-job';
-import type { CompensationPolicy, PriceSheetRate } from '../../money/types';
+import type { CompensationPolicy, PriceSheet, PriceSheetRate } from '../../money/types';
 import type {
   CalendarEventRepository,
   CloseOutFailureRepository,
   CommissionRepository,
   JobRepository,
+  PriceSheetDraft,
   PriceSheetRepository,
 } from '../../data/ports';
 
@@ -149,6 +150,9 @@ function makePriceSheetRepository(
     },
     async getActive() {
       return activePriceSheet;
+    },
+    async create(_draft: PriceSheetDraft): Promise<PriceSheet> {
+      throw new Error('not implemented');
     },
     ...overrides,
   };

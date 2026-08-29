@@ -359,6 +359,21 @@ export function createPriceSheetRepository(): PriceSheetRepository {
       }
       return (data as PriceSheet | null) ?? null;
     },
+
+    async create(draft: import('../../../../modules/admin-finance/src/data/ports').PriceSheetDraft): Promise<PriceSheet> {
+      const { data, error } = await supabase
+        .from('price_sheets')
+        .insert({
+          organization_id: draft.organizationId,
+          version: draft.version,
+        })
+        .select('*')
+        .single();
+      if (error) {
+        throw new Error(`create failed: ${error.message}`);
+      }
+      return data as PriceSheet;
+    },
   };
 }
 
@@ -1313,6 +1328,36 @@ export function createTimeOffAdminRepository(): TimeOffAdminRepo {
         throw new Error(`list time off requests failed: ${error.message}`);
       }
       return ((data ?? []) as TimeOffRequestAdminRow[]).map(toTimeOffRequestAdmin);
+    },
+
+    async createBlackout(
+      organizationId: string,
+      techId: string,
+      draft: { startDate: string; endDate: string; reason: string | null },
+    ) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        throw new Error(`create blackout failed to resolve current user: ${userError?.message ?? 'no session'}`);
+      }
+
+      const { data, error } = await supabase
+        .from('time_off_requests')
+        .insert({
+          organization_id: organizationId,
+          tech_id: techId,
+          start_date: draft.startDate,
+          end_date: draft.endDate,
+          reason: draft.reason,
+          created_by_admin_id: userData.user.id,
+          status: 'pending',
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.createBlackout', error.message, { organizationId, techId });
+        throw new Error(`create blackout failed: ${error.message}`);
+      }
+      return toTimeOffRequestAdmin(data as TimeOffRequestAdminRow);
     },
   };
 }

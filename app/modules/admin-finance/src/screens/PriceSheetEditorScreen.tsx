@@ -60,6 +60,8 @@ export interface PriceSheetEditorScreenProps {
   onSave?: (sheet: PriceSheet) => Promise<CalculationResult<void>>;
   /** Fired after a successful publish so the host can refresh or navigate. */
   onPublished?: (priceSheetId: string) => void;
+  archiveRepo?: PriceSheetRepo;
+  onArchived?: () => void;
   areaAdjustmentsRepo: {
     list(priceSheetId: string): Promise<CalculationResult<PriceSheetAreaAdjustment[]>>;
     save(
