@@ -87,14 +87,19 @@ type LoadState =
  * Expands each `TimeOffRequestAdmin` (spanning a startDate/endDate range) into one
  * `TimeOffEvent` per calendar day in range, for the shared job+time-off Calendar view.
  */
+function parseCalendarDate(dateOnly: string): Date {
+  const [year, month, day] = dateOnly.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function toCalendarTimeOffEvents(
   requests: TimeOffRequestAdmin[],
   techNameById: Map<string, string>,
 ): TimeOffEvent[] {
   const events: TimeOffEvent[] = [];
   for (const request of requests) {
-    const start = new Date(request.startDate);
-    const end = new Date(request.endDate);
+    const start = parseCalendarDate(request.startDate);
+    const end = parseCalendarDate(request.endDate);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       continue;
     }
