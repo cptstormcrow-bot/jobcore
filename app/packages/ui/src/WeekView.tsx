@@ -14,6 +14,7 @@ export interface TimeOffEvent {
   title: string | null;
   description: string | null;
   eventTime: string;
+  techId?: string;
 }
 
 export interface WeekViewProps {

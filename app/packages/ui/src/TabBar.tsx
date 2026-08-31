@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     padding: spacing.md,
-    gap: spacing.xs,
+    gap: 10,
   },
   tab: {
     borderRadius: radius.md,

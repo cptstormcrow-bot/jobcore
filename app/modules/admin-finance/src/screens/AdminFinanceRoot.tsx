@@ -23,12 +23,16 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, colors, spacing, radius } from '@jobcore/ui';
+import { addDays } from 'date-fns';
+import { Card, ListItem, Button, Select, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, colors, spacing, radius } from '@jobcore/ui';
+import type { TimeOffEvent } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
+import { isBetaVisible } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
+import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { ReimbursementQueueScreen } from './ReimbursementQueueScreen';
@@ -48,6 +52,7 @@ import { EmployeeRosterScreen } from './EmployeeRosterScreen';
 import { EmployeeEditorScreen } from './EmployeeEditorScreen';
 import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
+import { BlackoutEditorScreen } from './BlackoutEditorScreen';
 import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
@@ -68,13 +73,46 @@ type SubView =
   | 'reports'
   | 'auditLog'
   | 'payments'
-  | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail';
+  | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
+  | 'blackout-editor'
+  | 'calendar';
 
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[] }
+  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[]; timeOffRequests: TimeOffRequestAdmin[] }
   | { kind: 'failed'; message: string };
+
+/**
+ * Expands each `TimeOffRequestAdmin` (spanning a startDate/endDate range) into one
+ * `TimeOffEvent` per calendar day in range, for the shared job+time-off Calendar view.
+ */
+function toCalendarTimeOffEvents(
+  requests: TimeOffRequestAdmin[],
+  techNameById: Map<string, string>,
+): TimeOffEvent[] {
+  const events: TimeOffEvent[] = [];
+  for (const request of requests) {
+    const start = new Date(request.startDate);
+    const end = new Date(request.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      continue;
+    }
+    const techName = techNameById.get(request.techId) ?? 'Unknown tech';
+    let cursor = start;
+    while (cursor.getTime() <= end.getTime()) {
+      events.push({
+        id: `${request.id}-${cursor.toISOString().slice(0, 10)}`,
+        title: `${techName}: Time off`,
+        description: request.reason,
+        eventTime: cursor.toISOString(),
+        techId: request.techId,
+      });
+      cursor = addDays(cursor, 1);
+    }
+  }
+  return events;
+}
 
 const PREF_KEY_SHOW_TEST_JOBS = 'admin-finance.assignment-board.show-test-jobs';
 const PREF_KEY_SHOW_TEST_EMPLOYEES = 'admin-finance.assignment-board.show-test-employees';
@@ -104,6 +142,8 @@ export function AdminFinanceRoot() {
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
+  const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
+  const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
 
   const session = useModuleSession();
   const orgId = session?.org.id ?? null;
@@ -132,6 +172,9 @@ export function AdminFinanceRoot() {
     void jobRepository.listForOrganization(orgId).then((jobs) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, jobs } : prev));
     });
+    void ports.timeOffAdmin.listForOrganization(orgId).then((timeOffRequests) => {
+      setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, timeOffRequests } : prev));
+    });
   }
 
   const hasFocusedOnceRef = useRef(false);
@@ -158,10 +201,11 @@ export function AdminFinanceRoot() {
       techServiceAreaRepository.listForOrganization(orgId),
       ports.serviceAreas.listForOrganization(orgId),
       ports.techSkills.listForOrganization(orgId),
+      ports.timeOffAdmin.listForOrganization(orgId),
     ])
-      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills]) => {
+      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests]) => {
         if (!cancelled) {
-          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills });
+          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests });
         }
       })
       .catch((error: unknown) => {
@@ -173,7 +217,7 @@ export function AdminFinanceRoot() {
     return () => {
       cancelled = true;
     };
-  }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills]);
+  }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills, ports.timeOffAdmin]);
 
   useEffect(() => {
     let cancelled = false;
@@ -402,12 +446,44 @@ export function AdminFinanceRoot() {
     setSubView('employee-detail');
   }
 
+  const [blackoutInitialTechId, setBlackoutInitialTechId] = useState<string | undefined>(undefined);
+  const [blackoutReturnView, setBlackoutReturnView] = useState<SubView>('timeOffQueue');
+
+  function handleAddBlackout(initialTechId?: string) {
+    setBlackoutInitialTechId(initialTechId);
+    setBlackoutReturnView(subView === 'calendar' ? 'calendar' : 'timeOffQueue');
+    setSubView('blackout-editor');
+  }
+
+  function handleBlackoutEditorSaved() {
+    refreshJobs();
+    setSubView(blackoutReturnView);
+  }
+
+  function handleBlackoutEditorCancel() {
+    setSubView(blackoutReturnView);
+  }
+
+  function handleCalendarSelectJob(job: Job) {
+    if (job.assignedTechId) {
+      router.push('/job/' + job.id);
+      return;
+    }
+    if (selectedCalendarTechId) {
+      handleAssign(job, selectedCalendarTechId);
+      return;
+    }
+    setSubView('assignmentBoard');
+  }
+
   const currentScreenLabel =
     subView === 'employee-editor'
       ? selectedEmployee
         ? 'Edit Employee'
         : 'Add Employee'
-      : SUBVIEW_LABELS[subView];
+      : subView === 'blackout-editor'
+        ? 'Add Blackout'
+        : SUBVIEW_LABELS[subView];
 
   if (!session) {
     return (
@@ -492,21 +568,26 @@ export function AdminFinanceRoot() {
               onPress={() => router.push('/job/new')}
               style={styles.card}
             />
-            {loadState.jobs.length === 0 ? (
-              <EmptyState title="No jobs" message="This organization has no jobs on file." />
-            ) : (
-              <Card style={styles.card}>
-                {loadState.jobs.map((job) => (
-                  <ListItem
-                    key={job.id}
-                    title={job.address ?? job.description ?? job.id}
-                    subtitle={formatDate(job.scheduledStart)}
-                    onPress={() => router.push('/job/' + job.id)}
-                    right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
-                  />
-                ))}
-              </Card>
-            )}
+            {(() => {
+              const unassignedJobs = loadState.jobs.filter(
+                (job) => !job.assignedTechId && isBetaVisible(job, showTestJobs),
+              );
+              return unassignedJobs.length === 0 ? (
+                <EmptyState title="No jobs" message="This organization has no unassigned jobs on file." />
+              ) : (
+                <Card style={styles.card}>
+                  {unassignedJobs.map((job) => (
+                    <ListItem
+                      key={job.id}
+                      title={job.address ?? job.description ?? job.id}
+                      subtitle={formatDate(job.scheduledStart)}
+                      onPress={() => router.push('/job/' + job.id)}
+                      right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
+                    />
+                  ))}
+                </Card>
+              );
+            })()}
           </ScrollView>
         )
       ) : subView === 'leadInbox' ? (
@@ -543,7 +624,6 @@ export function AdminFinanceRoot() {
           priceSheets={ports.priceSheets}
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
-          archiveRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
           priceSheetRatesRepo={ports.priceSheetRates}
           serviceTasksRepo={ports.serviceTasks}
@@ -581,7 +661,7 @@ export function AdminFinanceRoot() {
       ) : subView === 'reimbursementQueue' ? (
         <ReimbursementQueueScreen reimbursements={ports.reimbursements} />
       ) : subView === 'timeOffQueue' ? (
-        <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} />
+        <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} />
       ) : subView === 'payoutBatch' ? (
         <PayoutBatchScreen payoutBatches={ports.payoutBatches} onSelectBatch={handleSelectPayoutBatch} />
       ) : subView === 'payoutBatch-detail' ? (
@@ -672,6 +752,18 @@ export function AdminFinanceRoot() {
           onSaved={handleEmployeeEditorSaved}
           onCancel={handleEmployeeEditorCancel}
         />
+      ) : subView === 'blackout-editor' ? (
+        <BlackoutEditorScreen
+          techs={
+            loadState.kind === 'loaded'
+              ? loadState.employees.filter((e) => e.role === 'tech' && e.active)
+              : []
+          }
+          timeOffAdmin={ports.timeOffAdmin}
+          initialTechId={blackoutInitialTechId}
+          onSaved={handleBlackoutEditorSaved}
+          onCancel={handleBlackoutEditorCancel}
+        />
       ) : subView === 'employee-job-detail' ? (
         selectedEmployeeJob ? (
           <EmployeeJobDetailScreen job={selectedEmployeeJob} onBack={handleBackToEmployeeDetail} />
@@ -679,6 +771,60 @@ export function AdminFinanceRoot() {
           <View style={styles.screen}>
             <EmptyState title="Job" message="No job selected." />
           </View>
+        )
+      ) : subView === 'calendar' ? (
+        loadState.kind === 'loading' || loadState.kind === 'idle' ? (
+          <LoadingState label="Loading jobs..." />
+        ) : loadState.kind === 'failed' ? (
+          <ErrorState message={loadState.message} />
+        ) : (
+          (() => {
+            const techs = loadState.employees.filter((e) => e.role === 'tech' && e.active);
+            const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
+            const calendarJobs = loadState.jobs
+              .filter(
+                (job) =>
+                  job.scheduledStart &&
+                  isBetaVisible(job, showTestJobs) &&
+                  (!selectedCalendarTechId || job.assignedTechId === selectedCalendarTechId),
+              )
+              .map((job) =>
+                !selectedCalendarTechId
+                  ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address}` }
+                  : job,
+              );
+            const calendarTimeOffEvents = toCalendarTimeOffEvents(loadState.timeOffRequests, techNameById).filter(
+              (e) => !selectedCalendarTechId || e.techId === selectedCalendarTechId,
+            );
+            return (
+              <View style={styles.screen}>
+                <View style={styles.content}>
+                  <View style={styles.calendarToolbar}>
+                    <Button label="Prev" size="sm" onPress={() => setCalendarAnchorDay((d) => addDays(d, -7))} />
+                    <Button label="Next" size="sm" onPress={() => setCalendarAnchorDay((d) => addDays(d, 7))} />
+                    <Select
+                      value={selectedCalendarTechId}
+                      onChange={setSelectedCalendarTechId}
+                      placeholder="All Techs"
+                      options={techs.map((t) => ({ label: t.fullName, value: t.id }))}
+                      style={styles.calendarTechSelect}
+                    />
+                    <Button
+                      label="Add Blackout"
+                      size="sm"
+                      onPress={() => handleAddBlackout(selectedCalendarTechId ?? undefined)}
+                    />
+                  </View>
+                </View>
+                <WeekView
+                  jobs={calendarJobs}
+                  anchorDay={calendarAnchorDay}
+                  timeOffEvents={calendarTimeOffEvents}
+                  onSelectJob={handleCalendarSelectJob}
+                />
+              </View>
+            );
+          })()
         )
       ) : (
         <View style={styles.screen}>
@@ -689,7 +835,7 @@ export function AdminFinanceRoot() {
   );
 }
 
-const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
+const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-editor'>, string> = {
   overview: 'Overview',
   jobs: 'Jobs',
   leadInbox: 'Leads',
@@ -710,6 +856,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor'>, string> = {
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
   'employee-job-detail': 'Employee Job Detail',
+  calendar: 'Calendar',
 };
 
 const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
@@ -721,6 +868,7 @@ const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
   { key: 'priceSheetList', label: 'Price Sheets' },
   { key: 'reimbursementQueue', label: 'Reimbursements' },
   { key: 'timeOffQueue', label: 'Time Off' },
+  { key: 'calendar', label: 'Calendar' },
   { key: 'payoutBatch', label: 'Payout Batches' },
   { key: 'reports', label: 'Reports' },
   { key: 'auditLog', label: 'Audit Log' },
@@ -734,4 +882,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md },
   card: { marginBottom: spacing.md },
+  calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  calendarTechSelect: { width: 180 },
 });

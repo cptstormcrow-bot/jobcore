@@ -1,5 +1,6 @@
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Ctx, Job } from '@jobcore/core';
+import { router } from 'expo-router';
 import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
@@ -93,8 +94,15 @@ export const adminFinanceModule: JobcoreModule = {
         await transitionJob(job, 'paid', ctx);
       },
     },
+    {
+      id: 'schedule',
+      label: 'Schedule',
+      onInvoke: (job: Job) => {
+        router.push('/job/' + job.id + '?panel=schedule');
+      },
+    },
   ],
-  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql'],
+  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0033_job_planning.sql'],
 };
 
 export default adminFinanceModule;

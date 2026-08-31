@@ -14,7 +14,7 @@
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from './supabase';
+import { supabase, supabaseUrl } from './supabase';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
 import { makeIdempotencyKey } from '@jobcore/core';
@@ -50,8 +50,17 @@ import type {
   CalendarEventDraft,
   CameraRepository,
   PhotoCapture,
+  EstimateRepository,
+  JobEstimate,
+  JobEstimateLineItem,
+  JobEstimateLineItemDraft,
+  JobEstimateInput,
+  TimeEntryRepository,
+  TimeEntry,
+  TimeEntryRow,
 } from '../../../../modules/field-tech/src/data/ports';
 import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
+import { getModuleSession } from '../../../../modules/field-tech/src/lib/module-session';
 import {
   toChecklistTemplate,
   toChecklistInstance,
@@ -61,6 +70,7 @@ import {
   toReimbursementRequest,
   toJobNote,
   toJob,
+  toTimeEntry,
 } from '../../../../modules/field-tech/src/data/ports';
 
 /**
@@ -604,6 +614,330 @@ export function createCameraRepository(): CameraRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * EstimateRepository
+ * ------------------------------------------------------------------ */
+
+/**
+ * Resolves this module's ambient org/user context from the injected
+ * `getModuleSession()` (`../../../../modules/field-tech/src/lib/module-session`)
+ * — the host is the only legal source for field-tech's ambient org/user
+ * context, per that module's own doc comment on the host-to-module read
+ * direction. Fail-closed: throws if no session is injected yet, matching
+ * this file's other functions' fail-fast convention for missing session/
+ * auth state (see `createCalendarEventRepository`'s `supabase.auth.getUser()`
+ * guard above).
+ */
+function requireModuleSession(): { organizationId: string; userId: string } {
+  const session = getModuleSession();
+  if (session === null) {
+    throw new Error(
+      'field-tech-repos: no module session injected — the host must call setModuleSession() before estimate writes.',
+    );
+  }
+  return { organizationId: session.org.id, userId: session.userId };
+}
+
+/**
+ * Duplicated from `admin-finance-repos.ts`'s identical mapper rather than
+ * imported/shared — module isolation forbids field-tech from depending on
+ * admin-finance's tree.
+ */
+function toJobEstimate(row: {
+  job_id: string;
+  organization_id: string;
+  status: JobEstimate['status'];
+  summary: string | null;
+  materials_notes: string | null;
+  labor_notes: string | null;
+  materials_cost: string | number;
+  labor_cost: string | number;
+  other_cost: string | number;
+  total_cost: string | number;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  payment_terms: string | null;
+  deposit_amount: string | number | null;
+  customer_notes: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}): JobEstimate {
+  return {
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    status: row.status,
+    summary: row.summary,
+    materialsNotes: row.materials_notes,
+    laborNotes: row.labor_notes,
+    materialsCost: Number(row.materials_cost),
+    laborCost: Number(row.labor_cost),
+    otherCost: Number(row.other_cost),
+    totalCost: Number(row.total_cost),
+    scheduledStart: row.scheduled_start,
+    scheduledEnd: row.scheduled_end,
+    paymentTerms: row.payment_terms,
+    depositAmount: row.deposit_amount === null ? null : Number(row.deposit_amount),
+    customerNotes: row.customer_notes,
+    internalNotes: row.internal_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    createdBy: row.created_by,
+    updatedBy: row.updated_by,
+  };
+}
+
+/**
+ * Duplicated from `admin-finance-repos.ts`'s identical mapper rather than
+ * imported/shared — module isolation forbids field-tech from depending on
+ * admin-finance's tree.
+ */
+function toJobEstimateLineItem(row: {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  kind: JobEstimateLineItem['kind'];
+  description: string;
+  quantity: string | number;
+  unit_cost: string | number;
+  line_total: string | number;
+  created_at: string;
+  created_by: string | null;
+}): JobEstimateLineItem {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    kind: row.kind,
+    description: row.description,
+    quantity: Number(row.quantity),
+    unitCost: Number(row.unit_cost),
+    lineTotal: Number(row.line_total),
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+  };
+}
+
+export function createEstimateRepository(): EstimateRepository {
+  return {
+    async getForJob(jobId: string): Promise<JobEstimate | null> {
+      const { organizationId } = requireModuleSession();
+      const { data, error } = await supabase
+        .from('job_estimates')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`getForJob failed: ${error.message}`);
+      }
+      return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
+    },
+
+    async upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate.upsert', occurredAt, { jobId, input });
+
+      const patch: Record<string, unknown> = {
+        job_id: jobId,
+        organization_id: organizationId,
+        updated_by: userId,
+      };
+      if (input.status !== undefined) {
+        patch.status = input.status;
+      }
+      if (input.summary !== undefined) {
+        patch.summary = input.summary;
+      }
+      if (input.materialsNotes !== undefined) {
+        patch.materials_notes = input.materialsNotes;
+      }
+      if (input.laborNotes !== undefined) {
+        patch.labor_notes = input.laborNotes;
+      }
+      if (input.materialsCost !== undefined) {
+        patch.materials_cost = input.materialsCost;
+      }
+      if (input.laborCost !== undefined) {
+        patch.labor_cost = input.laborCost;
+      }
+      if (input.otherCost !== undefined) {
+        patch.other_cost = input.otherCost;
+      }
+      if (input.totalCost !== undefined) {
+        patch.total_cost = input.totalCost;
+      }
+      if (input.scheduledStart !== undefined) {
+        patch.scheduled_start = input.scheduledStart;
+      }
+      if (input.scheduledEnd !== undefined) {
+        patch.scheduled_end = input.scheduledEnd;
+      }
+      if (input.paymentTerms !== undefined) {
+        patch.payment_terms = input.paymentTerms;
+      }
+      if (input.depositAmount !== undefined) {
+        patch.deposit_amount = input.depositAmount;
+      }
+      if (input.customerNotes !== undefined) {
+        patch.customer_notes = input.customerNotes;
+      }
+      if (input.internalNotes !== undefined) {
+        patch.internal_notes = input.internalNotes;
+      }
+
+      const { data, error } = await supabase
+        .from('job_estimates')
+        .upsert(patch, { onConflict: 'job_id' })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('field-tech-repos.upsertJobEstimate', error.message, { jobId, input });
+        throw new Error(`upsertForJob failed: ${error.message}`);
+      }
+      return toJobEstimate(data as Parameters<typeof toJobEstimate>[0]);
+    },
+
+    async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {
+      const { organizationId } = requireModuleSession();
+      const { data, error } = await supabase
+        .from('job_estimate_line_items')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('organization_id', organizationId)
+        .order('kind', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`listLineItems failed: ${error.message}`);
+      }
+      return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
+    },
+
+    async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate_line_item.add', occurredAt, { jobId, draft });
+
+      const { data, error } = await supabase
+        .from('job_estimate_line_items')
+        .insert({
+          job_id: jobId,
+          organization_id: organizationId,
+          kind: draft.kind,
+          description: draft.description,
+          quantity: draft.quantity,
+          unit_cost: draft.unitCost,
+          line_total: draft.lineTotal,
+          created_by: userId,
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('field-tech-repos.addJobEstimateLineItem', error.message, { jobId, draft });
+        throw new Error(`addLineItem failed: ${error.message}`);
+      }
+      return toJobEstimateLineItem(data as Parameters<typeof toJobEstimateLineItem>[0]);
+    },
+
+    // No RLS policy backs a tech UPDATE on job_estimate_line_items — this
+    // must fail loudly rather than silently no-op.
+    async updateLineItem(
+      _lineItemId: string,
+      _patch: Partial<JobEstimateLineItemDraft>,
+    ): Promise<JobEstimateLineItem> {
+      throw new Error('Techs cannot edit estimate line items — remove and re-add is not permitted either; contact an admin.');
+    },
+
+    // No RLS policy backs a tech DELETE on job_estimate_line_items — this
+    // must fail loudly rather than silently no-op.
+    async removeLineItem(_lineItemId: string): Promise<void> {
+      throw new Error('Techs cannot remove estimate line items; contact an admin.');
+    },
+
+    async issueShareLink(jobId: string): Promise<{ token: string; url: string }> {
+      const { data, error } = await supabase.rpc('issue_estimate_token', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`issueShareLink failed: ${error.message}`);
+      }
+      const token = data as string;
+      return { token, url: `${supabaseUrl}/functions/v1/estimate-resolve?token=${token}` };
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * TimeEntryRepository
+ * ------------------------------------------------------------------ */
+
+export function createTimeEntryRepository(): TimeEntryRepository {
+  return {
+    async clockIn(jobId: string): Promise<TimeEntry> {
+      const { organizationId, userId } = requireModuleSession();
+
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_time_entry.clock_in', occurredAt, { jobId });
+
+      const { data, error } = await supabase
+        .from('job_time_entries')
+        .insert({
+          organization_id: organizationId,
+          job_id: jobId,
+          tech_id: userId,
+          clock_in_at: occurredAt,
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        logSyncFailure('field-tech-repos.clockIn', error.message, { jobId });
+        throw new Error(`clockIn failed: ${error.message}`);
+      }
+
+      return toTimeEntry(data as TimeEntryRow);
+    },
+
+    async clockOut(entryId: string): Promise<TimeEntry> {
+      const occurredAt = new Date().toISOString();
+
+      await enqueueMutation('job_time_entry.clock_out', occurredAt, { entryId });
+
+      const { data, error } = await supabase
+        .from('job_time_entries')
+        .update({ clock_out_at: occurredAt })
+        .eq('id', entryId)
+        .select('*')
+        .single();
+
+      if (error) {
+        logSyncFailure('field-tech-repos.clockOut', error.message, { entryId });
+        throw new Error(`clockOut failed: ${error.message}`);
+      }
+
+      return toTimeEntry(data as TimeEntryRow);
+    },
+
+    async listForJob(jobId: string): Promise<TimeEntry[]> {
+      const { organizationId } = requireModuleSession();
+
+      const { data, error } = await supabase
+        .from('job_time_entries')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('organization_id', organizationId)
+        .order('clock_in_at', { ascending: true });
+
+      if (error) {
+        throw new Error(`listForJob failed: ${error.message}`);
+      }
+
+      return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -617,5 +951,7 @@ export function buildFieldTechPorts(): ModulePorts {
     jobs: createTechJobRepository(),
     calendarEvents: createCalendarEventRepository(),
     camera: createCameraRepository(),
+    estimates: createEstimateRepository(),
+    timeEntries: createTimeEntryRepository(),
   };
 }

@@ -7,7 +7,8 @@
  * `applyTransition` directly from `@jobcore/core`, enforced by the
  * field-tech `.eslintrc.cjs` override).
  *
- * Ordering is load-bearing: the after-photo and quality-notes recorders
+ * `ctx.hasAfterPhotos`/`ctx.hasQualityNotes` passed to `transitionJob` are
+ * plain synchronous closures over this screen's own local state, read fresh
  * (`lib/active-job-workflow-state.ts`, S1.4) are called BEFORE
  * `transitionJob(...)` so that `ctx.hasAfterPhotos`/`ctx.hasQualityNotes`
  * read synchronously true when `canTransition`/`applyTransition` evaluate
@@ -26,7 +27,7 @@
  * than importing anything from `apps/mobile`.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
 import { ScreenTitle } from '@jobcore/ui';
@@ -34,11 +35,22 @@ import { ScreenTitle } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { transitionJob } from '../domain/transition';
-import { recordAfterPhoto, recordQualityNotes } from '../lib/active-job-workflow-state';
+import {
+  recordAfterPhoto,
+  recordQualityNotes,
+  hasAfterPhotos as readHasAfterPhotos,
+  hasQualityNotes as readHasQualityNotes,
+} from '../lib/active-job-workflow-state';
 
 /** Builds a nonce for `makeIdempotencyKey` without depending on a uuid library. */
 function makeNonce(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+function formatWorkedTime(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m worked`;
 }
 
 export interface CompletionProps {
@@ -60,6 +72,30 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
   const [qualityNotes, setQualityNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [workedMinutes, setWorkedMinutes] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWorkedTime(): Promise<void> {
+      try {
+        const ports = getModulePorts();
+        const entries = await ports.timeEntries.listForJob(job.id);
+        let totalMs = 0;
+        for (const e of entries) {
+          if (e.clockOutAt !== null) {
+            totalMs += new Date(e.clockOutAt).getTime() - new Date(e.clockInAt).getTime();
+          }
+        }
+        if (!cancelled) {
+          setWorkedMinutes(Math.max(0, Math.round(totalMs / 60000)));
+        }
+      } catch {}
+    }
+    void loadWorkedTime();
+    return () => {
+      cancelled = true;
+    };
+  }, [job.id]);
 
   const trimmedNotes = qualityNotes.trim();
   const canSubmit =
@@ -131,6 +167,8 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
       recordQualityNotes(job.id);
 
       await transitionJob(job, 'completed', {
+        hasAfterPhotos: (j) => readHasAfterPhotos(j),
+        hasQualityNotes: (j) => readHasQualityNotes(j),
         role: session.role,
         now: () => new Date().toISOString(),
       });
@@ -183,6 +221,8 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
         placeholder="Quality notes"
         disabled={submitting}
       />
+
+      <p>{workedMinutes !== null ? formatWorkedTime(workedMinutes) : 'Loading time worked…'}</p>
 
       {error !== null ? <p role="alert">{error}</p> : null}
 

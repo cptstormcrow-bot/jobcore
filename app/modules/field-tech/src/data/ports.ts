@@ -705,3 +705,121 @@ export interface ReimbursementRequestRepository {
   listForTech(techId: string): Promise<ReimbursementRequest[]>;
   create(organizationId: string, techId: string, draft: ReimbursementRequestDraft): Promise<ReimbursementRequest>;
 }
+
+export type EstimateStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type EstimateLineItemKind = 'material' | 'labor' | 'other';
+
+export interface JobEstimate {
+  jobId: string;
+  organizationId: string;
+  status: EstimateStatus;
+  summary: string | null;
+  materialsNotes: string | null;
+  laborNotes: string | null;
+  materialsCost: number;
+  laborCost: number;
+  otherCost: number;
+  totalCost: number;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  paymentTerms: string | null;
+  depositAmount: number | null;
+  customerNotes: string | null;
+  internalNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
+}
+
+export interface JobEstimateInput {
+  status?: EstimateStatus;
+  summary?: string | null;
+  materialsNotes?: string | null;
+  laborNotes?: string | null;
+  materialsCost?: number;
+  laborCost?: number;
+  otherCost?: number;
+  totalCost?: number;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  paymentTerms?: string | null;
+  depositAmount?: number | null;
+  customerNotes?: string | null;
+  internalNotes?: string | null;
+}
+
+export interface JobEstimateLineItem {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  kind: EstimateLineItemKind;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export interface JobEstimateLineItemDraft {
+  kind: EstimateLineItemKind;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+}
+
+export interface EstimateRepository {
+  getForJob(jobId: string): Promise<JobEstimate | null>;
+  upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate>;
+  listLineItems(jobId: string): Promise<JobEstimateLineItem[]>;
+  addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem>;
+  updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem>;
+  removeLineItem(lineItemId: string): Promise<void>;
+  issueShareLink(jobId: string): Promise<{ token: string; url: string }>;
+}
+
+export interface TimeEntryRow {
+  id: string;
+  organization_id: string;
+  job_id: string;
+  tech_id: string;
+  clock_in_at: string;
+  clock_out_at: string | null;
+  created_at: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  techId: string;
+  clockInAt: string;
+  clockOutAt: string | null;
+  createdAt: string;
+}
+
+export function toTimeEntry(row: TimeEntryRow): TimeEntry {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    jobId: row.job_id,
+    techId: row.tech_id,
+    clockInAt: row.clock_in_at,
+    clockOutAt: row.clock_out_at,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Clock-in/out access to job_time_entries. No organizationId/techId params
+ * — resolves the caller's own org/user ambiently via requireModuleSession(),
+ * mirroring EstimateRepository. RLS scopes writes to the tech's own rows
+ * and their own assigned job.
+ */
+export interface TimeEntryRepository {
+  clockIn(jobId: string): Promise<TimeEntry>;
+  clockOut(entryId: string): Promise<TimeEntry>;
+  listForJob(jobId: string): Promise<TimeEntry[]>;
+}

@@ -14,7 +14,7 @@
  * pattern already established elsewhere in the app.
  */
 
-import { supabase } from './supabase';
+import { supabase, supabaseUrl } from './supabase';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
@@ -54,6 +54,18 @@ import type {
   InvitationRepository,
   Invitation,
   TechSkillRepository,
+  PriceSheetDraft,
+  JobPlanningRepository,
+  JobPlanningPhotoRepository,
+  JobPlanningDetails,
+  JobPlanningDetailsInput,
+  JobPlanningPhoto,
+  JobPlanningPhotoInput,
+  EstimateRepository,
+  JobEstimate,
+  JobEstimateLineItem,
+  JobEstimateLineItemDraft,
+  JobEstimateInput,
 } from '../../../../modules/admin-finance/src/data/ports';
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
@@ -69,10 +81,13 @@ import type {
   PriceSheetRow,
   PriceSheetRateRow,
 } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
-import { toPriceSheet, toPriceSheetRate, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import type { PriceSheetRateWithTaskRow } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import type {
   ReimbursementRepo,
   ReimbursementRow,
+  ApproveReimbursementInput,
+  RejectReimbursementInput,
 } from '../../../../modules/admin-finance/src/data/reimbursement-repo';
 import { toReimbursement, approveReimbursementViaRpc, rejectReimbursementViaRpc } from '../../../../modules/admin-finance/src/data/reimbursement-repo';
 import type {
@@ -80,6 +95,7 @@ import type {
   PayoutBatchRow,
   PayoutLineRow,
 } from '../../../../modules/admin-finance/src/data/payout-batch-repo';
+import type { PayoutBatch } from '../../../../modules/admin-finance/src/money/payout-batch';
 import { toPayoutBatch, persistPayoutBatchViaRpc } from '../../../../modules/admin-finance/src/data/payout-batch-repo';
 import type {
   TimeOffAdminRepo,
@@ -246,6 +262,8 @@ export function createJobRepository(): JobRepository {
           address: patch.address,
           description: patch.description,
           house_age_years: patch.houseAgeYears,
+          scheduled_start: patch.scheduledStart,
+          scheduled_end: patch.scheduledEnd,
         })
         .eq('id', jobId)
         .select('*')
@@ -344,7 +362,7 @@ export function createPriceSheetRepository(): PriceSheetRepository {
       if (error) {
         throw new Error(`listForOrganization failed: ${error.message}`);
       }
-      return (data ?? []) as PriceSheet[];
+      return ((data ?? []) as PriceSheetRow[]).map(toPriceSheet);
     },
 
     async getActive(organizationId: string): Promise<PriceSheet | null> {
@@ -357,7 +375,27 @@ export function createPriceSheetRepository(): PriceSheetRepository {
       if (error) {
         throw new Error(`getActive failed: ${error.message}`);
       }
-      return (data as PriceSheet | null) ?? null;
+      return data ? toPriceSheet(data as PriceSheetRow) : null;
+    },
+
+    async create(draft: PriceSheetDraft): Promise<PriceSheet> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('price_sheet.create', occurredAt, draft);
+
+      const { data, error } = await supabase
+        .from('price_sheets')
+        .insert({
+          organization_id: draft.organizationId,
+          version: draft.version,
+          status: 'draft',
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.createPriceSheet', error.message, { draft });
+        throw new Error(`create price sheet failed: ${error.message}`);
+      }
+      return toPriceSheet(data as PriceSheetRow);
     },
   };
 }
@@ -792,6 +830,98 @@ export function createPriceSheetAreaAdjustmentsRepository() {
   };
 }
 
+export function createPriceSheetRatesRepository() {
+  return {
+    async list(priceSheetId: string) {
+      const { data, error } = await supabase
+        .from('price_sheet_rates')
+        .select('*')
+        .eq('price_sheet_id', priceSheetId);
+      if (error) {
+        throw new Error(`listRates failed: ${error.message}`);
+      }
+      return ((data ?? []) as PriceSheetRateWithTaskRow[]).map(toPriceSheetRateWithTask);
+    },
+    async save(
+      priceSheetId: string,
+      serviceId: string,
+      taskId: string | null,
+      attachTiming: string,
+      amount: number,
+      timeEstimateMinutes: number | null
+    ) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('price_sheet_rate.save', occurredAt, {
+        priceSheetId,
+        serviceId,
+        taskId,
+        attachTiming,
+        amount,
+        timeEstimateMinutes,
+      });
+      const result = await saveRateRepo(
+        supabase as unknown as Parameters<typeof saveRateRepo>[0],
+        priceSheetId,
+        serviceId,
+        taskId,
+        attachTiming,
+        amount,
+        timeEstimateMinutes
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.saveRate', result.reason, {
+          priceSheetId,
+          serviceId,
+          taskId,
+          attachTiming,
+          amount,
+          timeEstimateMinutes,
+        });
+      }
+      return result;
+    },
+    async remove(rateId: string) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('price_sheet_rate.remove', occurredAt, { rateId });
+      const result = await deleteRateRepo(
+        supabase as unknown as Parameters<typeof deleteRateRepo>[0],
+        rateId
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.deleteRate', result.reason, { rateId });
+      }
+      return result;
+    },
+  };
+}
+
+export function createServiceTasksRepository() {
+  return {
+    async list(organizationId: string, serviceId?: string) {
+      const result = await listServiceTasksRepo(
+        supabase as unknown as Parameters<typeof listServiceTasksRepo>[0],
+        organizationId,
+        serviceId
+      );
+      return result;
+    },
+    async save(organizationId: string, serviceId: string, name: string) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('service_task.save', occurredAt, { organizationId, serviceId, name });
+      const result = await saveServiceTaskRepo(
+        supabase as unknown as Parameters<typeof saveServiceTaskRepo>[0],
+        organizationId,
+        serviceId,
+        name
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.saveServiceTask', result.reason, { organizationId, serviceId, name });
+      }
+      return result;
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * ReimbursementRepo
  * ------------------------------------------------------------------ */
@@ -821,7 +951,7 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       return data ? toReimbursement(data as ReimbursementRow) : null;
     },
 
-    async approve(input) {
+    async approve(input: ApproveReimbursementInput) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('reimbursement.approve', occurredAt, input);
       const result = await approveReimbursementViaRpc(supabase as unknown as Parameters<typeof approveReimbursementViaRpc>[0], input);
@@ -831,7 +961,7 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       return result;
     },
 
-    async reject(input) {
+    async reject(input: RejectReimbursementInput) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('reimbursement.reject', occurredAt, input);
       const result = await rejectReimbursementViaRpc(supabase as unknown as Parameters<typeof rejectReimbursementViaRpc>[0], input);
@@ -895,7 +1025,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
       return toPayoutBatch(data as PayoutBatchRow, lineRows);
     },
 
-    async persist(batch) {
+    async persist(batch: PayoutBatch) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('payout_batch.persist', occurredAt, batch);
       const result = await persistPayoutBatchViaRpc(supabase as unknown as Parameters<typeof persistPayoutBatchViaRpc>[0], batch);
@@ -905,7 +1035,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
       return result;
     },
 
-    async approve(batchId) {
+    async approve(batchId: string) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('payout_batch.approve', occurredAt, { batchId });
 
@@ -924,7 +1054,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
       return { ok: true, value: toPayoutBatch(data as PayoutBatchRow, lineRows) };
     },
 
-    async markPaid(batchId) {
+    async markPaid(batchId: string) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('payout_batch.mark_paid', occurredAt, { batchId });
 
@@ -1314,6 +1444,51 @@ export function createTimeOffAdminRepository(): TimeOffAdminRepo {
       }
       return ((data ?? []) as TimeOffRequestAdminRow[]).map(toTimeOffRequestAdmin);
     },
+
+    async createBlackout(
+      organizationId: string,
+      techId: string,
+      draft: { startDate: string; endDate: string; reason: string | null },
+    ) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        throw new Error(`create time off blackout failed to resolve current user: ${userError?.message ?? 'no session'}`);
+      }
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('time_off_request.create_blackout', occurredAt, { organizationId, techId, draft });
+
+      const { data, error } = await supabase
+        .from('time_off_requests')
+        .insert({
+          organization_id: organizationId,
+          tech_id: techId,
+          start_date: draft.startDate,
+          end_date: draft.endDate,
+          reason: draft.reason,
+          created_by_admin_id: userData.user.id,
+        })
+        .select('id, organization_id, tech_id, start_date, end_date, reason, status, created_at, updated_at, created_by_admin_id')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.createTimeOffBlackout', error.message, { organizationId, techId, draft });
+        throw new Error(`create time off blackout failed: ${error.message}`);
+      }
+      return toTimeOffRequestAdmin(data as TimeOffRequestAdminRow);
+    },
+
+    async cancel(requestId: string): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('time_off_request.cancel', occurredAt, { requestId });
+
+      const { error } = await supabase
+        .from('time_off_requests')
+        .update({ status: 'cancelled' })
+        .eq('id', requestId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.cancelTimeOffRequest', error.message, { requestId });
+        throw new Error(`cancel time off request failed: ${error.message}`);
+      }
+    },
   };
 }
 
@@ -1376,6 +1551,390 @@ export function createCustomerRepository(): CustomerRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * JobPlanningRepository / JobPlanningPhotoRepository
+ * ------------------------------------------------------------------ */
+
+function toJobPlanningDetails(row: {
+  job_id: string;
+  organization_id: string;
+  model_numbers: string | null;
+  parts_list: string | null;
+  measurements: string | null;
+  instructions: string | null;
+  updated_at: string;
+  updated_by: string | null;
+}): JobPlanningDetails {
+  return {
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    modelNumbers: row.model_numbers,
+    partsList: row.parts_list,
+    measurements: row.measurements,
+    instructions: row.instructions,
+    updatedAt: row.updated_at,
+    updatedBy: row.updated_by,
+  };
+}
+
+export function createJobPlanningRepository(): JobPlanningRepository {
+  return {
+    async getForJob(jobId: string): Promise<JobPlanningDetails | null> {
+      const { data, error } = await supabase
+        .from('job_planning_details')
+        .select('*')
+        .eq('job_id', jobId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`getForJob failed: ${error.message}`);
+      }
+      return data ? toJobPlanningDetails(data as Parameters<typeof toJobPlanningDetails>[0]) : null;
+    },
+
+    async upsertForJob(jobId: string, details: JobPlanningDetailsInput): Promise<JobPlanningDetails> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_planning.upsert', occurredAt, { jobId, details });
+
+      const { data, error } = await supabase
+        .from('job_planning_details')
+        .upsert(
+          {
+            job_id: jobId,
+            organization_id: organizationId,
+            model_numbers: details.modelNumbers,
+            parts_list: details.partsList,
+            measurements: details.measurements,
+            instructions: details.instructions,
+            updated_at: occurredAt,
+            updated_by: userId,
+          },
+          { onConflict: 'job_id' }
+        )
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.upsertJobPlanning', error.message, { jobId, details });
+        throw new Error(`upsertForJob failed: ${error.message}`);
+      }
+      return toJobPlanningDetails(data as Parameters<typeof toJobPlanningDetails>[0]);
+    },
+  };
+}
+
+function toJobPlanningPhoto(row: {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  storage_path: string;
+  caption: string | null;
+  created_at: string;
+  created_by: string | null;
+}): JobPlanningPhoto {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    storagePath: row.storage_path,
+    caption: row.caption,
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+  };
+}
+
+export function createJobPlanningPhotoRepository(): JobPlanningPhotoRepository {
+  return {
+    async listForJob(jobId: string): Promise<JobPlanningPhoto[]> {
+      const { data, error } = await supabase
+        .from('job_planning_photos')
+        .select('*')
+        .eq('job_id', jobId);
+      if (error) {
+        throw new Error(`listForJob failed: ${error.message}`);
+      }
+      return ((data ?? []) as Array<Parameters<typeof toJobPlanningPhoto>[0]>).map(toJobPlanningPhoto);
+    },
+
+    async addForJob(jobId: string, photo: JobPlanningPhotoInput): Promise<JobPlanningPhoto> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_planning_photo.add', occurredAt, { jobId, photo });
+
+      const { data, error } = await supabase
+        .from('job_planning_photos')
+        .insert({
+          job_id: jobId,
+          organization_id: organizationId,
+          storage_path: photo.storagePath,
+          caption: photo.caption ?? null,
+          created_at: occurredAt,
+          created_by: userId,
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.addJobPlanningPhoto', error.message, { jobId, photo });
+        throw new Error(`addForJob failed: ${error.message}`);
+      }
+      return toJobPlanningPhoto(data as Parameters<typeof toJobPlanningPhoto>[0]);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * EstimateRepository
+ * ------------------------------------------------------------------ */
+
+function toJobEstimate(row: {
+  job_id: string;
+  organization_id: string;
+  status: JobEstimate['status'];
+  summary: string | null;
+  materials_notes: string | null;
+  labor_notes: string | null;
+  materials_cost: string | number;
+  labor_cost: string | number;
+  other_cost: string | number;
+  total_cost: string | number;
+  scheduled_start: string | null;
+  scheduled_end: string | null;
+  payment_terms: string | null;
+  deposit_amount: string | number | null;
+  customer_notes: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  updated_by: string | null;
+}): JobEstimate {
+  return {
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    status: row.status,
+    summary: row.summary,
+    materialsNotes: row.materials_notes,
+    laborNotes: row.labor_notes,
+    materialsCost: Number(row.materials_cost),
+    laborCost: Number(row.labor_cost),
+    otherCost: Number(row.other_cost),
+    totalCost: Number(row.total_cost),
+    scheduledStart: row.scheduled_start,
+    scheduledEnd: row.scheduled_end,
+    paymentTerms: row.payment_terms,
+    depositAmount: row.deposit_amount === null ? null : Number(row.deposit_amount),
+    customerNotes: row.customer_notes,
+    internalNotes: row.internal_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    createdBy: row.created_by,
+    updatedBy: row.updated_by,
+  };
+}
+
+function toJobEstimateLineItem(row: {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  kind: JobEstimateLineItem['kind'];
+  description: string;
+  quantity: string | number;
+  unit_cost: string | number;
+  line_total: string | number;
+  created_at: string;
+  created_by: string | null;
+}): JobEstimateLineItem {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    kind: row.kind,
+    description: row.description,
+    quantity: Number(row.quantity),
+    unitCost: Number(row.unit_cost),
+    lineTotal: Number(row.line_total),
+    createdAt: row.created_at,
+    createdBy: row.created_by,
+  };
+}
+
+export function createEstimateRepository(): EstimateRepository {
+  return {
+    async getForJob(jobId: string): Promise<JobEstimate | null> {
+      const { organizationId } = requireModuleSession();
+      const { data, error } = await supabase
+        .from('job_estimates')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`getForJob failed: ${error.message}`);
+      }
+      return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
+    },
+
+    async upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate.upsert', occurredAt, { jobId, input });
+
+      const patch: Record<string, unknown> = {
+        job_id: jobId,
+        organization_id: organizationId,
+        updated_by: userId,
+      };
+      if (input.status !== undefined) {
+        patch.status = input.status;
+      }
+      if (input.summary !== undefined) {
+        patch.summary = input.summary;
+      }
+      if (input.materialsNotes !== undefined) {
+        patch.materials_notes = input.materialsNotes;
+      }
+      if (input.laborNotes !== undefined) {
+        patch.labor_notes = input.laborNotes;
+      }
+      if (input.materialsCost !== undefined) {
+        patch.materials_cost = input.materialsCost;
+      }
+      if (input.laborCost !== undefined) {
+        patch.labor_cost = input.laborCost;
+      }
+      if (input.otherCost !== undefined) {
+        patch.other_cost = input.otherCost;
+      }
+      if (input.totalCost !== undefined) {
+        patch.total_cost = input.totalCost;
+      }
+      if (input.scheduledStart !== undefined) {
+        patch.scheduled_start = input.scheduledStart;
+      }
+      if (input.scheduledEnd !== undefined) {
+        patch.scheduled_end = input.scheduledEnd;
+      }
+      if (input.paymentTerms !== undefined) {
+        patch.payment_terms = input.paymentTerms;
+      }
+      if (input.depositAmount !== undefined) {
+        patch.deposit_amount = input.depositAmount;
+      }
+      if (input.customerNotes !== undefined) {
+        patch.customer_notes = input.customerNotes;
+      }
+      if (input.internalNotes !== undefined) {
+        patch.internal_notes = input.internalNotes;
+      }
+
+      const { data, error } = await supabase
+        .from('job_estimates')
+        .upsert(patch, { onConflict: 'job_id' })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.upsertJobEstimate', error.message, { jobId, input });
+        throw new Error(`upsertForJob failed: ${error.message}`);
+      }
+      return toJobEstimate(data as Parameters<typeof toJobEstimate>[0]);
+    },
+
+    async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {
+      const { organizationId } = requireModuleSession();
+      const { data, error } = await supabase
+        .from('job_estimate_line_items')
+        .select('*')
+        .eq('job_id', jobId)
+        .eq('organization_id', organizationId)
+        .order('kind', { ascending: true })
+        .order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`listLineItems failed: ${error.message}`);
+      }
+      return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
+    },
+
+    async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate_line_item.add', occurredAt, { jobId, draft });
+
+      const { data, error } = await supabase
+        .from('job_estimate_line_items')
+        .insert({
+          job_id: jobId,
+          organization_id: organizationId,
+          kind: draft.kind,
+          description: draft.description,
+          quantity: draft.quantity,
+          unit_cost: draft.unitCost,
+          line_total: draft.lineTotal,
+          created_by: userId,
+        })
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.addJobEstimateLineItem', error.message, { jobId, draft });
+        throw new Error(`addLineItem failed: ${error.message}`);
+      }
+      return toJobEstimateLineItem(data as Parameters<typeof toJobEstimateLineItem>[0]);
+    },
+
+    async updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate_line_item.update', occurredAt, { lineItemId, patch });
+
+      const updatePatch: Record<string, unknown> = {};
+      if (patch.kind !== undefined) {
+        updatePatch.kind = patch.kind;
+      }
+      if (patch.description !== undefined) {
+        updatePatch.description = patch.description;
+      }
+      if (patch.quantity !== undefined) {
+        updatePatch.quantity = patch.quantity;
+      }
+      if (patch.unitCost !== undefined) {
+        updatePatch.unit_cost = patch.unitCost;
+      }
+      if (patch.lineTotal !== undefined) {
+        updatePatch.line_total = patch.lineTotal;
+      }
+
+      const { data, error } = await supabase
+        .from('job_estimate_line_items')
+        .update(updatePatch)
+        .eq('id', lineItemId)
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.updateJobEstimateLineItem', error.message, { lineItemId, patch });
+        throw new Error(`updateLineItem failed: ${error.message}`);
+      }
+      return toJobEstimateLineItem(data as Parameters<typeof toJobEstimateLineItem>[0]);
+    },
+
+    async removeLineItem(lineItemId: string): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_estimate_line_item.remove', occurredAt, { lineItemId });
+
+      const { error } = await supabase.from('job_estimate_line_items').delete().eq('id', lineItemId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.removeJobEstimateLineItem', error.message, { lineItemId });
+        throw new Error(`removeLineItem failed: ${error.message}`);
+      }
+    },
+
+    async issueShareLink(jobId: string): Promise<{ token: string; url: string }> {
+      const { data, error } = await supabase.rpc('issue_estimate_token', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`issueShareLink failed: ${error.message}`);
+      }
+      const token = data as string;
+      return { token, url: `${supabaseUrl}/functions/v1/estimate-resolve?token=${token}` };
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -1397,6 +1956,8 @@ export function buildAdminFinancePorts(): ModulePorts {
     auditLog: createAuditLogRepository(),
     priceSheetPublish: createPriceSheetPublishRepository(),
     priceSheetAreaAdjustments: createPriceSheetAreaAdjustmentsRepository(),
+    priceSheetRates: createPriceSheetRatesRepository(),
+    serviceTasks: createServiceTasksRepository(),
     reimbursements: createReimbursementsRepository(),
     payoutBatches: createPayoutBatchesRepository(),
     closeOutPhotos: createCloseOutPhotosRepository(),
@@ -1408,6 +1969,9 @@ export function buildAdminFinancePorts(): ModulePorts {
     techSkills: createTechSkillRepository(),
     serviceAreas: createServiceAreaRepository(),
     customers: createCustomerRepository(),
+    jobPlanning: createJobPlanningRepository(),
+    jobPlanningPhotos: createJobPlanningPhotoRepository(),
+    estimates: createEstimateRepository(),
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,

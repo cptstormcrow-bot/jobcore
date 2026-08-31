@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, FlatList, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, Modal, ScrollView, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { colors, spacing, radius, typography } from './tokens';
 
 export interface SelectOption {
@@ -46,11 +46,10 @@ export function Select({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
           <View style={styles.sheet}>
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item.value}
-              renderItem={({ item }) => (
+            <ScrollView style={{ maxHeight: '100%' }}>
+              {options.map((item) => (
                 <Pressable
+                  key={item.value}
                   onPress={() => {
                     onChange(item.value);
                     setOpen(false);
@@ -61,8 +60,8 @@ export function Select({
                     {item.label}
                   </Text>
                 </Pressable>
-              )}
-            />
+              ))}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>

@@ -32,9 +32,13 @@ import type {
   TechSkillRepository,
   ServiceAreaRepository,
   CustomerRepository,
+  ServiceTask,
+  JobPlanningRepository,
+  JobPlanningPhotoRepository,
+  EstimateRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
-import type { CalculationResult } from '../money/types';
+import type { CalculationResult, PriceSheetRate } from '../money/types';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
@@ -63,6 +67,22 @@ export interface ModulePorts {
       adjustmentValue: number
     ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
   };
+  priceSheetRates: {
+    list(priceSheetId: string): Promise<PriceSheetRate[]>;
+    save(
+      priceSheetId: string,
+      serviceId: string,
+      taskId: string | null,
+      attachTiming: string,
+      amount: number,
+      timeEstimateMinutes: number | null
+    ): Promise<CalculationResult<PriceSheetRate>>;
+    remove(rateId: string): Promise<CalculationResult<void>>;
+  };
+  serviceTasks: {
+    list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
+    save(organizationId: string, serviceId: string, name: string): Promise<CalculationResult<ServiceTask>>;
+  };
   reimbursements: ReimbursementRepo;
   payoutBatches: PayoutBatchRepo;
   closeOutPhotos: JobPhotoRepository;
@@ -70,6 +90,9 @@ export interface ModulePorts {
   payments: PaymentsRepository;
   calendarEvents: CalendarEventRepository;
   timeOffAdmin: TimeOffAdminRepo;
+  jobPlanning: JobPlanningRepository;
+  jobPlanningPhotos: JobPlanningPhotoRepository;
+  estimates: EstimateRepository;
   /**
    * Durable on-device key/value boolean preference storage — persists across
    * in-app navigation, app restarts, and logout/login. Backed by SecureStore

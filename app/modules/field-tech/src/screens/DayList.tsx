@@ -14,14 +14,24 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { JOB_STATUS_COLORS, Toggle, ScreenTitle } from '@jobcore/ui';
 
-export function DayList(): React.ReactElement {
+/** Props for `DayList`. */
+export interface DayListProps {
+  /**
+   * Optional row-selection callback. When provided, each job row becomes
+   * pressable and invokes this with the tapped job. When omitted, rows
+   * remain non-interactive — no behavior change for existing callers.
+   */
+  onSelectJob?: (job: Job) => void;
+}
+
+export function DayList({ onSelectJob }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,15 +112,23 @@ export function DayList(): React.ReactElement {
         <FlatList
           data={visibleJobs}
           keyExtractor={(job) => job.id}
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
-              <View style={styles.rowBody}>
-                <Text style={styles.address}>{item.address ?? 'No address'}</Text>
-                <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
+          renderItem={({ item }) => {
+            const rowContent = (
+              <View style={styles.row}>
+                <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
+                <View style={styles.rowBody}>
+                  <Text style={styles.address}>{item.address ?? 'No address'}</Text>
+                  <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            );
+
+            if (onSelectJob === undefined) {
+              return rowContent;
+            }
+
+            return <Pressable onPress={() => onSelectJob(item)}>{rowContent}</Pressable>;
+          }}
         />
       )}
     </View>

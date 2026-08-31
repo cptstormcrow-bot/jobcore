@@ -20,16 +20,20 @@ import {
   createJobPlanningRepository,
   createJobPlanningPhotoRepository,
   createPriceSheetRepository,
-  createPriceSheetRatesRepository,
+  createPriceSheetPublishRepository,
   createPriceSheetAreaAdjustmentsRepository,
   createServiceAreaRepository,
+  createEstimateRepository,
 } from '../../src/lib/admin-finance-repos';
 import type { JobDetailsPatch, CustomerPatch, CustomerCreateInput } from '../../../../modules/admin-finance/src/data/ports';
 import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qualify';
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
 import { classifyJob } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import { PlanningScreen } from '../../../../modules/admin-finance/src/screens/PlanningScreen';
-import { PriceEstimatingScreen } from '../../../../modules/admin-finance/src/screens/PriceEstimatingScreen';
+import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
+import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
+import { StartChecklist } from '../../../../modules/field-tech/src/screens/StartChecklist';
+import { Completion } from '../../../../modules/field-tech/src/screens/Completion';
 import type { ServiceArea } from '../../../../modules/admin-finance/src/data/ports';
 import { setModuleSession } from '@jobcore/admin-finance';
 // NOTE (slice 5): the assignment data model has no `kind` column --
@@ -114,6 +118,12 @@ const JOB_ROW_COLUMNS =
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 
+const DEEP_LINK_PANELS = ['plan', 'schedule', 'start-checklist', 'completion'] as const;
+type DeepLinkPanel = (typeof DEEP_LINK_PANELS)[number];
+function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
+  return (DEEP_LINK_PANELS as readonly string[]).includes(v ?? '');
+}
+
 /**
  * Local job-form state shape. Populated field-by-field by later slices
  * (2b/2c/2d/2e address, houseAgeYears, customer fields, etc.). In edit mode
@@ -171,8 +181,16 @@ export default function JobDrilldownScreen() {
   }, [org, role]);
 
   const priceEstimatingRates = useMemo(() => {
-    const repo = createPriceSheetRatesRepository();
-    return { list: (id: string) => repo.list(id).then((value) => ({ ok: true as const, value })) };
+    return {
+      list: async (priceSheetId: string) => {
+        try {
+          const value = await createPriceSheetPublishRepository().listRates(priceSheetId);
+          return { ok: true as const, value };
+        } catch (err) {
+          return { ok: false as const, reason: err instanceof Error ? err.message : String(err) };
+        }
+      },
+    };
   }, []);
 
   const [job, setJob] = useState<Job | null>(null);
@@ -193,7 +211,7 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<'details' | 'plan' | 'estimate'>(panel === 'plan' ? 'plan' : 'details');
+  const [activePanel, setActivePanel] = useState<'details' | 'plan' | 'jobEstimate' | 'schedule' | 'start-checklist' | 'completion'>(isDeepLinkPanel(panel) ? panel : 'details');
 
   useEffect(() => {
     if (!org?.id) {
@@ -287,7 +305,7 @@ export default function JobDrilldownScreen() {
   }, [isCreate, org?.id, jobId]);
 
   const dispatchInvoke = (actionId: string) => {
-    const action = actions.find((a) => a.id === actionId);
+    const action = mergedActions.find((a) => a.id === actionId);
     if (!job) return;
     void action?.onInvoke?.(job);
   };
@@ -428,6 +446,16 @@ export default function JobDrilldownScreen() {
     }
   };
 
+  const localActions = useMemo<JobAction[]>(
+    () => [
+      { id: 'plan', label: 'Plan', onInvoke: () => { if (!saving) setActivePanel('plan'); } },
+      { id: 'jobEstimate', label: 'Estimate', onInvoke: () => { if (!saving) setActivePanel('jobEstimate'); } },
+      { id: 'save', label: saving ? 'Saving…' : 'Save', onInvoke: () => { if (!saving) void handleSaveEdit(); } },
+    ],
+    [saving],
+  );
+  const mergedActions = useMemo<JobAction[]>(() => [...localActions, ...actions], [localActions, actions]);
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -457,18 +485,46 @@ export default function JobDrilldownScreen() {
       </View>
     );
   }
-  if (!isCreate && job && activePanel === 'estimate') {
+  if (!isCreate && job && activePanel === 'jobEstimate') {
     return (
       <View style={styles.root}>
-        <View style={styles.field}>
-          <Button label="Back to Job" variant="outline" size="sm" onPress={() => setActivePanel('details')} />
-        </View>
-        <PriceEstimatingScreen
+        <JobEstimateScreen
+          job={job}
+          estimates={createEstimateRepository()}
+          onBack={() => setActivePanel('details')}
           priceSheets={createPriceSheetRepository()}
           priceSheetRates={priceEstimatingRates}
           priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
           serviceAreas={serviceAreas}
         />
+      </View>
+    );
+  }
+  if (!isCreate && job && activePanel === 'schedule') {
+    return (
+      <View style={styles.root}>
+        <JobScheduleScreen
+          job={job}
+          onBack={() => setActivePanel('details')}
+          jobRepository={createJobRepository()}
+          onSaved={(updated) => setJob(updated)}
+        />
+      </View>
+    );
+  }
+
+  if (!isCreate && job && activePanel === 'start-checklist') {
+    return (
+      <View style={styles.root}>
+        <StartChecklist job={job} onDone={() => setActivePanel('details')} />
+      </View>
+    );
+  }
+
+  if (!isCreate && job && activePanel === 'completion') {
+    return (
+      <View style={styles.root}>
+        <Completion job={job} onDone={() => setActivePanel('details')} />
       </View>
     );
   }
@@ -619,23 +675,13 @@ export default function JobDrilldownScreen() {
           { label: job?.address || 'Job Details' },
         ]}
       />
-      <View style={styles.actionsRow}>
-        <Button label="Plan" onPress={() => setActivePanel('plan')} disabled={saving} style={styles.actionInline} />
-        <Button label="Estimate" onPress={() => setActivePanel('estimate')} disabled={saving} style={styles.actionInline} />
-        <Button
-          label={saving ? 'Saving…' : 'Save'}
-          onPress={() => void handleSaveEdit()}
-          disabled={saving}
-          style={styles.actionInline}
-        />
-      </View>
       <View style={styles.field}>
         <Text style={styles.subtitleText}>
           Currently assigned: {job?.assignedTechId ? (techs.find((t) => t.id === job.assignedTechId)?.fullName ?? job.assignedTechId) : 'Unassigned'}
         </Text>
       </View>
       <View style={styles.jobDetailPane}>
-        <JobDetail job={job as Job} actions={actions} onAction={dispatchInvoke} role={role} />
+        <JobDetail job={job as Job} actions={mergedActions} onAction={dispatchInvoke} role={role} />
       </View>
       <ScrollView style={styles.formPane} contentContainerStyle={styles.scrollContent}>
       <View style={styles.field}>
@@ -776,8 +822,6 @@ const styles = StyleSheet.create({
   field: { marginHorizontal: spacing.md, marginTop: spacing.md },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.sm, color: colors.text },
   subtitleText: { color: colors.textMuted, marginBottom: spacing.sm },
-  actionsRow: { flexDirection: 'row', gap: spacing.sm, marginHorizontal: spacing.md, marginTop: spacing.md },
-  actionInline: { flex: 1 },
   center: {
     flex: 1,
     alignItems: 'center',

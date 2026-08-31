@@ -19,12 +19,13 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
+import { router } from 'expo-router';
 import { TabBar, Breadcrumb } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
-import { DayList } from './screens/DayList';
+import { DayList, type DayListProps } from './screens/DayList';
 import { StartChecklist } from './screens/StartChecklist';
 import { Completion } from './screens/Completion';
 import { Greeting } from './screens/Greeting';
@@ -53,6 +54,7 @@ type SubView = 'jobs' | 'timeOff';
 
 function FieldTechRoot(): React.ReactElement {
   const [subView, setSubView] = React.useState<SubView>('jobs');
+  const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const session = getModuleSession();
 
   if (!session) {
@@ -60,6 +62,20 @@ function FieldTechRoot(): React.ReactElement {
       View,
       { style: styles.screen },
       React.createElement(DayList, null),
+    );
+  }
+
+  if (selectedJobId !== null) {
+    return React.createElement(
+      View,
+      { style: styles.screen },
+      React.createElement(Breadcrumb, {
+        segments: [
+          { label: 'Field Tech', onPress: () => setSelectedJobId(null) },
+          { label: 'Job Detail' },
+        ],
+      }),
+      React.createElement(FieldJobDetail, { jobId: selectedJobId }),
     );
   }
 
@@ -75,7 +91,9 @@ function FieldTechRoot(): React.ReactElement {
       activeKey: subView,
       onSelect: setSubView,
     }),
-    subView === 'jobs' ? React.createElement(DayList, null) : React.createElement(TimeOff, null),
+    subView === 'jobs'
+      ? React.createElement<DayListProps>(DayList, { onSelectJob: (job: Job) => setSelectedJobId(job.id) })
+      : React.createElement(TimeOff, null),
   );
 }
 
@@ -178,12 +196,50 @@ export const fieldTechModule: JobcoreModule = {
       },
     },
     {
-      id: 'complete-job',
-      label: 'Complete',
+      id: 'accept-job',
+      label: 'Accept',
       onInvoke: async (job: Job) => {
         const ctx = buildTransitionCtx();
-        const transitioned = await transitionJob(job, 'completed', ctx);
+        const transitioned = await transitionJob(job, 'accepted', ctx);
         await persistTransition(job, transitioned);
+        if (job.scheduledStart === null) {
+          Alert.alert('Not yet scheduled', 'Ask an admin to schedule this job.');
+        }
+      },
+    },
+    {
+      id: 'start-time',
+      label: 'Start Time',
+      onInvoke: async (job: Job) => {
+        const ports = getModulePorts();
+        const entries = await ports.timeEntries.listForJob(job.id);
+        const open = entries.find((e) => e.clockOutAt === null);
+        if (open) {
+          Alert.alert('Already clocked in', 'Stop the current time entry first.');
+          return;
+        }
+        await ports.timeEntries.clockIn(job.id);
+      },
+    },
+    {
+      id: 'stop-time',
+      label: 'Stop Time',
+      onInvoke: async (job: Job) => {
+        const ports = getModulePorts();
+        const entries = await ports.timeEntries.listForJob(job.id);
+        const open = entries.find((e) => e.clockOutAt === null);
+        if (!open) {
+          Alert.alert('Not clocked in', 'There is no open time entry for this job.');
+          return;
+        }
+        await ports.timeEntries.clockOut(open.id);
+      },
+    },
+    {
+      id: 'complete-job',
+      label: 'Complete',
+      onInvoke: (job: Job) => {
+        router.push('/job/' + job.id + '?panel=completion');
       },
     },
   ],

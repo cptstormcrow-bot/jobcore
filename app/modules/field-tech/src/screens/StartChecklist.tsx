@@ -44,7 +44,10 @@ import { ScreenTitle } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { transitionJob } from '../domain/transition';
-import { recordStartChecklistSubmitted } from '../lib/active-job-workflow-state';
+import {
+  recordStartChecklistSubmitted,
+  hasSubmittedStartChecklist as readHasSubmittedStartChecklist,
+} from '../lib/active-job-workflow-state';
 import type { ChecklistInstance, ChecklistItem, ChecklistItemAnswerDraft } from '../data/ports';
 
 export interface StartChecklistProps {
@@ -203,6 +206,7 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
       recordStartChecklistSubmitted(job.id);
 
       await transitionJob(job, 'in_progress', {
+        hasSubmittedStartChecklist: (j) => readHasSubmittedStartChecklist(j),
         role: session.role,
         now: () => new Date().toISOString(),
       });

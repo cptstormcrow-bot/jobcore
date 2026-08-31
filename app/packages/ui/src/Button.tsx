@@ -13,13 +13,15 @@ export interface ButtonProps {
 }
 
 // Vertical metrics (padding + minHeight) are intentionally the SAME across every
-// size — per explicit user direction, JobCore buttons must be uniform height and
-// "very much less vertically" than the old 44px WCAG-minimum target, to save
-// screen space on tablet/phone. sm/md/lg/tab still differ by font size and
-// horizontal padding only; height no longer varies by role.
-const paddingBySize = { sm: spacing.xs, md: spacing.xs, lg: spacing.xs, tab: spacing.xs } as const;
+// size — this is the deliberate, permanent, app-wide button standard (per user
+// decision 2026-08-30): this exact uniform-height treatment applies to every
+// button in the app, including every button added from now on. sm/md/lg/tab
+// still differ by font size and horizontal padding only; height must never be
+// split into per-size variants. minHeight uses the standard 44px mobile
+// tap-target minimum, applied uniformly rather than per-size.
+const paddingBySize = { sm: spacing.sm, md: spacing.sm, lg: spacing.sm, tab: spacing.sm } as const;
 const fontBySize = { sm: typography.size.label, md: typography.size.body, lg: typography.size.h6, tab: typography.size.label } as const;
-const minHeightBySize = { sm: 28, md: 28, lg: 28, tab: 28 } as const;
+const minHeightBySize = { sm: 44, md: 44, lg: 44, tab: 44 } as const;
 const paddingHorizontalBySize = { sm: spacing.lg, md: spacing.lg, lg: spacing.lg, tab: spacing.sm } as const;
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, fullWidth = false, style }: ButtonProps) {

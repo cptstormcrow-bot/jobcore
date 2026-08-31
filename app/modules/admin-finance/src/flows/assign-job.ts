@@ -77,16 +77,28 @@ export async function assignJob(
     };
   }
 
-  // P3g.6a: set assigned_tech_id via the existing scheduling-patch seam.
-  const patchedJob = await deps.jobs.patchScheduling(job.id, { assignedTechId: techId });
-
-  // P3g.6a: insert the job_assignments row.
+  // P3g.6a: insert the job_assignments row FIRST — a DB-level trigger can
+  // reject this (e.g. the tech has an approved time-off/blackout overlapping
+  // the job's scheduled dates), and must do so before any job-row write
+  // happens, so a rejected assignment never leaves `assigned_tech_id`
+  // incorrectly patched with no assignment row to back it.
   const assignedAt = deps.ctx.now();
-  await deps.assignments.create(job.organizationId, {
-    jobId: job.id,
-    techId,
-    assignedAt,
-  });
+  try {
+    await deps.assignments.create(job.organizationId, {
+      jobId: job.id,
+      techId,
+      assignedAt,
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'Failed to create job assignment.',
+    };
+  }
+
+  // P3g.6a: set assigned_tech_id via the existing scheduling-patch seam —
+  // only after the assignment row was accepted above.
+  const patchedJob = await deps.jobs.patchScheduling(job.id, { assignedTechId: techId });
 
   // P3g.6b, edge 1 of 2 — ONLY fires when starting status is 'qualified'.
   // Never called unconditionally: 'scheduled' -> 'scheduled' has no

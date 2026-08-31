@@ -131,7 +131,7 @@ export default function JobsScreen() {
   return (
     <View style={styles.root}>
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-      <JobDetail job={selectedJob} actions={actions} onAction={dispatchInvoke} />
+      <JobDetail job={selectedJob} actions={actions} onAction={dispatchInvoke} role={role} />
     </View>
   );
 }

@@ -18,7 +18,8 @@
     "@jobcore/core": "*",
     "@jobcore/module-sdk": "*",
     "@jobcore/ui": "*",
-    "date-fns": "^4.4.0"
+    "date-fns": "^4.4.0",
+    "expo-clipboard": "~7.0.0"
   },
   "peerDependencies": {
     "react": "18.3.1"

@@ -99,4 +99,14 @@ export function toTimeOffRequestAdmin(row: TimeOffRequestAdminRow): TimeOffReque
 export interface TimeOffAdminRepo {
   /** All time-off requests for the organization, in any status. */
   listForOrganization(organizationId: string): Promise<TimeOffRequestAdmin[]>;
+
+  /** Admin-entered blackout: a time-off request the admin creates directly for a tech, bypassing tech self-service. */
+  createBlackout(
+    organizationId: string,
+    techId: string,
+    draft: { startDate: string; endDate: string; reason: string | null },
+  ): Promise<TimeOffRequestAdmin>;
+
+  /** Cancels an existing time-off request by id. */
+  cancel(requestId: string): Promise<void>;
 }

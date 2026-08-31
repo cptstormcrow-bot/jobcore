@@ -148,6 +148,8 @@ export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'hou
   rooms?: string[] | null;
   panelInfo?: string | null;
   considerations?: string | null;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
 };
 
 /* ------------------------------------------------------------------ *
@@ -954,6 +956,98 @@ export interface JobPlanningPhotoRepository {
   listForJob(jobId: string): Promise<JobPlanningPhoto[]>;
   addForJob(jobId: string, photo: JobPlanningPhotoInput): Promise<JobPlanningPhoto>;
 }
+
+export type EstimateStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type EstimateLineItemKind = 'material' | 'labor' | 'other';
+
+export interface JobEstimate {
+  jobId: string;
+  organizationId: string;
+  status: EstimateStatus;
+  summary: string | null;
+  materialsNotes: string | null;
+  laborNotes: string | null;
+  materialsCost: number;
+  laborCost: number;
+  otherCost: number;
+  totalCost: number;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  paymentTerms: string | null;
+  depositAmount: number | null;
+  customerNotes: string | null;
+  internalNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+  updatedBy: string | null;
+}
+
+export interface JobEstimateInput {
+  status?: EstimateStatus;
+  summary?: string | null;
+  materialsNotes?: string | null;
+  laborNotes?: string | null;
+  materialsCost?: number;
+  laborCost?: number;
+  otherCost?: number;
+  totalCost?: number;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  paymentTerms?: string | null;
+  depositAmount?: number | null;
+  customerNotes?: string | null;
+  internalNotes?: string | null;
+}
+
+export interface JobEstimateLineItem {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  kind: EstimateLineItemKind;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+  createdAt: string;
+  createdBy: string | null;
+}
+
+export interface JobEstimateLineItemDraft {
+  kind: EstimateLineItemKind;
+  description: string;
+  quantity: number;
+  unitCost: number;
+  lineTotal: number;
+}
+
+export interface EstimateRepository {
+  getForJob(jobId: string): Promise<JobEstimate | null>;
+  upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate>;
+  listLineItems(jobId: string): Promise<JobEstimateLineItem[]>;
+  addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem>;
+  updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem>;
+  removeLineItem(lineItemId: string): Promise<void>;
+  issueShareLink(jobId: string): Promise<{ token: string; url: string }>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Service task ports (Price Sheets task-pricing feature).
+ * ------------------------------------------------------------------ */
+
+/** One task belonging to a service, selectable when pricing a `PriceSheetRate`. */
+export interface ServiceTask {
+  id: string;
+  organizationId: string;
+  serviceId: string;
+  name: string;
+}
+
+/**
+ * Fields needed to create a new `ServiceTask`. `id` is server-assigned, same
+ * convention as `PriceSheetDraft` above.
+ */
+export type ServiceTaskDraft = Omit<ServiceTask, 'id'>;
 
 // Re-exported so callers of this module don't also need a direct import
 // from `../money/types` just to name the status union.
