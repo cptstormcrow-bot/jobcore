@@ -300,6 +300,13 @@ export interface Invitation {
   createdAt: string;
 }
 
+export class DuplicateInvitationError extends Error {
+  constructor(public readonly email: string) {
+    super(`An invitation for ${email} is already pending.`);
+    this.name = 'DuplicateInvitationError';
+  }
+}
+
 /**
  * The full `VehicleStatus` union, restated as a runtime tuple so callers can
  * validate an untrusted wire value against it. Same idiom as `JOB_STATUSES`/
@@ -345,6 +352,8 @@ export interface EmployeeRepository {
 export interface InvitationRepository {
   createInvitation(organizationId: string, email: string, role: Role): Promise<void>;
   listPendingInvitations(organizationId: string): Promise<Invitation[]>;
+  findPendingInvitation(organizationId: string, email: string): Promise<Invitation | null>;
+  revokeInvitation(invitationId: string): Promise<void>;
 }
 
 /**

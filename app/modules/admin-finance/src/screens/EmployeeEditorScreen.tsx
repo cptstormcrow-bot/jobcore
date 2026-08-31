@@ -30,7 +30,7 @@ import type {
   TechSkillRepository,
   ServiceArea,
 } from '../data/ports';
-import { isVehicleStatus, isToolStatus } from '../data/ports';
+import { isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface EmployeeEditorScreenProps {
@@ -97,6 +97,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
+  const [duplicateConflict, setDuplicateConflict] = useState<{ invitationId: string; email: string } | null>(null);
 
   const [serviceAreaList, setServiceAreaList] = useState<ServiceArea[]>([]);
   const [assignedServiceAreaIds, setAssignedServiceAreaIds] = useState<Set<string>>(new Set());
@@ -168,10 +169,32 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     setActionState({ kind: 'working' });
     try {
       await invitationRepository.createInvitation(session!.org.id, emailInput, roleInput);
+      setDuplicateConflict(null);
       setActionState({ kind: 'done', message: 'Invitation sent.' });
       onSaved?.();
     } catch (error: unknown) {
+      if (error instanceof DuplicateInvitationError) {
+        const pending = await invitationRepository.findPendingInvitation(session!.org.id, emailInput);
+        if (pending) {
+          setDuplicateConflict({ invitationId: pending.id, email: pending.email });
+        }
+        setActionState({ kind: 'failed', message: error.message });
+        return;
+      }
       const message = error instanceof Error ? error.message : 'Could not send the invitation.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function handleRevokeAndResend(): Promise<void> {
+    if (!invitationRepository || !duplicateConflict) return;
+    setActionState({ kind: 'working' });
+    try {
+      await invitationRepository.revokeInvitation(duplicateConflict.invitationId);
+      setDuplicateConflict(null);
+      await handleCreate();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not revoke the pending invitation.';
       setActionState({ kind: 'failed', message });
     }
   }
@@ -320,7 +343,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 style={styles.input}
                 placeholder="Email"
                 value={emailInput}
-                onChangeText={setEmailInput}
+                onChangeText={(text) => {
+                  setEmailInput(text);
+                  setDuplicateConflict(null);
+                }}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -432,6 +458,17 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         />
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+        {actionState.kind === 'failed' && duplicateConflict ? (
+          <Button
+            label="Revoke pending invitation & resend"
+            variant="outline"
+            onPress={() => {
+              void handleRevokeAndResend();
+            }}
+            disabled={busy}
+            style={styles.action}
+          />
+        ) : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
       </ScrollView>
     </View>

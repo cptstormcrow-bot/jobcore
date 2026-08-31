@@ -15,6 +15,7 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import type { PostgrestError } from '@supabase/supabase-js';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
@@ -67,7 +68,7 @@ import type {
   JobEstimateLineItemDraft,
   JobEstimateInput,
 } from '../../../../modules/admin-finance/src/data/ports';
-import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
+import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import type { PriceSheet } from '../../../../modules/admin-finance/src/money/types';
@@ -640,6 +641,10 @@ function toInvitation(row: {
   };
 }
 
+function isDuplicatePendingInvitation(error: PostgrestError): boolean {
+  return error.code === '23505' && error.message.includes('invitations_pending_email_idx');
+}
+
 export function createInvitationRepository(): InvitationRepository {
   return {
     async createInvitation(organizationId: string, email: string, role: Role): Promise<void> {
@@ -657,6 +662,9 @@ export function createInvitationRepository(): InvitationRepository {
       });
       if (error) {
         logSyncFailure('admin-finance-repos.createInvitation', error.message, { organizationId, email, role });
+        if (isDuplicatePendingInvitation(error)) {
+          throw new DuplicateInvitationError(email);
+        }
         throw new Error(`createInvitation failed: ${error.message}`);
       }
     },
@@ -671,6 +679,28 @@ export function createInvitationRepository(): InvitationRepository {
         throw new Error(`listPendingInvitations failed: ${error.message}`);
       }
       return ((data ?? []) as Array<Parameters<typeof toInvitation>[0]>).map(toInvitation);
+    },
+
+    async findPendingInvitation(organizationId: string, email: string): Promise<Invitation | null> {
+      const { data, error } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .ilike('email', email)
+        .is('consumed_at', null)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`findPendingInvitation failed: ${error.message}`);
+      }
+      return data ? toInvitation(data as Parameters<typeof toInvitation>[0]) : null;
+    },
+
+    async revokeInvitation(invitationId: string): Promise<void> {
+      const { error } = await supabase.from('invitations').delete().eq('id', invitationId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.revokeInvitation', error.message, { invitationId });
+        throw new Error(`revokeInvitation failed: ${error.message}`);
+      }
     },
   };
 }
