@@ -1,22 +1,28 @@
 /**
- * Blackout editor screen — full-screen (not modal) create form for an org
- * admin to block out a per-tech date range, mirrors `EmployeeEditorScreen.tsx`'s
- * `ActionState` discriminated union and save/cancel layout exactly.
+ * Admin blackout editor screen — full-screen editor (not a modal), following
+ * the `-editor` naming convention used by `EmployeeEditorScreen.tsx` /
+ * `PriceSheetEditorScreen.tsx`.
  *
- * `TimeOffAdminRepo` (`../data/time-off-repo.ts`) already declares
- * `createBlackout` returning `Promise<TimeOffRequestAdmin>`; this screen
- * consumes that port directly rather than a local extension.
+ * Create-only: picks a tech (`Select`), a start/end date range
+ * (`DatePicker` x2), and an optional reason (`TextField`, multiline), then
+ * calls `TimeOffAdminRepo.createBlackout(organizationId, techId, draft)`.
  *
- * The DB call can be legitimately REJECTED (e.g. a conflicting job assignment
- * for that tech in that date range), not just fail on network/validation —
- * that rejection is caught, surfaces via `ActionState`'s `failed` kind with
- * the caught error's message, and the form stays populated so the admin can
- * adjust and retry (no crash-worthy treatment, no form reset).
+ * `createBlackout` can be legitimately rejected by the database — the tech
+ * already has a conflicting job assignment in that window
+ * (`deny_job_assignment_on_time_off`'s mirror-direction check in
+ * `decide_time_off_request()`) — not only on network/validation errors. That
+ * rejection is caught and surfaced via `ActionState`'s `failed` variant with
+ * the thrown message, and the form stays populated so the admin can pick
+ * different dates or a different tech.
+ *
+ * `initialTechId` (Fix 4) lets a caller — the Calendar tab's tech-filtered
+ * "Add Blackout" entry point — preselect the tech; the Time Off queue's
+ * entry point omits it, leaving the tech picker unset.
  */
 
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, Card, EmptyState, ErrorState, ScreenTitle, Select, TextField, DatePicker, colors, spacing } from '@jobcore/ui';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Button, Card, ErrorState, ScreenTitle, Select, DatePicker, TextField, EmptyState, colors, spacing } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -26,32 +32,32 @@ export interface BlackoutEditorScreenProps {
   techs?: Profile[];
   onSaved?: () => void;
   onCancel?: () => void;
+  /** Preselects the tech picker, e.g. when opened from a tech-filtered Calendar view. */
+  initialTechId?: string;
 }
 
-/** Save action state, mirrors `EmployeeEditorScreen.tsx`'s `ActionState`. */
+/** Save action state. */
 type ActionState =
   | { kind: 'idle' }
   | { kind: 'working' }
   | { kind: 'failed'; message: string }
   | { kind: 'done'; message: string };
 
-export function BlackoutEditorScreen(props: BlackoutEditorScreenProps) {
-  const { timeOffAdmin, techs = [], onSaved, onCancel } = props;
+export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
+  const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId } = props;
 
-  const [techIdInput, setTechIdInput] = useState<string | null>(null);
+  const [techIdInput, setTechIdInput] = useState<string | null>(initialTechId ?? null);
   const [startDateInput, setStartDateInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
   const [reasonInput, setReasonInput] = useState('');
-
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
-  const [validationMessage, setValidationMessage] = useState<string | null>(null);
 
   const session = getModuleSession();
 
   if (!session) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Blackout" message="Sign in to view this organization's techs." />
+        <EmptyState title="Add Blackout" message="Sign in to add a blackout for this organization." />
       </View>
     );
   }
@@ -59,68 +65,76 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps) {
   if (!timeOffAdmin) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Blackout" message="No data source is connected for this module yet." />
+        <EmptyState title="Add Blackout" message="No data source is connected for this module yet." />
       </View>
     );
   }
 
   const busy = actionState.kind === 'working';
 
-  const techOptions = techs.map((tech) => ({ label: tech.fullName, value: tech.id }));
-
-  async function handleSave(): Promise<void> {
+  function validate(): string | null {
     if (!techIdInput) {
-      setValidationMessage('Select a tech.');
-      return;
+      return 'Select a technician.';
     }
     if (!startDateInput || !endDateInput) {
-      setValidationMessage('Select a start and end date.');
-      return;
+      return 'Enter both a start date and an end date.';
     }
     if (endDateInput < startDateInput) {
-      setValidationMessage('End date must be on or after the start date.');
+      return 'End date must be on or after the start date.';
+    }
+    return null;
+  }
+
+  async function handleSave(): Promise<void> {
+    if (!timeOffAdmin) return;
+    const validationError = validate();
+    if (validationError) {
+      setActionState({ kind: 'failed', message: validationError });
       return;
     }
-    setValidationMessage(null);
     setActionState({ kind: 'working' });
     try {
-      const trimmedReason = reasonInput.trim();
-      await timeOffAdmin!.createBlackout(session!.org.id, techIdInput, {
+      await timeOffAdmin.createBlackout(session!.org.id, techIdInput!, {
         startDate: startDateInput,
         endDate: endDateInput,
-        reason: trimmedReason ? trimmedReason : null,
+        reason: reasonInput || null,
       });
-      setActionState({ kind: 'done', message: 'Blackout saved.' });
+      setActionState({ kind: 'done', message: 'Blackout added.' });
       onSaved?.();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not save the blackout.';
+      const message = error instanceof Error ? error.message : 'Could not add the blackout.';
       setActionState({ kind: 'failed', message });
     }
   }
 
+  const techOptions = techs.map((tech) => ({ label: tech.fullName, value: tech.id }));
+
   return (
     <View style={styles.screen}>
       <ScreenTitle title="Add Blackout" />
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Select
-            label="Tech"
+            label="Technician"
             value={techIdInput}
             options={techOptions}
             onChange={setTechIdInput}
-            placeholder="Select tech"
+            placeholder="Select a technician"
+            disabled={busy}
             style={styles.field}
           />
           <DatePicker
             label="Start Date"
             value={startDateInput}
             onChange={setStartDateInput}
+            disabled={busy}
             style={styles.field}
           />
           <DatePicker
             label="End Date"
             value={endDateInput}
             onChange={setEndDateInput}
+            disabled={busy}
             style={styles.field}
           />
           <TextField
@@ -129,11 +143,10 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps) {
             onChangeText={setReasonInput}
             placeholder="Reason (optional)"
             multiline
+            disabled={busy}
             style={styles.field}
           />
         </Card>
-
-        {validationMessage ? <ErrorState message={validationMessage} /> : null}
 
         <Button
           label={busy ? 'Saving...' : 'Save'}
@@ -147,12 +160,12 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps) {
           label="Cancel"
           variant="outline"
           onPress={() => onCancel?.()}
-          disabled={!onCancel}
+          disabled={!onCancel || busy}
           style={styles.action}
         />
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
-      </View>
+      </ScrollView>
     </View>
   );
 }

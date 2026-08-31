@@ -1,34 +1,51 @@
 /**
- * Time-off queue screen — read-only status history (Workstream F, 4b).
+ * Time-off queue screen — read-only status history (Workstream F, 4b), plus
+ * admin-created blackouts (Workstream F, 4c).
  *
  * Consumes `TimeOffAdminRepo` (`../data/time-off-repo.ts`): `listForOrganization`
- * is the only method used. Mirrors `ReimbursementQueueScreen.tsx`'s
+ * and `cancel`. Mirrors `ReimbursementQueueScreen.tsx`'s
  * optional-props pattern, `getModuleSession` session gate, and
  * idle/loading/loaded/failed state machine exactly, so the two admin queue
  * screens stay consistent.
  *
- * `listForOrganization` returns requests in ANY status — this screen filters
- * to `status === 'pending'` client-side, since the port exposes no
+ * `listForOrganization` returns requests in ANY status — the pending queue
+ * filters to `status === 'pending'` client-side, since the port exposes no
  * status-scoped query of its own (same discipline as the reimbursement
  * queue). Approve/deny decisions are now made by a database trigger at
  * insert time (first-come-first-served on job-assignment date conflicts);
- * this screen has no admin action of its own.
+ * this screen has no admin action of its own for pending requests.
+ *
+ * Admin-created blackouts insert directly as `'approved'` (`createBlackout`
+ * on `TimeOffAdminRepo`, invoked from `onAddBlackout`'s destination screen —
+ * `BlackoutEditorScreen.tsx` — not from here), so they never appear in the
+ * pending queue above; they surface in the "Upcoming Blackouts" section
+ * instead, alongside any other approved, not-yet-ended request regardless of
+ * who created it. Cancel uses a per-row `ActionState`, mirrors
+ * `PayoutBatchScreen.tsx`'s `Record<string, ActionState>` keyed-by-id
+ * pattern for its approve/mark-paid actions.
  */
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
 
 export interface TimeOffQueueScreenProps {
   timeOffAdmin?: TimeOffAdminRepo;
+  /** Fired when the "Add Blackout" button is pressed. */
+  onAddBlackout?: () => void;
 }
 
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
   | { kind: 'loaded'; items: TimeOffRequestAdmin[] }
+  | { kind: 'failed'; message: string };
+
+/** Per-request cancel-action state, keyed by request id. Absent = idle. */
+type ActionState =
+  | { kind: 'working' }
   | { kind: 'failed'; message: string };
 
 function formatDate(value: string): string {
@@ -38,8 +55,9 @@ function formatDate(value: string): string {
 }
 
 export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
-  const { timeOffAdmin } = props;
+  const { timeOffAdmin, onAddBlackout } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const [cancelActions, setCancelActions] = useState<Record<string, ActionState>>({});
 
   const session = getModuleSession();
 
@@ -66,6 +84,32 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
       cancelled = true;
     };
   }, [session, timeOffAdmin]);
+
+  function handleCancel(requestId: string) {
+    if (!timeOffAdmin) {
+      return;
+    }
+    setCancelActions((prev) => ({ ...prev, [requestId]: { kind: 'working' } }));
+    timeOffAdmin
+      .cancel(requestId)
+      .then(() => {
+        setLoadState((prev) => {
+          if (prev.kind !== 'loaded') {
+            return prev;
+          }
+          return { kind: 'loaded', items: prev.items.filter((existing) => existing.id !== requestId) };
+        });
+        setCancelActions((prev) => {
+          const next = { ...prev };
+          delete next[requestId];
+          return next;
+        });
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Could not cancel this blackout.';
+        setCancelActions((prev) => ({ ...prev, [requestId]: { kind: 'failed', message } }));
+      });
+  }
 
   if (!session) {
     return (
@@ -100,11 +144,53 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
   }
 
   const pending = loadState.items.filter((item) => item.status === 'pending');
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingBlackouts = loadState.items.filter(
+    (item) => item.status === 'approved' && item.endDate >= today,
+  );
+
+  const addBlackoutButton = (
+    <Button
+      label="Add Blackout"
+      onPress={() => onAddBlackout?.()}
+      disabled={!onAddBlackout}
+      style={styles.action}
+    />
+  );
 
   if (pending.length === 0) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Time Off" message="No time-off requests are awaiting review." />
+        <ScrollView contentContainerStyle={styles.content}>
+          <ScreenTitle title="Time Off" />
+          {addBlackoutButton}
+          <EmptyState title="Time Off" message="No time-off requests are awaiting review." />
+          {upcomingBlackouts.length > 0 ? (
+            <>
+              <Text style={styles.groupHeading}>Upcoming Blackouts</Text>
+              <Card style={styles.card}>
+                {upcomingBlackouts.map((item) => {
+                  const rowState = cancelActions[item.id] ?? { kind: 'idle' as const };
+                  return (
+                    <View key={item.id} style={styles.row}>
+                      <ListItem
+                        title={`${formatDate(item.startDate)} – ${formatDate(item.endDate)}`}
+                        subtitle={item.reason ?? 'No reason provided'}
+                      />
+                      <Button
+                        label="Cancel"
+                        onPress={() => handleCancel(item.id)}
+                        disabled={rowState.kind === 'working'}
+                        style={styles.action}
+                      />
+                      {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
+                    </View>
+                  );
+                })}
+              </Card>
+            </>
+          ) : null}
+        </ScrollView>
       </View>
     );
   }
@@ -113,6 +199,7 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title="Time Off" />
+        {addBlackoutButton}
         <Text style={styles.groupHeading}>Pending Review</Text>
         <Card style={styles.card}>
           {pending.map((item) => {
@@ -126,6 +213,32 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
             );
           })}
         </Card>
+
+        {upcomingBlackouts.length > 0 ? (
+          <>
+            <Text style={styles.groupHeading}>Upcoming Blackouts</Text>
+            <Card style={styles.card}>
+              {upcomingBlackouts.map((item) => {
+                const rowState = cancelActions[item.id] ?? { kind: 'idle' as const };
+                return (
+                  <View key={item.id} style={styles.row}>
+                    <ListItem
+                      title={`${formatDate(item.startDate)} – ${formatDate(item.endDate)}`}
+                      subtitle={item.reason ?? 'No reason provided'}
+                    />
+                    <Button
+                      label="Cancel"
+                      onPress={() => handleCancel(item.id)}
+                      disabled={rowState.kind === 'working'}
+                      style={styles.action}
+                    />
+                    {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
+                  </View>
+                );
+              })}
+            </Card>
+          </>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -153,5 +266,8 @@ const styles = StyleSheet.create({
   },
   row: {
     marginBottom: spacing.md,
+  },
+  action: {
+    marginBottom: spacing.sm,
   },
 });
