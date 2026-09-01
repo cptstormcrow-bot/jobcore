@@ -80,8 +80,6 @@ function makeRate(overrides: Partial<PriceSheetRate> = {}): PriceSheetRate {
     serviceId: 'svc-1',
     attachTiming: 'same_day',
     amount: 20000, // $200.00 in integer cents
-    taskId: null,
-    timeEstimateMinutes: null,
     ...overrides,
   };
 }

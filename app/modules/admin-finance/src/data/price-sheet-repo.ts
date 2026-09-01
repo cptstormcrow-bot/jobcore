@@ -10,6 +10,7 @@
 
 import type { PriceSheet, PriceSheetRate, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PublishPlan } from '../money/publish-plan';
+import type { ServiceTask } from './ports';
 
 /* ------------------------------------------------------------------ *
  * price_sheets row (snake_case) → domain type (camelCase)
@@ -260,6 +261,161 @@ export async function saveAreaAdjustment(
     return { ok: false, reason: error.message };
   }
   return { ok: true, value: toPriceSheetAreaAdjustment(data) };
+}
+
+/* ------------------------------------------------------------------ *
+ * price_sheet_rates row (with joined task) → domain type (camelCase)
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors `price_sheet_rates` joined with its optional `service_tasks` row
+ * (Slice D task-level pricing). `task_id` and `estimated_minutes` are the
+ * task-pricing columns (`estimated_minutes` added by migration 0024;
+ * `task_id` is a forward-referenced column this repo assumes but no
+ * migration has added yet — see build report Deviations); `service_tasks`
+ * is the optional embedded join Supabase returns when the caller selects
+ * it.
+ */
+export interface PriceSheetRateWithTaskRow {
+  id: string;
+  price_sheet_id: string;
+  service_id: string;
+  task_id: string | null;
+  attach_timing: string | null;
+  amount_cents: number;
+  estimated_minutes: number | null;
+  service_tasks?: { name: string } | null;
+}
+
+/**
+ * Map a `price_sheet_rates` (+ joined `service_tasks`) row to the domain
+ * `PriceSheetRate`, widened with the task-pricing fields (`taskId`,
+ * `timeEstimateMinutes`, `taskName`) that `PriceSheetRate` itself doesn't
+ * declare (`../money/types.ts`) but every caller of this mapper needs.
+ */
+export function toPriceSheetRateWithTask(
+  row: PriceSheetRateWithTaskRow
+): PriceSheetRate & { taskId: string | null; timeEstimateMinutes: number | null; taskName: string | null } {
+  return {
+    id: row.id,
+    priceSheetId: row.price_sheet_id,
+    serviceId: row.service_id,
+    attachTiming: row.attach_timing ?? '',
+    amount: row.amount_cents,
+    taskId: row.task_id,
+    timeEstimateMinutes: row.estimated_minutes,
+    taskName: row.service_tasks?.name ?? null,
+  };
+}
+
+// Minimal client seam matching the real Supabase query-builder's chainable
+// shape, same pattern as SupabaseAreaAdjustmentsClient above.
+interface SupabaseRatesClient {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+export async function saveRate(
+  client: SupabaseRatesClient,
+  priceSheetId: string,
+  serviceId: string,
+  taskId: string | null,
+  attachTiming: string,
+  amount: number,
+  timeEstimateMinutes: number | null
+): Promise<CalculationResult<PriceSheetRate>> {
+  const { data, error } = await client
+    .from('price_sheet_rates')
+    .upsert(
+      {
+        price_sheet_id: priceSheetId,
+        service_id: serviceId,
+        task_id: taskId,
+        attach_timing: attachTiming,
+        amount_cents: amount,
+        estimated_minutes: timeEstimateMinutes,
+      },
+      { onConflict: 'price_sheet_id,service_id,attach_timing' }
+    )
+    .select('*')
+    .single();
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: toPriceSheetRate(data) };
+}
+
+export async function deleteRate(
+  client: SupabaseRatesClient,
+  rateId: string
+): Promise<CalculationResult<void>> {
+  const { error } = await client.from('price_sheet_rates').delete().eq('id', rateId);
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: undefined };
+}
+
+/* ------------------------------------------------------------------ *
+ * service_tasks row (snake_case) → domain type (camelCase)
+ * ------------------------------------------------------------------ */
+
+/** Mirrors the Supabase `service_tasks` table (`app/supabase/0032_price_sheet_task_pricing.sql`). */
+export interface ServiceTaskRow {
+  id: string;
+  organization_id: string;
+  service_id: string;
+  name: string;
+}
+
+/** Map a `service_tasks` row to the domain `ServiceTask` (`../data/ports.ts`). */
+export function toServiceTask(row: ServiceTaskRow): ServiceTask {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    serviceId: row.service_id,
+    name: row.name,
+  };
+}
+
+// Minimal client seam matching the real Supabase query-builder's chainable
+// shape, same pattern as SupabaseAreaAdjustmentsClient above.
+interface SupabaseServiceTasksClient {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  from: (table: string) => any;
+}
+
+export async function listServiceTasks(
+  client: SupabaseServiceTasksClient,
+  organizationId: string,
+  serviceId?: string
+): Promise<CalculationResult<ServiceTask[]>> {
+  let query = client.from('service_tasks').select('*').eq('organization_id', organizationId);
+  if (serviceId) {
+    query = query.eq('service_id', serviceId);
+  }
+  const { data, error } = await query;
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: (data ?? []).map(toServiceTask) };
+}
+
+export async function saveServiceTask(
+  client: SupabaseServiceTasksClient,
+  organizationId: string,
+  serviceId: string,
+  name: string
+): Promise<CalculationResult<ServiceTask>> {
+  const { data, error } = await client
+    .from('service_tasks')
+    .insert({ organization_id: organizationId, service_id: serviceId, name })
+    .select('*')
+    .single();
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: toServiceTask(data) };
 }
 
 /* ------------------------------------------------------------------ *

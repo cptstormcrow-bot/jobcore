@@ -91,6 +91,9 @@ type LoadState =
  */
 function parseCalendarDate(dateOnly: string): Date {
   const [year, month, day] = dateOnly.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    throw new Error(`Invalid calendar date "${dateOnly}"`);
+  }
   return new Date(year, month - 1, day);
 }
 
@@ -385,11 +388,6 @@ export function AdminFinanceRoot() {
     setSubView('priceSheetList');
   }
 
-  function handleArchived() {
-    setSelectedPriceSheetId(null);
-    setSubView('priceSheetList');
-  }
-
   function handleSelectPayoutBatch(batch: PayoutBatch) {
     setSelectedPayoutBatch(batch);
     setSubView('payoutBatch-detail');
@@ -632,10 +630,7 @@ export function AdminFinanceRoot() {
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
-          priceSheetRatesRepo={ports.priceSheetRates}
-          serviceTasksRepo={ports.serviceTasks}
           onPublished={handlePublished}
-          onArchived={handleArchived}
         />
       ) : subView === 'closeOutQueue' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -803,7 +798,7 @@ export function AdminFinanceRoot() {
               )
               .map((job) =>
                 !selectedCalendarTechId
-                  ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address}` }
+                  ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address ?? 'No address'}` }
                   : job,
               );
             const calendarTimeOffEvents = toCalendarTimeOffEvents(loadState.timeOffRequests, techNameById).filter(

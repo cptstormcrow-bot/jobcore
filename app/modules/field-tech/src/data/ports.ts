@@ -297,11 +297,11 @@ export interface CameraRepository {
 /**
  * The full `TimeOffStatus` union, restated as a runtime tuple so
  * `toTimeOffRequest` can validate an untrusted row's `status` string
- * against it. Mirrors `time_off_requests_status_check` in the migration.
+ * against it. Mirrors `time_off_requests_status_check`, as widened by `0019_time_off_auto_decide.sql` to include `'cancelled'`.
  */
-export type TimeOffStatus = 'pending' | 'approved' | 'denied';
+export type TimeOffStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
 
-const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied'];
+const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied', 'cancelled'];
 
 function isTimeOffStatus(value: string): value is TimeOffStatus {
   return (TIME_OFF_STATUSES as readonly string[]).includes(value);

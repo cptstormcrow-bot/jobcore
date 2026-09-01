@@ -65,8 +65,7 @@ export interface JobEstimateScreenProps {
 
 /** Applies one area adjustment to a base DOLLAR value using the `percent`/`flat` convention.
  * `adjustment.adjustmentValue` is `Money` (integer cents) for a `'flat'` adjustment, so it is
- * converted to dollars before being added — unlike `PriceEstimatingScreen.tsx`'s helper of the
- * same name, which has a known bug applying `adjustmentValue` un-divided. */
+ * converted to dollars before being added. */
 function applyDollarAdjustment(baseDollars: number, adjustment: PriceSheetAreaAdjustment): number {
   if (adjustment.adjustmentType === 'percent') {
     return baseDollars + baseDollars * (adjustment.adjustmentValue / 100);

@@ -24,10 +24,10 @@
  * time_off_requests row (snake_case) -> domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors `time_off_requests_status_check` (`app/supabase/0007_field_tech_tables.sql` L111-112). */
-export type TimeOffStatus = 'pending' | 'approved' | 'denied';
+/** Mirrors `time_off_requests_status_check`, as widened by `app/supabase/0019_time_off_auto_decide.sql` (originally `app/supabase/0007_field_tech_tables.sql` L111-112) to include `'cancelled'`. */
+export type TimeOffStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
 
-const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied'];
+const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied', 'cancelled'];
 
 function isTimeOffStatus(value: string): value is TimeOffStatus {
   return (TIME_OFF_STATUSES as readonly string[]).includes(value);

@@ -75,8 +75,6 @@ const matchingRate: PriceSheetRate = {
   serviceId: 'service-1',
   attachTiming: 'same_day',
   amount: 10000,
-  taskId: null,
-  timeEstimateMinutes: null,
 };
 
 /** Records every `recordFailure`/`recordAttempt`/`resolve` call for assertion. */
