@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius } from '@jobcore/ui';
 
 import { signIn } from '../src/lib/session';
 
 export default function SignInScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,6 +85,15 @@ export default function SignInScreen() {
           />
         </Card>
 
+        <View style={styles.signUpLink}>
+          <Button
+            variant="outline"
+            size="sm"
+            label="Create an account"
+            onPress={() => router.push('/sign-up')}
+          />
+        </View>
+
         {error !== null ? <ErrorState title="Sign-in failed" message={error} /> : null}
       </View>
     </KeyboardAvoidingView>
@@ -110,6 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   submit: { marginTop: spacing.lg },
+  signUpLink: { marginTop: spacing.lg },
   passwordWrap: { position: 'relative', justifyContent: 'center' },
   passwordInput: { paddingRight: spacing.lg * 2 },
   passwordToggle: {

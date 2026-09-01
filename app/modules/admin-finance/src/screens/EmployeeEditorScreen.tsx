@@ -170,7 +170,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     try {
       await invitationRepository.createInvitation(session!.org.id, emailInput, roleInput);
       setDuplicateConflict(null);
-      setActionState({ kind: 'done', message: 'Invitation sent.' });
+      setActionState({ kind: 'done', message: 'Invitation created. No email is sent — activate the account manually in Supabase (Authentication → Users → Add user), then share the login with them.' });
       onSaved?.();
     } catch (error: unknown) {
       if (error instanceof DuplicateInvitationError) {

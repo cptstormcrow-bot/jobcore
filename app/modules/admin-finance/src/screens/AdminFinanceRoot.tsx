@@ -53,6 +53,7 @@ import { EmployeeEditorScreen } from './EmployeeEditorScreen';
 import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
 import { BlackoutEditorScreen } from './BlackoutEditorScreen';
+import { EmployeeInvitationsScreen } from './EmployeeInvitationsScreen';
 import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
@@ -74,6 +75,7 @@ type SubView =
   | 'auditLog'
   | 'payments'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
+  | 'employee-invitations'
   | 'blackout-editor'
   | 'calendar';
 
@@ -718,8 +720,14 @@ export function AdminFinanceRoot() {
           employees={employeeRepository}
           onSelectEmployee={handleSelectEmployee}
           onAddEmployee={handleAddEmployee}
+          onViewInvitations={() => setSubView('employee-invitations')}
           showTest={showTestEmployeesRoster}
           onShowTestChange={handleShowTestEmployeesRosterChange}
+        />
+      ) : subView === 'employee-invitations' ? (
+        <EmployeeInvitationsScreen
+          invitations={ports.invitations}
+          onBack={handleBackToRoster}
         />
       ) : subView === 'employee-detail' ? (
         selectedEmployee ? (
@@ -861,6 +869,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
   'employee-job-detail': 'Employee Job Detail',
+  'employee-invitations': 'Pending Invitations',
   calendar: 'Calendar',
 };
 

@@ -25,6 +25,8 @@ export interface EmployeeRosterScreenProps {
   onSelectEmployee?: (profile: Profile) => void;
   /** Fired when the "Add Employee" button is pressed. */
   onAddEmployee?: () => void;
+  /** Fired when the "Pending Invitations" button is pressed. */
+  onViewInvitations?: () => void;
   /** Controlled "Show Test Employees" value; falls back to local state when omitted. */
   showTest?: boolean;
   /** Fired when the "Show Test Employees" toggle changes; falls back to local state when omitted. */
@@ -38,7 +40,7 @@ type LoadState =
   | { kind: 'failed'; message: string };
 
 export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
-  const { employees: employeeRepository, onSelectEmployee, onAddEmployee, showTest: showTestProp, onShowTestChange } = props;
+  const { employees: employeeRepository, onSelectEmployee, onAddEmployee, onViewInvitations, showTest: showTestProp, onShowTestChange } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [localShowTest, setLocalShowTest] = useState(false);
   const showTest = showTestProp ?? localShowTest;
@@ -120,6 +122,16 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
           disabled={!onAddEmployee}
           style={styles.action}
         />
+
+        {onViewInvitations ? (
+          <Button
+            label="Pending Invitations"
+            onPress={() => onViewInvitations?.()}
+            variant="outline"
+            size="sm"
+            style={styles.action}
+          />
+        ) : null}
 
         <Toggle
           label="Show Test Employees"
