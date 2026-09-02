@@ -78,6 +78,7 @@ interface JobRow {
   rooms: string[] | null;
   panel_info: string | null;
   considerations: string | null;
+  service_area_id: string | null;
 }
 
 function toJob(row: JobRow): Job {
@@ -107,6 +108,7 @@ function toJob(row: JobRow): Job {
     rooms: row.rooms,
     panelInfo: row.panel_info,
     considerations: row.considerations,
+    service_area_id: row.service_area_id,
   };
 }
 
@@ -114,7 +116,7 @@ const JOB_ROW_COLUMNS =
   'id, organization_id, status, customer_id, service_id, source, payer, attach_timing, ' +
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
   'en_route_at, in_progress_at, completed_at, created_at, is_beta, house_age_years' +
-  ', permit_status, parking_available, rooms, panel_info, considerations';
+  ', permit_status, parking_available, rooms, panel_info, considerations, service_area_id';
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 
@@ -133,6 +135,7 @@ function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
 interface JobFormState {
   address: string;
   description: string;
+  serviceAreaId: string | null;
   houseAgeYears: string;
   customerName: string;
   customerPhone: string;
@@ -148,6 +151,7 @@ interface JobFormState {
 const EMPTY_JOB_FORM: JobFormState = {
   address: '',
   description: '',
+  serviceAreaId: null,
   houseAgeYears: '',
   customerName: '',
   customerPhone: '',
@@ -284,6 +288,7 @@ export default function JobDrilldownScreen() {
             ? {
                 address: loaded.address ?? '',
                 description: loaded.description ?? '',
+                serviceAreaId: loaded.service_area_id ?? null,
                 houseAgeYears: '',
                 customerName: customer?.name ?? '',
                 customerPhone: customer?.phone ?? '',
@@ -326,6 +331,7 @@ export default function JobDrilldownScreen() {
       const jobPatch: JobDetailsPatch = {
         address: form.address,
         description: form.description,
+        serviceAreaId: form.serviceAreaId,
         permitStatus: form.permitStatus,
         parkingAvailable: form.parkingAvailable,
         rooms: form.rooms,
@@ -398,7 +404,7 @@ export default function JobDrilldownScreen() {
         address: form.address,
         description: form.description,
         assignedTechId: null,
-        serviceAreaId: null,
+        serviceAreaId: form.serviceAreaId,
         permitStatus: form.permitStatus,
         parkingAvailable: form.parkingAvailable,
         rooms: form.rooms,
@@ -572,6 +578,30 @@ export default function JobDrilldownScreen() {
           labelStyle={styles.fieldLabel}
           inputStyle={styles.fieldInput}
         />
+        {serviceAreas.length > 0 && (
+          <View style={styles.field}>
+            <Text style={styles.sectionLabel}>Service area</Text>
+            <View style={styles.roomsGrid}>
+              <Button
+                label="Unassigned"
+                variant={form.serviceAreaId === null ? 'primary' : 'outline'}
+                onPress={() => setForm((prev) => ({ ...prev, serviceAreaId: null }))}
+                size="sm"
+                style={styles.field}
+              />
+              {serviceAreas.map((area) => (
+                <Button
+                  key={area.id}
+                  label={area.name}
+                  variant={form.serviceAreaId === area.id ? 'primary' : 'outline'}
+                  onPress={() => setForm((prev) => ({ ...prev, serviceAreaId: area.id }))}
+                  size="sm"
+                  style={styles.field}
+                />
+              ))}
+            </View>
+          </View>
+        )}
         <TextField
           label="Description"
           value={form.description}
@@ -726,6 +756,30 @@ export default function JobDrilldownScreen() {
         labelStyle={styles.fieldLabel}
         inputStyle={styles.fieldInput}
       />
+      {serviceAreas.length > 0 && (
+        <View style={styles.field}>
+          <Text style={styles.sectionLabel}>Service area</Text>
+          <View style={styles.roomsGrid}>
+            <Button
+              label="Unassigned"
+              variant={form.serviceAreaId === null ? 'primary' : 'outline'}
+              onPress={() => setForm((prev) => ({ ...prev, serviceAreaId: null }))}
+              size="sm"
+              style={styles.field}
+            />
+            {serviceAreas.map((area) => (
+              <Button
+                key={area.id}
+                label={area.name}
+                variant={form.serviceAreaId === area.id ? 'primary' : 'outline'}
+                onPress={() => setForm((prev) => ({ ...prev, serviceAreaId: area.id }))}
+                size="sm"
+                style={styles.field}
+              />
+            ))}
+          </View>
+        </View>
+      )}
       <TextField
         label="Permit status"
         value={form.permitStatus}

@@ -265,6 +265,7 @@ export function createJobRepository(): JobRepository {
           house_age_years: patch.houseAgeYears,
           scheduled_start: patch.scheduledStart,
           scheduled_end: patch.scheduledEnd,
+          service_area_id: patch.serviceAreaId,
         })
         .eq('id', jobId)
         .select('*')

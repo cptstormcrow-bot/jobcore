@@ -143,6 +143,7 @@ export type JobSchedulingPatch = Partial<
  * `houseAgeYears?: number | null`.
  */
 export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'houseAgeYears'>> & {
+  serviceAreaId?: string | null;
   permitStatus?: string | null;
   parkingAvailable?: string | null;
   rooms?: string[] | null;
