@@ -112,6 +112,11 @@ export function toJob(row: JobRow): Job {
     createdAt: row.created_at,
     isBeta: row.is_beta ?? false,
     houseAgeYears: row.house_age_years ?? null,
+    permitStatus: row.permit_status ?? null,
+    parkingAvailable: row.parking_available ?? null,
+    rooms: row.rooms ?? null,
+    panelInfo: row.panel_info ?? null,
+    considerations: row.considerations ?? null,
     service_area_id: row.service_area_id,
   };
 }

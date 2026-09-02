@@ -263,6 +263,11 @@ export function createJobRepository(): JobRepository {
           address: patch.address,
           description: patch.description,
           house_age_years: patch.houseAgeYears,
+          permit_status: patch.permitStatus,
+          parking_available: patch.parkingAvailable,
+          rooms: patch.rooms,
+          panel_info: patch.panelInfo,
+          considerations: patch.considerations,
           scheduled_start: patch.scheduledStart,
           scheduled_end: patch.scheduledEnd,
         })
@@ -296,6 +301,11 @@ export function createJobRepository(): JobRepository {
           scheduled_end: rest.scheduledEnd,
           address: rest.address,
           description: rest.description,
+          permit_status: rest.permitStatus,
+          parking_available: rest.parkingAvailable,
+          rooms: rest.rooms,
+          panel_info: rest.panelInfo,
+          considerations: rest.considerations,
           assigned_tech_id: rest.assignedTechId,
           service_area_id: serviceAreaId,
         })
