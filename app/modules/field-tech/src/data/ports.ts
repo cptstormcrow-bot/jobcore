@@ -823,3 +823,40 @@ export interface TimeEntryRepository {
   clockOut(entryId: string): Promise<TimeEntry>;
   listForJob(jobId: string): Promise<TimeEntry[]>;
 }
+
+/* ------------------------------------------------------------------ *
+ * job_investigations (Segway investigation dispatch —
+ * `app/supabase/0023_field_ops_segway_and_estimating.sql`'s
+ * `job_investigations` table). Mirrors
+ * `admin-finance/src/data/ports.ts`'s `JobInvestigation` type shape
+ * field-for-field for consistency; this module's repository is scoped to
+ * what `JobInvestigationScreen.tsx` actually calls (getForJob/upsertForJob).
+ * ------------------------------------------------------------------ */
+
+export interface JobInvestigation {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  techId: string;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
+  stateAssessment: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Patch fields a tech may write via `upsertForJob` — the four note fields plus `submittedAt` for the submit action. */
+export interface JobInvestigationInput {
+  ingressNotes?: string | null;
+  logisticsNotes?: string | null;
+  parkingNotes?: string | null;
+  stateAssessment?: string | null;
+  submittedAt?: string | null;
+}
+
+export interface JobInvestigationRepository {
+  getForJob(jobId: string): Promise<JobInvestigation | null>;
+  upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation>;
+}

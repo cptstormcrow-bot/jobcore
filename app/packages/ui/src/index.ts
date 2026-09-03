@@ -15,3 +15,4 @@ export * from './Checkbox';
 export * from './ScreenTitle';
 export * from './Breadcrumb';
 export * from './TabBar';
+export * from './telephony';

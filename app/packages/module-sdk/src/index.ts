@@ -41,6 +41,10 @@ export interface NavEntry {
 export interface JobAction {
   id: string;
   label: string;
+  /** Optional gate: if present, the action is hidden from the shared Job Detail unless this
+   * returns true for the current job. Evaluated synchronously against Job fields only (no
+   * async estimate/port lookups). */
+  visibleWhen?(job: Job): boolean;
   /** Optional invoke-time side effect hook: runs a module's custom logic when this action fires (distinct from any navigation/routing the action may already declare). */
   onInvoke?(job: Job): void | Promise<void>;
 }

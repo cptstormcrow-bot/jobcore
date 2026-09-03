@@ -32,6 +32,8 @@ import { classifyJob } from '../../../../modules/admin-finance/src/data/price-sh
 import { PlanningScreen } from '../../../../modules/admin-finance/src/screens/PlanningScreen';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
+import { JobEstimateEditor } from '../../../../modules/field-tech/src/screens/JobEstimateEditor';
+import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
 import { StartChecklist } from '../../../../modules/field-tech/src/screens/StartChecklist';
 import { Completion } from '../../../../modules/field-tech/src/screens/Completion';
 import type { ServiceArea } from '../../../../modules/admin-finance/src/data/ports';
@@ -41,9 +43,11 @@ import { setModuleSession } from '@jobcore/admin-finance';
 // `assigned_at` only, `JobAssignmentDraft`/`JobAssignmentRepository.create`
 // (admin-finance/src/data/ports.ts) carry no `kind` field, and `assignJob()`
 // (flows/assign-job.ts) takes only `(job, techId, deps)`. The dispatch asked
-// for `kind: 'installer' | 'investigator'` support, but there is nowhere to
-// persist that distinction today -- confirmed by reading both files fresh,
-// not inferred. This slice wires the real, persisted tech-assignment flow
+// for `kind: 'installer' | 'investigator'` support, but `job_assignments`/
+// `assignJob()` has nowhere to persist that distinction. Investigator
+// assignment is now implemented separately via `assignInvestigator()`
+// (admin-finance/src/flows/assign-investigator.ts) against the
+// `job_investigations` table. This slice wires the real, persisted tech-assignment flow
 // (single `assignedTechId` via `assignJob`) and does not fabricate a `kind`
 // toggle with no backing field. See this dispatch's `issues` field.
 // Path check: this file is app/apps/mobile/app/job/[jobId].tsx; ports.ts lives at
@@ -120,7 +124,7 @@ const JOB_ROW_COLUMNS =
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 
-const DEEP_LINK_PANELS = ['plan', 'schedule', 'start-checklist', 'completion'] as const;
+const DEEP_LINK_PANELS = ['plan', 'schedule', 'jobEstimate', 'jobInvestigation', 'start-checklist', 'completion'] as const;
 type DeepLinkPanel = (typeof DEEP_LINK_PANELS)[number];
 function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
   return (DEEP_LINK_PANELS as readonly string[]).includes(v ?? '');
@@ -215,7 +219,7 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<'details' | 'plan' | 'jobEstimate' | 'schedule' | 'start-checklist' | 'completion'>(isDeepLinkPanel(panel) ? panel : 'details');
+  const [activePanel, setActivePanel] = useState<'details' | 'plan' | 'jobEstimate' | 'jobInvestigation' | 'schedule' | 'start-checklist' | 'completion'>(isDeepLinkPanel(panel) ? panel : 'details');
 
   useEffect(() => {
     if (!org?.id) {
@@ -460,7 +464,10 @@ export default function JobDrilldownScreen() {
     ],
     [saving],
   );
-  const mergedActions = useMemo<JobAction[]>(() => [...localActions, ...actions], [localActions, actions]);
+  const mergedActions = useMemo<JobAction[]>(
+    () => [...localActions, ...actions].filter((a) => !job || !a.visibleWhen || a.visibleWhen(job)),
+    [localActions, actions, job],
+  );
 
   if (loading) {
     return (
@@ -492,6 +499,13 @@ export default function JobDrilldownScreen() {
     );
   }
   if (!isCreate && job && activePanel === 'jobEstimate') {
+    if (role === 'tech') {
+      return (
+        <View style={styles.root}>
+          <JobEstimateEditor jobId={job.id} onBack={() => setActivePanel('details')} />
+        </View>
+      );
+    }
     return (
       <View style={styles.root}>
         <JobEstimateScreen
@@ -506,6 +520,14 @@ export default function JobDrilldownScreen() {
       </View>
     );
   }
+  if (!isCreate && job && activePanel === 'jobInvestigation') {
+    return (
+      <View style={styles.root}>
+        <JobInvestigationScreen jobId={job.id} onBack={() => setActivePanel('details')} />
+      </View>
+    );
+  }
+
   if (!isCreate && job && activePanel === 'schedule') {
     return (
       <View style={styles.root}>

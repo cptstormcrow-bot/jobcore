@@ -242,6 +242,20 @@ export const fieldTechModule: JobcoreModule = {
         router.push('/job/' + job.id + '?panel=completion');
       },
     },
+    {
+      id: 'jobEstimate',
+      label: 'Estimate',
+      onInvoke: (job: Job) => {
+        router.push('/job/' + job.id + '?panel=jobEstimate');
+      },
+    },
+    {
+      id: 'jobInvestigation',
+      label: 'Investigation',
+      onInvoke: (job: Job) => {
+        router.push('/job/' + job.id + '?panel=jobInvestigation');
+      },
+    },
   ],
   migrations: ['0007_field_tech_tables.sql', '0008_field_tech_jobs_rls.sql'],
 };

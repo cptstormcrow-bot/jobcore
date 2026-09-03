@@ -24,8 +24,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
+import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography, telUrl } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { validateQualify } from '../domain/qualify';
 import type { ServiceArea } from '../data/ports';
@@ -104,6 +104,9 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: Q
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title="Qualify Lead" />
+        <Text style={styles.guidance}>
+          Call the customer now. Confirm the problem and rough scope before continuing.
+        </Text>
         <Card style={styles.card}>
           <Text style={styles.subtitle}>{lead.name}</Text>
 
@@ -112,6 +115,14 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: Q
           ) : (
             <Text style={styles.metaWarning}>Address unknown</Text>
           )}
+          {lead.phone ? (
+            <Text
+              style={[styles.meta, styles.phoneLink]}
+              onPress={() => Linking.openURL(telUrl(lead.phone as string))}
+            >
+              {lead.phone}
+            </Text>
+          ) : null}
           {lead.preferredDate ? (
             <Text style={styles.meta}>
               Requested: {lead.preferredDate}
@@ -208,6 +219,16 @@ const styles = StyleSheet.create({
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.xs,
+  },
+  phoneLink: {
+    color: colors.primary,
+    textDecorationLine: 'underline',
+  },
+  guidance: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.sm,
   },
   axisContainer: {
     marginBottom: spacing.md,

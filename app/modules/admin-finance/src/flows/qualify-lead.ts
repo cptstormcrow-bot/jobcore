@@ -32,11 +32,12 @@ import type { Ctx, Job } from '@jobcore/core';
 import type { Lead } from '../domain/lead';
 import { buildJobFromLead } from '../domain/qualify';
 import { transitionJob } from '../domain/transition';
-import type { CalendarEventRepository, JobRepository, LeadRepository } from '../data/ports';
+import type { CalendarEventRepository, CustomerRepository, JobRepository, LeadRepository } from '../data/ports';
 
 export interface QualifyLeadDeps {
   jobs: JobRepository;
   leads: LeadRepository;
+  customers: CustomerRepository;
   /**
    * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs the
    * `new` -> `qualified` transition below as a calendar event. Required,
@@ -67,8 +68,15 @@ export async function qualifyLead(
     return { ok: false, reason: draft.reason };
   }
 
-  // P3f.5a: create the `new`-status job.
-  const newJob = await deps.jobs.create(draft.job);
+  // P3f.5a: create/link the Customer record, then create the `new`-status job.
+  const customer = await deps.customers.create({
+    name: lead.name,
+    phone: lead.phone,
+    email: lead.email,
+    address: lead.address,
+  });
+  const jobWithCustomer = { ...draft.job, customerId: customer.id };
+  const newJob = await deps.jobs.create(jobWithCustomer);
 
   // P3f.5b: the ONLY approved path to `qualified` — never `newJob.status = ...`.
   const transitionedJob = await transitionJob(newJob, 'qualified', deps.ctx);

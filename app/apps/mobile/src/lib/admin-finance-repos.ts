@@ -1966,6 +1966,118 @@ export function createEstimateRepository(): EstimateRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * JobInvestigationRepository (mirrors `job_investigations`,
+ * `app/supabase/0023_field_ops_segway_and_estimating.sql`; unique
+ * `job_id` constraint added by `app/supabase/0038_job_investigations_unique_job.sql`
+ * so `upsertForJob` can use `onConflict: 'job_id'`, same idiom as
+ * `JobPlanningRepository.upsertForJob` above). Not yet declared in
+ * `ports.ts` — this shape is defined locally until a `ModulePorts` slot
+ * is added there.
+ * ------------------------------------------------------------------ */
+
+export interface JobInvestigation {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  techId: string;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
+  stateAssessment: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobInvestigationInput {
+  techId: string;
+  ingressNotes?: string | null;
+  logisticsNotes?: string | null;
+  parkingNotes?: string | null;
+  stateAssessment?: string | null;
+  submittedAt?: string | null;
+}
+
+export interface JobInvestigationRepository {
+  getForJob(jobId: string): Promise<JobInvestigation | null>;
+  upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation>;
+}
+
+function toJobInvestigation(row: {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  tech_id: string;
+  ingress_notes: string | null;
+  logistics_notes: string | null;
+  parking_notes: string | null;
+  state_assessment: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}): JobInvestigation {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    ingressNotes: row.ingress_notes,
+    logisticsNotes: row.logistics_notes,
+    parkingNotes: row.parking_notes,
+    stateAssessment: row.state_assessment,
+    submittedAt: row.submitted_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function createJobInvestigationRepository(): JobInvestigationRepository {
+  return {
+    async getForJob(jobId: string): Promise<JobInvestigation | null> {
+      const { data, error } = await supabase
+        .from('job_investigations')
+        .select('*')
+        .eq('job_id', jobId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`getForJob failed: ${error.message}`);
+      }
+      return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
+    },
+
+    async upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation> {
+      const { organizationId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_investigation.upsert', occurredAt, { jobId, patch });
+
+      const { data, error } = await supabase
+        .from('job_investigations')
+        .upsert(
+          {
+            job_id: jobId,
+            organization_id: organizationId,
+            tech_id: patch.techId,
+            ingress_notes: patch.ingressNotes ?? null,
+            logistics_notes: patch.logisticsNotes ?? null,
+            parking_notes: patch.parkingNotes ?? null,
+            state_assessment: patch.stateAssessment ?? null,
+            submitted_at: patch.submittedAt ?? null,
+            updated_at: occurredAt,
+          },
+          { onConflict: 'job_id' }
+        )
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.upsertJobInvestigation', error.message, { jobId, patch });
+        throw new Error(`upsertForJob failed: ${error.message}`);
+      }
+      return toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -2003,6 +2115,7 @@ export function buildAdminFinancePorts(): ModulePorts {
     jobPlanning: createJobPlanningRepository(),
     jobPlanningPhotos: createJobPlanningPhotoRepository(),
     estimates: createEstimateRepository(),
+    investigations: createJobInvestigationRepository(),
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,

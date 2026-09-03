@@ -868,6 +868,78 @@ export function createEstimateRepository(): EstimateRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * JobInvestigation (read-only, field-tech side)
+ *
+ * Mirrors `job_investigations` and the `JobInvestigation` shape defined in
+ * `admin-finance-repos.ts`'s `createJobInvestigationRepository()`. Duplicated
+ * locally rather than imported — module isolation forbids field-tech from
+ * depending on admin-finance's tree (same rationale as `toJobEstimate` /
+ * `toJobEstimateLineItem` above). Read-only here: field techs view
+ * investigation data for jobs they're assigned to via `getJobInvestigation`,
+ * matching this file's `EstimateRepository.getForJob` idiom (org-scoped via
+ * `requireModuleSession()`, `.maybeSingle()`, throw on error). Not yet
+ * declared in `ports.ts` — this shape is defined locally until a
+ * `ModulePorts` slot is added there, same as `JobInvestigationRepository` on
+ * the admin-finance side.
+ * ------------------------------------------------------------------ */
+
+export interface JobInvestigation {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  techId: string;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
+  stateAssessment: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function toJobInvestigation(row: {
+  id: string;
+  job_id: string;
+  organization_id: string;
+  tech_id: string;
+  ingress_notes: string | null;
+  logistics_notes: string | null;
+  parking_notes: string | null;
+  state_assessment: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}): JobInvestigation {
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    organizationId: row.organization_id,
+    techId: row.tech_id,
+    ingressNotes: row.ingress_notes,
+    logisticsNotes: row.logistics_notes,
+    parkingNotes: row.parking_notes,
+    stateAssessment: row.state_assessment,
+    submittedAt: row.submitted_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getJobInvestigation(jobId: string): Promise<JobInvestigation | null> {
+  const { organizationId } = requireModuleSession();
+  const { data, error } = await supabase
+    .from('job_investigations')
+    .select('*')
+    .eq('job_id', jobId)
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+  if (error) {
+    throw new Error(`getJobInvestigation failed: ${error.message}`);
+  }
+  return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
+}
+
+/* ------------------------------------------------------------------ *
  * TimeEntryRepository
  * ------------------------------------------------------------------ */
 

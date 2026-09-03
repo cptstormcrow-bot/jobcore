@@ -27,6 +27,7 @@ import type {
   CameraRepository,
   EstimateRepository,
   TimeEntryRepository,
+  JobInvestigationRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -39,6 +40,7 @@ export interface ModulePorts {
   calendarEvents: CalendarEventRepository;
   camera: CameraRepository;
   estimates: EstimateRepository;
+  investigations: JobInvestigationRepository;
   timeEntries: TimeEntryRepository;
 }
 

@@ -4,6 +4,9 @@ import { router } from 'expo-router';
 import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
+import { getModulePorts } from './lib/module-ports';
+import { submitEstimate } from './flows/submit-estimate';
+import { approveEstimate } from './flows/approve-estimate';
 
 // Re-exported so the host (apps/mobile) can inject the session (P3e.1a) without
 // a deep import into this package's internal file layout. See
@@ -101,8 +104,36 @@ export const adminFinanceModule: JobcoreModule = {
         router.push('/job/' + job.id + '?panel=schedule');
       },
     },
+    {
+      id: 'submit-estimate',
+      label: 'Submit Estimate',
+      visibleWhen: (job: Job) => job.status === 'new' || job.status === 'qualified',
+      onInvoke: async (job: Job) => {
+        const estimate = await getModulePorts().estimates.getForJob(job.id);
+        if (!estimate) return;
+        await submitEstimate(estimate, {
+          estimates: getModulePorts().estimates,
+          ctx: buildTransitionCtx(),
+          now: () => new Date().toISOString(),
+        });
+      },
+    },
+    {
+      id: 'approve-estimate',
+      label: 'Approve Estimate',
+      visibleWhen: (job: Job) => job.status === 'new' || job.status === 'qualified',
+      onInvoke: async (job: Job) => {
+        const estimate = await getModulePorts().estimates.getForJob(job.id);
+        if (!estimate) return;
+        await approveEstimate(estimate, 'approved', {
+          estimates: getModulePorts().estimates,
+          ctx: buildTransitionCtx(),
+          now: () => new Date().toISOString(),
+        });
+      },
+    },
   ],
-  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0033_job_planning.sql'],
+  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0014_job_planning.sql'],
 };
 
 export default adminFinanceModule;

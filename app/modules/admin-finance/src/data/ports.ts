@@ -492,6 +492,7 @@ export interface JobAssignmentDraft {
   jobId: string;
   techId: string;
   assignedAt: string;
+  kind?: 'installer' | 'investigator';
 }
 
 /** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
@@ -1062,3 +1063,31 @@ export type ServiceTaskDraft = Omit<ServiceTask, 'id'>;
 // Re-exported so callers of this module don't also need a direct import
 // from `../money/types` just to name the status union.
 export type { PriceSheetStatus };
+
+/* ------------------------------------------------------------------ *
+ * Job investigation port (Segway investigation dispatch —
+ * `app/supabase/0023_field_ops_segway_and_estimating.sql`'s
+ * `job_investigations` table). One evolving row per job, same
+ * getForJob/upsertForJob shape as `JobPlanningRepository`; `0038_job_
+ * investigations_unique_job.sql` adds the `job_id` unique constraint that
+ * shape's `onConflict: 'job_id'` implementation relies on.
+ * ------------------------------------------------------------------ */
+
+export interface JobInvestigation {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  techId: string;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
+  stateAssessment: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobInvestigationRepository {
+  getForJob(jobId: string): Promise<JobInvestigation | null>;
+  upsertForJob(jobId: string, patch: Partial<JobInvestigation>): Promise<JobInvestigation>;
+}

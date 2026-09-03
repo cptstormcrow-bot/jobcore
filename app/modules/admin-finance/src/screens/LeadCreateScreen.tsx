@@ -92,6 +92,9 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Text style={styles.title}>New lead</Text>
+          <Text style={styles.guidance}>
+            Capture the caller's name, number, and address — everything else can wait.
+          </Text>
 
           <Text style={styles.label}>Name</Text>
           <TextInput
@@ -207,6 +210,12 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.bold,
     marginBottom: spacing.xs,
+  },
+  guidance: {
+    color: colors.textLight,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.sm,
   },
   label: {
     color: colors.text,

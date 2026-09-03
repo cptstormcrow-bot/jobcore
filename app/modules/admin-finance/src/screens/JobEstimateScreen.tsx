@@ -411,6 +411,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           style={styles.action}
         />
         <ScreenTitle title="Estimate" />
+        <Text style={styles.guidance}>
+          Give the customer a number before you hang up. Submit once they accept.
+        </Text>
 
         <Card style={styles.card}>
           <ListItem title="Status" subtitle={estimate?.status ?? 'draft'} />
@@ -700,5 +703,11 @@ const styles = StyleSheet.create({
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.sm,
+  },
+  guidance: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.md,
   },
 });

@@ -19,7 +19,7 @@ import * as React from 'react';
 import { View, Text, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button } from '@jobcore/ui';
+import { ScreenTitle, Button, telUrl } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -41,11 +41,6 @@ function formatDateTime(value: string | null): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
   return parsed.toLocaleString();
-}
-
-/** Builds a `tel:` URL — no new native deps, matches the Linking-style URL convention. */
-function telUrl(phone: string): string {
-  return `tel:${phone.replace(/[^\d+]/g, '')}`;
 }
 
 /** Builds a `maps:` URL for tap-to-map — no new native deps. */

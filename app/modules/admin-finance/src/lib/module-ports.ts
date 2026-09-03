@@ -36,6 +36,7 @@ import type {
   JobPlanningRepository,
   JobPlanningPhotoRepository,
   EstimateRepository,
+  JobInvestigationRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { CalculationResult, PriceSheetRate } from '../money/types';
@@ -93,6 +94,7 @@ export interface ModulePorts {
   jobPlanning: JobPlanningRepository;
   jobPlanningPhotos: JobPlanningPhotoRepository;
   estimates: EstimateRepository;
+  investigations: JobInvestigationRepository;
   /**
    * Durable on-device key/value boolean preference storage — persists across
    * in-app navigation, app restarts, and logout/login. Backed by SecureStore

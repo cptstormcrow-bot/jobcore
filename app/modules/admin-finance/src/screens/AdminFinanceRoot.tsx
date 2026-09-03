@@ -21,7 +21,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays } from 'date-fns';
 import { Card, ListItem, Button, Select, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, colors, spacing, radius } from '@jobcore/ui';
@@ -44,6 +44,9 @@ import { PaymentsScreen } from './PaymentsScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
+import { LeadCreateScreen } from './LeadCreateScreen';
+import { PlanningScreen } from './PlanningScreen';
+import { JobEstimateScreen } from './JobEstimateScreen';
 import { CloseOutQueueScreen } from './CloseOutQueueScreen';
 import { CloseOutReviewScreen } from './CloseOutReviewScreen';
 import { PriceSheetEditorScreen } from './PriceSheetEditorScreen';
@@ -63,7 +66,8 @@ import type { TechColumnTech } from '../components/TechColumn';
 
 type SubView =
   | 'overview' | 'jobs'
-  | 'leadInbox' | 'qualify'
+  | 'leadInbox' | 'leadCreate' | 'qualify'
+  | 'planning' | 'jobEstimate'
   | 'assignmentBoard'
   | 'closeOutQueue' | 'closeOutReview'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
@@ -144,6 +148,7 @@ export function AdminFinanceRoot() {
   const [showTestEmployees, setShowTestEmployees] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedCloseOutJob, setSelectedCloseOutJob] = useState<Job | null>(null);
   const [selectedPriceSheetId, setSelectedPriceSheetId] = useState<string | null>(null);
   const [closeOutPhotos, setCloseOutPhotos] = useState<CloseOutPhoto[]>([]);
@@ -272,16 +277,33 @@ export function AdminFinanceRoot() {
     }
   }
 
-  function handleAssign(job: Job, techId: string) {
+  async function handleAssign(job: Job, techId: string) {
     if (!session) {
       return;
     }
-    void assignJob(job, techId, {
-      jobs: jobRepository,
-      assignments: ports.jobAssignments,
-      calendarEvents: ports.calendarEvents,
-      ctx: { role: session.role, now: () => new Date().toISOString() },
-    });
+    try {
+      const result = await assignJob(job, techId, {
+        jobs: jobRepository,
+        assignments: ports.jobAssignments,
+        calendarEvents: ports.calendarEvents,
+        ctx: { role: session.role, now: () => new Date().toISOString() },
+      });
+      if (!result.ok) {
+        Alert.alert('Assignment failed', result.reason);
+        return;
+      }
+    } catch (error) {
+      // `assignJob` returns a reason for the failures it anticipates, but a
+      // repository or state-machine throw would otherwise escape as an
+      // unhandled rejection and surface only as a red error overlay.
+      Alert.alert('Assignment failed', error instanceof Error ? error.message : 'Unexpected error.');
+      return;
+    }
+    // The board renders from `loadState.jobs`. Without this refresh the
+    // just-assigned job keeps showing under "Unassigned", which reads as a
+    // failed assign and invites a second Confirm press against a stale
+    // in-memory status.
+    refreshJobs();
   }
 
   useEffect(() => {
@@ -533,6 +555,11 @@ export function AdminFinanceRoot() {
                 subtitle="View leads"
                 onPress={() => setSubView('leadInbox')}
               />
+              <ListItem
+                title="New Lead"
+                subtitle="Capture a new lead"
+                onPress={() => setSubView('leadCreate')}
+              />
             </Card>
             <Card style={styles.card}>
               <ListItem
@@ -597,6 +624,14 @@ export function AdminFinanceRoot() {
         )
       ) : subView === 'leadInbox' ? (
         <LeadInboxScreen leads={ports.leads} onSelectLead={handleSelectLead} />
+      ) : subView === 'leadCreate' ? (
+        <LeadCreateScreen
+          onCreated={(lead) => {
+            setSelectedLead(lead);
+            setSubView('qualify');
+          }}
+          onCancel={() => setSubView('leadInbox')}
+        />
       ) : subView === 'qualify' ? (
         selectedLead ? (
           <>
@@ -611,6 +646,20 @@ export function AdminFinanceRoot() {
         ) : (
           <View style={styles.screen}>
             <EmptyState title="Qualify lead" message="No lead selected." />
+          </View>
+        )
+      ) : subView === 'planning' ? (
+        <PlanningScreen
+          jobs={loadState.kind === 'loaded' ? loadState.jobs : []}
+          initialSelectedJobId={selectedJob?.id}
+          onBack={() => setSubView('jobs')}
+        />
+      ) : subView === 'jobEstimate' ? (
+        selectedJob ? (
+          <JobEstimateScreen job={selectedJob} onBack={() => setSubView('jobs')} />
+        ) : (
+          <View style={styles.screen}>
+            <EmptyState title="Job estimate" message="No job selected." />
           </View>
         )
       ) : subView === 'priceSheetList' ? (
@@ -685,7 +734,7 @@ export function AdminFinanceRoot() {
           <ErrorState message={loadState.message} />
         ) : (
           <AssignmentBoardScreen
-            jobs={loadState.jobs}
+            jobs={loadState.jobs.filter((j) => j.status === 'qualified' || j.status === 'scheduled')}
             techs={loadState.employees.map(
               (profile): TechColumnTech => ({
                 id: profile.id,
@@ -847,7 +896,10 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   overview: 'Overview',
   jobs: 'Jobs',
   leadInbox: 'Leads',
+  leadCreate: 'New Lead',
   qualify: 'Qualify Lead',
+  planning: 'Planning',
+  jobEstimate: 'Job Estimate',
   assignmentBoard: 'Assignments',
   closeOutQueue: 'Close-Outs',
   closeOutReview: 'Close-Out Review',

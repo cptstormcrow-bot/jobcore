@@ -218,6 +218,8 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             <ErrorState message={detailsLoadState.message} />
           ) : (
             <>
+              <Text style={styles.guidance}>Note what you'd need on-site: model numbers, measurements, parts, access notes.</Text>
+
               <Text style={styles.label}>Model Numbers</Text>
               <TextInput
                 style={styles.notesInput}
@@ -341,6 +343,12 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
+  },
+  guidance: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.sm,
   },
   notesInput: {
     minHeight: spacing.xl * 2,
