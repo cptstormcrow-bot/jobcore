@@ -11,15 +11,23 @@
  *
  * Mirrors `modules/admin-finance/src` layering: screen reads session +
  * ports via the module seams, never constructs a repository itself.
+ *
+ * Also renders a "This Week" strip below the today list — a `WeekView`
+ * (from `@jobcore/ui`) fed the same assigned-jobs list plus this tech's
+ * own active time-off requests, expanded day-by-day into `TimeOffEvent`s
+ * the same way `AdminFinanceRoot.toCalendarTimeOffEvents` does for the
+ * admin calendar.
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
+import { addDays, isSameDay, format } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, Toggle, ScreenTitle } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, Toggle, ScreenTitle, WeekView, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
+import { isActiveTimeOffStatus, type TimeOffRequest } from '../data/ports';
 
 /** Props for `DayList`. */
 export interface DayListProps {
@@ -29,17 +37,84 @@ export interface DayListProps {
    * remain non-interactive — no behavior change for existing callers.
    */
   onSelectJob?: (job: Job) => void;
+  /** Opens the given job (today list + week strip job cards). */
+  onOpenJob?: (jobId: string) => void;
+  /** Opens the given time-off entry (week strip time-off cards). */
+  onOpenTimeOff?: (event: TimeOffEvent) => void;
 }
 
-export function DayList({ onSelectJob }: DayListProps = {}): React.ReactElement {
+/**
+ * True when `job.scheduledStart` falls on the same LOCAL calendar date as
+ * `today`. A job with no `scheduledStart` is never "today".
+ */
+export function isScheduledOnLocalDate(job: Job, today: Date): boolean {
+  if (job.scheduledStart === null || job.scheduledStart === undefined) {
+    return false;
+  }
+  const scheduled = new Date(job.scheduledStart);
+  if (Number.isNaN(scheduled.getTime())) {
+    return false;
+  }
+  return isSameDay(scheduled, today);
+}
+
+/**
+ * Expands each active (`pending` | `approved`) `TimeOffRequest` — spanning a
+ * `startDate`/`endDate` range — into one `TimeOffEvent` per calendar day in
+ * range. Mirrors `AdminFinanceRoot.toCalendarTimeOffEvents`, minus the
+ * admin-only tech-name lookup (this list is always the signed-in tech's own
+ * requests).
+ */
+export function expandTimeOffToEvents(requests: TimeOffRequest[], now: Date = new Date()): TimeOffEvent[] {
+  const events: TimeOffEvent[] = [];
+  for (const request of requests) {
+    if (!isActiveTimeOffStatus(request.status)) continue;
+    const start = parseCalendarDate(request.startDate);
+    const end = parseCalendarDate(request.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      continue;
+    }
+    let cursor = start;
+    while (cursor.getTime() <= end.getTime()) {
+      events.push({
+        id: `${request.id}-${cursor.toISOString().slice(0, 10)}`,
+        title: request.reason ?? 'Time off',
+        description: request.reason,
+        eventTime: cursor.toISOString(),
+        techId: request.techId,
+      });
+      cursor = addDays(cursor, 1);
+    }
+  }
+  return events;
+}
+
+function parseCalendarDate(dateOnly: string): Date {
+  const [year, month, day] = dateOnly.split('-').map(Number);
+  if (year === undefined || month === undefined || day === undefined) {
+    return new Date(NaN);
+  }
+  return new Date(year, month - 1, day);
+}
+
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
   // rows spawned by sales-marketing's "Spawn Test Jobs" flow.
   const [showBeta, setShowBeta] = useState(false);
+  const [anchorDay, setAnchorDay] = useState(() => new Date());
   const visibleJobs = jobs.filter((job) => isBetaVisible(job, showBeta));
+  const todayJobs = useMemo(() => {
+    const today = new Date();
+    return visibleJobs
+      .filter((job) => isScheduledOnLocalDate(job, today))
+      .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime());
+  }, [visibleJobs]);
+  const timeOffEvents = useMemo(() => expandTimeOffToEvents(timeOffRequests), [timeOffRequests]);
 
   useEffect(() => {
     if (session === null) {
@@ -51,13 +126,13 @@ export function DayList({ onSelectJob }: DayListProps = {}): React.ReactElement 
     setLoading(true);
     setError(null);
 
-    const { jobs: jobsRepository } = getModulePorts();
+    const { jobs: jobsRepository, timeOff: timeOffRepository } = getModulePorts();
 
-    jobsRepository
-      .listAssignedToTech(session.userId)
-      .then((result: Job[]) => {
+    Promise.all([jobsRepository.listAssignedToTech(session.userId), timeOffRepository.listForTech(session.userId)])
+      .then(([jobsResult, timeOffResult]: [Job[], TimeOffRequest[]]) => {
         if (!cancelled) {
-          setJobs(result);
+          setJobs(jobsResult);
+          setTimeOffRequests(timeOffResult);
         }
       })
       .catch((err: unknown) => {
@@ -100,21 +175,30 @@ export function DayList({ onSelectJob }: DayListProps = {}): React.ReactElement 
     );
   }
 
+  const handleOpenJob = (job: Job) => {
+    onSelectJob?.(job);
+    onOpenJob?.(job.id);
+  };
+
+  const weekLabel = format(anchorDay, 'MMM d, yyyy');
+
   return (
-    <View style={styles.listContent}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
       <ScreenTitle title="Today's Jobs" />
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-      {visibleJobs.length === 0 ? (
+      {todayJobs.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No jobs scheduled.</Text>
+          <Text style={styles.emptyText}>No jobs scheduled today.</Text>
         </View>
       ) : (
         <FlatList
-          data={visibleJobs}
+          data={todayJobs}
           keyExtractor={(job) => job.id}
+          scrollEnabled={false}
           renderItem={({ item }) => {
             const rowContent = (
               <View style={styles.row}>
+                <Text style={styles.bullet}>{'\u2022'}</Text>
                 <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
                 <View style={styles.rowBody}>
                   <Text style={styles.address}>{item.address ?? 'No address'}</Text>
@@ -123,19 +207,43 @@ export function DayList({ onSelectJob }: DayListProps = {}): React.ReactElement 
               </View>
             );
 
-            if (onSelectJob === undefined) {
-              return rowContent;
-            }
-
-            return <Pressable onPress={() => onSelectJob(item)}>{rowContent}</Pressable>;
+            return <Pressable onPress={() => handleOpenJob(item)}>{rowContent}</Pressable>;
           }}
         />
       )}
-    </View>
+
+      <View style={styles.weekHeader}>
+        <ScreenTitle title="This Week" />
+        <View style={styles.weekNav}>
+          <Pressable style={styles.navButton} onPress={() => setAnchorDay((d) => addDays(d, -7))}>
+            <Text style={styles.navButtonText}>Prev</Text>
+          </Pressable>
+          <Pressable style={styles.navButton} onPress={() => setAnchorDay(new Date())}>
+            <Text style={styles.navButtonText}>Today</Text>
+          </Pressable>
+          <Pressable style={styles.navButton} onPress={() => setAnchorDay((d) => addDays(d, 7))}>
+            <Text style={styles.navButtonText}>Next</Text>
+          </Pressable>
+        </View>
+        <Text style={styles.weekLabel}>{weekLabel}</Text>
+      </View>
+      <View style={styles.weekStrip}>
+        <WeekView
+          jobs={visibleJobs}
+          anchorDay={anchorDay}
+          timeOffEvents={timeOffEvents}
+          onSelectJob={(job) => handleOpenJob(job)}
+          onSelectTimeOff={onOpenTimeOff}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   centered: {
     flex: 1,
     alignItems: 'center',
@@ -158,6 +266,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#ddd',
   },
+  bullet: {
+    marginRight: 8,
+    color: colors.textMuted,
+  },
   statusChip: {
     width: 10,
     height: 10,
@@ -175,5 +287,33 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     marginTop: 2,
+  },
+  weekHeader: {
+    marginTop: spacing.lg,
+  },
+  weekNav: {
+    flexDirection: 'row',
+    marginTop: spacing.sm,
+  },
+  navButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    marginRight: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+  },
+  navButtonText: {
+    fontSize: typography.size.label,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  weekLabel: {
+    marginTop: spacing.sm,
+    fontSize: typography.size.small,
+    color: colors.textMuted,
+  },
+  weekStrip: {
+    height: 260,
+    marginTop: spacing.sm,
   },
 });

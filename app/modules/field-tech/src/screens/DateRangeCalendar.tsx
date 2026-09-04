@@ -22,6 +22,7 @@
 
 import * as React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { colors } from '@jobcore/ui';
 import {
   addDays,
   addMonths,
@@ -45,6 +46,8 @@ export interface DateRangeCalendarProps {
   onChangeStartDate: (value: string) => void;
   onChangeEndDate: (value: string) => void;
   disabled?: boolean;
+  markedRanges?: { id: string; startDate: string; endDate: string }[];
+  onSelectMarkedDay?: (id: string) => void;
 }
 
 function parseIsoDate(value: string): Date | null {
@@ -65,6 +68,8 @@ export function DateRangeCalendar({
   onChangeStartDate,
   onChangeEndDate,
   disabled = false,
+  markedRanges = [],
+  onSelectMarkedDay,
 }: DateRangeCalendarProps): React.ReactElement {
   const parsedStart = parseIsoDate(startDate);
   const parsedEnd = parseIsoDate(endDate);
@@ -81,8 +86,18 @@ export function DateRangeCalendar({
     days.push(day);
   }
 
+  function findMarkedRangeId(day: Date): string | null {
+    const dayIso = toIsoDate(day);
+    const m = markedRanges.find((r) => dayIso >= r.startDate && dayIso <= r.endDate);
+    return m ? m.id : null;
+  }
   function handleSelectDay(day: Date): void {
     if (disabled) {
+      return;
+    }
+    const mId = findMarkedRangeId(day);
+    if (onSelectMarkedDay && mId !== null) {
+      onSelectMarkedDay(mId);
       return;
     }
     if (parsedStart === null || parsedEnd !== null) {
@@ -141,6 +156,8 @@ export function DateRangeCalendar({
           const isStart = parsedStart !== null && isSameDay(day, parsedStart);
           const isEnd = parsedEnd !== null && isSameDay(day, parsedEnd);
           const inRange = isInRange(day);
+          const isMarked = findMarkedRangeId(day) !== null;
+          const isSelected = isStart || isEnd;
 
           return (
             <Pressable
@@ -151,14 +168,16 @@ export function DateRangeCalendar({
               style={[
                 styles.dayCell,
                 inRange && styles.dayCellInRange,
-                (isStart || isEnd) && styles.dayCellSelected,
+                isMarked && !isSelected && styles.dayCellMarked,
+                isSelected && styles.dayCellSelected,
               ]}
             >
               <Text
                 style={[
                   styles.dayText,
                   !inCurrentMonth && styles.dayTextMuted,
-                  (isStart || isEnd) && styles.dayTextSelected,
+                  isMarked && !isSelected && styles.dayTextMarked,
+                  isSelected && styles.dayTextSelected,
                 ]}
               >
                 {format(day, 'd')}
@@ -224,6 +243,11 @@ const styles = StyleSheet.create({
   dayCellInRange: {
     backgroundColor: '#eef4ff',
   },
+  dayCellMarked: {
+    borderWidth: 1,
+    borderColor: colors.danger,
+    borderRadius: 999,
+  },
   dayCellSelected: {
     backgroundColor: '#3366ff',
     borderRadius: 999,
@@ -233,6 +257,9 @@ const styles = StyleSheet.create({
   },
   dayTextMuted: {
     color: '#bbb',
+  },
+  dayTextMarked: {
+    color: colors.danger,
   },
   dayTextSelected: {
     color: '#fff',

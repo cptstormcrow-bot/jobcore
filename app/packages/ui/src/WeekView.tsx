@@ -22,9 +22,10 @@ export interface WeekViewProps {
   anchorDay: Date;
   timeOffEvents?: TimeOffEvent[];
   onSelectJob?: (job: Job) => void;
+  onSelectTimeOff?: (event: TimeOffEvent) => void;
 }
 
-export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob }: WeekViewProps) {
+export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff }: WeekViewProps) {
   const weekStart = startOfWeek(anchorDay, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -39,13 +40,14 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob }: W
             .filter((t) => isSameDay(new Date(t.eventTime), day))
             .sort((a, b) => new Date(a.eventTime).getTime() - new Date(b.eventTime).getTime());
           const isAnchor = isSameDay(day, anchorDay);
+          const isToday = isSameDay(day, new Date());
 
           return (
             <View key={day.toISOString()} style={styles.column}>
-              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
+              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }, isToday && styles.todayHeaderText]}>
                 {format(day, 'EEE')}
               </Text>
-              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }]}>
+              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }, isToday && styles.todayHeaderText]}>
                 {format(day, 'M/d')}
               </Text>
               {dayJobs.map((job) => (
@@ -59,10 +61,10 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob }: W
                 </Pressable>
               ))}
               {dayTimeOff.map((event) => (
-                <View key={event.id} style={[styles.card, styles.timeOffCard]}>
+                <Pressable key={event.id} disabled={!onSelectTimeOff} onPress={() => onSelectTimeOff?.(event)} style={[styles.card, styles.timeOffCard]}>
                   <Text style={styles.cardTime}>{format(new Date(event.eventTime), 'h:mm a')}</Text>
-                  <Text style={styles.cardAddress}>{event.title ?? 'Time off'}</Text>
-                </View>
+                  <Text style={[styles.cardAddress, styles.timeOffText]}>{event.title ?? 'Time off'}</Text>
+                </Pressable>
               ))}
             </View>
           );
@@ -93,6 +95,10 @@ const styles = StyleSheet.create({
     fontSize: typography.size.small,
     lineHeight: typography.size.small * typography.lineHeight.heading,
   },
+  todayHeaderText: {
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+  },
   card: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
@@ -101,8 +107,11 @@ const styles = StyleSheet.create({
   },
   timeOffCard: {
     borderLeftWidth: 4,
-    borderLeftColor: colors.textMuted,
+    borderLeftColor: colors.danger,
     backgroundColor: colors.offWhite,
+  },
+  timeOffText: {
+    color: colors.danger,
   },
   cardTime: {
     fontSize: typography.size.small,

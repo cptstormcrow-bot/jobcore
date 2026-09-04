@@ -318,6 +318,7 @@ export interface TimeOffRequestRow {
   status: string;
   created_at: string;
   updated_at: string;
+  created_by_admin_id: string | null;
 }
 
 /** Domain shape of a time off request. */
@@ -331,6 +332,7 @@ export interface TimeOffRequest {
   status: TimeOffStatus;
   createdAt: string;
   updatedAt: string;
+  createdByAdminId: string | null;
 }
 
 /**
@@ -353,7 +355,12 @@ export function toTimeOffRequest(row: TimeOffRequestRow): TimeOffRequest {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    createdByAdminId: row.created_by_admin_id,
   };
+}
+
+export function isActiveTimeOffStatus(status: TimeOffStatus): boolean {
+  return status === 'pending' || status === 'approved';
 }
 
 /** Fields needed to insert one `time_off_requests` row. `status` always starts `'pending'` (see migration comment), so it is not a caller-supplied field. */
@@ -373,6 +380,7 @@ export interface TimeOffRepository {
   create(organizationId: string, techId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest>;
   /** Cancels the caller's own existing time-off request, releasing the date. */
   cancel(requestId: string): Promise<void>;
+  update(requestId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest>;
 }
 
 /* ------------------------------------------------------------------ *

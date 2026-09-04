@@ -391,6 +391,28 @@ export function createTimeOffRepository(): TimeOffRepository {
   };
 }
 
+    async update(requestId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest> {
+      const { error } = await supabase.rpc('update_time_off_request', {
+        p_request_id: requestId,
+        p_start_date: draft.startDate,
+        p_end_date: draft.endDate,
+        p_reason: draft.reason ?? null,
+      });
+      if (error) {
+        throw new Error(`update time off request failed: ${error.message}`);
+      }
+
+      const { data, error: selectError } = await supabase
+        .from('time_off_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+      if (selectError) {
+        throw new Error(`update time off request failed: ${selectError.message}`);
+      }
+      return toTimeOffRequest(data as TimeOffRequestRow);
+    },
+
 /* ------------------------------------------------------------------ *
  * ReimbursementRequestRepository
  * ------------------------------------------------------------------ */

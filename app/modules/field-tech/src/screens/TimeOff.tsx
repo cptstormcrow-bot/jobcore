@@ -27,14 +27,21 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, Pressable } from 'react-native';
 
-import type { Job } from '@jobcore/core';
 import type { TimeOffRequest } from '../data/ports';
-import { ScreenTitle, Button } from '@jobcore/ui';
+import { isActiveTimeOffStatus } from '../data/ports';
+import { ScreenTitle, Button, colors } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
+
+function todayIso(): string {
+  const n = new Date();
+  const m = String(n.getMonth() + 1).padStart(2, '0');
+  const d = String(n.getDate()).padStart(2, '0');
+  return `${n.getFullYear()}-${m}-${d}`;
+}
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -48,16 +55,18 @@ function formatDate(value: string): string {
  * approve/deny affordance here — that is an org-admin concern enforced
  * elsewhere via RLS, per `TimeOffRepository`'s deliberately narrow shape.
  */
-export function TimeOff(): React.ReactElement {
+interface TimeOffProps {
+  initialSelectedId?: string;
+}
+
+export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement {
   const session = getModuleSession();
 
   const [requests, setRequests] = React.useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
-  const [upcomingJobs, setUpcomingJobs] = React.useState<Job[]>([]);
-  const [upcomingLoading, setUpcomingLoading] = React.useState(true);
-  const [upcomingError, setUpcomingError] = React.useState<string | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   const [startDate, setStartDate] = React.useState('');
   const [endDate, setEndDate] = React.useState('');
@@ -108,40 +117,33 @@ export function TimeOff(): React.ReactElement {
     return cleanup;
   }, [loadRequests]);
 
+  const activeRequests = React.useMemo(() => requests.filter((r) => r.endDate >= todayIso() && isActiveTimeOffStatus(r.status)), [requests]);
+
+  const selectedRequest = selectedId === null ? null : requests.find((r) => r.id === selectedId) ?? null;
+  const isAdminAdded = selectedRequest !== null && selectedRequest.createdByAdminId !== null;
+
+  function select(id: string): void {
+    const r = requests.find((x) => x.id === id);
+    if (!r) return;
+    setSelectedId(id);
+    setStartDate(r.startDate);
+    setEndDate(r.endDate);
+    setReason(r.reason ?? '');
+    setSubmitError(null);
+  }
+
+  function clearSelection(): void {
+    setSelectedId(null);
+    setStartDate('');
+    setEndDate('');
+    setReason('');
+    setSubmitError(null);
+  }
+
   React.useEffect(() => {
-    if (session === null) {
-      setUpcomingLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setUpcomingLoading(true);
-    setUpcomingError(null);
-
-    const { jobs } = getModulePorts();
-
-    jobs
-      .listAssignedToTech(session.userId)
-      .then((result) => {
-        if (!cancelled) {
-          setUpcomingJobs(result);
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setUpcomingError(err instanceof Error ? err.message : 'Failed to load upcoming assignments.');
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setUpcomingLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
+    if (initialSelectedId) select(initialSelectedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSelectedId]);
 
   const canSubmit = startDate.trim().length > 0 && endDate.trim().length > 0 && !submitting;
 
@@ -198,6 +200,43 @@ export function TimeOff(): React.ReactElement {
     }
   }
 
+  async function handleSave(): Promise<void> {
+    if (selectedId === null || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { timeOff } = getModulePorts();
+      const trimmedReason = reason.trim();
+      await timeOff.update(selectedId, {
+        startDate: startDate.trim(),
+        endDate: endDate.trim(),
+        reason: trimmedReason.length > 0 ? trimmedReason : null,
+      });
+      loadRequests();
+      clearSelection();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to save time-off request.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (selectedId === null || cancellingId !== null) return;
+    setCancellingId(selectedId);
+    setCancelError(null);
+    try {
+      const { timeOff } = getModulePorts();
+      await timeOff.cancel(selectedId);
+      loadRequests();
+      clearSelection();
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'Failed to delete time-off request.');
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   if (session === null) {
     return (
       <View style={styles.centered}>
@@ -211,35 +250,37 @@ export function TimeOff(): React.ReactElement {
       <ScreenTitle title="Time Off" />
       <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Upcoming assignments</Text>
-        {upcomingLoading ? (
+        <Text style={styles.sectionTitle}>Upcoming time off</Text>
+        {loading ? (
           <Text style={styles.emptyText}>Loading…</Text>
-        ) : upcomingError !== null ? (
-          <Text style={styles.errorText}>{upcomingError}</Text>
-        ) : upcomingJobs.length === 0 ? (
-          <Text style={styles.emptyText}>No upcoming assignments.</Text>
+        ) : loadError !== null ? (
+          <Text style={styles.errorText}>{loadError}</Text>
+        ) : activeRequests.length === 0 ? (
+          <Text style={styles.emptyText}>No upcoming time off.</Text>
         ) : (
-          upcomingJobs.map((item) => (
-            <View key={item.id} style={styles.requestRow}>
-              <Text style={styles.requestDates}>
-                {item.scheduledStart ? formatDate(item.scheduledStart) : 'Unscheduled'}
-                {item.scheduledEnd ? ` – ${formatDate(item.scheduledEnd)}` : ''}
+          activeRequests.map((item) => (
+            <Pressable key={item.id} onPress={() => select(item.id)} style={styles.upcomingRow}>
+              <Text style={styles.upcomingText}>
+                • {formatDate(item.startDate)} – {formatDate(item.endDate)}
               </Text>
-              <Text style={styles.requestStatus}>{item.address ?? 'No address on file'}</Text>
-            </View>
+            </Pressable>
           ))
         )}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Request time off</Text>
+        <Text style={styles.sectionTitle}>{selectedId !== null ? 'Editing time off' : 'Request time off'}</Text>
+        {isAdminAdded ? <Text style={styles.emptyText}>Added by your admin</Text> : null}
         <Text style={styles.label}>Date range</Text>
         <DateRangeCalendar
+          key={selectedId ?? 'new'}
           startDate={startDate}
           endDate={endDate}
           onChangeStartDate={setStartDate}
           onChangeEndDate={setEndDate}
-          disabled={submitting}
+          disabled={submitting || isAdminAdded}
+          onSelectMarkedDay={(id) => select(id)}
+          markedRanges={activeRequests.map((r) => ({ id: r.id, startDate: r.startDate, endDate: r.endDate }))}
         />
         <Text style={styles.label}>Reason (optional)</Text>
         <TextInput
@@ -247,16 +288,27 @@ export function TimeOff(): React.ReactElement {
           value={reason}
           onChangeText={setReason}
           placeholder="Reason for time off"
-          editable={!submitting}
+          editable={!submitting && !isAdminAdded}
           multiline
         />
         {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
+        {selectedId === null ? (
         <Button
           label={submitting ? 'Submitting…' : 'Submit request'}
           disabled={!canSubmit}
           onPress={handleSubmit}
           style={styles.submitButton}
         />
+        ) : null}
+        {selectedId !== null && !isAdminAdded ? (
+        <>
+        <Button label={submitting ? 'Saving…' : 'Save'} disabled={submitting} onPress={handleSave} style={styles.submitButton} />
+        <Button label={cancellingId === selectedId ? 'Deleting…' : 'Delete'} variant="outline" disabled={cancellingId !== null} onPress={handleDelete} style={styles.cancelButton} />
+        </>
+        ) : null}
+        {selectedId !== null ? (
+        <Button label="Cancel edit" variant="outline" onPress={clearSelection} style={styles.cancelButton} />
+        ) : null}
       </View>
 
       <View style={styles.section}>
@@ -360,6 +412,13 @@ const styles = StyleSheet.create({
   cancelButton: {
     marginTop: 6,
     alignSelf: 'flex-start',
+  },
+  upcomingRow: {
+    paddingVertical: 4,
+  },
+  upcomingText: {
+    fontSize: 13,
+    color: colors.danger,
   },
   emptyText: {
     color: '#666',

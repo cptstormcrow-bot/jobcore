@@ -55,6 +55,7 @@ type SubView = 'jobs' | 'timeOff';
 function FieldTechRoot(): React.ReactElement {
   const [subView, setSubView] = React.useState<SubView>('jobs');
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
+  const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const session = getModuleSession();
 
   if (!session) {
@@ -89,11 +90,21 @@ function FieldTechRoot(): React.ReactElement {
         { key: 'timeOff', label: 'Time Off' },
       ],
       activeKey: subView,
-      onSelect: setSubView,
+      onSelect: (key: SubView) => {
+        setSelectedTimeOffId(undefined);
+        setSubView(key);
+      },
     }),
     subView === 'jobs'
-      ? React.createElement<DayListProps>(DayList, { onSelectJob: (job: Job) => setSelectedJobId(job.id) })
-      : React.createElement(TimeOff, null),
+      ? React.createElement<DayListProps>(DayList, {
+          onSelectJob: (job: Job) => setSelectedJobId(job.id),
+          onOpenJob: (jobId: string) => router.push('/job/' + jobId),
+          onOpenTimeOff: (event) => {
+            setSelectedTimeOffId(event.id);
+            setSubView('timeOff');
+          },
+        })
+      : React.createElement(TimeOff, { initialSelectedId: selectedTimeOffId }),
   );
 }
 

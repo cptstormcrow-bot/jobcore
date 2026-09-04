@@ -107,6 +107,7 @@ function toCalendarTimeOffEvents(
 ): TimeOffEvent[] {
   const events: TimeOffEvent[] = [];
   for (const request of requests) {
+    if (request.status === 'cancelled' || request.status === 'denied') continue;
     const start = parseCalendarDate(request.startDate);
     const end = parseCalendarDate(request.endDate);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
