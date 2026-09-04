@@ -341,6 +341,7 @@ export function AdminFinanceRoot() {
     void qualifyLead(qualifiedLead, selection.serviceAreaId, {
       jobs: jobRepository,
       leads: ports.leads,
+      customers: ports.customers,
       calendarEvents: ports.calendarEvents,
       ctx: { role: session.role, now: () => new Date().toISOString() },
     }).then((result) => {

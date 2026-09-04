@@ -53,8 +53,8 @@ export interface AssignJobDeps {
   assignments: JobAssignmentRepository;
   /**
    * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs each
-   * transition below (`qualified` -> `scheduled` when it fires, and the
-   * unconditional `-> assigned`) as a calendar event.
+   * transition below (`qualified` -> `scheduled` when it fires, and
+   * `-> assigned` when the job isn't already `assigned`) as a calendar event.
    */
   calendarEvents: CalendarEventRepository;
   ctx: Ctx;

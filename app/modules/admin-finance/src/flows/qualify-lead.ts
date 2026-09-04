@@ -70,6 +70,7 @@ export async function qualifyLead(
 
   // P3f.5a: create/link the Customer record, then create the `new`-status job.
   const customer = await deps.customers.create({
+    organizationId: draft.job.organizationId,
     name: lead.name,
     phone: lead.phone,
     email: lead.email,
