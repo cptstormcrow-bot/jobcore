@@ -92,4 +92,17 @@ none
 **Verification:** `npx tsc --noEmit -p .` from `app/` → exit 0. Visual re-check on device is Jeff's (Forward contract FC-R2-1: Jeff re-runs the HTML smoke plan items B1/B6/B8 and confirms the week view fits the screen).
 
 **Deviations / Defects:** none beyond the round-2 failures listed above. `TimeOff.tsx` untouched; the question of moving the edit-existing form into the modal remains open for Jeff.
+
+## Fix Addendum — Round 3 (2026-09-05)
+Commit: 96e81df — fix(jobcore): field-tech time-off edit form moved into modal
+Changes (app/modules/field-tech/src/screens/TimeOff.tsx, +78/-55 per `git diff --stat`):
+- Tapping an upcoming "My requests" row now opens the date-tap modal in edit mode (title "Edit time off", modal DateRangeCalendar keyed per request, prefilled reason, Save + Delete + Cancel).
+- Calendar section is new-request only; inline Reason/Save/Delete/"Cancel edit" removed; calendar disabled while modal is open.
+- Admin-added requests render read-only in the modal ("Added by your admin", only Close).
+- Shared closeModal handles overlay tap, Android back, and Cancel; clears selection and errors.
+- Modal sheet wrapped in ScrollView (maxHeight 90%) for small screens.
+- tsc --noEmit from app/: exit 0.
+Test plan: .claude/test-plans/2026-09-05_field-tech-timeoff-edit-in-modal-smoke.html
+Forward contracts: FC-R3-1 — Jeff runs the round-3 HTML smoke plan (C1–C11) on device and returns the saved file. FC-R2-1 remains open (re-run B1/B6/B8; folded into C11).
+Deviations / Defects: none.
 </content>
