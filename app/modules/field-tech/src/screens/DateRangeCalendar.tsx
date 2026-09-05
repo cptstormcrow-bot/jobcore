@@ -35,6 +35,7 @@ import {
   isSameDay,
   isSameMonth,
   isBefore,
+  isAfter,
   isWithinInterval,
 } from 'date-fns';
 
@@ -48,6 +49,8 @@ export interface DateRangeCalendarProps {
   disabled?: boolean;
   markedRanges?: { id: string; startDate: string; endDate: string }[];
   onSelectMarkedDay?: (id: string) => void;
+  /** Fires after any non-marked day tap once start/end have been updated. */
+  onDayTapped?: (day: Date) => void;
 }
 
 function parseIsoDate(value: string): Date | null {
@@ -70,6 +73,7 @@ export function DateRangeCalendar({
   disabled = false,
   markedRanges = [],
   onSelectMarkedDay,
+  onDayTapped,
 }: DateRangeCalendarProps): React.ReactElement {
   const parsedStart = parseIsoDate(startDate);
   const parsedEnd = parseIsoDate(endDate);
@@ -100,17 +104,26 @@ export function DateRangeCalendar({
       onSelectMarkedDay(mId);
       return;
     }
-    if (parsedStart === null || parsedEnd !== null) {
-      onChangeStartDate(toIsoDate(day));
-      onChangeEndDate('');
+    if (
+      parsedStart === null ||
+      (parsedEnd !== null && isSameDay(parsedStart, parsedEnd) && isAfter(day, parsedStart))
+    ) {
+      if (parsedStart === null) {
+        onChangeStartDate(toIsoDate(day));
+      }
+      onChangeEndDate(toIsoDate(day));
+      onDayTapped?.(day);
       return;
     }
     if (isBefore(day, parsedStart)) {
       onChangeStartDate(toIsoDate(day));
       onChangeEndDate(toIsoDate(parsedStart));
+      onDayTapped?.(day);
       return;
     }
+    onChangeStartDate(toIsoDate(day));
     onChangeEndDate(toIsoDate(day));
+    onDayTapped?.(day);
   }
 
   function isInRange(day: Date): boolean {

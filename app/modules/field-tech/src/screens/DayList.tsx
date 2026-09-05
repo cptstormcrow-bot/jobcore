@@ -23,10 +23,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { addDays, isSameDay, format } from 'date-fns';
+import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, Toggle, ScreenTitle, WeekView, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, Toggle, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
 import { isActiveTimeOffStatus, type TimeOffRequest } from '../data/ports';
 
 /** Props for `DayList`. */
@@ -107,6 +107,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
   // rows spawned by sales-marketing's "Spawn Test Jobs" flow.
   const [showBeta, setShowBeta] = useState(false);
   const [anchorDay, setAnchorDay] = useState(() => new Date());
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const visibleJobs = jobs.filter((job) => isBetaVisible(job, showBeta));
   const todayJobs = useMemo(() => {
     const today = new Date();
@@ -180,7 +181,8 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
     onOpenJob?.(job.id);
   };
 
-  const weekLabel = format(anchorDay, 'MMM d, yyyy');
+  const weekLabel =
+    viewMode === 'week' ? format(anchorDay, 'MMM d, yyyy') : format(anchorDay, 'MMMM yyyy');
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
@@ -213,29 +215,62 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
       )}
 
       <View style={styles.weekHeader}>
-        <ScreenTitle title="This Week" />
+        <ScreenTitle title={viewMode === 'week' ? 'This Week' : 'This Month'} />
         <View style={styles.weekNav}>
-          <Pressable style={styles.navButton} onPress={() => setAnchorDay((d) => addDays(d, -7))}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() =>
+              setAnchorDay((d) => (viewMode === 'week' ? addDays(d, -7) : addMonths(d, -1)))
+            }
+          >
             <Text style={styles.navButtonText}>Prev</Text>
           </Pressable>
           <Pressable style={styles.navButton} onPress={() => setAnchorDay(new Date())}>
             <Text style={styles.navButtonText}>Today</Text>
           </Pressable>
-          <Pressable style={styles.navButton} onPress={() => setAnchorDay((d) => addDays(d, 7))}>
+          <Pressable
+            style={styles.navButton}
+            onPress={() =>
+              setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7) : addMonths(d, 1)))
+            }
+          >
             <Text style={styles.navButtonText}>Next</Text>
           </Pressable>
         </View>
         <Text style={styles.weekLabel}>{weekLabel}</Text>
       </View>
-      <View style={styles.weekStrip}>
-        <WeekView
-          jobs={visibleJobs}
-          anchorDay={anchorDay}
-          timeOffEvents={timeOffEvents}
-          onSelectJob={(job) => handleOpenJob(job)}
-          onSelectTimeOff={onOpenTimeOff}
-        />
-      </View>
+      <TabBar
+        items={[
+          { key: 'week', label: 'Week' },
+          { key: 'month', label: 'Month' },
+        ]}
+        activeKey={viewMode}
+        onSelect={(k) => setViewMode(k as 'week' | 'month')}
+        style={styles.modeToggle}
+      />
+      {viewMode === 'week' ? (
+        <View style={styles.weekStrip}>
+          <WeekView
+            jobs={visibleJobs}
+            anchorDay={anchorDay}
+            timeOffEvents={timeOffEvents}
+            onSelectJob={(job) => handleOpenJob(job)}
+            onSelectTimeOff={onOpenTimeOff}
+          />
+        </View>
+      ) : (
+        <View style={styles.monthStrip}>
+          <MonthView
+            jobs={visibleJobs}
+            anchorDay={anchorDay}
+            timeOffEvents={timeOffEvents}
+            onSelectDay={(day) => {
+              setAnchorDay(day);
+              setViewMode('week');
+            }}
+          />
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -314,6 +349,13 @@ const styles = StyleSheet.create({
   },
   weekStrip: {
     height: 260,
+    marginTop: spacing.sm,
+  },
+  modeToggle: {
+    marginTop: spacing.sm,
+    paddingHorizontal: 0,
+  },
+  monthStrip: {
     marginTop: spacing.sm,
   },
 });

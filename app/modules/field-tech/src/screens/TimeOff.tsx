@@ -27,7 +27,7 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, Pressable, Modal } from 'react-native';
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
@@ -76,6 +76,8 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
   const [cancellingId, setCancellingId] = React.useState<string | null>(null);
   const [cancelError, setCancelError] = React.useState<string | null>(null);
+
+  const [showRequestModal, setShowRequestModal] = React.useState(false);
 
   const loadRequests = React.useCallback(() => {
     if (session === null) {
@@ -138,6 +140,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     setEndDate('');
     setReason('');
     setSubmitError(null);
+    setShowRequestModal(false);
   }
 
   React.useEffect(() => {
@@ -173,6 +176,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
       setStartDate('');
       setEndDate('');
       setReason('');
+      setShowRequestModal(false);
       loadRequests();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Failed to submit time-off request.');
@@ -280,9 +284,13 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
           onChangeEndDate={setEndDate}
           disabled={submitting || isAdminAdded}
           onSelectMarkedDay={(id) => select(id)}
+          onDayTapped={() => { if (selectedId === null) setShowRequestModal(true); }}
           markedRanges={activeRequests.map((r) => ({ id: r.id, startDate: r.startDate, endDate: r.endDate }))}
         />
+        {selectedId !== null ? (
         <Text style={styles.label}>Reason (optional)</Text>
+        ) : null}
+        {selectedId !== null ? (
         <TextInput
           style={[styles.input, styles.reasonInput]}
           value={reason}
@@ -291,15 +299,8 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
           editable={!submitting && !isAdminAdded}
           multiline
         />
-        {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        {selectedId === null ? (
-        <Button
-          label={submitting ? 'Submitting…' : 'Submit request'}
-          disabled={!canSubmit}
-          onPress={handleSubmit}
-          style={styles.submitButton}
-        />
         ) : null}
+        {selectedId !== null && submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
         {selectedId !== null && !isAdminAdded ? (
         <>
         <Button label={submitting ? 'Saving…' : 'Save'} disabled={submitting} onPress={handleSave} style={styles.submitButton} />
@@ -347,6 +348,44 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
         )}
       </View>
       </ScrollView>
+      <Modal
+        visible={showRequestModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRequestModal(false)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setShowRequestModal(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <Text style={styles.modalTitle}>Request time off</Text>
+            <Text style={styles.modalRange}>
+              {startDate && endDate ? `${formatDate(startDate)} – ${formatDate(endDate)}` : ''}
+            </Text>
+            <Text style={styles.label}>Reason (optional)</Text>
+            <TextInput
+              style={[styles.input, styles.reasonInput]}
+              value={reason}
+              onChangeText={setReason}
+              placeholder="Reason for time off"
+              multiline
+            />
+            {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
+            <View style={styles.modalButtons}>
+              <Button
+                label="Cancel"
+                variant="outline"
+                onPress={() => setShowRequestModal(false)}
+                style={styles.cancelButton}
+              />
+              <Button
+                label={submitting ? 'Submitting…' : 'Submit'}
+                disabled={!canSubmit}
+                onPress={handleSubmit}
+                style={styles.submitButton}
+              />
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -427,4 +466,9 @@ const styles = StyleSheet.create({
     color: '#b00020',
     marginTop: 8,
   },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  sheet: { width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 16 },
+  modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
+  modalRange: { fontSize: 15, marginBottom: 8 },
+  modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },
 });
