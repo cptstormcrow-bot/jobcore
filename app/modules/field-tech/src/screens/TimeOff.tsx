@@ -27,7 +27,7 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, Pressable, Modal } from 'react-native';
+import { View, Text, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
@@ -341,6 +341,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
         onRequestClose={closeModal}
       >
         <Pressable style={styles.overlay} onPress={closeModal}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetWrap}>
           <Pressable style={styles.sheet} onPress={() => {}}>
             <ScrollView keyboardShouldPersistTaps="handled">
               <Text style={styles.modalTitle}>{selectedRequest !== null ? 'Edit time off' : 'Request time off'}</Text>
@@ -407,6 +408,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
               </View>
             </ScrollView>
           </Pressable>
+          </KeyboardAvoidingView>
         </Pressable>
       </Modal>
     </View>
@@ -490,7 +492,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  sheet: { width: '100%', maxHeight: '90%', backgroundColor: '#fff', borderRadius: 8, padding: 16 },
+  sheetWrap: { width: '100%', maxHeight: '90%' },
+  sheet: { width: '100%', flexShrink: 1, backgroundColor: '#fff', borderRadius: 8, padding: 16 },
   modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
   modalRange: { fontSize: 15, marginBottom: 8 },
   modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },

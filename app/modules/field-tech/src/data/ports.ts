@@ -355,7 +355,7 @@ export function toTimeOffRequest(row: TimeOffRequestRow): TimeOffRequest {
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    createdByAdminId: row.created_by_admin_id,
+    createdByAdminId: row.created_by_admin_id ?? null,
   };
 }
 
