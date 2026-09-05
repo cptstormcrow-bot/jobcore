@@ -26,6 +26,7 @@ import type {
   JobRow,
   JobSchedulingPatch,
   JobDetailsPatch,
+  JobLifecyclePatch,
   PriceSheetRepository,
   PayPeriodRepository,
   LeadRepository,
@@ -68,12 +69,13 @@ import type {
   JobEstimateLineItemDraft,
   JobEstimateInput,
 } from '../../../../modules/admin-finance/src/data/ports';
-import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../../../../modules/admin-finance/src/data/ports';
+import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import type { PriceSheet } from '../../../../modules/admin-finance/src/money/types';
 import type { PayPeriod } from '../../../../modules/admin-finance/src/money/rollup';
-import type { Lead } from '../../../../modules/admin-finance/src/domain/lead';
+import type { Lead, LeadRow } from '../../../../modules/admin-finance/src/domain/lead';
+import type { LeadPatch } from '../../../../modules/admin-finance/src/data/ports';
 import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qualify';
 import type { NewLeadDraft } from '../../../../modules/admin-finance/src/domain/intake-normalize';
 import type { CommissionLine } from '../../../../modules/admin-finance/src/money/types';
@@ -253,6 +255,28 @@ export function createJobRepository(): JobRepository {
       return toJob(data as JobRow);
     },
 
+    async patchLifecycle(jobId: string, patch: JobLifecyclePatch): Promise<Job> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job.patch_lifecycle', occurredAt, { jobId, patch });
+
+      const update: Record<string, string | null> = {};
+      if ('enRouteAt' in patch) update.en_route_at = patch.enRouteAt ?? null;
+      if ('inProgressAt' in patch) update.in_progress_at = patch.inProgressAt ?? null;
+      if ('completedAt' in patch) update.completed_at = patch.completedAt ?? null;
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .update(update)
+        .eq('id', jobId)
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.patchLifecycle', error.message, { jobId, patch });
+        throw new Error(`patchLifecycle failed: ${error.message}`);
+      }
+      return toJob(data as JobRow);
+    },
+
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('job.update_details', occurredAt, { jobId, patch });
@@ -263,9 +287,15 @@ export function createJobRepository(): JobRepository {
           address: patch.address,
           description: patch.description,
           house_age_years: patch.houseAgeYears,
+          ingress_instructions: patch.ingressInstructions,
           scheduled_start: patch.scheduledStart,
           scheduled_end: patch.scheduledEnd,
           service_area_id: patch.serviceAreaId,
+          permit_status: patch.permitStatus,
+          parking_available: patch.parkingAvailable,
+          rooms: patch.rooms,
+          panel_info: patch.panelInfo,
+          considerations: patch.considerations,
         })
         .eq('id', jobId)
         .select('*')
@@ -297,8 +327,15 @@ export function createJobRepository(): JobRepository {
           scheduled_end: rest.scheduledEnd,
           address: rest.address,
           description: rest.description,
+          house_age_years: rest.houseAgeYears ?? null,
+          ingress_instructions: rest.ingressInstructions ?? null,
           assigned_tech_id: rest.assignedTechId,
           service_area_id: serviceAreaId,
+          permit_status: rest.permitStatus,
+          parking_available: rest.parkingAvailable,
+          rooms: rest.rooms,
+          panel_info: rest.panelInfo,
+          considerations: rest.considerations,
         })
         .select('*')
         .single();
@@ -447,7 +484,7 @@ export function createLeadRepository(): LeadRepository {
       if (error) {
         throw new Error(`listForOrganization failed: ${error.message}`);
       }
-      return (data ?? []) as Lead[];
+      return (data ?? []).map((row) => toLead(row as LeadRow));
     },
 
     async markQualified(leadId: string, jobId: string, qualifiedAt: string): Promise<Lead> {
@@ -463,19 +500,54 @@ export function createLeadRepository(): LeadRepository {
         logSyncFailure('admin-finance-repos.markQualified', error.message, { leadId, jobId });
         throw new Error(`markQualified failed: ${error.message}`);
       }
-      return data as Lead;
+      return toLead(data as LeadRow);
     },
 
     async create(draft: NewLeadDraft): Promise<Lead> {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('lead.create', occurredAt, draft);
 
-      const { data, error } = await supabase.from('leads').insert(draft).select('*').single();
+      const { data, error } = await supabase
+        .from('leads')
+        .insert({
+          organization_id: draft.organizationId,
+          source_form: draft.sourceForm,
+          name: draft.name,
+          phone: draft.phone,
+          email: draft.email,
+          service: draft.service,
+          preferred_date: draft.preferredDate,
+          preferred_time: draft.preferredTime,
+          address: draft.address,
+          project_details: draft.projectDetails,
+          source: draft.source,
+          payer: draft.payer,
+          attach_timing: draft.attachTiming,
+        })
+        .select('*')
+        .single();
       if (error) {
         logSyncFailure('admin-finance-repos.createLead', error.message, { draft });
         throw new Error(`create lead failed: ${error.message}`);
       }
-      return data as Lead;
+      return toLead(data as LeadRow);
+    },
+
+    async update(leadId: string, patch: LeadPatch): Promise<Lead> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('lead.update', occurredAt, { leadId, patch });
+
+      const { data, error } = await supabase
+        .from('leads')
+        .update(toLeadRowPatch(patch))
+        .eq('id', leadId)
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.updateLead', error.message, { leadId, patch });
+        throw new Error(`update lead failed: ${error.message}`);
+      }
+      return toLead(data as LeadRow);
     },
   };
 }
@@ -720,11 +792,24 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
         job_id: draft.jobId,
         tech_id: draft.techId,
         assigned_at: draft.assignedAt,
+        kind: draft.kind ?? 'installer',
       });
       if (error) {
         logSyncFailure('admin-finance-repos.createJobAssignment', error.message, { organizationId, draft });
         throw new Error(`create job assignment failed: ${error.message}`);
       }
+    },
+
+    async getInvestigatorTechId(jobId: string): Promise<string | null> {
+      const { data, error } = await supabase
+        .from('job_assignments')
+        .select('tech_id, assigned_at')
+        .eq('job_id', jobId)
+        .eq('kind', 'investigator')
+        .order('assigned_at', { ascending: false })
+        .limit(1);
+      if (error) throw new Error(`get investigator tech failed: ${error.message}`);
+      return (data?.[0]?.tech_id as string | undefined) ?? null;
     },
   };
 }
@@ -1404,6 +1489,13 @@ export function createPaymentsRepository(): PaymentsRepository {
       }
       return ((data ?? []) as PaymentRow[]).map(toPayment);
     },
+    async listForJob(jobId: string): Promise<Payment[]> {
+      const { data, error } = await supabase.from('payments').select('*').eq('job_id', jobId);
+      if (error) {
+        throw new Error(`list job payments failed: ${error.message}`);
+      }
+      return ((data ?? []) as PaymentRow[]).map(toPayment);
+    },
   };
 }
 
@@ -1548,6 +1640,7 @@ export function createCustomerRepository(): CustomerRepository {
       const { data, error } = await supabase
         .from('customers')
         .insert({
+          organization_id: input.organizationId,
           name: input.name,
           phone: input.phone,
           email: input.email,
@@ -1592,6 +1685,10 @@ function toJobPlanningDetails(row: {
   parts_list: string | null;
   measurements: string | null;
   instructions: string | null;
+  ingress_notes: string | null;
+  logistics_notes: string | null;
+  parking_notes: string | null;
+  state_assessment: string | null;
   updated_at: string;
   updated_by: string | null;
 }): JobPlanningDetails {
@@ -1602,6 +1699,10 @@ function toJobPlanningDetails(row: {
     partsList: row.parts_list,
     measurements: row.measurements,
     instructions: row.instructions,
+    ingressNotes: row.ingress_notes,
+    logisticsNotes: row.logistics_notes,
+    parkingNotes: row.parking_notes,
+    stateAssessment: row.state_assessment,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
   };
@@ -1636,6 +1737,10 @@ export function createJobPlanningRepository(): JobPlanningRepository {
             parts_list: details.partsList,
             measurements: details.measurements,
             instructions: details.instructions,
+            ingress_notes: details.ingressNotes,
+            logistics_notes: details.logisticsNotes,
+            parking_notes: details.parkingNotes,
+            state_assessment: details.stateAssessment,
             updated_at: occurredAt,
             updated_by: userId,
           },

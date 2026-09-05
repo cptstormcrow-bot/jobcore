@@ -18,6 +18,7 @@ import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { Card, Button, EmptyState, colors, spacing, typography } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import type { NewLeadDraft } from '../domain/intake-normalize';
+import { DEFAULT_AXIS_VALUES } from '../domain/intake-normalize';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -38,9 +39,9 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
   const [preferredTime, setPreferredTime] = useState('');
   const [address, setAddress] = useState('');
   const [projectDetails, setProjectDetails] = useState('');
-  const [source, setSource] = useState('direct');
-  const [payer, setPayer] = useState('customer');
-  const [attachTiming, setAttachTiming] = useState('at_purchase');
+  const [source, setSource] = useState<string>(DEFAULT_AXIS_VALUES.source);
+  const [payer, setPayer] = useState<string>(DEFAULT_AXIS_VALUES.payer);
+  const [attachTiming, setAttachTiming] = useState<string>(DEFAULT_AXIS_VALUES.attachTiming);
 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -53,7 +54,9 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
     );
   }
 
-  const canSubmit = name.trim().length > 0 && !submitting;
+  const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const dateValid = preferredDate.trim() === '' || ISO_DATE_RE.test(preferredDate.trim());
+  const canSubmit = name.trim().length > 0 && dateValid && !submitting;
 
   async function handleSubmit() {
     if (!canSubmit || !session) {
@@ -93,7 +96,7 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
         <Card style={styles.card}>
           <Text style={styles.title}>New lead</Text>
           <Text style={styles.guidance}>
-            Capture the caller's name, number, and address — everything else can wait.
+            Capture the caller&apos;s name, number, and address — everything else can wait.
           </Text>
 
           <Text style={styles.label}>Name</Text>
@@ -142,6 +145,7 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
             placeholder="YYYY-MM-DD"
             placeholderTextColor={colors.textLight}
           />
+          {!dateValid && <Text style={styles.errorText}>Use YYYY-MM-DD.</Text>}
 
           <Text style={styles.label}>Preferred time</Text>
           <TextInput

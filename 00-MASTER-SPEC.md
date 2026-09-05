@@ -1,3 +1,9 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "Jobcore — Master Specification"
+origin: Codespace/SDAssemblyPros/Jobcore/00-MASTER-SPEC.md
+tags: [sdassemblypros, jobcore]
+---
 # Jobcore — Master Specification
 
 > **What this file is.** The durable source of truth for a modular, cross-platform field-service
@@ -120,12 +126,12 @@ Replace the single `channel` enum. These three facts drive three unrelated subsy
 
 | Field | Values | Drives |
 |---|---|---|
-| `source` | `direct \| home_depot \| wayfair \| other_partner` | attribution + marketing reporting |
+| `source` | `website \| costco \| ikea \| owm` | attribution + marketing reporting |
 | `payer` | `customer \| partner` | the tech's completion branch; the QR page's first state |
 | `attach_timing` | `at_purchase \| after_the_fact` | **which price-sheet rate applies** |
 
-Worked example: a Home Depot customer who books assembly on the site *later* is
-`source=home_depot, payer=customer, attach_timing=after_the_fact`. No single enum expresses that
+Worked example: a Costco customer who books assembly on the site *later* is
+`source=costco, payer=customer, attach_timing=after_the_fact`. No single enum expresses that
 without producing a wrong "collect payment" screen or a wrong rate.
 
 Both `leads` and `jobs` carry all three fields.

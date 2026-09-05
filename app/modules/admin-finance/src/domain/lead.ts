@@ -8,11 +8,11 @@
  * fields the `jobs` table carries, so a lead can convert into a job with no
  * lossy translation.
  *
- * `attachTiming` is plain `string | null` here, NOT an enum — unlike
- * `Job.attachTiming` in `@jobcore/core`, the `leads.attach_timing` column is
- * untyped `text` at the DB level (no check constraint, no enum), so widening
- * it into a closed union would be inventing a constraint the schema does not
- * actually enforce.
+ * `source`/`payer`/`attachTiming` are plain `string | null` here, NOT enums.
+ * Since `0022_leads_source_check.sql`, `source` IS constrained at the DB
+ * level (website|costco|ikea|owm) but is kept as `string | null` at this
+ * layer rather than a closed union — see `domain/intake-normalize.ts`'s
+ * `SOURCE_VALUES`/`AxisField` for the enforced picker-facing union.
  *
  * `name` and `createdAt` are the only fields the DB marks `not null`
  * (besides `id`/`organizationId`) — every other intake field mirrors the
@@ -66,10 +66,10 @@ export interface Lead {
 }
 
 /**
- * Map a `leads` row to the domain `Lead`. No enum validation is needed here
- * (unlike `toJob`) because every nullable text column on this table is
- * genuinely untyped free text at the DB level — there is nothing to fail
- * closed against.
+ * Map a `leads` row to the domain `Lead`. No enum validation is done here
+ * (unlike `toJob`) even though `source` is now DB-constrained since 0022 —
+ * this mapper stays a passthrough; enforcement lives at the picker layer
+ * (`domain/intake-normalize.ts`'s `SOURCE_VALUES`).
  */
 export function toLead(row: LeadRow): Lead {
   return {

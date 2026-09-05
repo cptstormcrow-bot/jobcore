@@ -31,15 +31,17 @@
   </p>
   <p>
     Everything else under <code>modules/admin-finance/src/screens/</code> —
-    <code>LeadInboxScreen</code>, <code>QualifyScreen</code>, <code>AssignmentBoardScreen</code>,
+    <code>AssignmentBoardScreen</code>,
     <code>CloseOutQueueScreen</code>, <code>CloseOutReviewScreen</code>, <code>PayoutBatchScreen</code>,
     <code>PriceSheetListScreen</code>, <code>PriceSheetEditorScreen</code>,
     <code>ReimbursementQueueScreen</code>, <code>ReportsScreen</code>, and <code>AuditLogScreen</code> — is
-    real, substantial code (lead intake/normalization, qualify/assign/close-out flows, payout batches,
+    real, substantial code (assign/close-out flows, payout batches,
     price sheets, reimbursements, reporting, an audit log) sitting behind a rich domain and money layer
     (<code>src/domain/</code>, <code>src/money/</code>, <code>src/reporting/</code>, <code>src/flows/</code>).
     None of it appears in <code>adminFinanceModule.routes</code> or <code>navEntries</code>, so none of it is
     reachable by navigating the running app today. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    <code>LeadInboxScreen</code> (titled "Leads") and <code>QualifyScreen</code> are the exception —
+    reachable via the Leads tab, described below.
     The walkthroughs below narrate this fuller screen set as the module's intended day-to-day shape, with
     every screen name honestly badged for its current reachability.
   </p>
@@ -66,11 +68,10 @@
       <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>.
     </li>
     <li>
-      <strong>Triage new leads.</strong> <code>LeadInboxScreen</code> would surface leads normalized by
-      <code>domain/intake-normalize.ts</code> from <code>data/intake-adapter.ts</code> /
-      <code>mock-feed-adapter.ts</code> / <code>manual-entry-adapter.ts</code>, moving a lead toward
-      <a href="#state-qualified">state-qualified</a> via <code>flows/qualify-lead.ts</code> and
-      <code>QualifyScreen</code>. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      <strong>Triage new leads.</strong> The Leads tab lists unconverted leads newest first behind a New Lead button;
+      opening one goes to <code>LeadEditScreen</code> (every field editable, Save); its Create Job
+      button runs <code>flows/qualify-lead.ts</code> (<code>QualifyScreen</code>) to reach
+      <a href="#state-qualified">state-qualified</a>. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
     </li>
     <li>
       <strong>Assign the job.</strong> <code>AssignmentBoardScreen</code>, backed by

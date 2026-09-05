@@ -12,7 +12,9 @@ import type { Job, JobStatus, Commission, Profile, Role, VehicleStatus, ToolStat
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
+export type { Lead } from '../domain/lead';
 export type { LeadRow } from '../domain/lead';
+import type { LeadPatchInput as LeadPatch } from './lead-repo';
 export { toLead } from '../domain/lead';
 import type { JobDraft } from '../domain/qualify';
 import type { NewLeadDraft } from '../domain/intake-normalize';
@@ -29,6 +31,7 @@ import type { CommissionLine } from '../money/types';
  */
 export interface JobRow {
   id: string;
+  job_number: number | null;
   organization_id: string;
   status: string;
   customer_id: string | null;
@@ -53,6 +56,7 @@ export interface JobRow {
   rooms: string[] | null;
   panel_info: string | null;
   considerations: string | null;
+  ingress_instructions: string | null;
   service_area_id: string | null;
 }
 
@@ -93,6 +97,7 @@ export function toJob(row: JobRow): Job {
   }
   return {
     id: row.id,
+    jobNumber: row.job_number ?? null,
     organizationId: row.organization_id,
     status: row.status,
     customerId: row.customer_id,
@@ -112,6 +117,12 @@ export function toJob(row: JobRow): Job {
     createdAt: row.created_at,
     isBeta: row.is_beta ?? false,
     houseAgeYears: row.house_age_years ?? null,
+    permitStatus: row.permit_status,
+    parkingAvailable: row.parking_available,
+    rooms: row.rooms,
+    panelInfo: row.panel_info,
+    considerations: row.considerations,
+    ingressInstructions: row.ingress_instructions,
     service_area_id: row.service_area_id,
   };
 }
@@ -142,7 +153,9 @@ export type JobSchedulingPatch = Partial<
  * of this patch — `@jobcore/core`'s `Job` type declares
  * `houseAgeYears?: number | null`.
  */
-export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'houseAgeYears'>> & {
+export type JobLifecyclePatch = { enRouteAt?: string | null; inProgressAt?: string | null; completedAt?: string | null };
+
+export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'houseAgeYears' | 'ingressInstructions'>> & {
   serviceAreaId?: string | null;
   permitStatus?: string | null;
   parkingAvailable?: string | null;
@@ -183,6 +196,7 @@ export interface JobRepository {
    * comment above.
    */
   updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job>;
+  patchLifecycle(jobId: string, patch: JobLifecyclePatch): Promise<Job>;
   create(draft: JobDraft): Promise<Job>;
   /**
    * Persists the result of an in-memory `applyTransition`/`transitionJob`
@@ -239,10 +253,14 @@ export interface PayPeriodRepository {
 }
 
 /**
- * Read + qualify-write access to leads (P3e.5, P3f.5c). `listForOrganization`
- * is P3e.5's read; `markQualified` is P3-f's one write, added once qualifying
- * a lead (filling in the missing fields `lead-readiness.ts` reports) and
- * converting it into a job became this group's concern.
+ * Read + qualify-write + patch access to leads (P3e.5, P3f.5c, S2).
+ * `listForOrganization` is P3e.5's read; `markQualified` is P3-f's one
+ * write, added once qualifying a lead (filling in the missing fields
+ * `lead-readiness.ts` reports) and converting it into a job became this
+ * group's concern. `update` (S2) is the admin-finance overview's
+ * edit-a-lead seam, backed by `data/lead-repo.ts`'s `updateLead`/
+ * `toLeadRowPatch` — `LeadPatch` is that file's `LeadPatchInput`,
+ * re-exported here so callers depend only on `ports.ts`.
  *
  * `markQualified` stamps the SAME two columns `toLead`/`LeadRow` already
  * declare (`leads.qualified_at`, `leads.converted_job_id` —
@@ -262,7 +280,25 @@ export interface LeadRepository {
    * unqualified lead.
    */
   create(draft: NewLeadDraft): Promise<Lead>;
+  /**
+   * Patches the editable subset of a lead (`LeadPatch`) via the same
+   * `.update().select().single()` + `toLead()` remap pattern
+   * `JobRepository.updateDetails` uses. Backed by `data/lead-repo.ts`'s
+   * `updateLead`; excludes identity/derived fields the same way
+   * `LeadPatch` does.
+   */
+  update(leadId: string, patch: LeadPatch): Promise<Lead>;
 }
+
+/**
+ * Re-exported alias of `data/lead-repo.ts`'s `LeadPatchInput` — this file
+ * cannot import from `lead-repo.ts` (repo files depend on `ports.ts`, not
+ * the reverse), so the type is declared there and named here via `import
+ * type` + re-export, letting `LeadRepository.update` reference it without
+ * a circular import.
+ */
+export type { LeadPatchInput as LeadPatch } from './lead-repo';
+export { toLeadRowPatch } from './lead-repo';
 
 /* ------------------------------------------------------------------ *
  * Tech + assignment ports (P3g.6a — additive, supporting the assignment
@@ -456,6 +492,7 @@ export interface ServiceAreaRow {
   organization_id: string;
   name: string;
   created_at: string;
+  zip_codes: string[] | null;
 }
 
 /** Domain (camelCase) shape of one `service_areas` row. */
@@ -464,6 +501,7 @@ export interface ServiceArea {
   organizationId: string;
   name: string;
   createdAt: string;
+  zipCodes: string[];
 }
 
 /** Maps a `service_areas` row to its domain shape. Pure, no validation needed — every column is already well-typed at the wire boundary, same as `toTechServiceArea`. */
@@ -473,6 +511,7 @@ export function toServiceArea(row: ServiceAreaRow): ServiceArea {
     organizationId: row.organization_id,
     name: row.name,
     createdAt: row.created_at,
+    zipCodes: row.zip_codes ?? [],
   };
 }
 
@@ -495,9 +534,13 @@ export interface JobAssignmentDraft {
   kind?: 'installer' | 'investigator';
 }
 
-/** Write access to `job_assignments`. Insert-only — no update/delete needed by this group. */
+/**
+ * Write access to `job_assignments`. Creates assignments (kind `installer`
+ * or `investigator`) and reads back the latest investigator tech for a job.
+ */
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
+  getInvestigatorTechId(jobId: string): Promise<string | null>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -551,7 +594,9 @@ export function toCustomer(row: CustomerRow): Customer {
  * `createdAt` are implementation-assigned on `create`, same invariant as
  * `JobAssignmentDraft`.
  */
-export type CustomerCreateInput = Pick<Customer, 'name' | 'phone' | 'email' | 'address'>;
+export type CustomerCreateInput = Pick<Customer, 'name' | 'phone' | 'email' | 'address'> & {
+  organizationId: string;
+};
 
 /** Patch shape for `CustomerRepository.update` — same `Partial<Pick<...>>` convention as `JobSchedulingPatch`. */
 export type CustomerPatch = Partial<Pick<Customer, 'name' | 'phone' | 'email' | 'address'>>;
@@ -919,6 +964,7 @@ export function toPayment(row: PaymentRow): Payment {
 export interface PaymentsRepository {
   listNeedingAttention(organizationId: string): Promise<Payment[]>;
   listManuallyConfirmed(organizationId: string): Promise<Payment[]>;
+  listForJob(jobId: string): Promise<Payment[]>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -932,6 +978,10 @@ export interface JobPlanningDetails {
   partsList: string | null;
   measurements: string | null;
   instructions: string | null;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
+  stateAssessment: string | null;
   updatedAt: string;
   updatedBy: string | null;
 }
@@ -941,6 +991,10 @@ export interface JobPlanningDetailsInput {
   partsList?: string | null;
   measurements?: string | null;
   instructions?: string | null;
+  ingressNotes?: string | null;
+  logisticsNotes?: string | null;
+  parkingNotes?: string | null;
+  stateAssessment?: string | null;
 }
 
 export interface JobPlanningPhoto {

@@ -31,6 +31,7 @@ import { validateQualify } from '../domain/qualify';
 import type { ServiceArea } from '../data/ports';
 import {
   AxisPicker,
+  asAxisValue,
   SOURCE_VALUES,
   PAYER_VALUES,
   ATTACH_TIMING_VALUES,
@@ -52,13 +53,10 @@ export interface QualifyScreenProps {
   serviceAreas?: ServiceArea[];
   onSubmit?: (selection: QualifyAxisSelection) => void;
   onCancel?: () => void;
+  disabled?: boolean;
 }
 
-function asAxisValue<T extends string>(values: readonly T[], value: string | null): T | null {
-  return value !== null && (values as readonly string[]).includes(value) ? (value as T) : null;
-}
-
-export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: QualifyScreenProps) {
+export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel, disabled }: QualifyScreenProps) {
   const [source, setSource] = useState<SourceValue | null>(() => asAxisValue(SOURCE_VALUES, lead.source));
   const [payer, setPayer] = useState<PayerValue | null>(() => asAxisValue(PAYER_VALUES, lead.payer));
   const [attachTiming, setAttachTiming] = useState<AttachTimingValue | null>(() =>
@@ -94,7 +92,7 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: Q
   ];
 
   function handleSubmit() {
-    if (!canSubmit || !onSubmit) {
+    if (!canSubmit || !onSubmit || disabled) {
       return;
     }
     onSubmit({ source, payer, attachTiming, serviceAreaId } as QualifyAxisSelection);
@@ -171,7 +169,7 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel }: Q
 
           <View style={styles.actions}>
             {onCancel && <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.action} />}
-            <Button label="Qualify" onPress={handleSubmit} disabled={!canSubmit} style={styles.action} />
+            <Button label="Qualify" onPress={handleSubmit} disabled={!canSubmit || disabled} style={styles.action} />
           </View>
         </Card>
       </ScrollView>

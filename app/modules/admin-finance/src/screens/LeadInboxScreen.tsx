@@ -15,7 +15,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { Button, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { selectInboxLeads } from '../domain/lead-inbox';
 import type { LeadRepository } from '../data/ports';
@@ -25,6 +25,7 @@ import { getModuleSession } from '../lib/module-session';
 export interface LeadInboxScreenProps {
   leads?: LeadRepository;
   onSelectLead?: (lead: Lead) => void;
+  onCreateLead?: () => void;
 }
 
 type LoadState =
@@ -33,7 +34,7 @@ type LoadState =
   | { kind: 'loaded'; leads: Lead[] }
   | { kind: 'failed'; message: string };
 
-export function LeadInboxScreen({ leads: leadRepository, onSelectLead }: LeadInboxScreenProps = {}) {
+export function LeadInboxScreen({ leads: leadRepository, onSelectLead, onCreateLead }: LeadInboxScreenProps = {}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const session = getModuleSession();
 
@@ -62,7 +63,7 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead }: LeadInb
   if (!session) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Lead inbox" message="Sign in to view this organization's leads." />
+        <EmptyState title="Leads" message="Sign in to view this organization's leads." />
       </View>
     );
   }
@@ -70,7 +71,7 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead }: LeadInb
   if (!leadRepository) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Lead inbox" message="No data source is connected for this module yet." />
+        <EmptyState title="Leads" message="No data source is connected for this module yet." />
       </View>
     );
   }
@@ -96,7 +97,8 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead }: LeadInb
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title="Lead Inbox" />
+        <ScreenTitle title="Leads" />
+        <Button label="New Lead" onPress={() => onCreateLead?.()} disabled={!onCreateLead} style={styles.action} />
         {inboxLeads.length === 0 ? (
           <EmptyState title="No leads" message="This organization has no unconverted leads." />
         ) : (
@@ -123,5 +125,8 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  action: {
+    marginBottom: spacing.sm,
   },
 });

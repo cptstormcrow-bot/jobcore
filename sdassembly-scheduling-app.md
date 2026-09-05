@@ -1,3 +1,9 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "Plan — Modular Field-Service Scheduling App: Descriptive Prompt Series"
+origin: Codespace/SDAssemblyPros/Jobcore/sdassembly-scheduling-app.md
+tags: [sdassemblypros, jobcore]
+---
 # Plan — Modular Field-Service Scheduling App: Descriptive Prompt Series
 
 > **Naming note:** this file carries a harness-assigned whimsy name. Jeff's `NAME:` directive
@@ -358,12 +364,12 @@ subsystems:
 
 | Field | Values | Drives |
 |---|---|---|
-| `source` | `direct \| home_depot \| wayfair \| other_partner` | attribution + marketing reporting |
+| `source` | `website \| costco \| ikea \| owm` | attribution + marketing reporting |
 | `payer` | `customer \| partner` | tech's completion branch; QR page's first state |
 | `attach_timing` | `at_purchase \| after_the_fact` | **which price-sheet rate applies** |
 
-Jeff's case — a Home Depot customer who books assembly on the site later — is
-`source=home_depot, payer=customer, attach_timing=after_the_fact`, which no single enum can express
+Jeff's case — a Costco customer who books assembly on the site later — is
+`source=costco, payer=customer, attach_timing=after_the_fact`, which no single enum can express
 without a wrong "collect payment" screen or a wrong rate.
 
 ### Price sheet — Admin-owned, published as a versioned contract

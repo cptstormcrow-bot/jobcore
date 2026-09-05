@@ -45,6 +45,7 @@ import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
+import { LeadEditScreen } from './LeadEditScreen';
 import { PlanningScreen } from './PlanningScreen';
 import { JobEstimateScreen } from './JobEstimateScreen';
 import { CloseOutQueueScreen } from './CloseOutQueueScreen';
@@ -66,7 +67,7 @@ import type { TechColumnTech } from '../components/TechColumn';
 
 type SubView =
   | 'overview' | 'jobs'
-  | 'leadInbox' | 'leadCreate' | 'qualify'
+  | 'leadInbox' | 'leadCreate' | 'qualify' | 'leadEdit'
   | 'planning' | 'jobEstimate'
   | 'assignmentBoard'
   | 'closeOutQueue' | 'closeOutReview'
@@ -149,6 +150,7 @@ export function AdminFinanceRoot() {
   const [showTestEmployees, setShowTestEmployees] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [qualifying, setQualifying] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedCloseOutJob, setSelectedCloseOutJob] = useState<Job | null>(null);
   const [selectedPriceSheetId, setSelectedPriceSheetId] = useState<string | null>(null);
@@ -330,13 +332,17 @@ export function AdminFinanceRoot() {
 
   function handleSelectLead(lead: Lead) {
     setSelectedLead(lead);
-    setSubView('qualify');
+    setSubView('leadEdit');
   }
 
   function handleQualifySubmit(selection: QualifyAxisSelection) {
     if (!session || !selectedLead) {
       return;
     }
+    if (qualifying) {
+      return;
+    }
+    setQualifying(true);
     const qualifiedLead: Lead = { ...selectedLead, ...selection };
     setQualifyError(null);
     void qualifyLead(qualifiedLead, selection.serviceAreaId, {
@@ -345,20 +351,22 @@ export function AdminFinanceRoot() {
       customers: ports.customers,
       calendarEvents: ports.calendarEvents,
       ctx: { role: session.role, now: () => new Date().toISOString() },
-    }).then((result) => {
+    }).then(async (result) => {
       if (!result.ok) {
         setQualifyError(result.reason);
         return;
       }
+      await refreshJobs();
       setSelectedLead(null);
       setSubView('leadInbox');
+    }).finally(() => {
+      setQualifying(false);
     });
   }
 
   function handleQualifyCancel() {
-    setSelectedLead(null);
     setQualifyError(null);
-    setSubView('leadInbox');
+    setSubView('leadEdit');
   }
 
   function handleSelectCloseOutJob(job: Job) {
@@ -525,24 +533,31 @@ export function AdminFinanceRoot() {
     );
   }
 
+  // Navigating to a top-level tab or breadcrumb root intentionally discards any
+  // in-progress, unsaved lead edit with no confirmation prompt.
+  function goTop(view: SubView) {
+    setSelectedLead(null);
+    setSubView(view);
+  }
+
   return (
     <View style={styles.screen}>
       {subView === 'employee-detail' && selectedEmployee ? (
         <Breadcrumb
           segments={[
-            { label: 'Admin & Finance', onPress: () => setSubView('overview') },
+            { label: 'Admin & Finance', onPress: () => goTop('overview') },
             { label: `${currentScreenLabel} > ${selectedEmployee.fullName}` },
           ]}
         />
       ) : (
         <Breadcrumb
           segments={[
-            { label: 'Admin & Finance', onPress: () => setSubView('overview') },
+            { label: 'Admin & Finance', onPress: () => goTop('overview') },
             { label: currentScreenLabel },
           ]}
         />
       )}
-      <TabBar items={TOP_LEVEL_TABS} activeKey={subView} onSelect={setSubView} />
+      <TabBar items={TOP_LEVEL_TABS} activeKey={subView} onSelect={goTop} />
 
       {subView === 'overview' || subView === 'jobs' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -556,11 +571,6 @@ export function AdminFinanceRoot() {
                 title="Leads"
                 subtitle="View leads"
                 onPress={() => setSubView('leadInbox')}
-              />
-              <ListItem
-                title="New Lead"
-                subtitle="Capture a new lead"
-                onPress={() => setSubView('leadCreate')}
               />
             </Card>
             <Card style={styles.card}>
@@ -625,15 +635,33 @@ export function AdminFinanceRoot() {
           </ScrollView>
         )
       ) : subView === 'leadInbox' ? (
-        <LeadInboxScreen leads={ports.leads} onSelectLead={handleSelectLead} />
+        <LeadInboxScreen leads={ports.leads} onSelectLead={handleSelectLead} onCreateLead={() => setSubView('leadCreate')} />
       ) : subView === 'leadCreate' ? (
         <LeadCreateScreen
           onCreated={(lead) => {
             setSelectedLead(lead);
-            setSubView('qualify');
+            setSubView('leadEdit');
           }}
           onCancel={() => setSubView('leadInbox')}
         />
+      ) : subView === 'leadEdit' ? (
+        selectedLead ? (
+          <LeadEditScreen
+            key={selectedLead.id}
+            lead={selectedLead}
+            onSaved={setSelectedLead}
+            onCreateJob={(saved) => {
+              setSelectedLead(saved);
+              setSubView('qualify');
+            }}
+            onBack={() => {
+              setSelectedLead(null);
+              setSubView('leadInbox');
+            }}
+          />
+        ) : (
+          <EmptyState title="No lead selected." />
+        )
       ) : subView === 'qualify' ? (
         selectedLead ? (
           <>
@@ -643,6 +671,7 @@ export function AdminFinanceRoot() {
               serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
               onSubmit={handleQualifySubmit}
               onCancel={handleQualifyCancel}
+              disabled={qualifying}
             />
           </>
         ) : (
@@ -900,6 +929,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   leadInbox: 'Leads',
   leadCreate: 'New Lead',
   qualify: 'Qualify Lead',
+  leadEdit: 'Edit Lead',
   planning: 'Planning',
   jobEstimate: 'Job Estimate',
   assignmentBoard: 'Assignments',

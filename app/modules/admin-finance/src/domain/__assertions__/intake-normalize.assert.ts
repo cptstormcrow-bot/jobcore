@@ -33,7 +33,7 @@ test('bare partner raw lead: all three axis fields assumed, flagged for review',
 
   assert.deepEqual(normalized.assumedAxisFields, ['source', 'payer', 'attachTiming']);
   assert.equal(normalized.flaggedForReview, true);
-  assert.equal(normalized.draft.source, 'direct');
+  assert.equal(normalized.draft.source, 'website');
   assert.equal(normalized.draft.payer, 'customer');
   assert.equal(normalized.draft.attachTiming, 'at_purchase');
 });
@@ -43,7 +43,8 @@ test('partially stated raw lead: only payer assumed, flagged for review', () => 
 
   assert.deepEqual(normalized.assumedAxisFields, ['payer']);
   assert.equal(normalized.flaggedForReview, true);
-  assert.equal(normalized.draft.source, 'direct');
+  // Stated source ('costco') passes through uncoerced, distinguishable from the default.
+  assert.equal(normalized.draft.source, 'costco');
   assert.equal(normalized.draft.payer, 'customer');
   assert.equal(normalized.draft.attachTiming, 'at_purchase');
 });

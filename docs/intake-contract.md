@@ -44,7 +44,7 @@ interface RawLead {
 ### `NormalizedLead` / `NewLeadDraft`
 
 `normalizeRawLead(raw, organizationId)` fills any missing axis field with a
-fixed default (`DEFAULT_AXIS_VALUES`: `source: 'direct'`,
+fixed default (`DEFAULT_AXIS_VALUES`: `source: 'website'`,
 `payer: 'customer'`, `attachTiming: 'at_purchase'`) and reports which fields
 it had to assume:
 

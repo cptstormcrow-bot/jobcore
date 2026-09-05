@@ -48,7 +48,8 @@ export const partiallyStatedRawLead: RawLead = {
   preferredTime: 'afternoon',
   address: '4 Cobblestone Ct',
   projectDetails: 'bedroom set, 3 pieces',
-  source: 'direct',
+  // Stated source is not coerced — proves it passes through distinguishable from the default.
+  source: 'costco',
   attachTiming: 'at_purchase',
 };
 

@@ -17,11 +17,13 @@ export type AxisField = 'source' | 'payer' | 'attachTiming';
 /**
  * Defaults applied when an axis field is missing from a `RawLead`. Mirrors
  * the `jobs`/`leads` table convention: a lead with no stated source is
- * treated as a direct/organic contact, paid by the customer, attached at
- * time of purchase — the most common case, not a guess pulled from nowhere.
+ * treated as a website contact (the only DB-valid default per
+ * `leads_source_check`: website|costco|ikea|owm), paid by the customer,
+ * attached at time of purchase — the most common case, not a guess pulled
+ * from nowhere.
  */
-export const DEFAULT_AXIS_VALUES: { source: 'direct'; payer: 'customer'; attachTiming: 'at_purchase' } = {
-  source: 'direct',
+export const DEFAULT_AXIS_VALUES: { source: 'website'; payer: 'customer'; attachTiming: 'at_purchase' } = {
+  source: 'website',
   payer: 'customer',
   attachTiming: 'at_purchase',
 };
@@ -32,6 +34,8 @@ export const DEFAULT_AXIS_VALUES: { source: 'direct'; payer: 'customer'; attachT
  * draft. The nine customer-facing fields mirror `domain/lead.ts`'s `Lead`
  * (minus server-assigned id/timestamps); the three axis fields are optional
  * because the website's hero quick form genuinely never collects them.
+ * Note: `normalizeRawLead` is not the only `NewLeadDraft` producer —
+ * `LeadCreateScreen.tsx:65-79` hand-builds one with `sourceForm: 'manual'`.
  */
 export interface RawLead {
   sourceForm: string;
