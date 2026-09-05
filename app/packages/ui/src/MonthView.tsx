@@ -78,6 +78,7 @@ export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: 
                     !inMonth && styles.dayTextMuted,
                     today && styles.dayTextToday,
                     selected && styles.dayTextSelected,
+                    hasTimeOff && styles.dayTextTimeOff,
                   ]}
                 >
                   {format(day, 'd')}
@@ -131,6 +132,10 @@ const styles = StyleSheet.create({
   },
   dayTextSelected: {
     color: '#fff',
+  },
+  dayTextTimeOff: {
+    color: '#D32F2F',
+    fontWeight: '700',
   },
   dotsRow: {
     flexDirection: 'row',

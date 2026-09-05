@@ -23,15 +23,18 @@ export interface WeekViewProps {
   timeOffEvents?: TimeOffEvent[];
   onSelectJob?: (job: Job) => void;
   onSelectTimeOff?: (event: TimeOffEvent) => void;
+  onSelectDay?: (day: Date) => void;
 }
 
-export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff }: WeekViewProps) {
+const TIME_OFF_RED = '#D32F2F';
+
+export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff, onSelectDay }: WeekViewProps) {
   const weekStart = startOfWeek(anchorDay, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
     <ScrollView style={styles.verticalRoot}>
-      <ScrollView horizontal style={styles.root} contentContainerStyle={styles.content}>
+      <View style={styles.root}>
         {days.map((day) => {
           const dayJobs = jobs
             .filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day))
@@ -41,35 +44,50 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
             .sort((a, b) => new Date(a.eventTime).getTime() - new Date(b.eventTime).getTime());
           const isAnchor = isSameDay(day, anchorDay);
           const isToday = isSameDay(day, new Date());
+          const hasTimeOff = dayTimeOff.length > 0;
 
           return (
             <View key={day.toISOString()} style={styles.column}>
-              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }, isToday && styles.todayHeaderText]}>
-                {format(day, 'EEE')}
-              </Text>
-              <Text style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }, isToday && styles.todayHeaderText]}>
-                {format(day, 'M/d')}
-              </Text>
+              <Pressable disabled={!onSelectDay} onPress={() => onSelectDay?.(day)} style={styles.headerPressable}>
+                <Text
+                  style={[styles.headerText, { color: isAnchor ? colors.primary : colors.textMuted }, isToday && styles.todayHeaderText]}
+                  numberOfLines={1}
+                >
+                  {format(day, 'EEE')}
+                </Text>
+                <Text
+                  style={[
+                    styles.dayNumberText,
+                    { color: isAnchor ? colors.primary : colors.textMuted },
+                    isToday && styles.todayHeaderText,
+                    hasTimeOff && styles.timeOffDayNumberText,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {format(day, 'd')}
+                </Text>
+              </Pressable>
+              {dayTimeOff.map((event) => (
+                <Pressable key={event.id} disabled={!onSelectTimeOff} onPress={() => onSelectTimeOff?.(event)}>
+                  <Text style={styles.timeOffLabel} numberOfLines={1}>
+                    {event.title ?? 'Time off'}
+                  </Text>
+                </Pressable>
+              ))}
               {dayJobs.map((job) => (
                 <Pressable
                   key={job.id}
                   onPress={() => onSelectJob?.(job)}
                   style={[styles.card, { borderLeftWidth: 4, borderLeftColor: JOB_STATUS_COLORS[job.status] }]}
                 >
-                  <Text style={styles.cardTime}>{format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
-                  <Text style={styles.cardAddress}>{job.address ?? 'No address'}</Text>
-                </Pressable>
-              ))}
-              {dayTimeOff.map((event) => (
-                <Pressable key={event.id} disabled={!onSelectTimeOff} onPress={() => onSelectTimeOff?.(event)} style={[styles.card, styles.timeOffCard]}>
-                  <Text style={styles.cardTime}>{format(new Date(event.eventTime), 'h:mm a')}</Text>
-                  <Text style={[styles.cardAddress, styles.timeOffText]}>{event.title ?? 'Time off'}</Text>
+                  <Text style={styles.cardTime} numberOfLines={1}>{format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
+                  <Text style={styles.cardAddress} numberOfLines={2} ellipsizeMode="tail">{job.address ?? 'No address'}</Text>
                 </Pressable>
               ))}
             </View>
           );
         })}
-      </ScrollView>
+      </View>
     </ScrollView>
   );
 }
@@ -80,18 +98,24 @@ const styles = StyleSheet.create({
   },
   root: {
     backgroundColor: colors.offWhite,
-  },
-  content: {
     flexDirection: 'row',
   },
   column: {
-    width: 140,
+    flex: 1,
+    minWidth: 0,
     marginRight: spacing.sm,
     borderRightColor: colors.border,
     borderRightWidth: 1,
     paddingHorizontal: spacing.xs,
   },
+  headerPressable: {
+    alignItems: 'center',
+  },
   headerText: {
+    fontSize: typography.size.small,
+    lineHeight: typography.size.small * typography.lineHeight.heading,
+  },
+  dayNumberText: {
     fontSize: typography.size.small,
     lineHeight: typography.size.small * typography.lineHeight.heading,
   },
@@ -99,19 +123,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
+  timeOffDayNumberText: {
+    color: TIME_OFF_RED,
+    fontWeight: '700',
+  },
+  timeOffLabel: {
+    fontSize: typography.size.small,
+    lineHeight: typography.size.small * typography.lineHeight.body,
+    color: TIME_OFF_RED,
+    textAlign: 'center',
+  },
   card: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
     padding: spacing.sm,
     marginTop: spacing.sm,
-  },
-  timeOffCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: colors.danger,
-    backgroundColor: colors.offWhite,
-  },
-  timeOffText: {
-    color: colors.danger,
   },
   cardTime: {
     fontSize: typography.size.small,

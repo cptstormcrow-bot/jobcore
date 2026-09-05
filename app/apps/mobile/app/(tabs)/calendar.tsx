@@ -1,13 +1,12 @@
 // P2e.2a/2b/2c - Calendar day + week view, status colours, role gate.
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { colors, typography, spacing, radius, Toggle } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { colors, spacing, Toggle, CalendarHeader, type CalendarMode } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { addDays, addMonths, format } from 'date-fns';
+import { addDays, addMonths, endOfWeek, format, startOfWeek } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { WeekView, MonthView, type TimeOffEvent } from '@jobcore/ui';
-import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 
@@ -81,11 +80,9 @@ interface CalendarEventRow {
 
 const CALENDAR_EVENT_COLUMNS = `id, organization_id, job_id, kind, title, description, event_time, jobs (${JOB_ROW_COLUMNS})`;
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 through 19 inclusive
-
 export default function CalendarScreen() {
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
-  const [mode, setMode] = useState<'day' | 'week' | 'month'>('day');
+  const [mode, setMode] = useState<CalendarMode>('week');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffEvents, setTimeOffEvents] = useState<TimeOffEvent[]>([]);
   // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
@@ -162,61 +159,21 @@ export default function CalendarScreen() {
   const visibleTimeOff = showTimeOffLayer ? timeOffEvents : [];
 
   const goPrev = () =>
-    setSelectedDay((d) => (mode === 'day' ? addDays(d, -1) : mode === 'week' ? addDays(d, -7) : addMonths(d, -1)));
+    setSelectedDay((d) => (mode === 'week' ? addDays(d, -7) : addMonths(d, -1)));
   const goNext = () =>
-    setSelectedDay((d) => (mode === 'day' ? addDays(d, 1) : mode === 'week' ? addDays(d, 7) : addMonths(d, 1)));
+    setSelectedDay((d) => (mode === 'week' ? addDays(d, 7) : addMonths(d, 1)));
   const goToday = () => setSelectedDay(new Date());
 
-  const jobsForHour = (hour: number): Job[] =>
-    visibleJobs.filter((job) => {
-      if (!job.scheduledStart) return false;
-      const start = new Date(job.scheduledStart);
-      return (
-        start.getFullYear() === selectedDay.getFullYear() &&
-        start.getMonth() === selectedDay.getMonth() &&
-        start.getDate() === selectedDay.getDate() &&
-        start.getHours() === hour
-      );
-    });
-
-  const timeOffForHour = (hour: number): TimeOffEvent[] =>
-    visibleTimeOff.filter((event) => {
-      const start = new Date(event.eventTime);
-      return (
-        start.getFullYear() === selectedDay.getFullYear() &&
-        start.getMonth() === selectedDay.getMonth() &&
-        start.getDate() === selectedDay.getDate() &&
-        start.getHours() === hour
-      );
-    });
+  const weekStart = startOfWeek(selectedDay);
+  const weekEnd = endOfWeek(selectedDay);
+  const label =
+    mode === 'week'
+      ? `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`
+      : format(selectedDay, 'MMMM yyyy');
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
-        <Pressable onPress={goPrev} style={styles.navButton}>
-          <Text style={styles.navButtonText}>‹</Text>
-        </Pressable>
-        <Pressable onPress={goToday} style={styles.navButton}>
-          <Text style={styles.navButtonText}>Today</Text>
-        </Pressable>
-        <Text style={styles.dayLabel}>
-          {format(selectedDay, mode === 'day' ? 'EEE, MMM d' : mode === 'week' ? 'MMM d, yyyy' : 'MMMM yyyy')}
-        </Text>
-        <Pressable onPress={goNext} style={styles.navButton}>
-          <Text style={styles.navButtonText}>›</Text>
-        </Pressable>
-      </View>
-      <View style={styles.modeToggle}>
-        <Pressable onPress={() => setMode('day')} style={styles.modeButton}>
-          <Text style={[styles.modeButtonText, { color: mode === 'day' ? colors.primary : colors.textMuted }]}>Day</Text>
-        </Pressable>
-        <Pressable onPress={() => setMode('week')} style={styles.modeButton}>
-          <Text style={[styles.modeButtonText, { color: mode === 'week' ? colors.primary : colors.textMuted }]}>Week</Text>
-        </Pressable>
-        <Pressable onPress={() => setMode('month')} style={styles.modeButton}>
-          <Text style={[styles.modeButtonText, { color: mode === 'month' ? colors.primary : colors.textMuted }]}>Month</Text>
-        </Pressable>
-      </View>
+      <CalendarHeader mode={mode} onModeChange={setMode} label={label} onPrev={goPrev} onNext={goNext} onToday={goToday} />
       <View style={styles.modeToggle}>
         <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       </View>
@@ -225,40 +182,7 @@ export default function CalendarScreen() {
         <Toggle label="Jobs" value={showJobsLayer} onChange={setShowJobsLayer} />
         <Toggle label="Time Off" value={showTimeOffLayer} onChange={setShowTimeOffLayer} />
       </View>
-      {mode === 'day' ? (
-        <ScrollView style={styles.grid}>
-          {HOURS.map((hour) => {
-            const hourDate = new Date(selectedDay);
-            hourDate.setHours(hour, 0, 0, 0);
-            const hourJobs = jobsForHour(hour);
-            const hourTimeOff = timeOffForHour(hour);
-            return (
-              <View key={hour} style={styles.hourRow}>
-                <View style={styles.hourGutter}>
-                  <Text style={styles.hourLabel}>{format(hourDate, 'h a')}</Text>
-                </View>
-                <View style={styles.hourLane}>
-                  {hourJobs.map((job) => (
-                    <Pressable
-                      key={job.id}
-                      onPress={() => router.push(`/job/${job.id}`)}
-                      style={[styles.jobCard, { borderLeftWidth: 4, borderLeftColor: JOB_STATUS_COLORS[job.status] }]}
-                    >
-                      <Text style={styles.jobAddress}>{job.address ?? 'No address'}</Text>
-                      <Text style={styles.jobStatus}>{job.status}</Text>
-                    </Pressable>
-                  ))}
-                  {hourTimeOff.map((event) => (
-                    <View key={event.id} style={[styles.jobCard, styles.timeOffCard]}>
-                      <Text style={styles.jobAddress}>{event.title ?? 'Time off'}</Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      ) : mode === 'week' ? (
+      {mode === 'week' ? (
         <WeekView
           jobs={visibleJobs}
           anchorDay={selectedDay}
@@ -272,7 +196,7 @@ export default function CalendarScreen() {
           timeOffEvents={visibleTimeOff}
           onSelectDay={(d) => {
             setSelectedDay(d);
-            setMode('day');
+            setMode('week');
           }}
         />
       )}
@@ -285,80 +209,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.offWhite,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  navButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  navButtonText: {
-    fontSize: typography.size.h3,
-    color: colors.primary,
-  },
-  dayLabel: {
-    fontSize: typography.size.h5,
-    lineHeight: typography.size.h5 * typography.lineHeight.heading,
-    color: colors.text,
-  },
-  grid: {
-    flex: 1,
-  },
-  hourRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    minHeight: 48,
-  },
-  hourGutter: {
-    width: 56,
-    paddingTop: spacing.xs,
-    paddingHorizontal: spacing.xs,
-  },
-  hourLabel: {
-    fontSize: typography.size.small,
-    color: colors.textMuted,
-  },
-  hourLane: {
-    flex: 1,
-    paddingVertical: spacing.xs,
-    paddingRight: spacing.sm,
-    gap: spacing.xs,
-  },
-  jobCard: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
-  },
-  jobAddress: {
-    fontSize: typography.size.body,
-    lineHeight: typography.size.body * typography.lineHeight.body,
-    color: colors.text,
-  },
-  jobStatus: {
-    fontSize: typography.size.small,
-    color: colors.textMuted,
-  },
-  timeOffCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: colors.textMuted,
-    backgroundColor: colors.offWhite,
-  },
   modeToggle: {
     flexDirection: 'row',
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
     gap: spacing.md,
-  },
-  modeButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  modeButtonText: {
-    fontSize: typography.size.label,
   },
 });
