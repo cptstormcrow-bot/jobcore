@@ -4,9 +4,9 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { colors, typography, spacing, radius, Toggle } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { addDays, format } from 'date-fns';
+import { addDays, addMonths, format } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { WeekView, type TimeOffEvent } from '@jobcore/ui';
+import { WeekView, MonthView, type TimeOffEvent } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -85,7 +85,7 @@ const HOURS = Array.from({ length: 13 }, (_, i) => i + 7); // 7 through 19 inclu
 
 export default function CalendarScreen() {
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
-  const [mode, setMode] = useState<'day' | 'week'>('day');
+  const [mode, setMode] = useState<'day' | 'week' | 'month'>('day');
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffEvents, setTimeOffEvents] = useState<TimeOffEvent[]>([]);
   // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
@@ -161,8 +161,11 @@ export default function CalendarScreen() {
   const visibleJobs = showJobsLayer ? jobs.filter((job) => isBetaVisible(job, showBeta)) : [];
   const visibleTimeOff = showTimeOffLayer ? timeOffEvents : [];
 
-  const goPrevDay = () => setSelectedDay((d) => addDays(d, -1));
-  const goNextDay = () => setSelectedDay((d) => addDays(d, 1));
+  const goPrev = () =>
+    setSelectedDay((d) => (mode === 'day' ? addDays(d, -1) : mode === 'week' ? addDays(d, -7) : addMonths(d, -1)));
+  const goNext = () =>
+    setSelectedDay((d) => (mode === 'day' ? addDays(d, 1) : mode === 'week' ? addDays(d, 7) : addMonths(d, 1)));
+  const goToday = () => setSelectedDay(new Date());
 
   const jobsForHour = (hour: number): Job[] =>
     visibleJobs.filter((job) => {
@@ -190,11 +193,16 @@ export default function CalendarScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Pressable onPress={goPrevDay} style={styles.navButton}>
+        <Pressable onPress={goPrev} style={styles.navButton}>
           <Text style={styles.navButtonText}>‹</Text>
         </Pressable>
-        <Text style={styles.dayLabel}>{format(selectedDay, 'EEE, MMM d')}</Text>
-        <Pressable onPress={goNextDay} style={styles.navButton}>
+        <Pressable onPress={goToday} style={styles.navButton}>
+          <Text style={styles.navButtonText}>Today</Text>
+        </Pressable>
+        <Text style={styles.dayLabel}>
+          {format(selectedDay, mode === 'day' ? 'EEE, MMM d' : mode === 'week' ? 'MMM d, yyyy' : 'MMMM yyyy')}
+        </Text>
+        <Pressable onPress={goNext} style={styles.navButton}>
           <Text style={styles.navButtonText}>›</Text>
         </Pressable>
       </View>
@@ -204,6 +212,9 @@ export default function CalendarScreen() {
         </Pressable>
         <Pressable onPress={() => setMode('week')} style={styles.modeButton}>
           <Text style={[styles.modeButtonText, { color: mode === 'week' ? colors.primary : colors.textMuted }]}>Week</Text>
+        </Pressable>
+        <Pressable onPress={() => setMode('month')} style={styles.modeButton}>
+          <Text style={[styles.modeButtonText, { color: mode === 'month' ? colors.primary : colors.textMuted }]}>Month</Text>
         </Pressable>
       </View>
       <View style={styles.modeToggle}>
@@ -247,12 +258,22 @@ export default function CalendarScreen() {
             );
           })}
         </ScrollView>
-      ) : (
+      ) : mode === 'week' ? (
         <WeekView
           jobs={visibleJobs}
           anchorDay={selectedDay}
           timeOffEvents={visibleTimeOff}
           onSelectJob={(job) => router.push(`/job/${job.id}`)}
+        />
+      ) : (
+        <MonthView
+          jobs={visibleJobs}
+          anchorDay={selectedDay}
+          timeOffEvents={visibleTimeOff}
+          onSelectDay={(d) => {
+            setSelectedDay(d);
+            setMode('day');
+          }}
         />
       )}
     </View>

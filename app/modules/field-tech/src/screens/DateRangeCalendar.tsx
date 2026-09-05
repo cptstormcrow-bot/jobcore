@@ -22,7 +22,6 @@
 
 import * as React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors } from '@jobcore/ui';
 import {
   addDays,
   addMonths,
@@ -144,6 +143,14 @@ export function DateRangeCalendar({
         >
           <Text style={styles.navButtonText}>{'‹'}</Text>
         </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          disabled={disabled}
+          onPress={() => setVisibleMonth(startOfMonth(new Date()))}
+          style={styles.navButton}
+        >
+          <Text style={styles.navButtonText}>Today</Text>
+        </Pressable>
         <Text style={styles.monthLabel}>{format(visibleMonth, 'MMMM yyyy')}</Text>
         <Pressable
           accessibilityRole="button"
@@ -156,7 +163,7 @@ export function DateRangeCalendar({
       </View>
 
       <View style={styles.weekdayRow}>
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((label, i) => (
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label, i) => (
           <Text key={`${label}-${i}`} style={styles.weekdayText}>
             {label}
           </Text>
@@ -254,16 +261,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCellInRange: {
-    backgroundColor: '#eef4ff',
+    backgroundColor: '#fdecea',
   },
-  dayCellMarked: {
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: 999,
-  },
+  dayCellMarked: {},
   dayCellSelected: {
-    backgroundColor: '#3366ff',
-    borderRadius: 999,
+    backgroundColor: '#fdecea',
   },
   dayText: {
     fontSize: 13,
@@ -272,11 +274,12 @@ const styles = StyleSheet.create({
     color: '#bbb',
   },
   dayTextMarked: {
-    color: colors.danger,
+    color: '#c62828',
+    fontWeight: '700',
   },
   dayTextSelected: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#c62828',
+    fontWeight: '700',
   },
   rangeSummary: {
     marginTop: 8,
