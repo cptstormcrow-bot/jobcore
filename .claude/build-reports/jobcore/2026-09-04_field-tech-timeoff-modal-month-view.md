@@ -106,3 +106,23 @@ Test plan: .claude/test-plans/2026-09-05_field-tech-timeoff-edit-in-modal-smoke.
 Forward contracts: FC-R3-1 — Jeff runs the round-3 HTML smoke plan (C1–C11) on device and returns the saved file. FC-R2-1 remains open (re-run B1/B6/B8; folded into C11).
 Deviations / Defects: none.
 </content>
+
+## Round 4 Fix Addendum (3f75d2a)
+
+Source: round-3 smoke results saved 2026-09-05T20:48:29Z (`2026-09-05_field-tech-timeoff-edit-in-modal-smoke.html`): C1/C2/C4/C5/C6/C9/C11 pass; C3 FAIL, C8 FAIL, C10 FAIL; C7 unanswered; all comment fields empty.
+
+Code commit: `3f75d2a` — `app/modules/field-tech/src/screens/TimeOff.tsx`, `app/modules/field-tech/src/data/ports.ts` only. `npx tsc --noEmit` exit 0.
+
+| Item | Finding | Action |
+|---|---|---|
+| C10 (keyboard / small screen: Save/Delete/Cancel unreachable) | Sheet had no keyboard avoidance and fixed layout | Wrapped the sheet in `KeyboardAvoidingView` (`behavior='padding'` on iOS, undefined on Android) inside a new `sheetWrap` style (`width 100%`, `maxHeight 90%`); sheet gets `flexShrink: 1`; ScrollView keeps `keyboardShouldPersistTaps="handled"` |
+| C3 (tap upcoming request → prefilled Edit modal) | Data path verified intact: `listForTech` selects `*`, row mapper sets `createdByAdminId`, migration 0035 applied live 2026-08-27. No code defect found | Hardened mapper to `row.created_by_admin_id ?? null` (undefined → null). Retest required |
+| C8 (admin-added request → read-only "Added by your admin" modal) | Same data path as C3; `isAdminAdded` derives from `createdByAdminId` | Same hardening; retest required |
+| C7 (overlay tap / Android back = Cancel) | Not answered in round 3 | Retest |
+
+Working hypothesis for C3/C8: the device ran a bundle predating `96e81df` (the round-3 refactor), so the old non-modal edit flow was exercised. The round-4 plan requires a bundle reload before testing and asks for a description of what the screen actually shows on any fail.
+
+Forward contracts: Jeff runs `.claude/test-plans/2026-09-05_field-tech-timeoff-round4-retest.html` and returns the saved file.
+
+## Deviations / Defects
+none
