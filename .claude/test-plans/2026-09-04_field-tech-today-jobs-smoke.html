@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Field-Tech Today's Jobs Smoke Test</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+    color: #1a1a1a;
+    background: #fff;
+    line-height: 1.4;
+  }
+  h1 { margin-bottom: 4px; }
+  .subtitle { color: #555; margin-top: 0; margin-bottom: 20px; font-size: 0.95em; }
+  .top-fields { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .top-fields label { display: flex; flex-direction: column; font-weight: 600; font-size: 0.9em; flex: 1; min-width: 220px; }
+  .top-fields input { font-size: 1em; padding: 6px 8px; margin-top: 4px; }
+  #banner {
+    background: #eef6ff; border: 1px solid #9cc4ee; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; display: none;
+  }
+  #summary {
+    position: sticky; top: 0; background: #fff; padding: 10px 0; border-bottom: 2px solid #ddd;
+    font-weight: 600; z-index: 10;
+  }
+  section { margin-top: 28px; }
+  section > h2 { border-bottom: 2px solid #333; padding-bottom: 4px; }
+  .item {
+    border: 1px solid #ccc; border-radius: 6px; padding: 12px 14px; margin: 12px 0; background: #fafafa;
+  }
+  .item.pass { background: #e9f7ec; border-color: #a7d7b3; }
+  .item.fail { background: #fbeaea; border-color: #e3a7a7; }
+  .item h3 { margin: 0 0 6px 0; font-size: 1.05em; }
+  .item .steps, .item .expected { margin: 4px 0; font-size: 0.95em; }
+  .item .steps strong, .item .expected strong { color: #333; }
+  .radios { margin: 10px 0 6px; display: flex; gap: 18px; }
+  .radios label { font-weight: 500; cursor: pointer; }
+  .item textarea {
+    width: 100%; box-sizing: border-box; font-family: inherit; font-size: 0.95em; padding: 6px; margin-top: 4px;
+  }
+  .bottom-notes {
+    margin-top: 30px;
+  }
+  .bottom-notes textarea { width: 100%; min-height: 100px; font-family: inherit; font-size: 1em; padding: 8px; }
+  .buttons { margin-top: 24px; display: flex; gap: 12px; }
+  button {
+    font-size: 1em; padding: 10px 18px; border-radius: 5px; border: 1px solid #333; cursor: pointer; background: #f0f0f0;
+  }
+  button#save-btn { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  button#reset-btn { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+  @media print {
+    #summary { position: static; }
+    .buttons, #banner { display: none; }
+  }
+</style>
+</head>
+<body data-saved-at="">
+
+<h1>Field-Tech Today's Jobs Smoke Test</h1>
+<p class="subtitle">Jobcore · commit 04bc445 · migration 0043 · 2026-09-04</p>
+
+<div id="banner"></div>
+
+<div class="top-fields">
+  <label>Tester name
+    <input type="text" id="tester-name" name="tester-name">
+  </label>
+  <label>Device / build
+    <input type="text" id="device-build" name="device-build">
+  </label>
+</div>
+
+<div id="summary">0 pass · 0 fail · 0 n/a · 0 untested</div>
+
+<section id="section-a">
+  <h2>A. Today's Jobs list</h2>
+
+  <div class="item" data-item-id="A1">
+    <h3>A1. Only today's jobs listed</h3>
+    <p class="steps"><strong>Steps:</strong> Open Field Tech home.</p>
+    <p class="expected"><strong>Expected:</strong> Bulleted list shows only jobs whose scheduledStart is local today; yesterday/tomorrow jobs absent.</p>
+    <div class="radios">
+      <label><input type="radio" name="A1" value="pass"> Pass</label>
+      <label><input type="radio" name="A1" value="fail"> Fail</label>
+      <label><input type="radio" name="A1" value="na"> N/A</label>
+    </div>
+    <textarea id="A1-comments" name="A1-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="A2">
+    <h3>A2. Job link</h3>
+    <p class="steps"><strong>Steps:</strong> Tap a bullet.</p>
+    <p class="expected"><strong>Expected:</strong> Opens /job/[id] for that job.</p>
+    <div class="radios">
+      <label><input type="radio" name="A2" value="pass"> Pass</label>
+      <label><input type="radio" name="A2" value="fail"> Fail</label>
+      <label><input type="radio" name="A2" value="na"> N/A</label>
+    </div>
+    <textarea id="A2-comments" name="A2-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="A3">
+    <h3>A3. Empty state</h3>
+    <p class="steps"><strong>Steps:</strong> On a day with no jobs.</p>
+    <p class="expected"><strong>Expected:</strong> Sensible empty message, no crash.</p>
+    <div class="radios">
+      <label><input type="radio" name="A3" value="pass"> Pass</label>
+      <label><input type="radio" name="A3" value="fail"> Fail</label>
+      <label><input type="radio" name="A3" value="na"> N/A</label>
+    </div>
+    <textarea id="A3-comments" name="A3-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+</section>
+
+<section id="section-b">
+  <h2>B. Week calendar</h2>
+
+  <div class="item" data-item-id="B1">
+    <h3>B1. Prev/Today/Next</h3>
+    <p class="steps"><strong>Steps:</strong> Tap each.</p>
+    <p class="expected"><strong>Expected:</strong> Week shifts, Today returns to current week with today highlighted.</p>
+    <div class="radios">
+      <label><input type="radio" name="B1" value="pass"> Pass</label>
+      <label><input type="radio" name="B1" value="fail"> Fail</label>
+      <label><input type="radio" name="B1" value="na"> N/A</label>
+    </div>
+    <textarea id="B1-comments" name="B1-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="B2">
+    <h3>B2. Past/present/future jobs shown</h3>
+    <p class="steps"><strong>Steps:</strong> Navigate through weeks with assigned/reassigned jobs.</p>
+    <p class="expected"><strong>Expected:</strong> Assigned/reassigned jobs appear on correct days across weeks.</p>
+    <div class="radios">
+      <label><input type="radio" name="B2" value="pass"> Pass</label>
+      <label><input type="radio" name="B2" value="fail"> Fail</label>
+      <label><input type="radio" name="B2" value="na"> N/A</label>
+    </div>
+    <textarea id="B2-comments" name="B2-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="B3">
+    <h3>B3. Job drilldown from calendar</h3>
+    <p class="steps"><strong>Steps:</strong> Tap a job on calendar.</p>
+    <p class="expected"><strong>Expected:</strong> /job/[id] opens.</p>
+    <div class="radios">
+      <label><input type="radio" name="B3" value="pass"> Pass</label>
+      <label><input type="radio" name="B3" value="fail"> Fail</label>
+      <label><input type="radio" name="B3" value="na"> N/A</label>
+    </div>
+    <textarea id="B3-comments" name="B3-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="B4">
+    <h3>B4. Time off in red</h3>
+    <p class="steps"><strong>Steps:</strong> Look at days with time-off entries.</p>
+    <p class="expected"><strong>Expected:</strong> Time-off entries render in red text on their days.</p>
+    <div class="radios">
+      <label><input type="radio" name="B4" value="pass"> Pass</label>
+      <label><input type="radio" name="B4" value="fail"> Fail</label>
+      <label><input type="radio" name="B4" value="na"> N/A</label>
+    </div>
+    <textarea id="B4-comments" name="B4-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="B5">
+    <h3>B5. Time-off drilldown</h3>
+    <p class="steps"><strong>Steps:</strong> Tap a red entry.</p>
+    <p class="expected"><strong>Expected:</strong> Time Off screen opens with that entry selected.</p>
+    <div class="radios">
+      <label><input type="radio" name="B5" value="pass"> Pass</label>
+      <label><input type="radio" name="B5" value="fail"> Fail</label>
+      <label><input type="radio" name="B5" value="na"> N/A</label>
+    </div>
+    <textarea id="B5-comments" name="B5-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+</section>
+
+<section id="section-c">
+  <h2>C. Time Off screen</h2>
+
+  <div class="item" data-item-id="C1">
+    <h3>C1. Future entries list</h3>
+    <p class="steps"><strong>Steps:</strong> Open Time Off screen.</p>
+    <p class="expected"><strong>Expected:</strong> Only future time-off entries bulleted above the calendar.</p>
+    <div class="radios">
+      <label><input type="radio" name="C1" value="pass"> Pass</label>
+      <label><input type="radio" name="C1" value="fail"> Fail</label>
+      <label><input type="radio" name="C1" value="na"> N/A</label>
+    </div>
+    <textarea id="C1-comments" name="C1-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C2">
+    <h3>C2. Add entry</h3>
+    <p class="steps"><strong>Steps:</strong> Pick dates via calendar picker, add reason, save.</p>
+    <p class="expected"><strong>Expected:</strong> Entry appears in list and in red on calendar.</p>
+    <div class="radios">
+      <label><input type="radio" name="C2" value="pass"> Pass</label>
+      <label><input type="radio" name="C2" value="fail"> Fail</label>
+      <label><input type="radio" name="C2" value="na"> N/A</label>
+    </div>
+    <textarea id="C2-comments" name="C2-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C3">
+    <h3>C3. Edit entry</h3>
+    <p class="steps"><strong>Steps:</strong> Change dates and reason on an existing entry.</p>
+    <p class="expected"><strong>Expected:</strong> Changes persist after reload (uses update_time_off_request, migration 0043).</p>
+    <div class="radios">
+      <label><input type="radio" name="C3" value="pass"> Pass</label>
+      <label><input type="radio" name="C3" value="fail"> Fail</label>
+      <label><input type="radio" name="C3" value="na"> N/A</label>
+    </div>
+    <textarea id="C3-comments" name="C3-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C4">
+    <h3>C4. Delete entry</h3>
+    <p class="steps"><strong>Steps:</strong> Delete an existing entry.</p>
+    <p class="expected"><strong>Expected:</strong> Entry gone from list and calendar after reload.</p>
+    <div class="radios">
+      <label><input type="radio" name="C4" value="pass"> Pass</label>
+      <label><input type="radio" name="C4" value="fail"> Fail</label>
+      <label><input type="radio" name="C4" value="na"> N/A</label>
+    </div>
+    <textarea id="C4-comments" name="C4-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C5">
+    <h3>C5. Cancelled/denied hidden</h3>
+    <p class="steps"><strong>Steps:</strong> Check list and calendar for cancelled/denied entries.</p>
+    <p class="expected"><strong>Expected:</strong> No cancelled or denied entries shown anywhere.</p>
+    <div class="radios">
+      <label><input type="radio" name="C5" value="pass"> Pass</label>
+      <label><input type="radio" name="C5" value="fail"> Fail</label>
+      <label><input type="radio" name="C5" value="na"> N/A</label>
+    </div>
+    <textarea id="C5-comments" name="C5-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+</section>
+
+<section id="section-d">
+  <h2>D. Admin module</h2>
+
+  <div class="item" data-item-id="D1">
+    <h3>D1. Red tech names on admin week calendar</h3>
+    <p class="steps"><strong>Steps:</strong> Open admin assignment week calendar.</p>
+    <p class="expected"><strong>Expected:</strong> Each tech's time off shows tech name in red text on those days.</p>
+    <div class="radios">
+      <label><input type="radio" name="D1" value="pass"> Pass</label>
+      <label><input type="radio" name="D1" value="fail"> Fail</label>
+      <label><input type="radio" name="D1" value="na"> N/A</label>
+    </div>
+    <textarea id="D1-comments" name="D1-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="D2">
+    <h3>D2. No regressions</h3>
+    <p class="steps"><strong>Steps:</strong> Review existing admin job entries.</p>
+    <p class="expected"><strong>Expected:</strong> Existing admin job entries unchanged.</p>
+    <div class="radios">
+      <label><input type="radio" name="D2" value="pass"> Pass</label>
+      <label><input type="radio" name="D2" value="fail"> Fail</label>
+      <label><input type="radio" name="D2" value="na"> N/A</label>
+    </div>
+    <textarea id="D2-comments" name="D2-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+</section>
+
+<div class="bottom-notes">
+  <h2>General notes</h2>
+  <textarea id="general-notes" name="general-notes" placeholder="General notes"></textarea>
+</div>
+
+<div class="buttons">
+  <button id="save-btn" type="button">Save results (download)</button>
+  <button id="reset-btn" type="button">Reset</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var LS_KEY = 'field-tech-smoke-results-v1';
+  var ITEM_IDS = ['A1','A2','A3','B1','B2','B3','B4','B5','C1','C2','C3','C4','C5','D1','D2'];
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function todayDateString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function updateItemTint(itemId) {
+    var el = document.querySelector('.item[data-item-id="' + itemId + '"]');
+    if (!el) return;
+    el.classList.remove('pass', 'fail');
+    var checked = document.querySelector('input[name="' + itemId + '"]:checked');
+    if (checked) {
+      if (checked.value === 'pass') el.classList.add('pass');
+      else if (checked.value === 'fail') el.classList.add('fail');
+    }
+  }
+
+  function updateSummary() {
+    var pass = 0, fail = 0, na = 0, untested = 0;
+    ITEM_IDS.forEach(function (id) {
+      var checked = document.querySelector('input[name="' + id + '"]:checked');
+      if (!checked) { untested++; return; }
+      if (checked.value === 'pass') pass++;
+      else if (checked.value === 'fail') fail++;
+      else if (checked.value === 'na') na++;
+    });
+    $('#summary').textContent = pass + ' pass · ' + fail + ' fail · ' + na + ' n/a · ' + untested + ' untested';
+  }
+
+  function collectState() {
+    var state = {};
+    $all('input[type="text"]').forEach(function (input) {
+      state[input.id || input.name] = input.value;
+    });
+    $all('textarea').forEach(function (ta) {
+      state[ta.id || ta.name] = ta.value;
+    });
+    ITEM_IDS.forEach(function (id) {
+      var checked = document.querySelector('input[name="' + id + '"]:checked');
+      state[id] = checked ? checked.value : '';
+    });
+    return state;
+  }
+
+  function applyState(state) {
+    if (!state) return;
+    $all('input[type="text"]').forEach(function (input) {
+      var key = input.id || input.name;
+      if (Object.prototype.hasOwnProperty.call(state, key)) input.value = state[key];
+    });
+    $all('textarea').forEach(function (ta) {
+      var key = ta.id || ta.name;
+      if (Object.prototype.hasOwnProperty.call(state, key)) ta.value = state[key];
+    });
+    ITEM_IDS.forEach(function (id) {
+      if (state[id]) {
+        var radio = document.querySelector('input[name="' + id + '"][value="' + state[id] + '"]');
+        if (radio) radio.checked = true;
+      }
+      updateItemTint(id);
+    });
+    updateSummary();
+  }
+
+  function saveToLocalStorage() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(collectState()));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function loadFromLocalStorageIfNoEmbedded() {
+    var embedded = document.getElementById('saved-state');
+    if (embedded) return; // embedded state takes priority
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var state = JSON.parse(raw);
+        applyState(state);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function showBannerFromEmbedded() {
+    var scriptEl = document.getElementById('saved-state');
+    if (!scriptEl) return;
+    var timestamp = document.documentElement.getAttribute('data-saved-at') || '';
+    try {
+      var state = JSON.parse(scriptEl.textContent);
+      applyState(state);
+    } catch (e) {
+      /* ignore parse errors */
+    }
+    var banner = $('#banner');
+    banner.style.display = 'block';
+    banner.textContent = 'Loaded saved results from ' + (timestamp || 'unknown time');
+  }
+
+  function doSave() {
+    var state = collectState();
+    var clone = document.documentElement.cloneNode(true);
+
+    // Remove any stale banner display state in the clone (keep markup, just not forcing visible)
+    var clonedBanner = clone.querySelector('#banner');
+    if (clonedBanner) {
+      clonedBanner.removeAttribute('style');
+    }
+
+    var existingScript = clone.querySelector('#saved-state');
+    if (existingScript) {
+      existingScript.parentNode.removeChild(existingScript);
+    }
+
+    var newScript = clone.ownerDocument.createElement('script');
+    newScript.id = 'saved-state';
+    newScript.type = 'application/json';
+    newScript.textContent = JSON.stringify(state);
+    clone.querySelector('body').appendChild(newScript);
+
+    var isoNow = new Date().toISOString();
+    clone.setAttribute('data-saved-at', isoNow);
+
+    var htmlOut = '<!doctype html>\n' + clone.outerHTML;
+    var blob = new Blob([htmlOut], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'field-tech-smoke-results_' + todayDateString() + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function doReset() {
+    try {
+      localStorage.removeItem(LS_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    var scriptEl = document.getElementById('saved-state');
+    if (scriptEl) scriptEl.parentNode.removeChild(scriptEl);
+    document.documentElement.removeAttribute('data-saved-at');
+    location.reload();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    showBannerFromEmbedded();
+    loadFromLocalStorageIfNoEmbedded();
+    updateSummary();
+
+    document.addEventListener('change', function (evt) {
+      var target = evt.target;
+      if (target.matches('input[type="radio"]')) {
+        updateItemTint(target.name);
+      }
+      updateSummary();
+      saveToLocalStorage();
+    });
+
+    document.addEventListener('input', function (evt) {
+      if (evt.target.matches('textarea, input[type="text"]')) {
+        saveToLocalStorage();
+      }
+    });
+
+    $('#save-btn').addEventListener('click', doSave);
+    $('#reset-btn').addEventListener('click', doReset);
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -6,7 +6,7 @@ Date: 2026-09-05
 Project: jobcore
 Branch: jobcore-job-detail-action-buttons
 Tier: A
-Commit: (filled by closeout commit — see git log for "feat(jobcore): time-off date-tap modal + week/month calendar toggle")
+Commit: f68f665
 Built via: Rule 38 rolling slices S1–S6 (Nestor scribe hound per slice, Marmanduke crib), Ultracode ON
 
 ## Goal
