@@ -90,8 +90,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.body,
     color: colors.text,
+    fontWeight: typography.weight.semibold,
   },
-  placeholderText: { color: colors.textMuted },
+  placeholderText: { color: colors.textMuted, fontWeight: typography.weight.regular },
   disabled: { opacity: 0.5 },
   overlay: {
     flex: 1,
