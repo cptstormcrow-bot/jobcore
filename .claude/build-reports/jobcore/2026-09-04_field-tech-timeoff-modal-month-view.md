@@ -48,4 +48,28 @@ Prior lineage 2026-09-04_job-detail-screen-restyle OPEN FC "eas build + on-devic
 
 ## DEFERRED
 none
+
+---
+
+## Fix Addendum — 2026-09-05 (Rule 8/37)
+
+**Trigger:** Jeff's smoke-test results (`2026-09-05_field-tech-timeoff-modal-month-view-smoke.html`). PASS: A1–A5, B2, B4, B7, C1–C3. FAIL: A6, B1, B3, B5, B6, B8.
+
+**Root cause:** The week/month toggle, Today button, and MonthView were wired into `DayList.tsx` (field-tech module), but the mobile Calendar tab (`app/apps/mobile/app/(tabs)/calendar.tsx`) only offered Day/Week — so B1/B3/B5/B6/B8 (no month toggle, no Today, cannot see month view) failed where Jeff actually tested. A6 was the legacy `#3366ff` filled-circle marker styles in `DateRangeCalendar.tsx`.
+
+**Fix commit:** `3e38a75` — `fix(jobcore): calendar tab month view + Today; time-off calendar Prev/Today/Next with red-bold blackouts`
+
+**Files (2, 46+/22−):**
+- `app/apps/mobile/app/(tabs)/calendar.tsx` — mode `'day' | 'week' | 'month'`; Month button; Today button; goPrev/goNext step by mode (±1 day / ±7 days / ±1 month via date-fns `addDays`/`addMonths`); `<MonthView>` from `@jobcore/ui` with day-select dropping into Day mode.
+- `app/modules/field-tech/src/screens/DateRangeCalendar.tsx` — Prev/Today/Next header; Sun–Sat weekday labels; blue filled circle removed; blackout/selected dates render red (`#c62828`) bold on a light `#fdecea` tint.
+
+**Verification:** `git diff --stat` (2 files, 46+/22−); `npx tsc --noEmit -p .` from `app/` exit 0. Re-test by Jeff pending against the same HTML plan.
+
+**Not changed (by decision):** the bottom form in `TimeOff.tsx` (A6 second half) is the edit-existing-request form gated on `selectedId !== null`, not a leftover inline form; left in place pending Jeff's call on moving edits into the modal.
+
+**Forward contracts:** FC-fix-1 — Jeff re-runs the smoke plan against `3e38a75`; open until PASS recorded.
+
+## Deviations / Defects (addendum)
+- DEV-fix-1: Original build wired month view into the wrong screen (DayList.tsx vs Calendar tab). Fixed in `3e38a75`.
+- DEV-fix-2: Legacy marker styling shipped in f68f665 contrary to Jeff's stated preference. Fixed in `3e38a75`.
 </content>
