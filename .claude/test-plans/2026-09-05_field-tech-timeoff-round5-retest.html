@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Field Tech Time Off — Round 5 Retest (Computer + Phone)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+    color: #1a1a1a;
+    background: #fff;
+    line-height: 1.4;
+  }
+  h1 { margin-bottom: 4px; }
+  .subtitle { color: #555; margin-top: 0; margin-bottom: 20px; font-size: 0.95em; }
+  .top-fields { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .top-fields label { display: flex; flex-direction: column; font-weight: 600; font-size: 0.9em; flex: 1; min-width: 220px; }
+  .top-fields input { font-size: 1em; padding: 6px 8px; margin-top: 4px; }
+  #banner {
+    background: #eef6ff; border: 1px solid #9cc4ee; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px; display: none;
+  }
+  #summary {
+    position: sticky; top: 0; background: #fff; padding: 10px 0; border-bottom: 2px solid #ddd;
+    font-weight: 600; z-index: 10;
+  }
+  .required-note { background: #fff8e1; border: 1px solid #e0c34d; padding: 10px 12px; border-radius: 4px; margin-bottom: 16px; font-size: 0.95em; }
+  section { margin-top: 28px; }
+  section > h2 { border-bottom: 2px solid #333; padding-bottom: 4px; }
+  .item {
+    border: 1px solid #ccc; border-radius: 6px; padding: 12px 14px; margin: 12px 0; background: #fafafa;
+  }
+  .item.pass { background: #e9f7ec; border-color: #a7d7b3; }
+  .item.fail { background: #fbeaea; border-color: #e3a7a7; }
+  .item h3 { margin: 0 0 6px 0; font-size: 1.05em; }
+  .item .expected { margin: 4px 0; font-size: 0.95em; }
+  .item .expected strong { color: #333; }
+  .toggles { margin: 10px 0 6px; display: flex; gap: 10px; }
+  .toggles button {
+    font-size: 0.9em; padding: 6px 14px; border-radius: 5px; border: 1px solid #999; cursor: pointer; background: #fff;
+  }
+  .toggles button.active-pass { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  .toggles button.active-fail { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+  .item textarea {
+    width: 100%; box-sizing: border-box; font-family: inherit; font-size: 0.95em; padding: 6px; margin-top: 4px;
+  }
+  .bottom-notes {
+    margin-top: 30px;
+  }
+  .bottom-notes textarea { width: 100%; min-height: 100px; font-family: inherit; font-size: 1em; padding: 8px; }
+  .buttons { margin-top: 24px; display: flex; gap: 12px; }
+  button {
+    font-size: 1em; padding: 10px 18px; border-radius: 5px; border: 1px solid #333; cursor: pointer; background: #f0f0f0;
+  }
+  button#save-btn { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  button#reset-btn { background: #b71c1c; color: #fff; border-color: #b71c1c; }
+  @media print {
+    #summary { position: static; }
+    .buttons, #banner { display: none; }
+  }
+.path { color: #555; font-size: 0.9em; margin: 4px 0; }
+  .path { color: #555; font-size: 0.9em; margin: 4px 0 8px; }
+</style>
+</head>
+<body data-saved-at="">
+
+<h1>Field Tech Time Off — Round 5 Retest (Computer + Phone)</h1>
+<p class="subtitle">Jobcore · branch jobcore-job-detail-action-buttons · 2026-09-05</p>
+
+<div id="banner"></div>
+
+<p class="required-note">Round 4 could not be run because there is no phone build yet. This plan runs on the COMPUTER (Expo web in a browser). Every item is tagged <strong>Computer</strong> / <strong>Phone</strong> / <strong>Both</strong>. Items tagged <strong>Phone only</strong> are marked "SKIP until an APK/iPhone build exists" — leave them blank. Every item quotes the exact text you should see on screen, in "double quotes". Pressed/highlighted button looks should match between web and phone; if an item's look could differ, it says so.</p>
+
+<p class="required-note"><strong>Definitions:</strong> "Your own request" = a row under the section header "Upcoming time off" that does NOT show the small text "Added by your admin". "Admin-added request" = a row under "Upcoming time off" that DOES show "Added by your admin".</p>
+
+<p class="required-note"><strong>How to get there (referenced by every item):</strong> 1) In a terminal at <code>E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile</code> run <code>npx expo start -c</code>, then press <code>w</code> to open the browser. 2) On the Home screen click the row "Field Tech". 3) At the top you see the breadcrumb "Field Tech" and two tabs "Jobs" and "Time Off". Click "Time Off". 4) You are on the screen titled "Time Off" with section headers "Upcoming time off", "Request time off" (with a "Date range" label and a text box whose grey placeholder reads "Reason for time off"), and "My requests".</p>
+
+<p class="required-note">Comments are required on any item marked Fail — describe exactly what the screen showed.</p>
+
+<div class="top-fields">
+  <label>Tester name
+    <input type="text" id="tester-name" name="tester-name">
+  </label>
+  <label>Date
+    <input type="date" id="test-date" name="test-date">
+  </label>
+</div>
+
+<div id="summary">0 pass · 0 fail · 0 untested</div>
+
+<section id="section-r">
+  <h2>Round 5 Retest</h2>
+
+  <div class="item" data-item-id="R0">
+    <h3>R0. [Computer] Start: fresh bundle loaded</h3>
+    <p class="expected"><strong>Expected:</strong> Run <code>npx expo start -c</code> and press <code>w</code>. PASS = browser opens and the Home screen shows a row "Field Tech". FAIL = red error screen or no "Field Tech" row (paste the error).</p>
+    <p class="path">Screen / How to get there: See "How to get there" step 1 above.</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="R0" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="R0" data-value="fail">Fail</button>
+    </div>
+    <textarea id="R0-comments" name="R0-comments" rows="2" placeholder="Comments (paste error text if FAIL)"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C3">
+    <h3>C3. [Both] Edit your own request</h3>
+    <p class="expected"><strong>Expected:</strong> On "Time Off", under "Upcoming time off", click a row that does NOT say "Added by your admin". PASS = a popup titled "Edit time off" opens with "Date range" and the reason box already filled with that row's values, and buttons "Cancel", "Delete", "Save". FAIL = popup titled "Request time off" opens, fields are empty, or nothing opens.</p>
+    <p class="path">Screen / How to get there: See "How to get there" above, then click a row under "Upcoming time off" that does NOT show "Added by your admin". If no such row exists, first create one: in "Request time off" pick a date range, type a reason, click "Submit", then it appears under "Upcoming time off".</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="C3" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="C3" data-value="fail">Fail</button>
+    </div>
+    <textarea id="C3-comments" name="C3-comments" rows="2" placeholder="Comments (on fail, describe exactly what appears — screen, title, any form)"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C7">
+    <h3>C7. [Both] Close the popup without saving</h3>
+    <p class="expected"><strong>Expected:</strong> With "Edit time off" open — Computer: click "Cancel"; also try pressing the Escape key and clicking the dark area outside the popup. Phone: tap "Cancel"; also tap outside the popup or press the Android back button. PASS = popup closes, row unchanged. Note: Escape / click-outside is a browser convenience; only "Cancel" is guaranteed on both.</p>
+    <p class="path">Screen / How to get there: Same path as C3 to open the "Edit time off" popup.</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="C7" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="C7" data-value="fail">Fail</button>
+    </div>
+    <textarea id="C7-comments" name="C7-comments" rows="2" placeholder="Comments"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C8">
+    <h3>C8. [Both] Admin-added request is read-only</h3>
+    <p class="expected"><strong>Expected:</strong> Click a row that DOES show "Added by your admin". PASS = popup "Edit time off" shows the text "Added by your admin", fields cannot be edited, and the ONLY button is "Close"; no "Save" or "Delete". FAIL = "Save"/"Delete" visible or fields editable.</p>
+    <p class="path">Screen / How to get there: See "How to get there" above, then click a row under "Upcoming time off" that DOES show "Added by your admin". If no such row exists, mark N/A in comments.</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="C8" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="C8" data-value="fail">Fail</button>
+    </div>
+    <textarea id="C8-comments" name="C8-comments" rows="2" placeholder="Comments (on fail, describe what appears)"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C10">
+    <h3>C10. [Phone only — SKIP until APK/iPhone build] Keyboard does not cover buttons</h3>
+    <p class="expected"><strong>Expected:</strong> On a phone, open "Edit time off", tap the reason box so the keyboard rises. PASS = "Cancel", "Delete", "Save" stay visible above the keyboard.</p>
+    <p class="path">Screen / How to get there: SKIP until an APK/iPhone build exists — leave blank.</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="C10" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="C10" data-value="fail">Fail</button>
+    </div>
+    <textarea id="C10-comments" name="C10-comments" rows="2" placeholder="Comments (leave blank — no phone build yet)"></textarea>
+  </div>
+
+  <div class="item" data-item-id="C11">
+    <h3>C11. [Both] Button pressed look matches</h3>
+    <p class="expected"><strong>Expected:</strong> Press and hold "Save" (or "Submit") for a second. Expected: the button visibly darkens/dims while held, on both web and phone. Computer note: browsers only show this while the mouse button is held; on phone it shows while your finger is down. Record what you see in comments even if you mark PASS.</p>
+    <p class="path">Screen / How to get there: Open "Request time off" or "Edit time off" and press-and-hold the "Save"/"Submit" button.</p>
+    <div class="toggles">
+      <button type="button" class="pass-btn" data-item="C11" data-value="pass">Pass</button>
+      <button type="button" class="fail-btn" data-item="C11" data-value="fail">Fail</button>
+    </div>
+    <textarea id="C11-comments" name="C11-comments" rows="2" placeholder="Comments (describe what you saw, even if PASS)"></textarea>
+  </div>
+</section>
+
+<div class="bottom-notes">
+  <h2>Notes / overall verdict</h2>
+  <textarea id="general-notes" name="general-notes" placeholder="Notes / overall verdict"></textarea>
+</div>
+
+<div class="buttons">
+  <button id="save-btn" type="button">Save results (download)</button>
+  <button id="reset-btn" type="button">Reset</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var LS_KEY = 'field-tech-timeoff-round5-retest-v1';
+  var ITEM_IDS = ['R0','C3','C7','C8','C10','C11'];
+
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $all(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function todayDateString() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function setItemValue(itemId, value) {
+    var el = document.querySelector('.item[data-item-id="' + itemId + '"]');
+    if (!el) return;
+    el.setAttribute('data-status', value || '');
+    el.classList.remove('pass', 'fail');
+    if (value === 'pass') el.classList.add('pass');
+    else if (value === 'fail') el.classList.add('fail');
+    var passBtn = el.querySelector('.pass-btn');
+    var failBtn = el.querySelector('.fail-btn');
+    if (passBtn) passBtn.classList.toggle('active-pass', value === 'pass');
+    if (failBtn) failBtn.classList.toggle('active-fail', value === 'fail');
+  }
+
+  function getItemValue(itemId) {
+    var el = document.querySelector('.item[data-item-id="' + itemId + '"]');
+    return el ? (el.getAttribute('data-status') || '') : '';
+  }
+
+  function updateSummary() {
+    var pass = 0, fail = 0, untested = 0;
+    ITEM_IDS.forEach(function (id) {
+      var v = getItemValue(id);
+      if (v === 'pass') pass++;
+      else if (v === 'fail') fail++;
+      else untested++;
+    });
+    $('#summary').textContent = pass + ' pass · ' + fail + ' fail · ' + untested + ' untested';
+  }
+
+  function collectState() {
+    var state = {};
+    $all('input[type="text"], input[type="date"]').forEach(function (input) {
+      state[input.id || input.name] = input.value;
+    });
+    $all('textarea').forEach(function (ta) {
+      state[ta.id || ta.name] = ta.value;
+    });
+    ITEM_IDS.forEach(function (id) {
+      state[id] = getItemValue(id);
+    });
+    return state;
+  }
+
+  function applyState(state) {
+    if (!state) return;
+    $all('input[type="text"], input[type="date"]').forEach(function (input) {
+      var key = input.id || input.name;
+      if (Object.prototype.hasOwnProperty.call(state, key)) input.value = state[key];
+    });
+    $all('textarea').forEach(function (ta) {
+      var key = ta.id || ta.name;
+      if (Object.prototype.hasOwnProperty.call(state, key)) ta.value = state[key];
+    });
+    ITEM_IDS.forEach(function (id) {
+      if (state[id]) setItemValue(id, state[id]);
+    });
+    updateSummary();
+  }
+
+  function saveToLocalStorage() {
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(collectState()));
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function loadFromLocalStorageIfNoEmbedded() {
+    var embedded = document.getElementById('saved-state');
+    if (embedded && embedded.textContent && embedded.textContent.trim()) return; // embedded state takes priority
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        var state = JSON.parse(raw);
+        applyState(state);
+      }
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function showBannerFromEmbedded() {
+    var scriptEl = document.getElementById('saved-state');
+    if (!scriptEl || !scriptEl.textContent || !scriptEl.textContent.trim()) return;
+    var timestamp = document.documentElement.getAttribute('data-saved-at') || '';
+    try {
+      var state = JSON.parse(scriptEl.textContent);
+      applyState(state);
+    } catch (e) {
+      /* ignore parse errors */
+    }
+    var banner = $('#banner');
+    banner.style.display = 'block';
+    banner.textContent = 'Loaded saved results from ' + (timestamp || 'unknown time');
+  }
+
+  function doSave() {
+    var state = collectState();
+    var isoNow = new Date().toISOString();
+    document.documentElement.setAttribute('data-saved-at', isoNow);
+
+    var scriptEl = document.getElementById('saved-state');
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = 'saved-state';
+      scriptEl.type = 'application/json';
+      document.body.appendChild(scriptEl);
+    }
+    scriptEl.textContent = JSON.stringify(state).replace(/<\//g, '<\\/');
+
+    var htmlOut = '<!doctype html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([htmlOut], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '2026-09-05_field-tech-timeoff-round5-retest.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function doReset() {
+    try {
+      localStorage.removeItem(LS_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+    var scriptEl = document.getElementById('saved-state');
+    if (scriptEl) scriptEl.parentNode.removeChild(scriptEl);
+    document.documentElement.removeAttribute('data-saved-at');
+    location.reload();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    showBannerFromEmbedded();
+    loadFromLocalStorageIfNoEmbedded();
+    updateSummary();
+
+    document.addEventListener('click', function (evt) {
+      var target = evt.target;
+      if (target.matches('.pass-btn, .fail-btn')) {
+        var itemId = target.getAttribute('data-item');
+        var value = target.getAttribute('data-value');
+        var current = getItemValue(itemId);
+        setItemValue(itemId, current === value ? '' : value);
+        updateSummary();
+        saveToLocalStorage();
+      }
+    });
+
+    document.addEventListener('input', function (evt) {
+      if (evt.target.matches('textarea, input[type="text"], input[type="date"]')) {
+        saveToLocalStorage();
+      }
+    });
+
+    $('#save-btn').addEventListener('click', doSave);
+    $('#reset-btn').addEventListener('click', doReset);
+  });
+})();
+</script>
+
+<script id="saved-state" type="application/json"></script>
+
+</body>
+</html>
