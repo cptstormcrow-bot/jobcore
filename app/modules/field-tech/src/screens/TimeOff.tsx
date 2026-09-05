@@ -132,6 +132,8 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     setEndDate(r.endDate);
     setReason(r.reason ?? '');
     setSubmitError(null);
+    setCancelError(null);
+    setShowRequestModal(true);
   }
 
   function clearSelection(): void {
@@ -142,6 +144,14 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     setSubmitError(null);
     setShowRequestModal(false);
   }
+
+  const closeModal = () => {
+    if (selectedId !== null) clearSelection();
+    else {
+      setShowRequestModal(false);
+      setSubmitError(null);
+    }
+  };
 
   React.useEffect(() => {
     if (initialSelectedId) select(initialSelectedId);
@@ -273,8 +283,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{selectedId !== null ? 'Editing time off' : 'Request time off'}</Text>
-        {isAdminAdded ? <Text style={styles.emptyText}>Added by your admin</Text> : null}
+        <Text style={styles.sectionTitle}>Request time off</Text>
         <Text style={styles.label}>Date range</Text>
         <DateRangeCalendar
           key={selectedId ?? 'new'}
@@ -282,34 +291,11 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
           endDate={endDate}
           onChangeStartDate={setStartDate}
           onChangeEndDate={setEndDate}
-          disabled={submitting || isAdminAdded}
+          disabled={submitting || showRequestModal}
           onSelectMarkedDay={(id) => select(id)}
           onDayTapped={() => { if (selectedId === null) setShowRequestModal(true); }}
           markedRanges={activeRequests.map((r) => ({ id: r.id, startDate: r.startDate, endDate: r.endDate }))}
         />
-        {selectedId !== null ? (
-        <Text style={styles.label}>Reason (optional)</Text>
-        ) : null}
-        {selectedId !== null ? (
-        <TextInput
-          style={[styles.input, styles.reasonInput]}
-          value={reason}
-          onChangeText={setReason}
-          placeholder="Reason for time off"
-          editable={!submitting && !isAdminAdded}
-          multiline
-        />
-        ) : null}
-        {selectedId !== null && submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        {selectedId !== null && !isAdminAdded ? (
-        <>
-        <Button label={submitting ? 'Saving…' : 'Save'} disabled={submitting} onPress={handleSave} style={styles.submitButton} />
-        <Button label={cancellingId === selectedId ? 'Deleting…' : 'Delete'} variant="outline" disabled={cancellingId !== null} onPress={handleDelete} style={styles.cancelButton} />
-        </>
-        ) : null}
-        {selectedId !== null ? (
-        <Button label="Cancel edit" variant="outline" onPress={clearSelection} style={styles.cancelButton} />
-        ) : null}
       </View>
 
       <View style={styles.section}>
@@ -352,37 +338,74 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
         visible={showRequestModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowRequestModal(false)}
+        onRequestClose={closeModal}
       >
-        <Pressable style={styles.overlay} onPress={() => setShowRequestModal(false)}>
+        <Pressable style={styles.overlay} onPress={closeModal}>
           <Pressable style={styles.sheet} onPress={() => {}}>
-            <Text style={styles.modalTitle}>Request time off</Text>
-            <Text style={styles.modalRange}>
-              {startDate && endDate ? `${formatDate(startDate)} – ${formatDate(endDate)}` : ''}
-            </Text>
-            <Text style={styles.label}>Reason (optional)</Text>
-            <TextInput
-              style={[styles.input, styles.reasonInput]}
-              value={reason}
-              onChangeText={setReason}
-              placeholder="Reason for time off"
-              multiline
-            />
-            {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-            <View style={styles.modalButtons}>
-              <Button
-                label="Cancel"
-                variant="outline"
-                onPress={() => setShowRequestModal(false)}
-                style={styles.cancelButton}
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <Text style={styles.modalTitle}>{selectedRequest !== null ? 'Edit time off' : 'Request time off'}</Text>
+              {isAdminAdded ? <Text style={styles.emptyText}>Added by your admin</Text> : null}
+              <Text style={styles.modalRange}>
+                {startDate && endDate ? `${formatDate(startDate)} – ${formatDate(endDate)}` : ''}
+              </Text>
+              {selectedRequest !== null ? (
+                <>
+                  <Text style={styles.label}>Date range</Text>
+                  <DateRangeCalendar
+                    key={`edit-${selectedRequest.id}`}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChangeStartDate={setStartDate}
+                    onChangeEndDate={setEndDate}
+                    disabled={submitting || isAdminAdded}
+                    markedRanges={[]}
+                  />
+                </>
+              ) : null}
+              <Text style={styles.label}>Reason (optional)</Text>
+              <TextInput
+                style={[styles.input, styles.reasonInput]}
+                value={reason}
+                onChangeText={setReason}
+                placeholder="Reason for time off"
+                editable={!submitting && !isAdminAdded}
+                multiline
               />
-              <Button
-                label={submitting ? 'Submitting…' : 'Submit'}
-                disabled={!canSubmit}
-                onPress={handleSubmit}
-                style={styles.submitButton}
-              />
-            </View>
+              {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
+              {selectedRequest !== null && cancelError !== null ? <Text style={styles.errorText}>{cancelError}</Text> : null}
+              <View style={styles.modalButtons}>
+                <Button
+                  label={isAdminAdded && selectedRequest !== null ? 'Close' : 'Cancel'}
+                  variant="outline"
+                  onPress={closeModal}
+                  style={styles.cancelButton}
+                />
+                {selectedRequest === null ? (
+                  <Button
+                    label={submitting ? 'Submitting…' : 'Submit'}
+                    disabled={!canSubmit}
+                    onPress={handleSubmit}
+                    style={styles.submitButton}
+                  />
+                ) : !isAdminAdded ? (
+                  <>
+                    <Button
+                      label={cancellingId === selectedId ? 'Deleting…' : 'Delete'}
+                      variant="outline"
+                      disabled={cancellingId !== null || submitting}
+                      onPress={handleDelete}
+                      style={styles.cancelButton}
+                    />
+                    <Button
+                      label={submitting ? 'Saving…' : 'Save'}
+                      disabled={!canSubmit}
+                      onPress={handleSave}
+                      style={styles.submitButton}
+                    />
+                  </>
+                ) : null}
+              </View>
+            </ScrollView>
           </Pressable>
         </Pressable>
       </Modal>
@@ -467,7 +490,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  sheet: { width: '100%', backgroundColor: '#fff', borderRadius: 8, padding: 16 },
+  sheet: { width: '100%', maxHeight: '90%', backgroundColor: '#fff', borderRadius: 8, padding: 16 },
   modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
   modalRange: { fontSize: 15, marginBottom: 8 },
   modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },
