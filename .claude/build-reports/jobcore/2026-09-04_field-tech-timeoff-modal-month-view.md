@@ -72,4 +72,24 @@ none
 ## Deviations / Defects (addendum)
 - DEV-fix-1: Original build wired month view into the wrong screen (DayList.tsx vs Calendar tab). Fixed in `3e38a75`.
 - DEV-fix-2: Legacy marker styling shipped in f68f665 contrary to Jeff's stated preference. Fixed in `3e38a75`.
+
+## Fix Addendum — Round 2 (2026-09-05)
+
+**Trigger:** Jeff's round-2 re-run of `.claude/test-plans/2026-09-05_field-tech-timeoff-modal-month-view-smoke.html` (saved 2026-09-05T16:45Z): 14 PASS, 3 FAIL (B1, B6, B8) plus general note that the Jobs calendar and Time Off date-range calendar diverged and that the orange time-off circles were distracting. Separately reported: Jobs week view overflowed the right edge of the screen.
+
+**Code commit:** `df9b9c3` — `fix(jobcore): unify Jobs + Time Off calendars on shared week/month CalendarHeader; red-bold time-off dates; week view fits screen (round-2 B1/B6/B8)`
+
+| Item | Round-2 result | Root cause | Fix |
+|---|---|---|---|
+| B1 — week/month toggle on Jobs calendar | FAIL ("nowhere to toggle it") | Mode toggle was a low-contrast text-only control and easily missed | New shared `CalendarHeader` in `@jobcore/ui`: row 1 `‹ Prev · Today · <label> · Next ›`, row 2 segmented Week / Month buttons |
+| B6 — Jobs and Time Off calendars should look identical | FAIL | `DateRangeCalendar.tsx` had its own month-only grid | `DateRangeCalendar.tsx` now renders the same `CalendarHeader` + `WeekView` / `MonthView` primitives as `calendar.tsx` |
+| B8 — month toggle | FAIL ("no month toggle") | Same as B1 | Same as B1 |
+| General note — orange circles distracting | — | `MonthView` painted a primary-colour circle on time-off days | Time-off / blackout dates now render as red bold text (`#D32F2F`, weight 700) in both `WeekView` and `MonthView`; the filled circle is reserved for the selected/anchor day |
+| Jobs week view runs off the right edge | Reported in chat | `WeekView` used a horizontal ScrollView with fixed 140px columns | `WeekView` now lays out 7 `flex:1` columns fitting the screen width, with EEE + date headers (today bold/primary) |
+
+**Files changed (6):** `app/packages/ui/src/CalendarHeader.tsx` (new), `app/packages/ui/src/WeekView.tsx`, `app/packages/ui/src/MonthView.tsx`, `app/packages/ui/src/index.ts`, `app/apps/mobile/app/(tabs)/calendar.tsx` (364→218 lines; day mode removed), `app/modules/field-tech/src/screens/DateRangeCalendar.tsx` (289→194 lines).
+
+**Verification:** `npx tsc --noEmit -p .` from `app/` → exit 0. Visual re-check on device is Jeff's (Forward contract FC-R2-1: Jeff re-runs the HTML smoke plan items B1/B6/B8 and confirms the week view fits the screen).
+
+**Deviations / Defects:** none beyond the round-2 failures listed above. `TimeOff.tsx` untouched; the question of moving the edit-existing form into the modal remains open for Jeff.
 </content>
