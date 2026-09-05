@@ -61,6 +61,8 @@
     #summary { position: static; }
     .buttons, #banner { display: none; }
   }
+.path { color: #555; font-size: 0.9em; margin: 4px 0; }
+  .path { color: #555; font-size: 0.9em; margin: 4px 0 8px; }
 </style>
 </head>
 <body data-saved-at="">
@@ -89,6 +91,7 @@
   <div class="item" data-item-id="R0">
     <h3>R0. Preliminary: fresh bundle loaded</h3>
     <p class="expected"><strong>Expected:</strong> Stop Expo, run <code>npx expo start -c</code> from <code>app/apps/mobile</code>, reload the app on device, confirm the Time Off screen shows the calendar and the Requests list.</p>
+    <p class="path">Screen / How to get there: On your PC, in the app terminal run `npx expo start -c`, then reload the app on the phone. No screen needed.</p>
     <div class="toggles">
       <button type="button" class="pass-btn" data-item="R0" data-value="pass">Pass</button>
       <button type="button" class="fail-btn" data-item="R0" data-value="fail">Fail</button>
@@ -99,6 +102,7 @@
   <div class="item" data-item-id="C3">
     <h3>C3. Tapping an upcoming request opens Edit modal prefilled</h3>
     <p class="expected"><strong>Expected:</strong> Tap an upcoming request you created → modal titled "Edit time off" opens with its dates pre-selected and the reason pre-filled.</p>
+    <p class="path">Screen / How to get there: Home screen (org name, 'your name · tech', module rows, Sign out) → tap the Field Tech row → breadcrumb Field Tech → tap the Time Off tab → section Upcoming time off → tap a request you created yourself → modal titled Edit time off opens prefilled.</p>
     <div class="toggles">
       <button type="button" class="pass-btn" data-item="C3" data-value="pass">Pass</button>
       <button type="button" class="fail-btn" data-item="C3" data-value="fail">Fail</button>
@@ -109,6 +113,7 @@
   <div class="item" data-item-id="C7">
     <h3>C7. Overlay tap / Android back behaves like Cancel</h3>
     <p class="expected"><strong>Expected:</strong> With the modal open, tap the dark overlay outside the sheet; then reopen and press Android back. Both close the modal without saving.</p>
+    <p class="path">Screen / How to get there: Same path as C3 to open the Edit time off modal → tap the dimmed area outside the modal, or press the Android back button.</p>
     <div class="toggles">
       <button type="button" class="pass-btn" data-item="C7" data-value="pass">Pass</button>
       <button type="button" class="fail-btn" data-item="C7" data-value="fail">Fail</button>
@@ -119,6 +124,7 @@
   <div class="item" data-item-id="C8">
     <h3>C8. Admin-added requests are read-only</h3>
     <p class="expected"><strong>Expected:</strong> Tap a request created by an admin → modal shows "Added by your admin", calendar and reason disabled, only a Close button.</p>
+    <p class="path">Screen / How to get there: Home → Field Tech row → Time Off tab → Upcoming time off → tap a request showing 'Added by your admin' → modal shows that text, greyed-out fields, and only a Close button.</p>
     <div class="toggles">
       <button type="button" class="pass-btn" data-item="C8" data-value="pass">Pass</button>
       <button type="button" class="fail-btn" data-item="C8" data-value="fail">Fail</button>
@@ -129,6 +135,7 @@
   <div class="item" data-item-id="C10">
     <h3>C10. Modal scrolls to keep action buttons reachable</h3>
     <p class="expected"><strong>Expected:</strong> Open the edit modal, tap the reason field so the keyboard opens (or use a small screen) → the sheet shrinks/scrolls and Save, Delete, and Cancel remain reachable.</p>
+    <p class="path">Screen / How to get there: Home → Field Tech row → Time Off tab → tap Request time off → tap the Reason for time off field so the keyboard opens → check Save / Delete (edit mode) / Cancel stay reachable above the keyboard.</p>
     <div class="toggles">
       <button type="button" class="pass-btn" data-item="C10" data-value="pass">Pass</button>
       <button type="button" class="fail-btn" data-item="C10" data-value="fail">Fail</button>
