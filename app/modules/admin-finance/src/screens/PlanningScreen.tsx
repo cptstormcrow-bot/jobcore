@@ -30,17 +30,26 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
-import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository } from '../data/ports';
+import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository, JobInvestigation, JobPlanTasksRepository, JobPlanTaskRow, ServiceTaskCatalogEntry } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
+import { seedPlanningFromInvestigation } from '../domain/job-detail-helpers';
 
 export interface PlanningScreenProps {
   jobs: Job[];
   jobPlanning?: JobPlanningRepository;
   jobPlanningPhotos?: JobPlanningPhotoRepository;
+  jobPlanTasks: JobPlanTasksRepository;
   initialSelectedJobId?: string;
   onBack?: () => void;
+  /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
+  embedded?: boolean;
+  /** When provided, backfills any null planning fields from this investigation's findings once details load (editable pre-filled copy — user edits win). */
+  investigationSeed?: JobInvestigation | null;
+  /** Org's price-sheet standard duration (minutes), when known; shown alongside the tasks' total duration for comparison. */
+  standardMinutes?: number;
 }
 
 type DetailsLoadState =
@@ -57,7 +66,125 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
-export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanningPhotos: jobPlanningPhotosProp, initialSelectedJobId, onBack }: PlanningScreenProps) {
+function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: string; jobPlanTasks: JobPlanTasksRepository; standardMinutes?: number }) {
+  const [rows, setRows] = useState<JobPlanTaskRow[]>([]);
+  const [catalog, setCatalog] = useState<ServiceTaskCatalogEntry[]>([]);
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<string, string>>({});
+  const [savingRowId, setSavingRowId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    const { organizationId } = getModuleSession();
+    Promise.all([jobPlanTasks.listForJob(jobId), jobPlanTasks.listCatalogTasks(organizationId)])
+      .then(([taskRows, catalogTasks]) => {
+        if (cancelled) return;
+        setRows(taskRows);
+        setCatalog(catalogTasks);
+        setQuantityDrafts(Object.fromEntries(taskRows.map((r) => [r.id, String(r.quantity)])));
+        setError(null);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : 'Failed to load tasks.');
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, jobPlanTasks]);
+
+  async function handleAddTask(serviceTaskId: string) {
+    try {
+      const row = await jobPlanTasks.addTask(jobId, serviceTaskId, 1);
+      setRows((prev) => [...prev, row]);
+      setQuantityDrafts((prev) => ({ ...prev, [row.id]: String(row.quantity) }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to add task.');
+    }
+  }
+
+  async function handleQuantityBlur(rowId: string) {
+    if (savingRowId === rowId) {
+      return;
+    }
+    const draft = quantityDrafts[rowId];
+    const quantity = Number(draft);
+    if (!draft || Number.isNaN(quantity) || quantity <= 0) {
+      return;
+    }
+    setSavingRowId(rowId);
+    try {
+      const updated = await jobPlanTasks.updateQuantity(rowId, quantity);
+      setRows((prev) => prev.map((r) => (r.id === rowId ? updated : r)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save quantity.');
+    } finally {
+      setSavingRowId(null);
+    }
+  }
+
+  async function handleRemove(rowId: string) {
+    try {
+      await jobPlanTasks.removeTask(rowId);
+      setRows((prev) => prev.filter((r) => r.id !== rowId));
+      setQuantityDrafts((prev) => {
+        const next = { ...prev };
+        delete next[rowId];
+        return next;
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to remove task.');
+    }
+  }
+
+  const totalMinutes = rows.reduce((sum, r) => sum + (r.estimatedMinutes ?? 0) * r.quantity, 0);
+
+  if (loading) {
+    return <LoadingState />;
+  }
+
+  return (
+    <>
+      {error && <ErrorState message={error} />}
+      <Select
+        options={catalog.map((t) => ({ label: t.name, value: t.id }))}
+        value={null}
+        placeholder="Add task..."
+        onChange={(taskId) => {
+          if (taskId) {
+            void handleAddTask(taskId);
+          }
+        }}
+      />
+      {rows.length === 0 ? (
+        <EmptyState message="No tasks added yet." />
+      ) : (
+        rows.map((row) => (
+          <ListItem key={row.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text>{row.name}</Text>
+            <TextInput
+              style={{ width: 60, textAlign: 'center' }}
+              keyboardType="numeric"
+              value={quantityDrafts[row.id] ?? String(row.quantity)}
+              onChangeText={(text) => setQuantityDrafts((prev) => ({ ...prev, [row.id]: text }))}
+              onBlur={() => void handleQuantityBlur(row.id)}
+            />
+            <Button title="Remove" onPress={() => void handleRemove(row.id)} />
+          </ListItem>
+        ))
+      )}
+      <Text>Total duration: {totalMinutes} min (standard: {standardMinutes ?? 60} min)</Text>
+    </>
+  );
+}
+
+export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanningPhotos: jobPlanningPhotosProp, jobPlanTasks, initialSelectedJobId, onBack, embedded, investigationSeed, standardMinutes }: PlanningScreenProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(initialSelectedJobId ?? null);
   const [detailsLoadState, setDetailsLoadState] = useState<DetailsLoadState>({ kind: 'idle' });
   const [details, setDetails] = useState<JobPlanningDetails | null>(null);
@@ -66,6 +193,10 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
   const [partsList, setPartsList] = useState('');
   const [measurements, setMeasurements] = useState('');
   const [instructions, setInstructions] = useState('');
+  const [ingressNotes, setIngressNotes] = useState('');
+  const [logisticsNotes, setLogisticsNotes] = useState('');
+  const [parkingNotes, setParkingNotes] = useState('');
+  const [stateAssessment, setStateAssessment] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -91,11 +222,24 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
         if (cancelled) {
           return;
         }
+        const seeded = seedPlanningFromInvestigation(
+          {
+            ingressNotes: result?.ingressNotes ?? null,
+            logisticsNotes: result?.logisticsNotes ?? null,
+            parkingNotes: result?.parkingNotes ?? null,
+            stateAssessment: result?.stateAssessment ?? null,
+          },
+          investigationSeed,
+        );
         setDetails(result);
         setModelNumbers(result?.modelNumbers ?? '');
         setPartsList(result?.partsList ?? '');
         setMeasurements(result?.measurements ?? '');
         setInstructions(result?.instructions ?? '');
+        setIngressNotes(seeded.ingressNotes ?? '');
+        setLogisticsNotes(seeded.logisticsNotes ?? '');
+        setParkingNotes(seeded.parkingNotes ?? '');
+        setStateAssessment(seeded.stateAssessment ?? '');
         setDetailsLoadState({ kind: 'loaded' });
       })
       .catch((error: unknown) => {
@@ -166,6 +310,10 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
         partsList: partsList.trim() || null,
         measurements: measurements.trim() || null,
         instructions: instructions.trim() || null,
+        ingressNotes: ingressNotes.trim() || null,
+        logisticsNotes: logisticsNotes.trim() || null,
+        parkingNotes: parkingNotes.trim() || null,
+        stateAssessment: stateAssessment.trim() || null,
       });
       setDetails(saved);
     } catch (error: unknown) {
@@ -202,15 +350,22 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
     }
   }
 
+  const Root = embedded ? View : ScrollView;
+  const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
+
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.backRow}>
-          <Button label={onBack ? 'Back to Job' : 'Back to job list'} variant="outline" size="sm" onPress={onBack ?? (() => setSelectedJobId(null))} />
-        </View>
+      <Root {...rootProps}>
+        {!embedded && (
+          <View style={styles.backRow}>
+            <Button label={onBack ? 'Back to Job' : 'Back to job list'} variant="outline" size="sm" onPress={onBack ?? (() => setSelectedJobId(null))} />
+          </View>
+        )}
 
         <Card style={styles.card}>
-          <Text style={styles.title}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
+          {!embedded && (
+            <Text style={styles.title}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
+          )}
 
           {detailsLoadState.kind === 'loading' || detailsLoadState.kind === 'idle' ? (
             <LoadingState label="Loading planning details..." />
@@ -218,13 +373,16 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             <ErrorState message={detailsLoadState.message} />
           ) : (
             <>
-              <Text style={styles.guidance}>Note what you'd need on-site: model numbers, measurements, parts, access notes.</Text>
+              <Text style={styles.guidance}>Note what you&apos;d need on-site: model numbers, measurements, parts, access notes.</Text>
 
               <Text style={styles.label}>Model Numbers</Text>
               <TextInput
                 style={styles.notesInput}
                 value={modelNumbers}
                 onChangeText={setModelNumbers}
+                onBlur={() => {
+                  void handleSave();
+                }}
                 placeholder="e.g. Trane XR16, model # ..."
                 placeholderTextColor={colors.textLight}
                 multiline
@@ -236,6 +394,9 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 style={styles.notesInput}
                 value={partsList}
                 onChangeText={setPartsList}
+                onBlur={() => {
+                  void handleSave();
+                }}
                 placeholder="List parts needed for this job"
                 placeholderTextColor={colors.textLight}
                 multiline
@@ -247,6 +408,9 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 style={styles.notesInput}
                 value={measurements}
                 onChangeText={setMeasurements}
+                onBlur={() => {
+                  void handleSave();
+                }}
                 placeholder="Dimensions, clearances, etc."
                 placeholderTextColor={colors.textLight}
                 multiline
@@ -258,7 +422,66 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 style={styles.notesInput}
                 value={instructions}
                 onChangeText={setInstructions}
+                onBlur={() => {
+                  void handleSave();
+                }}
                 placeholder="Step-by-step notes for the assigned tech"
+                placeholderTextColor={colors.textLight}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>Ingress Notes</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={ingressNotes}
+                onChangeText={setIngressNotes}
+                onBlur={() => {
+                  void handleSave();
+                }}
+                placeholder="How to access the site"
+                placeholderTextColor={colors.textLight}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>Logistics Notes</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={logisticsNotes}
+                onChangeText={setLogisticsNotes}
+                onBlur={() => {
+                  void handleSave();
+                }}
+                placeholder="Logistics considerations for the visit"
+                placeholderTextColor={colors.textLight}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>Parking Notes</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={parkingNotes}
+                onChangeText={setParkingNotes}
+                onBlur={() => {
+                  void handleSave();
+                }}
+                placeholder="Where to park"
+                placeholderTextColor={colors.textLight}
+                multiline
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.label}>State Assessment</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={stateAssessment}
+                onChangeText={setStateAssessment}
+                onBlur={() => {
+                  void handleSave();
+                }}
+                placeholder="Current state of the site/system"
                 placeholderTextColor={colors.textLight}
                 multiline
                 textAlignVertical="top"
@@ -285,6 +508,11 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
         </Card>
 
         <Card style={styles.card}>
+          <Text style={styles.title}>Tasks</Text>
+          <TaskListSection jobId={selectedJobId as string} jobPlanTasks={jobPlanTasks} standardMinutes={standardMinutes} />
+        </Card>
+
+        <Card style={styles.card}>
           <Text style={styles.title}>Photos</Text>
           {photosError && <Text style={styles.errorText}>{photosError}</Text>}
           {photos.length === 0 ? (
@@ -306,7 +534,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             />
           </View>
         </Card>
-      </ScrollView>
+      </Root>
     </View>
   );
 }

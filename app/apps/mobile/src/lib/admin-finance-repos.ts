@@ -68,6 +68,9 @@ import type {
   JobEstimateLineItem,
   JobEstimateLineItemDraft,
   JobEstimateInput,
+  JobPlanTasksRepository,
+  JobPlanTaskRow,
+  ServiceTaskCatalogEntry,
 } from '../../../../modules/admin-finance/src/data/ports';
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
@@ -84,8 +87,9 @@ import type {
   PriceSheetRow,
   PriceSheetRateRow,
 } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
-import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, updateServiceTask as updateServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import type { PriceSheetRateWithTaskRow } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { getStandardDuration, upsertStandardDuration } from '../../../../modules/admin-finance/src/data/price-sheet-standard-duration-repo';
 import type {
   ReimbursementRepo,
   ReimbursementRow,
@@ -1035,6 +1039,51 @@ export function createServiceTasksRepository() {
       }
       return result;
     },
+    async updateServiceTask(
+      taskId: string,
+      patch: {
+        estimatedMinutes?: number | null;
+        rate?: number | null;
+        category?: string | null;
+        active?: boolean;
+      }
+    ) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('service_task.update', occurredAt, { taskId, patch });
+      const result = await updateServiceTaskRepo(
+        supabase as unknown as Parameters<typeof updateServiceTaskRepo>[0],
+        taskId,
+        patch
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.updateServiceTask', result.reason, { taskId, patch });
+      }
+      return result;
+    },
+  };
+}
+
+export function createPriceSheetStandardDurationRepository() {
+  return {
+    async get(organizationId: string) {
+      return getStandardDuration(
+        supabase as unknown as Parameters<typeof getStandardDuration>[0],
+        organizationId
+      );
+    },
+    async upsert(organizationId: string, standardMinutes: number) {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('price_sheet_standard_duration.upsert', occurredAt, { organizationId, standardMinutes });
+      const result = await upsertStandardDuration(
+        supabase as unknown as Parameters<typeof upsertStandardDuration>[0],
+        organizationId,
+        standardMinutes
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.upsertStandardDuration', result.reason, { organizationId, standardMinutes });
+      }
+      return result;
+    },
   };
 }
 
@@ -1460,9 +1509,13 @@ export function createServiceAreaRepository(): ServiceAreaRepository {
 
 /* ------------------------------------------------------------------ *
  * PaymentsRepository (Workstream D — folded in from the retired
- * payment-review module). Read-only, mirrors createAuditLogRepository's
- * shape: no enqueueMutation (nothing is written here), maps rows via
- * toPayment (throws on an unrecognized status — fail closed).
+ * payment-review module). Mirrors createAuditLogRepository's shape for
+ * its read methods (maps rows via toPayment, which throws on an
+ * unrecognized status — fail closed); recordManualPayment is the one
+ * write path, used by the Job Details screen's manual "Mark Paid"
+ * action. It always inserts provider_id: 'manual' and leaves
+ * external_ref null — this table may never hold a card number, PAN,
+ * CVV, or any token that could be one.
  * ------------------------------------------------------------------ */
 
 export function createPaymentsRepository(): PaymentsRepository {
@@ -1495,6 +1548,32 @@ export function createPaymentsRepository(): PaymentsRepository {
         throw new Error(`list job payments failed: ${error.message}`);
       }
       return ((data ?? []) as PaymentRow[]).map(toPayment);
+    },
+    async recordManualPayment(organizationId: string, jobId: string, amount: number): Promise<Payment> {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        throw new Error(`record manual payment failed to resolve current user: ${userError?.message ?? 'no session'}`);
+      }
+
+      const { data, error } = await supabase
+        .from('payments')
+        .insert({
+          organization_id: organizationId,
+          job_id: jobId,
+          provider_id: 'manual',
+          amount,
+          status: 'manual_confirmed',
+          external_ref: null,
+          confirmed_at: new Date().toISOString(),
+          confirmed_by: userData.user.id,
+        })
+        .select('*')
+        .single();
+      if (error || !data) {
+        logSyncFailure('admin-finance-repos.recordManualPayment', error?.message ?? 'no row returned', { organizationId, jobId, amount });
+        throw new Error(`record manual payment failed: ${error?.message ?? 'no row returned'}`);
+      }
+      return toPayment(data as PaymentRow);
     },
   };
 }
@@ -2183,6 +2262,130 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * JobPlanTasksRepository
+ * ------------------------------------------------------------------ */
+
+function toJobPlanTaskRow(row: {
+  id: string;
+  job_id: string;
+  service_task_id: string;
+  quantity: number;
+  notes: string | null;
+  service_tasks: {
+    name: string;
+    estimated_minutes: number | null;
+    rate: number | null;
+    category: string | null;
+    active: boolean;
+  } | null;
+}): JobPlanTaskRow {
+  const task = row.service_tasks;
+  return {
+    id: row.id,
+    jobId: row.job_id,
+    serviceTaskId: row.service_task_id,
+    quantity: row.quantity,
+    notes: row.notes,
+    name: task?.name ?? '',
+    estimatedMinutes: task?.estimated_minutes ?? null,
+    rate: task?.rate ?? null,
+    category: task?.category ?? null,
+    active: task?.active ?? false,
+  };
+}
+
+export function createJobPlanTasksRepository(): JobPlanTasksRepository {
+  return {
+    async listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]> {
+      const { data, error } = await supabase
+        .from('service_tasks')
+        .select('id, name, category, estimated_minutes, rate')
+        .eq('organization_id', organizationId)
+        .eq('active', true);
+      if (error) {
+        throw new Error(`listCatalogTasks failed: ${error.message}`);
+      }
+      return ((data ?? []) as Array<{
+        id: string;
+        name: string;
+        category: string | null;
+        estimated_minutes: number | null;
+        rate: number | null;
+      }>).map((row) => ({
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        estimatedMinutes: row.estimated_minutes,
+        rate: row.rate,
+      }));
+    },
+
+    async listForJob(jobId: string): Promise<JobPlanTaskRow[]> {
+      const { data, error } = await supabase
+        .from('job_plan_tasks')
+        .select('*, service_tasks(name, estimated_minutes, rate, category, active)')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`listForJob failed: ${error.message}`);
+      }
+      return ((data ?? []) as Array<Parameters<typeof toJobPlanTaskRow>[0]>).map(toJobPlanTaskRow);
+    },
+
+    async addTask(jobId: string, serviceTaskId: string, quantity: number): Promise<JobPlanTaskRow> {
+      const { organizationId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_plan_task.add', occurredAt, { jobId, serviceTaskId, quantity });
+
+      const { data, error } = await supabase
+        .from('job_plan_tasks')
+        .insert({
+          organization_id: organizationId,
+          job_id: jobId,
+          service_task_id: serviceTaskId,
+          quantity,
+        })
+        .select('*, service_tasks(name, estimated_minutes, rate, category, active)')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.addJobPlanTask', error.message, { jobId, serviceTaskId, quantity });
+        throw new Error(`addTask failed: ${error.message}`);
+      }
+      return toJobPlanTaskRow(data as Parameters<typeof toJobPlanTaskRow>[0]);
+    },
+
+    async updateQuantity(taskRowId: string, quantity: number): Promise<JobPlanTaskRow> {
+      const { userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_plan_task.update_quantity', occurredAt, { taskRowId, quantity });
+
+      const { data, error } = await supabase
+        .from('job_plan_tasks')
+        .update({ quantity, updated_at: occurredAt, updated_by: userId })
+        .eq('id', taskRowId)
+        .select('*, service_tasks(name, estimated_minutes, rate, category, active)')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.updateJobPlanTaskQuantity', error.message, { taskRowId, quantity });
+        throw new Error(`updateQuantity failed: ${error.message}`);
+      }
+      return toJobPlanTaskRow(data as Parameters<typeof toJobPlanTaskRow>[0]);
+    },
+
+    async removeTask(taskRowId: string): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_plan_task.remove', occurredAt, { taskRowId });
+
+      const { error } = await supabase.from('job_plan_tasks').delete().eq('id', taskRowId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.removeJobPlanTask', error.message, { taskRowId });
+        throw new Error(`removeTask failed: ${error.message}`);
+      }
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -2221,6 +2424,7 @@ export function buildAdminFinancePorts(): ModulePorts {
     jobPlanningPhotos: createJobPlanningPhotoRepository(),
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
+    jobPlanTasks: createJobPlanTasksRepository(),
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,

@@ -710,6 +710,7 @@ export function AdminFinanceRoot() {
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
+          serviceTasksRepo={ports.serviceTasks}
           onPublished={handlePublished}
         />
       ) : subView === 'closeOutQueue' ? (

@@ -39,11 +39,200 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
-import type { PriceSheetRepository } from '../data/ports';
+import type { PriceSheetRepository, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession } from '../lib/module-session';
+
+interface ServiceTasksRepoPort {
+  list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
+  save(organizationId: string, serviceId: string, name: string): Promise<CalculationResult<ServiceTask>>;
+  updateServiceTask(
+    taskId: string,
+    patch: {
+      estimatedMinutes?: number | null;
+      rate?: number | null;
+      category?: string | null;
+      active?: boolean;
+    }
+  ): Promise<CalculationResult<ServiceTask>>;
+}
+
+type ServiceTasksCardState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'loaded' }
+  | { kind: 'done'; message: string }
+  | { kind: 'failed'; message: string };
+
+function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasksRepoPort }) {
+  const [tasks, setTasks] = useState<ServiceTask[]>([]);
+  const [loadState, setLoadState] = useState<ServiceTasksCardState>({ kind: 'idle' });
+  const [saveState, setSaveState] = useState<ServiceTasksCardState>({ kind: 'idle' });
+  const [nameInput, setNameInput] = useState('');
+  const [serviceIdInput, setServiceIdInput] = useState('');
+  const [drafts, setDrafts] = useState<
+    Record<string, { estimatedMinutes: string; rate: string; category: string }>
+  >({});
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoadState({ kind: 'loading' });
+      const { organizationId } = getModuleSession();
+      const result = await serviceTasksRepo.list(organizationId);
+      if (cancelled) return;
+      if (!result.ok) {
+        setLoadState({ kind: 'failed', message: result.reason });
+        return;
+      }
+      setTasks(result.value);
+      setDrafts(
+        Object.fromEntries(
+          result.value.map((task) => [
+            task.id,
+            {
+              estimatedMinutes: task.estimatedMinutes != null ? String(task.estimatedMinutes) : '',
+              rate: task.rate != null ? String(task.rate) : '',
+              category: task.category ?? '',
+            },
+          ])
+        )
+      );
+      setLoadState({ kind: 'loaded' });
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceTasksRepo]);
+
+  function updateDraft(taskId: string, field: 'estimatedMinutes' | 'rate' | 'category', value: string) {
+    setDrafts((prev) => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
+  }
+
+  async function commitField(
+    taskId: string,
+    patch: { estimatedMinutes?: number | null; rate?: number | null; category?: string | null }
+  ) {
+    const result = await serviceTasksRepo.updateServiceTask(taskId, patch);
+    if (!result.ok) {
+      setLoadState({ kind: 'failed', message: result.reason });
+      return;
+    }
+    setTasks((prev) => prev.map((task) => (task.id === taskId ? result.value : task)));
+  }
+
+  async function handleToggleActive(task: ServiceTask) {
+    const result = await serviceTasksRepo.updateServiceTask(task.id, { active: !task.active });
+    if (!result.ok) {
+      setLoadState({ kind: 'failed', message: result.reason });
+      return;
+    }
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? result.value : t)));
+  }
+
+  async function handleCreate() {
+    if (!serviceIdInput || !nameInput) return;
+    setSaveState({ kind: 'loading' });
+    const { organizationId } = getModuleSession();
+    const result = await serviceTasksRepo.save(organizationId, serviceIdInput, nameInput);
+    if (!result.ok) {
+      setSaveState({ kind: 'failed', message: result.reason });
+      return;
+    }
+    setTasks((prev) => [...prev, result.value]);
+    setDrafts((prev) => ({
+      ...prev,
+      [result.value.id]: {
+        estimatedMinutes: result.value.estimatedMinutes != null ? String(result.value.estimatedMinutes) : '',
+        rate: result.value.rate != null ? String(result.value.rate) : '',
+        category: result.value.category ?? '',
+      },
+    }));
+    setNameInput('');
+    setServiceIdInput('');
+    setSaveState({ kind: 'done', message: 'Task added.' });
+  }
+
+  return (
+    <Card style={styles.card}>
+      <Text style={styles.heading}>Service Tasks</Text>
+      {loadState.kind === 'loading' ? <LoadingState label="Loading service tasks..." /> : null}
+      {loadState.kind === 'failed' ? <ErrorState message={loadState.message} /> : null}
+
+      {tasks.map((task) => {
+        const draft = drafts[task.id] ?? { estimatedMinutes: '', rate: '', category: '' };
+        return (
+          <View key={task.id} style={styles.action}>
+            <ListItem title={task.name} subtitle={task.serviceId} />
+            <TextInput
+              style={styles.input}
+              placeholder="Estimated minutes"
+              value={draft.estimatedMinutes}
+              keyboardType="numeric"
+              onChangeText={(text) => updateDraft(task.id, 'estimatedMinutes', text)}
+              onBlur={() => {
+                const parsed = draft.estimatedMinutes === '' ? null : Number(draft.estimatedMinutes);
+                if (parsed !== null && Number.isNaN(parsed)) return;
+                void commitField(task.id, { estimatedMinutes: parsed });
+              }}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Rate"
+              value={draft.rate}
+              keyboardType="numeric"
+              onChangeText={(text) => updateDraft(task.id, 'rate', text)}
+              onBlur={() => {
+                const parsed = draft.rate === '' ? null : Number(draft.rate);
+                if (parsed !== null && Number.isNaN(parsed)) return;
+                void commitField(task.id, { rate: parsed });
+              }}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Category"
+              value={draft.category}
+              onChangeText={(text) => updateDraft(task.id, 'category', text)}
+              onBlur={() =>
+                void commitField(task.id, { category: draft.category === '' ? null : draft.category })
+              }
+            />
+            <Button
+              label={task.active ? 'Active' : 'Inactive'}
+              variant="outline"
+              size="sm"
+              onPress={() => void handleToggleActive(task)}
+            />
+          </View>
+        );
+      })}
+
+      <TextInput
+        style={styles.input}
+        placeholder="Service ID"
+        value={serviceIdInput}
+        onChangeText={setServiceIdInput}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="New task name"
+        value={nameInput}
+        onChangeText={setNameInput}
+      />
+      <Button
+        label={saveState.kind === 'loading' ? 'Saving...' : 'Add Task'}
+        onPress={() => void handleCreate()}
+        disabled={saveState.kind === 'loading'}
+        style={styles.action}
+      />
+      {saveState.kind === 'failed' ? <ErrorState message={saveState.message} /> : null}
+      {saveState.kind === 'done' ? <Text style={styles.note}>{saveState.message}</Text> : null}
+    </Card>
+  );
+}
 
 export interface PriceSheetEditorScreenProps {
   priceSheets?: PriceSheetRepository;
@@ -68,6 +257,11 @@ export interface PriceSheetEditorScreenProps {
       adjustmentType: 'percent' | 'flat',
       adjustmentValue: number
     ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
+  };
+  serviceTasksRepo: ServiceTasksRepoPort;
+  standardDurationRepo?: {
+    get(organizationId: string): Promise<PriceSheetStandardDuration | null>;
+    upsert(organizationId: string, standardMinutes: number): Promise<PriceSheetStandardDuration>;
   };
 }
 
@@ -107,6 +301,8 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     onSave,
     onPublished,
     areaAdjustmentsRepo,
+    serviceTasksRepo,
+    standardDurationRepo,
   } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
@@ -115,6 +311,9 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [serviceAreaIdInput, setServiceAreaIdInput] = useState('');
   const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
   const [adjustmentValueInput, setAdjustmentValueInput] = useState('');
+  const [standardDuration, setStandardDuration] = useState<PriceSheetStandardDuration | null>(null);
+  const [standardMinutesInput, setStandardMinutesInput] = useState('60');
+  const [standardDurationState, setStandardDurationState] = useState<ActionState>({ kind: 'idle' });
 
   const session = getModuleSession();
 
@@ -164,10 +363,25 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
           setAreaAdjustmentState({ kind: 'failed', message });
         }
       });
+    if (standardDurationRepo) {
+      standardDurationRepo
+        .get(session.org.id)
+        .then((result) => {
+          if (cancelled) return;
+          setStandardDuration(result);
+          setStandardMinutesInput(result ? String(result.standardMinutes) : '60');
+        })
+        .catch((error: unknown) => {
+          if (!cancelled) {
+            const message = error instanceof Error ? error.message : 'Could not load the standard duration.';
+            setStandardDurationState({ kind: 'failed', message });
+          }
+        });
+    }
     return () => {
       cancelled = true;
     };
-  }, [areaAdjustmentsRepo, priceSheetId]);
+  }, [areaAdjustmentsRepo, priceSheetId, standardDurationRepo, session.org.id]);
 
   if (!session) {
     return (
@@ -289,6 +503,19 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     }
   }
 
+  async function handleSaveStandardDuration(value: number): Promise<void> {
+    if (!standardDurationRepo) return;
+    setStandardDurationState({ kind: 'working' });
+    try {
+      const saved = await standardDurationRepo.upsert(session.org.id, value);
+      setStandardDuration(saved);
+      setStandardDurationState({ kind: 'done', message: 'Saved.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the standard duration.';
+      setStandardDurationState({ kind: 'failed', message });
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -321,6 +548,25 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+
+        {standardDurationRepo ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Standard Trip Duration</Text>
+            <Text style={styles.note}>
+              The baseline duration ({standardDuration?.standardMinutes ?? 60} min) other job
+              estimates are compared against.
+            </Text>
+            <TextInput style={styles.input} placeholder="Standard minutes" value={standardMinutesInput} onChangeText={setStandardMinutesInput} keyboardType="numeric" />
+            <Button
+              label={standardDurationState.kind === 'working' ? 'Saving...' : 'Save Standard Duration'}
+              onPress={() => { const value = Number(standardMinutesInput); if (Number.isNaN(value) || value <= 0) return; void handleSaveStandardDuration(value); }}
+              disabled={standardDurationState.kind === 'working'}
+              style={styles.action}
+            />
+            {standardDurationState.kind === 'failed' ? <ErrorState message={standardDurationState.message} /> : null}
+            {standardDurationState.kind === 'done' ? <Text style={styles.note}>{standardDurationState.message}</Text> : null}
+          </Card>
+        ) : null}
 
         {areaAdjustmentsRepo ? (
           <Card style={styles.card}>
@@ -381,6 +627,8 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
             ) : null}
           </Card>
         ) : null}
+
+        {serviceTasksRepo ? <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} /> : null}
 
         <Text style={styles.note}>
           Rate rows are not editable yet — the read port exposes no rates method.

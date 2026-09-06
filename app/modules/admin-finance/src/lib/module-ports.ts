@@ -37,6 +37,7 @@ import type {
   JobPlanningPhotoRepository,
   EstimateRepository,
   JobInvestigationRepository,
+  JobPlanTasksRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { CalculationResult, PriceSheetRate } from '../money/types';
@@ -83,6 +84,15 @@ export interface ModulePorts {
   serviceTasks: {
     list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
     save(organizationId: string, serviceId: string, name: string): Promise<CalculationResult<ServiceTask>>;
+    updateServiceTask(
+      taskId: string,
+      patch: {
+        estimatedMinutes?: number | null;
+        rate?: number | null;
+        category?: string | null;
+        active?: boolean;
+      }
+    ): Promise<CalculationResult<ServiceTask>>;
   };
   reimbursements: ReimbursementRepo;
   payoutBatches: PayoutBatchRepo;
@@ -95,6 +105,7 @@ export interface ModulePorts {
   jobPlanningPhotos: JobPlanningPhotoRepository;
   estimates: EstimateRepository;
   investigations: JobInvestigationRepository;
+  jobPlanTasks: JobPlanTasksRepository;
   /**
    * Durable on-device key/value boolean preference storage — persists across
    * in-app navigation, app restarts, and logout/login. Backed by SecureStore

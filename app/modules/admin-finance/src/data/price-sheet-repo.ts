@@ -418,6 +418,53 @@ export async function saveServiceTask(
   return { ok: true, value: toServiceTask(data) };
 }
 
+export async function updateServiceTask(
+  client: SupabaseServiceTasksClient,
+  taskId: string,
+  patch: {
+    estimatedMinutes?: number | null;
+    rate?: number | null;
+    category?: string | null;
+    active?: boolean;
+  }
+): Promise<CalculationResult<ServiceTask>> {
+  const updateObj: Record<string, unknown> = {};
+  if ('estimatedMinutes' in patch) {
+    updateObj.estimated_minutes = patch.estimatedMinutes;
+  }
+  if ('rate' in patch) {
+    updateObj.rate = patch.rate;
+  }
+  if ('category' in patch) {
+    updateObj.category = patch.category;
+  }
+  if ('active' in patch) {
+    updateObj.active = patch.active;
+  }
+  const { data, error } = await client
+    .from('service_tasks')
+    .update(updateObj)
+    .eq('id', taskId)
+    .select('*')
+    .single();
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return {
+    ok: true,
+    value: {
+      id: data.id,
+      organizationId: data.organization_id,
+      serviceId: data.service_id,
+      name: data.name,
+      estimatedMinutes: data.estimated_minutes,
+      rate: data.rate,
+      category: data.category,
+      active: data.active,
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * Job classification — Standard / Engineered / Unclassified
  * ------------------------------------------------------------------ */
