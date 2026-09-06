@@ -43,7 +43,7 @@ import type { PriceSheetRepository, ServiceTask, PriceSheetStandardDuration } fr
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
-import { getModuleSession } from '../lib/module-session';
+import { getModuleSession, useModuleSession } from '../lib/module-session';
 
 interface ServiceTasksRepoPort {
   list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
@@ -59,6 +59,8 @@ interface ServiceTasksRepoPort {
   ): Promise<CalculationResult<ServiceTask>>;
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 type ServiceTasksCardState =
   | { kind: 'idle' }
   | { kind: 'loading' }
@@ -67,6 +69,8 @@ type ServiceTasksCardState =
   | { kind: 'failed'; message: string };
 
 function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasksRepoPort }) {
+  const session = useModuleSession();
+  const organizationId = session?.org.id;
   const [tasks, setTasks] = useState<ServiceTask[]>([]);
   const [loadState, setLoadState] = useState<ServiceTasksCardState>({ kind: 'idle' });
   const [saveState, setSaveState] = useState<ServiceTasksCardState>({ kind: 'idle' });
@@ -79,8 +83,11 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (!organizationId) {
+        setLoadState({ kind: 'idle' });
+        return;
+      }
       setLoadState({ kind: 'loading' });
-      const { organizationId } = getModuleSession();
       const result = await serviceTasksRepo.list(organizationId);
       if (cancelled) return;
       if (!result.ok) {
@@ -106,7 +113,7 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
     return () => {
       cancelled = true;
     };
-  }, [serviceTasksRepo]);
+  }, [serviceTasksRepo, organizationId]);
 
   function updateDraft(taskId: string, field: 'estimatedMinutes' | 'rate' | 'category', value: string) {
     setDrafts((prev) => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
@@ -135,8 +142,15 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
 
   async function handleCreate() {
     if (!serviceIdInput || !nameInput) return;
+    if (!UUID_PATTERN.test(serviceIdInput)) {
+      setSaveState({ kind: 'failed', message: 'Service ID must be a valid UUID.' });
+      return;
+    }
+    if (!organizationId) {
+      setSaveState({ kind: 'failed', message: 'No organization selected yet.' });
+      return;
+    }
     setSaveState({ kind: 'loading' });
-    const { organizationId } = getModuleSession();
     const result = await serviceTasksRepo.save(organizationId, serviceIdInput, nameInput);
     if (!result.ok) {
       setSaveState({ kind: 'failed', message: result.reason });
