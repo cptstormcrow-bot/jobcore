@@ -49,6 +49,13 @@ separate follow-on work.
 | `0024_time_tracking_and_variance.sql` | Time tracking + variance schema |
 | `0026_close_out_write_rpc.sql` | Close-out write RPC |
 | `0027_beta_test_source.sql` | Widens `jobs_source_check` to allow `'beta-test'` — unblocks the "Spawn Test Jobs" feature's synthetic-row insert. |
+| `0034_price_sheet_archive.sql` | Adds `public.archive_price_sheet` function for archiving a price sheet — applied 2026-09-04 (linked DB, `db query --file`) |
+| `0038_job_investigations_unique_job.sql` | applied 2026-09-05 (unique constraint job_investigations_job_id_key, verified via pg_constraint) |
+| `0040_jobs_job_number.sql` | Sequential job number on `jobs`, numbered GLOBALLY across organizations (not per-org), by design (plan decision S1, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
+| `0041_service_areas_zip_codes.sql` | Zip-code list on `service_areas` for address-based auto-select (plan decision S2, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
+| `0042_job_planning_evisit_columns.sql` | Plan region's own editable copy of the E-visit fields (ingress/logistics/parking/state) on `job_planning_details`, seeded from `job_investigations` client-side where null, then diverges (plan decision 9, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
+| `0044_jobs_ingress_instructions.sql` | Adds nullable `jobs.ingress_instructions` text column (gate codes, meetup notes) for the mobile Job Details form. |
+| `0045_service_areas_zip_backfill.sql` | applied 2026-09-05 — backfills `service_areas.zip_codes` for 31 existing San Diego service areas (91 zips total, verified via SELECT count); enables auto zip→service-area match on the Job Details form. |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
@@ -242,3 +249,4 @@ Public price feed for the current published price sheet per organization. Reads 
 
 ### handoff-resolve
 Token-based payment-handoff resolution API for the review/handoff flow (GET /:token, POST /:token/providers/:providerId/handoff). Service-role client only, no Supabase auth session. Deploy REQUIRES --no-verify-jwt (verify_jwt = false) — see functions/handoff-resolve/DEPLOY.md.
+| `0046_job_plan_tasks.sql` | applied 2026-09-05 — Adds job_plan_tasks table (per-job catalog task list, live-linked to service_tasks) and extends service_tasks with estimated_minutes, rate, category, active columns. |
