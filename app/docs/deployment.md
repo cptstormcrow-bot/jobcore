@@ -49,7 +49,7 @@ npx eas build --profile production
 
 ## App identifiers and versioning
 
-- iOS bundle identifier / Android package: `com.sdassemblypros.jobcore`
+- iOS bundle identifier: `com.sdassemblypros.jobcore`; Android package: `com.sdassemblypros.jobcore.v2`
   (`app.json` → `ios.bundleIdentifier` / `android.package`).
 - `app.json` → `version` is the user-facing semantic version (e.g. `0.1.1`).
   Bump this for any release that should show a new version string to users.

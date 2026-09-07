@@ -3,7 +3,7 @@ title: Jobcore Mobile Build Toolchain (Android + iOS)
 type: project
 status: reference
 created: 2026-08-04
-updated: 2026-08-04
+updated: 2026-09-07
 comments: "How Jobcore gets compiled for Android and iOS, and when"
 classification: sdassemblypros/jobcore
 origin: Codespace/SDAssemblyPros/Jobcore/jobcore-mobile-build-toolchain.md
@@ -40,7 +40,7 @@ Reasons specific to this project:
 
 | Requirement | State | Evidence |
 |---|---|---|
-| Android package id | OK `com.sdassemblypros.jobcore` | `app.json` |
+| Android package id | OK `com.sdassemblypros.jobcore.v2` | `app.json` |
 | iOS bundle id | OK `com.sdassemblypros.jobcore` | `app.json` |
 | EAS profiles | OK `development` / `preview` / `production` | `eas.json` |
 | Expo SDK / RN | OK Expo ~52.0.0, RN 0.76.5, New Arch on | `package.json`, `app.json` |
