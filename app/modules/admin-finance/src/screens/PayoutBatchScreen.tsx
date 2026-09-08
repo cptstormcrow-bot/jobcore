@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
@@ -201,7 +201,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
   return (
     <View style={styles.screen}>
       {banner}
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <ScreenTitle title="Payout Batches" />
         <Text style={styles.groupHeading}>Payout Batches</Text>
         {loadState.batches.map((batch, batchIndex) => {
@@ -249,7 +249,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
             </Card>
           );
         })}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -258,7 +258,6 @@ export default PayoutBatchScreen;
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
     backgroundColor: colors.offWhite,
   },
   banner: {

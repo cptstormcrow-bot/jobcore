@@ -35,12 +35,9 @@ import { awaitingCloseOut } from '../domain/closeout';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
-import { ReimbursementQueueScreen } from './ReimbursementQueueScreen';
 import { TimeOffQueueScreen } from './TimeOffQueueScreen';
-import { PayoutBatchScreen } from './PayoutBatchScreen';
-import { PayoutBatchDetailScreen } from './PayoutBatchDetailScreen';
 import { AuditLogScreen } from './AuditLogScreen';
-import { PaymentsScreen } from './PaymentsScreen';
+import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
@@ -72,10 +69,7 @@ type SubView =
   | 'assignmentBoard'
   | 'closeOutQueue' | 'closeOutReview'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
-  | 'reimbursementQueue'
   | 'timeOffQueue'
-  | 'payoutBatch'
-  | 'payoutBatch-detail'
   | 'reports'
   | 'auditLog'
   | 'payments'
@@ -158,6 +152,7 @@ export function AdminFinanceRoot() {
   const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
+  const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
@@ -422,11 +417,10 @@ export function AdminFinanceRoot() {
 
   function handleSelectPayoutBatch(batch: PayoutBatch) {
     setSelectedPayoutBatch(batch);
-    setSubView('payoutBatch-detail');
   }
 
   function handleBackToPayoutBatches() {
-    setSubView('payoutBatch');
+    setSelectedPayoutBatch(null);
   }
 
   function handleSelectEmployee(profile: Profile) {
@@ -537,6 +531,8 @@ export function AdminFinanceRoot() {
   // in-progress, unsaved lead edit with no confirmation prompt.
   function goTop(view: SubView) {
     setSelectedLead(null);
+    setSelectedPayoutBatch(null);
+    setPaymentsScrollTarget(null);
     setSubView(view);
   }
 
@@ -598,7 +594,10 @@ export function AdminFinanceRoot() {
               <ListItem
                 title="Payouts"
                 subtitle="View payout batches"
-                onPress={() => setSubView('payoutBatch')}
+                onPress={() => {
+                  setSubView('payments');
+                  setPaymentsScrollTarget('payoutBatches');
+                }}
               />
             </Card>
           </ScrollView>
@@ -741,24 +740,21 @@ export function AdminFinanceRoot() {
             <EmptyState title="Close out" message="No job selected." />
           </View>
         )
-      ) : subView === 'reimbursementQueue' ? (
-        <ReimbursementQueueScreen reimbursements={ports.reimbursements} />
       ) : subView === 'timeOffQueue' ? (
         <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} />
-      ) : subView === 'payoutBatch' ? (
-        <PayoutBatchScreen payoutBatches={ports.payoutBatches} onSelectBatch={handleSelectPayoutBatch} />
-      ) : subView === 'payoutBatch-detail' ? (
-        selectedPayoutBatch ? (
-          <PayoutBatchDetailScreen batch={selectedPayoutBatch} onBack={handleBackToPayoutBatches} />
-        ) : (
-          <View style={styles.screen}>
-            <EmptyState title="Payout Batch" message="No payout batch selected." />
-          </View>
-        )
       ) : subView === 'auditLog' ? (
         <AuditLogScreen auditLog={ports.auditLog} />
       ) : subView === 'payments' ? (
-        <PaymentsScreen payments={ports.payments} />
+        <PaymentsHubScreen
+          payments={ports.payments}
+          reimbursements={ports.reimbursements}
+          payoutBatches={ports.payoutBatches}
+          selectedPayoutBatch={selectedPayoutBatch}
+          onSelectPayoutBatch={handleSelectPayoutBatch}
+          onBackFromPayoutBatch={handleBackToPayoutBatches}
+          scrollToSection={paymentsScrollTarget}
+          onScrollHandled={() => setPaymentsScrollTarget(null)}
+        />
       ) : subView === 'assignmentBoard' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />
@@ -939,13 +935,10 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',
   priceSheetCreate: 'New Price Sheet',
-  reimbursementQueue: 'Reimbursements',
   timeOffQueue: 'Time Off',
-  payoutBatch: 'Payout Batches',
-  'payoutBatch-detail': 'Payout Batch Detail',
   reports: 'Reports',
   auditLog: 'Audit Log',
-  payments: 'Payment & Review',
+  payments: 'Payments',
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
   'employee-job-detail': 'Employee Job Detail',
@@ -960,13 +953,11 @@ const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
   { key: 'assignmentBoard', label: 'Assignments' },
   { key: 'closeOutQueue', label: 'Close-Outs' },
   { key: 'priceSheetList', label: 'Price Sheets' },
-  { key: 'reimbursementQueue', label: 'Reimbursements' },
+  { key: 'payments', label: 'Payments' },
   { key: 'timeOffQueue', label: 'Time Off' },
   { key: 'calendar', label: 'Calendar' },
-  { key: 'payoutBatch', label: 'Payout Batches' },
   { key: 'reports', label: 'Reports' },
   { key: 'auditLog', label: 'Audit Log' },
-  { key: 'payments', label: 'Payment & Review' },
   { key: 'employee-roster', label: 'Employees' },
 ];
 

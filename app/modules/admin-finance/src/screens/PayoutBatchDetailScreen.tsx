@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 
@@ -31,7 +31,7 @@ export function PayoutBatchDetailScreen({ batch, onBack }: PayoutBatchDetailScre
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <ScreenTitle title="Payout Batch Detail" />
         <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
 
@@ -64,7 +64,7 @@ export function PayoutBatchDetailScreen({ batch, onBack }: PayoutBatchDetailScre
         </Card>
 
         <Text style={styles.note}>Records only - this app does not move money</Text>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -73,7 +73,6 @@ export default PayoutBatchDetailScreen;
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
     backgroundColor: colors.offWhite,
   },
   content: {

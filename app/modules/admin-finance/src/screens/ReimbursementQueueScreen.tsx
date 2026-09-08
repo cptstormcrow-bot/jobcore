@@ -25,7 +25,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -194,7 +194,7 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <ScreenTitle title="Reimbursements" />
         <Text style={styles.groupHeading}>Pending Review</Text>
         <Card style={styles.card}>
@@ -251,7 +251,7 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
             );
           })}
         </Card>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -260,7 +260,6 @@ export default ReimbursementQueueScreen;
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
     backgroundColor: colors.offWhite,
   },
   content: {
