@@ -48,6 +48,8 @@ import type {
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { PriceSheetRate, CalculationResult } from '../money/types';
 import { getModulePorts } from '../lib/module-ports';
+import { getModuleSession } from '../lib/module-session';
+import { approveEstimate } from '../flows/approve-estimate';
 
 export interface JobEstimateScreenProps {
   job: Job;
@@ -61,6 +63,8 @@ export interface JobEstimateScreenProps {
     list: (priceSheetId: string, serviceAreaId?: string) => Promise<CalculationResult<PriceSheetAreaAdjustment[]>>;
   };
   serviceAreas?: ServiceArea[];
+  /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
+  embedded?: boolean;
 }
 
 /** Applies one area adjustment to a base DOLLAR value using the `percent`/`flat` convention.
@@ -103,7 +107,7 @@ function formatCurrency(amount: number): string {
 }
 
 export function JobEstimateScreen(props: JobEstimateScreenProps) {
-  const { job, onBack } = props;
+  const { job, onBack, embedded } = props;
   const estimates = props.estimates ?? getModulePorts().estimates;
 
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
@@ -378,6 +382,30 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     }
   }
 
+  async function handleApprove(): Promise<void> {
+    if (!estimate) {
+      return;
+    }
+    setActionState({ kind: 'working' });
+    try {
+      const session = getModuleSession();
+      const result = await approveEstimate(estimate, 'approved', {
+        estimates,
+        ctx: { role: session ? session.role : 'admin', now: () => new Date().toISOString() },
+        now: () => new Date().toISOString(),
+      });
+      if (result.ok) {
+        setEstimate(result.estimate);
+        setActionState({ kind: 'done', message: 'Estimate approved.' });
+      } else {
+        setActionState({ kind: 'failed', message: result.reason });
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not approve the estimate.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
   function handlePrint(): void {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       window.print();
@@ -400,17 +428,22 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     );
   }
 
+  const Root = embedded ? View : ScrollView;
+  const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
+
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Button
-          label={onBack ? 'Back to Job' : 'Estimate'}
-          variant="outline"
-          onPress={() => onBack?.()}
-          disabled={!onBack}
-          style={styles.action}
-        />
-        <ScreenTitle title="Estimate" />
+      <Root {...rootProps}>
+        {!embedded && (
+          <Button
+            label={onBack ? 'Back to Job' : 'Estimate'}
+            variant="outline"
+            onPress={() => onBack?.()}
+            disabled={!onBack}
+            style={styles.action}
+          />
+        )}
+        {!embedded && <ScreenTitle title="Estimate" />}
         <Text style={styles.guidance}>
           Give the customer a number before you hang up. Submit once they accept.
         </Text>
@@ -419,6 +452,16 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           <ListItem title="Status" subtitle={estimate?.status ?? 'draft'} />
           <ListItem title="Address" subtitle={job.address ?? 'No address on file'} />
           {job.description ? <ListItem title="Description" subtitle={job.description} /> : null}
+          {estimate?.status === 'submitted' ? (
+            <Button
+              label={busy ? 'Approving...' : 'Approve'}
+              onPress={() => {
+                void handleApprove();
+              }}
+              disabled={busy}
+              style={styles.action}
+            />
+          ) : null}
         </Card>
 
         <Card style={styles.card}>
@@ -648,7 +691,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
-      </ScrollView>
+      </Root>
     </View>
   );
 }

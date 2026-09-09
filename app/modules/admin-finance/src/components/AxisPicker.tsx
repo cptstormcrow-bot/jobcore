@@ -1,20 +1,16 @@
 /**
  * Three-way axis picker (P3f.3).
  *
- * Qualify asks staff to confirm the three axis fields the master spec
- * defines (`00-MASTER-SPEC.md` lines 122-129) — `source`, `payer`,
- * `attach_timing` — each a closed enum, byte-exact to the master spec (the
- * DB columns themselves are untyped `text`, deliberately, per the doc
- * comments in `domain/lead.ts` and `packages/core/src/index.ts`'s `Job`
- * fields, so the master spec — not the SQL — is the source of truth for the
- * legal value set):
- *   - source:         direct | home_depot | wayfair | other_partner
+ * Qualify asks staff to confirm the three axis fields `leads_source_check`
+ * constrains at the DB level (`0022_referrer_taxonomy...sql`) — `source`, `payer`,
+ * `attach_timing` — each a closed enum. (Formerly the
+ * doc's text; now the SQL check constraint is truth):
+ *   - source:         website | costco | ikea | owm
  *   - payer:          customer | partner
  *   - attach_timing:  at_purchase | after_the_fact
  *
  * `@jobcore/ui` has no Picker/Select/SegmentedControl primitive
- * (`packages/ui/src/index.ts` exports only `Button`, `Card`, `ListItem`,
- * `EmptyState`, `LoadingState`, `ErrorState`), so this is composed from
+ * so this is composed from
  * `Button` plus a plain `View`/`Text` label, styled purely from
  * `tokens.ts` — the same "compose from primitives + tokens when no
  * dedicated primitive exists" rule `LeadRow.tsx` follows. AC-11: zero raw
@@ -25,7 +21,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Button, colors, spacing, radius, typography } from '@jobcore/ui';
 
-export const SOURCE_VALUES = ['direct', 'home_depot', 'wayfair', 'other_partner', 'costco', 'ikea', 'owm'] as const;
+export const SOURCE_VALUES = ['website', 'costco', 'ikea', 'owm'] as const;
 export const PAYER_VALUES = ['customer', 'partner'] as const;
 export const ATTACH_TIMING_VALUES = ['at_purchase', 'after_the_fact'] as const;
 
@@ -35,10 +31,10 @@ export type AttachTimingValue = (typeof ATTACH_TIMING_VALUES)[number];
 
 /** Human-readable labels for each enum value — display only, not the stored value. */
 const LABELS: Record<string, string> = {
-  direct: 'Direct',
-  home_depot: 'Home Depot',
-  wayfair: 'Wayfair',
-  other_partner: 'Other partner',
+  website: 'Website',
+  costco: 'Costco',
+  ikea: 'IKEA',
+  owm: 'OWM',
   customer: 'Customer',
   partner: 'Partner',
   at_purchase: 'At purchase',
@@ -73,6 +69,10 @@ export function AxisPicker<T extends string>({ label, values, selected, onSelect
   );
 }
 
+export function asAxisValue<T extends string>(values: readonly T[], value: string | null): T | null {
+  if (value === null) return null;
+  return (values as readonly string[]).includes(value) ? (value as T) : null;
+}
 export default AxisPicker;
 
 const styles = StyleSheet.create({

@@ -682,6 +682,7 @@ export function AdminFinanceRoot() {
         <PlanningScreen
           jobs={loadState.kind === 'loaded' ? loadState.jobs : []}
           initialSelectedJobId={selectedJob?.id}
+          jobPlanTasks={ports.jobPlanTasks}
           onBack={() => setSubView('jobs')}
         />
       ) : subView === 'jobEstimate' ? (

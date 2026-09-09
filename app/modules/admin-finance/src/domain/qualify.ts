@@ -70,6 +70,8 @@ export interface JobDraft {
   rooms?: string[] | null;
   panelInfo?: string | null;
   considerations?: string | null;
+  houseAgeYears?: number | null;
+  ingressInstructions?: string | null;
 }
 
 export type BuildJobFromLeadResult =

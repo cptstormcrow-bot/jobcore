@@ -246,6 +246,17 @@ export interface PriceSheetRepository {
   create(draft: PriceSheetDraft): Promise<PriceSheet>;
 }
 
+export interface PriceSheetStandardDuration {
+  organizationId: string;
+  standardMinutes: number;
+  updatedAt: string;
+}
+
+export interface PriceSheetStandardDurationRepository {
+  get(organizationId: string): Promise<PriceSheetStandardDuration | null>;
+  upsert(organizationId: string, standardMinutes: number): Promise<PriceSheetStandardDuration>;
+}
+
 /** Read-only access to pay periods. */
 export interface PayPeriodRepository {
   listForOrganization(organizationId: string): Promise<PayPeriod[]>;
@@ -338,9 +349,11 @@ export interface Invitation {
 }
 
 export class DuplicateInvitationError extends Error {
-  constructor(public readonly email: string) {
+  readonly email: string;
+  constructor(email: string) {
     super(`An invitation for ${email} is already pending.`);
     this.name = 'DuplicateInvitationError';
+    this.email = email;
   }
 }
 
@@ -956,15 +969,20 @@ export function toPayment(row: PaymentRow): Payment {
 }
 
 /**
- * Read access to payments, split into the two views the merged Payments
- * tab renders — ported from `payment-review`'s `ReconciliationView.tsx`
- * (needs-attention: `status in ('pending','failed')`; manually-confirmed:
- * `status = 'manual_confirmed'`).
+ * Payments access for the merged Payments tab (listNeedingAttention /
+ * listManuallyConfirmed / listForJob — ported from `payment-review`'s
+ * `ReconciliationView.tsx`; needs-attention: `status in ('pending','failed')`;
+ * manually-confirmed: `status = 'manual_confirmed'`), plus
+ * `recordManualPayment`, the write path for the Job Details screen's manual
+ * "Mark Paid" action. `provider_id` is always the `'manual'` sentinel and
+ * `external_ref` stays null — this table may never hold a card number, PAN,
+ * CVV, or any token that could be one.
  */
 export interface PaymentsRepository {
   listNeedingAttention(organizationId: string): Promise<Payment[]>;
   listManuallyConfirmed(organizationId: string): Promise<Payment[]>;
   listForJob(jobId: string): Promise<Payment[]>;
+  recordManualPayment(organizationId: string, jobId: string, amount: number): Promise<Payment>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1106,6 +1124,39 @@ export interface ServiceTask {
   organizationId: string;
   serviceId: string;
   name: string;
+  estimatedMinutes?: number | null;
+  rate?: number | null;
+  category?: string | null;
+  active?: boolean;
+}
+
+export interface JobPlanTaskRow {
+  id: string;
+  jobId: string;
+  serviceTaskId: string;
+  quantity: number;
+  notes: string | null;
+  name: string;
+  estimatedMinutes: number | null;
+  rate: number | null;
+  category: string | null;
+  active: boolean;
+}
+
+export interface ServiceTaskCatalogEntry {
+  id: string;
+  name: string;
+  category: string | null;
+  estimatedMinutes: number | null;
+  rate: number | null;
+}
+
+export interface JobPlanTasksRepository {
+  listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]>;
+  listForJob(jobId: string): Promise<JobPlanTaskRow[]>;
+  addTask(jobId: string, serviceTaskId: string, quantity: number): Promise<JobPlanTaskRow>;
+  updateQuantity(taskRowId: string, quantity: number): Promise<JobPlanTaskRow>;
+  removeTask(taskRowId: string): Promise<void>;
 }
 
 /**

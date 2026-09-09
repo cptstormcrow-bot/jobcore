@@ -65,22 +65,16 @@ export type AssignJobResult =
   | { ok: false; reason: string };
 
 /**
- * Assigns `job` to `techId`. `job` must be in `qualified` or `scheduled`
- * status — anything else is rejected before any write happens, since this
- * flow only knows how to drive those two starting points to `assigned`.
+ * Assigns `job` to `techId`. Status gating is delegated to the state
+ * machine (`domain/transition.ts`) — this function assigns regardless of
+ * the job's starting status, advancing qualified→scheduled→assigned only
+ * when those edges apply to the job's current status.
  */
 export async function assignJob(
   job: Job,
   techId: string,
   deps: AssignJobDeps
 ): Promise<AssignJobResult> {
-  if (job.status !== 'qualified' && job.status !== 'scheduled') {
-    return {
-      ok: false,
-      reason: `Cannot assign a job in status "${job.status}"; expected "qualified" or "scheduled".`,
-    };
-  }
-
   // Re-read before any write. `job` is the caller's in-memory copy, and the
   // assignment board does not refetch after a successful assign, so a second
   // Confirm press arrives here still claiming `qualified` while the row is
@@ -105,16 +99,6 @@ export async function assignJob(
   // double-press). Report success instead of duplicating the row.
   if (current.status === 'assigned' && current.assignedTechId === techId) {
     return { ok: true, job: current };
-  }
-
-  // Re-run the entry guard against the authoritative status, not the stale
-  // one. Reassignment (`assigned` -> a different tech) has no transition
-  // table entry and is correctly rejected here rather than thrown from.
-  if (current.status !== 'qualified' && current.status !== 'scheduled') {
-    return {
-      ok: false,
-      reason: `Cannot assign a job in status "${current.status}"; expected "qualified" or "scheduled".`,
-    };
   }
 
   // P3g.6a: insert the job_assignments row FIRST — a DB-level trigger can
@@ -163,7 +147,7 @@ export async function assignJob(
     // re-read above makes that unreachable on the single-client path; this
     // guard covers a concurrent assign landing between that read and here.
     let assignedJob = scheduledJob;
-    if (scheduledJob.status !== 'assigned') {
+    if (scheduledJob.status === 'scheduled') {
       const transitionedToAssigned = await transitionJob(scheduledJob, 'assigned', deps.ctx);
       // Workstream E: persist + log this edge too.
       assignedJob = await deps.jobs.updateStatus(transitionedToAssigned.id, transitionedToAssigned.status);

@@ -20,19 +20,28 @@
  * belonging to the assignment-board flow; this screen only ever sends the
  * two schedule fields.
  *
- * `@jobcore/ui`'s `DatePicker` is a date-only control (`YYYY-MM-DD` text
- * entry, no calendar popover, no time-of-day — see its own doc comment).
- * Since `scheduledStart`/`scheduledEnd` are full timestamps, each field is
- * composed from a `DatePicker` (date part) plus a plain `TextInput` (time
- * part, `HH:MM` 24-hour) — the same "validated text entry, no native
- * dependency" convention `DatePicker` itself follows, and the same
- * "local, honest formatter" pattern `PlanningScreen.tsx` uses for date
- * display (`@jobcore/ui` has no datetime formatter or time picker of its
- * own).
+ * Scheduled start/end are entered via the native
+ * `@react-native-community/datetimepicker` control rather than free text:
+ * on iOS an inline spinner (`mode="datetime"`) lets the admin scrub date and
+ * time together; on Android — which has no combined spinner — a "Pick
+ * date" button drives a native date dialog followed immediately by a
+ * native time dialog, and the two selections are combined into one `Date`.
+ * Both platforms funnel back into the same `startDate`/`startTime` (and
+ * end) string state the save handler already validates via
+ * `combineDateTime`/`splitIsoDateTime` above — only the input widget
+ * changed, not the payload shape sent to `JobRepository.updateDetails`.
+ *
+ * `embedded` lets a host screen (e.g. Job Detail) inline this panel inside
+ * its own scroll view: the Back row is suppressed (the host owns
+ * navigation back) and the root becomes a plain `View` instead of a
+ * `ScrollView` (the host supplies the scroll container). Non-embedded
+ * behavior — used when this screen is pushed as its own route — is
+ * unchanged.
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TextInput, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Card, Button, DatePicker, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
@@ -44,6 +53,12 @@ export interface JobScheduleScreenProps {
   onBack?: () => void;
   /** Fires with the updated `Job` after a successful save, so a host (e.g. the Job Detail screen) can refresh its own copy. */
   onSaved?: (job: Job) => void;
+  /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
+  embedded?: boolean;
+  /** Sum of estimated task minutes for this job, when known; drives Stop = Start + this duration in `applyPickedDate` instead of the 60-minute fallback. */
+  totalTaskMinutes?: number;
+  /** Org's price-sheet standard duration (minutes), when known; the fallback default when no task minutes are available. */
+  standardMinutes?: number;
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -98,7 +113,25 @@ function combineDateTime(date: string, time: string, label: string): CombineResu
   return { value: composed.toISOString(), error: null };
 }
 
-export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onSaved }: JobScheduleScreenProps) {
+/** `Date` → the `startDate`/`startTime` (or end) string pair the save handler validates. */
+function dateToParts(d: Date): { date: string; time: string } {
+  const yyyy = String(d.getFullYear()).padStart(4, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return { date: `${yyyy}-${mm}-${dd}`, time: `${hh}:${min}` };
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const toLocalInputValue = (d: Date) =>
+  `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+
+type ScheduleField = 'start' | 'end';
+type AndroidStage = 'date' | 'time';
+type AndroidPickerState = { field: ScheduleField; stage: AndroidStage; datePart: Date } | null;
+
+export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onSaved, embedded, totalTaskMinutes, standardMinutes }: JobScheduleScreenProps) {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -107,6 +140,13 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  // Local `Date` state driving the native pickers, derived from the ISO
+  // strings on `job` (falls back to "now" when unset, matching the pickers'
+  // own default-value expectations).
+  const [startPickerDate, setStartPickerDate] = useState<Date>(() => (job.scheduledStart ? new Date(job.scheduledStart) : new Date()));
+  const [endPickerDate, setEndPickerDate] = useState<Date>(() => (job.scheduledEnd ? new Date(job.scheduledEnd) : new Date()));
+  const [androidPicker, setAndroidPicker] = useState<AndroidPickerState>(null);
+
   useEffect(() => {
     const start = splitIsoDateTime(job.scheduledStart);
     const end = splitIsoDateTime(job.scheduledEnd);
@@ -114,9 +154,58 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     setStartTime(start.time);
     setEndDate(end.date);
     setEndTime(end.time);
+    setStartPickerDate(job.scheduledStart ? new Date(job.scheduledStart) : new Date());
+    setEndPickerDate(job.scheduledEnd ? new Date(job.scheduledEnd) : new Date());
     setSaveError(null);
     setSaved(false);
   }, [job.id]);
+
+  // Fallback-only: no price-sheet `estimated_minutes` is currently loaded
+  // by this screen (it is never fetched here — see PriceSheetRateWithTaskRow
+  // in `price-sheet-repo.ts`, which is keyed by service/task, not by job,
+  // and this screen has no such lookup wired). Until that plumbing exists,
+  // every Start change pushes Stop out by this fixed duration.
+  const effectiveDefault = standardMinutes ?? 60;
+
+  function applyPickedDate(field: ScheduleField, next: Date) {
+    const parts = dateToParts(next);
+    if (field === 'start') {
+      setStartPickerDate(next);
+      setStartDate(parts.date);
+      setStartTime(parts.time);
+      // Requirement: Start moving always overwrites Stop to Start + duration
+      // (price-sheet estimated minutes when available, else the standard
+      // duration fallback above). Stop remains independently editable otherwise.
+      const effectiveDurationMinutes =
+        totalTaskMinutes && totalTaskMinutes > 0 ? totalTaskMinutes : effectiveDefault;
+      const nextEnd = new Date(next.getTime() + effectiveDurationMinutes * 60000);
+      const endParts = dateToParts(nextEnd);
+      setEndPickerDate(nextEnd);
+      setEndDate(endParts.date);
+      setEndTime(endParts.time);
+    } else {
+      setEndPickerDate(next);
+      setEndDate(parts.date);
+      setEndTime(parts.time);
+    }
+  }
+
+  function handleAndroidChange(field: ScheduleField, stage: AndroidStage, event: { type: string }, picked?: Date) {
+    if (event.type !== 'set' || !picked) {
+      setAndroidPicker(null);
+      return;
+    }
+    if (stage === 'date') {
+      // Date leg chosen — immediately chain into the time leg for the same field.
+      setAndroidPicker({ field, stage: 'time', datePart: picked });
+      return;
+    }
+    // Time leg chosen — combine the previously-picked date with this time and commit.
+    const base = androidPicker?.datePart ?? (field === 'start' ? startPickerDate : endPickerDate);
+    const combined = new Date(base.getFullYear(), base.getMonth(), base.getDate(), picked.getHours(), picked.getMinutes(), 0, 0);
+    applyPickedDate(field, combined);
+    setAndroidPicker(null);
+  }
 
   async function handleSave() {
     if (saving) {
@@ -156,46 +245,106 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     }
   }
 
+  function renderFieldPicker(field: ScheduleField) {
+    const pickerDate = field === 'start' ? startPickerDate : endPickerDate;
+    const displayText =
+      field === 'start'
+        ? startDate && startTime
+          ? startPickerDate.toLocaleString()
+          : 'Not set'
+        : endDate && endTime
+          ? endPickerDate.toLocaleString()
+          : 'Not set';
+
+    if (Platform.OS === 'web') {
+      return React.createElement('input', {
+        type: 'datetime-local',
+        value: toLocalInputValue(pickerDate),
+        onChange: (e: { target: { value: string } }) => {
+          if (e.target.value) applyPickedDate(field, new Date(e.target.value));
+        },
+      });
+    }
+
+    if (Platform.OS === 'ios') {
+      return (
+        <View>
+          <DateTimePicker
+            mode="datetime"
+            display="spinner"
+            value={pickerDate}
+            onChange={(_event, picked) => {
+              if (picked) {
+                applyPickedDate(field, picked);
+              }
+            }}
+          />
+          <Text style={styles.hintText}>{displayText}</Text>
+        </View>
+      );
+    }
+
+    const activeForField = androidPicker?.field === field ? androidPicker : null;
+    return (
+      <View>
+        <Button
+          label="Pick date"
+          variant="outline"
+          size="sm"
+          onPress={() => setAndroidPicker({ field, stage: 'date', datePart: pickerDate })}
+        />
+        <Text style={styles.hintText}>{displayText}</Text>
+        {activeForField?.stage === 'date' && (
+          <DateTimePicker
+            mode="date"
+            display="default"
+            value={pickerDate}
+            onChange={(event, picked) => handleAndroidChange(field, 'date', event, picked)}
+          />
+        )}
+        {activeForField?.stage === 'time' && (
+          <DateTimePicker
+            mode="time"
+            display="default"
+            value={activeForField.datePart}
+            onChange={(event, picked) => handleAndroidChange(field, 'time', event, picked)}
+          />
+        )}
+      </View>
+    );
+  }
+
+  const Root = embedded ? View : ScrollView;
+  const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
+
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {onBack && (
+      <Root {...rootProps}>
+        {!embedded && onBack && (
           <View style={styles.backRow}>
             <Button label="Back to Job" variant="outline" size="sm" onPress={onBack} />
           </View>
         )}
 
         <Card style={styles.card}>
-          <Text style={styles.title}>Schedule</Text>
+          {!embedded && <Text style={styles.title}>Schedule</Text>}
           <Text style={styles.subtitle}>{job.address ?? job.description ?? job.id}</Text>
 
           <Text style={styles.sectionLabel}>Scheduled Start</Text>
-          <View style={styles.dateTimeRow}>
-            <DatePicker value={startDate} onChange={setStartDate} style={styles.dateField} />
-            <TextInput
-              style={styles.timeInput}
-              value={startTime}
-              onChangeText={setStartTime}
-              placeholder="HH:MM"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numbers-and-punctuation"
-              accessibilityLabel="Scheduled start time"
-            />
-          </View>
+          {renderFieldPicker('start')}
 
           <Text style={styles.sectionLabel}>Scheduled End</Text>
-          <View style={styles.dateTimeRow}>
-            <DatePicker value={endDate} onChange={setEndDate} style={styles.dateField} />
-            <TextInput
-              style={styles.timeInput}
-              value={endTime}
-              onChangeText={setEndTime}
-              placeholder="HH:MM"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numbers-and-punctuation"
-              accessibilityLabel="Scheduled end time"
-            />
-          </View>
+          {renderFieldPicker('end')}
+
+          {(() => {
+            const delta = (totalTaskMinutes ?? 0) - effectiveDefault;
+            return (
+              <Text style={styles.hintText}>
+                Estimated: {totalTaskMinutes ?? 0} min · Standard: {effectiveDefault} min ·{' '}
+                {delta >= 0 ? '+' + delta : delta} min vs. standard
+              </Text>
+            );
+          })()}
 
           {saveError && <Text style={styles.errorText}>{saveError}</Text>}
           {saved && !saveError && <Text style={styles.hintText}>Schedule saved.</Text>}
@@ -211,7 +360,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
             />
           </View>
         </Card>
-      </ScrollView>
+      </Root>
     </View>
   );
 }

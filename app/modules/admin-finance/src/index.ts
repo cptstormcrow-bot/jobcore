@@ -15,16 +15,13 @@ export type { ModuleSession } from './lib/module-session';
 export { setModuleSession, clearModuleSession } from './lib/module-session';
 
 /**
- * Assembles the `Ctx` this module's transition-driving flows
- * (`qualify-lead.ts`, `assign-job.ts`) need to call `transitionJob`,
- * mirroring `field-tech/src/index.ts`'s `buildTransitionCtx` — real role
- * via the injected session, never a hardcoded stand-in (contrast
- * `payment-review/src/index.ts`'s scaffold `role: 'admin'`). All of this
- * module's transitions (`new -> qualified`, `qualified -> scheduled`,
- * `scheduled -> assigned`) are OFFICE-role edges with no `Ctx` precondition
- * probe (`state-machine.ts`), so `role`/`now` alone are sufficient — no
- * `hasSubmittedStartChecklist`/`hasAfterPhotos`/`hasQualityNotes`/
- * `hasPaymentRecord` wiring is needed here.
+ * Assembles the `Ctx` this module's transition-driving flows need to call
+ * `transitionJob`: `role` comes from the injected session (real role, never
+ * a hardcoded stand-in like `payment-review/src/index.ts`'s scaffold
+ * `role: 'admin'`), and `now` is the current-time closure. `hasPaymentRecord`
+ * (needed for `completed -> paid`, which is office-only) is supplied by
+ * callers as a pre-resolved synchronous boolean closure — a Promise-returning
+ * probe reads as `false` via `readSyncProbe`, never awaited here.
  */
 export function buildTransitionCtx(): Ctx {
   const session = getModuleSession();

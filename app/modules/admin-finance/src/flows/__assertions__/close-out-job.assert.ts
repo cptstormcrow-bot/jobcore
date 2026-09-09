@@ -122,6 +122,9 @@ function makeJobs(overrides: Partial<JobRepository> = {}): JobRepository {
     async closeOutWrite(_jobId, _fromStatus, _commission, _closedByUserId) {
       throw new Error('not implemented');
     },
+    async patchLifecycle(_jobId, _patch) {
+      throw new Error('not implemented');
+    },
     async create() {
       throw new Error('not implemented');
     },
