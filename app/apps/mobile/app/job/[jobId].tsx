@@ -780,6 +780,12 @@ export default function JobDrilldownScreen() {
   };
 
   const confirmMarkPaid = (): void => {
+    if (!job || job.status !== 'completed') {
+      const message = 'Complete the job before marking it paid.';
+      setSaveError(message);
+      setActionError(message);
+      return;
+    }
     const amount = estimate?.totalCost ?? 0;
     const title = 'Confirm payment received';
     const body = `Mark this job as paid for $${amount.toFixed(2)}?`;
@@ -797,6 +803,12 @@ export default function JobDrilldownScreen() {
 
   const handleMarkPaid = async (): Promise<void> => {
     if (!job || session.status !== 'authenticated') return;
+    if (job.status !== 'completed') {
+      const message = 'Complete the job before marking it paid.';
+      setSaveError(message);
+      setActionError(message);
+      return;
+    }
     setBusyAction('paid');
     setActionError(null);
     try {

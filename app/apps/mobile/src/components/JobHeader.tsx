@@ -54,6 +54,11 @@ export function JobHeader({
 }: JobHeaderProps) {
   const elapsedFrom = job.completedAt ?? job.inProgressAt ?? job.enRouteAt ?? job.createdAt ?? null;
   const elapsed = formatElapsed(elapsedFrom);
+  const paidEligible = job.status === 'completed';
+  const paidHint =
+    !paidEligible && job.status !== 'paid' && job.status !== 'closed'
+      ? 'Complete the job before marking it paid.'
+      : null;
 
   return (
     <View style={styles.root}>
@@ -142,10 +147,11 @@ export function JobHeader({
           label="Paid"
           size="tab"
           variant="outline"
-          disabled={busyAction === 'paid'}
+          disabled={busyAction === 'paid' || !paidEligible}
           onPress={onPaid}
         />
       </View>
+      {paidHint ? <Text style={styles.paidHint}>{paidHint}</Text> : null}
     </View>
   );
 }
@@ -187,5 +193,6 @@ const styles = StyleSheet.create({
   techRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   techSelect: { flexGrow: 1, minWidth: 160, marginLeft: spacing.sm },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
+  paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
 });
