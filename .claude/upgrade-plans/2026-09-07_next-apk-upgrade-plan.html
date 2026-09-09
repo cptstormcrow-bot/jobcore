@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobCore - Next APK Upgrade Plan (2026-09-07)</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a1a;
+    --muted: #555;
+    --border: #ccc;
+    --zebra: #f4f4f4;
+    --code-bg: #f0f0f0;
+    --code-fg: #1a1a1a;
+    --warn-bg: #fff6dd;
+    --warn-border: #d9a400;
+    --ok-bg: #e7f7ea;
+    --ok-border: #2e8b41;
+    --note-bg: #e7f0fb;
+    --note-border: #2f6fbf;
+    --btn-bg: #e8e8e8;
+    --btn-fg: #1a1a1a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --fg: #eaeaea;
+      --muted: #aaa;
+      --border: #444;
+      --zebra: #242424;
+      --code-bg: #2a2a2a;
+      --code-fg: #eaeaea;
+      --warn-bg: #3a3110;
+      --warn-border: #d9a400;
+      --ok-bg: #10331a;
+      --ok-border: #2e8b41;
+      --note-bg: #10233a;
+      --note-border: #2f6fbf;
+      --btn-bg: #333;
+      --btn-fg: #eaeaea;
+    }
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px 20px 80px;
+    line-height: 1.55;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  h1 { margin-bottom: 4px; }
+  .subtitle { color: var(--muted); margin-top: 0; }
+  .meta { color: var(--muted); font-size: 0.9em; margin-bottom: 20px; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0 20px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  tr:nth-child(even) { background: var(--zebra); }
+  pre, code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    background: var(--code-bg);
+    color: var(--code-fg);
+  }
+  pre {
+    padding: 10px 12px;
+    overflow-x: auto;
+    white-space: pre;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  code { padding: 1px 4px; border-radius: 3px; }
+  .copy-btn {
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+    margin: 4px 0;
+  }
+  .callout {
+    border-left: 4px solid var(--border);
+    padding: 10px 14px;
+    margin: 14px 0;
+    border-radius: 3px;
+  }
+  .warn { background: var(--warn-bg); border-left-color: var(--warn-border); }
+  .ok { background: var(--ok-bg); border-left-color: var(--ok-border); }
+  .note { background: var(--note-bg); border-left-color: var(--note-border); }
+  .toc a { display: block; margin: 2px 0; }
+  @media print {
+    .copy-btn { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<h1>JobCore - Next APK Upgrade Plan</h1>
+<p class="subtitle">Encodes the 2026-09-06 build session so the next .apk takes minutes, not hours. Start the next build by copying the prompt in section 6.</p>
+<p class="meta">Date 2026-09-07 - Branch jobcore-job-detail-action-buttons - Source session d70733a0-3fbe-4bb8-9bd2-38047a50b848 - Repo copy: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.claude\upgrade-plans\2026-09-07_next-apk-upgrade-plan.html</p>
+
+<div class="toc">
+<a href="#section-1">1. Current state snapshot</a>
+<a href="#section-2">2. Pre-flight checklist</a>
+<a href="#section-3">3. Exact build recipe (as exercised 2026-09-06)</a>
+<a href="#section-4">4. Gotchas encountered and their fixes</a>
+<a href="#section-5">5. Speed-ups for the next build (verify-first)</a>
+<a href="#section-6">6. The prompt - paste this into a fresh Claude Code session</a>
+<a href="#section-7">7. Installing on the devices (no adb, no pairing)</a>
+<a href="#section-8">8. Closeout and references</a>
+</div>
+
+<div class="callout warn">
+never pair/connect/authorize any physically/adb-attached device.<br>
+Every file you deliver is named by its full path in chat. NO EXCEPTIONS.
+</div>
+
+<h2 id="section-1">1. Current state snapshot</h2>
+<table>
+<tr><th>Item</th><th>Value</th></tr>
+<tr><td>Android package id</td><td><code>com.sdassemblypros.jobcore.v2</code> - app.json line 17 (expo.android.package). PERMANENT decision 2026-09-07 ("Option A").</td></tr>
+<tr><td>iOS bundle id</td><td><code>com.sdassemblypros.jobcore</code> - unchanged by design; the asymmetry with Android is intentional.</td></tr>
+<tr><td>versionCode</td><td>1 - app.json line 18</td></tr>
+<tr><td>versionName</td><td>0.1.1 - app.json line 7</td></tr>
+<tr><td>Delivered APK path</td><td>E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\android\app\build\outputs\apk\release\app-release.apk</td></tr>
+<tr><td>Built</td><td>2026-09-06 13:55:55</td></tr>
+<tr><td>Size</td><td>84,597,122 bytes</td></tr>
+<tr><td>SHA256</td><td>31d1b062049f9cf574465302c242649e73d88e1d3db9ad313000e0c0fcf31f46</td></tr>
+<tr><td>minSdk / targetSdk / compileSdk</td><td>24 / 34 / 35</td></tr>
+<tr><td>ABIs</td><td>arm64-v8a, armeabi-v7a, x86, x86_64</td></tr>
+<tr><td>Signing cert SHA-256</td><td>fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c</td></tr>
+<tr><td>Phone (Android 16)</td><td>still has the original-id app (com.sdassemblypros.jobcore); .v2 not yet installed there</td></tr>
+<tr><td>Tablet (Galaxy Tab S7 FE)</td><td>Android 14 / One UI 6; has .v2 installed at versionCode 1</td></tr>
+<tr><td>Toolchain</td><td>JBR: C:\Program Files\Android\Android Studio\jbr - SDK: %LOCALAPPDATA%\Android\Sdk - build-tools 34.0.0 - Gradle 8.10.2 - AGP 8.6.0 - NDK 26.1.10909125 - CMake 3.22.1 - Expo ~52.0.0 - RN 0.76.5 - New Architecture on</td></tr>
+<tr><td>android/ is gitignored</td><td>app/.gitignore line 20</td></tr>
+<tr><td>build.gradle lines 89/91</td><td>line 89: namespace 'com.sdassemblypros.jobcore' (unchanged, harmless); line 91: applicationId 'com.sdassemblypros.jobcore.v2' (hand-edited 2026-09-06); versionCode/versionName lines follow just after - verify by Read before editing</td></tr>
+<tr><td>EAS projectId</td><td>e5206f71-f1c3-4c51-98e8-3c3f59eaab0a (owner: wolfgaard-studio, slug: jobcore)</td></tr>
+<tr><td>google-services.json</td><td>none present</td></tr>
+</table>
+
+<div class="callout note">
+The APK sideloads as an in-place upgrade only when three things hold simultaneously: the package id
+matches exactly, the signing certificate matches exactly, and the new build's versionCode is strictly
+higher than the one already installed. If any one of those differs, Android treats it as a different
+app and either refuses the install or installs it side by side rather than upgrading. That is why the
+pre-flight and verification steps below check all three every time, not just once.
+</div>
+
+<h2 id="section-2">2. Pre-flight checklist</h2>
+<ol>
+<li><input type="checkbox"> Branch/status check: <code>git branch --show-current</code> and <code>git status --short</code></li>
+<li><input type="checkbox"> Confirm app.json expo.android.package is still <code>com.sdassemblypros.jobcore.v2</code></li>
+<li><input type="checkbox"> Confirm build.gradle applicationId/versionCode lines (89/91 area). Because android/ is gitignored, app.json bumps do not propagate to build.gradle automatically - either hand-edit build.gradle (keeps the native build cache) or re-run <code>npx expo prebuild --platform android</code> (regenerates from app.json; adding --clean wipes android/ and forces a slow full rebuild)</li>
+<li><input type="checkbox"> Confirm app\apps\mobile\.env exists</li>
+<li><input type="checkbox"> Run bare <code>subst</code> and confirm no Z: is already mapped</li>
+<li><input type="checkbox"> JAVA_HOME plan: per-command prefix only, never a persistent env change</li>
+<li><input type="checkbox"> No adb, no pairing, no USB-debugging prompts</li>
+<li><input type="checkbox"> Keystore check (speed-up F, verify-first)</li>
+<li><input type="checkbox"> Do not run ./gradlew clean and do not run expo prebuild --clean unless android/ is missing or broken</li>
+<li><input type="checkbox"> app.json may carry unrelated unstaged hunks - stage only the versionCode hunk</li>
+</ol>
+
+<h2 id="section-3">3. Exact build recipe (as exercised 2026-09-06)</h2>
+
+<p><strong>Step 1 - map Z:</strong></p>
+<button class="copy-btn" data-target="step1">Copy</button>
+<pre id="step1">subst Z: "E:\Jeff\Codespace\SDAssemblyPros\Jobcore"</pre>
+
+<p><strong>Step 2 - cd into the mobile android dir</strong></p>
+<button class="copy-btn" data-target="step2">Copy</button>
+<pre id="step2">cd "Z:/app/apps/mobile/android"</pre>
+
+<p><strong>Step 3 - run gradlew (Git Bash form)</strong></p>
+<button class="copy-btn" data-target="step3">Copy</button>
+<pre id="step3">JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew assembleRelease &gt; "&lt;scratchpad&gt;/gradle-z-build.log" 2&gt;&amp;1</pre>
+<p>Note: "&lt;scratchpad&gt;" is this session's own scratchpad directory - every session gets its own path; use the current one, not the 2026-09-06 example.</p>
+
+<p><strong>Step 4 - tail/grep the log (never cat it)</strong></p>
+<button class="copy-btn" data-target="step4">Copy</button>
+<pre id="step4">tail -n 20 "&lt;log&gt;"
+# on failure:
+grep -n -E "error:|FAILED|ninja" "&lt;log&gt;" | head -n 20</pre>
+
+<p><strong>Step 5 - APK path</strong></p>
+<button class="copy-btn" data-target="step5">Copy</button>
+<pre id="step5">E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\android\app\build\outputs\apk\release\app-release.apk</pre>
+<p>While Z: is mapped the same file is also reachable as <code>Z:\app\apps\mobile\android\app\build\outputs\apk\release\app-release.apk</code> - always report the E:\ form.</p>
+
+<p><strong>Step 6 - apksigner (cmd and Git Bash forms)</strong></p>
+<button class="copy-btn" data-target="step6a">Copy (cmd)</button>
+<pre id="step6a">"C:\Program Files\Android\Android Studio\jbr\bin\java.exe" -jar "%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\lib\apksigner.jar" verify --print-certs "&lt;apk&gt;"</pre>
+<button class="copy-btn" data-target="step6b">Copy (Git Bash)</button>
+<pre id="step6b">"C:/Program Files/Android/Android Studio/jbr/bin/java.exe" -jar "$LOCALAPPDATA/Android/Sdk/build-tools/34.0.0/lib/apksigner.jar" verify --print-certs "&lt;apk&gt;"</pre>
+<p>Expected digest line:</p>
+<pre>Signer #1 certificate SHA-256 digest: fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c</pre>
+
+<p><strong>Step 7 - size + hash (PowerShell)</strong></p>
+<button class="copy-btn" data-target="step7">Copy</button>
+<pre id="step7">(Get-Item '&lt;apk&gt;').Length
+(Get-FileHash '&lt;apk&gt;' -Algorithm SHA256).Hash</pre>
+
+<p><strong>Step 8 - aapt badging</strong></p>
+<button class="copy-btn" data-target="step8">Copy</button>
+<pre id="step8">"%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\aapt.exe" dump badging "&lt;apk&gt;" | findstr /i "package sdkVersion"</pre>
+
+<p><strong>Step 9 - teardown with proof</strong></p>
+<button class="copy-btn" data-target="step9">Copy</button>
+<pre id="step9">subst Z: /D
+subst</pre>
+
+<table>
+<tr><th>Measured</th><th>Value</th></tr>
+<tr><td>Gradle build time</td><td>BUILD SUCCESSFUL in 4m 34s</td></tr>
+</table>
+
+<div class="callout note">
+PowerShell equivalent (not exercised this session, verify-first):
+<pre>$env:JAVA_HOME = 'C:\Program Files\Android\Android Studio\jbr'
+Set-Location Z:\app\apps\mobile\android
+.\gradlew assembleRelease *&gt; '&lt;scratchpad&gt;\gradle-z-build.log'</pre>
+Reminder: $env: changes die with the shell - they are not a persistent environment change.
+</div>
+
+<h2 id="section-4">4. Gotchas encountered and their fixes</h2>
+<table>
+<tr><th>#</th><th>Symptom</th><th>Cause</th><th>Fix</th><th>Status</th></tr>
+<tr><td>1</td><td>./gradlew -&gt; java.lang.UnsupportedClassVersionError</td><td>wrapper ran under an old java on PATH</td><td>prefix the command with JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" (per-command only)</td><td>RESOLVED</td></tr>
+<tr><td>2</td><td>ninja: "Filename longer than 260 characters" during the CMake/New-Architecture native build</td><td>Windows MAX_PATH on the deep E:\ path</td><td>subst Z: "E:\Jeff\Codespace\SDAssemblyPros\Jobcore" and run gradlew from Z:\app\apps\mobile\android; tear down with subst Z: /D afterwards</td><td>RESOLVED</td></tr>
+<tr><td>3</td><td>Tablet: "App not installed as package appears to be invalid"</td><td>a stale package record for com.sdassemblypros.jobcore lingered on the tablet after an earlier uninstall; no user-facing way to reset the record/cert</td><td>change the applicationId to com.sdassemblypros.jobcore.v2, now permanent in app.json</td><td>RESOLVED</td></tr>
+<tr><td>4</td><td>SendUserFile could not deliver the 84.6 MB APK through Remote Control (30 MiB limit)</td><td>file card shows only in the desktop app on this PC</td><td>always state the full E:\ path in chat; the path IS the delivery</td><td>MITIGATED (standing rule)</td></tr>
+<tr><td>5</td><td>Installing straight from the Google Drive app did not behave like a normal sideload</td><td>Drive app install flow differs from a file-manager install</td><td>download to the device first, then install from My Files -&gt; Downloads</td><td>RESOLVED</td></tr>
+<tr><td>6</td><td>The Gradle log is huge; reading it bloats the context</td><td>full log has thousands of lines</td><td>redirect to a scratchpad file, tail -n 20 only, grep for BUILD SUCCESSFUL / FAILED / error:</td><td>RESOLVED (standing practice)</td></tr>
+<tr><td>7</td><td>Writing large files from the main session with Bash heredocs (python -c / &lt;&lt;EOF) fails past a size threshold with shell quote-parsing errors</td><td>harness quirk with large heredoc writes</td><td>route every write to Nestor (scribe-hound) using the Write tool</td><td>RESOLVED (standing practice)</td></tr>
+<tr><td>8</td><td>Git prints "LF will be replaced by CRLF" on add</td><td>line-ending normalization</td><td>ignore - cosmetic</td><td>N/A</td></tr>
+<tr><td>9</td><td>The subst target was not recorded in the first pass and had to be recovered from the session transcript afterwards</td><td>ad-hoc environment change not logged at the time</td><td>this document records it exactly; the prompt tells Claude to echo every ad-hoc environment change into the build report</td><td>RESOLVED</td></tr>
+<tr><td>10</td><td>Sending Jeff to hunt through tablet Settings for a certificate reset went nowhere ("cant find anything")</td><td>there is nothing to find in Settings for this</td><td>change the package id or bump versionCode instead</td><td>RESOLVED</td></tr>
+</table>
+
+<h2 id="section-5">5. Speed-ups for the next build (verify-first)</h2>
+<table>
+<tr><th>Candidate</th><th>What to do</th><th>Expected gain</th><th>How to verify first</th></tr>
+<tr><td>A</td><td>Restrict ABIs to arm64-v8a only (both Samsungs are arm64): set reactNativeArchitectures=arm64-v8a in the gitignored android/gradle.properties, or append -PreactNativeArchitectures=arm64-v8a to the gradlew line</td><td>native compile roughly one quarter of the work; much smaller APK than 84.6 MB</td><td>confirm the reactNativeArchitectures key is present in android/gradle.properties before editing (RN templates ship armeabi-v7a,arm64-v8a,x86,x86_64); roll back to all four ABIs before any store or EAS build</td></tr>
+<tr><td>B</td><td>Keep the Gradle daemon alive between builds (./gradlew --status)</td><td>avoids daemon cold-start</td><td>do NOT run ./gradlew clean and do NOT run expo prebuild --clean unless android/ is missing or broken - both discard the native build cache</td></tr>
+<tr><td>C</td><td>Keep Z: mapped for the whole session and tear it down once at the end, instead of per command</td><td>fewer subst calls</td><td>confirm no other process needs Z: released mid-session</td></tr>
+<tr><td>D</td><td>Log to the scratchpad and tail only</td><td>keeps context lean</td><td>already standard practice</td></tr>
+<tr><td>E</td><td>Optional cloud path: npm install -g eas-cli; eas login; eas build --platform android --profile preview</td><td>offloads the build to EAS's cloud</td><td>untested here; eas.json already defines development/preview/production profiles; the .env Supabase values must first be moved to EAS secrets or the cloud build ships without a backend</td></tr>
+<tr><td>F</td><td>Keystore safety: copy android\app\debug.keystore to a safe place outside android/</td><td>protects the signing cert from a future prebuild --clean</td><td>read the signingConfigs block of build.gradle first to confirm release is signed with signingConfigs.debug pointing at android/app/debug.keystore</td></tr>
+</table>
+<div class="callout warn">
+None of A-F were exercised on 2026-09-06. Treat each as Jeff's call; roll back ABI restriction before any store/EAS build.
+</div>
+
+<h2 id="section-6">6. The prompt - paste this into a fresh Claude Code session</h2>
+<div class="callout ok">Copy with the button, paste as the first message, then say "go" at each yield.</div>
+<button class="copy-btn" data-target="next-apk-prompt">Copy prompt</button>
+<pre id="next-apk-prompt">JobCore - build the next release APK (rehearsed procedure; Upgrade Plan 2026-09-07)
+
+Just do it - this procedure is the approved plan. It is recorded in full at
+E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.claude\upgrade-plans\2026-09-07_next-apk-upgrade-plan.html
+(read that file if anything below is unclear). Every path and command below is exact and was
+exercised on 2026-09-06. Do not ask me questions before step 3 unless a hard rule would be broken.
+
+GOAL
+Build a new Android release APK of JobCore from the current working tree, for sideload onto my
+Samsung phone (Android 16) and Galaxy Tab S7 FE (Android 14). Deliver the APK's full path, size,
+SHA256, versionCode/versionName, and proof that the signing cert still matches.
+
+HARD RULES (non-negotiable)
+1. Never pair, connect, or authorize any physically/adb-attached device. No adb at all: no
+   "adb devices", no "adb install", no USB-debugging prompts. I sideload the file myself.
+2. Every file you deliver is named by its FULL path in chat. NO EXCEPTIONS. Also send it with
+   SendUserFile (display: attach); the card only shows in the desktop app because of the 30 MiB
+   Remote Control limit, so the path is the real delivery.
+3. Keep the main context lean: route writes to Nestor (scribe-hound) using the Write tool, offload
+   bulky reads to hounds, redirect the Gradle log to the scratchpad and tail -n 20 it - never cat it.
+   Use rolling-slice offload if the build needs debugging.
+4. Tear down everything ad-hoc at the end: "subst Z: /D", then bare "subst" to prove it is gone.
+   No persistent env-var, registry, or system-setting changes; JAVA_HOME is a per-command prefix only.
+5. Do not touch, stage, or commit unrelated modified/untracked files on the branch. Never commit
+   anything under app/apps/mobile/android/ (it is gitignored).
+6. Do not run "./gradlew clean" and do not run "npx expo prebuild --clean" unless android/ is
+   missing or broken - both discard the native build cache and turn a ~5-minute build into a long one.
+7. No downloads without my explicit permission.
+
+KNOWN-GOOD FACTS
+- Repo root: E:\Jeff\Codespace\SDAssemblyPros\Jobcore   Mobile app: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile
+- Android package id (permanent): com.sdassemblypros.jobcore.v2 - source of truth is app.json line 17
+  (expo.android.package). The iOS bundle id stays com.sdassemblypros.jobcore; do not "fix" the asymmetry.
+- Last shipped APK: versionCode 1, versionName 0.1.1, built 2026-09-06,
+  SHA256 31d1b062049f9cf574465302c242649e73d88e1d3db9ad313000e0c0fcf31f46, signing cert SHA-256
+  fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c. The tablet has it installed.
+  The next APK upgrades in place only if the package id and cert are identical AND versionCode is higher.
+- JDK: C:\Program Files\Android\Android Studio\jbr   SDK: %LOCALAPPDATA%\Android\Sdk (build-tools 34.0.0)
+  Gradle 8.10.2 via the wrapper, AGP 8.6.0, NDK 26.1.10909125, Expo ~52, RN 0.76.5, New Architecture on.
+- Both devices are arm64-v8a.
+
+STEPS
+1. Pre-flight (read-only, report each result in one line):
+   a. From the repo root: git branch --show-current ; git status --short | head -n 40
+   b. Read app.json lines 1-20: confirm expo.android.package = com.sdassemblypros.jobcore.v2 and note versionCode.
+   c. Read the gitignored app\apps\mobile\android\app\build.gradle lines 85-95: confirm
+      applicationId 'com.sdassemblypros.jobcore.v2' and note the versionCode / versionName lines.
+      If android/ does not exist at all: run "npx expo prebuild --platform android" in the mobile dir
+      (regenerates from app.json, so .v2 carries over) and re-check the same lines.
+   d. Confirm app\apps\mobile\.env exists (the Supabase URL and anon key are inlined at build time).
+   e. Run bare "subst" and confirm Z: is not already mapped.
+   f. Read the signingConfigs block of build.gradle once and tell me which keystore signs release.
+2. Version bump (Nestor, two small edits, no other changes):
+   - app.json: expo.android.versionCode -> previous + 1
+   - build.gradle (gitignored): versionCode -> the same number
+   Leave version / versionName at 0.1.1 unless I say otherwise. Report both new values.
+3. Build (Bash tool = Git Bash):
+   subst Z: "E:\Jeff\Codespace\SDAssemblyPros\Jobcore"
+   cd "Z:/app/apps/mobile/android"
+   JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" ./gradlew assembleRelease &gt; "&lt;this session's scratchpad&gt;/gradle-z-build.log" 2&gt;&amp;1
+   Then: tail -n 20 "&lt;log&gt;"  - expect BUILD SUCCESSFUL (about 4m 34s last time with a warm cache).
+   On failure: grep -n -E "error:|FAILED|ninja" "&lt;log&gt;" | head -n 20, then tail only the region
+   around the first hit. Never paste the whole log.
+   Optional speed-up, only if I said so: append -PreactNativeArchitectures=arm64-v8a to the gradlew
+   line to build arm64 only (roll back before any store/EAS build).
+4. Verify the artifact - run all three and report the values:
+   - Signature: "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" -jar "%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\lib\apksigner.jar" verify --print-certs "&lt;apk&gt;"
+     (Git Bash form: "$LOCALAPPDATA/Android/Sdk/build-tools/34.0.0/lib/apksigner.jar")
+     The Signer #1 SHA-256 digest MUST equal fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c.
+     If it does not: STOP and tell me - the APK will not upgrade-install over the existing app.
+   - Identity: "%LOCALAPPDATA%\Android\Sdk\build-tools\34.0.0\aapt.exe" dump badging "&lt;apk&gt;" | findstr /i "package sdkVersion"
+     -> package name com.sdassemblypros.jobcore.v2, versionCode = the new number, versionName 0.1.1.
+   - Size + hash (PowerShell): (Get-Item '&lt;apk&gt;').Length ; (Get-FileHash '&lt;apk&gt;' -Algorithm SHA256).Hash
+   APK path - always report this E:\ form, never the Z:\ form:
+   E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\android\app\build\outputs\apk\release\app-release.apk
+5. Deliver: SendUserFile the APK (display: attach) and print in chat: the full path above, size in
+   bytes, SHA256, versionCode/versionName, the cert-match verdict, and the install steps
+   (copy the APK to the device -> My Files -> Downloads -> tap it -> allow "Install unknown apps"
+   for My Files -> Install; it upgrades in place on the tablet).
+6. Teardown: "subst Z: /D", then bare "subst" - paste that one-line result as proof.
+   Yield here and wait for me to confirm the install before closeout.
+7. Closeout (only after my confirmation):
+   - Ask whether I want a test plan (Rule 43).
+   - Commit ONLY the app.json versionCode hunk. If "git diff -- app/apps/mobile/app.json" shows more
+     than one hunk, stage just yours (git diff -- app/apps/mobile/app.json | sed '/^@@ &lt;other hunk header&gt;/,$d' | git apply --cached)
+     and prove it with "git diff --cached --stat" and "git diff --cached -- app/apps/mobile/app.json".
+     Message: chore(jobcore): bump android versionCode to &lt;N&gt; for APK build
+     ending with:  Co-Authored-By: Claude Fable 5.1 &lt;noreply@anthropic.com&gt;
+   - Tier-A build report via Nestor at
+     E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.claude\build-reports\jobcore\&lt;YYYY-MM-DD&gt;_android-apk-v&lt;N&gt;.md
+     with Forward contracts and Deviations / Defects; record every ad-hoc environment change
+     (the subst target, any ABI restriction, the keystore that signed). Report its full path in chat.
+   - Then Themis (ledger-reconciliation-hound). No /ground on JobCore.
+
+FALLBACKS
+- "UnsupportedClassVersionError" from gradlew -> the JAVA_HOME prefix is missing.
+- ninja "Filename longer than 260 characters" -> you are not running from Z:; map it and re-run from Z:\app\apps\mobile\android.
+- Device says "package appears to be invalid" or "App not installed" -> compare versionCode (must be
+  higher than the installed one) and the cert digest (must match). If both are right, tell me -
+  do not change the package id without asking.
+- Gradle daemon misbehaving -> "./gradlew --stop" then re-run. Still no "clean".</pre>
+<button class="copy-btn" data-target="next-apk-prompt">Copy prompt</button>
+
+<h2 id="section-7">7. Installing on the devices (no adb, no pairing)</h2>
+<ol>
+<li>Copy the APK onto the device (USB file copy, or Google Drive -&gt; Download to device)</li>
+<li>Open My Files -&gt; Downloads</li>
+<li>Tap the APK</li>
+<li>When prompted, allow "Install unknown apps" for My Files</li>
+<li>Tap Install</li>
+</ol>
+<table>
+<tr><th>Condition</th><th>Required value</th><th>Where to check</th></tr>
+<tr><td>Package id</td><td>com.sdassemblypros.jobcore.v2</td><td>aapt dump badging</td></tr>
+<tr><td>Cert digest</td><td>fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c</td><td>apksigner verify --print-certs</td></tr>
+<tr><td>versionCode</td><td>higher than the installed one</td><td>aapt dump badging vs Settings &gt; Apps &gt; JobCore &gt; version</td></tr>
+</table>
+<div class="callout note">
+The phone still carries the original-id app (com.sdassemblypros.jobcore) from the first APK. Jeff can
+uninstall it at his leisure; the .v2 app sits beside it until then. Installing straight from inside the
+Google Drive app behaved differently than downloading first and installing from My Files - use My Files.
+</div>
+
+<h2 id="section-8">8. Closeout and references</h2>
+<p>Standing closeout order: commit -&gt; build report -&gt; Themis (ledger-reconciliation-hound). Never /ground on JobCore.
+Ask about a test plan (Rule 43) before the commit. Commit only the versionCode hunk of app.json. Commit
+messages end with the trailer: Co-Authored-By: Claude Fable 5.1 &lt;noreply@anthropic.com&gt;</p>
+<ul>
+<li>app.json: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\app.json</li>
+<li>build.gradle (gitignored): E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\android\app\build.gradle</li>
+<li>app/docs/deployment.md: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\docs\deployment.md</li>
+<li>jobcore-mobile-build-toolchain.md: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\jobcore-mobile-build-toolchain.md</li>
+<li>Planned 2026-09-07 build report: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.claude\build-reports\jobcore\2026-09-07_android-package-id-v2.md</li>
+<li>Delivered APK: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile\android\app\build\outputs\apk\release\app-release.apk</li>
+</ul>
+
+<p>Generated 2026-09-07 by the Claude Code session that produced the 2026-09-06 APK. Facts verified on disk that session; items marked verify-first were not.</p>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.copy-btn');
+  for (var i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function () {
+      var btn = this;
+      var targetId = btn.getAttribute('data-target');
+      var el = document.getElementById(targetId);
+      if (!el) return;
+      var text = el.textContent;
+      function done() {
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = original; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () {
+          fallbackCopy(text);
+          done();
+        });
+      } else {
+        fallbackCopy(text);
+        done();
+      }
+    });
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+})();
+</script>
+
+</body>
+</html>

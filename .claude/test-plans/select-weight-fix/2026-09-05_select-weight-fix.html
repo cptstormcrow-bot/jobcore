@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Test Plan: Select Trigger Bold-Weight Fix</title>
+<style>
+  body {
+    font-family: -apple-system, Segoe UI, Arial, sans-serif;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 0 16px;
+    color: #222;
+    background: #fafafa;
+  }
+  header, footer {
+    font-size: 13px;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  footer {
+    border-bottom: none;
+    border-top: 1px solid #ccc;
+    padding-top: 8px;
+    margin-top: 24px;
+  }
+  h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .item {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .item h2 {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+  }
+  .item p.desc {
+    font-size: 14px;
+    color: #444;
+    margin: 0 0 10px 0;
+    white-space: pre-line;
+  }
+  .toggle {
+    margin-bottom: 8px;
+  }
+  .toggle label {
+    margin-right: 16px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 50px;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+  }
+  #saveBtn {
+    display: block;
+    margin: 20px 0;
+    padding: 10px 18px;
+    font-size: 15px;
+    background: #2b6cb0;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  #saveBtn:hover {
+    background: #1e4e80;
+  }
+  #saveStatus {
+    font-size: 13px;
+    color: #2b6cb0;
+    margin-left: 12px;
+  }
+  .pass { color: #1a7f37; font-weight: 600; }
+  .fail { color: #c1121f; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Test Plan: Select Trigger Bold-Weight Fix</h1>
+  <div>Commit: <code>1780149</code> — "fix(jobcore): bold Select trigger text to match other filled fields"</div>
+  <div>Date: 2026-09-05</div>
+  <div>Component: <code>app/packages/ui/src/Select.tsx</code> (shared, used app-wide)</div>
+</header>
+
+<div id="items">
+
+  <div class="item" data-id="item1">
+    <h2>1. Filled Select trigger renders bold/semibold</h2>
+    <p class="desc">Open a job in edit mode with a service area already assigned (e.g. "Ramona").
+Confirm the selected value text in the Select trigger renders bold/semibold, matching the
+weight of other filled fields on the same form (customer name, address, etc.) — no longer
+looking lighter/thinner than its neighbors.</p>
+    <div class="toggle">
+      <label><input type="radio" name="item1_result" value="pass"> Pass</label>
+      <label><input type="radio" name="item1_result" value="fail"> Fail</label>
+    </div>
+    <textarea name="item1_comment" placeholder="Comments (optional)"></textarea>
+  </div>
+
+  <div class="item" data-id="item2">
+    <h2>2. Empty/placeholder Select trigger stays regular weight</h2>
+    <p class="desc">View a job/dropdown with no service area assigned, or the JobHeader
+technician-assignment dropdown with no technician assigned. Confirm the placeholder/
+instructional text (e.g. "Select service area", "No service areas configured", or
+equivalent) renders at regular (non-bold) weight and gray color — unchanged from before
+the fix.</p>
+    <div class="toggle">
+      <label><input type="radio" name="item2_result" value="pass"> Pass</label>
+      <label><input type="radio" name="item2_result" value="fail"> Fail</label>
+    </div>
+    <textarea name="item2_comment" placeholder="Comments (optional)"></textarea>
+  </div>
+
+  <div class="item" data-id="item3">
+    <h2>3. In-dropdown option list is unaffected</h2>
+    <p class="desc">Open the dropdown's option list (e.g. tap the service-area or
+technician Select to expand it). Confirm unselected rows render at normal weight, and the
+currently selected row still shows its existing medium-weight highlighted style
+(rowTextSelected) — unchanged by this fix, which only touches the closed trigger's
+displayed text.</p>
+    <div class="toggle">
+      <label><input type="radio" name="item3_result" value="pass"> Pass</label>
+      <label><input type="radio" name="item3_result" value="fail"> Fail</label>
+    </div>
+    <textarea name="item3_comment" placeholder="Comments (optional)"></textarea>
+  </div>
+
+</div>
+
+<button id="saveBtn">Save Results (downloads updated HTML file)</button>
+<span id="saveStatus"></span>
+
+<footer>
+  Test plan for commit <code>1780149</code> — authored 2026-09-05. Reopen the saved
+  download to see previously entered answers pre-filled.
+</footer>
+
+<script id="results" type="application/json">{}</script>
+
+<script>
+(function () {
+  // On load: restore any previously saved answers from the embedded results block.
+  function restoreResults() {
+    var resultsEl = document.getElementById('results');
+    var data = {};
+    try {
+      data = JSON.parse(resultsEl.textContent || '{}');
+    } catch (e) {
+      data = {};
+    }
+    Object.keys(data).forEach(function (itemId) {
+      var entry = data[itemId];
+      if (!entry) return;
+      var radio = document.querySelector(
+        'input[name="' + itemId + '_result"][value="' + entry.result + '"]'
+      );
+      if (radio) radio.checked = true;
+      var textarea = document.querySelector('textarea[name="' + itemId + '_comment"]');
+      if (textarea && typeof entry.comment === 'string') {
+        textarea.value = entry.comment;
+      }
+    });
+  }
+
+  function collectResults() {
+    var itemIds = ['item1', 'item2', 'item3'];
+    var data = {};
+    itemIds.forEach(function (itemId) {
+      var checked = document.querySelector('input[name="' + itemId + '_result"]:checked');
+      var textarea = document.querySelector('textarea[name="' + itemId + '_comment"]');
+      data[itemId] = {
+        result: checked ? checked.value : '',
+        comment: textarea ? textarea.value : ''
+      };
+    });
+    return data;
+  }
+
+  function save() {
+    var data = collectResults();
+    var resultsEl = document.getElementById('results');
+    resultsEl.textContent = JSON.stringify(data, null, 2);
+
+    // Serialize the full current document (including embedded results) to a Blob
+    // and trigger a download of the updated HTML file under the same filename.
+    var htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '2026-09-05_select-weight-fix.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    var status = document.getElementById('saveStatus');
+    status.textContent = 'Saved — check your downloads folder.';
+    setTimeout(function () { status.textContent = ''; }, 4000);
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', save);
+  restoreResults();
+})();
+</script>
+
+</body>
+</html>
