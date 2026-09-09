@@ -34,9 +34,9 @@
     <code>AssignmentBoardScreen</code>,
     <code>CloseOutQueueScreen</code>, <code>CloseOutReviewScreen</code>, <code>PayoutBatchScreen</code>,
     <code>PriceSheetListScreen</code>, <code>PriceSheetEditorScreen</code>,
-    <code>ReimbursementQueueScreen</code>, <code>ReportsScreen</code>, and <code>AuditLogScreen</code> — is
+    <code>ReimbursementQueueScreen</code>, and <code>ReportsScreen</code> — is
     real, substantial code (assign/close-out flows, payout batches,
-    price sheets, reimbursements, reporting, an audit log) sitting behind a rich domain and money layer
+    price sheets, reimbursements, reporting) sitting behind a rich domain and money layer
     (<code>src/domain/</code>, <code>src/money/</code>, <code>src/reporting/</code>, <code>src/flows/</code>).
     None of it appears in <code>adminFinanceModule.routes</code> or <code>navEntries</code>, so none of it is
     reachable by navigating the running app today. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
@@ -111,8 +111,10 @@
       jobAction's underlying data. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
-      <strong>Check the audit trail.</strong> <code>AuditLogScreen</code>, over
-      <code>fixtures/audit-log.ts</code>, is the intended record of who changed what — useful for
+      <strong>Check the audit trail.</strong> Per-job audit/activity history no longer lives on a
+      dedicated screen of its own — it's reached by drilling into a job from
+      <code>ReportsScreen</code>: Admin &amp; Finance &gt; Reports &gt; a group &gt; a job, landing on
+      that job's detail screen's Activity section, which shows who changed what — useful for
       confirming who forced a transition like a reschedule resolution or a manual close-out.
       <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
     </li>

@@ -23,9 +23,9 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { addDays } from 'date-fns';
-import { Card, ListItem, Button, Select, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, colors, spacing, radius } from '@jobcore/ui';
-import type { TimeOffEvent } from '@jobcore/ui';
+import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
+import { Card, ListItem, Button, Select, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, MonthView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
@@ -36,10 +36,10 @@ import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { TimeOffQueueScreen } from './TimeOffQueueScreen';
-import { AuditLogScreen } from './AuditLogScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
+import { ReportsJobDetailScreen } from '../screens/ReportsJobDetailScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
@@ -70,8 +70,7 @@ type SubView =
   | 'closeOutQueue' | 'closeOutReview'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'timeOffQueue'
-  | 'reports'
-  | 'auditLog'
+  | 'reports' | 'reports-job-detail'
   | 'payments'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
@@ -154,9 +153,11 @@ export function AdminFinanceRoot() {
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
+  const [selectedReportsJob, setSelectedReportsJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
   const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
+  const [calendarMode, setCalendarMode] = useState<CalendarMode>('month');
 
   const session = useModuleSession();
   const orgId = session?.org.id ?? null;
@@ -477,6 +478,16 @@ export function AdminFinanceRoot() {
     setSubView('employee-detail');
   }
 
+  function handleSelectReportsJob(job: Job) {
+    setSelectedReportsJob(job);
+    setSubView('reports-job-detail');
+  }
+
+  function handleBackFromReportsJobDetail() {
+    setSelectedReportsJob(null);
+    setSubView('reports');
+  }
+
   const [blackoutInitialTechId, setBlackoutInitialTechId] = useState<string | undefined>(undefined);
   const [blackoutReturnView, setBlackoutReturnView] = useState<SubView>('timeOffQueue');
 
@@ -493,6 +504,18 @@ export function AdminFinanceRoot() {
 
   function handleBlackoutEditorCancel() {
     setSubView(blackoutReturnView);
+  }
+
+  function handleCalendarPrev(): void {
+    setCalendarAnchorDay((prev) => (calendarMode === 'month' ? subMonths(prev, 1) : subWeeks(prev, 1)));
+  }
+
+  function handleCalendarNext(): void {
+    setCalendarAnchorDay((prev) => (calendarMode === 'month' ? addMonths(prev, 1) : addWeeks(prev, 1)));
+  }
+
+  function handleCalendarToday(): void {
+    setCalendarAnchorDay(calendarMode === 'month' ? startOfMonth(new Date()) : new Date());
   }
 
   function handleCalendarSelectJob(job: Job) {
@@ -743,8 +766,6 @@ export function AdminFinanceRoot() {
         )
       ) : subView === 'timeOffQueue' ? (
         <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} />
-      ) : subView === 'auditLog' ? (
-        <AuditLogScreen auditLog={ports.auditLog} />
       ) : subView === 'payments' ? (
         <PaymentsHubScreen
           payments={ports.payments}
@@ -786,7 +807,20 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} />
+          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} onSelectJob={handleSelectReportsJob} />
+        )
+      ) : subView === 'reports-job-detail' ? (
+        selectedReportsJob && loadState.kind === 'loaded' && orgId ? (
+          <ReportsJobDetailScreen
+            job={selectedReportsJob}
+            commissions={loadState.commissions}
+            organizationId={orgId}
+            onBack={handleBackFromReportsJobDetail}
+          />
+        ) : (
+          <View style={styles.screen}>
+            <EmptyState title="Job" message="No job selected." />
+          </View>
         )
       ) : subView === 'employee-roster' ? (
         <EmployeeRosterScreen
@@ -882,12 +916,25 @@ export function AdminFinanceRoot() {
             const calendarTimeOffEvents = toCalendarTimeOffEvents(loadState.timeOffRequests, techNameById).filter(
               (e) => !selectedCalendarTechId || e.techId === selectedCalendarTechId,
             );
+            const label =
+              calendarMode === 'month'
+                ? format(calendarAnchorDay, 'MMMM yyyy')
+                : `${format(startOfWeek(calendarAnchorDay, { weekStartsOn: 0 }), 'MMM d')} – ${format(
+                    endOfWeek(calendarAnchorDay, { weekStartsOn: 0 }),
+                    'MMM d, yyyy'
+                  )}`;
             return (
               <View style={styles.screen}>
                 <View style={styles.content}>
                   <View style={styles.calendarToolbar}>
-                    <Button label="Prev" size="sm" onPress={() => setCalendarAnchorDay((d) => addDays(d, -7))} />
-                    <Button label="Next" size="sm" onPress={() => setCalendarAnchorDay((d) => addDays(d, 7))} />
+                    <CalendarHeader
+                      mode={calendarMode}
+                      onModeChange={setCalendarMode}
+                      label={label}
+                      onPrev={handleCalendarPrev}
+                      onNext={handleCalendarNext}
+                      onToday={handleCalendarToday}
+                    />
                     <Select
                       value={selectedCalendarTechId}
                       onChange={setSelectedCalendarTechId}
@@ -902,12 +949,22 @@ export function AdminFinanceRoot() {
                     />
                   </View>
                 </View>
-                <WeekView
-                  jobs={calendarJobs}
-                  anchorDay={calendarAnchorDay}
-                  timeOffEvents={calendarTimeOffEvents}
-                  onSelectJob={handleCalendarSelectJob}
-                />
+                {calendarMode === 'week' ? (
+                  <WeekView
+                    jobs={calendarJobs}
+                    anchorDay={calendarAnchorDay}
+                    timeOffEvents={calendarTimeOffEvents}
+                    onSelectJob={handleCalendarSelectJob}
+                  />
+                ) : (
+                  <MonthView
+                    variant="list"
+                    jobs={calendarJobs}
+                    anchorDay={calendarAnchorDay}
+                    timeOffEvents={calendarTimeOffEvents}
+                    onSelectJob={handleCalendarSelectJob}
+                  />
+                )}
               </View>
             );
           })()
@@ -938,7 +995,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   priceSheetCreate: 'New Price Sheet',
   timeOffQueue: 'Time Off',
   reports: 'Reports',
-  auditLog: 'Audit Log',
+  'reports-job-detail': 'Job Detail',
   payments: 'Payments',
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
@@ -958,7 +1015,6 @@ const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
   { key: 'timeOffQueue', label: 'Time Off' },
   { key: 'calendar', label: 'Calendar' },
   { key: 'reports', label: 'Reports' },
-  { key: 'auditLog', label: 'Audit Log' },
   { key: 'employee-roster', label: 'Employees' },
 ];
 

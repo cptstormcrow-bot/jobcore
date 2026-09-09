@@ -22,19 +22,33 @@
  * unclassified record for a known-good one.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
+import { isBetaVisible } from '@jobcore/core';
 import { byStatus, bySource, byAttachTiming } from '../reporting/group-by';
-import { slotHitRate } from '../reporting/slot-hit-rate';
+import { slotHitRate, classifyWindow } from '../reporting/slot-hit-rate';
 import { commissionTotals, type CommissionAmountSource } from '../reporting/revenue';
 import { getModuleSession } from '../lib/module-session';
 
 export interface ReportsScreenProps {
   jobs?: Job[];
   commissions?: CommissionAmountSource[];
+  /** "Show Test Jobs" toggle state — mirrors `AssignmentBoardScreen.tsx`'s `showTestJobs` prop. Filtering is applied only at job-row render time, never at aggregate/count computation. */
+  showTestJobs?: boolean;
+  /** Bubbles a job selection up to the parent (level 2 — `ReportsJobDetailScreen.tsx` is wired by AdminFinanceRoot.tsx, not built here). */
+  onSelectJob?: (job: Job) => void;
 }
+
+/** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
+type DrillState =
+  | { section: 'status'; key: string }
+  | { section: 'source'; key: string }
+  | { section: 'attachTiming'; key: string }
+  | { section: 'slotHitRate'; key: 'hit' | 'miss' | 'unknown' }
+  | { section: 'commissionTotals'; key: 'known' | 'unknown' }
+  | null;
 
 /** Local, honest formatter for cents — this screen has no shared money formatter to reuse. */
 function formatAmount(amountCents: number): string {
@@ -45,8 +59,38 @@ function formatPercent(rate: number): string {
   return `${(rate * 100).toFixed(1)}%`;
 }
 
+/** Renders a drilled-into job list for a group/bucket, filtering test jobs at row-render time only. */
+function JobListDrillDown(props: {
+  jobs: Job[];
+  showTestJobs: boolean;
+  onSelectJob?: (job: Job) => void;
+  onBack: () => void;
+}) {
+  const { jobs, showTestJobs, onSelectJob, onBack } = props;
+  const visibleJobs = jobs.filter((job) => isBetaVisible(job, showTestJobs));
+
+  return (
+    <Card style={styles.card}>
+      <Button label="< Back" variant="outline" size="sm" onPress={onBack} style={styles.backButton} />
+      {visibleJobs.length === 0 ? (
+        <EmptyState title="No jobs" message="No jobs match this group." />
+      ) : (
+        visibleJobs.map((job) => (
+          <ListItem
+            key={job.id}
+            title={job.address ?? job.id}
+            subtitle={job.status}
+            onPress={onSelectJob ? () => onSelectJob(job) : undefined}
+          />
+        ))
+      )}
+    </Card>
+  );
+}
+
 export function ReportsScreen(props: ReportsScreenProps = {}) {
-  const { jobs, commissions } = props;
+  const { jobs, commissions, showTestJobs = false, onSelectJob } = props;
+  const [drill, setDrill] = useState<DrillState>(null);
 
   const session = getModuleSession();
 
@@ -79,7 +123,31 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
   const sourceGroups = bySource(jobs);
   const attachTimingGroups = byAttachTiming(jobs);
   const hitRate = slotHitRate(jobs);
-  const totals = commissionTotals(commissions ?? []);
+  const commissionRecords = commissions ?? [];
+  const totals = commissionTotals(commissionRecords);
+
+  // Slot Hit Rate has no pre-existing Record<string, Job[]> grouping — bucket client-side by classifyWindow.
+  const slotHitRateGroups: Record<'hit' | 'miss' | 'unknown', Job[]> = { hit: [], miss: [], unknown: [] };
+  for (const job of jobs) {
+    slotHitRateGroups[classifyWindow(job)].push(job);
+  }
+
+  // Commission Totals has no job list at all — map CommissionAmountSource.jobId back onto the loaded Job[].
+  const jobsById = new Map(jobs.map((job) => [job.id, job]));
+  const knownCommissionJobIds = new Set(
+    commissionRecords.filter((c) => c.amount !== null && c.amount !== undefined).map((c) => c.jobId),
+  );
+  const unknownCommissionJobIds = new Set(
+    commissionRecords.filter((c) => c.amount === null || c.amount === undefined).map((c) => c.jobId),
+  );
+  const commissionKnownJobs = [...knownCommissionJobIds]
+    .map((id) => jobsById.get(id))
+    .filter((job): job is Job => job !== undefined);
+  const commissionUnknownJobs = [...unknownCommissionJobIds]
+    .map((id) => jobsById.get(id))
+    .filter((job): job is Job => job !== undefined);
+
+  const backProps = { showTestJobs, onSelectJob, onBack: () => setDrill(null) };
 
   return (
     <View style={styles.screen}>
@@ -87,42 +155,92 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title="Reports" />
         <Text style={styles.groupHeading}>By Status</Text>
-        <Card style={styles.card}>
-          {Object.entries(statusGroups).map(([status, groupJobs]) => (
-            <ListItem key={status} title={status} subtitle={`${groupJobs.length} job(s)`} />
-          ))}
-        </Card>
+        {drill?.section === 'status' ? (
+          <JobListDrillDown jobs={statusGroups[drill.key] ?? []} {...backProps} />
+        ) : (
+          <Card style={styles.card}>
+            {Object.entries(statusGroups).map(([status, groupJobs]) => (
+              <ListItem
+                key={status}
+                title={status}
+                subtitle={`${groupJobs.length} job(s)`}
+                onPress={() => setDrill({ section: 'status', key: status })}
+              />
+            ))}
+          </Card>
+        )}
 
         <Text style={styles.groupHeading}>By Source</Text>
-        <Card style={styles.card}>
-          {Object.entries(sourceGroups).map(([source, groupJobs]) => (
-            <ListItem key={source} title={source} subtitle={`${groupJobs.length} job(s)`} />
-          ))}
-        </Card>
+        {drill?.section === 'source' ? (
+          <JobListDrillDown jobs={sourceGroups[drill.key] ?? []} {...backProps} />
+        ) : (
+          <Card style={styles.card}>
+            {Object.entries(sourceGroups).map(([source, groupJobs]) => (
+              <ListItem
+                key={source}
+                title={source}
+                subtitle={`${groupJobs.length} job(s)`}
+                onPress={() => setDrill({ section: 'source', key: source })}
+              />
+            ))}
+          </Card>
+        )}
 
         <Text style={styles.groupHeading}>By Attach Timing</Text>
-        <Card style={styles.card}>
-          {Object.entries(attachTimingGroups).map(([timing, groupJobs]) => (
-            <ListItem key={timing} title={timing} subtitle={`${groupJobs.length} job(s)`} />
-          ))}
-        </Card>
+        {drill?.section === 'attachTiming' ? (
+          <JobListDrillDown jobs={attachTimingGroups[drill.key] ?? []} {...backProps} />
+        ) : (
+          <Card style={styles.card}>
+            {Object.entries(attachTimingGroups).map(([timing, groupJobs]) => (
+              <ListItem
+                key={timing}
+                title={timing}
+                subtitle={`${groupJobs.length} job(s)`}
+                onPress={() => setDrill({ section: 'attachTiming', key: timing })}
+              />
+            ))}
+          </Card>
+        )}
 
         <Text style={styles.groupHeading}>Slot Hit Rate</Text>
-        <Card style={styles.card}>
-          <ListItem title="Hit" subtitle={`${hitRate.hit}`} />
-          <ListItem title="Miss" subtitle={`${hitRate.miss}`} />
-          <ListItem title="Unknown" subtitle={`${hitRate.unknown}`} />
-          <ListItem title="Total" subtitle={`${hitRate.total}`} />
-          <ListItem title="Hit Rate" subtitle={formatPercent(hitRate.hitRate)} />
-        </Card>
+        {drill?.section === 'slotHitRate' ? (
+          <JobListDrillDown jobs={slotHitRateGroups[drill.key] ?? []} {...backProps} />
+        ) : (
+          <Card style={styles.card}>
+            <ListItem title="Hit" subtitle={`${hitRate.hit}`} onPress={() => setDrill({ section: 'slotHitRate', key: 'hit' })} />
+            <ListItem title="Miss" subtitle={`${hitRate.miss}`} onPress={() => setDrill({ section: 'slotHitRate', key: 'miss' })} />
+            <ListItem
+              title="Unknown"
+              subtitle={`${hitRate.unknown}`}
+              onPress={() => setDrill({ section: 'slotHitRate', key: 'unknown' })}
+            />
+            <ListItem title="Total" subtitle={`${hitRate.total}`} />
+            <ListItem title="Hit Rate" subtitle={formatPercent(hitRate.hitRate)} />
+          </Card>
+        )}
 
         <Text style={styles.groupHeading}>Commission Totals</Text>
-        <Card style={styles.card}>
-          <ListItem title="Total Commission" subtitle={formatAmount(totals.totalCommission)} />
-          <ListItem title="Known" subtitle={`${totals.knownCount}`} />
-          <ListItem title="Unknown" subtitle={`${totals.unknownCount}`} />
-          <ListItem title="Job Count" subtitle={`${totals.jobCount}`} />
-        </Card>
+        {drill?.section === 'commissionTotals' ? (
+          <JobListDrillDown
+            jobs={drill.key === 'known' ? commissionKnownJobs : commissionUnknownJobs}
+            {...backProps}
+          />
+        ) : (
+          <Card style={styles.card}>
+            <ListItem title="Total Commission" subtitle={formatAmount(totals.totalCommission)} />
+            <ListItem
+              title="Known"
+              subtitle={`${totals.knownCount}`}
+              onPress={() => setDrill({ section: 'commissionTotals', key: 'known' })}
+            />
+            <ListItem
+              title="Unknown"
+              subtitle={`${totals.unknownCount}`}
+              onPress={() => setDrill({ section: 'commissionTotals', key: 'unknown' })}
+            />
+            <ListItem title="Job Count" subtitle={`${totals.jobCount}`} />
+          </Card>
+        )}
       </ScrollView>
     </View>
   );
@@ -156,5 +274,9 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  backButton: {
+    marginBottom: spacing.sm,
+    alignSelf: 'flex-start',
   },
 });
