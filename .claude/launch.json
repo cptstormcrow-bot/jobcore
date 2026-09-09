@@ -4,7 +4,7 @@
     {
       "name": "jobcore-mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "app/apps/mobile", "run", "start", "--", "--web", "-c"],
+      "runtimeArgs": ["--prefix", "app/apps/mobile", "run", "start", "--", "--web", "-c", "--port", "8081"],
       "port": 8081
     }
   ]

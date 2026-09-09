@@ -58,6 +58,8 @@ import type {
   TimeEntryRepository,
   TimeEntry,
   TimeEntryRow,
+  JobInvestigationRepository,
+  JobInvestigationInput,
 } from '../../../../modules/field-tech/src/data/ports';
 import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/field-tech/src/lib/module-session';
@@ -388,8 +390,6 @@ export function createTimeOffRepository(): TimeOffRepository {
         throw new Error(`cancel time off request failed: ${error.message}`);
       }
     },
-  };
-}
 
     async update(requestId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest> {
       const { error } = await supabase.rpc('update_time_off_request', {
@@ -412,6 +412,8 @@ export function createTimeOffRepository(): TimeOffRepository {
       }
       return toTimeOffRequest(data as TimeOffRequestRow);
     },
+  };
+}
 
 /* ------------------------------------------------------------------ *
  * ReimbursementRequestRepository
@@ -961,6 +963,44 @@ export async function getJobInvestigation(jobId: string): Promise<JobInvestigati
   return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
 }
 
+export function createJobInvestigationRepository(): JobInvestigationRepository {
+  return {
+    async getForJob(jobId: string): Promise<JobInvestigation | null> {
+      return getJobInvestigation(jobId);
+    },
+
+    async upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation> {
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_investigation.upsert', occurredAt, { jobId, patch });
+
+      const { data, error } = await supabase
+        .from('job_investigations')
+        .upsert(
+          {
+            job_id: jobId,
+            organization_id: organizationId,
+            tech_id: userId,
+            ingress_notes: patch.ingressNotes ?? null,
+            logistics_notes: patch.logisticsNotes ?? null,
+            parking_notes: patch.parkingNotes ?? null,
+            state_assessment: patch.stateAssessment ?? null,
+            submitted_at: patch.submittedAt ?? null,
+            updated_at: occurredAt,
+          },
+          { onConflict: 'job_id' }
+        )
+        .select('*')
+        .single();
+      if (error) {
+        logSyncFailure('field-tech-repos.upsertJobInvestigation', error.message, { jobId, patch });
+        throw new Error(`upsertForJob failed: ${error.message}`);
+      }
+      return toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]);
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * TimeEntryRepository
  * ------------------------------------------------------------------ */
@@ -1046,6 +1086,7 @@ export function buildFieldTechPorts(): ModulePorts {
     calendarEvents: createCalendarEventRepository(),
     camera: createCameraRepository(),
     estimates: createEstimateRepository(),
+    investigations: createJobInvestigationRepository(),
     timeEntries: createTimeEntryRepository(),
   };
 }

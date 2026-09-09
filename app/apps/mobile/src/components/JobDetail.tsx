@@ -3,18 +3,14 @@
 // resolved from the registry by the caller (P2e.3b). The JobAction type comes from
 // @jobcore/module-sdk (the contract package), never from a module implementation.
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { Job, Role } from '@jobcore/core';
-import type { JobAction } from '@jobcore/module-sdk';
-import { colors, spacing, typography, radius, ScreenTitle } from '@jobcore/ui';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import type { Job } from '@jobcore/core';
+import { colors, spacing, typography, radius } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { supabase } from '../lib/supabase';
 
 export interface JobDetailProps {
   job: Job;
-  actions?: JobAction[];
-  onAction?: (actionId: string) => void;
-  role?: Role;
 }
 
 interface JobMaterial {
@@ -61,7 +57,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function JobDetail({ job, actions, onAction, role }: JobDetailProps) {
+export function JobDetail({ job }: JobDetailProps) {
   const [materials, setMaterials] = useState<JobMaterial[]>([]);
   const [links, setLinks] = useState<JobReferenceLink[]>([]);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
@@ -140,9 +136,7 @@ export function JobDetail({ job, actions, onAction, role }: JobDetailProps) {
   }, [job.id, job.organizationId]);
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>{`Job #${job.id.slice(-4).toUpperCase()}`}</Text>
-      <ScreenTitle title="Job Details" subtitle={job.address ?? undefined} />
+    <View style={[styles.root, styles.content]}>
       <View style={[styles.statusBar, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
       <Text style={styles.status}>{job.status}</Text>
       {job.isBeta ? (
@@ -150,33 +144,6 @@ export function JobDetail({ job, actions, onAction, role }: JobDetailProps) {
           <Text style={styles.betaBadgeLabel}>BETA</Text>
         </View>
       ) : null}
-
-      {actions && actions.length > 0 ? (
-        <View style={styles.actions}>
-          {actions.map((action) => (
-            <Pressable
-              key={action.id}
-              style={[
-                styles.actionButton,
-                { backgroundColor: role === 'tech' ? colors.info : colors.secondaryDark },
-              ]}
-              onPress={() => onAction?.(action.id)}
-            >
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Job Info</Text>
-        <Row label="Address" value={job.address ?? 'No address'} />
-        <Row label="Description" value={job.description ?? 'No description'} />
-        <Row label="Scheduled" value={job.scheduledStart ?? 'Unscheduled'} />
-        <Row label="Source" value={job.source ?? 'Unknown'} />
-        <Row label="Payer" value={job.payer ?? 'Unknown'} />
-        <Row label="Assigned tech" value={job.assignedTechId ?? 'Unassigned'} />
-      </View>
 
       {materials.length > 0 ? (
         <View style={styles.card}>
@@ -242,18 +209,13 @@ export function JobDetail({ job, actions, onAction, role }: JobDetailProps) {
         </View>
       ) : null}
 
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md, gap: spacing.md },
-  title: {
-    fontSize: typography.size.h5,
-    lineHeight: typography.size.h5 * typography.lineHeight.heading,
-    color: colors.text,
-  },
   statusBar: { height: 6, borderRadius: radius.pill },
   status: {
     fontSize: typography.size.h5,
@@ -284,24 +246,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.body,
     lineHeight: typography.size.body * typography.lineHeight.body,
     color: colors.text,
-  },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  actionButton: {
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-    flexGrow: 0,
-    flexShrink: 0,
-  },
-  actionLabel: {
-    fontSize: typography.size.body,
-    lineHeight: typography.size.body * typography.lineHeight.body,
-    color: colors.white,
-    fontWeight: '700',
-    textAlign: 'center',
   },
   betaBadge: {
     alignSelf: 'flex-start',

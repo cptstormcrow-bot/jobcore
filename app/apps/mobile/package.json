@@ -20,6 +20,7 @@
     "@jobcore/sales-marketing": "*",
     "@jobcore/ui": "*",
     "@opentelemetry/api": "^1.9.1",
+    "@react-native-community/datetimepicker": "8.2.0",
     "@supabase/supabase-js": "^2.45.0",
     "date-fns": "^4.4.0",
     "expo": "~52.0.0",

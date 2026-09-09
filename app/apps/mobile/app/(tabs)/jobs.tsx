@@ -1,12 +1,12 @@
-// P2e.3b / S2.3 - Job Detail host. The registry lookup lives HERE, not in JobDetail.tsx:
-// the shared canvas stays free of any module coupling (spec 02-P2 L85-86) and
-// receives module-contributed buttons as a plain `actions` prop.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+// P2e.3b / S2.3 - Job Detail host. JobDetail owns its own rendering; this
+// screen just selects the job and passes it through.
+
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
-import { colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
+import { useRouter } from 'expo-router';
+import { Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -64,17 +64,10 @@ const JOB_ROW_COLUMNS =
   'en_route_at, in_progress_at, completed_at, created_at, is_beta';
 
 export default function JobsScreen() {
+  const router = useRouter();
   const session = useSession();
-  const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const userId = session.status === 'authenticated' ? session.session.user.id : undefined;
-
-  // Module-contributed buttons, resolved from the registry by enabled-module +
-  // role. Never names a module id - only apps/mobile/src/modules.ts may do that.
-  const actions = useMemo<JobAction[]>(() => {
-    if (!org || !role) return [];
-    return getEnabledModules(org, role).flatMap((m) => m.jobActions ?? []);
-  }, [org, role]);
 
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showBeta, setShowBeta] = useState(false);
@@ -108,21 +101,11 @@ export default function JobsScreen() {
     };
   }, [role, userId]);
 
-  // Generic onInvoke dispatch: names no module. Looks up the matched JobAction
-  // by id and runs its onInvoke hook, if one is declared.
-  const dispatchInvoke = useCallback(
-    (actionId: string) => {
-      const action = actions.find((a) => a.id === actionId);
-      if (!selectedJob) return;
-      void action?.onInvoke?.(selectedJob);
-    },
-    [actions, selectedJob],
-  );
-
   if (!selectedJob || !isBetaVisible(selectedJob, showBeta)) {
     return (
       <View style={styles.center}>
         <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
+        <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
         <EmptyState title="Jobs" message="No job selected. The job list lands in a later slice." />
       </View>
     );
@@ -131,7 +114,8 @@ export default function JobsScreen() {
   return (
     <View style={styles.root}>
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-      <JobDetail job={selectedJob} actions={actions} onAction={dispatchInvoke} role={role} />
+      <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
+      <JobDetail job={selectedJob} />
     </View>
   );
 }
