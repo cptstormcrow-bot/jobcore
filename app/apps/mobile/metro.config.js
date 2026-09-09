@@ -28,6 +28,29 @@ config.resolver.nodeModulesPaths = [
 // back to Metro's legacy main-field resolution avoids the failure.
 config.resolver.unstable_enablePackageExports = false;
 
+// Metro's watchFolders (above) covers the whole monorepo workspace root so
+// hoisted packages are picked up, but that also puts native build output
+// under the watcher: Android's CMake/Gradle intermediates (android/.cxx,
+// android/build, android/app/build) and iOS's Pods/build directories. These
+// can contain very large numbers of fast-changing/binary files during a
+// native build, which has been a suspected cause of the Metro file watcher
+// crashing outright (taking the whole dev server down) with no error trail.
+// Exclude them from the watcher via resolver.blockList, merged with
+// whatever default exclusions getDefaultConfig already set up so those
+// aren't silently dropped.
+const exclusionList = require('metro-config/src/defaults/exclusionList');
+const nativeBuildArtifactExclusions = [
+  /.*\/android\/\.cxx\/.*/,
+  /.*\/android\/app\/build\/.*/,
+  /.*\/android\/build\/.*/,
+  /.*\/ios\/Pods\/.*/,
+  /.*\/ios\/build\/.*/,
+  /.*\/CMakeFiles\/.*/,
+];
+config.resolver.blockList = config.resolver.blockList
+  ? exclusionList([config.resolver.blockList, ...nativeBuildArtifactExclusions])
+  : exclusionList(nativeBuildArtifactExclusions);
+
 // packages/core and packages/ui use TypeScript NodeNext/ESM-style relative
 // imports that end in `.js` but resolve to `.ts`/`.tsx` source files on disk
 // (e.g. `import './clocks.js'` -> clocks.ts). Metro's default resolver does
