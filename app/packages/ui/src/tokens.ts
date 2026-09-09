@@ -19,6 +19,7 @@ export const colors = {
   text: '#212529',
   textLight: '#495057',
   textMuted: '#868E96',
+  textMutedDark: '#78818A',
   border: '#E9ECEF',
   overlay: 'rgba(27, 42, 74, 0.85)',
   // Semantic status colors — NOT defined in the brand CSS (source has no status
@@ -45,7 +46,7 @@ export const typography = {
   },
   // Source sizes are fluid clamp(); RN has no viewport units, so each collapses
   // to a fixed density-independent value (upper-mid of the clamp range).
-  size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13 },
+  size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13, summary: 8, detail: 10 },
   lineHeight: { heading: 1.2, body: 1.6, relaxed: 1.7 },
 } as const;
 

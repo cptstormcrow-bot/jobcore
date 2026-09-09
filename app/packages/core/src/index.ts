@@ -91,6 +91,8 @@ export type JobStatus =
  */
 export interface Job {
   id: string;
+  // sequential display number (jobs.job_number)
+  jobNumber?: number | null;
   organizationId: string;
   status: JobStatus;
   customerId: string | null;
@@ -122,6 +124,7 @@ export interface Job {
   rooms?: string[] | null;
   panelInfo?: string | null;
   considerations?: string | null;
+  ingressInstructions?: string | null;
 }
 
 /**

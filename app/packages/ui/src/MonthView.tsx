@@ -53,7 +53,7 @@ export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: 
         ))}
       </View>
       {rows.map((row) => (
-        <View key={row[0].toISOString()} style={styles.row}>
+        <View key={row[0]!.toISOString()} style={styles.row}>
           {row.map((day) => {
             const dayJobs = jobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day));
             const dayStart = startOfDay(day);
