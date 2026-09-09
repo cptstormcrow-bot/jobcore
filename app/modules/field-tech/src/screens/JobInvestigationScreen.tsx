@@ -16,7 +16,7 @@ import * as React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField } from '@jobcore/ui';
+import { ScreenTitle, Button, TextField, colors, typography } from '@jobcore/ui';
 import type { JobInvestigation, JobInvestigationInput } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -25,6 +25,8 @@ import { getModulePorts } from '../lib/module-ports';
 export interface JobInvestigationScreenProps {
   jobId: string;
   onBack?: () => void;
+  /** Inlined inside a host screen (e.g. Job Detail) that already owns navigation/scroll: suppresses the Back row and the duplicate screen title. */
+  embedded?: boolean;
 }
 
 function formatDateTime(value: string | null): string {
@@ -40,7 +42,7 @@ function formatDateTime(value: string | null): string {
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -145,9 +147,9 @@ export function JobInvestigationScreen({ jobId, onBack }: JobInvestigationScreen
 
   return (
     <View style={styles.container}>
-      {onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
-      <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />
-      <Text style={styles.title}>Job {job.id}</Text>
+      {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
+      {!embedded && <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />}
+      {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
       <Text style={styles.status}>
         {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
       </Text>
@@ -180,31 +182,37 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
   },
   status: {
-    fontSize: 14,
-    color: '#555',
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    color: colors.textLight,
     marginBottom: 12,
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.size.h6,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
     marginBottom: 8,
   },
   label: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    color: colors.textMuted,
     marginTop: 6,
   },
   value: {
-    fontSize: 14,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
   },
   error: {
-    color: '#b00020',
+    color: colors.danger,
+    fontFamily: typography.fontFamily.body,
   },
 });

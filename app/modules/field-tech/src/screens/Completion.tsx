@@ -89,7 +89,9 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
         if (!cancelled) {
           setWorkedMinutes(Math.max(0, Math.round(totalMs / 60000)));
         }
-      } catch {}
+      } catch {
+        // worked-time lookup is best-effort; leave the field untouched on failure
+      }
     }
     void loadWorkedTime();
     return () => {

@@ -15,7 +15,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField } from '@jobcore/ui';
+import { ScreenTitle, Button, TextField, colors, typography } from '@jobcore/ui';
 import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -24,6 +24,12 @@ import { getModulePorts } from '../lib/module-ports';
 export interface JobEstimateEditorProps {
   jobId: string;
   onBack?: () => void;
+  /**
+   * When true, this screen is inlined inside a host screen (e.g. Job Detail):
+   * the Back button and the screen-level title/subtitle are hidden since the
+   * host already provides that navigation/context.
+   */
+  embedded?: boolean;
 }
 
 function formatDateTime(value: string | null): string {
@@ -39,7 +45,7 @@ function formatDateTime(value: string | null): string {
  * (read-only derived display), a single "Submit" status action, and a
  * Share Link action.
  */
-export function JobEstimateEditor({ jobId, onBack }: JobEstimateEditorProps): React.ReactElement {
+export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstimateEditorProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -170,9 +176,9 @@ export function JobEstimateEditor({ jobId, onBack }: JobEstimateEditorProps): Re
 
   return (
     <View style={styles.container}>
-      {onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
-      <ScreenTitle title="Job Estimate" subtitle={job.address ?? undefined} />
-      <Text style={styles.title}>Job {job.id}</Text>
+      {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
+      {!embedded && <ScreenTitle title="Job Estimate" subtitle={job.address ?? undefined} />}
+      {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
       <Text style={styles.status}>Estimate status: {estimate?.status ?? 'draft'}</Text>
 
       <View style={styles.section}>
@@ -229,34 +235,40 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
   },
   status: {
-    fontSize: 14,
-    color: '#555',
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    color: colors.textLight,
     marginBottom: 12,
   },
   section: {
     marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: typography.size.h6,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
     marginBottom: 8,
   },
   label: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    color: colors.textMuted,
     marginTop: 6,
   },
   value: {
-    fontSize: 14,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
   },
   lineRow: {
     marginBottom: 8,
   },
   error: {
-    color: '#b00020',
+    color: colors.danger,
+    fontFamily: typography.fontFamily.body,
   },
 });
