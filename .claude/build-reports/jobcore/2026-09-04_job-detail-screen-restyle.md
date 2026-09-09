@@ -160,3 +160,46 @@ Forward contracts (addendum):
 Scope expansions ordered by Jeff during this cycle: create-screen unification with New Lead (test 36), estimate editor for all roles (tests 24/25), copy buttons (F12), Ingress instructions field (F13), the two test-runner fixes (DEV-A8).
 
 Themis reconciliation: to run at closeout.
+
+## Addendum 2 (2026-09-09) — Fix-cycle closeout
+
+### T10/T12 and T21 — Price sheet standard duration
+
+Jeff's verbatim requirement: "I need both of these built together. an Hour trip is a standard to measure against the others. on the price sheet." Resolved via a dedicated `price_sheet_standard_duration` table, delivered in migration `app/supabase/0047_price_sheet_standard_duration.sql`, confirmed LIVE on the hosted Supabase DB.
+
+Status: CLOSED.
+
+### T38 — JobHeader copy-to-clipboard buttons
+
+Jeff's verbatim requirement: "T38 — copy-to-clipboard buttons are now not needed on the pinned JobHeader above the buttons. they should stay on the existing items below the buttons." Implemented and verified.
+
+Status: CLOSED.
+
+### Migration 0047 saga
+
+Landing this migration surfaced several process incidents worth recording:
+- Classifier-denial incidents: the change was initially misclassified/blocked before being correctly routed to the appropriate write path.
+- Supabase CLI local-binary invocation fix discovered: the workspace-local `.\node_modules\.bin\supabase.cmd`, invoked relative to the `app` directory, must be used — a bare `supabase` is not on PATH. `supabase/config.toml` has `project_id = "app"`.
+- Migration-renumbering CRLF diagnosis: an apparent renumbering was confirmed, via git's own 100% rename-similarity detection, to be a CRLF line-ending artifact rather than a real content change.
+- A dollar-quote syntax bug was encountered in a plpgsql migration and fixed.
+- A double live-confirmation step was taken before trusting the migration was applied (two independent confirmation reads against the hosted DB, not one).
+- The `job_notes_kind_check` constraint issue came up during this cycle and was resolved.
+
+### Test plan
+
+A 44-item HTML test plan was authored and offered for this closeout. Jeff declined the retest step ("no test plan. continue"), closing out the verification gate for this cycle without a live retest run.
+
+### Forward contracts (Addendum 2)
+- None new. FC1 (eas dev build + on-device checklist) and FC2 (TimeOff.tsx typecheck / separate workstream) remain open from the base report and prior addenda; FC-A1–FC-A3 from the 2026-09-05 addendum remain as previously stated.
+
+### Deviations / Defects (Addendum 2)
+1. Pre-existing `price-sheet-repo.ts` field-dropping bug — Jeff said "Leave it out," explicitly out of scope; not fixed this cycle.
+2. Approximately 5 non-pattern-A typecheck errors were identified as pre-existing/unrelated and left unfixed this cycle, per no contrary signal from Jeff.
+
+### Git hygiene closeout (Rule 42)
+
+A full `/git-audit` pass was run and completed:
+- Bucket 1 (commit-now): 8 commits landed on branch `jobcore-job-detail-action-buttons` — a19daa2, 4224d89, 7dd4db1, 1e281b8, 635c85c, f6fd84b, c504330, 0bbd735.
+- Bucket 2 (gitignore-candidate, reported only, not auto-edited): `app/supabase/migrations/` untracked directory.
+- Bucket 3 (unfinished): zero items.
+- An untracked stray `nul` file (Windows shell-redirection artifact) was also removed from repo root, per Jeff's authorization.
