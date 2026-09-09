@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   addDays,
   endOfMonth,
@@ -23,11 +23,24 @@ export interface MonthViewProps {
   anchorDay: Date;
   timeOffEvents?: TimeOffEvent[];
   onSelectDay?: (day: Date) => void;
+  onSelectJob?: (job: Job) => void;
+  onSelectTimeOff?: (event: TimeOffEvent) => void;
+  variant?: 'dots' | 'list';
+  maxVisibleItems?: number;
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: MonthViewProps) {
+export function MonthView({
+  jobs,
+  anchorDay,
+  timeOffEvents = [],
+  onSelectDay,
+  onSelectJob,
+  onSelectTimeOff,
+  variant = 'dots',
+  maxVisibleItems = 4,
+}: MonthViewProps) {
   const gridStart = startOfWeek(startOfMonth(anchorDay), { weekStartsOn: 0 });
   const gridEnd = endOfWeek(endOfMonth(anchorDay), { weekStartsOn: 0 });
 
@@ -43,7 +56,11 @@ export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: 
     rows.push(days.slice(i, i + 7));
   }
 
-  return (
+  const listMode = variant === 'list';
+
+  type TimeOffEventWithRange = TimeOffEvent & { startDate?: string | number | Date; endDate?: string | number | Date };
+
+  const grid = (
     <View>
       <View style={styles.header}>
         {WEEKDAY_LABELS.map((label) => (
@@ -58,13 +75,69 @@ export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: 
             const dayJobs = jobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day));
             const dayStart = startOfDay(day);
             const hasTimeOff = timeOffEvents.some((t) => {
-              const start = startOfDay(new Date((t as any).startDate ?? t.eventTime));
-              const end = startOfDay(new Date((t as any).endDate ?? t.eventTime));
+              const start = startOfDay(new Date((t as TimeOffEventWithRange).startDate ?? t.eventTime));
+              const end = startOfDay(new Date((t as TimeOffEventWithRange).endDate ?? t.eventTime));
               return isWithinInterval(dayStart, { start, end });
             });
             const inMonth = isSameMonth(day, anchorDay);
             const selected = isSameDay(day, anchorDay);
             const today = isToday(day);
+
+            if (listMode) {
+              const dayTimeOffList = timeOffEvents.filter((t) => {
+                const start = startOfDay(new Date((t as TimeOffEventWithRange).startDate ?? t.eventTime));
+                const end = startOfDay(new Date((t as TimeOffEventWithRange).endDate ?? t.eventTime));
+                return isWithinInterval(dayStart, { start, end });
+              });
+              const dayJobsList = jobs
+                .filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day))
+                .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
+              const allItems = [...dayTimeOffList, ...dayJobsList];
+              const visibleItems = allItems.slice(0, maxVisibleItems);
+              const overflowCount = allItems.length - visibleItems.length;
+
+              return (
+                <Pressable
+                  key={day.toISOString()}
+                  onPress={() => onSelectDay?.(day)}
+                  style={[styles.cell, styles.cellList, selected && styles.cellSelected]}
+                >
+                  <Text
+                    style={[
+                      styles.dayText,
+                      !inMonth && styles.dayTextMuted,
+                      today && styles.dayTextToday,
+                      selected && styles.dayTextSelected,
+                      dayTimeOffList.length > 0 && styles.dayTextTimeOff,
+                    ]}
+                  >
+                    {format(day, 'd')}
+                  </Text>
+                  {visibleItems.map((item) =>
+                    'scheduledStart' in item ? (
+                      <Pressable key={item.id} onPress={() => onSelectJob?.(item)} style={styles.listItemRow}>
+                        <View
+                          style={[
+                            styles.listItemDot,
+                            { backgroundColor: JOB_STATUS_COLORS[item.status] ?? colors.primary },
+                          ]}
+                        />
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.listItemText}>
+                          {'• ' + (item.address ?? 'No address')}
+                        </Text>
+                      </Pressable>
+                    ) : (
+                      <Pressable key={item.id} onPress={() => onSelectTimeOff?.(item)}>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, styles.timeOffListText]}>
+                          {'• ' + (item.title ?? 'Time off')}
+                        </Text>
+                      </Pressable>
+                    )
+                  )}
+                  {overflowCount > 0 && <Text style={styles.moreText}>+{overflowCount} more</Text>}
+                </Pressable>
+              );
+            }
 
             return (
               <Pressable
@@ -100,6 +173,16 @@ export function MonthView({ jobs, anchorDay, timeOffEvents = [], onSelectDay }: 
       ))}
     </View>
   );
+
+  if (listMode) {
+    return (
+      <View style={styles.verticalRoot}>
+        <ScrollView style={styles.verticalRoot}>{grid}</ScrollView>
+      </View>
+    );
+  }
+
+  return grid;
 }
 
 const styles = StyleSheet.create({
@@ -160,5 +243,29 @@ const styles = StyleSheet.create({
     right: 0,
     height: 3,
     backgroundColor: colors.danger,
+  },
+  verticalRoot: {
+    flex: 1,
+  },
+  cellList: {
+    minHeight: 110,
+  },
+  listItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  listItemDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+    marginRight: 4,
+  },
+  listItemText: {
+    fontSize: 10,
+    color: colors.text,
+  },
+  timeOffListText: {
+    color: '#D32F2F',
   },
 });

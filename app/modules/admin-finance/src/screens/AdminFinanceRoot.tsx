@@ -815,6 +815,11 @@ export function AdminFinanceRoot() {
             job={selectedReportsJob}
             commissions={loadState.commissions}
             organizationId={orgId}
+            techName={
+              loadState.kind === 'loaded'
+                ? new Map(loadState.employees.map((t) => [t.id, t.fullName])).get(selectedReportsJob.assignedTechId ?? '')
+                : undefined
+            }
             onBack={handleBackFromReportsJobDetail}
           />
         ) : (
@@ -886,7 +891,15 @@ export function AdminFinanceRoot() {
         />
       ) : subView === 'employee-job-detail' ? (
         selectedEmployeeJob ? (
-          <EmployeeJobDetailScreen job={selectedEmployeeJob} onBack={handleBackToEmployeeDetail} />
+          <EmployeeJobDetailScreen
+            job={selectedEmployeeJob}
+            techName={
+              loadState.kind === 'loaded'
+                ? new Map(loadState.employees.map((t) => [t.id, t.fullName])).get(selectedEmployeeJob.assignedTechId ?? '')
+                : undefined
+            }
+            onBack={handleBackToEmployeeDetail}
+          />
         ) : (
           <View style={styles.screen}>
             <EmptyState title="Job" message="No job selected." />
@@ -936,10 +949,11 @@ export function AdminFinanceRoot() {
                       onToday={handleCalendarToday}
                     />
                     <Select
+                      label="Technicians"
                       value={selectedCalendarTechId}
-                      onChange={setSelectedCalendarTechId}
+                      onChange={(v) => setSelectedCalendarTechId(v === '' ? null : v)}
                       placeholder="All Techs"
-                      options={techs.map((t) => ({ label: t.fullName, value: t.id }))}
+                      options={[{ label: 'All Techs', value: '' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
                       style={styles.calendarTechSelect}
                     />
                     <Button
