@@ -21,7 +21,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_conflict boolean;
   v_full_name text;
@@ -67,14 +67,14 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 create or replace function public.deny_job_assignment_on_time_off()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_conflict boolean;
 begin
@@ -96,7 +96,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists deny_job_assignment_on_time_off on public.job_assignments;
 create trigger deny_job_assignment_on_time_off

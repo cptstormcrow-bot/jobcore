@@ -32,7 +32,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_conflict boolean;
   v_full_name text;
@@ -74,7 +74,7 @@ begin
 
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists time_off_requests_decide on public.time_off_requests;
 create trigger time_off_requests_decide
@@ -102,7 +102,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_row public.time_off_requests%rowtype;
 begin
@@ -136,7 +136,7 @@ begin
     v_row.tech_id
   );
 end;
-$;
+$$;
 
 grant execute on function public.cancel_time_off_request(uuid) to authenticated;
 

@@ -26,12 +26,12 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   new.updated_at := now();
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists price_sheet_standard_duration_set_updated_at on public.price_sheet_standard_duration;
 create trigger price_sheet_standard_duration_set_updated_at

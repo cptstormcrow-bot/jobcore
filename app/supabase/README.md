@@ -42,13 +42,16 @@ separate follow-on work.
 | `0018_beta_test_jobs.sql` | Adds `jobs.is_beta boolean NOT NULL DEFAULT false` — backs the "Spawn Test Jobs" feature |
 | `0019_time_off_auto_decide.sql` | Time-off requests auto-decided at insert (no admin approve/deny step); adds `decide_time_off_request()` trigger function and `cancel_time_off_request(uuid)` RPC |
 | `0020_job_detail_extensions_read_access.sql` | Read-access RLS for job-detail extensions |
+| `0021_payout_lines_freeze.sql` | Payout lines freeze |
 | `0022_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy + area pricing schema |
 | `0022_close_out_failures.sql` | Close-out failure tracking |
 | `0023_close_out_override_rpcs.sql` | Admin override RPCs for close-out |
 | `0023_field_ops_segway_and_estimating.sql` | Field-ops segway + estimating schema |
 | `0024_time_tracking_and_variance.sql` | Time tracking + variance schema |
+| `0025_reimbursement_review_rpcs.sql` | Reimbursement review RPCs |
 | `0026_close_out_write_rpc.sql` | Close-out write RPC |
 | `0027_beta_test_source.sql` | Widens `jobs_source_check` to allow `'beta-test'` — unblocks the "Spawn Test Jobs" feature's synthetic-row insert. |
+| `0033_job_planning.sql` | Job planning schema |
 | `0034_price_sheet_archive.sql` | Adds `public.archive_price_sheet` function for archiving a price sheet — applied 2026-09-04 (linked DB, `db query --file`) |
 | `0038_job_investigations_unique_job.sql` | applied 2026-09-05 (unique constraint job_investigations_job_id_key, verified via pg_constraint) |
 | `0040_jobs_job_number.sql` | Sequential job number on `jobs`, numbered GLOBALLY across organizations (not per-org), by design (plan decision S1, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
@@ -56,6 +59,10 @@ separate follow-on work.
 | `0042_job_planning_evisit_columns.sql` | Plan region's own editable copy of the E-visit fields (ingress/logistics/parking/state) on `job_planning_details`, seeded from `job_investigations` client-side where null, then diverges (plan decision 9, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
 | `0044_jobs_ingress_instructions.sql` | Adds nullable `jobs.ingress_instructions` text column (gate codes, meetup notes) for the mobile Job Details form. |
 | `0045_service_areas_zip_backfill.sql` | applied 2026-09-05 — backfills `service_areas.zip_codes` for 31 existing San Diego service areas (91 zips total, verified via SELECT count); enables auto zip→service-area match on the Job Details form. |
+| `0048_job_notes_gotcha_kind.sql` | Adds 'gotcha' to job_notes_kind_check |
+| `0049_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy and area pricing |
+| `0050_field_ops_segway_and_estimating.sql` | Field ops segway and estimating |
+| `0051_restore_job_notes_gotcha_kind.sql` | Re-adds 'gotcha' alongside other values to job_notes_kind_check |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |

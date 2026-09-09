@@ -41,7 +41,7 @@ returns text
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_org_id uuid;
   v_token  text;
@@ -66,4 +66,4 @@ begin
 
   return v_token;
 end;
-$;
+$$;

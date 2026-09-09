@@ -21,7 +21,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_row public.time_off_requests%rowtype;
 begin
@@ -62,6 +62,6 @@ begin
     v_row.tech_id
   );
 end;
-$;
+$$;
 
 grant execute on function public.update_time_off_request(uuid, date, date, text) to authenticated;
