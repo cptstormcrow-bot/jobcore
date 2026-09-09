@@ -26,8 +26,11 @@ import type {
   AuditLogRepository,
   JobPhotoRepository,
   JobNoteRepository,
+  JobContactLogRepository,
+  CloseOutFailureRepository,
   PaymentsRepository,
   CalendarEventRepository,
+  TimeEntryRepository,
   TechServiceAreaRepository,
   TechSkillRepository,
   ServiceAreaRepository,
@@ -98,6 +101,9 @@ export interface ModulePorts {
   payoutBatches: PayoutBatchRepo;
   closeOutPhotos: JobPhotoRepository;
   closeOutNotes: JobNoteRepository;
+  closeOutContactLog: JobContactLogRepository;
+  /** Close-out-failure tracking repo (Slice 7). */
+  closeOutFailures: CloseOutFailureRepository;
   payments: PaymentsRepository;
   calendarEvents: CalendarEventRepository;
   timeOffAdmin: TimeOffAdminRepo;
@@ -106,6 +112,7 @@ export interface ModulePorts {
   estimates: EstimateRepository;
   investigations: JobInvestigationRepository;
   jobPlanTasks: JobPlanTasksRepository;
+  timeEntries: TimeEntryRepository;
   /**
    * Durable on-device key/value boolean preference storage — persists across
    * in-app navigation, app restarts, and logout/login. Backed by SecureStore

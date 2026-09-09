@@ -40,6 +40,8 @@ import type {
   CloseOutPhoto,
   JobPhotoRepository,
   JobNoteRepository,
+  JobContactLogRepository,
+  JobContactLogEntry,
   PaymentRow,
   PaymentsRepository,
   Payment,
@@ -71,8 +73,15 @@ import type {
   JobPlanTasksRepository,
   JobPlanTaskRow,
   ServiceTaskCatalogEntry,
+  TimeEntryRepository,
+  TimeEntryRow,
+  TimeEntry,
+  CloseOutFailureRepository,
+  CloseOutFailureStage,
+  CloseOutFailureRow,
+  CloseOutFailureRecord,
 } from '../../../../modules/admin-finance/src/data/ports';
-import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch } from '../../../../modules/admin-finance/src/data/ports';
+import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch, toCloseOutFailure } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import type { PriceSheet } from '../../../../modules/admin-finance/src/money/types';
@@ -109,6 +118,7 @@ import type {
   TimeOffRequestAdminRow,
 } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { toTimeOffRequestAdmin } from '../../../../modules/admin-finance/src/data/time-off-repo';
+import { toTimeEntry } from '../../../../modules/admin-finance/src/data/ports';
 import { listTechServiceAreas } from '../../../../modules/admin-finance/src/data/tech-service-area-repo';
 import { listTechSkills } from '../../../../modules/admin-finance/src/data/tech-skill-repo';
 import { listServiceAreas } from '../../../../modules/admin-finance/src/data/service-area-repo';
@@ -1381,6 +1391,229 @@ export function createCloseOutNotesRepository(): JobNoteRepository {
   };
 }
 
+export function createCloseOutContactLogRepository(): JobContactLogRepository {
+  return {
+    async listForJob(jobId: string): Promise<JobContactLogEntry[]> {
+      const { data, error } = await supabase
+        .from('job_contact_log')
+        .select('id, organization_id, job_id, contact_type, note, contacted_by, created_at')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        throw new Error(`listForJob failed: ${error.message}`);
+      }
+      return (data as Array<{
+        id: number;
+        organization_id: string;
+        job_id: string;
+        contact_type: 'phone' | 'text' | 'email' | 'other';
+        note: string | null;
+        contacted_by: string | null;
+        created_at: string;
+      }>).map((row) => ({
+        id: row.id,
+        organizationId: row.organization_id,
+        jobId: row.job_id,
+        contactType: row.contact_type,
+        note: row.note,
+        contactedBy: row.contacted_by,
+        createdAt: row.created_at,
+      }));
+    },
+
+    async create(
+      jobId: string,
+      organizationId: string,
+      contactType: 'phone' | 'text' | 'email' | 'other',
+      note: string | null,
+    ): Promise<JobContactLogEntry> {
+      const { userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job_contact_log.create', occurredAt, { jobId, organizationId, contactType, note });
+
+      const { data, error } = await supabase
+        .from('job_contact_log')
+        .insert({
+          organization_id: organizationId,
+          job_id: jobId,
+          contact_type: contactType,
+          note,
+          contacted_by: userId,
+        })
+        .select('id, organization_id, job_id, contact_type, note, contacted_by, created_at')
+        .single();
+      if (error) {
+        logSyncFailure('admin-finance-repos.createCloseOutContactLog', error.message, { jobId, contactType, note });
+        throw new Error(`create close-out contact log entry failed: ${error.message}`);
+      }
+      const row = data as {
+        id: number;
+        organization_id: string;
+        job_id: string;
+        contact_type: 'phone' | 'text' | 'email' | 'other';
+        note: string | null;
+        contacted_by: string | null;
+        created_at: string;
+      };
+      return {
+        id: row.id,
+        organizationId: row.organization_id,
+        jobId: row.job_id,
+        contactType: row.contact_type,
+        note: row.note,
+        contactedBy: row.contacted_by,
+        createdAt: row.created_at,
+      };
+    },
+  };
+}
+
+export function createCloseOutFailuresRepository(): CloseOutFailureRepository {
+  const OPEN_STATUSES = ['open', 'retrying'] as const;
+
+  async function fetchOpenFailureRow(jobId: string) {
+    const { data, error } = await supabase
+      .from('close_out_failures')
+      .select(
+        'id, organization_id, job_id, stage, reason, status, attempts, last_attempted_at, resolved_by, resolved_at, resolution_note, created_at, updated_at',
+      )
+      .eq('job_id', jobId)
+      .in('status', OPEN_STATUSES as unknown as string[])
+      .maybeSingle();
+    if (error) {
+      logSyncFailure('admin-finance-repos.closeOutFailures.fetchOpenFailureRow', error.message, { jobId });
+      throw new Error(`fetch open close-out failure failed: ${error.message}`);
+    }
+    return data as CloseOutFailureRow | null;
+  }
+
+  return {
+    async recordFailure(
+      organizationId: string,
+      jobId: string,
+      stage: CloseOutFailureStage,
+      reason: string,
+    ): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('close_out_failures.recordFailure', occurredAt, { organizationId, jobId, stage, reason });
+
+      const existing = await fetchOpenFailureRow(jobId);
+
+      if (existing) {
+        const { error } = await supabase
+          .from('close_out_failures')
+          .update({ stage, reason, updated_at: occurredAt })
+          .eq('id', existing.id);
+        if (error) {
+          logSyncFailure('admin-finance-repos.closeOutFailures.recordFailure', error.message, { jobId, stage, reason });
+          throw new Error(`update close-out failure failed: ${error.message}`);
+        }
+        return;
+      }
+
+      const { error } = await supabase.from('close_out_failures').insert({
+        organization_id: organizationId,
+        job_id: jobId,
+        stage,
+        reason,
+        status: 'open',
+      });
+      if (error) {
+        logSyncFailure('admin-finance-repos.closeOutFailures.recordFailure', error.message, { jobId, stage, reason });
+        throw new Error(`record close-out failure failed: ${error.message}`);
+      }
+    },
+
+    async recordAttempt(jobId: string): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('close_out_failures.recordAttempt', occurredAt, { jobId });
+
+      const existing = await fetchOpenFailureRow(jobId);
+      if (!existing) {
+        throw new Error(`recordAttempt: no open close-out failure found for job ${jobId}`);
+      }
+
+      const { error } = await supabase
+        .from('close_out_failures')
+        .update({
+          attempts: existing.attempts + 1,
+          last_attempted_at: occurredAt,
+          status: 'retrying',
+          updated_at: occurredAt,
+        })
+        .eq('id', existing.id);
+      if (error) {
+        logSyncFailure('admin-finance-repos.closeOutFailures.recordAttempt', error.message, { jobId });
+        throw new Error(`record close-out failure attempt failed: ${error.message}`);
+      }
+    },
+
+    // 'resolved_manual' routes through resolve_close_out_failure_manual (0023) —
+    // admin-gated, security definer, uses auth.uid() as resolver internally, so
+    // the passed resolvedBy is not sent (kept in the signature to match the
+    // port). 'resolved_retry' has no dedicated RPC outside the atomic
+    // close_out_job_write path (0026), so it is written directly here,
+    // matching the fail-closed direct-write pattern used by neighboring repos.
+    async resolve(
+      jobId: string,
+      resolution: 'resolved_retry' | 'resolved_manual',
+      resolvedBy: string,
+      note?: string,
+    ): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('close_out_failures.resolve', occurredAt, { jobId, resolution, resolvedBy, note });
+
+      const existing = await fetchOpenFailureRow(jobId);
+      if (!existing) {
+        throw new Error(`resolve: no open close-out failure found for job ${jobId}`);
+      }
+
+      if (resolution === 'resolved_manual') {
+        const { error } = await supabase.rpc('resolve_close_out_failure_manual', {
+          p_failure_id: existing.id,
+          p_note: note ?? null,
+        });
+        if (error) {
+          logSyncFailure('admin-finance-repos.closeOutFailures.resolve', error.message, { jobId, resolution });
+          throw new Error(`resolve close-out failure (manual) failed: ${error.message}`);
+        }
+        return;
+      }
+
+      const { error } = await supabase
+        .from('close_out_failures')
+        .update({
+          status: 'resolved_retry',
+          resolved_by: resolvedBy,
+          resolved_at: occurredAt,
+          resolution_note: note ?? null,
+          updated_at: occurredAt,
+        })
+        .eq('id', existing.id);
+      if (error) {
+        logSyncFailure('admin-finance-repos.closeOutFailures.resolve', error.message, { jobId, resolution });
+        throw new Error(`resolve close-out failure (retry) failed: ${error.message}`);
+      }
+    },
+
+    async listNeedingAttention(organizationId: string): Promise<CloseOutFailureRecord[]> {
+      const { data, error } = await supabase
+        .from('close_out_failures')
+        .select(
+          'id, organization_id, job_id, stage, reason, status, attempts, last_attempted_at, resolved_by, resolved_at, resolution_note, created_at, updated_at',
+        )
+        .eq('organization_id', organizationId)
+        .in('status', OPEN_STATUSES as unknown as string[])
+        .order('created_at', { ascending: false });
+      if (error) {
+        logSyncFailure('admin-finance-repos.closeOutFailures.listNeedingAttention', error.message, { organizationId });
+        throw new Error(`list close-out failures failed: ${error.message}`);
+      }
+      return (data as CloseOutFailureRow[]).map(toCloseOutFailure);
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * AuditLogRepository
  * ------------------------------------------------------------------ */
@@ -2385,6 +2618,22 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
   };
 }
 
+export function createTimeEntryRepository(): TimeEntryRepository {
+  return {
+    async listForEmployee(profileId: string): Promise<TimeEntry[]> {
+      const { data, error } = await supabase
+        .from('job_time_entries')
+        .select('*')
+        .eq('tech_id', profileId)
+        .order('clock_in_at', { ascending: false });
+      if (error) {
+        throw new Error(`listForEmployee failed: ${error.message}`);
+      }
+      return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
@@ -2411,8 +2660,10 @@ export function buildAdminFinancePorts(): ModulePorts {
     serviceTasks: createServiceTasksRepository(),
     reimbursements: createReimbursementsRepository(),
     payoutBatches: createPayoutBatchesRepository(),
+    closeOutFailures: createCloseOutFailuresRepository(),
     closeOutPhotos: createCloseOutPhotosRepository(),
     closeOutNotes: createCloseOutNotesRepository(),
+    closeOutContactLog: createCloseOutContactLogRepository(),
     payments: createPaymentsRepository(),
     calendarEvents: createCalendarEventRepository(),
     timeOffAdmin: createTimeOffAdminRepository(),
@@ -2425,6 +2676,7 @@ export function buildAdminFinancePorts(): ModulePorts {
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
     jobPlanTasks: createJobPlanTasksRepository(),
+    timeEntries: createTimeEntryRepository(),
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,
