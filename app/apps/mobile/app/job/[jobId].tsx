@@ -405,6 +405,8 @@ export default function JobDrilldownScreen() {
                 description: loaded.description ?? '',
                 serviceAreaId: loaded.service_area_id ?? null,
                 houseAgeYears: '',
+                evisitParking: '',
+                evisitPanel: '',
                 customerName: fetchedCustomer?.name ?? '',
                 customerPhone: fetchedCustomer?.phone ?? '',
                 customerEmail: fetchedCustomer?.email ?? '',

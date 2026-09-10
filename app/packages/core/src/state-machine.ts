@@ -137,6 +137,7 @@ export const TRANSITIONS: readonly Transition[] = [
     precondition: requirePaymentSettled,
   },
   { from: 'paid', to: 'closed', roles: OFFICE },
+  { from: 'closed', to: 'archived', roles: OFFICE },
 
   // ↘ declined — a rejected assignment goes back to the office for reassignment.
   { from: 'declined', to: 'scheduled', roles: OFFICE },

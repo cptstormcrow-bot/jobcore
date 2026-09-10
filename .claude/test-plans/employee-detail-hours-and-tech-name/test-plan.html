@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Test Plan — Technician Name &amp; Hours Worked</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #f4f5f7; color: #1c1e21; margin: 0; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: #555; margin-bottom: 20px; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  th, td { border: 1px solid #ddd; padding: 10px; vertical-align: top; text-align: left; font-size: 14px; }
+  th { background: #2c3e50; color: #fff; }
+  tr:nth-child(even) { background: #fafafa; }
+  .item-desc { max-width: 380px; }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-btn { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: #eee; font-size: 12px; }
+  .toggle-btn.active-pass { background: #2ecc71; color: #fff; border-color: #27ae60; }
+  .toggle-btn.active-fail { background: #e74c3c; color: #fff; border-color: #c0392b; }
+  .toggle-btn.active-nottested { background: #95a5a6; color: #fff; border-color: #7f8c8d; }
+  textarea { width: 100%; min-height: 50px; box-sizing: border-box; font-family: inherit; font-size: 13px; padding: 4px; }
+  #copyBtn { margin-top: 16px; padding: 10px 18px; background: #2980b9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  #copyBtn:hover { background: #21618c; }
+  #copyStatus { margin-left: 12px; font-size: 13px; color: #27ae60; }
+  .footer { margin-top: 30px; font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Test Plan — Technician Name &amp; Hours Worked</h1>
+<div class="sub">JobCore &mdash; Employee Detail: Technician Name &amp; Hours Worked. Results persist locally in this browser. Use "Copy results" to export as plain text.</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px;">#</th>
+      <th class="item-desc">Test Item</th>
+      <th style="width:220px;">Status</th>
+      <th style="width:260px;">Comment</th>
+    </tr>
+  </thead>
+  <tbody id="itemsBody"></tbody>
+</table>
+
+<button id="copyBtn">Copy results</button>
+<span id="copyStatus"></span>
+
+<div class="footer">Storage key: <code>testplan-employee-detail-hours-tech-name</code> &mdash; state is per-browser (localStorage), no server or file export.</div>
+
+<script>
+  var STORAGE_KEY = "testplan-employee-detail-hours-tech-name";
+
+  var items = [
+    "EmployeeJobDetailScreen shows assigned technician's real name (not raw id) when techName is supplied by caller.",
+    "EmployeeJobDetailScreen falls back to raw assignedTechId (or \"Unassigned\") when techName is not supplied.",
+    "ReportsJobDetailScreen shows assigned technician's real name (not raw id) when techName is supplied by caller.",
+    "ReportsJobDetailScreen falls back to raw assignedTechId (or \"Unassigned\") when techName is not supplied.",
+    "AdminFinanceRoot correctly resolves selectedReportsJob.assignedTechId to a display name via the techs Map and passes it as techName to ReportsJobDetailScreen.",
+    "EmployeeDetailScreen \"Hours Worked\" row shows a formatted number (one decimal place) when hoursWorked is provided.",
+    "EmployeeDetailScreen \"Hours Worked\" row shows \"Not available\" when hoursWorked is null/undefined.",
+    "AdminFinanceRoot fetches employee hours via getModulePorts().timeEntries.listForEmployee(profileId) on selecting an employee, and passes the computed value as hoursWorked to EmployeeDetailScreen.",
+    "Hours computation correctly skips time entries with a null clockOutAt.",
+    "Hours computation guards against negative duration (e.g. clockOutAt before clockInAt)."
+  ];
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  var state = loadState();
+
+  function ensureItemState(idx) {
+    if (!state[idx]) {
+      state[idx] = { status: "nottested", comment: "" };
+    }
+    return state[idx];
+  }
+
+  var tbody = document.getElementById("itemsBody");
+
+  items.forEach(function (text, idx) {
+    var st = ensureItemState(idx);
+
+    var tr = document.createElement("tr");
+
+    var tdNum = document.createElement("td");
+    tdNum.textContent = String(idx + 1);
+    tr.appendChild(tdNum);
+
+    var tdDesc = document.createElement("td");
+    tdDesc.className = "item-desc";
+    tdDesc.textContent = text;
+    tr.appendChild(tdDesc);
+
+    var tdToggle = document.createElement("td");
+    var group = document.createElement("div");
+    group.className = "toggle-group";
+
+    var statuses = [
+      { key: "pass", label: "Pass" },
+      { key: "fail", label: "Fail" },
+      { key: "nottested", label: "Not Tested" }
+    ];
+
+    var buttons = {};
+
+    statuses.forEach(function (s) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "toggle-btn";
+      btn.textContent = s.label;
+      btn.addEventListener("click", function () {
+        st.status = s.key;
+        saveState(state);
+        updateButtons();
+      });
+      buttons[s.key] = btn;
+      group.appendChild(btn);
+    });
+
+    function updateButtons() {
+      Object.keys(buttons).forEach(function (k) {
+        buttons[k].className = "toggle-btn" + (st.status === k ? (" active-" + k) : "");
+      });
+    }
+    updateButtons();
+
+    tdToggle.appendChild(group);
+    tr.appendChild(tdToggle);
+
+    var tdComment = document.createElement("td");
+    var textarea = document.createElement("textarea");
+    textarea.value = st.comment || "";
+    textarea.addEventListener("input", function () {
+      st.comment = textarea.value;
+      saveState(state);
+    });
+    tdComment.appendChild(textarea);
+    tr.appendChild(tdComment);
+
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var lines = [];
+    lines.push("Test Plan — Technician Name & Hours Worked");
+    lines.push("");
+    items.forEach(function (text, idx) {
+      var st = ensureItemState(idx);
+      var statusLabel = st.status === "pass" ? "PASS" : (st.status === "fail" ? "FAIL" : "NOT TESTED");
+      lines.push((idx + 1) + ". [" + statusLabel + "] " + text);
+      if (st.comment) {
+        lines.push("   Comment: " + st.comment);
+      }
+    });
+    var output = lines.join("\n");
+
+    function fallbackCopy(text) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    var statusEl = document.getElementById("copyStatus");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(output).then(function () {
+        statusEl.textContent = "Copied!";
+        setTimeout(function () { statusEl.textContent = ""; }, 2000);
+      }).catch(function () {
+        fallbackCopy(output);
+        statusEl.textContent = "Copied!";
+        setTimeout(function () { statusEl.textContent = ""; }, 2000);
+      });
+    } else {
+      fallbackCopy(output);
+      statusEl.textContent = "Copied!";
+      setTimeout(function () { statusEl.textContent = ""; }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>

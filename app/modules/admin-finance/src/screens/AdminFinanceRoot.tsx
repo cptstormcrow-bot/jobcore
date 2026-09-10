@@ -59,7 +59,7 @@ import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { qualifyLead } from '../flows/qualify-lead';
-import { transitionJob } from '../domain/transition';
+import { closeOutJob } from '../flows/close-out-job';
 import type { TechColumnTech } from '../components/TechColumn';
 
 type SubView =
@@ -150,6 +150,7 @@ export function AdminFinanceRoot() {
   const [closeOutPhotos, setCloseOutPhotos] = useState<CloseOutPhoto[]>([]);
   const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
+  const [employeeHoursWorked, setEmployeeHoursWorked] = useState<number | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
@@ -158,6 +159,8 @@ export function AdminFinanceRoot() {
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
   const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('month');
+  const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
+  const [techNames, setTechNames] = useState<Record<string, string>>({});
 
   const session = useModuleSession();
   const orgId = session?.org.id ?? null;
@@ -232,6 +235,43 @@ export function AdminFinanceRoot() {
       cancelled = true;
     };
   }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills, ports.timeOffAdmin]);
+
+  useEffect(() => {
+    const jobs = loadState.kind === 'loaded' ? loadState.jobs : [];
+    const distinctCustomerIds = Array.from(
+      new Set(jobs.map((job) => job.customerId).filter((id): id is string => id !== null))
+    );
+    if (distinctCustomerIds.length === 0) {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const modulePorts = getModulePorts();
+      const entries = await Promise.all(
+        distinctCustomerIds.map(async (id) => {
+          const customer = await modulePorts.customers.getById(id);
+          return [id, customer?.name ?? ''] as const;
+        })
+      );
+      if (!cancelled) {
+        setCustomerNames((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadState]);
+
+  useEffect(() => {
+    const employees = loadState.kind === 'loaded' ? loadState.employees : [];
+    if (employees.length === 0) {
+      return;
+    }
+    setTechNames((prev) => ({
+      ...prev,
+      ...Object.fromEntries(employees.map((employee) => [employee.id, employee.fullName])),
+    }));
+  }, [loadState]);
 
   useEffect(() => {
     let cancelled = false;
@@ -326,6 +366,30 @@ export function AdminFinanceRoot() {
     };
   }, [selectedCloseOutJob, ports.closeOutPhotos, ports.closeOutNotes]);
 
+  useEffect(() => {
+    if (subView !== 'employee-detail' || !selectedEmployee) {
+      return undefined;
+    }
+    let cancelled = false;
+    getModulePorts()
+      .timeEntries.listForEmployee(selectedEmployee.id)
+      .then((entries) => {
+        if (cancelled) return;
+        const totalHours = entries.reduce((sum, entry) => {
+          if (!entry.clockOutAt) return sum;
+          const durationMs = new Date(entry.clockOutAt).getTime() - new Date(entry.clockInAt).getTime();
+          return sum + (durationMs > 0 ? durationMs / 3600000 : 0);
+        }, 0);
+        setEmployeeHoursWorked(totalHours);
+      })
+      .catch(() => {
+        if (!cancelled) setEmployeeHoursWorked(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subView, selectedEmployee]);
+
   function handleSelectLead(lead: Lead) {
     setSelectedLead(lead);
     setSubView('leadEdit');
@@ -387,9 +451,23 @@ export function AdminFinanceRoot() {
     if (!session) {
       return;
     }
-    void transitionJob(job, 'paid', { role: session.role, now: () => new Date().toISOString() }).then(() => {
-      setSelectedCloseOutJob(null);
-      setSubView('closeOutQueue');
+    void closeOutJob(job, {
+      ctx: { role: session.role, now: () => new Date().toISOString() },
+      jobs: jobRepository,
+      calendarEvents: ports.calendarEvents,
+      priceSheetRepository: ports.priceSheets,
+      // TODO(forward contract): no per-actor CompensationPolicy repository/field
+      // exists yet on ModuleSession or ModulePorts — placeholder zero-policy
+      // used until one is wired up.
+      compensationPolicy: { id: '', organizationId: session.org.id, commissionBasisPercent: 0, hourlyRate: 0 },
+      rates: [],
+      commissionRepository: commissionRepository,
+      closedByUserId: session.userId,
+    }).then((result) => {
+      if (result.ok) {
+        setSelectedCloseOutJob(null);
+        setSubView('closeOutQueue');
+      }
     });
   }
 
@@ -746,6 +824,8 @@ export function AdminFinanceRoot() {
             jobs={loadState.jobs}
             ctx={{ role: session.role, now: () => new Date().toISOString() }}
             onSelectJob={handleSelectCloseOutJob}
+            customerNames={customerNames}
+            techNames={techNames}
           />
         )
       ) : subView === 'closeOutReview' ? (
@@ -758,6 +838,16 @@ export function AdminFinanceRoot() {
             onRemovePhoto={handleRemovePhoto}
             onChangeNotes={handleChangeNotes}
             onCloseOut={handleCloseOut}
+            // TODO(forward-contract): wire real timeEntries once available
+            hoursLogged={undefined}
+            // TODO(forward-contract): resolve tech payouts from commissions/payments once wired
+            techPayouts={undefined}
+            // TODO(forward-contract): resolve contractor payouts from price sheet once wired
+            contractorPayouts={undefined}
+            // TODO(forward-contract): no locally-resolved customer object (with phone/email) is
+            // available for the selected close-out job — only customerNames (id -> name) exists;
+            // wire once a customer lookup is available here without adding a new repository call.
+            customerContacts={undefined}
           />
         ) : (
           <View style={styles.screen}>
@@ -855,6 +945,7 @@ export function AdminFinanceRoot() {
                 ? loadState.techSkills.filter((s) => s.techId === selectedEmployee.id).map((s) => s.skill)
                 : []
             }
+            hoursWorked={employeeHoursWorked ?? undefined}
             onEdit={handleEditEmployee}
             onBack={handleBackToRoster}
             onSelectJob={handleSelectEmployeeJob}

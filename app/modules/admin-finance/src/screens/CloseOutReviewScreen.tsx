@@ -58,6 +58,16 @@ export interface CloseOutReviewScreenProps {
   onChangeNotes?: (notes: string) => void;
   /** Fired when the primary close action is pressed; disabled while blockers remain. */
   onCloseOut?: (job: Job) => void;
+  /** Fired when the customer-contact "Contact" button is pressed. */
+  onContact?: (jobId: string) => void;
+  /** Total hours logged to the job. */
+  hoursLogged?: number;
+  /** Tech payouts for the job. */
+  techPayouts?: { techName: string; amount: number; basis: 'hourly' | 'commission' }[];
+  /** Contractor payouts for the job. */
+  contractorPayouts?: { contractorName: string; amount: number }[];
+  /** Itemized customer contacts (e.g. phone/email/alt-phone). */
+  customerContacts?: { label: string; value: string }[];
 }
 
 export function CloseOutReviewScreen({
@@ -69,6 +79,11 @@ export function CloseOutReviewScreen({
   onRemovePhoto,
   onChangeNotes,
   onCloseOut,
+  onContact,
+  hoursLogged,
+  techPayouts,
+  contractorPayouts,
+  customerContacts,
 }: CloseOutReviewScreenProps) {
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
 
@@ -87,6 +102,53 @@ export function CloseOutReviewScreen({
         <Card style={styles.headerCard}>
           <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
           <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Hours logged</Text>
+          {hoursLogged ? (
+            <Text style={styles.body}>{hoursLogged.toFixed(1)} hrs</Text>
+          ) : (
+            <Text style={styles.empty}>No hours logged.</Text>
+          )}
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Payouts</Text>
+          <Text style={styles.subTitle}>Tech payouts</Text>
+          {!techPayouts || techPayouts.length === 0 ? (
+            <Text style={styles.empty}>None</Text>
+          ) : (
+            techPayouts.map((payout, index) => (
+              <Text key={index} style={styles.body}>
+                {payout.techName} ({payout.basis}): ${payout.amount.toFixed(2)}
+              </Text>
+            ))
+          )}
+          <Text style={styles.subTitle}>Contractor payouts</Text>
+          {!contractorPayouts || contractorPayouts.length === 0 ? (
+            <Text style={styles.empty}>None</Text>
+          ) : (
+            contractorPayouts.map((payout, index) => (
+              <Text key={index} style={styles.body}>
+                {payout.contractorName}: ${payout.amount.toFixed(2)}
+              </Text>
+            ))
+          )}
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Customer contacts</Text>
+          {!customerContacts || customerContacts.length === 0 ? (
+            <Text style={styles.empty}>No contacts on file.</Text>
+          ) : (
+            customerContacts.map((contact, index) => (
+              <Text key={index} style={styles.body}>
+                {contact.label}: {contact.value}
+              </Text>
+            ))
+          )}
+          <Button label="Contact" onPress={() => onContact?.(job.id)} variant="secondary" size="sm" />
         </Card>
 
         <Card style={styles.section}>
@@ -193,6 +255,19 @@ const styles = StyleSheet.create({
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.sm,
+  },
+  body: {
+    color: colors.text,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.xs,
+  },
+  subTitle: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.xs,
   },
   photoGrid: {
     flexDirection: 'row',

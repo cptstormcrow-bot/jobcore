@@ -24,7 +24,8 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, colors, spacing, typography, WeekView } from '@jobcore/ui';
+import { Button, Card, ListItem, colors, spacing, typography } from '@jobcore/ui';
+import { DayList } from '@jobcore/field-tech';
 import type { Profile, Job } from '@jobcore/core';
 
 export interface EmployeeDetailScreenProps {
@@ -33,6 +34,7 @@ export interface EmployeeDetailScreenProps {
   jobs: Job[];
   /** This employee's assigned skills, already filtered by the caller — same pattern as `jobs`. */
   skills?: string[];
+  hoursWorked?: number;
   onEdit: () => void;
   onBack: () => void;
   onSelectJob: (job: Job) => void;
@@ -66,7 +68,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
-  const { employee, jobs, skills, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
+  const { employee, jobs, skills, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
 
   return (
     <View style={styles.screen}>
@@ -81,6 +83,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
+          <InfoRow label="Hours Worked" value={hoursWorked != null ? hoursWorked.toFixed(1) : 'Not available'} />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>
@@ -94,7 +97,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
 
         <Text style={styles.heading}>Schedule</Text>
         <Card style={styles.card}>
-          <WeekView jobs={jobs} anchorDay={new Date()} onSelectJob={onSelectJob} />
+          <DayList techId={employee.id} />
         </Card>
 
         <Text style={styles.heading}>Job History</Text>

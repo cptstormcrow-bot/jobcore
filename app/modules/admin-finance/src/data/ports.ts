@@ -440,6 +440,51 @@ export function toTechServiceArea(row: TechServiceAreaRow): TechServiceArea {
   };
 }
 
+export interface TimeEntryRow {
+  id: string;
+  organization_id: string;
+  job_id: string;
+  tech_id: string;
+  clock_in_at: string;
+  clock_out_at: string | null;
+  created_at: string;
+}
+
+export interface TimeEntry {
+  id: string;
+  organizationId: string;
+  jobId: string;
+  techId: string;
+  clockInAt: string;
+  clockOutAt: string | null;
+  createdAt: string;
+}
+
+export function toTimeEntry(row: TimeEntryRow): TimeEntry {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    jobId: row.job_id,
+    techId: row.tech_id,
+    clockInAt: row.clock_in_at,
+    clockOutAt: row.clock_out_at,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * Employee-scoped read access to job_time_entries for the admin roster's
+ * hours-worked display. Distinct from field-tech's TimeEntryRepository
+ * (clockIn/clockOut/listForJob, session-scoped to the acting tech) — this
+ * interface is read-only and scoped by employee/profile id, for an org
+ * admin viewing any tech's cumulative hours. RLS's job_time_entries_admin_all
+ * policy already grants org admins full read access to every row in their
+ * organization, so no new migration is required.
+ */
+export interface TimeEntryRepository {
+  listForEmployee(profileId: string): Promise<TimeEntry[]>;
+}
+
 /**
  * Read + coverage-write access to tech service-area assignments. Feeds
  * `domain/segway-candidates.ts`'s `candidatesFor` for the assignment
@@ -778,6 +823,53 @@ export interface JobPhotoRepository {
 export interface JobNoteRepository {
   getForJob(jobId: string): Promise<string>;
   upsert(jobId: string, notes: string): Promise<void>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Job contact log port — itemized customer-contact history (phone/text/
+ * email/other) per job, backed by the `job_contact_log` table
+ * (`app/supabase/0052_job_contact_log.sql`).
+ * ------------------------------------------------------------------ */
+
+/**
+ * Mirrors the Supabase `job_contact_log` table. Snake_case wire shape of
+ * `JobContactLogEntry`, same convention as `JobRow`.
+ */
+export interface JobContactLogRow {
+  id: number;
+  organization_id: string;
+  job_id: string;
+  contact_type: string;
+  note: string | null;
+  contacted_by: string | null;
+  created_at: string;
+}
+
+/** Domain (camelCase) shape of one `job_contact_log` row. */
+export interface JobContactLogEntry {
+  id: number;
+  organizationId: string;
+  jobId: string;
+  contactType: 'phone' | 'text' | 'email' | 'other';
+  note: string | null;
+  contactedBy: string | null;
+  createdAt: string;
+}
+
+/**
+ * Read + create access to a job's itemized contact log. `create`'s
+ * `contactedBy` is deliberately not a caller-supplied parameter — the
+ * concrete implementation resolves it from the acting profile, same
+ * invariant as `CalendarEventDraft.createdBy`.
+ */
+export interface JobContactLogRepository {
+  listForJob(jobId: string): Promise<JobContactLogEntry[]>;
+  create(
+    jobId: string,
+    organizationId: string,
+    contactType: 'phone' | 'text' | 'email' | 'other',
+    note: string | null,
+  ): Promise<JobContactLogEntry>;
 }
 
 /* ------------------------------------------------------------------ *

@@ -34,6 +34,7 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
 
   return (
     <ScrollView style={styles.verticalRoot}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={styles.root}>
         {days.map((day) => {
           const dayJobs = jobs
@@ -74,7 +75,7 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                   </Text>
                 </Pressable>
               ))}
-              {dayJobs.map((job) => (
+              {dayJobs.slice(0, 3).map((job) => (
                 <Pressable
                   key={job.id}
                   onPress={() => onSelectJob?.(job)}
@@ -84,10 +85,16 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                   <Text style={styles.cardAddress} numberOfLines={2} ellipsizeMode="tail">{job.address ?? 'No address'}</Text>
                 </Pressable>
               ))}
+              {dayJobs.length > 3 && (
+                <Text style={styles.moreLabel} numberOfLines={1}>
+                  +{dayJobs.length - 3} more
+                </Text>
+              )}
             </View>
           );
         })}
       </View>
+      </ScrollView>
     </ScrollView>
   );
 }
@@ -101,8 +108,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   column: {
-    flex: 1,
-    minWidth: 0,
+    width: 160,
     marginRight: spacing.sm,
     borderRightColor: colors.border,
     borderRightWidth: 1,
@@ -148,5 +154,11 @@ const styles = StyleSheet.create({
     fontSize: typography.size.label,
     lineHeight: typography.size.label * typography.lineHeight.body,
     color: colors.text,
+  },
+  moreLabel: {
+    fontSize: typography.size.small,
+    lineHeight: typography.size.small * typography.lineHeight.body,
+    color: colors.textMuted,
+    marginTop: spacing.sm,
   },
 });

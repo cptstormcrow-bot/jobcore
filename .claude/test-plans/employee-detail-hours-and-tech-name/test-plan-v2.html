@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Test Plan v2 — Technician Name &amp; Hours Worked (with navigation breadcrumbs)</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #f4f5f7; color: #1c1e21; margin: 0; padding: 24px; }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  h2.screen-header { font-size: 17px; margin: 28px 0 6px 0; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 4px; }
+  .sub { color: #555; margin-bottom: 20px; font-size: 13px; }
+  .breadcrumb-box { background: #eef4fb; border: 1px solid #bcd6ee; border-radius: 4px; padding: 10px 14px; margin-bottom: 12px; font-size: 13px; }
+  .breadcrumb-box .bc-label { font-weight: bold; color: #1c4e80; }
+  .breadcrumb-box code { background: #dbe9f7; padding: 1px 4px; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 8px; }
+  th, td { border: 1px solid #ddd; padding: 10px; vertical-align: top; text-align: left; font-size: 14px; }
+  th { background: #2c3e50; color: #fff; }
+  tr:nth-child(even) { background: #fafafa; }
+  .item-desc { max-width: 380px; }
+  .anchor-note { font-size: 12px; color: #555; margin-top: 4px; display: block; }
+  .toggle-group { display: flex; gap: 6px; }
+  .toggle-btn { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; background: #eee; font-size: 12px; }
+  .toggle-btn.active-pass { background: #2ecc71; color: #fff; border-color: #27ae60; }
+  .toggle-btn.active-fail { background: #e74c3c; color: #fff; border-color: #c0392b; }
+  .toggle-btn.active-nottested { background: #95a5a6; color: #fff; border-color: #7f8c8d; }
+  textarea { width: 100%; min-height: 50px; box-sizing: border-box; font-family: inherit; font-size: 13px; padding: 4px; }
+  #copyBtn { margin-top: 16px; padding: 10px 18px; background: #2980b9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  #copyBtn:hover { background: #21618c; }
+  #copyStatus { margin-left: 12px; font-size: 13px; color: #27ae60; }
+  .footer { margin-top: 30px; font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+
+<h1>Test Plan v2 — Technician Name &amp; Hours Worked</h1>
+<div class="sub">JobCore &mdash; supersedes <code>test-plan.html</code> in this folder (that version had no navigation breadcrumbs). Grouped by screen: each screen section states the exact tap path and on-screen anchors to confirm arrival, then lists its test items. Results persist locally in this browser. Use "Copy results" to export as plain text.</div>
+
+<h2 class="screen-header">Screen: Employee Job Detail (EmployeeJobDetailScreen.tsx)</h2>
+<div class="breadcrumb-box">
+  <span class="bc-label">Entry path:</span> Launch app &rarr; on the <code>Home</code> screen tap the tile labeled <code>&quot;Admin &amp; Finance&quot;</code> &rarr; in the tab bar at the top of the Admin &amp; Finance module tap <code>&quot;Employees&quot;</code> &rarr; on the <code>Employee Roster</code> screen tap any employee row (a tech with at least one assigned job, for item 1; a tech with no assigned jobs, for item 2 &mdash; if none exists, this item is Not Tested) &rarr; on the <code>Employee Detail</code> screen scroll to the <code>&quot;Job History&quot;</code> list and tap a job row.<br>
+  <span class="bc-label">On-screen anchors:</span> a screen titled <code>&quot;Job Details&quot;</code> (via the header/title area), with an <code>&quot;Assigned Technician&quot;</code> row and a <code>&quot;Back&quot;</code> button.
+</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px;">#</th>
+      <th class="item-desc">Test Item</th>
+      <th style="width:220px;">Status</th>
+      <th style="width:260px;">Comment</th>
+    </tr>
+  </thead>
+  <tbody id="itemsBody-0"></tbody>
+</table>
+
+<h2 class="screen-header">Screen: Reports Job Detail (ReportsJobDetailScreen.tsx)</h2>
+<div class="breadcrumb-box">
+  <span class="bc-label">Entry path:</span> Launch app &rarr; on the <code>Home</code> screen tap the tile labeled <code>&quot;Admin &amp; Finance&quot;</code> &rarr; in the tab bar at the top of the Admin &amp; Finance module tap <code>&quot;Reports&quot;</code> &rarr; on the <code>Reports</code> screen (banner text &quot;Reports are read-only summaries&quot;) tap any job row under one of the status/source groupings (a job with an assigned tech, for item 3; a job with no assigned tech, for item 4 &mdash; if none exists, this item is Not Tested).<br>
+  <span class="bc-label">On-screen anchors:</span> a screen titled <code>&quot;Job Details&quot;</code>, with an <code>&quot;Assigned Technician&quot;</code> row, a <code>&quot;Source&quot;</code> row, an <code>&quot;Activity&quot;</code> section below, and a <code>&quot;Back&quot;</code> button.
+</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px;">#</th>
+      <th class="item-desc">Test Item</th>
+      <th style="width:220px;">Status</th>
+      <th style="width:260px;">Comment</th>
+    </tr>
+  </thead>
+  <tbody id="itemsBody-1"></tbody>
+</table>
+
+<h2 class="screen-header">Screen: Employee Detail (EmployeeDetailScreen.tsx)</h2>
+<div class="breadcrumb-box">
+  <span class="bc-label">Entry path:</span> Launch app &rarr; on the <code>Home</code> screen tap the tile labeled <code>&quot;Admin &amp; Finance&quot;</code> &rarr; in the tab bar at the top of the Admin &amp; Finance module tap <code>&quot;Employees&quot;</code> &rarr; on the <code>Employee Roster</code> screen tap an employee row who has clocked-in/out time entries, for item 5; tap an employee row with no time-entry data, for item 6 (if none exists, this item is Not Tested).<br>
+  <span class="bc-label">On-screen anchors:</span> the breadcrumb at the top reads <code>&quot;Admin &amp; Finance &gt; Employee Detail &gt; [Employee Name]&quot;</code>; the screen shows a <code>&quot;Back&quot;</code> button, an identity-fields card, an <code>&quot;Hours Worked&quot;</code> row, and a <code>&quot;Job History&quot;</code> list.
+</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px;">#</th>
+      <th class="item-desc">Test Item</th>
+      <th style="width:220px;">Status</th>
+      <th style="width:260px;">Comment</th>
+    </tr>
+  </thead>
+  <tbody id="itemsBody-2"></tbody>
+</table>
+
+<button id="copyBtn">Copy results</button>
+<span id="copyStatus"></span>
+
+<div class="footer">Storage key: <code>testplan-employee-detail-hours-tech-name-v2</code> &mdash; state is per-browser (localStorage), no server or file export. Supersedes the no-breadcrumb <code>test-plan.html</code> in this same folder.</div>
+
+<script>
+  var STORAGE_KEY = "testplan-employee-detail-hours-tech-name-v2";
+
+  var groups = [
+    {
+      screen: "Employee Job Detail",
+      items: [
+        "Employee Job Detail screen: \"Assigned Technician\" row shows the technician's actual name (not a raw UUID/id) for a job with an assigned tech.",
+        "Employee Job Detail screen: \"Assigned Technician\" row shows \"Unassigned\" (not blank, not a raw id) when no tech is assigned to the job."
+      ]
+    },
+    {
+      screen: "Reports Job Detail",
+      items: [
+        "Reports Job Detail screen: \"Assigned Technician\" row shows the technician's actual name (not a raw UUID/id) for a job with an assigned tech.",
+        "Reports Job Detail screen: \"Assigned Technician\" row shows \"Unassigned\" when no tech is assigned to the job."
+      ]
+    },
+    {
+      screen: "Employee Detail",
+      items: [
+        "Employee Detail screen: \"Hours Worked\" row shows a formatted number with one decimal place (e.g. \"12.5\") when hours data is available for that employee.",
+        "Employee Detail screen: \"Hours Worked\" row shows \"Not available\" (not blank, not \"NaN\") when hours data is not available for that employee."
+      ]
+    }
+  ];
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  var state = loadState();
+
+  function keyFor(groupIdx, itemIdx) {
+    return groupIdx + "-" + itemIdx;
+  }
+
+  function ensureItemState(groupIdx, itemIdx) {
+    var k = keyFor(groupIdx, itemIdx);
+    if (!state[k]) {
+      state[k] = { status: "nottested", comment: "" };
+    }
+    return state[k];
+  }
+
+  groups.forEach(function (group, groupIdx) {
+    var tbody = document.getElementById("itemsBody-" + groupIdx);
+    group.items.forEach(function (text, itemIdx) {
+      var st = ensureItemState(groupIdx, itemIdx);
+
+      var tr = document.createElement("tr");
+
+      var tdNum = document.createElement("td");
+      tdNum.textContent = String(itemIdx + 1);
+      tr.appendChild(tdNum);
+
+      var tdDesc = document.createElement("td");
+      tdDesc.className = "item-desc";
+      tdDesc.textContent = text;
+      tr.appendChild(tdDesc);
+
+      var tdToggle = document.createElement("td");
+      var groupDiv = document.createElement("div");
+      groupDiv.className = "toggle-group";
+
+      var statuses = [
+        { key: "pass", label: "Pass" },
+        { key: "fail", label: "Fail" },
+        { key: "nottested", label: "Not Tested" }
+      ];
+
+      var buttons = {};
+
+      statuses.forEach(function (s) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "toggle-btn";
+        btn.textContent = s.label;
+        btn.addEventListener("click", function () {
+          st.status = s.key;
+          saveState(state);
+          updateButtons();
+        });
+        buttons[s.key] = btn;
+        groupDiv.appendChild(btn);
+      });
+
+      function updateButtons() {
+        Object.keys(buttons).forEach(function (k) {
+          buttons[k].className = "toggle-btn" + (st.status === k ? (" active-" + k) : "");
+        });
+      }
+      updateButtons();
+
+      tdToggle.appendChild(groupDiv);
+      tr.appendChild(tdToggle);
+
+      var tdComment = document.createElement("td");
+      var textarea = document.createElement("textarea");
+      textarea.value = st.comment || "";
+      textarea.addEventListener("input", function () {
+        st.comment = textarea.value;
+        saveState(state);
+      });
+      tdComment.appendChild(textarea);
+      tr.appendChild(tdComment);
+
+      tbody.appendChild(tr);
+    });
+  });
+
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    var lines = [];
+    lines.push("Test Plan v2 — Technician Name & Hours Worked");
+    lines.push("");
+    groups.forEach(function (group, groupIdx) {
+      lines.push("Screen: " + group.screen);
+      group.items.forEach(function (text, itemIdx) {
+        var st = ensureItemState(groupIdx, itemIdx);
+        var statusLabel = st.status === "pass" ? "PASS" : (st.status === "fail" ? "FAIL" : "NOT TESTED");
+        lines.push((itemIdx + 1) + ". [" + statusLabel + "] " + text);
+        if (st.comment) {
+          lines.push("   Comment: " + st.comment);
+        }
+      });
+      lines.push("");
+    });
+    var output = lines.join("\n");
+
+    function fallbackCopy(text) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    var statusEl = document.getElementById("copyStatus");
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(output).then(function () {
+        statusEl.textContent = "Copied!";
+        setTimeout(function () { statusEl.textContent = ""; }, 2000);
+      }).catch(function () {
+        fallbackCopy(output);
+        statusEl.textContent = "Copied!";
+        setTimeout(function () { statusEl.textContent = ""; }, 2000);
+      });
+    } else {
+      fallbackCopy(output);
+      statusEl.textContent = "Copied!";
+      setTimeout(function () { statusEl.textContent = ""; }, 2000);
+    }
+  });
+</script>
+
+</body>
+</html>

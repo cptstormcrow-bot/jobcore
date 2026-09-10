@@ -31,6 +31,7 @@ export interface ReportsJobDetailScreenProps {
   job: Job;
   commissions: CommissionAmountSource[];
   organizationId: string;
+  techName?: string;
   onBack: () => void;
 }
 
@@ -49,7 +50,7 @@ function formatDate(iso: string | null): string {
 }
 
 export function ReportsJobDetailScreen(props: ReportsJobDetailScreenProps) {
-  const { job, commissions, organizationId, onBack } = props;
+  const { job, commissions, organizationId, techName, onBack } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export function ReportsJobDetailScreen(props: ReportsJobDetailScreenProps) {
           <ListItem title="Status" subtitle={job.status} />
           <ListItem title="Address" subtitle={job.address ?? 'No address'} />
           <ListItem title="Scheduled" subtitle={formatDate(job.scheduledStart)} />
-          <ListItem title="Assigned Technician" subtitle={job.assignedTechId ?? 'Unassigned'} />
+          <ListItem title="Assigned Technician" subtitle={techName ?? job.assignedTechId ?? 'Unassigned'} />
           <ListItem title="Source" subtitle={job.source ?? 'Unknown'} />
           <ListItem title="Attach Timing" subtitle={job.attachTiming ?? 'Unknown'} />
           <ListItem title="Requested Window" subtitle={job.requestedWindow ?? 'None'} />

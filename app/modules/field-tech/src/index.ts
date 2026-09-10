@@ -40,6 +40,7 @@ export type { ModuleSession } from './lib/module-session';
 export { setModuleSession, clearModuleSession } from './lib/module-session';
 export type { ModulePorts } from './lib/module-ports';
 export { setModulePorts } from './lib/module-ports';
+export type { DayListProps } from './screens/DayList';
 
 /**
  * Internal sub-view switcher for the field-tech route, mirroring
@@ -98,7 +99,6 @@ function FieldTechRoot(): React.ReactElement {
     subView === 'jobs'
       ? React.createElement<DayListProps>(DayList, {
           onSelectJob: (job: Job) => setSelectedJobId(job.id),
-          onOpenJob: (jobId: string) => router.push('/job/' + jobId),
           onOpenTimeOff: (event) => {
             setSelectedTimeOffId(event.id);
             setSubView('timeOff');

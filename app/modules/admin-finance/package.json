@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@jobcore/core": "*",
+    "@jobcore/field-tech": "*",
     "@jobcore/module-sdk": "*",
     "@jobcore/ui": "*",
     "expo-clipboard": "~7.0.0"

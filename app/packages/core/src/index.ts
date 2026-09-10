@@ -80,7 +80,8 @@ export type JobStatus =
   | 'closed'
   | 'declined'
   | 'needs_reschedule'
-  | 'cancelled';
+  | 'cancelled'
+  | 'archived';
 
 /**
  * Mirrors the Supabase `jobs` table.

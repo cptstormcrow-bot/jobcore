@@ -20,7 +20,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
@@ -41,6 +41,12 @@ export interface DayListProps {
   onOpenJob?: (jobId: string) => void;
   /** Opens the given time-off entry (week strip time-off cards). */
   onOpenTimeOff?: (event: TimeOffEvent) => void;
+  /**
+   * Optional tech id override — when provided (admin viewing a specific
+   * tech), scopes the fetch to this tech instead of the signed-in
+   * session's own userId.
+   */
+  techId?: string;
 }
 
 /**
@@ -78,7 +84,7 @@ export function expandTimeOffToEvents(requests: TimeOffRequest[], now: Date = ne
     while (cursor.getTime() <= end.getTime()) {
       events.push({
         id: `${request.id}-${cursor.toISOString().slice(0, 10)}`,
-        title: request.reason ?? 'Time off',
+        title: 'Day Off',
         description: request.reason,
         eventTime: cursor.toISOString(),
         techId: request.techId,
@@ -97,7 +103,7 @@ function parseCalendarDate(dateOnly: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps = {}): React.ReactElement {
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
@@ -108,6 +114,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
   const [showBeta, setShowBeta] = useState(false);
   const [anchorDay, setAnchorDay] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const visibleJobs = jobs.filter((job) => isBetaVisible(job, showBeta));
   const todayJobs = useMemo(() => {
     const today = new Date();
@@ -129,7 +136,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
 
     const { jobs: jobsRepository, timeOff: timeOffRepository } = getModulePorts();
 
-    Promise.all([jobsRepository.listAssignedToTech(session.userId), timeOffRepository.listForTech(session.userId)])
+    Promise.all([jobsRepository.listAssignedToTech(techId ?? session.userId), timeOffRepository.listForTech(techId ?? session.userId)])
       .then(([jobsResult, timeOffResult]: [Job[], TimeOffRequest[]]) => {
         if (!cancelled) {
           setJobs(jobsResult);
@@ -150,7 +157,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, techId]);
 
   if (session === null) {
     return (
@@ -180,6 +187,8 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
     onSelectJob?.(job);
     onOpenJob?.(job.id);
   };
+
+  const handleSelectDay = (day: Date) => setSelectedDay(day);
 
   const weekLabel =
     viewMode === 'week' ? format(anchorDay, 'MMM d, yyyy') : format(anchorDay, 'MMMM yyyy');
@@ -256,6 +265,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
             timeOffEvents={timeOffEvents}
             onSelectJob={(job) => handleOpenJob(job)}
             onSelectTimeOff={onOpenTimeOff}
+            onSelectDay={handleSelectDay}
           />
         </View>
       ) : (
@@ -265,12 +275,48 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff }: DayListProps 
             anchorDay={anchorDay}
             timeOffEvents={timeOffEvents}
             onSelectDay={(day) => {
-              setAnchorDay(day);
-              setViewMode('week');
+              handleSelectDay(day);
             }}
           />
         </View>
       )}
+      <Modal
+        visible={selectedDay !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedDay(null)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setSelectedDay(null)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <ScrollView>
+              {selectedDay !== null ? (
+                <>
+                  <Text style={styles.modalTitle}>{format(selectedDay, 'EEEE, MMM d')}</Text>
+                  {visibleJobs
+                    .filter((job) => job.scheduledStart !== null && job.scheduledStart !== undefined && isSameDay(new Date(job.scheduledStart), selectedDay))
+                    .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime())
+                    .map((job) => (
+                      <View key={job.id} style={styles.modalJobRow}>
+                        <Text style={styles.address}>{job.address ?? 'No address'}</Text>
+                        <Text style={styles.window}>{job.requestedWindow ?? job.scheduledStart ?? 'Unscheduled'}</Text>
+                      </View>
+                    ))}
+                  {timeOffEvents
+                    .filter((event) => isSameDay(new Date(event.eventTime), selectedDay))
+                    .map((event) => (
+                      <View key={event.id} style={styles.modalTimeOffRow}>
+                        <Text style={styles.modalTimeOffText}>{event.description ?? 'Day off'}</Text>
+                      </View>
+                    ))}
+                  <Pressable style={styles.modalCloseButton} onPress={() => setSelectedDay(null)}>
+                    <Text style={styles.modalCloseButtonText}>Close</Text>
+                  </Pressable>
+                </>
+              ) : null}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -357,5 +403,51 @@ const styles = StyleSheet.create({
   },
   monthStrip: {
     marginTop: spacing.sm,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  sheet: {
+    width: '100%',
+    maxHeight: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  modalJobRow: {
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#ddd',
+  },
+  modalTimeOffRow: {
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#ddd',
+  },
+  modalTimeOffText: {
+    fontSize: 14,
+    color: colors.danger,
+  },
+  modalCloseButton: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+  },
+  modalCloseButtonText: {
+    fontSize: typography.size.label,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });

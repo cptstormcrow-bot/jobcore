@@ -1,11 +1,11 @@
 /**
  * Close-out queue screen (P3h.2).
  *
- * Awaiting-close-out queue: shows every job `closeout.ts`'s `awaitingCloseOut`
- * reports (`completed`/`paid`, not yet `closed`), each with the blocker
- * reasons `closeOutBlockers` returns for it. This screen is READ-ONLY — it
- * surfaces the queue and blockers, it performs no transition. Close actions
- * are P3h.3b, out of scope here.
+ * Close-out queue: shows every job grouped into a 3-way status view —
+ * Unassigned, In Progress, Completed — per `closeout.ts`'s `closeOutStatus`,
+ * each with the blocker reasons `closeOutBlockers` returns for it. This
+ * screen is READ-ONLY — it surfaces the queue and blockers, it performs no
+ * transition. Close actions are P3h.3b, out of scope here.
  *
  * `awaitingCloseOut`/`closeOutBlockers` do the membership test and the
  * `canTransition` call; this screen never restates the awaiting-close-out
@@ -29,13 +29,18 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import { Card, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
-import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
+import { awaitingCloseOut, closeOutBlockers, closeOutStatus } from '../domain/closeout';
+import type { CloseOutStatus } from '../domain/closeout';
 
 export interface CloseOutQueueScreenProps {
   jobs: Job[];
   ctx: Ctx;
   /** Fired when a queue entry is selected, mirrors `LeadInboxScreen.tsx`'s `onSelectLead`. */
   onSelectJob?: (job: Job) => void;
+  /** Customer id → display name, for the per-card "Customer" line. */
+  customerNames?: Record<string, string>;
+  /** Tech id → display name, for the per-card "Last worked" line. */
+  techNames?: Record<string, string>;
 }
 
 interface QueueEntry {
@@ -43,7 +48,19 @@ interface QueueEntry {
   blockers: string[];
 }
 
-export function CloseOutQueueScreen({ jobs, ctx, onSelectJob }: CloseOutQueueScreenProps) {
+const SECTIONS: { key: CloseOutStatus; label: string }[] = [
+  { key: 'unassigned', label: 'Unassigned' },
+  { key: 'in_progress', label: 'In Progress' },
+  { key: 'completed', label: 'Completed' },
+];
+
+export function CloseOutQueueScreen({
+  jobs,
+  ctx,
+  onSelectJob,
+  customerNames,
+  techNames,
+}: CloseOutQueueScreenProps) {
   const queue = useMemo<QueueEntry[]>(
     () =>
       jobs
@@ -51,6 +68,18 @@ export function CloseOutQueueScreen({ jobs, ctx, onSelectJob }: CloseOutQueueScr
         .map((job) => ({ job, blockers: closeOutBlockers(job, ctx) })),
     [jobs, ctx]
   );
+
+  const grouped = useMemo(() => {
+    const map: Record<CloseOutStatus, QueueEntry[]> = {
+      unassigned: [],
+      in_progress: [],
+      completed: [],
+    };
+    for (const entry of queue) {
+      map[closeOutStatus(entry.job)].push(entry);
+    }
+    return map;
+  }, [queue]);
 
   if (queue.length === 0) {
     return (
@@ -64,23 +93,43 @@ export function CloseOutQueueScreen({ jobs, ctx, onSelectJob }: CloseOutQueueScr
     <View style={styles.screen}>
       <ScreenTitle title="Close-Out Queue" />
       <ScrollView contentContainerStyle={styles.content}>
-        {queue.map(({ job, blockers }) => (
-          <Pressable key={job.id} onPress={() => onSelectJob?.(job)}>
-            <Card style={styles.card}>
-              <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
-              <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
-              {blockers.length === 0 ? (
-                <Text style={styles.ready}>Ready to advance.</Text>
-              ) : (
-                blockers.map((reason, index) => (
-                  <Text key={index} style={styles.blocker}>
-                    {reason}
-                  </Text>
-                ))
-              )}
-            </Card>
-          </Pressable>
-        ))}
+        {SECTIONS.map(({ key, label }) => {
+          const entries = grouped[key];
+          if (entries.length === 0) {
+            return null;
+          }
+          return (
+            <View key={key} style={styles.section}>
+              <Text style={styles.sectionHeader}>{label}</Text>
+              {entries.map(({ job, blockers }) => {
+                const lastWorked = job.completedAt ?? job.inProgressAt ?? '—';
+                const techName = techNames?.[job.assignedTechId ?? ''] ?? 'Unassigned';
+                const customerName = customerNames?.[job.customerId ?? ''] ?? 'Unknown customer';
+                return (
+                  <Pressable key={job.id} onPress={() => onSelectJob?.(job)}>
+                    <Card style={styles.card}>
+                      <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
+                      <Text style={styles.jobCustomer}>Customer: {customerName}</Text>
+                      <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
+                      <Text style={styles.jobLastWorked}>
+                        Last worked: {lastWorked} · {techName}
+                      </Text>
+                      {blockers.length === 0 ? (
+                        <Text style={styles.ready}>Ready to advance.</Text>
+                      ) : (
+                        blockers.map((reason, index) => (
+                          <Text key={index} style={styles.blocker}>
+                            {reason}
+                          </Text>
+                        ))
+                      )}
+                    </Card>
+                  </Pressable>
+                );
+              })}
+            </View>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -105,6 +154,16 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.md,
   },
+  section: {
+    marginBottom: spacing.md,
+  },
+  sectionHeader: {
+    color: colors.text,
+    fontSize: typography.size.h5,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.sm,
+  },
   card: {
     marginBottom: spacing.md,
   },
@@ -115,11 +174,23 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     marginBottom: spacing.xs,
   },
+  jobCustomer: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.xs,
+  },
   jobStatus: {
     color: colors.textMuted,
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
     textTransform: 'capitalize',
+    marginBottom: spacing.sm,
+  },
+  jobLastWorked: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
     marginBottom: spacing.sm,
   },
   ready: {

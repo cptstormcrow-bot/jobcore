@@ -35,6 +35,17 @@ export function awaitingCloseOut(job: Job): boolean {
   return AWAITING_CLOSE_OUT_STATUSES.has(job.status);
 }
 
+export type CloseOutStatus = 'unassigned' | 'in_progress' | 'completed';
+
+const IN_PROGRESS: ReadonlySet<JobStatus> = new Set(['assigned', 'accepted', 'en_route', 'in_progress']);
+const COMPLETED: ReadonlySet<JobStatus> = new Set(['completed', 'paid', 'closed']);
+
+export function closeOutStatus(job: Job): CloseOutStatus {
+  if (COMPLETED.has(job.status)) return 'completed';
+  if (IN_PROGRESS.has(job.status)) return 'in_progress';
+  return 'unassigned';
+}
+
 /**
  * The next close-out edge per awaiting-close-out status — `completed ->
  * paid`, `paid -> closed`. A lookup table, not a `status === '...'` branch.
