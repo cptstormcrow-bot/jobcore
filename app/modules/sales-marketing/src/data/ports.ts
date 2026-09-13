@@ -528,6 +528,15 @@ export interface SocialProviderRepository {
  * test jobs (Workstream K: "Spawn Test Jobs") — writes `jobs` directly
  * ------------------------------------------------------------------ */
 
+/** A single spawned test job, as listed for the Sales & Marketing test-job panel. */
+export type TestJobRow = {
+  id: string;
+  description: string | null;
+  address: string | null;
+  status: string;
+  createdAt: string;
+};
+
 /**
  * Workstream K. Touches the core `jobs` table (`is_beta`,
  * `app/supabase/0018_beta_test_jobs.sql`) rather than any table this module
@@ -538,12 +547,32 @@ export interface SocialProviderRepository {
  *
  * `spawnTestJobs` MUST be reset-then-insert and idempotent: delete any
  * existing `is_beta = true` rows for the org first, then insert exactly 3
- * new `jobs` rows (`status = 'new'`, `is_beta = true`) with placeholder
- * customer/address data labeled "BETA TEST 1"/"BETA TEST 2"/"BETA TEST 3".
- * Repeated calls must leave exactly 3 beta rows, never accumulate.
+ * new `jobs` rows (`status = 'new'`, `is_beta = true`) using a real Carlsbad
+ * service area + address and customer "Test Customer" / 760-580-6041.
+ * `assigned_tech_id` is left null (omitted) so the jobs stay assignable to
+ * any active tech rather than pre-assigned. Repeated calls must leave
+ * exactly 3 beta rows, never accumulate.
+ *
+ * `listTestJobs`, `deleteTestJob`, and `deleteAllTestJobs` round out the
+ * lifecycle so spawned jobs can be inspected and cleared from the UI at any
+ * time, individually or all at once — normal (non-`is_beta`) jobs are never
+ * deletable through this or any other port.
  */
 export interface TestJobsRepository {
+  /**
+   * Deletes any existing test jobs for this organization, then creates 3
+   * fresh ones: Carlsbad service area, a real Carlsbad address, customer
+   * "Test Customer" / 760-580-6041, and no tech assigned (left
+   * assignable). Marked via `is_beta = true` so they can be listed and
+   * deleted independently of real jobs, which are never deletable.
+   */
   spawnTestJobs(organizationId: string): Promise<void>;
+  /** Lists current test jobs (is_beta = true) for this organization. */
+  listTestJobs(organizationId: string): Promise<TestJobRow[]>;
+  /** Deletes a single test job by id; refuses jobs not marked is_beta. */
+  deleteTestJob(jobId: string): Promise<void>;
+  /** Deletes all is_beta test jobs for this organization at once. */
+  deleteAllTestJobs(organizationId: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *

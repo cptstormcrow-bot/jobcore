@@ -13,11 +13,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import type { Job, Profile } from '@jobcore/core';
-import type { PriceSheet, PriceSheetRate, CompensationPolicy } from '../types';
+import type { PriceSheet, PriceSheetRate, CompensationPolicy, TimeSegment } from '../types';
 import { calculateCommission } from '../commission';
-import { deriveBillableHours } from '../billable-hours';
+import { deriveBillableHours, type BillableHoursInput } from '../billable-hours';
 import { NullBonusRule } from '../bonus';
-import { rollUpPeriodPay, type RollupJobInput } from '../rollup';
+import { rollUpPeriodPay, type RollupJobInput, type PayrollTech } from '../rollup';
 
 function makeJob(overrides: Partial<Job> = {}): Job {
   return {
@@ -62,6 +62,25 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
   };
 }
 
+let segSeq = 0;
+function makeSegment(overrides: Partial<TimeSegment> = {}): TimeSegment {
+  segSeq += 1;
+  return {
+    id: `seg-${segSeq}`,
+    organizationId: 'org-1',
+    techId: 'tech-1',
+    jobId: 'job-1',
+    reasonCode: 'job_labor',
+    startedAt: '2026-08-01T13:00:00.000Z',
+    endedAt: '2026-08-01T15:00:00.000Z',
+    source: 'trigger',
+    createdAt: '2026-08-01T13:00:00.000Z',
+    ...overrides,
+  };
+}
+function hoursInput(segments: TimeSegment[]): BillableHoursInput {
+  return { segments };
+}
 function makePublishedPriceSheet(overrides: Partial<PriceSheet> = {}): PriceSheet {
   return {
     id: 'sheet-1',
@@ -94,7 +113,7 @@ function makePolicy(overrides: Partial<CompensationPolicy> = {}): CompensationPo
   };
 }
 
-const tech = makeProfile();
+const tech: PayrollTech = makeProfile();
 const period = { start: '2026-08-01T00:00:00.000Z', end: '2026-08-15T00:00:00.000Z' };
 
 test('AC: total is DERIVED — equals sum of the four component amounts on a multi-job fixture', () => {
@@ -115,10 +134,10 @@ test('AC: total is DERIVED — equals sum of the four component amounts on a mul
   });
 
   const rates = [makeRate()];
-
+  const seg2 = makeSegment({ jobId: 'job-2', startedAt: '2026-08-02T09:15:00.000Z', endedAt: '2026-08-02T10:15:00.000Z' });
   const jobs: RollupJobInput[] = [
-    { job: job1, priceSheet, rates, hours: job1, reimbursementCents: 1500 },
-    { job: job2, priceSheet, rates, hours: job2, reimbursementCents: 0 },
+    { job: job1, priceSheet, rates, hours: hoursInput([makeSegment()]), reimbursementCents: 1500 },
+    { job: job2, priceSheet, rates, hours: hoursInput([seg2]), reimbursementCents: 0 },
   ];
 
   const result = rollUpPeriodPay(tech, period, jobs, policy, {});
@@ -154,7 +173,7 @@ test('AC: an unpublished (draft) price sheet fails calculateCommission and that 
   // Propagation check: rollUpPeriodPay must surface the failure, never coerce
   // it to a 0 commission line.
   const jobs: RollupJobInput[] = [
-    { job, priceSheet: draftPriceSheet, rates, hours: job, reimbursementCents: 500 },
+    { job, priceSheet: draftPriceSheet, rates, hours: hoursInput([makeSegment()]), reimbursementCents: 500 },
   ];
   const rollupResult = rollUpPeriodPay(tech, period, jobs, policy, {});
   assert.equal(rollupResult.ok, false);
@@ -173,7 +192,7 @@ test('AC: NullBonusRule contributes exactly 0 to bonusAmount', () => {
   const policy = makePolicy();
   const job = makeJob();
   const rates = [makeRate()];
-  const jobs: RollupJobInput[] = [{ job, priceSheet, rates, hours: job, reimbursementCents: 0 }];
+  const jobs: RollupJobInput[] = [{ job, priceSheet, rates, hours: hoursInput([makeSegment()]), reimbursementCents: 0 }];
 
   const result = rollUpPeriodPay(tech, period, jobs, policy, { bonusRule: NullBonusRule });
   assert.equal(result.ok, true);
@@ -182,12 +201,8 @@ test('AC: NullBonusRule contributes exactly 0 to bonusAmount', () => {
   }
 });
 
-test('AC: deriveBillableHours emits an unpaidSpan for the travel leg', () => {
-  const input = {
-    enRouteAt: '2026-08-01T13:00:00.000Z',
-    inProgressAt: '2026-08-01T13:30:00.000Z',
-    completedAt: '2026-08-01T15:30:00.000Z',
-  };
+XMARKCX
+XMARKDX
 
   const result = deriveBillableHours(input);
   assert.equal(result.ok, true);

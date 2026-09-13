@@ -61,18 +61,9 @@ export interface CommissionLine {
   amount: Money;
 }
 
-/** A span of time that is unpaid by construction — travel and idle time. */
-export interface UnpaidSpan {
-  from: string;
-  to: string;
-  reason: 'travel' | 'idle';
-}
-
-/** Billable hours for a period, net of any unpaid spans. */
-export interface BillableHours {
-  hours: number;
-  unpaidSpans: UnpaidSpan[];
-}
+export type TimeSegmentReasonCode = 'job_labor'|'lunch'|'materials'|'prem_visit'|'travel'|'other';
+export interface TimeSegment { id: string; organizationId: string; techId: string; jobId: string | null; reasonCode: TimeSegmentReasonCode; startedAt: string; endedAt: string | null; source: 'trigger' | 'manual'; createdAt: string; }
+export interface BillableHours { hoursByReason: Record<TimeSegmentReasonCode, number>; }
 
 /** The result of evaluating one bonus rule. */
 export interface BonusResult {

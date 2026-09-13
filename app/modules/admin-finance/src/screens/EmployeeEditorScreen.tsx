@@ -22,6 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { Button, Card, ListItem, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
+import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE } from '@jobcore/core';
 import type {
   EmployeeRepository,
   InvitationRepository,
@@ -94,6 +95,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [emailInput, setEmailInput] = useState('');
   const [roleInput, setRoleInput] = useState<Role>(profile?.role ?? 'tech');
   const [isTestInput, setIsTestInput] = useState(profile?.isTest ?? false);
+  const [paidTravelInput, setPaidTravelInput] = useState(profile?.paidTravel ?? false);
+  const [ptpmInput, setPtpmInput] = useState(profile?.paidTravelPolicyMessage ?? DEFAULT_PAID_TRAVEL_POLICY_MESSAGE);
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
@@ -211,6 +214,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         driversLicenseNumber: driversLicenseInput || null,
         vehicleStatus: vehicleStatusInput && isVehicleStatus(vehicleStatusInput) ? vehicleStatusInput : null,
         toolStatus: toolStatusInput && isToolStatus(toolStatusInput) ? toolStatusInput : null,
+        paidTravel: paidTravelInput,
+        paidTravelPolicyMessage: ptpmInput || null,
       });
       setActionState({ kind: 'done', message: 'Saved.' });
       onSaved?.();
@@ -336,6 +341,25 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 onChange={setIsTestInput}
                 style={styles.action}
               />
+              <Toggle
+                label="Paid Travel"
+                value={paidTravelInput}
+                onChange={setPaidTravelInput}
+                style={styles.action}
+              />
+              {paidTravelInput && vehicleStatusInput !== 'assigned' ? (
+                <Text style={styles.warning}>
+                  No vehicle assigned to tech.
+                </Text>
+              ) : null}
+              {paidTravelInput ? (
+                <TextInput
+                  style={[styles.input, styles.multiline]}
+                  value={ptpmInput}
+                  onChangeText={setPtpmInput}
+                  multiline
+                />
+              ) : null}
             </>
           ) : (
             <>
@@ -511,5 +535,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     color: colors.text,
     fontFamily: typography.fontFamily.body,
+  },
+  warning: {
+    color: colors.danger,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: spacing.sm,
+  },
+  multiline: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
 });

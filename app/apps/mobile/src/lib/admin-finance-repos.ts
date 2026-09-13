@@ -583,6 +583,8 @@ function toProfile(row: {
   drivers_license_number: string | null;
   vehicle_status: string | null;
   tool_status: string | null;
+  paid_travel: boolean;
+  paid_travel_policy_message: string | null;
 }): Profile {
   return {
     id: row.id,
@@ -597,6 +599,8 @@ function toProfile(row: {
     driversLicenseNumber: row.drivers_license_number,
     vehicleStatus: row.vehicle_status && isVehicleStatus(row.vehicle_status) ? row.vehicle_status : null,
     toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
+    paidTravel: row.paid_travel,
+    paidTravelPolicyMessage: row.paid_travel_policy_message,
   };
 }
 
@@ -636,6 +640,8 @@ export function createEmployeeRepository(): EmployeeRepository {
         driversLicenseNumber?: string | null;
         vehicleStatus?: VehicleStatus | null;
         toolStatus?: ToolStatus | null;
+        paidTravel?: boolean;
+        paidTravelPolicyMessage?: string | null;
       },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();
@@ -662,6 +668,12 @@ export function createEmployeeRepository(): EmployeeRepository {
       }
       if (updates.toolStatus !== undefined) {
         patch.tool_status = updates.toolStatus;
+      }
+      if (updates.paidTravel !== undefined) {
+        patch.paid_travel = updates.paidTravel;
+      }
+      if (updates.paidTravelPolicyMessage !== undefined) {
+        patch.paid_travel_policy_message = updates.paidTravelPolicyMessage;
       }
 
       const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);

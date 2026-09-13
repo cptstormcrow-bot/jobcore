@@ -60,7 +60,11 @@ export interface Profile {
   driversLicenseNumber: string | null;
   vehicleStatus: VehicleStatus | null;
   toolStatus: ToolStatus | null;
+  paidTravel: boolean;
+  paidTravelPolicyMessage: string | null;
 }
+export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
+  'Paid travel time is allowable if a vehicle is assigned to tech.';
 
 /**
  * Mirrors the Postgres `job_status` enum (supabase/0004_scheduling.sql).

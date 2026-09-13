@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JobCore — Job Time Segments Migration Test Plan (2026-09-13)</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; margin: 20px; background: #f5f5f5; color: #222; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 32px; border-bottom: 2px solid #333; padding-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; background: #fff; }
+  th, td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; font-size: 13px; }
+  th { background: #333; color: #fff; text-align: left; }
+  .desc { width: 40%; }
+  .status-group label { margin-right: 8px; white-space: nowrap; }
+  textarea { width: 100%; min-height: 40px; box-sizing: border-box; font-family: inherit; font-size: 12px; }
+  #toolbar { margin: 16px 0; }
+  button { padding: 8px 16px; font-size: 14px; cursor: pointer; }
+  #copyMsg { margin-left: 12px; font-size: 13px; color: green; }
+  tr.pass { background: #e6ffe6; }
+  tr.fail { background: #ffe6e6; }
+  tr.not-tested { background: #fff; }
+</style>
+</head>
+<body>
+<h1>JobCore — Job Time Segments Migration Test Plan (2026-09-13)</h1>
+<div id="toolbar">
+  <button id="copyBtn">Copy results</button>
+  <span id="copyMsg"></span>
+</div>
+
+<div id="root"></div>
+
+<script>
+const sections = [
+  {
+    title: "1. Migration 0055 (paid_travel_policy)",
+    items: [
+      { id: "m0055-1", desc: "SQL: profiles.paid_travel boolean column exists and defaults false (SELECT column_default, data_type FROM information_schema.columns WHERE table_name='profiles' AND column_name='paid_travel')." },
+      { id: "m0055-2", desc: "SQL: profiles.paid_travel_policy_message column exists and defaults to 'Paid travel time is allowable if a vehicle is assigned to tech.' (SELECT column_default FROM information_schema.columns WHERE table_name='profiles' AND column_name='paid_travel_policy_message')." },
+      { id: "m0055-3", desc: "UI: Admin > Employee edit screen shows a Paid Travel toggle with an editable policy message textbox; toggling on/off and editing the message, then saving and reopening the record, persists the new values." }
+    ]
+  },
+  {
+    title: "2. Migration 0056 (job_time_segments)",
+    items: [
+      { id: "m0056-1", desc: "SQL: job_time_segments table exists with columns job_id, tech_id, segment_type (including a 'travel' value), started_at, ended_at, source (SELECT column_name FROM information_schema.columns WHERE table_name='job_time_segments')." },
+      { id: "m0056-2", desc: "RLS: authenticated as a field tech, SELECT * FROM job_time_segments returns only rows where tech_id = auth.uid(); a segment belonging to another tech is not returned." },
+      { id: "m0056-3", desc: "RLS: authenticated as an admin, SELECT * FROM job_time_segments returns all segments for jobs within the admin's org, including other techs' segments." }
+    ]
+  },
+  {
+    title: "3. Migration 0057 (sync_job_time_segments trigger)",
+    items: [
+      { id: "m0057-1", desc: "UI/DB: drive a job through status transitions en_route -> in_progress -> completed; confirm job_time_segments rows are created automatically with started_at/ended_at matching the transition timestamps and source reflecting the trigger." },
+      { id: "m0057-2", desc: "DB: with profiles.paid_travel = true and a vehicle assigned to the tech, confirm a travel-type segment is created/paid for the en_route period." },
+      { id: "m0057-3", desc: "DB: with profiles.paid_travel = false OR no vehicle assigned, confirm no travel segment is created (or it is created but not marked paid), for the same en_route transition." }
+    ]
+  },
+  {
+    title: "4. Migration 0058 (job_time_segment_corrections)",
+    items: [
+      { id: "m0058-1", desc: "UI: as admin, submit a correction request against an existing job_time_segments row (e.g. adjust started_at/ended_at) and confirm a row lands in job_time_segment_corrections with status pending." },
+      { id: "m0058-2", desc: "UI/DB: approve a pending correction and confirm the underlying job_time_segments row is updated to the corrected values, and the correction row's status flips to approved." },
+      { id: "m0058-3", desc: "UI/DB: reject a pending correction and confirm the underlying job_time_segments row is left unchanged, and the correction row's status flips to rejected." },
+      { id: "m0058-4", desc: "RLS: authenticated as a non-admin field tech, attempt an INSERT/UPDATE against job_time_segment_corrections and confirm it is denied; confirm an admin's write succeeds." }
+    ]
+  },
+  {
+    title: "5. Payroll / bookkeeping cross-cut",
+    items: [
+      { id: "cross-1", desc: "UI: Earnings.tsx-style hour derivation for a tech still computes correct total hours for bookkeeping display after the job_time_segments migration (spot-check one completed job against manual sum of segment durations)." },
+      { id: "cross-2", desc: "UI/DB: for a job with paid_travel enabled, travel time is broken out as a separate line/total from work time in the payroll view; for a job with paid_travel disabled, travel time does not appear as a separate paid line item." }
+    ]
+  }
+];
+
+const STORAGE_PREFIX = "jts-testplan-2026-09-13:";
+
+function loadState(id) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + id);
+    if (!raw) return { status: "not-tested", comment: "" };
+    const parsed = JSON.parse(raw);
+    return { status: parsed.status || "not-tested", comment: parsed.comment || "" };
+  } catch (e) {
+    return { status: "not-tested", comment: "" };
+  }
+}
+
+function saveState(id, status, comment) {
+  localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify({ status, comment }));
+}
+
+function buildTable(section) {
+  const table = document.createElement("table");
+  table.innerHTML = "<thead><tr><th class='desc'>Description</th><th>Status</th><th>Comment</th></tr></thead>";
+  const tbody = document.createElement("tbody");
+  section.items.forEach(item => {
+    const state = loadState(item.id);
+    const tr = document.createElement("tr");
+    tr.id = "row-" + item.id;
+    tr.className = state.status;
+
+    const tdDesc = document.createElement("td");
+    tdDesc.className = "desc";
+    tdDesc.textContent = item.desc;
+
+    const tdStatus = document.createElement("td");
+    const group = document.createElement("div");
+    group.className = "status-group";
+    ["pass", "fail", "not-tested"].forEach(val => {
+      const label = document.createElement("label");
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = "status-" + item.id;
+      radio.value = val;
+      radio.checked = state.status === val;
+      radio.addEventListener("change", () => {
+        const comment = ta.value;
+        saveState(item.id, val, comment);
+        tr.className = val;
+      });
+      label.appendChild(radio);
+      label.appendChild(document.createTextNode(" " + val));
+      group.appendChild(label);
+    });
+    tdStatus.appendChild(group);
+
+    const tdComment = document.createElement("td");
+    const ta = document.createElement("textarea");
+    ta.id = "comment-" + item.id;
+    ta.value = state.comment;
+    ta.addEventListener("input", () => {
+      const checked = group.querySelector("input[type=radio]:checked");
+      const status = checked ? checked.value : "not-tested";
+      saveState(item.id, status, ta.value);
+    });
+    tdComment.appendChild(ta);
+
+    tr.appendChild(tdDesc);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdComment);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  return table;
+}
+
+function render() {
+  const root = document.getElementById("root");
+  sections.forEach(section => {
+    const h2 = document.createElement("h2");
+    h2.textContent = section.title;
+    root.appendChild(h2);
+    root.appendChild(buildTable(section));
+  });
+}
+
+function copyResults() {
+  const lines = [];
+  sections.forEach(section => {
+    lines.push("== " + section.title + " ==");
+    section.items.forEach(item => {
+      const state = loadState(item.id);
+      lines.push(
+        "[" + item.id + "] " + item.desc +
+        " | STATUS: " + state.status +
+        " | COMMENT: " + (state.comment || "")
+      );
+    });
+    lines.push("");
+  });
+  const text = lines.join("\n");
+  const msg = document.getElementById("copyMsg");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      msg.textContent = "Copied to clipboard.";
+      setTimeout(() => { msg.textContent = ""; }, 3000);
+    }, () => {
+      fallbackCopy(text, msg);
+    });
+  } else {
+    fallbackCopy(text, msg);
+  }
+}
+
+function fallbackCopy(text, msg) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    msg.textContent = "Copied to clipboard.";
+  } catch (e) {
+    msg.textContent = "Copy failed — select and copy manually.";
+  }
+  document.body.removeChild(ta);
+  setTimeout(() => { msg.textContent = ""; }, 3000);
+}
+
+document.getElementById("copyBtn").addEventListener("click", copyResults);
+render();
+</script>
+</body>
+</html>

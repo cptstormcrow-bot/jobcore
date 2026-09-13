@@ -391,6 +391,8 @@ export interface EmployeeRepository {
       driversLicenseNumber?: string | null;
       vehicleStatus?: VehicleStatus | null;
       toolStatus?: ToolStatus | null;
+      paidTravel?: boolean;
+      paidTravelPolicyMessage?: string | null;
     }
   ): Promise<void>;
   deactivateEmployee(profileId: string): Promise<void>;
@@ -1287,4 +1289,56 @@ export interface JobInvestigation {
 export interface JobInvestigationRepository {
   getForJob(jobId: string): Promise<JobInvestigation | null>;
   upsertForJob(jobId: string, patch: Partial<JobInvestigation>): Promise<JobInvestigation>;
+}
+
+/* ------------------------------------------------------------------ *
+ * Time segment correction admin queue (job-time-segments-unified-time-
+ * tracking-conditional plan, Step 8 -- job_time_segment_corrections,
+ * migrations 0055-0058). Mirrors the reimbursements approve/reject
+ * pattern (human review required), NOT time-off's auto-decide pattern.
+ *
+ * TimeSegmentReasonCode, TimeSegmentCorrectionStatus, and
+ * TimeSegmentCorrection below are defined locally rather than
+ * imported from field-tech because, as of this writing, field-tech's
+ * ports.ts has not yet been updated with the plan's Step 2-7
+ * TimeSegment* types (migrations 0055-0058 are also not yet applied).
+ * These are stand-ins matching the plan's literal shapes; once
+ * field-tech lands the canonical versions, this module should import
+ * from there instead and these local definitions should be removed.
+ *
+ * Do not reuse the string 'admin_correction' anywhere in this code --
+ * it collides with an existing unrelated JobNoteKind value.
+ * ------------------------------------------------------------------ */
+
+export type TimeSegmentReasonCode = 'job_labor' | 'lunch' | 'materials' | 'prem_visit' | 'travel' | 'other';
+
+export type TimeSegmentCorrectionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface TimeSegmentCorrection {
+  id: string;
+  organizationId: string;
+  segmentId: string;
+  techId: string;
+  status: TimeSegmentCorrectionStatus;
+  requestedStartAt: string | null;
+  requestedEndAt: string | null;
+  requestedReasonCode: TimeSegmentReasonCode | null;
+  note: string;
+  reviewNote: string | null;
+  createdAt: string;
+}
+
+/**
+ * Admin review queue for job_time_segment_corrections
+ * (0056_job_time_segment_corrections.sql). approve / reject call the
+ * security-definer RPCs from 0058 (approve_time_segment_correction,
+ * reject_time_segment_correction), which set reviewed_by/reviewed_at
+ * server-side. Unlike ReimbursementRepo, these methods resolve with
+ * the updated record or reject the promise on failure -- there is no
+ * {ok, ...} result wrapper for this port.
+ */
+export interface TimeSegmentCorrectionAdminRepository {
+  listForOrganization(organizationId: string): Promise<TimeSegmentCorrection[]>;
+  approve(correctionId: string): Promise<TimeSegmentCorrection>;
+  reject(correctionId: string, reason: string): Promise<TimeSegmentCorrection>;
 }

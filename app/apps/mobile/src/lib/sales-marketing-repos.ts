@@ -388,6 +388,15 @@ export function createSocialProviderRepository(): SocialProviderRepository {
  * `TestJobsRepository`.
  * ------------------------------------------------------------------ */
 
+const CARLSBAD_SERVICE_AREA_NAME = 'Carlsbad';
+const TEST_CUSTOMER_NAME = 'Test Customer';
+const TEST_CUSTOMER_PHONE = '760-580-6041';
+const TEST_JOB_ADDRESSES = [
+  '2450 Jefferson St, Carlsbad, CA 92008',
+  '1140 Carlsbad Village Dr, Carlsbad, CA 92008',
+  '3200 Roosevelt St, Carlsbad, CA 92008',
+];
+
 export function createTestJobsRepository(): TestJobsRepository {
   return {
     async spawnTestJobs(organizationId: string): Promise<void> {
@@ -400,18 +409,97 @@ export function createTestJobsRepository(): TestJobsRepository {
         throw new Error(`spawnTestJobs reset failed: ${deleteError.message}`);
       }
 
-      const rows = [1, 2, 3].map((n) => ({
+      const { data: serviceArea, error: serviceAreaError } = await supabase
+        .from('service_areas')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('name', CARLSBAD_SERVICE_AREA_NAME)
+        .maybeSingle();
+      if (serviceAreaError) {
+        throw new Error(`spawnTestJobs service area lookup failed: ${serviceAreaError.message}`);
+      }
+
+      let customerId: string;
+      const { data: existingCustomer, error: customerLookupError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('name', TEST_CUSTOMER_NAME)
+        .maybeSingle();
+      if (customerLookupError) {
+        throw new Error(`spawnTestJobs customer lookup failed: ${customerLookupError.message}`);
+      }
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        const { data: newCustomer, error: customerInsertError } = await supabase
+          .from('customers')
+          .insert({
+            organization_id: organizationId,
+            name: TEST_CUSTOMER_NAME,
+            phone: TEST_CUSTOMER_PHONE,
+          })
+          .select('id')
+          .single();
+        if (customerInsertError || !newCustomer) {
+          throw new Error(`spawnTestJobs customer create failed: ${customerInsertError?.message}`);
+        }
+        customerId = newCustomer.id;
+      }
+
+      const rows = TEST_JOB_ADDRESSES.map((address, index) => ({
         organization_id: organizationId,
         status: 'new' as const,
         is_beta: true,
-        description: `BETA TEST ${n}`,
-        address: `BETA TEST ${n} — placeholder address`,
-        source: 'beta-test',
+        description: `Test job ${index + 1} — spawned for testing`,
+        address,
+        service_area_id: serviceArea?.id ?? null,
+        customer_id: customerId,
       }));
-
       const { error: insertError } = await supabase.from('jobs').insert(rows);
       if (insertError) {
         throw new Error(`spawnTestJobs insert failed: ${insertError.message}`);
+      }
+    },
+
+    async listTestJobs(organizationId: string) {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, description, address, status, created_at')
+        .eq('organization_id', organizationId)
+        .eq('is_beta', true)
+        .order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`listTestJobs failed: ${error.message}`);
+      }
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        description: row.description,
+        address: row.address,
+        status: row.status,
+        createdAt: row.created_at,
+      }));
+    },
+
+    async deleteTestJob(jobId: string): Promise<void> {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId)
+        .eq('is_beta', true);
+      if (error) {
+        throw new Error(`deleteTestJob failed: ${error.message}`);
+      }
+    },
+
+    async deleteAllTestJobs(organizationId: string): Promise<void> {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('is_beta', true);
+      if (error) {
+        throw new Error(`deleteAllTestJobs failed: ${error.message}`);
       }
     },
   };

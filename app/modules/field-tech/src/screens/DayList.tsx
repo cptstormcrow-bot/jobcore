@@ -109,9 +109,9 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId }: DayLi
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
-  // rows spawned by sales-marketing's "Spawn Test Jobs" flow.
-  const [showBeta, setShowBeta] = useState(false);
+  // Workstream K: "Show Test Jobs" toggle, default ON — shows jobs.is_beta
+  // rows spawned by sales-marketing's "Spawn Test Jobs" flow; toggle still hides them.
+  const [showBeta, setShowBeta] = useState(true);
   const [anchorDay, setAnchorDay] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);

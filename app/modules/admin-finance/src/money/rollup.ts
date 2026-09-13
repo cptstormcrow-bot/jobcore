@@ -21,11 +21,15 @@ import type {
   CompensationPolicy,
   CalculationResult,
   PeriodPayResult,
+  TimeSegmentReasonCode,
 } from './types';
 import { calculateCommission } from './commission';
 import { deriveBillableHours, type BillableHoursInput } from './billable-hours';
 import type { BonusRule } from './bonus';
 import { NullBonusRule } from './bonus';
+
+/** `Profile` lacks `paidTravel` (planned migration 0059). Extend locally. */
+export type PayrollTech = Profile & { paidTravel?: boolean };
 
 /** A closed pay period. */
 export interface PayPeriod {
@@ -36,7 +40,7 @@ export interface PayPeriod {
 /**
  * One job's inputs to the rollup: the job itself, the price sheet and rate
  * table its commission is calculated against, and the payroll-grade
- * timestamps `deriveBillableHours` reads. Reimbursements are tracked
+ * time segments `deriveBillableHours` reads. Reimbursements are tracked
  * per-job in integer cents; they are added straight through, never
  * deducted against commission (mirrors `CommissionLine`'s hard constraint
  * in types.ts).
@@ -71,7 +75,7 @@ export interface RollupOptions {
  * failed line is ever silently coerced to a 0 amount.
  */
 export function rollUpPeriodPay(
-  tech: Profile,
+  tech: PayrollTech,
   period: PayPeriod,
   jobs: RollupJobInput[],
   policy: CompensationPolicy,
@@ -79,7 +83,9 @@ export function rollUpPeriodPay(
 ): CalculationResult<PeriodPayResult> {
   const bonusRule = options.bonusRule ?? NullBonusRule;
 
-  let hoursTotal = 0; // accumulated in hours, converted to cents below
+  const hoursByReason: Record<TimeSegmentReasonCode, number> = {
+    job_labor: 0, lunch: 0, materials: 0, prem_visit: 0, travel: 0, other: 0,
+  };
   let commissionAmount = 0;
   let reimbursementAmount = 0;
 
@@ -88,7 +94,9 @@ export function rollUpPeriodPay(
     if (!hoursResult.ok) {
       return { ok: false, reason: `job ${entry.job.id}: ${hoursResult.reason}` };
     }
-    hoursTotal += hoursResult.value.hours;
+    for (const k of Object.keys(hoursByReason) as TimeSegmentReasonCode[]) {
+      hoursByReason[k] += hoursResult.value.hoursByReason[k];
+    }
 
     const commissionResult = calculateCommission(entry.job, entry.priceSheet, policy, entry.rates);
     if (!commissionResult.ok) {
@@ -99,12 +107,13 @@ export function rollUpPeriodPay(
     reimbursementAmount += entry.reimbursementCents;
   }
 
-  // Rounds down (Math.round on a whole-cent product never leaves a
-  // fraction here, but the multiplication itself can produce a
-  // non-integer for fractional hourly rates in cents — round to the
-  // nearest cent rather than truncate, since underpaying by a
-  // systematic half-cent every period is worse than a symmetric round).
-  const hoursAmount = Math.round(hoursTotal * policy.hourlyRate);
+  // Only job_labor + prem_visit are always paid; travel only if
+  // tech.paidTravel. lunch/materials/other are bookkeeping-only.
+  const payableHours =
+    hoursByReason.job_labor +
+    hoursByReason.prem_visit +
+    (tech.paidTravel ? hoursByReason.travel : 0);
+  const hoursAmount = Math.round(payableHours * policy.hourlyRate);
 
   const bonusResult = bonusRule.evaluate(
     period,
