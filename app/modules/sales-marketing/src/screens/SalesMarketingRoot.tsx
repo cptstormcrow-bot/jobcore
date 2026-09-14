@@ -14,8 +14,9 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Button, EmptyState, Breadcrumb, TabBar } from '@jobcore/ui';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Button, EmptyState, Breadcrumb, TabBar, ScreenTitle } from '@jobcore/ui';
 
 import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
@@ -37,6 +38,7 @@ const TABS: Array<{ key: SubView; label: string }> = [
 ];
 
 export function SalesMarketingRoot(): React.ReactElement {
+  const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('reviewLibrary');
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
   // No service/service-area picker exists yet anywhere in this module —
@@ -189,6 +191,7 @@ export function SalesMarketingRoot(): React.ReactElement {
       ? React.createElement(
           View,
           { key: 'testJobsPanel', style: styles.testJobsPanel },
+          React.createElement(ScreenTitle, { key: 'testJobsPanelTitle', title: 'Test Jobs' }),
           testJobsError ? React.createElement(Text, { style: styles.errorText }, testJobsError) : null,
           testJobs.length > 0
             ? React.createElement(
@@ -196,8 +199,8 @@ export function SalesMarketingRoot(): React.ReactElement {
                 { style: styles.testJobsList },
                 ...testJobs.map((job) =>
                   React.createElement(
-                    View,
-                    { key: job.id, style: styles.testJobRow },
+                    Pressable,
+                    { key: job.id, style: styles.testJobRow, onPress: () => router.push(`/job/${job.id}`) },
                     React.createElement(
                       Text,
                       { style: styles.testJobLabel },
