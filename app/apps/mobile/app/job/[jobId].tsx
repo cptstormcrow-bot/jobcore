@@ -7,11 +7,12 @@ import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet,
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
-import { useSession } from '../../src/lib/session';
+import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import {
   createJobRepository,
@@ -885,6 +886,28 @@ export default function JobDrilldownScreen() {
     ? serviceAreas.find((a) => a.id === currentJob.service_area_id)?.name ?? null
     : null;
 
+  const jobDetailMenuItems: MenuItem[] = [
+    { id: 'plan', label: 'Plan', onPress: () => selectRegion('plan'), isActive: region === 'plan' },
+    { id: 'evisit', label: 'Prelim (E-visit)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
+    { id: 'estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
+    { id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' },
+    { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
+    { id: 'contact', label: 'Contact', onPress: handleContact },
+    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive() },
+    { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
+    { id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() },
+    { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      onPress: () => {},
+      submenu: [
+        { id: 'config-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
+        { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+      ],
+    },
+  ];
+
   return (
     <View style={styles.root}>
       <JobHeader
@@ -897,10 +920,7 @@ export default function JobDrilldownScreen() {
         assigningTech={assigning !== null}
         region={region}
         onSelectRegion={selectRegion}
-        onContact={handleContact}
-        onArrive={() => void handleArrive()}
-        onComplete={() => void handleComplete()}
-        onPaid={() => void confirmMarkPaid()}
+        jobDetailMenuItems={jobDetailMenuItems}
         busyAction={busyAction}
         statusError={actionError}
       />

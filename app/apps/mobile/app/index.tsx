@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { getEnabledModules } from '@jobcore/module-sdk';
-import { Button, ListItem, EmptyState, LoadingState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { EmptyState, LoadingState, ScreenTitle, AppChrome, colors, spacing, typography } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
 
 import { useSession, signOut } from '../src/lib/session';
 
@@ -37,11 +37,18 @@ export default function HomeScreen() {
   const { organization, profile } = state;
   const modules = getEnabledModules(organization, profile.role);
 
-  // navEntries are the nav surface; a module may contribute more than one.
-  // Flattened and re-sorted here so ordering is global, not per-module.
-  const entries = modules
-    .flatMap((m) => m.navEntries.map((entry) => ({ moduleId: m.id, entry })))
-    .sort((a, b) => a.entry.order - b.entry.order);
+  const menuItems: MenuItem[] = [
+    ...modules.map((m) => ({ id: m.id, label: m.displayName, onPress: () => router.push(`/m/${m.id}`) })),
+    { id: 'logins', label: 'Logins/Sign in/out', onPress: () => void signOut() },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      submenu: [
+        { id: 'spawn-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
+        { id: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+      ],
+    },
+  ];
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
@@ -53,29 +60,16 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {entries.length === 0 ? (
+      <AppChrome breadcrumbSegments={[{ label: 'Home' }]} menuItems={menuItems} optionsItems={[]} />
+
+      {modules.length === 0 ? (
         <View style={styles.center}>
           <EmptyState
             title="No modules enabled"
             message="No modules are enabled for your organization, or none are available to your role. Contact your admin."
           />
         </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.list}>
-          {entries.map(({ moduleId, entry }) => (
-            <ListItem
-              key={`${moduleId}:${entry.label}`}
-              title={entry.label}
-              onPress={() => router.push(`/m/${moduleId}`)}
-              right={<Ionicons name={entry.icon as never} size={22} color={colors.secondary} />}
-            />
-          ))}
-        </ScrollView>
-      )}
-
-      <View style={styles.footer}>
-        <Button label="Sign out" variant="outline" onPress={() => void signOut()} />
-      </View>
+      ) : null}
     </View>
   );
 }

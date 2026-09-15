@@ -20,8 +20,8 @@
 
 import * as React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { TabBar, Breadcrumb } from '@jobcore/ui';
+import { router, useRouter } from 'expo-router';
+import { AppChrome, Breadcrumb } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -32,9 +32,12 @@ import { Greeting } from './screens/Greeting';
 import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
+import { Overview } from './screens/Overview';
+import { Reviews } from './screens/Reviews';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import { transitionJob } from './domain/transition';
+import { signOut } from '../../../apps/mobile/src/lib/session';
 
 export type { ModuleSession } from './lib/module-session';
 export { setModuleSession, clearModuleSession } from './lib/module-session';
@@ -51,10 +54,11 @@ export type { DayListProps } from './screens/DayList';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'jobs' | 'timeOff';
+type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews';
 
 function FieldTechRoot(): React.ReactElement {
-  const [subView, setSubView] = React.useState<SubView>('jobs');
+  const router = useRouter();
+  const [subView, setSubView] = React.useState<SubView>('overview');
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const session = getModuleSession();
@@ -81,30 +85,92 @@ function FieldTechRoot(): React.ReactElement {
     );
   }
 
+  const menuItems = [
+    {
+      id: 'overview',
+      label: 'Overview',
+      isActive: subView === 'overview',
+      onPress: () => setSubView('overview'),
+    },
+    {
+      id: 'jobs',
+      label: 'Jobs',
+      isActive: subView === 'jobs',
+      onPress: () => {
+        setSelectedTimeOffId(undefined);
+        setSubView('jobs');
+      },
+    },
+    {
+      id: 'timeOff',
+      label: 'Time Off',
+      isActive: subView === 'timeOff',
+      onPress: () => setSubView('timeOff'),
+    },
+    {
+      id: 'reviews',
+      label: 'Reviews',
+      isActive: subView === 'reviews',
+      onPress: () => setSubView('reviews'),
+    },
+    {
+      id: 'loginsSignInOut',
+      label: 'Logins/Sign in/out',
+      onPress: () => {
+        void signOut();
+      },
+    },
+    {
+      id: 'configuration',
+      label: 'Configuration',
+      onPress: () => {},
+      submenu: [
+        {
+          id: 'configSpawnTestJobs',
+          label: 'Spawn Test Jobs',
+          onPress: () => router.push('/config/test-jobs'),
+        },
+        {
+          id: 'configSettings',
+          label: 'Settings',
+          onPress: () => router.push('/config/settings'),
+        },
+      ],
+    },
+  ];
+
+  let content: React.ReactElement;
+  switch (subView) {
+    case 'timeOff':
+      content = React.createElement(TimeOff, { initialSelectedId: selectedTimeOffId });
+      break;
+    case 'reviews':
+      content = React.createElement(Reviews, null);
+      break;
+    case 'jobs':
+      content = React.createElement<DayListProps>(DayList, {
+        onSelectJob: (job: Job) => setSelectedJobId(job.id),
+        onOpenTimeOff: (event) => {
+          setSelectedTimeOffId(event.id);
+          setSubView('timeOff');
+        },
+      });
+      break;
+    case 'overview':
+    default:
+      content = React.createElement(Overview, null);
+      break;
+  }
+
   return React.createElement(
     View,
     { style: styles.screen },
-    React.createElement(Breadcrumb, { segments: [{ label: 'Field Tech' }] }),
-    React.createElement(TabBar<SubView>, {
-      items: [
-        { key: 'jobs', label: 'Jobs' },
-        { key: 'timeOff', label: 'Time Off' },
-      ],
-      activeKey: subView,
-      onSelect: (key: SubView) => {
-        setSelectedTimeOffId(undefined);
-        setSubView(key);
-      },
+    React.createElement(AppChrome, {
+      breadcrumbSegments: [{ label: 'Field Tech' }],
+      menuItems,
+      optionsItems: [],
     }),
-    subView === 'jobs'
-      ? React.createElement<DayListProps>(DayList, {
-          onSelectJob: (job: Job) => setSelectedJobId(job.id),
-          onOpenTimeOff: (event) => {
-            setSelectedTimeOffId(event.id);
-            setSubView('timeOff');
-          },
-        })
-      : React.createElement(TimeOff, { initialSelectedId: selectedTimeOffId }),
+    content,
   );
 }
 

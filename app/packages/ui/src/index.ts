@@ -16,5 +16,6 @@ export * from './CalendarHeader';
 export * from './Checkbox';
 export * from './ScreenTitle';
 export * from './Breadcrumb';
+export * from './AppChrome';
 export * from './TabBar';
 export * from './telephony';

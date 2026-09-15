@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>App-Wide Menu System — Test Plan (2026-09-14)</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; max-width: 960px; margin: 20px auto; padding: 0 16px; color: #222; background: #f7f7f8; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 28px; border-bottom: 2px solid #ccc; padding-bottom: 4px; }
+  p.meta { color: #555; font-size: 13px; }
+  .note { background: #fff8e1; border: 1px solid #e0c46c; padding: 10px 14px; font-size: 13px; margin: 14px 0; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 8px; }
+  th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; font-size: 13px; }
+  th { background: #eee; text-align: left; }
+  td.desc { width: 38%; }
+  td.steps { width: 30%; }
+  td.status { width: 14%; }
+  td.comment { width: 18%; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 50px; font-family: inherit; font-size: 12px; resize: vertical; }
+  select { width: 100%; padding: 4px; font-size: 13px; }
+  select.status-pass { background: #d9f2d9; }
+  select.status-fail { background: #f8d7d7; }
+  select.status-not-tested { background: #fff; }
+  .toolbar { position: sticky; top: 0; background: #f7f7f8; padding: 10px 0; z-index: 5; display: flex; gap: 10px; align-items: center; }
+  button { padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: 4px; border: 1px solid #888; background: #fff; }
+  button.primary { background: #2c6ecb; color: #fff; border-color: #2c6ecb; }
+  #copyStatus { font-size: 12px; color: #2c6ecb; }
+  .summary { font-size: 13px; margin-left: auto; color: #444; }
+  ol { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<h1>App-Wide Menu System — Test Plan (2026-09-14)</h1>
+<p class="meta">
+  Scope: <strong>interface tests only</strong>, covering the new app-wide ☰ hamburger menu / ⋮ options
+  menu system across Home, Admin &amp; Finance, Job Detail, Field Tech, Sales &amp; Marketing, and the
+  shared Configuration submenu.<br />
+  Generated 2026-09-14.
+</p>
+
+<div class="note">
+  Note: Items 5 and 6 test the corrected (actual) behavior, not the original plan's assumption —
+  see item text for details. This is a documented deviation, not a bug.
+</div>
+
+<div class="toolbar">
+  <button class="primary" onclick="copyResults()">Copy results</button>
+  <button onclick="resetAll()">Reset all</button>
+  <span id="copyStatus"></span>
+  <span class="summary" id="summary"></span>
+</div>
+
+<h2>Checklist</h2>
+<table>
+  <thead><tr><th class="desc">Test</th><th class="steps">Steps</th><th class="status">Status</th><th class="comment">Comment</th></tr></thead>
+  <tbody id="section1"></tbody>
+</table>
+
+<script>
+const ITEMS = [
+  { id: 'item-1', section: 'section1',
+    desc: 'Start Expo web dev server (jobcore-mobile-web, port 8081). Confirm it boots clean with no console errors.',
+    steps: '1. Start the jobcore-mobile-web Expo web dev server on port 8081.\n2. Confirm it boots cleanly.\n3. Confirm no console errors are printed.' },
+  { id: 'item-2', section: 'section1',
+    desc: 'Home screen: ☰ opens a 5-item menu — Admin & Finance, Field Tech, Sales & Marketing, Logins/Sign in/out, Configuration (gear, expands to Spawn Test Jobs + Settings). Back row is disabled/greyed (Home is the root after login). ⋮ opens an empty Options menu. The old footer Sign Out button is gone. "Logins/Sign in/out" signs the user out correctly.',
+    steps: '1. Log in and land on Home.\n2. Open ☰ and confirm the 5 items: Admin & Finance, Field Tech, Sales & Marketing, Logins/Sign in/out, Configuration (gear expands to Spawn Test Jobs + Settings).\n3. Confirm the Back row is disabled/greyed.\n4. Open ⋮ and confirm it is empty.\n5. Confirm the old footer Sign Out button is gone.\n6. Tap "Logins/Sign in/out" and confirm it signs out correctly.' },
+  { id: 'item-3', section: 'section1',
+    desc: 'Admin & Finance: ☰ opens a 13-item menu — Back (enabled → Home) then Overview, Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Time Off, Calendar, Reports, Employees, Logins/Sign in/out, Configuration (gear submenu: Spawn Test Jobs, Settings), with Employees immediately above Logins. Leads\' "create new" button and Jobs\' "Add a Job" button remain on-screen and functional.',
+    steps: '1. From Home, navigate to Admin & Finance.\n2. Open ☰ and confirm Back is enabled and returns to Home.\n3. Confirm the full ordered item list: Overview, Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Time Off, Calendar, Reports, Employees, Logins/Sign in/out, Configuration (gear: Spawn Test Jobs, Settings).\n4. Confirm Employees sits immediately above Logins.\n5. On Leads, confirm the "create new" button still works.\n6. On Jobs, confirm "Add a Job" still works.' },
+  { id: 'item-4', section: 'section1',
+    desc: 'Job Detail: ☰ opens Back (enabled → Jobs list) followed by the 9-step stepper — Plan, Prelim (E-visit), Estimate, Assign, Schedule, Contact, Arrive, Complete, Paid — then Logins/Sign in/out and Configuration (gear submenu). The 4 Copy buttons and the Save button on the Job Details form are visually and functionally unchanged from before this work.',
+    steps: '1. Open a Job Detail screen.\n2. Open ☰ and confirm Back is enabled and returns to the Jobs list.\n3. Confirm the 9-step stepper items in order: Plan, Prelim (E-visit), Estimate, Assign, Schedule, Contact, Arrive, Complete, Paid.\n4. Confirm Logins/Sign in/out and Configuration (gear submenu) follow the stepper.\n5. Confirm the 4 Copy buttons and the Save button on the Job Details form look and behave unchanged.' },
+  { id: 'item-5', section: 'section1',
+    desc: 'KNOWN DEVIATION FROM ORIGINAL PLAN — the plan assumed an existing "skip the role-picker" auto-navigate bypass that recon confirmed does NOT exist in app/apps/mobile/app/index.tsx. So Field Tech is actually reached by pushing forward from the Home picker (not a direct-landing replace), meaning Back renders ENABLED → Home, not disabled. Test for the actual (corrected) expectation: confirm ☰ shows Back (enabled → Home) then a 6-item menu — Overview, Jobs, Time Off, Reviews, Logins/Sign in/out, Configuration (gear submenu) — and that Reviews shows a "coming soon" stub screen.',
+    steps: '1. From Home, navigate to Field Tech via the Home picker.\n2. Open ☰ and confirm Back is ENABLED and returns to Home (not disabled — this is the corrected expectation, not the original plan\'s assumption).\n3. Confirm the 6-item menu: Overview, Jobs, Time Off, Reviews, Logins/Sign in/out, Configuration (gear submenu).\n4. Open Reviews and confirm it shows a "coming soon" stub screen.' },
+  { id: 'item-6', section: 'section1',
+    desc: 'SAME KNOWN DEVIATION as item 5 — reached via the Home picker, so Back renders ENABLED → Home, not disabled. Confirm ☰ shows Back (enabled → Home) then a 7-item menu — Review Library, Pitch Picker, Composer, Reporting, Callback tasks, Logins/Sign in/out, Configuration (gear submenu) — and that the old inline "Spawn Test Jobs" UI that used to live on this screen is gone.',
+    steps: '1. From Home, navigate to Sales & Marketing via the Home picker.\n2. Open ☰ and confirm Back is ENABLED and returns to Home (not disabled — same deviation as item 5).\n3. Confirm the 7-item menu: Review Library, Pitch Picker, Composer, Reporting, Callback tasks, Logins/Sign in/out, Configuration (gear submenu).\n4. Confirm the old inline "Spawn Test Jobs" UI that used to live on this screen is gone.' },
+  { id: 'item-7', section: 'section1',
+    desc: 'Configuration (gear) submenu, checked from at least two different contexts: Spawn Test Jobs and Settings both open the shared config routes. The Test Jobs screen can spawn, delete, and delete-all test jobs correctly, and shows each test job\'s current workflow stage. All is_beta=true jobs (including any pre-existing ones) are deletable there.',
+    steps: '1. From at least two different screen contexts, open the Configuration (gear) submenu.\n2. Confirm Spawn Test Jobs and Settings both open the shared config routes in each context.\n3. On the Test Jobs screen, spawn a test job, delete a single test job, and delete all test jobs, confirming each works.\n4. Confirm each test job\'s current workflow stage is shown.\n5. Confirm all is_beta=true jobs, including any pre-existing ones, are deletable there.' },
+  { id: 'item-8', section: 'section1',
+    desc: 'Sign Out works correctly from both a Home-reached context (e.g. Admin & Finance) and the Field Tech / Sales & Marketing context.',
+    steps: '1. From Admin & Finance (a Home-reached context), sign out via Logins/Sign in/out and confirm it works correctly.\n2. Log back in, navigate to Field Tech or Sales & Marketing, sign out via Logins/Sign in/out, and confirm it works correctly there too.' },
+];
+
+const STORE_KEY = 'jobcore-test-plan-2026-09-14-app-wide-menu-system';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function render() {
+  const state = loadState();
+  const sections = { section1: document.getElementById('section1') };
+  Object.values(sections).forEach(el => el.innerHTML = '');
+
+  ITEMS.forEach(item => {
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const tr = document.createElement('tr');
+
+    const tdDesc = document.createElement('td');
+    tdDesc.className = 'desc';
+    tdDesc.textContent = item.desc;
+
+    const tdSteps = document.createElement('td');
+    tdSteps.className = 'steps';
+    const ol = document.createElement('ol');
+    item.steps.split('\n').forEach(line => {
+      const stripped = line.replace(/^\d+\.\s*/, '');
+      const li = document.createElement('li');
+      li.textContent = stripped;
+      ol.appendChild(li);
+    });
+    tdSteps.appendChild(ol);
+
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'status';
+    const select = document.createElement('select');
+    select.id = 'status-' + item.id;
+    ['not-tested', 'pass', 'fail'].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v === 'not-tested' ? 'Not tested' : v === 'pass' ? 'Pass' : 'Fail';
+      if (v === saved.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.className = 'status-' + saved.status;
+    select.addEventListener('change', () => {
+      select.className = 'status-' + select.value;
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].status = select.value;
+      saveState(s);
+      updateSummary();
+    });
+    tdStatus.appendChild(select);
+
+    const tdComment = document.createElement('td');
+    tdComment.className = 'comment';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'comment-' + item.id;
+    textarea.value = saved.comment || '';
+    textarea.addEventListener('input', () => {
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].comment = textarea.value;
+      saveState(s);
+    });
+    tdComment.appendChild(textarea);
+
+    tr.appendChild(tdDesc);
+    tr.appendChild(tdSteps);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdComment);
+    sections[item.section].appendChild(tr);
+  });
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const state = loadState();
+  let pass = 0, fail = 0, nt = 0;
+  ITEMS.forEach(item => {
+    const s = (state[item.id] || {}).status || 'not-tested';
+    if (s === 'pass') pass++;
+    else if (s === 'fail') fail++;
+    else nt++;
+  });
+  document.getElementById('summary').textContent =
+    ITEMS.length + ' items — ' + pass + ' pass / ' + fail + ' fail / ' + nt + ' not tested';
+}
+
+function resetAll() {
+  if (!confirm('Reset all results? This clears saved progress in this browser.')) return;
+  localStorage.removeItem(STORE_KEY);
+  render();
+}
+
+function copyResults() {
+  const state = loadState();
+  const lines = [];
+  lines.push('# App-Wide Menu System — Test Plan Results (2026-09-14)');
+  lines.push('');
+  ITEMS.forEach(item => {
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const statusLabel = saved.status === 'pass' ? 'PASS' : saved.status === 'fail' ? 'FAIL' : 'NOT TESTED';
+    lines.push('- [' + statusLabel + '] ' + item.desc + (saved.comment ? ' — ' + saved.comment : ''));
+  });
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('copyStatus').textContent = 'Copied to clipboard.';
+    setTimeout(() => { document.getElementById('copyStatus').textContent = ''; }, 2500);
+  }, () => {
+    document.getElementById('copyStatus').textContent = 'Copy failed — select and copy manually.';
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>

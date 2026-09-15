@@ -24,7 +24,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, Select, TabBar, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, MonthView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, Breadcrumb, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
 import type { Commission, Job, Profile } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
@@ -61,6 +61,7 @@ import { assignJob } from '../flows/assign-job';
 import { qualifyLead } from '../flows/qualify-lead';
 import { closeOutJob } from '../flows/close-out-job';
 import type { TechColumnTech } from '../components/TechColumn';
+import { signOut } from '../../../../apps/mobile/src/lib/session';
 
 type SubView =
   | 'overview' | 'jobs'
@@ -654,7 +655,32 @@ export function AdminFinanceRoot() {
           ]}
         />
       )}
-      <TabBar items={TOP_LEVEL_TABS} activeKey={subView} onSelect={goTop} />
+      <AppChrome
+        breadcrumbSegments={[{ label: 'Admin & Finance' }]}
+        menuItems={[
+          { id: 'overview', label: 'Overview', onPress: () => goTop('overview') },
+          { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox') },
+          { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs') },
+          { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard') },
+          { id: 'closeOutQueue', label: 'Close-Outs', onPress: () => goTop('closeOutQueue') },
+          { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList') },
+          { id: 'payments', label: 'Payments', onPress: () => goTop('payments') },
+          { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue') },
+          { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar') },
+          { id: 'reports', label: 'Reports', onPress: () => goTop('reports') },
+          { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster') },
+          { id: 'logins', label: 'Logins', onPress: () => void signOut() },
+          {
+            id: 'configuration',
+            label: 'Configuration',
+            onPress: () => {},
+            submenu: [
+              { id: 'config-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
+              { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+            ],
+          },
+        ]}
+      />
 
       {subView === 'overview' || subView === 'jobs' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (

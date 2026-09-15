@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { Breadcrumb, Button, Select, colors, spacing, typography } from '@jobcore/ui';
+import { AppChrome, Select, colors, spacing, typography } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 
@@ -15,8 +16,7 @@ export type JobHeaderProps = {
   techs?: { id: string; name: string }[];
   onAssignTech?: (techId: string) => void;
   assigningTech?: boolean;
-  region: JobRegion;
-  onSelectRegion: (r: JobRegion) => void;
+  jobDetailMenuItems: MenuItem[];
   onContact: () => void;
   onArrive: () => void;
   onComplete: () => void;
@@ -24,16 +24,6 @@ export type JobHeaderProps = {
   busyAction?: string | null;
   statusError?: string | null;
 };
-
-type RegionButton = { id: JobRegion; label: string };
-
-const REGION_BUTTONS: RegionButton[] = [
-  { id: 'plan', label: 'Plan' },
-  { id: 'evisit', label: 'E-visit' },
-  { id: 'estimate', label: 'Estimate' },
-  { id: 'assign', label: 'Assign' },
-  { id: 'schedule', label: 'Schedule' },
-];
 
 export function JobHeader({
   job,
@@ -43,8 +33,7 @@ export function JobHeader({
   techs,
   onAssignTech,
   assigningTech,
-  region,
-  onSelectRegion,
+  jobDetailMenuItems,
   onContact,
   onArrive,
   onComplete,
@@ -62,8 +51,10 @@ export function JobHeader({
 
   return (
     <View style={styles.root}>
-      <Breadcrumb
-        segments={[
+      <AppChrome
+        menuItems={jobDetailMenuItems}
+        optionsItems={[]}
+        breadcrumbSegments={[
           { label: 'Jobs' },
           { label: abbreviate(job.address) },
           { label: `#${job.jobNumber ?? '—'}` },
@@ -111,46 +102,6 @@ export function JobHeader({
         </View>
       </View>
       <View style={styles.rule} />
-      <View style={styles.buttonRow}>
-        {REGION_BUTTONS.map((btn) => (
-          <Button
-            key={btn.id}
-            label={btn.label}
-            size="tab"
-            variant={region === btn.id ? 'primary' : 'outline'}
-            disabled={busyAction === btn.id}
-            onPress={() => onSelectRegion(btn.id)}
-          />
-        ))}
-        <Button
-          label="Contact"
-          size="tab"
-          variant="outline"
-          disabled={busyAction === 'contact'}
-          onPress={onContact}
-        />
-        <Button
-          label="Arrive"
-          size="tab"
-          variant="outline"
-          disabled={busyAction === 'arrive'}
-          onPress={onArrive}
-        />
-        <Button
-          label="Complete"
-          size="tab"
-          variant="outline"
-          disabled={busyAction === 'complete'}
-          onPress={onComplete}
-        />
-        <Button
-          label="Paid"
-          size="tab"
-          variant="outline"
-          disabled={busyAction === 'paid' || !paidEligible}
-          onPress={onPaid}
-        />
-      </View>
       {paidHint ? <Text style={styles.paidHint}>{paidHint}</Text> : null}
     </View>
   );
