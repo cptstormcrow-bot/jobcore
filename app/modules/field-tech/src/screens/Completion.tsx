@@ -28,9 +28,10 @@
  */
 
 import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, Button, Checkbox, TextField, colors, spacing, typography } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -184,24 +185,22 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
   }
 
   return (
-    <div>
+    <View style={styles.container}>
       <ScreenTitle title="Complete Job" />
-      <p>Complete this job.</p>
+      <Text style={styles.body}>Complete this job.</Text>
 
-      <label>
-        <input
-          type="checkbox"
-          checked={checklistComplete}
-          onChange={(e) => setChecklistComplete(e.target.checked)}
-          disabled={submitting}
-        />
-        Completion checklist done
-      </label>
+      <Checkbox
+        label="Completion checklist done"
+        checked={checklistComplete}
+        onChange={() => setChecklistComplete((prev) => !prev)}
+        disabled={submitting}
+        style={styles.checkboxRow}
+      />
 
-      <div>
-        <button
-          type="button"
-          onClick={() => {
+      <View style={styles.section}>
+        <Button
+          label="Capture after-photo"
+          onPress={() => {
             void (async () => {
               const ports = getModulePorts();
               const captured = await ports.camera.capturePhoto('after');
@@ -211,26 +210,64 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
             })();
           }}
           disabled={submitting}
-        >
-          Capture after-photo
-        </button>
-        <p>{afterPhotoCount} after-photo(s) recorded</p>
-      </div>
+          style={styles.button}
+        />
+        <Text style={styles.body}>{afterPhotoCount} after-photo(s) recorded</Text>
+      </View>
 
-      <textarea
+      <TextField
         value={qualityNotes}
-        onChange={(e) => setQualityNotes(e.target.value)}
+        onChangeText={setQualityNotes}
         placeholder="Quality notes"
         disabled={submitting}
+        multiline
+        style={styles.field}
       />
 
-      <p>{workedMinutes !== null ? formatWorkedTime(workedMinutes) : 'Loading time worked…'}</p>
+      <Text style={styles.body}>
+        {workedMinutes !== null ? formatWorkedTime(workedMinutes) : 'Loading time worked…'}
+      </Text>
 
-      {error !== null ? <p role="alert">{error}</p> : null}
+      {error !== null ? (
+        <Text accessibilityRole="alert" style={styles.errorText}>
+          {error}
+        </Text>
+      ) : null}
 
-      <button type="button" onClick={() => void handleSubmit()} disabled={!canSubmit}>
-        {submitting ? 'Completing…' : 'Complete job'}
-      </button>
-    </div>
+      <Button
+        label={submitting ? 'Completing…' : 'Complete job'}
+        onPress={() => void handleSubmit()}
+        disabled={!canSubmit}
+        style={styles.button}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.md,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  body: {
+    fontSize: typography.size.body,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  field: {
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    fontSize: typography.size.label,
+    color: colors.danger,
+    marginBottom: spacing.md,
+  },
+  button: {
+    marginBottom: spacing.md,
+  },
+  checkboxRow: {
+    marginBottom: spacing.md,
+  },
+});
