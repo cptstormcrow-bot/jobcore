@@ -6,6 +6,7 @@ export interface TextFieldProps {
   label?: string;
   value: string;
   onChangeText?: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   multiline?: boolean;
   disabled?: boolean;
@@ -19,6 +20,7 @@ export function TextField({
   label,
   value,
   onChangeText,
+  onBlur,
   placeholder,
   multiline = false,
   disabled = false,
@@ -34,6 +36,7 @@ export function TextField({
       <TextInput
         value={value}
         onChangeText={onChangeText}
+        onBlur={onBlur}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
