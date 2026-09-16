@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, type JobRegion } from '../../src/components/JobHeader';
@@ -860,7 +860,12 @@ export default function JobDrilldownScreen() {
     // until Create is pressed.
     return (
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Breadcrumb segments={[{ label: 'Jobs', onPress: () => router.back() }, { label: 'New Job' }]} />
+        <AppChrome
+          menuItems={[]}
+          optionsItems={[]}
+          breadcrumbSegments={[{ label: 'Jobs' }, { label: 'New Job' }]}
+          titleBar={{ title: 'New Job' }}
+        />
         <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
           <JobDetailsForm
             mode="create"
