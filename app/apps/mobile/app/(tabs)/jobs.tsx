@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { useRouter } from 'expo-router';
-import { Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
+import { AppChrome, Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -104,6 +104,12 @@ export default function JobsScreen() {
   if (!selectedJob || !isBetaVisible(selectedJob, showBeta)) {
     return (
       <View style={styles.center}>
+        <AppChrome
+          breadcrumbSegments={[{ label: 'Jobs' }]}
+          menuItems={[]}
+          optionsItems={[]}
+          titleBar={{ title: 'Jobs' }}
+        />
         <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
         <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
         <EmptyState title="Jobs" message="No job selected. The job list lands in a later slice." />
@@ -113,6 +119,12 @@ export default function JobsScreen() {
 
   return (
     <View style={styles.root}>
+      <AppChrome
+        breadcrumbSegments={[{ label: 'Jobs' }]}
+        menuItems={[]}
+        optionsItems={[]}
+        titleBar={{ title: 'Jobs' }}
+      />
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
       <JobDetail job={selectedJob} />
