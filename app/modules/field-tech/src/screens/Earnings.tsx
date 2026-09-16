@@ -32,8 +32,9 @@
  */
 
 import { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import type { Job, PayPeriod, BonusRule, Commission, Reimbursement, CloseOut, DerivedHours } from '@jobcore/core';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, Button, TextField, colors, spacing, typography } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -147,80 +148,116 @@ export function Earnings({
   }
 
   return (
-    <div>
+    <View style={styles.container}>
       <ScreenTitle title="Earnings" />
-      <p>Earnings for {period.start} – {period.end}</p>
+      <Text style={styles.body}>Earnings for {period.start} – {period.end}</Text>
 
-      <section>
-        <h3>Hours</h3>
+      <View style={styles.section}>
+        <Text style={styles.heading}>Hours</Text>
         {derivedHours === null ? (
-          <p>Hours not yet derivable — job has not completed.</p>
+          <Text style={styles.body}>Hours not yet derivable — job has not completed.</Text>
         ) : (
-          <p>{derivedHours.hours.toFixed(2)} hours ({derivedHours.from} – {derivedHours.to})</p>
+          <Text style={styles.body}>{derivedHours.hours.toFixed(2)} hours ({derivedHours.from} – {derivedHours.to})</Text>
         )}
-      </section>
+      </View>
 
-      <section>
-        <h3>Bonus</h3>
-        <p>{bonusRule.description}</p>
-        <p>{formatCurrency(bonusAmount)}</p>
-      </section>
+      <View style={styles.section}>
+        <Text style={styles.heading}>Bonus</Text>
+        <Text style={styles.body}>{bonusRule.description}</Text>
+        <Text style={styles.body}>{formatCurrency(bonusAmount)}</Text>
+      </View>
 
-      <section>
-        <h3>Commissions</h3>
+      <View style={styles.section}>
+        <Text style={styles.heading}>Commissions</Text>
         {commissions.length === 0 ? (
-          <p>{formatCurrency(0)}</p>
+          <Text style={styles.body}>{formatCurrency(0)}</Text>
         ) : (
-          <ul>
+          <View>
             {commissions.map((c, i) => (
-              <li key={`${c.jobId}-${i}`}>{formatCurrency(c.amount)}</li>
+              <Text key={`${c.jobId}-${i}`} style={styles.body}>{formatCurrency(c.amount)}</Text>
             ))}
-          </ul>
+          </View>
         )}
-        <p>Total: {formatCurrency(totalCommissions)}</p>
-      </section>
+        <Text style={styles.body}>Total: {formatCurrency(totalCommissions)}</Text>
+      </View>
 
-      <section>
-        <h3>Reimbursements</h3>
+      <View style={styles.section}>
+        <Text style={styles.heading}>Reimbursements</Text>
         {reimbursements.length === 0 ? (
-          <p>{formatCurrency(0)}</p>
+          <Text style={styles.body}>{formatCurrency(0)}</Text>
         ) : (
-          <ul>
+          <View>
             {reimbursements.map((r, i) => (
-              <li key={`${r.jobId}-${i}`}>{formatCurrency(r.amount)}</li>
+              <Text key={`${r.jobId}-${i}`} style={styles.body}>{formatCurrency(r.amount)}</Text>
             ))}
-          </ul>
+          </View>
         )}
-        <p>Total: {formatCurrency(totalReimbursements)}</p>
-      </section>
+        <Text style={styles.body}>Total: {formatCurrency(totalReimbursements)}</Text>
+      </View>
 
-      <section>
-        <h3>Close-out</h3>
+      <View style={styles.section}>
+        <Text style={styles.heading}>Close-out</Text>
         {closeOut.closed ? (
-          <p>
+          <Text style={styles.body}>
             Closed {closeOut.closedAt !== null ? `on ${closeOut.closedAt}` : ''}
             {closeOut.closedBy !== null ? ` by ${closeOut.closedBy}` : ''}
-          </p>
+          </Text>
         ) : (
-          <p>Pending — this period has not been closed out yet.</p>
+          <Text style={styles.body}>Pending — this period has not been closed out yet.</Text>
         )}
-      </section>
+      </View>
 
-      <section>
-        <h3>Dispute</h3>
-        <p>Filing a dispute records a note only — it does not change this job&apos;s status.</p>
-        <textarea
+      <View style={styles.section}>
+        <Text style={styles.heading}>Dispute</Text>
+        <Text style={styles.body}>Filing a dispute records a note only — it does not change this job&apos;s status.</Text>
+        <TextField
           value={disputeText}
-          onChange={(e) => setDisputeText(e.target.value)}
+          onChangeText={setDisputeText}
           placeholder="Describe the dispute"
           disabled={submitting}
+          multiline
+          style={styles.field}
         />
-        {error !== null ? <p role="alert">{error}</p> : null}
-        {submitted ? <p>Dispute recorded.</p> : null}
-        <button type="button" onClick={() => void handleSubmitDispute()} disabled={!canSubmitDispute}>
-          {submitting ? 'Submitting…' : 'Submit dispute'}
-        </button>
-      </section>
-    </div>
+        {error !== null ? (
+          <Text accessibilityRole="alert" style={styles.errorText}>
+            {error}
+          </Text>
+        ) : null}
+        {submitted ? <Text style={styles.body}>Dispute recorded.</Text> : null}
+        <Button
+          label={submitting ? 'Submitting…' : 'Submit dispute'}
+          onPress={() => void handleSubmitDispute()}
+          disabled={!canSubmitDispute}
+        />
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.md,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  heading: {
+    fontSize: typography.size.h5,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  body: {
+    fontSize: typography.size.body,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  field: {
+    marginBottom: spacing.sm,
+  },
+  errorText: {
+    fontSize: typography.size.label,
+    color: colors.danger,
+    marginBottom: spacing.sm,
+  },
+});
