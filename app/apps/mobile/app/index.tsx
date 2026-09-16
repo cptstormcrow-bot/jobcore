@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getEnabledModules } from '@jobcore/module-sdk';
-import { EmptyState, LoadingState, ScreenTitle, AppChrome, colors, spacing, typography } from '@jobcore/ui';
+import { EmptyState, LoadingState, AppChrome, colors, spacing, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 
 import { useSession, signOut } from '../src/lib/session';
@@ -52,15 +52,19 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <ScreenTitle title="Home" />
+      <AppChrome
+        breadcrumbSegments={[{ label: 'Home' }]}
+        menuItems={menuItems}
+        optionsItems={[]}
+        titleBar={{ title: 'Home' }}
+      />
+
       <View style={styles.header}>
         <Text style={styles.org}>{organization.name}</Text>
         <Text style={styles.who}>
           {profile.fullName} · {profile.role}
         </Text>
       </View>
-
-      <AppChrome breadcrumbSegments={[{ label: 'Home' }]} menuItems={menuItems} optionsItems={[]} />
 
       {modules.length === 0 ? (
         <View style={styles.center}>
@@ -86,7 +90,7 @@ const styles = StyleSheet.create({
   org: {
     color: colors.primary,
     fontSize: typography.size.h2,
-    fontFamily: typography.fontFamily.heading,
+    fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
   },
   who: {
