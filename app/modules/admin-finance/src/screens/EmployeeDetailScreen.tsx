@@ -24,7 +24,7 @@
 
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import { DayList } from '@jobcore/field-tech';
 import type { Profile, Job } from '@jobcore/core';
 
@@ -73,6 +73,8 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <ScreenTitle title={employee.fullName} />
+
         <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
 
         <Card style={styles.card}>
