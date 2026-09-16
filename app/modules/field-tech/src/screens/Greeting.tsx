@@ -21,8 +21,9 @@
  */
 
 import { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, Button, TextField, colors, spacing, typography } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -93,43 +94,78 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
 
   if (showDeclineForm) {
     return (
-      <div>
-        <p>Please tell us why you&apos;re declining this job.</p>
-        <textarea
+      <View style={styles.container}>
+        <Text style={styles.body}>Please tell us why you&apos;re declining this job.</Text>
+        <TextField
           value={reason}
-          onChange={(e) => setReason(e.target.value)}
+          onChangeText={setReason}
           placeholder="Reason for declining"
           disabled={submitting}
+          multiline
+          style={styles.field}
         />
-        {error !== null ? <p role="alert">{error}</p> : null}
-        <button
-          type="button"
-          onClick={() => {
-            setShowDeclineForm(false);
-            setReason('');
-            setError(null);
-          }}
-          disabled={submitting}
-        >
-          Back
-        </button>
-        <button type="button" onClick={handleDeclineSubmit} disabled={!canSubmitDecline}>
-          {submitting ? 'Submitting…' : 'Submit decline'}
-        </button>
-      </div>
+        {error !== null ? (
+          <Text accessibilityRole="alert" style={styles.errorText}>
+            {error}
+          </Text>
+        ) : null}
+        <View style={styles.buttonRow}>
+          <Button
+            label="Back"
+            variant="outline"
+            disabled={submitting}
+            onPress={() => {
+              setShowDeclineForm(false);
+              setReason('');
+              setError(null);
+            }}
+            style={styles.button}
+          />
+          <Button
+            label={submitting ? 'Submitting…' : 'Submit decline'}
+            disabled={!canSubmitDecline}
+            onPress={handleDeclineSubmit}
+            style={styles.button}
+          />
+        </View>
+      </View>
     );
   }
 
   return (
-    <div>
+    <View style={styles.container}>
       <ScreenTitle title="New Job Assigned" />
-      <p>You&apos;ve been assigned a new job.</p>
-      <button type="button" onClick={handleAccept}>
-        Accept
-      </button>
-      <button type="button" onClick={() => setShowDeclineForm(true)}>
-        Decline
-      </button>
-    </div>
+      <Text style={styles.body}>You&apos;ve been assigned a new job.</Text>
+      <View style={styles.buttonRow}>
+        <Button label="Accept" onPress={handleAccept} style={styles.button} />
+        <Button label="Decline" variant="outline" onPress={() => setShowDeclineForm(true)} style={styles.button} />
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.md,
+  },
+  body: {
+    fontSize: typography.size.body,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  field: {
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    fontSize: typography.size.label,
+    color: colors.danger,
+    marginBottom: spacing.md,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  button: {
+    flex: 1,
+  },
+});
