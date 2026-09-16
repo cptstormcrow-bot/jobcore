@@ -30,10 +30,14 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
   // WCAG AA's 4.5:1 for normal text. secondaryDark (#C46000, already a defined
   // brand token) raises that to ~4.2:1 without inventing a new color or
   // touching the sdassemblypro.com site palette itself.
-  const bg = variant === 'primary' ? colors.secondaryDark : variant === 'secondary' ? colors.primary : 'transparent';
+  // primary uses a lighter tan (#E1AF80) background per user decision; white
+  // label text on that tan only reaches ~2.0:1 contrast (fails WCAG AA), so
+  // primary's label uses colors.primary (dark navy) instead of white below.
+  const bg = variant === 'primary' ? '#E1AF80' : variant === 'secondary' ? colors.primary : 'transparent';
   // Same contrast reasoning applies to outline-variant text on white: use
-  // secondaryDark, not secondary, so label text also clears ~4.2:1.
-  const labelColor = isOutline ? colors.secondaryDark : colors.white;
+  // secondaryDark, not secondary, so label text also clears ~4.2:1. secondary's
+  // navy background still contrasts fine with white label text.
+  const labelColor = isOutline ? colors.secondaryDark : variant === 'primary' ? colors.primary : colors.white;
   return (
     <Pressable
       onPress={onPress}
