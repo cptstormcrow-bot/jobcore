@@ -140,9 +140,10 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
   return (
     <View style={styles.container}>
-      <ScreenTitle title="Field Job Detail" subtitle={job.address ?? undefined} />
-      <Text style={styles.title}>Job {job.id}</Text>
-      <Text style={styles.status}>{job.status}</Text>
+      <ScreenTitle
+        title={`Job ${job.id}`}
+        subtitle={[job.status, job.address].filter(Boolean).join(' · ') || undefined}
+      />
 
       {job.description ? <Text style={styles.description}>{job.description}</Text> : null}
 
@@ -195,15 +196,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  status: {
-    fontSize: 14,
-    color: colors.textMutedDark,
-    marginBottom: 12,
   },
   description: {
     fontSize: 14,
