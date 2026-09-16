@@ -36,10 +36,11 @@
  */
 
 import { useCallback, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
 import type { NewQueuedMutation } from '@jobcore/core';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, Button, Checkbox, colors, spacing, typography } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -221,39 +222,41 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
 
   if (session === null) {
     return (
-      <div>
-        <p>Sign in to start this job.</p>
-      </div>
+      <View style={styles.container}>
+        <Text style={styles.body}>Sign in to start this job.</Text>
+      </View>
     );
   }
 
   return (
-    <div>
+    <View style={styles.container}>
       <ScreenTitle title="Start Checklist" />
-      <p>Job {job.id}</p>
-      {error !== null ? <p role="alert">{error}</p> : null}
+      <Text style={styles.body}>Job {job.id}</Text>
+      {error !== null ? (
+        <Text accessibilityRole="alert" style={styles.errorText}>
+          {error}
+        </Text>
+      ) : null}
 
       {!enRoute ? (
-        <button type="button" onClick={handleOnMyWay}>
-          On my way
-        </button>
+        <Button label="On my way" onPress={handleOnMyWay} style={styles.button} />
       ) : null}
 
       {enRoute && instance === null ? (
-        <button type="button" onClick={handleStart}>
-          Start
-        </button>
+        <Button label="Start" onPress={handleStart} style={styles.button} />
       ) : null}
 
       {instance !== null ? (
-        <div>
-          <p>Checklist instance {instance.id} (template v{instance.templateVersion})</p>
+        <View>
+          <Text style={styles.body}>
+            Checklist instance {instance.id} (template v{instance.templateVersion})
+          </Text>
 
-          <div>
-            <p>Before photos captured: {beforePhotoCount}</p>
-            <button
-              type="button"
-              onClick={() => {
+          <View style={styles.section}>
+            <Text style={styles.body}>Before photos captured: {beforePhotoCount}</Text>
+            <Button
+              label="Capture before-photo"
+              onPress={() => {
                 void (async () => {
                   const ports = getModulePorts();
                   const captured = await ports.camera.capturePhoto('before');
@@ -262,31 +265,55 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
                   }
                 })();
               }}
-            >
-              Capture before-photo
-            </button>
-          </div>
+              style={styles.button}
+            />
+          </View>
 
-          <ul>
+          <View style={styles.section}>
             {templateItems.map((item) => (
-              <li key={item.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={checkedLabels.has(item.label)}
-                    onChange={() => handleToggleItem(item.label)}
-                  />
-                  {item.label}
-                </label>
-              </li>
+              <Checkbox
+                key={item.id}
+                label={item.label}
+                checked={checkedLabels.has(item.label)}
+                onChange={() => handleToggleItem(item.label)}
+                style={styles.checkboxRow}
+              />
             ))}
-          </ul>
+          </View>
 
-          <button type="button" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Submitting…' : 'Submit'}
-          </button>
-        </div>
+          <Button
+            label={submitting ? 'Submitting…' : 'Submit'}
+            disabled={submitting}
+            onPress={handleSubmit}
+            style={styles.button}
+          />
+        </View>
       ) : null}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    padding: spacing.md,
+  },
+  body: {
+    fontSize: typography.size.body,
+    color: colors.text,
+    marginBottom: spacing.md,
+  },
+  errorText: {
+    fontSize: typography.size.label,
+    color: colors.danger,
+    marginBottom: spacing.md,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  button: {
+    marginBottom: spacing.md,
+  },
+  checkboxRow: {
+    marginBottom: spacing.sm,
+  },
+});
