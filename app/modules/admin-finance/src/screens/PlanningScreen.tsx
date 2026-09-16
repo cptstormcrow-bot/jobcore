@@ -30,7 +30,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository, JobInvestigation, JobPlanTasksRepository, JobPlanTaskRow, ServiceTaskCatalogEntry } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
@@ -364,7 +364,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
 
         <Card style={styles.card}>
           {!embedded && (
-            <Text style={styles.title}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
+            <Text style={styles.jobTitle}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
           )}
 
           {detailsLoadState.kind === 'loading' || detailsLoadState.kind === 'idle' ? (
@@ -375,116 +375,92 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             <>
               <Text style={styles.guidance}>Note what you&apos;d need on-site: model numbers, measurements, parts, access notes.</Text>
 
-              <Text style={styles.label}>Model Numbers</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Model Numbers"
                 value={modelNumbers}
                 onChangeText={setModelNumbers}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="e.g. Trane XR16, model # ..."
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Parts List</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Parts List"
                 value={partsList}
                 onChangeText={setPartsList}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="List parts needed for this job"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Measurements</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Measurements"
                 value={measurements}
                 onChangeText={setMeasurements}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="Dimensions, clearances, etc."
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Instructions</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Instructions"
                 value={instructions}
                 onChangeText={setInstructions}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="Step-by-step notes for the assigned tech"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Ingress Notes</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Ingress Notes"
                 value={ingressNotes}
                 onChangeText={setIngressNotes}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="How to access the site"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Logistics Notes</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Logistics Notes"
                 value={logisticsNotes}
                 onChangeText={setLogisticsNotes}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="Logistics considerations for the visit"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>Parking Notes</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="Parking Notes"
                 value={parkingNotes}
                 onChangeText={setParkingNotes}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="Where to park"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
-              <Text style={styles.label}>State Assessment</Text>
-              <TextInput
-                style={styles.notesInput}
+              <TextField
+                label="State Assessment"
                 value={stateAssessment}
                 onChangeText={setStateAssessment}
                 onBlur={() => {
                   void handleSave();
                 }}
                 placeholder="Current state of the site/system"
-                placeholderTextColor={colors.textLight}
                 multiline
-                textAlignVertical="top"
               />
 
               {saveError && <Text style={styles.errorText}>{saveError}</Text>}
@@ -508,12 +484,12 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
         </Card>
 
         <Card style={styles.card}>
-          <Text style={styles.title}>Tasks</Text>
+          <Text style={styles.tasksTitle}>Tasks</Text>
           <TaskListSection jobId={selectedJobId as string} jobPlanTasks={jobPlanTasks} standardMinutes={standardMinutes} />
         </Card>
 
         <Card style={styles.card}>
-          <Text style={styles.title}>Photos</Text>
+          <Text style={styles.photosTitle}>Photos</Text>
           {photosError && <Text style={styles.errorText}>{photosError}</Text>}
           {photos.length === 0 ? (
             <Text style={styles.hintText}>No photos added yet.</Text>
@@ -557,10 +533,24 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: spacing.sm,
   },
-  title: {
+  jobTitle: {
     color: colors.text,
     fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.heading,
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
+  },
+  tasksTitle: {
+    color: colors.text,
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: typography.weight.bold,
+    marginBottom: spacing.xs,
+  },
+  photosTitle: {
+    color: colors.text,
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
     marginBottom: spacing.xs,
   },
