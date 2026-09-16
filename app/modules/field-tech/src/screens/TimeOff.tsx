@@ -438,12 +438,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: '#777',
+    color: colors.textMutedDark,
     marginTop: 6,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 8,
     marginTop: 4,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
   requestRow: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   requestDates: {
     fontSize: 14,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   requestStatus: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 2,
   },
   requestReason: {
@@ -485,15 +485,15 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
     marginTop: 8,
   },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   sheetWrap: { width: '100%', maxHeight: '90%' },
-  sheet: { width: '100%', flexShrink: 1, backgroundColor: '#fff', borderRadius: 8, padding: 16 },
+  sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: 8, padding: 16 },
   modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
   modalRange: { fontSize: 15, marginBottom: 8 },
   modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },

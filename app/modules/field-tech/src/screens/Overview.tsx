@@ -23,6 +23,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { colors } from '@jobcore/ui';
 
 /** Job statuses that count as "closed out" — everything else counts as open. */
 const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   card: {
     width: '48%',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     margin: 4,
@@ -249,14 +250,14 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 4,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
     marginTop: 8,
   },
 });

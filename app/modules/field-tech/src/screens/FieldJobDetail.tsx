@@ -19,7 +19,7 @@ import * as React from 'react';
 import { View, Text, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, telUrl } from '@jobcore/ui';
+import { ScreenTitle, Button, telUrl, colors } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   status: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textMutedDark,
     marginBottom: 12,
   },
   description: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: '#777',
+    color: colors.textMutedDark,
     marginTop: 6,
   },
   value: {
@@ -230,9 +230,9 @@ const styles = StyleSheet.create({
   },
   noteTimestamp: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textMutedDark,
   },
   error: {
-    color: '#b00020',
+    color: colors.danger,
   },
 });

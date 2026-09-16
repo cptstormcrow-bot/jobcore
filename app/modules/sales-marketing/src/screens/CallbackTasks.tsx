@@ -19,7 +19,7 @@
 import * as React from 'react';
 import { View, Text, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { ScreenTitle, Toggle } from '@jobcore/ui';
+import { ScreenTitle, Toggle, colors } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
@@ -162,10 +162,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
   },
   listContent: {
     paddingBottom: 16,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   row: {
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   customerName: {
     fontSize: 15,
@@ -181,13 +181,13 @@ const styles = StyleSheet.create({
   },
   meta: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 2,
   },
   markButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   markButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
 });
 

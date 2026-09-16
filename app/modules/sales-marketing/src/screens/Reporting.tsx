@@ -37,7 +37,7 @@ import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-nat
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review } from '../data/ports';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, colors } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
   platform: string;
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   notice: {
     backgroundColor: '#fff4e5',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#e0a300',
+    borderColor: colors.accent,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -224,12 +224,12 @@ const styles = StyleSheet.create({
   noticeTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#7a4a00',
+    color: colors.warning,
     marginBottom: 4,
   },
   noticeBody: {
     fontSize: 13,
-    color: '#7a4a00',
+    color: colors.warning,
   },
   centered: {
     flex: 1,
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
   },
   scrollContent: {
     paddingBottom: 16,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
     fontSize: 13,
     marginBottom: 4,
   },
@@ -259,16 +259,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   rowLabel: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
   },
   rowValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
 });
 

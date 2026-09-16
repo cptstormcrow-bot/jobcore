@@ -214,10 +214,10 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   dayTextSelected: {
-    color: '#fff',
+    color: colors.white,
   },
   dayTextTimeOff: {
-    color: '#D32F2F',
+    color: colors.danger,
     fontWeight: '700',
   },
   dotsRow: {
@@ -266,6 +266,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   timeOffListText: {
-    color: '#D32F2F',
+    color: colors.danger,
   },
 });

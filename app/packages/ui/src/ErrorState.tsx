@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.danger,
     fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.heading,
+    fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
   },
   message: {

@@ -55,7 +55,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, colors } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 10,
@@ -502,17 +502,17 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
   suggestedCaption: {
     fontSize: 14,
     fontStyle: 'italic',
-    color: '#333',
+    color: colors.text,
     marginBottom: 12,
   },
   label: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textMutedDark,
     marginBottom: 4,
   },
   platformRow: {
@@ -524,26 +524,26 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
   },
   platformChipActive: {
-    backgroundColor: '#333',
+    backgroundColor: colors.text,
   },
   platformChipText: {
     fontSize: 13,
-    color: '#333',
+    color: colors.text,
   },
   platformChipTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   guidanceText: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textMutedDark,
     marginBottom: 12,
   },
   captionInput: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 10,
@@ -570,24 +570,24 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#888',
+    borderColor: colors.textMutedDark,
     marginRight: 8,
   },
   checkboxChecked: {
-    backgroundColor: '#333',
+    backgroundColor: colors.text,
   },
   assetLabel: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
     fontSize: 13,
     marginTop: 4,
   },
   infoText: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textMutedDark,
     marginTop: 8,
   },
   approvedText: {
@@ -597,25 +597,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   primaryButton: {
-    backgroundColor: '#333',
+    backgroundColor: colors.text,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 16,
   },
   primaryButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 15,
     fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#333',
+    color: colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -627,12 +627,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
   },
   doneButtonText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
 });
 

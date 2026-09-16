@@ -25,7 +25,7 @@
 
 import * as React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, colors } from '@jobcore/ui';
 
 /** The four pitch angles a sales rep can build a post around (spec § Pitch picker and composer). */
 export type PitchAngle = 'service_line' | 'community' | 'seasonal' | 'before_after';
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textMutedDark,
     marginTop: 4,
     marginBottom: 16,
   },
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 8,
     padding: 16,
   },
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textMutedDark,
   },
 });
 

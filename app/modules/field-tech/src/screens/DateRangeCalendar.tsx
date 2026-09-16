@@ -26,7 +26,7 @@ import {
   isAfter,
   isWithinInterval,
 } from 'date-fns';
-import { CalendarHeader, WeekView, MonthView, type CalendarMode, type TimeOffEvent } from '@jobcore/ui';
+import { CalendarHeader, WeekView, MonthView, colors, type CalendarMode, type TimeOffEvent } from '@jobcore/ui';
 
 export interface DateRangeCalendarProps {
   /** ISO `YYYY-MM-DD`, or empty string when unset. */
@@ -181,7 +181,7 @@ export function DateRangeCalendar({
 const styles = StyleSheet.create({
   container: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 8,
     marginTop: 4,
@@ -189,6 +189,6 @@ const styles = StyleSheet.create({
   rangeSummary: {
     marginTop: 8,
     fontSize: 12,
-    color: '#666',
+    color: colors.textMutedDark,
   },
 });

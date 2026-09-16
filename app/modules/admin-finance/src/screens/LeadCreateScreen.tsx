@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.heading,
+    fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
     marginBottom: spacing.xs,
   },

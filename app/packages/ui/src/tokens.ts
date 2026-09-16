@@ -33,9 +33,11 @@ export const colors = {
 
 export const typography = {
   fontFamily: {
-    heading: 'Poppins',       // used for headings/buttons/nav in source
-    body: 'Inter',            // body text
-    accent: 'DancingScript',  // declared-but-unused in source; kept for future use
+    heading: 'Poppins_600SemiBold',       // used for headings/buttons/nav in source
+    headingBold: 'Poppins_700Bold',
+    headingMedium: 'Poppins_500Medium',
+    body: 'Inter_400Regular',            // body text
+    bodyMedium: 'Inter_500Medium',
   },
   weight: {
     regular: '400',

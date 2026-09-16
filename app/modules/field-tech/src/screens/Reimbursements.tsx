@@ -18,6 +18,7 @@ import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-na
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { colors } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -224,12 +225,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: '#777',
+    color: colors.textMutedDark,
     marginTop: 6,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 6,
     padding: 8,
     marginTop: 4,
@@ -239,7 +240,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   requestRow: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   requestAmount: {
     fontSize: 14,
@@ -267,19 +268,19 @@ const styles = StyleSheet.create({
   },
   requestStatus: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 2,
   },
   requestDate: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 2,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
     marginTop: 8,
   },
 });

@@ -35,7 +35,7 @@
 
 import * as React from 'react';
 import { View, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { ScreenTitle } from '@jobcore/ui';
+import { ScreenTitle, colors } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 13,
-    color: '#555',
+    color: colors.textMutedDark,
     marginTop: 8,
     marginBottom: 4,
   },
@@ -283,21 +283,21 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
   },
   ratingChipActive: {
-    backgroundColor: '#333',
+    backgroundColor: colors.text,
   },
   ratingChipText: {
     fontSize: 13,
-    color: '#333',
+    color: colors.text,
   },
   ratingChipTextActive: {
-    color: '#fff',
+    color: colors.white,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#ccc',
+    borderColor: colors.border,
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 10,
@@ -310,10 +310,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
   },
   listContent: {
     paddingBottom: 16,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   reorderControls: {
     marginRight: 12,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   rating: {
     fontSize: 15,
-    color: '#e0a300',
+    color: colors.accent,
   },
   author: {
     fontSize: 15,
@@ -351,18 +351,18 @@ const styles = StyleSheet.create({
   },
   body: {
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     marginTop: 4,
   },
   meta: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textMutedDark,
     marginTop: 4,
   },
   curateButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: '#eee',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   curateButtonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
 });
 

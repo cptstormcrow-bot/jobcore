@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   segmentTextSelected: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '700',
   },
 });

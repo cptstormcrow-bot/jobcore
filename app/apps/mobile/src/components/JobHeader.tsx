@@ -23,6 +23,8 @@ export type JobHeaderProps = {
   onPaid: () => void;
   busyAction?: string | null;
   statusError?: string | null;
+  totalLaborSeconds: number;
+  isAdmin: boolean;
 };
 
 export function JobHeader({
@@ -40,13 +42,19 @@ export function JobHeader({
   onPaid,
   busyAction = null,
   statusError = null,
+  totalLaborSeconds,
+  isAdmin,
 }: JobHeaderProps) {
-  const elapsedFrom = job.completedAt ?? job.inProgressAt ?? job.enRouteAt ?? job.createdAt ?? null;
-  const elapsed = formatElapsed(elapsedFrom);
   const paidEligible = job.status === 'completed';
   const paidHint =
     !paidEligible && job.status !== 'paid' && job.status !== 'closed'
       ? 'Complete the job before marking it paid.'
+      : null;
+  const arriveEligible = Boolean(assignedTechName);
+  const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
+  const totalHoursLabel =
+    totalLaborSeconds > 0
+      ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
       : null;
 
   return (
@@ -59,8 +67,10 @@ export function JobHeader({
           { label: abbreviate(job.address) },
           { label: `#${job.jobNumber ?? '—'}` },
         ]}
+        titleBar={{ title: customer?.name ?? 'Unknown Customer', subtitle: job.address ?? undefined }}
       />
       <Text style={styles.heading}>Job Details</Text>
+      {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
       <View style={styles.summary}>
         <Text style={styles.summaryLine}>{customer?.name ?? 'Unknown Customer'}</Text>
         <Text style={styles.summaryLine}>{job.address ?? '—'}</Text>
@@ -71,7 +81,6 @@ export function JobHeader({
             job.inProgressAt ? 'Arrived' : null,
             job.completedAt ? 'Completed' : null,
             job.status === 'paid' ? 'Paid' : null,
-            elapsed ? `Elapsed: ${elapsed}` : null,
           ]
             .filter(Boolean)
             .join(' · ') || 'Not started'}
@@ -103,6 +112,7 @@ export function JobHeader({
       </View>
       <View style={styles.rule} />
       {paidHint ? <Text style={styles.paidHint}>{paidHint}</Text> : null}
+      {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}
     </View>
   );
 }
@@ -112,10 +122,18 @@ export default JobHeader;
 const styles = StyleSheet.create({
   root: { width: '100%' },
   heading: {
-    fontFamily: typography.fontFamily.heading,
+    fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
     fontSize: typography.size.h6,
     color: colors.textMutedDark,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+  },
+  totalHours: {
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: typography.weight.bold,
+    fontSize: typography.size.h6,
+    color: colors.text,
     paddingHorizontal: spacing.md,
     marginTop: spacing.xs,
   },
@@ -125,25 +143,19 @@ const styles = StyleSheet.create({
   },
   summaryLine: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.summary,
+    fontSize: typography.size.small,
     color: colors.text,
   },
   rule: {
     height: 3,
-    backgroundColor: '#000',
+    backgroundColor: colors.text,
     width: '100%',
     marginVertical: spacing.sm,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
   },
   techRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   techSelect: { flexGrow: 1, minWidth: 160, marginLeft: spacing.sm },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
   paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
+  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
 });
