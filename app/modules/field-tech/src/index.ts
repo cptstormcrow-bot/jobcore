@@ -139,6 +139,13 @@ function FieldTechRoot(): React.ReactElement {
     },
   ];
 
+  const SUBVIEW_LABELS: Record<SubView, string> = {
+    overview: 'Overview',
+    jobs: 'Jobs',
+    timeOff: 'Time Off',
+    reviews: 'Reviews',
+  };
+
   let content: React.ReactElement;
   switch (subView) {
     case 'timeOff':
@@ -169,6 +176,7 @@ function FieldTechRoot(): React.ReactElement {
       breadcrumbSegments: [{ label: 'Field Tech' }],
       menuItems,
       optionsItems: [],
+      titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
     }),
     content,
   );

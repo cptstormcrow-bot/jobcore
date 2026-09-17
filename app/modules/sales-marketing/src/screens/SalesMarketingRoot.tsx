@@ -28,6 +28,14 @@ import { signOut } from '../../../../apps/mobile/src/lib/session';
 
 type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
+const SUBVIEW_LABELS: Record<SubView, string> = {
+  reviewLibrary: 'Review Library',
+  pitchPicker: 'Pitch Picker',
+  composer: 'Composer',
+  reporting: 'Reporting',
+  callbackTasks: 'Callback tasks',
+};
+
 export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('reviewLibrary');
@@ -144,6 +152,7 @@ export function SalesMarketingRoot(): React.ReactElement {
       breadcrumbSegments: [{ label: 'Sales & Marketing' }],
       menuItems,
       optionsItems: [],
+      titleBar: { title: 'Sales & Marketing', subtitle: SUBVIEW_LABELS[subView] },
     }),
     content,
   );

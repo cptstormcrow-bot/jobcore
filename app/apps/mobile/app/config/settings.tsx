@@ -9,6 +9,7 @@ export default function SettingsScreen() {
         breadcrumbSegments={[{ label: 'Configuration' }, { label: 'Settings' }]}
         menuItems={[]}
         optionsItems={[]}
+        titleBar={{ title: 'Settings', subtitle: 'Configuration' }}
       />
       <EmptyState
         title="Settings"
