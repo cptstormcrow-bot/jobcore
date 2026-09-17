@@ -23,4 +23,5 @@ export const JOB_STATUS_COLORS: Record<JobStatus, string> = {
   declined: colors.danger,
   needs_reschedule: colors.warning,
   cancelled: colors.textLight,
+  archived: colors.textMutedDark,
 };
