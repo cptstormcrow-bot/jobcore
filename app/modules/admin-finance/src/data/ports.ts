@@ -58,6 +58,7 @@ export interface JobRow {
   considerations: string | null;
   ingress_instructions: string | null;
   service_area_id: string | null;
+  total_labor_seconds: number | null;
 }
 
 /**
@@ -124,6 +125,7 @@ export function toJob(row: JobRow): Job {
     considerations: row.considerations,
     ingressInstructions: row.ingress_instructions,
     service_area_id: row.service_area_id,
+    totalLaborSeconds: row.total_labor_seconds ?? 0,
   };
 }
 
@@ -209,6 +211,7 @@ export interface JobRepository {
    * `JobStatus` `applyTransition` already computed.
    */
   updateStatus(jobId: string, status: JobStatus): Promise<Job>;
+  markBeta(jobId: string, isBeta: boolean): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
    * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
@@ -393,6 +396,7 @@ export interface EmployeeRepository {
       toolStatus?: ToolStatus | null;
       paidTravel?: boolean;
       paidTravelPolicyMessage?: string | null;
+      defaultHourlyRateCents?: number;
     }
   ): Promise<void>;
   deactivateEmployee(profileId: string): Promise<void>;
