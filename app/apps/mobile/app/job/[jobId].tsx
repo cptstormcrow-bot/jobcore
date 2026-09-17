@@ -897,7 +897,7 @@ export default function JobDrilldownScreen() {
 
   const jobDetailMenuItems: MenuItem[] = [
     { id: 'plan', label: 'Plan', onPress: () => selectRegion('plan'), isActive: region === 'plan' },
-    { id: 'evisit', label: 'Prelim (E-visit)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
+    { id: 'evisit', label: 'Prelim (Prem visit)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
     { id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' },
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
@@ -976,7 +976,7 @@ export default function JobDrilldownScreen() {
             busy={assigning !== null}
             error={assignError}
             onAssign={(techId) => void handleAssign(techId)}
-            label={estimate?.status === 'approved' ? 'Assign Technician' : 'Assign E-visit Tech'}
+            label={estimate?.status === 'approved' ? 'Assign Technician' : 'Assign Prem visit Tech'}
           />
         )}
         {region === 'schedule' && (
