@@ -701,6 +701,10 @@ export default function JobDrilldownScreen() {
 
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
+    if (!job.assignedTechId) {
+      Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Arrive can be marked.');
+      return;
+    }
     setBusyAction('arrive');
     setActionError(null);
     try {
@@ -898,7 +902,7 @@ export default function JobDrilldownScreen() {
     { id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' },
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', label: 'Contact', onPress: handleContact },
-    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive() },
+    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !currentJob.assignedTechId },
     { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
     { id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() },
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
@@ -907,7 +911,6 @@ export default function JobDrilldownScreen() {
       label: 'Configuration',
       onPress: () => {},
       submenu: [
-        { id: 'config-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
         { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
       ],
     },

@@ -1,5 +1,11 @@
--- Jobcore — open_time_segment() null-tech_id guard
--- Apply after 0058.
+-- Jobcore — open_time_segment() null tech_id guard
+-- Apply after 0057.
+--
+-- job_time_segments.tech_id is uuid not null (0056). When a job has only an
+-- investigator assigned (no installer tech), sync_job_time_segments_trg
+-- (0057) can call open_time_segment() with a null p_tech_id, violating the
+-- not-null constraint and crashing the live Arrive flow. Guard: no-op if
+-- p_tech_id is null instead of attempting the insert.
 
 create or replace function public.open_time_segment(
   p_tech_id uuid,
@@ -15,7 +21,7 @@ declare
   v_organization_id uuid;
 begin
   if p_tech_id is null then
-    raise exception 'open_time_segment: tech_id is null, cannot open a time segment (job_id=%, reason_code=%)', p_job_id, p_reason_code;
+    return;
   end if;
 
   select organization_id into v_organization_id
