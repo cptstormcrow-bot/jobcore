@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Animated, View, Text, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius, typography } from './tokens';
 import type { BreadcrumbSegment } from './Breadcrumb';
@@ -32,6 +32,16 @@ function MenuRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasSubmenu = !!item.submenu && item.submenu.length > 0;
+  const pressAnim = useRef(new Animated.Value(0)).current;
+
+  const animateTo = (toValue: number) => {
+    Animated.timing(pressAnim, { toValue, duration: 175, useNativeDriver: false }).start();
+  };
+
+  const animatedBg = pressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [item.isActive ? colors.accent : 'transparent', colors.accent],
+  });
 
   return (
     <View>
@@ -44,27 +54,39 @@ function MenuRow({
             onLeafPress(item);
           }
         }}
+        onPressIn={() => {
+          if (item.disabled) return;
+          animateTo(1);
+        }}
+        onPressOut={() => {
+          if (item.disabled) return;
+          if (!item.isActive) animateTo(0);
+        }}
         disabled={item.disabled}
         accessibilityRole="button"
         accessibilityLabel={item.label}
         accessibilityState={{ disabled: item.disabled, selected: item.isActive }}
-        style={[
-          styles.row,
-          { paddingLeft: spacing.md + depth * spacing.md },
-          item.isActive && styles.rowActive,
-          item.disabled && styles.rowDisabled,
-        ]}
       >
-        <Text
+        <Animated.View
           style={[
-            styles.rowText,
-            item.isActive && styles.rowTextActive,
-            item.disabled && styles.rowTextDisabled,
+            styles.row,
+            { paddingLeft: spacing.md + depth * spacing.md },
+            item.isActive && styles.rowActive,
+            item.disabled && styles.rowDisabled,
+            { backgroundColor: animatedBg },
           ]}
         >
-          {item.label}
-          {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
-        </Text>
+          <Text
+            style={[
+              styles.rowText,
+              item.isActive && styles.rowTextActive,
+              item.disabled && styles.rowTextDisabled,
+            ]}
+          >
+            {item.label}
+            {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
+          </Text>
+        </Animated.View>
       </Pressable>
       {hasSubmenu && expanded && (
         <View>
