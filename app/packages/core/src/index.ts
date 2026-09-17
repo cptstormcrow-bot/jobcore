@@ -62,9 +62,11 @@ export interface Profile {
   toolStatus: ToolStatus | null;
   paidTravel: boolean;
   paidTravelPolicyMessage: string | null;
+  defaultHourlyRateCents?: number;
 }
 export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
   'Paid travel time is allowable if a vehicle is assigned to tech.';
+export const DEFAULT_HOURLY_RATE_CENTS = 2500;
 
 /**
  * Mirrors the Postgres `job_status` enum (supabase/0004_scheduling.sql).
@@ -130,6 +132,7 @@ export interface Job {
   panelInfo?: string | null;
   considerations?: string | null;
   ingressInstructions?: string | null;
+  totalLaborSeconds: number;
 }
 
 /**
