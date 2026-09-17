@@ -109,9 +109,9 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId }: DayLi
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Workstream K: "Show Test Jobs" toggle, default ON — shows jobs.is_beta
+  // Workstream K: "Show Test Jobs" toggle, default OFF — shows jobs.is_beta
   // rows spawned by sales-marketing's "Spawn Test Jobs" flow; toggle still hides them.
-  const [showBeta, setShowBeta] = useState(true);
+  const [showBeta, setShowBeta] = useState(false);
   const [anchorDay, setAnchorDay] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -332,10 +332,10 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   emptyText: {
-    color: '#666',
+    color: colors.textMutedDark,
   },
   errorText: {
-    color: '#b00020',
+    color: colors.danger,
   },
   listContent: {
     padding: 16,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   bullet: {
     marginRight: 8,
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   window: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textMutedDark,
     marginTop: 2,
   },
   weekHeader: {
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   sheet: {
     width: '100%',
     maxHeight: '80%',
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 8,
     padding: 16,
   },
@@ -426,12 +426,12 @@ const styles = StyleSheet.create({
   modalJobRow: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   modalTimeOffRow: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#ddd',
+    borderBottomColor: colors.border,
   },
   modalTimeOffText: {
     fontSize: 14,
