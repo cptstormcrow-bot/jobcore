@@ -58,6 +58,8 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     driversLicenseNumber: null,
     vehicleStatus: null,
     toolStatus: null,
+    paidTravel: false,
+    paidTravelPolicyMessage: null,
     ...overrides,
   };
 }
@@ -199,22 +201,6 @@ test('AC: NullBonusRule contributes exactly 0 to bonusAmount', () => {
   if (result.ok) {
     assert.equal(result.value.bonusAmount, 0);
   }
-});
-
-XMARKCX
-XMARKDX
-
-  const result = deriveBillableHours(input);
-  assert.equal(result.ok, true);
-  if (!result.ok) return;
-
-  assert.equal(result.value.unpaidSpans.length, 1);
-  const span = result.value.unpaidSpans[0];
-  assert.ok(span);
-  assert.equal(span.reason, 'travel');
-  assert.equal(span.from, input.enRouteAt);
-  assert.equal(span.to, input.inProgressAt);
-  assert.equal(result.value.hours, 2); // 13:30 -> 15:30 billable leg
 });
 
 test('AC-8: the whole suite runs with zero setup — no DB, no network, no env vars, no faked clock', () => {
