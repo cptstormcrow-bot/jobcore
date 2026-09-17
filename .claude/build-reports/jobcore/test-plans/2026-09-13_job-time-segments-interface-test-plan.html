@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>JobCore Interface Test Plan — Job Time Segments (2026-09-13, commit 1827fe7)</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; max-width: 960px; margin: 20px auto; padding: 0 16px; color: #222; background: #f7f7f8; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 28px; border-bottom: 2px solid #ccc; padding-bottom: 4px; }
+  p.meta { color: #555; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 8px; }
+  th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; font-size: 13px; }
+  th { background: #eee; text-align: left; }
+  td.desc { width: 38%; }
+  td.steps { width: 30%; }
+  td.status { width: 14%; }
+  td.comment { width: 18%; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 50px; font-family: inherit; font-size: 12px; resize: vertical; }
+  select { width: 100%; padding: 4px; font-size: 13px; }
+  select.status-pass { background: #d9f2d9; }
+  select.status-fail { background: #f8d7d7; }
+  select.status-not-tested { background: #fff; }
+  .toolbar { position: sticky; top: 0; background: #f7f7f8; padding: 10px 0; z-index: 5; display: flex; gap: 10px; align-items: center; }
+  button { padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: 4px; border: 1px solid #888; background: #fff; }
+  button.primary { background: #2c6ecb; color: #fff; border-color: #2c6ecb; }
+  #copyStatus { font-size: 12px; color: #2c6ecb; }
+  .summary { font-size: 13px; margin-left: auto; color: #444; }
+  ol { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<h1>JobCore Interface Test Plan — Job Time Segments / Paid Travel / Test Jobs Panel / DayList</h1>
+<p class="meta">
+  Commit under test: <code>1827fe7</code> — job time segments migration (0055-0058), admin-finance +
+  sales-marketing repo/screen polish, field-tech DayList fix.<br />
+  Scope: <strong>interface tests only</strong>. Migrations 0055-0058, SQL correctness, and RLS policies
+  are explicitly out of scope for this plan.<br />
+  Generated 2026-09-13.
+</p>
+
+<div class="toolbar">
+  <button class="primary" onclick="copyResults()">Copy results</button>
+  <button onclick="resetAll()">Reset all</button>
+  <span id="copyStatus"></span>
+  <span class="summary" id="summary"></span>
+</div>
+
+<h2>1. Admin-Finance — Employee Editor: Paid Travel</h2>
+<table>
+  <thead><tr><th class="desc">Test</th><th class="steps">Steps</th><th class="status">Status</th><th class="comment">Comment</th></tr></thead>
+  <tbody id="section1"></tbody>
+</table>
+
+<h2>2. Sales-Marketing — Test Jobs Panel</h2>
+<table>
+  <thead><tr><th class="desc">Test</th><th class="steps">Steps</th><th class="status">Status</th><th class="comment">Comment</th></tr></thead>
+  <tbody id="section2"></tbody>
+</table>
+
+<h2>3. Field-Tech — DayList "Show Test Jobs" default</h2>
+<table>
+  <thead><tr><th class="desc">Test</th><th class="steps">Steps</th><th class="status">Status</th><th class="comment">Comment</th></tr></thead>
+  <tbody id="section3"></tbody>
+</table>
+
+<script>
+const ITEMS = [
+  // Section 1 — Employee Editor paid travel
+  { id: 's1-1', section: 'section1',
+    desc: 'Paid Travel toggle appears in Employee Editor and defaults to the employee\'s saved value',
+    steps: '1. Open Admin Finance &gt; Employees &gt; select a tech profile.\n2. Confirm a "Paid Travel" toggle is visible.\n3. Confirm its initial state matches the profile\'s current paidTravel value (off if never set).' },
+  { id: 's1-2', section: 'section1',
+    desc: 'Enabling Paid Travel reveals the policy message text box, pre-filled with the default message',
+    steps: '1. Toggle Paid Travel ON for a tech with no custom message saved.\n2. Confirm a multiline text box appears below the toggle.\n3. Confirm it is pre-filled with the default paid-travel policy message text.' },
+  { id: 's1-3', section: 'section1',
+    desc: 'Disabling Paid Travel hides the policy message box and the vehicle warning',
+    steps: '1. With Paid Travel ON, toggle it OFF.\n2. Confirm the policy message text box disappears.\n3. Confirm any "No vehicle assigned to tech" warning also disappears.' },
+  { id: 's1-4', section: 'section1',
+    desc: 'Vehicle warning shows only when Paid Travel is ON and the tech has no assigned vehicle',
+    steps: '1. Pick a tech whose Vehicle Status is NOT "assigned".\n2. Toggle Paid Travel ON.\n3. Confirm red warning text "No vehicle assigned to tech." appears.\n4. Change Vehicle Status to "assigned" (or pick a tech that already has one) with Paid Travel still ON.\n5. Confirm the warning disappears.' },
+  { id: 's1-5', section: 'section1',
+    desc: 'Editing the policy message text is free-form and does not revert on re-render',
+    steps: '1. With Paid Travel ON, clear the default message and type a custom sentence.\n2. Interact with another field on the screen (e.g. click elsewhere) to trigger a re-render.\n3. Confirm the custom message text you typed is still present, unchanged.' },
+  { id: 's1-6', section: 'section1',
+    desc: 'Saving persists Paid Travel + policy message, and reopening the editor reflects the saved values',
+    steps: '1. Toggle Paid Travel ON, edit the policy message, click Save.\n2. Confirm the "Saved." confirmation appears.\n3. Navigate away and reopen the same tech\'s editor.\n4. Confirm Paid Travel is still ON and the policy message matches what was saved.' },
+  { id: 's1-7', section: 'section1',
+    desc: 'Saving with Paid Travel OFF does not send a stale policy message',
+    steps: '1. For a tech, toggle Paid Travel ON, type a custom message, then toggle Paid Travel back OFF before saving.\n2. Click Save.\n3. Reopen the editor and confirm Paid Travel is OFF (the discarded message should not resurrect unexpectedly if the toggle is re-enabled — note actual behavior in comments).' },
+
+  // Section 2 — Sales-marketing test jobs panel
+  { id: 's2-1', section: 'section2',
+    desc: 'Test Jobs panel is hidden when there are no test jobs and no error',
+    steps: '1. Open Sales & Marketing tab with no existing spawned test jobs.\n2. Confirm no test-jobs panel/list is rendered below the tab row.' },
+  { id: 's2-2', section: 'section2',
+    desc: '"Spawn Test Jobs" creates test jobs and the panel populates automatically',
+    steps: '1. Click the "Spawn Test Jobs" button.\n2. Confirm the button shows a busy/pending state while spawning.\n3. Confirm after completion a list of test job rows appears, each showing an address/description/id.' },
+  { id: 's2-3', section: 'section2',
+    desc: 'Each test job row has a working Delete button that removes only that row',
+    steps: '1. With 2+ test jobs listed, click "Delete" on one specific row.\n2. Confirm that row shows "Deleting…" while in flight.\n3. Confirm after completion only that row is gone and the others remain.' },
+  { id: 's2-4', section: 'section2',
+    desc: '"Delete All" removes every test job and the panel disappears',
+    steps: '1. With multiple test jobs listed, click "Delete All".\n2. Confirm the button shows "Deleting all…" while in flight, and per-row Delete buttons are disabled during that time.\n3. Confirm after completion the list is empty and the whole panel (list block) is no longer shown.' },
+  { id: 's2-5', section: 'section2',
+    desc: 'Delete/Delete All buttons are disabled appropriately during concurrent operations',
+    steps: '1. Trigger a single-row Delete.\n2. While it is in flight, confirm "Delete All" is disabled.\n3. Trigger "Delete All" separately (after the prior op finishes) and confirm individual Delete buttons are disabled while it runs.' },
+  { id: 's2-6', section: 'section2',
+    desc: 'A failed spawn/delete/delete-all shows an inline error message, not a silent failure',
+    steps: '1. Force a failure condition if feasible (e.g. offline/dev-server down, or invalid org session), otherwise verify by code review reasoning.\n2. Attempt Spawn/Delete/Delete All.\n3. Confirm a red error line appears with a human-readable message, and the UI remains usable (no crash).' },
+  { id: 's2-7', section: 'section2',
+    desc: 'Test jobs list reloads automatically on entering the Sales & Marketing screen',
+    steps: '1. Spawn at least one test job, then navigate away from Sales & Marketing entirely.\n2. Navigate back into Sales & Marketing.\n3. Confirm the previously spawned test job(s) still appear without needing to click Spawn again.' },
+
+  // Section 3 — field-tech DayList
+  { id: 's3-1', section: 'section3',
+    desc: '"Show Test Jobs" now defaults to ON for a fresh field-tech session',
+    steps: '1. As a field tech with at least one is_beta/test job assigned, open Day List (DayList screen) fresh (no prior toggle interaction this session).\n2. Confirm test/beta jobs ARE visible by default (previously they were hidden by default).' },
+  { id: 's3-2', section: 'section3',
+    desc: 'Toggling "Show Test Jobs" OFF still hides beta/test jobs',
+    steps: '1. From the default (ON) state, toggle "Show Test Jobs" OFF.\n2. Confirm beta/test jobs disappear from the Day List while real jobs remain visible.' },
+  { id: 's3-3', section: 'section3',
+    desc: 'Toggling "Show Test Jobs" back ON restores visibility without a full reload',
+    steps: '1. With the toggle OFF (test jobs hidden), toggle it back ON.\n2. Confirm beta/test jobs reappear immediately without needing to navigate away and back.' },
+  { id: 's3-4', section: 'section3',
+    desc: 'Real (non-beta) jobs are unaffected by the toggle in either state',
+    steps: '1. With a mix of real and beta/test jobs assigned, toggle Show Test Jobs both ON and OFF.\n2. Confirm real jobs remain visible and unchanged in both states.' },
+];
+
+const STORE_KEY = 'jobcore-test-plan-2026-09-13-job-time-segments-interface';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function render() {
+  const state = loadState();
+  const sections = { section1: document.getElementById('section1'), section2: document.getElementById('section2'), section3: document.getElementById('section3') };
+  Object.values(sections).forEach(el => el.innerHTML = '');
+
+  ITEMS.forEach(item => {
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const tr = document.createElement('tr');
+
+    const tdDesc = document.createElement('td');
+    tdDesc.className = 'desc';
+    tdDesc.textContent = item.desc;
+
+    const tdSteps = document.createElement('td');
+    tdSteps.className = 'steps';
+    const ol = document.createElement('ol');
+    item.steps.split('\n').forEach(line => {
+      const stripped = line.replace(/^\d+\.\s*/, '');
+      const li = document.createElement('li');
+      li.textContent = stripped;
+      ol.appendChild(li);
+    });
+    tdSteps.appendChild(ol);
+
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'status';
+    const select = document.createElement('select');
+    select.id = 'status-' + item.id;
+    ['not-tested', 'pass', 'fail'].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v === 'not-tested' ? 'Not tested' : v === 'pass' ? 'Pass' : 'Fail';
+      if (v === saved.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.className = 'status-' + saved.status;
+    select.addEventListener('change', () => {
+      select.className = 'status-' + select.value;
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].status = select.value;
+      saveState(s);
+      updateSummary();
+    });
+    tdStatus.appendChild(select);
+
+    const tdComment = document.createElement('td');
+    tdComment.className = 'comment';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'comment-' + item.id;
+    textarea.value = saved.comment || '';
+    textarea.addEventListener('input', () => {
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].comment = textarea.value;
+      saveState(s);
+    });
+    tdComment.appendChild(textarea);
+
+    tr.appendChild(tdDesc);
+    tr.appendChild(tdSteps);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdComment);
+    sections[item.section].appendChild(tr);
+  });
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const state = loadState();
+  let pass = 0, fail = 0, nt = 0;
+  ITEMS.forEach(item => {
+    const s = (state[item.id] || {}).status || 'not-tested';
+    if (s === 'pass') pass++;
+    else if (s === 'fail') fail++;
+    else nt++;
+  });
+  document.getElementById('summary').textContent =
+    ITEMS.length + ' items — ' + pass + ' pass / ' + fail + ' fail / ' + nt + ' not tested';
+}
+
+function resetAll() {
+  if (!confirm('Reset all results? This clears saved progress in this browser.')) return;
+  localStorage.removeItem(STORE_KEY);
+  render();
+}
+
+function copyResults() {
+  const state = loadState();
+  const lines = [];
+  lines.push('# JobCore Interface Test Plan Results — Job Time Segments (2026-09-13, commit 1827fe7)');
+  lines.push('');
+  let currentSection = '';
+  const sectionTitles = {
+    section1: '1. Admin-Finance — Employee Editor: Paid Travel',
+    section2: '2. Sales-Marketing — Test Jobs Panel',
+    section3: '3. Field-Tech — DayList "Show Test Jobs" default',
+  };
+  ITEMS.forEach(item => {
+    if (item.section !== currentSection) {
+      currentSection = item.section;
+      lines.push('## ' + sectionTitles[currentSection]);
+      lines.push('');
+    }
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const statusLabel = saved.status === 'pass' ? 'PASS' : saved.status === 'fail' ? 'FAIL' : 'NOT TESTED';
+    lines.push('- [' + statusLabel + '] ' + item.desc + (saved.comment ? ' — ' + saved.comment : ''));
+  });
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('copyStatus').textContent = 'Copied to clipboard.';
+    setTimeout(() => { document.getElementById('copyStatus').textContent = ''; }, 2500);
+  }, () => {
+    document.getElementById('copyStatus').textContent = 'Copy failed — select and copy manually.';
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>

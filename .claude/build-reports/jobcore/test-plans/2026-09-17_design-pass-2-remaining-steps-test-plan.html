@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Design Pass 2 — Remaining Steps Test Plan</title>
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; max-width: 960px; margin: 20px auto; padding: 0 16px; color: #222; background: #f7f7f8; }
+  h1 { font-size: 20px; }
+  h2 { font-size: 16px; margin-top: 28px; border-bottom: 2px solid #ccc; padding-bottom: 4px; }
+  p.meta { color: #555; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; margin-bottom: 8px; }
+  th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; font-size: 13px; }
+  th { background: #eee; text-align: left; }
+  td.desc { width: 38%; }
+  td.steps { width: 30%; }
+  td.status { width: 14%; }
+  td.comment { width: 18%; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 50px; font-family: inherit; font-size: 12px; resize: vertical; }
+  select { width: 100%; padding: 4px; font-size: 13px; }
+  select.status-pass { background: #d9f2d9; }
+  select.status-fail { background: #f8d7d7; }
+  select.status-not-tested { background: #fff; }
+  .toolbar { position: sticky; top: 0; background: #f7f7f8; padding: 10px 0; z-index: 5; display: flex; gap: 10px; align-items: center; }
+  button { padding: 8px 14px; font-size: 13px; cursor: pointer; border-radius: 4px; border: 1px solid #888; background: #fff; }
+  button.primary { background: #2c6ecb; color: #fff; border-color: #2c6ecb; }
+  #copyStatus { font-size: 12px; color: #2c6ecb; }
+  .summary { font-size: 13px; margin-left: auto; color: #444; }
+  ol { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Design Pass 2 — Remaining Steps Test Plan</h1>
+<p class="meta">
+  Scope: manual visual verification of the remaining "App-Wide Design Consistency" closeout steps —
+  AppChrome title bar recolor, shared design-token consolidation across Config/Test Jobs, Composer,
+  Week View, Field Job Detail, and Planning Screen.<br />
+  Verify each item against the running Expo web dev server, which binds exclusively to
+  <strong>port 8081</strong> (launch config <code>jobcore-mobile-web</code>). Do not start an
+  alternate-port instance as a workaround.<br />
+  Generated 2026-09-17.
+</p>
+
+<div class="toolbar">
+  <button class="primary" onclick="copyResults()">Copy results</button>
+  <button onclick="resetAll()">Reset all</button>
+  <span id="copyStatus"></span>
+  <span class="summary" id="summary"></span>
+</div>
+
+<h2>1. Design Pass 2 — Remaining Steps</h2>
+<table>
+  <thead><tr><th class="desc">Test</th><th class="steps">Steps</th><th class="status">Status</th><th class="comment">Comment</th></tr></thead>
+  <tbody id="section1"></tbody>
+</table>
+
+<script>
+const ITEMS = [
+  { id: 's1-1', section: 'section1',
+    desc: 'AppChrome title bar — dark navy background, bright white text',
+    steps: '1. Start the Expo web dev server (port 8081, launch config jobcore-mobile-web) and open the app in a browser.\n2. Navigate to any screen (e.g. the jobs list or a job detail screen).\n3. Look at the top title bar, the strip between the hamburger (☰) icon on the left and the options (⋮) icon on the right.\n4. Confirm the bar background is a dark navy color and the title text is bright white — not the prior lighter color scheme.\n5. Repeat on 2-3 different screens to confirm the color is consistent everywhere, not just one screen.' },
+  { id: 's1-2', section: 'section1',
+    desc: 'AppChrome wordmark/nav rows — no visual regression in the hamburger nav drawer',
+    steps: '1. Click the hamburger (☰) icon to open the nav drawer.\n2. Confirm the app wordmark text at the top of the drawer still renders bold and legible (correct weight, no washed-out or thin appearance).\n3. Confirm each nav row label (e.g. Jobs, Planning, Reports, etc.) still renders bold and legible, with consistent spacing between rows.\n4. Close and reopen the drawer once more to confirm the styling is stable, not just correct on first render.' },
+  { id: 's1-3', section: 'section1',
+    desc: 'Config / Test Jobs screen — layout unchanged after token conversion',
+    steps: '1. Navigate to Config &gt; Test Jobs (app/apps/mobile/app/config/test-jobs.tsx).\n2. Visually compare overall layout, spacing between elements, and text weights against your memory of the screen pre-change (or against a similar config screen for consistency).\n3. Confirm nothing looks shifted, misaligned, or oddly spaced.\n4. Confirm all text remains readable with no unexpected font-weight changes.' },
+  { id: 's1-4', section: 'section1',
+    desc: 'Composer screen — success/confirmation green renders correctly',
+    steps: '1. Navigate to Sales & Marketing &gt; Composer.\n2. Trigger a success/confirmation state (e.g. send a test message, or any action that shows a green success indicator).\n3. Confirm the success color renders as a clear, correct green (matching the shared colors.success token) — not a broken, missing, or oddly-shaded color.' },
+  { id: 's1-5', section: 'section1',
+    desc: 'Week View — time-off entries render in red/danger color',
+    steps: '1. Navigate to a screen that uses the shared Week View component (e.g. Planning or Schedule).\n2. Find or create a time-off entry so it appears in the week view.\n3. Confirm the time-off entry renders in a red/danger color.\n4. Note: the shade may look very slightly different than before (local constant swapped for colors.danger token) — this is expected. Only flag if it looks visually wrong (e.g. wrong hue entirely, washed out, or illegible), not merely "slightly different."' },
+  { id: 's1-6', section: 'section1',
+    desc: 'Field Job Detail screen — header/title area consistent with other screens',
+    steps: '1. As a field tech (or via the field-tech module route), open a Field Job Detail screen for any job.\n2. Look at the header/title area at the top of the screen.\n3. Confirm its font size, weight, and spacing look consistent with title/section headers on other screens in the app (e.g. compare against a Planning Screen section title or the AppChrome title bar text).\n4. Confirm there is no visual break, misalignment, or inconsistent sizing from the style consolidation.' },
+  { id: 's1-7', section: 'section1',
+    desc: 'Planning Screen — "Job", "Tasks", "Photos" section titles visually consistent',
+    steps: '1. Navigate to Admin Finance &gt; Planning Screen for a job with tasks and photos.\n2. Locate the three section titles: "Job", "Tasks", and "Photos".\n3. Confirm all three use the same font size, weight, and color as each other (previously three separate styles, now consolidated into one shared style).\n4. Confirm none of the three looks out of place relative to the other two.' },
+];
+
+const STORE_KEY = 'jobcore-test-plan-2026-09-17-design-pass-2-remaining-steps';
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveState(state) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function render() {
+  const state = loadState();
+  const sections = { section1: document.getElementById('section1') };
+  Object.values(sections).forEach(el => el.innerHTML = '');
+
+  ITEMS.forEach(item => {
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const tr = document.createElement('tr');
+
+    const tdDesc = document.createElement('td');
+    tdDesc.className = 'desc';
+    tdDesc.textContent = item.desc;
+
+    const tdSteps = document.createElement('td');
+    tdSteps.className = 'steps';
+    const ol = document.createElement('ol');
+    item.steps.split('\n').forEach(line => {
+      const stripped = line.replace(/^\d+\.\s*/, '');
+      const li = document.createElement('li');
+      li.textContent = stripped;
+      ol.appendChild(li);
+    });
+    tdSteps.appendChild(ol);
+
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'status';
+    const select = document.createElement('select');
+    select.id = 'status-' + item.id;
+    ['not-tested', 'pass', 'fail'].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v === 'not-tested' ? 'Not tested' : v === 'pass' ? 'Pass' : 'Fail';
+      if (v === saved.status) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.className = 'status-' + saved.status;
+    select.addEventListener('change', () => {
+      select.className = 'status-' + select.value;
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].status = select.value;
+      saveState(s);
+      updateSummary();
+    });
+    tdStatus.appendChild(select);
+
+    const tdComment = document.createElement('td');
+    tdComment.className = 'comment';
+    const textarea = document.createElement('textarea');
+    textarea.id = 'comment-' + item.id;
+    textarea.value = saved.comment || '';
+    textarea.addEventListener('input', () => {
+      const s = loadState();
+      s[item.id] = s[item.id] || {};
+      s[item.id].comment = textarea.value;
+      saveState(s);
+    });
+    tdComment.appendChild(textarea);
+
+    tr.appendChild(tdDesc);
+    tr.appendChild(tdSteps);
+    tr.appendChild(tdStatus);
+    tr.appendChild(tdComment);
+    sections[item.section].appendChild(tr);
+  });
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const state = loadState();
+  let pass = 0, fail = 0, nt = 0;
+  ITEMS.forEach(item => {
+    const s = (state[item.id] || {}).status || 'not-tested';
+    if (s === 'pass') pass++;
+    else if (s === 'fail') fail++;
+    else nt++;
+  });
+  document.getElementById('summary').textContent =
+    ITEMS.length + ' items — ' + pass + ' pass / ' + fail + ' fail / ' + nt + ' not tested';
+}
+
+function resetAll() {
+  if (!confirm('Reset all results? This clears saved progress in this browser.')) return;
+  localStorage.removeItem(STORE_KEY);
+  render();
+}
+
+function copyResults() {
+  const state = loadState();
+  const lines = [];
+  lines.push('# Design Pass 2 — Remaining Steps Test Plan Results (2026-09-17)');
+  lines.push('');
+  let currentSection = '';
+  const sectionTitles = {
+    section1: '1. Design Pass 2 — Remaining Steps',
+  };
+  ITEMS.forEach(item => {
+    if (item.section !== currentSection) {
+      currentSection = item.section;
+      lines.push('## ' + sectionTitles[currentSection]);
+      lines.push('');
+    }
+    const saved = state[item.id] || { status: 'not-tested', comment: '' };
+    const statusLabel = saved.status === 'pass' ? 'PASS' : saved.status === 'fail' ? 'FAIL' : 'NOT TESTED';
+    lines.push('- [' + statusLabel + '] ' + item.desc + (saved.comment ? ' — ' + saved.comment : ''));
+  });
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('copyStatus').textContent = 'Copied to clipboard.';
+    setTimeout(() => { document.getElementById('copyStatus').textContent = ''; }, 2500);
+  }, () => {
+    document.getElementById('copyStatus').textContent = 'Copy failed — select and copy manually.';
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
