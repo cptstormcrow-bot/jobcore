@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius, typography } from './tokens';
-import { Breadcrumb, BreadcrumbSegment } from './Breadcrumb';
+import type { BreadcrumbSegment } from './Breadcrumb';
 
 export type MenuItem = {
   id: string;
@@ -18,6 +18,7 @@ export type AppChromeProps = {
   menuItems: MenuItem[];
   optionsItems?: MenuItem[];
   showBack?: boolean; // default true
+  titleBar?: { title: string; subtitle?: string };
 };
 
 function MenuRow({
@@ -81,6 +82,7 @@ export function AppChrome({
   menuItems,
   optionsItems,
   showBack = true,
+  titleBar,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const [hMenuOpen, setHMenuOpen] = useState(false);
@@ -105,7 +107,6 @@ export function AppChrome({
 
   return (
     <View style={styles.container}>
-      <Breadcrumb segments={breadcrumbSegments} />
       <View style={styles.controlsRow}>
         <Pressable
           onPress={() => setHMenuOpen(true)}
@@ -116,6 +117,18 @@ export function AppChrome({
         >
           <Text style={styles.iconText}>☰</Text>
         </Pressable>
+        {titleBar && (
+          <View style={styles.titleBar}>
+            <Text style={styles.titleBarTitle} numberOfLines={1}>
+              {titleBar.title}
+            </Text>
+            {titleBar.subtitle ? (
+              <Text style={styles.titleBarSubtitle} numberOfLines={1}>
+                {titleBar.subtitle}
+              </Text>
+            ) : null}
+          </View>
+        )}
         <Pressable
           onPress={() => setOMenuOpen(true)}
           accessibilityRole="button"
@@ -195,6 +208,33 @@ const styles = StyleSheet.create({
     fontSize: typography.size.h5,
     color: colors.primary,
     fontWeight: typography.weight.semibold,
+  },
+  titleBar: {
+    flex: 1,
+    flexGrow: 1,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginHorizontal: spacing.sm,
+    alignItems: 'center',
+  },
+  titleBarTitle: {
+    fontFamily: typography.fontFamily.headingBold,
+    fontSize: 15,
+    color: colors.white,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 2,
+  },
+  titleBarSubtitle: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: 12,
+    color: colors.white,
+    opacity: 0.85,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 2,
   },
   overlay: {
     flex: 1,
