@@ -166,6 +166,10 @@ export function AppChrome({
         <Pressable style={styles.overlay} onPress={() => setHMenuOpen(false)}>
           <View style={styles.sheet}>
             <ScrollView style={{ maxHeight: '100%' }}>
+              <View style={styles.wordmarkChip}>
+                <Text style={styles.wordmarkText}>JobCore©</Text>
+              </View>
+              <View style={styles.divider} />
               {showBack && (
                 <>
                   <Pressable
@@ -258,6 +262,19 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 2,
   },
+  wordmarkChip: {
+    alignSelf: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  wordmarkText: {
+    fontFamily: typography.fontFamily.headingBold,
+    color: colors.primary,
+    fontSize: typography.size.h6,
+  },
   overlay: {
     flex: 1,
     backgroundColor: colors.overlay,
@@ -269,6 +286,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     maxHeight: '60%',
     paddingVertical: spacing.sm,
+    maxWidth: 340,
+    width: '100%',
+    alignSelf: 'center',
   },
   divider: {
     borderBottomWidth: 1,
@@ -276,6 +296,9 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xs,
   },
   row: {
+    minHeight: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
@@ -286,13 +309,17 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   rowText: {
-    fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.heading,
+    fontSize: 18,
+    textAlign: 'center',
     color: colors.text,
   },
   rowTextActive: {
-    fontWeight: typography.weight.semibold,
-    color: colors.primary,
+    fontFamily: typography.fontFamily.headingBold,
+    color: colors.white,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 2,
   },
   rowTextDisabled: {
     color: colors.textMuted,
