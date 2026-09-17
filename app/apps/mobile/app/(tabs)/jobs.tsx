@@ -101,7 +101,7 @@ export default function JobsScreen() {
     };
   }, [role, userId]);
 
-  if (!selectedJob || !isBetaVisible(selectedJob, showBeta)) {
+  if (!selectedJob || !(isBetaVisible(selectedJob, showBeta) || selectedJob.source === 'job-simulator')) {
     return (
       <View style={styles.center}>
         <AppChrome
