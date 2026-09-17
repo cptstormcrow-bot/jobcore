@@ -86,6 +86,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
           <InfoRow label="Hours Worked" value={hoursWorked != null ? hoursWorked.toFixed(1) : 'Not available'} />
+          <InfoRow label="Hourly Rate" value={employee.defaultHourlyRateCents != null ? `$${(employee.defaultHourlyRateCents / 100).toFixed(2)}/hr` : 'Not set'} />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>

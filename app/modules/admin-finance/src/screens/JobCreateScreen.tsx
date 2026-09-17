@@ -153,7 +153,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.headingBold,
-    fontWeight: typography.weight.bold,
     marginBottom: spacing.xs,
   },
   label: {

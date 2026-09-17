@@ -116,7 +116,10 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   }, [serviceTasksRepo, organizationId]);
 
   function updateDraft(taskId: string, field: 'estimatedMinutes' | 'rate' | 'category', value: string) {
-    setDrafts((prev) => ({ ...prev, [taskId]: { ...prev[taskId], [field]: value } }));
+    setDrafts((prev) => ({
+      ...prev,
+      [taskId]: { ...(prev[taskId] ?? { estimatedMinutes: '', rate: '', category: '' }), [field]: value },
+    }));
   }
 
   async function commitField(
@@ -357,6 +360,9 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   }, [session, priceSheetRepository, priceSheetId]);
 
   useEffect(() => {
+    if (!session) {
+      return undefined;
+    }
     if (!areaAdjustmentsRepo || !priceSheetId) {
       return undefined;
     }
@@ -395,7 +401,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     return () => {
       cancelled = true;
     };
-  }, [areaAdjustmentsRepo, priceSheetId, standardDurationRepo, session.org.id]);
+  }, [areaAdjustmentsRepo, priceSheetId, standardDurationRepo, session?.org.id]);
 
   if (!session) {
     return (
@@ -518,6 +524,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   }
 
   async function handleSaveStandardDuration(value: number): Promise<void> {
+    if (!session) return;
     if (!standardDurationRepo) return;
     setStandardDurationState({ kind: 'working' });
     try {

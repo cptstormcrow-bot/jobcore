@@ -22,7 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
 import { Button, Card, ListItem, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
-import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE } from '@jobcore/core';
+import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
   EmployeeRepository,
   InvitationRepository,
@@ -97,6 +97,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [isTestInput, setIsTestInput] = useState(profile?.isTest ?? false);
   const [paidTravelInput, setPaidTravelInput] = useState(profile?.paidTravel ?? false);
   const [ptpmInput, setPtpmInput] = useState(profile?.paidTravelPolicyMessage ?? DEFAULT_PAID_TRAVEL_POLICY_MESSAGE);
+  const [hourlyRateInput, setHourlyRateInput] = useState(
+    (((profile as unknown as { defaultHourlyRateCents?: number })?.defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS) / 100).toFixed(2)
+  );
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
@@ -216,6 +219,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         toolStatus: toolStatusInput && isToolStatus(toolStatusInput) ? toolStatusInput : null,
         paidTravel: paidTravelInput,
         paidTravelPolicyMessage: ptpmInput || null,
+        defaultHourlyRateCents: Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100),
       });
       setActionState({ kind: 'done', message: 'Saved.' });
       onSaved?.();
@@ -320,6 +324,13 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 placeholder="Driver's License #"
                 value={driversLicenseInput}
                 onChangeText={setDriversLicenseInput}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Hourly Rate"
+                value={hourlyRateInput}
+                onChangeText={setHourlyRateInput}
+                keyboardType="numeric"
               />
               <Select
                 label="Vehicle Status"

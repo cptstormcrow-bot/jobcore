@@ -25,7 +25,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
-import type { Job } from '@jobcore/core';
+import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { byStatus, bySource, byAttachTiming } from '../reporting/group-by';
 import { slotHitRate, classifyWindow } from '../reporting/slot-hit-rate';
@@ -43,7 +43,7 @@ export interface ReportsScreenProps {
 
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
 type DrillState =
-  | { section: 'status'; key: string }
+  | { section: 'status'; key: JobStatus }
   | { section: 'source'; key: string }
   | { section: 'attachTiming'; key: string }
   | { section: 'slotHitRate'; key: 'hit' | 'miss' | 'unknown' }
@@ -164,7 +164,7 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
                 key={status}
                 title={status}
                 subtitle={`${groupJobs.length} job(s)`}
-                onPress={() => setDrill({ section: 'status', key: status })}
+                onPress={() => setDrill({ section: 'status', key: status as JobStatus })}
               />
             ))}
           </Card>
