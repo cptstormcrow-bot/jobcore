@@ -19,7 +19,7 @@ import * as React from 'react';
 import { View, Text, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, telUrl, colors } from '@jobcore/ui';
+import { Button, telUrl, colors, spacing, typography } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -138,12 +138,11 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     );
   }
 
+  const headerLine = [`Job ${job.id}`, job.status, job.address].filter(Boolean).join(' · ');
+
   return (
     <View style={styles.container}>
-      <ScreenTitle
-        title={`Job ${job.id}`}
-        subtitle={[job.status, job.address].filter(Boolean).join(' · ') || undefined}
-      />
+      <Text style={styles.sectionTitle}>{headerLine}</Text>
 
       {job.description ? <Text style={styles.description}>{job.description}</Text> : null}
 
@@ -195,33 +194,33 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.md,
   },
   description: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: typography.size.label,
+    marginBottom: spacing.sm,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontSize: typography.size.h6,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.sm,
   },
   label: {
-    fontSize: 12,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
-    marginTop: 6,
+    marginTop: spacing.xs,
   },
   value: {
-    fontSize: 14,
+    fontSize: typography.size.label,
   },
   noteRow: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   noteTimestamp: {
-    fontSize: 11,
+    fontSize: typography.size.detail,
     color: colors.textMutedDark,
   },
   error: {

@@ -77,7 +77,12 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const { organizationId } = getModuleSession();
+    const session = getModuleSession();
+    if (!session) {
+      setLoading(false);
+      return;
+    }
+    const organizationId = session.org.id;
     Promise.all([jobPlanTasks.listForJob(jobId), jobPlanTasks.listCatalogTasks(organizationId)])
       .then(([taskRows, catalogTasks]) => {
         if (cancelled) return;
@@ -163,10 +168,10 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
         }}
       />
       {rows.length === 0 ? (
-        <EmptyState message="No tasks added yet." />
+        <EmptyState title="No tasks added yet." />
       ) : (
         rows.map((row) => (
-          <ListItem key={row.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text>{row.name}</Text>
             <TextInput
               style={{ width: 60, textAlign: 'center' }}
@@ -175,8 +180,8 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
               onChangeText={(text) => setQuantityDrafts((prev) => ({ ...prev, [row.id]: text }))}
               onBlur={() => void handleQuantityBlur(row.id)}
             />
-            <Button title="Remove" onPress={() => void handleRemove(row.id)} />
-          </ListItem>
+            <Button label="Remove" onPress={() => void handleRemove(row.id)} />
+          </View>
         ))
       )}
       <Text>Total duration: {totalMinutes} min (standard: {standardMinutes ?? 60} min)</Text>
@@ -364,7 +369,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
 
         <Card style={styles.card}>
           {!embedded && (
-            <Text style={styles.jobTitle}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
+            <Text style={styles.title}>{selectedJob?.address ?? selectedJob?.description ?? selectedJobId}</Text>
           )}
 
           {detailsLoadState.kind === 'loading' || detailsLoadState.kind === 'idle' ? (
@@ -484,12 +489,12 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
         </Card>
 
         <Card style={styles.card}>
-          <Text style={styles.tasksTitle}>Tasks</Text>
+          <Text style={styles.title}>Tasks</Text>
           <TaskListSection jobId={selectedJobId as string} jobPlanTasks={jobPlanTasks} standardMinutes={standardMinutes} />
         </Card>
 
         <Card style={styles.card}>
-          <Text style={styles.photosTitle}>Photos</Text>
+          <Text style={styles.title}>Photos</Text>
           {photosError && <Text style={styles.errorText}>{photosError}</Text>}
           {photos.length === 0 ? (
             <Text style={styles.hintText}>No photos added yet.</Text>
@@ -533,25 +538,10 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: spacing.sm,
   },
-  jobTitle: {
+  title: {
     color: colors.text,
     fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.headingBold,
-    fontWeight: typography.weight.bold,
-    marginBottom: spacing.xs,
-  },
-  tasksTitle: {
-    color: colors.text,
-    fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.headingBold,
-    fontWeight: typography.weight.bold,
-    marginBottom: spacing.xs,
-  },
-  photosTitle: {
-    color: colors.text,
-    fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.headingBold,
-    fontWeight: typography.weight.bold,
     marginBottom: spacing.xs,
   },
   label: {

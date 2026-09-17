@@ -26,7 +26,6 @@ export interface WeekViewProps {
   onSelectDay?: (day: Date) => void;
 }
 
-const TIME_OFF_RED = '#D32F2F';
 
 export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff, onSelectDay }: WeekViewProps) {
   const weekStart = startOfWeek(anchorDay, { weekStartsOn: 0 });
@@ -130,13 +129,13 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
   timeOffDayNumberText: {
-    color: TIME_OFF_RED,
+    color: colors.danger,
     fontWeight: '700',
   },
   timeOffLabel: {
     fontSize: typography.size.small,
     lineHeight: typography.size.small * typography.lineHeight.body,
-    color: TIME_OFF_RED,
+    color: colors.danger,
     textAlign: 'center',
   },
   card: {

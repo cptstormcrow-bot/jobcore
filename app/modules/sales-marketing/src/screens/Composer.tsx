@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   approvedText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1a7a1a',
+    color: colors.success,
     marginBottom: 16,
   },
   primaryButton: {
