@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Redirect, Stack, useRootNavigationState, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
+import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { LoadingState, ErrorState, EmptyState, Button, colors, spacing } from '@jobcore/ui';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
@@ -10,12 +13,16 @@ import { SyncStatusProvider } from '../src/lib/sync-status';
 import { SyncIndicator } from '../src/components/SyncIndicator';
 import { countPending } from '../src/lib/offline-db';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
+import { WalkthroughProvider } from '../src/walkthrough/WalkthroughProvider';
+import { WalkthroughOverlay } from '../src/walkthrough/WalkthroughOverlay';
 
 // Side-effect import: registers every compiled-in module exactly once, before any
 // screen calls getEnabledModules(). This is the only import of this file in the app.
 import '../src/modules';
 
 installGlobalErrorHandler();
+
+SplashScreen.preventAutoHideAsync();
 
 /**
  * Auth gate. Reads the session state and decides what the router may render:
@@ -120,18 +127,39 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
-    <SafeAreaProvider>
-      <SessionProvider>
-        {/* Mounted at the root so the sync indicator is app-wide ("persistent")
-            across every screen. `replay` is deliberately left unwired here until
-            a Supabase transport exists. */}
-        <SyncStatusProvider countPending={countPending}>
-          <StatusBar style="auto" />
-          <AuthGate />
-        </SyncStatusProvider>
-      </SessionProvider>
-    </SafeAreaProvider>
+    <WalkthroughProvider>
+      <SafeAreaProvider>
+        <SessionProvider>
+          {/* Mounted at the root so the sync indicator is app-wide ("persistent")
+              across every screen. `replay` is deliberately left unwired here until
+              a Supabase transport exists. */}
+          <SyncStatusProvider countPending={countPending}>
+            <StatusBar style="auto" />
+            <AuthGate />
+          </SyncStatusProvider>
+        </SessionProvider>
+      </SafeAreaProvider>
+      <WalkthroughOverlay />
+    </WalkthroughProvider>
   );
 }
 
