@@ -642,6 +642,7 @@ export function AdminFinanceRoot() {
     <View style={styles.screen}>
       <AppChrome
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
+        titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
         menuItems={[
           { id: 'overview', label: 'Overview', onPress: () => goTop('overview') },
           { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox') },
