@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   rowActive: {
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.accent,
   },
   rowDisabled: {
     opacity: 0.5,
