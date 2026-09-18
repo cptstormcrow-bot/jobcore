@@ -6,7 +6,7 @@ import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, AppChrome, colors, spacing, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 
-import { useSession, signOut } from '../src/lib/session';
+import { useSession } from '../src/lib/session';
 
 /**
  * Registry-driven launcher (P1 build item 6).
@@ -39,7 +39,7 @@ export default function HomeScreen() {
 
   const menuItems: MenuItem[] = [
     ...modules.map((m) => ({ id: m.id, label: m.displayName, onPress: () => router.push(`/m/${m.id}`) })),
-    { id: 'logins', label: 'Logins/Sign in/out', onPress: () => void signOut() },
+    { id: 'logins', label: 'Logins/Sign in/out', onPress: () => router.push('/account') },
     {
       id: 'configuration',
       label: 'Configuration',

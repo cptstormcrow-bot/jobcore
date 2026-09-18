@@ -24,7 +24,6 @@ import { Composer } from './Composer';
 import { Reporting } from './Reporting';
 import { CallbackTasks } from './CallbackTasks';
 import { getModuleSession } from '../lib/module-session';
-import { signOut } from '../../../../apps/mobile/src/lib/session';
 
 type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
@@ -86,9 +85,7 @@ export function SalesMarketingRoot(): React.ReactElement {
       {
         id: 'loginsSignInOut',
         label: 'Logins/Sign in/out',
-        onPress: () => {
-          void signOut();
-        },
+        onPress: () => router.push('/account'),
       },
       {
         id: 'configuration',

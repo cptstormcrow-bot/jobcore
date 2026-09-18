@@ -22,6 +22,8 @@ export interface ProfileRow {
   drivers_license_number: string | null;
   vehicle_status: string | null;
   tool_status: string | null;
+  paid_travel: boolean;
+  paid_travel_policy_message: string | null;
 }
 
 export interface OrganizationRow {
@@ -60,6 +62,8 @@ export function toProfile(row: ProfileRow): Profile {
     driversLicenseNumber: row.drivers_license_number,
     vehicleStatus: row.vehicle_status && isVehicleStatus(row.vehicle_status) ? row.vehicle_status : null,
     toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
+    paidTravel: row.paid_travel,
+    paidTravelPolicyMessage: row.paid_travel_policy_message,
   };
 }
 
@@ -116,7 +120,7 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
 
   const profileResult = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status')
+    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status, paid_travel, paid_travel_policy_message')
     .eq('id', session.user.id)
     .maybeSingle<ProfileRow>();
 

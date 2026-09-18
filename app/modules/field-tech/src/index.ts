@@ -37,7 +37,6 @@ import { Reviews } from './screens/Reviews';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import { transitionJob } from './domain/transition';
-import { signOut } from '../../../apps/mobile/src/lib/session';
 
 export type { ModuleSession } from './lib/module-session';
 export { setModuleSession, clearModuleSession } from './lib/module-session';
@@ -116,9 +115,7 @@ function FieldTechRoot(): React.ReactElement {
     {
       id: 'loginsSignInOut',
       label: 'Logins/Sign in/out',
-      onPress: () => {
-        void signOut();
-      },
+      onPress: () => router.push('/account'),
     },
     {
       id: 'configuration',

@@ -61,7 +61,6 @@ import { assignJob } from '../flows/assign-job';
 import { qualifyLead } from '../flows/qualify-lead';
 import { closeOutJob } from '../flows/close-out-job';
 import type { TechColumnTech } from '../components/TechColumn';
-import { signOut } from '../../../../apps/mobile/src/lib/session';
 
 type SubView =
   | 'overview' | 'jobs'
@@ -656,7 +655,7 @@ export function AdminFinanceRoot() {
           { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar') },
           { id: 'reports', label: 'Reports', onPress: () => goTop('reports') },
           { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster') },
-          { id: 'logins', label: 'Logins', onPress: () => void signOut() },
+          { id: 'logins', label: 'Logins', onPress: () => router.push('/account') },
           {
             id: 'configuration',
             label: 'Configuration',

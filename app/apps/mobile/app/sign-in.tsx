@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,14 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
 
   const canSubmit = email.length > 0 && password.length > 0 && !busy;
+  const formRef = useRef<HTMLFormElement>(null);
+  function submit() {
+    if (Platform.OS === 'web' && formRef.current) {
+      formRef.current.requestSubmit();
+      return;
+    }
+    if (canSubmit) void handleSubmit();
+  }
 
   async function handleSubmit() {
     setBusy(true);
@@ -50,6 +58,7 @@ export default function SignInScreen() {
             placeholderTextColor={colors.textMuted}
             style={styles.input}
             editable={!busy}
+            nativeID="email"
           />
 
           <Text style={styles.label}>Password</Text>
@@ -65,9 +74,8 @@ export default function SignInScreen() {
               placeholderTextColor={colors.textMuted}
               style={[styles.input, styles.passwordInput]}
               editable={!busy}
-              onSubmitEditing={() => {
-                if (canSubmit) void handleSubmit();
-              }}
+              nativeID="password"
+              onSubmitEditing={submit}
             />
             <Pressable
               style={styles.passwordToggle}
@@ -80,7 +88,7 @@ export default function SignInScreen() {
           <Button
             label={busy ? 'Signing in…' : 'Sign in'}
             disabled={!canSubmit}
-            onPress={() => void handleSubmit()}
+            onPress={submit}
             style={styles.submit}
           />
         </Card>
