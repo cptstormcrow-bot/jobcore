@@ -126,11 +126,6 @@ function FieldTechRoot(): React.ReactElement {
       onPress: () => {},
       submenu: [
         {
-          id: 'configSpawnTestJobs',
-          label: 'Spawn Test Jobs',
-          onPress: () => router.push('/config/test-jobs'),
-        },
-        {
           id: 'configSettings',
           label: 'Settings',
           onPress: () => router.push('/config/settings'),

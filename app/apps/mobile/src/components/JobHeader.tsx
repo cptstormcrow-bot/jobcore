@@ -68,6 +68,7 @@ export function JobHeader({
           { label: `#${job.jobNumber ?? '—'}` },
         ]}
         titleBar={{ title: customer?.name ?? 'Unknown Customer', subtitle: job.address ?? undefined }}
+        helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
       />
       <Text style={styles.heading}>Job Details</Text>
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}

@@ -19,3 +19,7 @@ export * from './Breadcrumb';
 export * from './AppChrome';
 export * from './TabBar';
 export * from './telephony';
+export * from './walkthrough/walkthrough-content';
+export * from './walkthrough/WalkthroughProvider';
+export * from './walkthrough/WalkthroughOverlay';
+export * from './walkthrough/WalkthroughHelpCallout';

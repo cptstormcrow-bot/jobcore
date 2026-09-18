@@ -404,7 +404,8 @@ export function createTestJobsRepository(): TestJobsRepository {
         .from('jobs')
         .delete()
         .eq('organization_id', organizationId)
-        .eq('is_beta', true);
+        .eq('is_beta', true)
+        .eq('source', 'beta-test');
       if (deleteError) {
         throw new Error(`spawnTestJobs reset failed: ${deleteError.message}`);
       }
@@ -451,6 +452,7 @@ export function createTestJobsRepository(): TestJobsRepository {
         organization_id: organizationId,
         status: 'new' as const,
         is_beta: true,
+        source: 'beta-test',
         description: `Test job ${index + 1} — spawned for testing`,
         address,
         service_area_id: serviceArea?.id ?? null,

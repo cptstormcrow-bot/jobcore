@@ -291,6 +291,17 @@ export function createJobRepository(): JobRepository {
       return toJob(data as JobRow);
     },
 
+    async markBeta(jobId: string, isBeta: boolean): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('job.markBeta', occurredAt, { jobId, isBeta });
+
+      const { error } = await supabase.from('jobs').update({ is_beta: isBeta }).eq('id', jobId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.markBeta', error.message, { jobId, isBeta });
+        throw new Error(`markBeta failed: ${error.message}`);
+      }
+    },
+
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('job.update_details', occurredAt, { jobId, patch });
@@ -585,6 +596,7 @@ function toProfile(row: {
   tool_status: string | null;
   paid_travel: boolean;
   paid_travel_policy_message: string | null;
+  hourly_rate_cents: number | null;
 }): Profile {
   return {
     id: row.id,
@@ -601,6 +613,7 @@ function toProfile(row: {
     toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
     paidTravel: row.paid_travel,
     paidTravelPolicyMessage: row.paid_travel_policy_message,
+    defaultHourlyRateCents: row.hourly_rate_cents ?? undefined,
   };
 }
 
@@ -642,6 +655,7 @@ export function createEmployeeRepository(): EmployeeRepository {
         toolStatus?: ToolStatus | null;
         paidTravel?: boolean;
         paidTravelPolicyMessage?: string | null;
+        defaultHourlyRateCents?: number;
       },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();
@@ -674,6 +688,9 @@ export function createEmployeeRepository(): EmployeeRepository {
       }
       if (updates.paidTravelPolicyMessage !== undefined) {
         patch.paid_travel_policy_message = updates.paidTravelPolicyMessage;
+      }
+      if (updates.defaultHourlyRateCents !== undefined) {
+        patch.hourly_rate_cents = updates.defaultHourlyRateCents;
       }
 
       const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);

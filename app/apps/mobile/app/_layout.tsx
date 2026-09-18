@@ -6,15 +6,13 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
-import { LoadingState, ErrorState, EmptyState, Button, colors, spacing } from '@jobcore/ui';
+import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay } from '@jobcore/ui';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
 import { SyncStatusProvider } from '../src/lib/sync-status';
 import { SyncIndicator } from '../src/components/SyncIndicator';
 import { countPending } from '../src/lib/offline-db';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
-import { WalkthroughProvider } from '../src/walkthrough/WalkthroughProvider';
-import { WalkthroughOverlay } from '../src/walkthrough/WalkthroughOverlay';
 
 // Side-effect import: registers every compiled-in module exactly once, before any
 // screen calls getEnabledModules(). This is the only import of this file in the app.

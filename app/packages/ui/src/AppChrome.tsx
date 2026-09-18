@@ -3,6 +3,10 @@ import { Animated, View, Text, Pressable, Modal, ScrollView, StyleSheet } from '
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius, typography } from './tokens';
 import type { BreadcrumbSegment } from './Breadcrumb';
+import type { JobStatus } from '@jobcore/core';
+import { getHelpStep, type ScreenKey } from './walkthrough/walkthrough-content';
+import { useWalkthrough } from './walkthrough/WalkthroughProvider';
+import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
 
 export type MenuItem = {
   id: string;
@@ -19,6 +23,7 @@ export type AppChromeProps = {
   optionsItems?: MenuItem[];
   showBack?: boolean; // default true
   titleBar?: { title: string; subtitle?: string };
+  helpContext?: { screenKey: ScreenKey; jobStatus?: JobStatus };
 };
 
 function MenuRow({
@@ -105,11 +110,17 @@ export function AppChrome({
   optionsItems,
   showBack = true,
   titleBar,
+  helpContext,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const [hMenuOpen, setHMenuOpen] = useState(false);
   const [oMenuOpen, setOMenuOpen] = useState(false);
   const canGoBack = router.canGoBack();
+  const { standaloneStep, showHelp, dismissHelp } = useWalkthrough();
+  const helpStep = helpContext ? getHelpStep(helpContext.screenKey, helpContext.jobStatus) : undefined;
+  const resolvedOptionsItems = helpStep
+    ? [{ id: 'help', label: 'Help', onPress: () => showHelp(helpStep.id) }, ...(optionsItems ?? [])]
+    : optionsItems;
 
   const handleLeafPress = (item: MenuItem) => {
     setHMenuOpen(false);
@@ -197,8 +208,8 @@ export function AppChrome({
         <Pressable style={styles.overlay} onPress={() => setOMenuOpen(false)}>
           <View style={styles.sheet}>
             <ScrollView style={{ maxHeight: '100%' }}>
-              {optionsItems && optionsItems.length > 0 ? (
-                optionsItems.map((item) => (
+              {resolvedOptionsItems && resolvedOptionsItems.length > 0 ? (
+                resolvedOptionsItems.map((item) => (
                   <MenuRow key={item.id} item={item} onLeafPress={handleOptionPress} />
                 ))
               ) : (
@@ -210,6 +221,8 @@ export function AppChrome({
           </View>
         </Pressable>
       </Modal>
+
+      <WalkthroughHelpCallout />
     </View>
   );
 }

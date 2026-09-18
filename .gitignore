@@ -1,0 +1,5 @@
+# tsc emit that landed beside sources; real output is each package's dist/
+app/**/src/**/*.js
+app/**/src/**/*.d.ts
+app/**/src/**/*.d.ts.map
+.claude/scratch/

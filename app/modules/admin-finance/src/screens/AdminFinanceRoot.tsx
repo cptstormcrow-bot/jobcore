@@ -641,6 +641,7 @@ export function AdminFinanceRoot() {
   return (
     <View style={styles.screen}>
       <AppChrome
+        helpContext={{ screenKey: 'admin-finance' }}
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
         menuItems={[
@@ -661,7 +662,6 @@ export function AdminFinanceRoot() {
             label: 'Configuration',
             onPress: () => {},
             submenu: [
-              { id: 'config-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
               { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
             ],
           },

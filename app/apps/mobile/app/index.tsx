@@ -44,7 +44,6 @@ export default function HomeScreen() {
       id: 'configuration',
       label: 'Configuration',
       submenu: [
-        { id: 'spawn-test-jobs', label: 'Spawn Test Jobs', onPress: () => router.push('/config/test-jobs') },
         { id: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
       ],
     },
