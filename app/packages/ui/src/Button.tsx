@@ -37,7 +37,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
   // Same contrast reasoning applies to outline-variant text on white: use
   // secondaryDark, not secondary, so label text also clears ~4.2:1. secondary's
   // navy background still contrasts fine with white label text.
-  const labelColor = isOutline ? colors.secondaryDark : variant === 'primary' ? colors.primary : colors.white;
+  const labelColor = isOutline ? colors.secondaryDark : variant === 'primary' ? colors.text : colors.white;
   return (
     <Pressable
       onPress={onPress}
@@ -60,7 +60,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
         fullWidth && { alignSelf: 'stretch' },
       ]}
     >
-      <Text style={[styles.label, { color: labelColor, fontSize: fontBySize[size] }]}>{label}</Text>
+      <Text style={[styles.label, variant === 'primary' && styles.labelPrimary, { color: labelColor, fontSize: fontBySize[size] }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -86,4 +86,5 @@ const styles = StyleSheet.create({
   outline: { borderColor: colors.secondary },
   disabled: { opacity: 0.5 },
   label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold },
+  labelPrimary: { fontFamily: typography.fontFamily.headingBold, fontWeight: typography.weight.bold },
 });
