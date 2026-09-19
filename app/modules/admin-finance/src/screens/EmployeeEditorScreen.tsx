@@ -20,7 +20,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, Checkbox, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -446,20 +446,23 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
         <Card style={styles.card}>
           <Text style={styles.heading}>Role</Text>
-          {ROLES.map((role) => (
-            <ListItem
-              key={role}
-              title={role}
-              subtitle={role === roleInput ? 'Current' : undefined}
-              onPress={
-                isEditMode
-                  ? () => {
-                      void handleRoleChange(role);
-                    }
-                  : () => setRoleInput(role)
-              }
-            />
-          ))}
+          <View style={styles.roleRow}>
+            {ROLES.map((role) => (
+              <Checkbox
+                key={role}
+                label={role}
+                checked={role === roleInput}
+                disabled={roleActionState.kind === 'working'}
+                onChange={() => {
+                  if (isEditMode) {
+                    void handleRoleChange(role);
+                  } else {
+                    setRoleInput(role);
+                  }
+                }}
+              />
+            ))}
+          </View>
           {isEditMode && roleActionState.kind === 'working' ? (
             <Text style={styles.note}>Updating role...</Text>
           ) : null}
@@ -578,6 +581,12 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   action: {
     marginBottom: spacing.sm,

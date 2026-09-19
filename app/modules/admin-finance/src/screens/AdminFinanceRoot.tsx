@@ -58,6 +58,7 @@ import { EmployeeInvitationsScreen } from './EmployeeInvitationsScreen';
 import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
+import { assignInvestigator } from '../flows/assign-investigator';
 import { qualifyLead } from '../flows/qualify-lead';
 import { closeOutJob } from '../flows/close-out-job';
 import type { TechColumnTech } from '../components/TechColumn';
@@ -349,6 +350,29 @@ export function AdminFinanceRoot() {
     // just-assigned job keeps showing under "Unassigned", which reads as a
     // failed assign and invites a second Confirm press against a stale
     // in-memory status.
+    refreshJobs();
+  }
+
+  async function handleAssignInvestigator(job: Job, techId: string) {
+    if (!session) {
+      return;
+    }
+    try {
+      const result = await assignInvestigator(job, techId, {
+        assignments: ports.jobAssignments,
+        ctx: { role: session.role, now: () => new Date().toISOString() },
+      });
+      if (!result.ok) {
+        Alert.alert('Prem visit assignment failed', result.reason);
+        return;
+      }
+    } catch (error) {
+      Alert.alert(
+        'Prem visit assignment failed',
+        error instanceof Error ? error.message : 'Unexpected error.'
+      );
+      return;
+    }
     refreshJobs();
   }
 
@@ -673,7 +697,24 @@ export function AdminFinanceRoot() {
                 },
               },
             ]
-          : undefined;
+          : subView === 'assignmentBoard'
+            ? [
+                {
+                  id: 'show-test-jobs',
+                  label: 'Show Test Jobs',
+                  kind: 'toggle',
+                  checked: showTestJobs,
+                  onToggle: handleShowTestJobsChange,
+                },
+                {
+                  id: 'show-test-employees',
+                  label: 'Show Test Employees',
+                  kind: 'toggle',
+                  checked: showTestEmployees,
+                  onToggle: handleShowTestEmployeesChange,
+                },
+              ]
+            : undefined;
 
   if (!session) {
     return (
@@ -957,10 +998,9 @@ export function AdminFinanceRoot() {
             resolveServiceAreaId={(job) => job.service_area_id ?? null}
             techServiceAreas={loadState.techServiceAreas}
             onAssign={handleAssign}
+            onAssignInvestigator={handleAssignInvestigator}
             showTestJobs={showTestJobs}
-            onShowTestJobsChange={handleShowTestJobsChange}
             showTestEmployees={showTestEmployees}
-            onShowTestEmployeesChange={handleShowTestEmployeesChange}
           />
         )
       ) : subView === 'reports' ? (

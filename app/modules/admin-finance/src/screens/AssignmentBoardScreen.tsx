@@ -39,7 +39,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Toggle, Button, Select, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, EmptyState, Button, Select, colors, spacing, radius, typography } from '@jobcore/ui';
 import { TechColumn, type TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -71,6 +71,8 @@ export interface AssignmentBoardScreenProps {
   techServiceAreas?: TechServiceAreaCoverage[];
   /** Fired once the assignment is confirmed (warnings shown, never blocking). */
   onAssign?: (job: Job, techId: string) => void;
+  /** Fired to assign a prem-visit investigator tech to a job (AD-32). */
+  onAssignInvestigator?: (job: Job, techId: string) => void;
   /**
    * Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
    * rows spawned by sales-marketing's "Spawn Test Jobs" flow. Lifted to the
@@ -78,19 +80,21 @@ export interface AssignmentBoardScreenProps {
    * on a `subView` switch.
    */
   showTestJobs: boolean;
-  onShowTestJobsChange: (value: boolean) => void;
   /**
    * "Show Test Employees" toggle, default OFF — hides profiles.is_test rows
    * via `isTestVisible`, mirroring `showTestJobs`/`isBetaVisible` above. Also
    * lifted to the caller for the same unmount-survival reason.
    */
   showTestEmployees: boolean;
-  onShowTestEmployeesChange: (value: boolean) => void;
 }
 
 interface PendingAssignment {
   job: Job;
   tech: TechColumnTech;
+}
+
+export function jobCategoryOf(job: Pick<Job, 'isBeta' | 'source'>): 'real' | 'beta' | 'test' {
+  return job.source === 'job-simulator' ? 'test' : job.isBeta ? 'beta' : 'real';
 }
 
 export function AssignmentBoardScreen({
@@ -100,23 +104,29 @@ export function AssignmentBoardScreen({
   resolveTimeOffForTech,
   techServiceAreas,
   onAssign,
+  onAssignInvestigator,
   showTestJobs,
-  onShowTestJobsChange,
   showTestEmployees,
-  onShowTestEmployeesChange,
 }: AssignmentBoardScreenProps) {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
+  const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
+  const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
 
   const visibleTechs = useMemo(
     () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
     [techs, showTestEmployees]
   );
 
-  const unassignedJobs = useMemo(
-    () => jobs.filter((job) => !job.assignedTechId && isBetaVisible(job, showTestJobs)),
-    [jobs, showTestJobs]
+  const poolJobs = useMemo(
+    () =>
+      jobs.filter(
+        (job) =>
+          isBetaVisible(job, showTestJobs) &&
+          (category === 'all' || jobCategoryOf(job) === category)
+      ),
+    [jobs, showTestJobs, category]
   );
 
   const jobsByTech = useMemo(() => {
@@ -226,20 +236,48 @@ export function AssignmentBoardScreen({
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.poolCard}>
-          <Text style={styles.poolTitle}>Unassigned</Text>
-          <Toggle label="Show Test Jobs" value={showTestJobs} onChange={onShowTestJobsChange} />
-          <Toggle label="Show Test Employees" value={showTestEmployees} onChange={onShowTestEmployeesChange} />
-          {unassignedJobs.length === 0 ? (
+          <Text style={styles.poolTitle}>Jobs</Text>
+          <View style={styles.categorySegmentRow}>
+            {(['real', 'beta', 'test', 'all'] as const).map((cat) => (
+              <Button
+                key={cat}
+                label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
+                variant={category === cat ? 'primary' : 'outline'}
+                size="sm"
+                disabled={cat !== 'real' && !showTestJobs}
+                onPress={() => setCategory(cat)}
+              />
+            ))}
+          </View>
+          {!showTestJobs && (
+            <Text style={styles.empty}>Turn on Show Test Jobs in ⋮ to see Beta/Test/All.</Text>
+          )}
+          {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
-            unassignedJobs.map((job) => {
+            poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
+              const kind = visitKind[job.id] ?? 'service';
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
                     <View style={styles.poolRowInfo}>
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
+                    </View>
+                    <View style={styles.visitKindSegmentRow}>
+                      <Button
+                        label="Service"
+                        variant={kind === 'service' ? 'primary' : 'outline'}
+                        size="sm"
+                        onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))}
+                      />
+                      <Button
+                        label="Prem"
+                        variant={kind === 'prem' ? 'primary' : 'outline'}
+                        size="sm"
+                        onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))}
+                      />
                     </View>
                     {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                         priority keeps this tap from also firing the row's
@@ -335,6 +373,16 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
+  },
+  categorySegmentRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  visitKindSegmentRow: {
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginRight: spacing.sm,
   },
   poolRow: {
     flexDirection: 'row',
