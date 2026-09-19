@@ -94,6 +94,9 @@ export interface ModulePorts {
         rate?: number | null;
         category?: string | null;
         active?: boolean;
+        priceCents?: number | null;
+        details?: string | null;
+        materials?: string | null;
       }
     ): Promise<CalculationResult<ServiceTask>>;
   };

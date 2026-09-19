@@ -366,6 +366,13 @@ export interface ServiceTaskRow {
   organization_id: string;
   service_id: string;
   name: string;
+  estimated_minutes?: number | null;
+  rate?: number | null;
+  category?: string | null;
+  active?: boolean;
+  price_cents?: number | null;
+  details?: string | null;
+  materials?: string | null;
 }
 
 /** Map a `service_tasks` row to the domain `ServiceTask` (`../data/ports.ts`). */
@@ -375,6 +382,13 @@ export function toServiceTask(row: ServiceTaskRow): ServiceTask {
     organizationId: row.organization_id,
     serviceId: row.service_id,
     name: row.name,
+    estimatedMinutes: row.estimated_minutes ?? null,
+    rate: row.rate ?? null,
+    category: row.category ?? null,
+    active: row.active ?? true,
+    priceCents: row.price_cents ?? null,
+    details: row.details ?? null,
+    materials: row.materials ?? null,
   };
 }
 
@@ -426,6 +440,9 @@ export async function updateServiceTask(
     rate?: number | null;
     category?: string | null;
     active?: boolean;
+    priceCents?: number | null;
+    details?: string | null;
+    materials?: string | null;
   }
 ): Promise<CalculationResult<ServiceTask>> {
   const updateObj: Record<string, unknown> = {};
@@ -441,6 +458,15 @@ export async function updateServiceTask(
   if ('active' in patch) {
     updateObj.active = patch.active;
   }
+  if ('priceCents' in patch) {
+    updateObj.price_cents = patch.priceCents;
+  }
+  if ('details' in patch) {
+    updateObj.details = patch.details;
+  }
+  if ('materials' in patch) {
+    updateObj.materials = patch.materials;
+  }
   const { data, error } = await client
     .from('service_tasks')
     .update(updateObj)
@@ -450,19 +476,7 @@ export async function updateServiceTask(
   if (error) {
     return { ok: false, reason: error.message };
   }
-  return {
-    ok: true,
-    value: {
-      id: data.id,
-      organizationId: data.organization_id,
-      serviceId: data.service_id,
-      name: data.name,
-      estimatedMinutes: data.estimated_minutes,
-      rate: data.rate,
-      category: data.category,
-      active: data.active,
-    },
-  };
+  return { ok: true, value: toServiceTask(data) };
 }
 
 /* ------------------------------------------------------------------ *

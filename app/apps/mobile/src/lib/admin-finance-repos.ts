@@ -55,6 +55,7 @@ import type {
   CustomerCreateInput,
   CustomerPatch,
   EmployeeRepository,
+  ProfilePrivate,
   InvitationRepository,
   Invitation,
   TechSkillRepository,
@@ -299,6 +300,13 @@ export function createJobRepository(): JobRepository {
       if (error) {
         logSyncFailure('admin-finance-repos.markBeta', error.message, { jobId, isBeta });
         throw new Error(`markBeta failed: ${error.message}`);
+      }
+    },
+
+    async resetTimeSegments(jobId: string): Promise<void> {
+      const { error } = await supabase.rpc('reset_job_time_segments', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`resetTimeSegments failed: ${error.message}`);
       }
     },
 
@@ -597,6 +605,7 @@ function toProfile(row: {
   paid_travel: boolean;
   paid_travel_policy_message: string | null;
   hourly_rate_cents: number | null;
+  test_jobs_only: boolean;
 }): Profile {
   return {
     id: row.id,
@@ -614,6 +623,7 @@ function toProfile(row: {
     paidTravel: row.paid_travel,
     paidTravelPolicyMessage: row.paid_travel_policy_message,
     defaultHourlyRateCents: row.hourly_rate_cents ?? undefined,
+    testJobsOnly: row.test_jobs_only === true,
   };
 }
 
@@ -656,6 +666,7 @@ export function createEmployeeRepository(): EmployeeRepository {
         paidTravel?: boolean;
         paidTravelPolicyMessage?: string | null;
         defaultHourlyRateCents?: number;
+        testJobsOnly?: boolean;
       },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();
@@ -691,6 +702,9 @@ export function createEmployeeRepository(): EmployeeRepository {
       }
       if (updates.defaultHourlyRateCents !== undefined) {
         patch.hourly_rate_cents = updates.defaultHourlyRateCents;
+      }
+      if (updates.testJobsOnly !== undefined) {
+        patch.test_jobs_only = updates.testJobsOnly;
       }
 
       const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
@@ -733,6 +747,21 @@ export function createEmployeeRepository(): EmployeeRepository {
       if (error) {
         throw new Error(`setEmployeeRole failed: ${error.message}`);
       }
+    },
+    async getPrivate(profileId) {
+      const { data, error } = await supabase.from('profile_private').select('ssn_last4, emergency_contact_name, emergency_contact_phone').eq('profile_id', profileId).maybeSingle();
+      if (error) throw new Error(`getPrivate failed: ${error.message}`);
+      if (!data) return null;
+      return { ssnLast4: data.ssn_last4 ?? null, emergencyContactName: data.emergency_contact_name ?? null, emergencyContactPhone: data.emergency_contact_phone ?? null };
+    },
+    async upsertPrivate(profileId, organizationId, patch) {
+      if (patch.ssnLast4 != null && !/^\d{4}$/.test(patch.ssnLast4)) throw new Error('upsertPrivate: ssnLast4 must be exactly 4 digits');
+      const row: Record<string, unknown> = { profile_id: profileId, organization_id: organizationId, updated_at: new Date().toISOString() };
+      if (patch.ssnLast4 !== undefined) row.ssn_last4 = patch.ssnLast4;
+      if (patch.emergencyContactName !== undefined) row.emergency_contact_name = patch.emergencyContactName;
+      if (patch.emergencyContactPhone !== undefined) row.emergency_contact_phone = patch.emergencyContactPhone;
+      const { error } = await supabase.from('profile_private').upsert(row, { onConflict: 'profile_id' });
+      if (error) throw new Error(`upsertPrivate failed: ${error.message}`);
     },
   };
 }
@@ -1085,6 +1114,9 @@ export function createServiceTasksRepository() {
         rate?: number | null;
         category?: string | null;
         active?: boolean;
+        priceCents?: number | null;
+        details?: string | null;
+        materials?: string | null;
       }
     ) {
       const occurredAt = new Date().toISOString();

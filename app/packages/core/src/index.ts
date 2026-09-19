@@ -63,6 +63,7 @@ export interface Profile {
   paidTravel: boolean;
   paidTravelPolicyMessage: string | null;
   defaultHourlyRateCents?: number;
+  testJobsOnly?: boolean;
 }
 export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
   'Paid travel time is allowable if a vehicle is assigned to tech.';

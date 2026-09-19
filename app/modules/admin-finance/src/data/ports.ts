@@ -212,6 +212,7 @@ export interface JobRepository {
    */
   updateStatus(jobId: string, status: JobStatus): Promise<Job>;
   markBeta(jobId: string, isBeta: boolean): Promise<void>;
+  /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
    * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
@@ -380,6 +381,13 @@ export function isToolStatus(value: string): value is ToolStatus {
   return (TOOL_STATUSES as readonly string[]).includes(value);
 }
 
+/** Admin-only fields from public.profile_private (RLS admin_all). Non-admins receive null. */
+export interface ProfilePrivate {
+  ssnLast4: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+}
+
 /** Read/write access to organization employees (`Profile` rows). */
 export interface EmployeeRepository {
   listEmployees(organizationId: string): Promise<Profile[]>;
@@ -397,11 +405,14 @@ export interface EmployeeRepository {
       paidTravel?: boolean;
       paidTravelPolicyMessage?: string | null;
       defaultHourlyRateCents?: number;
+      testJobsOnly?: boolean;
     }
   ): Promise<void>;
   deactivateEmployee(profileId: string): Promise<void>;
   reactivateEmployee(profileId: string): Promise<void>;
   setEmployeeRole(profileId: string, role: Role): Promise<void>;
+  getPrivate(profileId: string): Promise<ProfilePrivate | null>;
+  upsertPrivate(profileId: string, organizationId: string, patch: Partial<ProfilePrivate>): Promise<void>;
 }
 
 /** Write + read access to pending organization invitations. */
@@ -1226,6 +1237,9 @@ export interface ServiceTask {
   rate?: number | null;
   category?: string | null;
   active?: boolean;
+  priceCents?: number | null;
+  details?: string | null;
+  materials?: string | null;
 }
 
 export interface JobPlanTaskRow {

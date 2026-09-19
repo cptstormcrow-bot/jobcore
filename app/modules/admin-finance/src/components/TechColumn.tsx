@@ -57,6 +57,8 @@ export interface TechColumnTech {
    * `isAvailable` already follows.
    */
   coversServiceArea?: boolean;
+  phone?: string | null;
+  testJobsOnly?: boolean;
 }
 
 export interface TechColumnProps {

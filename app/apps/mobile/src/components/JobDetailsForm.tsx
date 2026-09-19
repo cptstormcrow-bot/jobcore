@@ -5,15 +5,11 @@
 // business logic -- this component only renders `value` and reports
 // changes via `onChange`.
 import { StyleSheet, Text, View } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { copyToClipboard } from '../../../../modules/field-tech/src/lib/clipboard';
 import { Button, Checkbox, colors, Select, spacing, TextField, typography } from '@jobcore/ui';
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 const UNASSIGNED_SERVICE_AREA = '';
-
-const copy = (text: string) => {
-  void Clipboard.setStringAsync(text).catch(() => {});
-};
 
 export type JobFormValues = {
   address: string;
@@ -76,7 +72,7 @@ export function JobDetailsForm({
             value={value.customerName}
             onChangeText={(text) => onChange({ customerName: text })}
             placeholder="Customer name"
-            style={styles.field}
+            style={[styles.field, styles.fieldTight]}
             labelStyle={styles.fieldLabel}
             inputStyle={inputStyleFor(value.customerName)}
           />
@@ -86,7 +82,7 @@ export function JobDetailsForm({
           size="sm"
           variant="outline"
           disabled={!value.customerName}
-          onPress={() => copy(value.customerName)}
+          onPress={() => copyToClipboard(value.customerName)}
         />
       </View>
       <View style={styles.copyRow}>
@@ -96,7 +92,7 @@ export function JobDetailsForm({
             value={value.address}
             onChangeText={(text) => onChange({ address: text })}
             placeholder="Street, city, zip"
-            style={styles.field}
+            style={[styles.field, styles.fieldTight]}
             labelStyle={styles.fieldLabel}
             inputStyle={inputStyleFor(value.address)}
           />
@@ -106,7 +102,7 @@ export function JobDetailsForm({
           size="sm"
           variant="outline"
           disabled={!value.address}
-          onPress={() => copy(value.address)}
+          onPress={() => copyToClipboard(value.address)}
         />
       </View>
       <View style={styles.copyRow}>
@@ -116,7 +112,7 @@ export function JobDetailsForm({
             value={value.customerPhone}
             onChangeText={(text) => onChange({ customerPhone: text })}
             placeholder="Customer phone"
-            style={styles.field}
+            style={[styles.field, styles.fieldTight]}
             labelStyle={styles.fieldLabel}
             inputStyle={inputStyleFor(value.customerPhone)}
           />
@@ -126,7 +122,7 @@ export function JobDetailsForm({
           size="sm"
           variant="outline"
           disabled={!value.customerPhone}
-          onPress={() => copy(value.customerPhone)}
+          onPress={() => copyToClipboard(value.customerPhone)}
         />
       </View>
       <TextField
@@ -134,11 +130,11 @@ export function JobDetailsForm({
         value={value.customerEmail}
         onChangeText={(text) => onChange({ customerEmail: text })}
         placeholder="Customer email"
-        style={styles.field}
+        style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         inputStyle={inputStyleFor(value.customerEmail)}
       />
-      <View style={styles.field}>
+      <View style={[styles.field, styles.fieldTight]}>
         <Text style={styles.sectionLabel}>Service area</Text>
         <Select
           value={value.serviceAreaId ?? UNASSIGNED_SERVICE_AREA}
@@ -169,7 +165,7 @@ export function JobDetailsForm({
           size="sm"
           variant="outline"
           disabled={!value.ingressInstructions}
-          onPress={() => copy(value.ingressInstructions)}
+          onPress={() => copyToClipboard(value.ingressInstructions)}
         />
       </View>
       <TextField
@@ -273,6 +269,16 @@ export function JobDetailsForm({
       ) : null}
       <TextField
         label={mode === 'create' ? 'Project details' : 'Description'}
+        value={value.description}
+        onChangeText={(text) => onChange({ description: text })}
+        placeholder="What needs to be done"
+        multiline
+        style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.description)}
+      />
+      <TextField
+        label="Considerations"
         value={value.considerations}
         onChangeText={(text) => onChange({ considerations: text })}
         placeholder="Anything else worth noting"
@@ -302,16 +308,17 @@ export function JobDetailsForm({
 
 const styles = StyleSheet.create({
   field: { marginHorizontal: spacing.md, marginTop: spacing.md },
+  fieldTight: { marginTop: spacing.xs },
   fieldLabel: { color: colors.textMutedDark, fontSize: typography.size.detail },
   fieldInput: { fontSize: typography.size.h4, color: colors.text },
   fieldInputFilled: { fontWeight: '600' },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.sm, color: colors.textMutedDark, fontSize: typography.size.detail },
   roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
-  roomCheckbox: { width: '50%', minHeight: 32, marginBottom: spacing.xs },
+  roomCheckbox: { width: '50%', minHeight: 28, marginBottom: 0 },
   roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   readOnlyText: { color: colors.textMuted },
   errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.sm },
-  copyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  copyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
   copyField: { flex: 1 },
   saveRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 12, marginTop: 16 },
   saveStatus: { color: colors.textMutedDark, fontSize: typography.size.small },

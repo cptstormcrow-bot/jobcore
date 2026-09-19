@@ -891,6 +891,7 @@ export function AdminFinanceRoot() {
                 id: profile.id,
                 fullName: profile.fullName,
                 isTest: profile.isTest,
+                testJobsOnly: profile.testJobsOnly ?? false,
               }),
             )}
             resolveServiceAreaId={(job) => job.service_area_id ?? null}
