@@ -515,6 +515,7 @@ export interface JobRow {
   in_progress_at: string | null;
   completed_at: string | null;
   created_at: string;
+  is_beta?: boolean | null;
 }
 
 /**
@@ -545,7 +546,7 @@ export function toJob(row: JobRow): Job {
     inProgressAt: row.in_progress_at,
     completedAt: row.completed_at,
     createdAt: row.created_at,
-    isBeta: false,
+    isBeta: row.is_beta === true,
     totalLaborSeconds: 0,
   };
 }

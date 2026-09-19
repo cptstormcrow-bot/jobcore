@@ -36,6 +36,7 @@ import { Overview } from './screens/Overview';
 import { Reviews } from './screens/Reviews';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
+import type { MenuItem } from '@jobcore/ui';
 import { transitionJob } from './domain/transition';
 
 export type { ModuleSession } from './lib/module-session';
@@ -55,11 +56,20 @@ export type { DayListProps } from './screens/DayList';
  */
 type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews';
 
+const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
+const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
+
 function FieldTechRoot(): React.ReactElement {
   const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('overview');
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
+  const [showTestJobs, setShowTestJobs] = React.useState(false);
+  const [defaultMonthView, setDefaultMonthView] = React.useState(false);
+  React.useEffect(() => {
+    void getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false).then(setShowTestJobs);
+    void getModulePorts().localPrefs.getBool(DEFAULT_MONTH_KEY, false).then(setDefaultMonthView);
+  }, []);
   const session = getModuleSession();
 
   if (!session) {
@@ -131,6 +141,29 @@ function FieldTechRoot(): React.ReactElement {
     },
   ];
 
+  const jobsOptions: MenuItem[] = [
+    {
+      id: 'show-test-jobs',
+      label: 'Show Test Jobs',
+      kind: 'toggle',
+      checked: showTestJobs,
+      onToggle: (next) => {
+        setShowTestJobs(next);
+        void getModulePorts().localPrefs.setBool(SHOW_TEST_JOBS_KEY, next);
+      },
+    },
+    {
+      id: 'default-month-view',
+      label: 'Default to Month View',
+      kind: 'toggle',
+      checked: defaultMonthView,
+      onToggle: (next) => {
+        setDefaultMonthView(next);
+        void getModulePorts().localPrefs.setBool(DEFAULT_MONTH_KEY, next);
+      },
+    },
+  ];
+
   const SUBVIEW_LABELS: Record<SubView, string> = {
     overview: 'Overview',
     jobs: 'Jobs',
@@ -153,6 +186,8 @@ function FieldTechRoot(): React.ReactElement {
           setSelectedTimeOffId(event.id);
           setSubView('timeOff');
         },
+        showTestJobs,
+        defaultViewMode: defaultMonthView ? 'month' : 'week',
       });
       break;
     case 'overview':
@@ -167,7 +202,7 @@ function FieldTechRoot(): React.ReactElement {
     React.createElement(AppChrome, {
       breadcrumbSegments: [{ label: 'Field Tech' }],
       menuItems,
-      optionsItems: [],
+      optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
     }),
     content,

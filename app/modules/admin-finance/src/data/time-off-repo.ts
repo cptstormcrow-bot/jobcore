@@ -44,6 +44,7 @@ export interface TimeOffRequestAdminRow {
   status: string;
   created_at: string;
   updated_at: string;
+  created_by_admin_id: string | null;
 }
 
 /** Admin-facing domain shape of a time-off request. */
@@ -57,6 +58,7 @@ export interface TimeOffRequestAdmin {
   status: TimeOffStatus;
   createdAt: string;
   updatedAt: string;
+  createdByAdminId: string | null;
 }
 
 /**
@@ -78,6 +80,7 @@ export function toTimeOffRequestAdmin(row: TimeOffRequestAdminRow): TimeOffReque
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    createdByAdminId: row.created_by_admin_id ?? null,
   };
 }
 

@@ -9,6 +9,7 @@ export interface AssignTechRegionProps {
   error?: string | null;
   onAssign: (techId: string) => void;
   label?: string;
+  indicator?: string | null;
 }
 
 export function AssignTechRegion({
@@ -18,12 +19,14 @@ export function AssignTechRegion({
   error = null,
   onAssign,
   label = 'Assign Technician',
+  indicator = null,
 }: AssignTechRegionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(currentTechId);
 
   return (
     <View style={styles.root}>
       <Text style={styles.label}>{label}</Text>
+      {indicator ? <Text style={styles.indicator}>{indicator}</Text> : null}
       {techs.length === 0 && (
         <Text style={styles.hint}>No active technicians in this organization</Text>
       )}
@@ -35,7 +38,7 @@ export function AssignTechRegion({
         placeholder="Select a technician"
       />
       <Button
-        label={label}
+        label="Assign"
         onPress={() => selectedId && onAssign(selectedId)}
         disabled={!selectedId || busy}
         style={styles.button}
@@ -58,6 +61,18 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.small,
     color: colors.textMuted,
+    marginBottom: spacing.sm,
+  },
+  indicator: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+    fontSize: typography.size.small,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
     marginBottom: spacing.sm,
   },
   button: { marginTop: spacing.sm },

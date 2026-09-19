@@ -26,7 +26,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, Toggle, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
 import { isActiveTimeOffStatus, type TimeOffRequest } from '../data/ports';
 
 /** Props for `DayList`. */
@@ -47,6 +47,8 @@ export interface DayListProps {
    * session's own userId.
    */
   techId?: string;
+  showTestJobs?: boolean;
+  defaultViewMode?: 'week' | 'month';
 }
 
 /**
@@ -103,19 +105,19 @@ function parseCalendarDate(dateOnly: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId }: DayListProps = {}): React.ReactElement {
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Workstream K: "Show Test Jobs" toggle, default OFF — shows jobs.is_beta
-  // rows spawned by sales-marketing's "Spawn Test Jobs" flow; toggle still hides them.
-  const [showBeta, setShowBeta] = useState(false);
   const [anchorDay, setAnchorDay] = useState(() => new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [viewMode, setViewMode] = useState<'week' | 'month'>(defaultViewMode ?? 'week');
+  useEffect(() => {
+    if (defaultViewMode) setViewMode(defaultViewMode);
+  }, [defaultViewMode]);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const visibleJobs = jobs.filter((job) => isBetaVisible(job, showBeta));
+  const visibleJobs = jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false));
   const todayJobs = useMemo(() => {
     const today = new Date();
     return visibleJobs
@@ -196,7 +198,6 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId }: DayLi
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
       <ScreenTitle title="Today's Jobs" />
-      <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       {todayJobs.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>No jobs scheduled today.</Text>

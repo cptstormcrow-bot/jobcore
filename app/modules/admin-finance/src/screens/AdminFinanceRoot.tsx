@@ -25,8 +25,8 @@ import { View, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
 import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
-import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
-import type { Commission, Job, Profile } from '@jobcore/core';
+import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
+import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
@@ -123,9 +123,11 @@ function toCalendarTimeOffEvents(
   return events;
 }
 
+const BOARD_HIDDEN_STATUSES = new Set<JobStatus>(['closed', 'cancelled', 'archived']);
 const PREF_KEY_SHOW_TEST_JOBS = 'admin-finance.assignment-board.show-test-jobs';
 const PREF_KEY_SHOW_TEST_EMPLOYEES = 'admin-finance.assignment-board.show-test-employees';
 const PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER = 'admin-finance.employee-roster.show-test-employees';
+const SHOW_BLACKOUTS_KEY = 'admin-finance.calendar.show-blackouts';
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
 function formatDate(iso: string | null): string {
@@ -142,6 +144,7 @@ export function AdminFinanceRoot() {
   const [showTestJobs, setShowTestJobs] = useState(false);
   const [showTestEmployees, setShowTestEmployees] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
+  const [showBlackouts, setShowBlackouts] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [qualifying, setQualifying] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -276,15 +279,17 @@ export function AdminFinanceRoot() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [jobs, employees, employeesRoster] = await Promise.all([
+      const [jobs, employees, employeesRoster, blackouts] = await Promise.all([
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, false),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, false),
+        ports.localPrefs.getBool(SHOW_BLACKOUTS_KEY, true),
       ]);
       if (cancelled) return;
       setShowTestJobs(jobs);
       setShowTestEmployees(employees);
       setShowTestEmployeesRoster(employeesRoster);
+      setShowBlackouts(blackouts);
     })();
     return () => {
       cancelled = true;
@@ -617,6 +622,24 @@ export function AdminFinanceRoot() {
         ? 'Add Blackout'
         : SUBVIEW_LABELS[subView];
 
+  const handleShowBlackoutsChange = (v: boolean) => {
+    setShowBlackouts(v);
+    void ports.localPrefs.setBool(SHOW_BLACKOUTS_KEY, v);
+  };
+
+  const optionsItems: MenuItem[] | undefined =
+    subView === 'calendar'
+      ? [
+          {
+            id: 'show-blackouts',
+            label: 'Show Blackouts',
+            kind: 'toggle',
+            checked: showBlackouts,
+            onToggle: handleShowBlackoutsChange,
+          },
+        ]
+      : undefined;
+
   if (!session) {
     return (
       <View style={styles.screen}>
@@ -640,6 +663,7 @@ export function AdminFinanceRoot() {
   return (
     <View style={styles.screen}>
       <AppChrome
+        optionsItems={optionsItems}
         helpContext={{ screenKey: 'admin-finance' }}
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
@@ -885,7 +909,7 @@ export function AdminFinanceRoot() {
           <ErrorState message={loadState.message} />
         ) : (
           <AssignmentBoardScreen
-            jobs={loadState.jobs.filter((j) => j.status === 'qualified' || j.status === 'scheduled')}
+            jobs={loadState.jobs.filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))}
             techs={loadState.employees.map(
               (profile): TechColumnTech => ({
                 id: profile.id,
@@ -1029,7 +1053,10 @@ export function AdminFinanceRoot() {
                   ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address ?? 'No address'}` }
                   : job,
               );
-            const calendarTimeOffEvents = toCalendarTimeOffEvents(loadState.timeOffRequests, techNameById).filter(
+            const calendarTimeOffEvents = toCalendarTimeOffEvents(
+              loadState.timeOffRequests.filter((r) => showBlackouts || r.createdByAdminId === null),
+              techNameById,
+            ).filter(
               (e) => !selectedCalendarTechId || e.techId === selectedCalendarTechId,
             );
             const label =

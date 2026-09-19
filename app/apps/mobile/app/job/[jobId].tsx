@@ -645,6 +645,27 @@ export default function JobDrilldownScreen() {
 
   const handleAssign = estimate?.status === 'approved' ? handleAssignInstaller : handleAssignInvestigator;
 
+  // Clears the assignment back to the shared "Unassigned" convention
+  // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
+  // the clear via patchScheduling, investigator picks clear locally only.
+  const handleUnassign = async (): Promise<void> => {
+    if (!job) return;
+    setAssigning('unassign');
+    setActionError(null);
+    try {
+      if (estimate?.status === 'approved') {
+        const updated = await createJobRepository().patchScheduling(job.id, { assignedTechId: null });
+        setJob(updated);
+      } else {
+        setInvestigatorTechId(null);
+      }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
+    } finally {
+      setAssigning(null);
+    }
+  };
+
   // Save-follows-selection: switching regions autosaves a dirty edit-mode
   // form before moving; a `saving` ref guards `beforeRemove` against a
   // double-fire.
@@ -924,17 +945,11 @@ export default function JobDrilldownScreen() {
         assignedTechName={assignedTechName}
         serviceAreaName={currentServiceAreaName}
         techs={eligibleTechOptions}
-        onAssignTech={(techId) => void handleAssign(techId)}
+        onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
         assigningTech={assigning !== null}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={jobDetailMenuItems}
-        onContact={handleContact}
-        onArrive={() => void handleArrive()}
-        onComplete={() => void handleComplete()}
-        onPaid={() => void confirmMarkPaid()}
-        busyAction={busyAction}
         statusError={actionError}
-        isAdmin={role === 'admin'}
       />
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         {region === 'plan' && (
@@ -980,7 +995,7 @@ export default function JobDrilldownScreen() {
             busy={assigning !== null}
             error={assignError}
             onAssign={(techId) => void handleAssign(techId)}
-            label={estimate?.status === 'approved' ? 'Assign Technician' : 'Assign Prem visit Tech'}
+            label="Assign Technician" indicator={estimate?.status === 'approved' ? null : 'Prem Visit'}
           />
         )}
         {region === 'schedule' && (

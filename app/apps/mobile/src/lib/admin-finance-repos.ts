@@ -1931,7 +1931,7 @@ export function createTimeOffAdminRepository(): TimeOffAdminRepo {
     async listForOrganization(organizationId: string) {
       const { data, error } = await supabase
         .from('time_off_requests')
-        .select('id, organization_id, tech_id, start_date, end_date, reason, status, created_at, updated_at')
+        .select('id, organization_id, tech_id, start_date, end_date, reason, status, created_at, updated_at, created_by_admin_id')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
       if (error) {
