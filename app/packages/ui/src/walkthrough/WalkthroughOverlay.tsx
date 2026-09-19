@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   hintBox: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 8,
     padding: spacing.sm,
     marginBottom: spacing.lg,

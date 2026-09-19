@@ -8,14 +8,23 @@ import { getHelpStep, type ScreenKey } from './walkthrough/walkthrough-content';
 import { useWalkthrough } from './walkthrough/WalkthroughProvider';
 import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
 
-export type MenuItem = {
-  id: string;
-  label: string;
-  onPress: () => void;
-  isActive?: boolean;
-  disabled?: boolean;
-  submenu?: MenuItem[]; // one level, used only by the Configuration entry
-};
+export type MenuItem =
+  | {
+      id: string;
+      label: string;
+      onPress: () => void;
+      isActive?: boolean;
+      disabled?: boolean;
+      submenu?: undefined;
+    }
+  | {
+      id: string;
+      label: string;
+      onPress?: () => void;
+      isActive?: boolean;
+      disabled?: boolean;
+      submenu: MenuItem[]; // one level, used only by the Configuration entry
+    };
 
 export type AppChromeProps = {
   breadcrumbSegments: BreadcrumbSegment[];
@@ -124,12 +133,12 @@ export function AppChrome({
 
   const handleLeafPress = (item: MenuItem) => {
     setHMenuOpen(false);
-    item.onPress();
+    item.onPress?.();
   };
 
   const handleOptionPress = (item: MenuItem) => {
     setOMenuOpen(false);
-    item.onPress();
+    item.onPress?.();
   };
 
   const handleBackPress = () => {

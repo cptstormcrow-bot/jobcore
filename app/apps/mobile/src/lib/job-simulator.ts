@@ -73,7 +73,21 @@ export async function runJobSimulator(organizationId: string, actorProfile: Prof
   try {
     const existingJobs = await createJobRepository().listForOrganization(organizationId);
     if (existingJobs.length > 0) {
-      job = existingJobs[0];
+      job = existingJobs[0] ?? null;
+      if (!job) {
+        stages.push({
+          stage: 'create',
+          ok: false,
+          detail: 'Existing job lookup returned no job.',
+        });
+        return {
+          jobId: null,
+          startedAt,
+          finishedAt: new Date().toISOString(),
+          stages,
+          cleanedUp: false,
+        };
+      }
       stages.push({
         stage: 'create',
         ok: true,

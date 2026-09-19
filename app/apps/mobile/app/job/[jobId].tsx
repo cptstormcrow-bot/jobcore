@@ -926,11 +926,15 @@ export default function JobDrilldownScreen() {
         techs={eligibleTechOptions}
         onAssignTech={(techId) => void handleAssign(techId)}
         assigningTech={assigning !== null}
-        region={region}
-        onSelectRegion={selectRegion}
+        totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={jobDetailMenuItems}
+        onContact={handleContact}
+        onArrive={() => void handleArrive()}
+        onComplete={() => void handleComplete()}
+        onPaid={() => void confirmMarkPaid()}
         busyAction={busyAction}
         statusError={actionError}
+        isAdmin={role === 'admin'}
       />
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         {region === 'plan' && (

@@ -37,6 +37,56 @@ export default function SignInScreen() {
     }
   }
 
+  const fields = (
+    <>
+      <Text style={styles.label}>Email</Text>
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        autoComplete="email"
+        keyboardType="email-address"
+        textContentType="emailAddress"
+        placeholder="you@example.com"
+        placeholderTextColor={colors.textMuted}
+        style={styles.input}
+        editable={!busy}
+        nativeID="email"
+      />
+
+      <Text style={styles.label}>Password</Text>
+      <View style={styles.passwordWrap}>
+        <TextInput
+          value={password}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          autoComplete="current-password"
+          textContentType="password"
+          secureTextEntry={!showPassword}
+          placeholder="••••••••"
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, styles.passwordInput]}
+          editable={!busy}
+          nativeID="password"
+          onSubmitEditing={submit}
+        />
+        <Pressable
+          style={styles.passwordToggle}
+          onPress={() => setShowPassword((prev) => !prev)}
+        >
+          <Text style={styles.passwordToggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
+        </Pressable>
+      </View>
+
+      <Button
+        label={busy ? 'Signing in…' : 'Sign in'}
+        disabled={!canSubmit}
+        onPress={submit}
+        style={styles.submit}
+      />
+    </>
+  );
+
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
@@ -46,51 +96,20 @@ export default function SignInScreen() {
         <ScreenTitle title="Sign In" subtitle="Sign in to continue" />
 
         <Card style={styles.card}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            textContentType="emailAddress"
-            placeholder="you@example.com"
-            placeholderTextColor={colors.textMuted}
-            style={styles.input}
-            editable={!busy}
-            nativeID="email"
-          />
-
-          <Text style={styles.label}>Password</Text>
-          <View style={styles.passwordWrap}>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-              autoComplete="current-password"
-              textContentType="password"
-              secureTextEntry={!showPassword}
-              placeholder="••••••••"
-              placeholderTextColor={colors.textMuted}
-              style={[styles.input, styles.passwordInput]}
-              editable={!busy}
-              nativeID="password"
-              onSubmitEditing={submit}
-            />
-            <Pressable
-              style={styles.passwordToggle}
-              onPress={() => setShowPassword((prev) => !prev)}
+          {Platform.OS === 'web' ? (
+            <form
+              ref={formRef}
+              style={{ display: 'contents' }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (canSubmit) void handleSubmit();
+              }}
             >
-              <Text style={styles.passwordToggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
-            </Pressable>
-          </View>
-
-          <Button
-            label={busy ? 'Signing in…' : 'Sign in'}
-            disabled={!canSubmit}
-            onPress={submit}
-            style={styles.submit}
-          />
+              {fields}
+            </form>
+          ) : (
+            fields
+          )}
         </Card>
 
         <View style={styles.signUpLink}>

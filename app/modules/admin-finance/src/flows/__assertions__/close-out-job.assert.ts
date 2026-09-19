@@ -42,6 +42,7 @@ function makeJob(overrides: Partial<Job> = {}): Job {
     completedAt: '2026-08-01T00:00:00.000Z',
     createdAt: '2026-01-01T00:00:00.000Z',
     isBeta: false,
+    totalLaborSeconds: 0,
     ...overrides,
   };
 }
@@ -131,6 +132,7 @@ function makeJobs(overrides: Partial<JobRepository> = {}): JobRepository {
     async updateStatus(_jobId, status) {
       return makeJob({ status });
     },
+    async markBeta(_jobId, _isBeta) {},
     ...overrides,
   };
 }

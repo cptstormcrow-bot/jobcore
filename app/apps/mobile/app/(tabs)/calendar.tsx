@@ -54,6 +54,7 @@ function toJob(row: JobRow): Job {
     completedAt: row.completed_at,
     createdAt: row.created_at,
     isBeta: row.is_beta,
+    totalLaborSeconds: 0,
   };
 }
 
