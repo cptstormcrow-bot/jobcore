@@ -7,10 +7,9 @@
  * renders its version, status and published date as READ-ONLY fields.
  *
  * P3i.4b adds the SAVE / PUBLISH wiring on top of that scaffold:
- * - `onSave` is a callback-out prop. No port in `ports.ts` or
- *   `price-sheet-repo.ts` exposes a draft-update write, so the screen does not
- *   invent one — the host supplies the persistence and returns a
- *   `CalculationResult<void>` (`../money/types.ts`), never a thrown error.
+ * - Each section persists via its own Save (standard duration, area
+ *   adjustments, service tasks). There is no sheet-level draft write;
+ *   Publish is the only sheet-level action (AD-20).
  * - Publish runs the real seam: `getPublished(orgId)` on the publish port
  *   (`PriceSheetRepo`, `../data/price-sheet-repo.ts`) supplies
  *   `planPublish`'s `priorPublished`, `planPublish` (`../money/publish-plan.ts`)
@@ -35,11 +34,11 @@
  * the two screens stay consistent.
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
+import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
-import type { PriceSheetRepository, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
+import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
@@ -55,11 +54,30 @@ interface ServiceTasksRepoPort {
       rate?: number | null;
       category?: string | null;
       active?: boolean;
+      priceCents?: number | null;
+      details?: string | null;
+      materials?: string | null;
     }
   ): Promise<CalculationResult<ServiceTask>>;
 }
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const HELP_BULLETS = [
+  'A price sheet is one versioned set of task prices, trip durations and area adjustments.',
+  'Only one version is Published at a time; techs and estimates always use that one.',
+  'Drafts are private — nothing here changes what techs see until you tap Publish.',
+  'Publish makes this version live and archives the previous one; published versions never change again.',
+  'Price Area Adjustments raise or lower every price on this sheet for the selected service areas, by percent or a flat amount.',
+];
+
+const centsToDollarsText = (c: number | null | undefined) => (c == null ? '' : (c / 100).toFixed(2));
+const dollarsTextToCents = (t: string): number | null | undefined => {
+  const s = t.trim().replace(/[$,]/g, '');
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : undefined;
+};
 
 type ServiceTasksCardState =
   | { kind: 'idle' }
@@ -76,8 +94,14 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   const [saveState, setSaveState] = useState<ServiceTasksCardState>({ kind: 'idle' });
   const [nameInput, setNameInput] = useState('');
   const [serviceIdInput, setServiceIdInput] = useState('');
+  const [priceInput, setPriceInput] = useState('');
+  const [detailsInput, setDetailsInput] = useState('');
+  const [materialsInput, setMaterialsInput] = useState('');
   const [drafts, setDrafts] = useState<
-    Record<string, { estimatedMinutes: string; rate: string; category: string }>
+    Record<
+      string,
+      { estimatedMinutes: string; rate: string; category: string; price: string; details: string; materials: string }
+    >
   >({});
 
   useEffect(() => {
@@ -103,6 +127,9 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
               estimatedMinutes: task.estimatedMinutes != null ? String(task.estimatedMinutes) : '',
               rate: task.rate != null ? String(task.rate) : '',
               category: task.category ?? '',
+              price: centsToDollarsText(task.priceCents),
+              details: task.details ?? '',
+              materials: task.materials ?? '',
             },
           ])
         )
@@ -115,16 +142,37 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
     };
   }, [serviceTasksRepo, organizationId]);
 
-  function updateDraft(taskId: string, field: 'estimatedMinutes' | 'rate' | 'category', value: string) {
+  function updateDraft(
+    taskId: string,
+    field: 'estimatedMinutes' | 'rate' | 'category' | 'price' | 'details' | 'materials',
+    value: string
+  ) {
     setDrafts((prev) => ({
       ...prev,
-      [taskId]: { ...(prev[taskId] ?? { estimatedMinutes: '', rate: '', category: '' }), [field]: value },
+      [taskId]: {
+        ...(prev[taskId] ?? {
+          estimatedMinutes: '',
+          rate: '',
+          category: '',
+          price: '',
+          details: '',
+          materials: '',
+        }),
+        [field]: value,
+      },
     }));
   }
 
   async function commitField(
     taskId: string,
-    patch: { estimatedMinutes?: number | null; rate?: number | null; category?: string | null }
+    patch: {
+      estimatedMinutes?: number | null;
+      rate?: number | null;
+      category?: string | null;
+      priceCents?: number | null;
+      details?: string | null;
+      materials?: string | null;
+    }
   ) {
     const result = await serviceTasksRepo.updateServiceTask(taskId, patch);
     if (!result.ok) {
@@ -166,10 +214,24 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
         estimatedMinutes: result.value.estimatedMinutes != null ? String(result.value.estimatedMinutes) : '',
         rate: result.value.rate != null ? String(result.value.rate) : '',
         category: result.value.category ?? '',
+        price: centsToDollarsText(result.value.priceCents),
+        details: result.value.details ?? '',
+        materials: result.value.materials ?? '',
       },
     }));
+    const priceCents = dollarsTextToCents(priceInput);
+    if (priceInput !== '' || detailsInput !== '' || materialsInput !== '') {
+      void serviceTasksRepo.updateServiceTask(result.value.id, {
+        ...(priceCents === undefined ? {} : { priceCents }),
+        details: detailsInput === '' ? null : detailsInput,
+        materials: materialsInput === '' ? null : materialsInput,
+      });
+    }
     setNameInput('');
     setServiceIdInput('');
+    setPriceInput('');
+    setDetailsInput('');
+    setMaterialsInput('');
     setSaveState({ kind: 'done', message: 'Task added.' });
   }
 
@@ -180,7 +242,14 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
       {loadState.kind === 'failed' ? <ErrorState message={loadState.message} /> : null}
 
       {tasks.map((task) => {
-        const draft = drafts[task.id] ?? { estimatedMinutes: '', rate: '', category: '' };
+        const draft = drafts[task.id] ?? {
+          estimatedMinutes: '',
+          rate: '',
+          category: '',
+          price: '',
+          details: '',
+          materials: '',
+        };
         return (
           <View key={task.id} style={styles.action}>
             <ListItem title={task.name} subtitle={task.serviceId} />
@@ -217,6 +286,40 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
                 void commitField(task.id, { category: draft.category === '' ? null : draft.category })
               }
             />
+            <TextInput
+              style={styles.input}
+              placeholder="Price ($)"
+              value={draft.price}
+              keyboardType="decimal-pad"
+              onChangeText={(text) => updateDraft(task.id, 'price', text)}
+              onBlur={() => {
+                const cents = dollarsTextToCents(draft.price);
+                if (cents === undefined) return;
+                void commitField(task.id, { priceCents: cents });
+              }}
+            />
+            <TextInput
+              style={[styles.input, styles.inputMultiline]}
+              placeholder="Details"
+              value={draft.details}
+              multiline
+              numberOfLines={3}
+              onChangeText={(text) => updateDraft(task.id, 'details', text)}
+              onBlur={() =>
+                void commitField(task.id, { details: draft.details === '' ? null : draft.details })
+              }
+            />
+            <TextInput
+              style={[styles.input, styles.inputMultiline]}
+              placeholder="Materials"
+              value={draft.materials}
+              multiline
+              numberOfLines={3}
+              onChangeText={(text) => updateDraft(task.id, 'materials', text)}
+              onBlur={() =>
+                void commitField(task.id, { materials: draft.materials === '' ? null : draft.materials })
+              }
+            />
             <Button
               label={task.active ? 'Active' : 'Inactive'}
               variant="outline"
@@ -239,12 +342,37 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
         value={nameInput}
         onChangeText={setNameInput}
       />
-      <Button
-        label={saveState.kind === 'loading' ? 'Saving...' : 'Add Task'}
-        onPress={() => void handleCreate()}
-        disabled={saveState.kind === 'loading'}
-        style={styles.action}
+      <TextInput
+        style={styles.input}
+        placeholder="Price ($)"
+        value={priceInput}
+        keyboardType="decimal-pad"
+        onChangeText={setPriceInput}
       />
+      <TextInput
+        style={[styles.input, styles.inputMultiline]}
+        placeholder="Details"
+        value={detailsInput}
+        multiline
+        numberOfLines={3}
+        onChangeText={setDetailsInput}
+      />
+      <TextInput
+        style={[styles.input, styles.inputMultiline]}
+        placeholder="Materials"
+        value={materialsInput}
+        multiline
+        numberOfLines={3}
+        onChangeText={setMaterialsInput}
+      />
+      <View style={styles.actionRow}>
+        <Button
+          label={saveState.kind === 'loading' ? 'Saving...' : 'Add Task'}
+          onPress={() => void handleCreate()}
+          disabled={saveState.kind === 'loading'}
+          size="sm"
+        />
+      </View>
       {saveState.kind === 'failed' ? <ErrorState message={saveState.message} /> : null}
       {saveState.kind === 'done' ? <Text style={styles.note}>{saveState.message}</Text> : null}
     </Card>
@@ -259,11 +387,6 @@ export interface PriceSheetEditorScreenProps {
    * disabled rather than hidden so the affordance stays honest.
    */
   publishRepo?: PriceSheetRepo;
-  /**
-   * Host-supplied persistence for the draft. Returns a `CalculationResult`
-   * rather than throwing, matching every failable path in `money/`.
-   */
-  onSave?: (sheet: PriceSheet) => Promise<CalculationResult<void>>;
   /** Fired after a successful publish so the host can refresh or navigate. */
   onPublished?: (priceSheetId: string) => void;
   areaAdjustmentsRepo: {
@@ -280,6 +403,7 @@ export interface PriceSheetEditorScreenProps {
     get(organizationId: string): Promise<PriceSheetStandardDuration | null>;
     upsert(organizationId: string, standardMinutes: number): Promise<PriceSheetStandardDuration>;
   };
+  serviceAreas?: ServiceArea[];
 }
 
 /** Save/publish action state. Independent of the sheet's own load state. */
@@ -315,22 +439,29 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     priceSheets: priceSheetRepository,
     priceSheetId,
     publishRepo,
-    onSave,
     onPublished,
     areaAdjustmentsRepo,
     serviceTasksRepo,
     standardDurationRepo,
+    serviceAreas = [],
   } = props;
+  const [helpOpen, setHelpOpen] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
-  const [serviceAreaIdInput, setServiceAreaIdInput] = useState('');
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
   const [adjustmentValueInput, setAdjustmentValueInput] = useState('');
   const [standardDuration, setStandardDuration] = useState<PriceSheetStandardDuration | null>(null);
   const [standardMinutesInput, setStandardMinutesInput] = useState('60');
   const [standardDurationState, setStandardDurationState] = useState<ActionState>({ kind: 'idle' });
+
+  const areaNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    serviceAreas.forEach((area) => map.set(area.id, area.name));
+    return map;
+  }, [serviceAreas]);
 
   const session = getModuleSession();
 
@@ -460,22 +591,6 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const sheet = loadState.sheet;
   const busy = actionState.kind === 'working';
 
-  async function handleSave(target: PriceSheet): Promise<void> {
-    if (!onSave) return;
-    setActionState({ kind: 'working' });
-    try {
-      const result = await onSave(target);
-      setActionState(
-        result.ok
-          ? { kind: 'done', message: 'Saved.' }
-          : { kind: 'failed', message: result.reason },
-      );
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not save the price sheet.';
-      setActionState({ kind: 'failed', message });
-    }
-  }
-
   async function handlePublish(target: PriceSheet): Promise<void> {
     if (!publishRepo) return;
     setActionState({ kind: 'working' });
@@ -495,31 +610,42 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     }
   }
 
-  async function handleSaveAreaAdjustment(
-    serviceAreaId: string,
+  async function handleSaveAreaAdjustments(
+    areaIds: string[],
     adjustmentType: 'percent' | 'flat',
     adjustmentValue: number
   ): Promise<void> {
     if (!areaAdjustmentsRepo || !priceSheetId) return;
     setAreaAdjustmentState({ kind: 'working' });
-    try {
-      const result = await areaAdjustmentsRepo.save(priceSheetId, serviceAreaId, adjustmentType, adjustmentValue);
-      if (result.ok) {
-        const saved = result.value;
-        setAreaAdjustments((prev) => {
-          const idx = prev.findIndex((item) => item.serviceAreaId === saved.serviceAreaId);
-          if (idx === -1) return [...prev, saved];
-          const next = [...prev];
-          next[idx] = saved;
-          return next;
-        });
-        setAreaAdjustmentState({ kind: 'done', message: 'Saved.' });
-      } else {
-        setAreaAdjustmentState({ kind: 'failed', message: result.reason });
+    let okCount = 0;
+    let lastFailureMessage = '';
+    for (const areaId of areaIds) {
+      try {
+        const result = await areaAdjustmentsRepo.save(priceSheetId, areaId, adjustmentType, adjustmentValue);
+        if (result.ok) {
+          okCount += 1;
+          const saved = result.value;
+          setAreaAdjustments((prev) => {
+            const idx = prev.findIndex((item) => item.serviceAreaId === saved.serviceAreaId);
+            if (idx === -1) return [...prev, saved];
+            const next = [...prev];
+            next[idx] = saved;
+            return next;
+          });
+        } else {
+          lastFailureMessage = result.reason;
+        }
+      } catch (error: unknown) {
+        lastFailureMessage = error instanceof Error ? error.message : 'Could not save the area adjustment.';
       }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not save the area adjustment.';
-      setAreaAdjustmentState({ kind: 'failed', message });
+    }
+    if (okCount === areaIds.length) {
+      setAreaAdjustmentState({ kind: 'done', message: `Saved ${okCount} of ${areaIds.length} areas.` });
+    } else {
+      setAreaAdjustmentState({
+        kind: 'failed',
+        message: lastFailureMessage || `Saved ${okCount} of ${areaIds.length} areas.`,
+      });
     }
   }
 
@@ -542,30 +668,59 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title="Price Sheet Editor" />
         <Card style={styles.card}>
-          <ListItem title="Version" subtitle={String(sheet.version)} />
-          <ListItem title="Status" subtitle={STATUS_LABEL[sheet.status]} />
-          <ListItem title="Published" subtitle={formatDate(sheet.publishedAt)} />
+          <Pressable onPress={() => setHelpOpen((o) => !o)} accessibilityRole="button" accessibilityState={{ expanded: helpOpen }} style={styles.helpHeader}>
+            <Text style={styles.heading}>How price sheets work</Text>
+            <Text style={styles.note}>{helpOpen ? 'Hide' : 'Show'}</Text>
+          </Pressable>
+          {helpOpen ? (
+            <View>
+              {HELP_BULLETS.map((b) => (
+                <Text key={b} style={styles.bullet}>{'• '}{b}</Text>
+              ))}
+            </View>
+          ) : null}
+        </Card>
+        <Card style={[styles.card, styles.metaCard]}>
+          <View style={styles.metaRow}>
+            <View style={styles.metaCell}>
+              <Text style={styles.metaLabel}>Version</Text>
+              <Text style={styles.metaValue}>{String(sheet.version)}</Text>
+            </View>
+            <View style={styles.metaCell}>
+              <Text style={styles.metaLabel}>Status</Text>
+              <Text style={styles.metaValue}>{STATUS_LABEL[sheet.status]}</Text>
+            </View>
+            <View style={styles.metaCell}>
+              <Text style={styles.metaLabel}>Published</Text>
+              <Text style={styles.metaValue}>{formatDate(sheet.publishedAt)}</Text>
+            </View>
+          </View>
         </Card>
 
-        <Button
-          label={busy ? 'Saving...' : 'Save'}
-          onPress={() => {
-            void handleSave(sheet);
-          }}
-          disabled={!onSave || busy}
-          style={styles.action}
-        />
         {sheet.status === 'draft' ? (
-          <Button
-            label={busy ? 'Publishing...' : 'Publish'}
-            variant="secondary"
-            onPress={() => {
-              void handlePublish(sheet);
-            }}
-            disabled={!publishRepo || busy}
-            style={styles.action}
-          />
+          <View style={styles.actionRow}>
+            <Button
+              label={busy ? 'Publishing...' : 'Publish'}
+              variant="secondary"
+              onPress={() => {
+                void handlePublish(sheet);
+              }}
+              disabled={!publishRepo || busy}
+              size="sm"
+            />
+          </View>
         ) : null}
+        {sheet.status === 'draft' ? (
+          <Text style={styles.note}>
+            Changes in each section save as you go — techs keep seeing the published sheet until
+            you tap Publish. Publish makes this version live and archives the previous one.
+          </Text>
+        ) : (
+          <Text style={styles.note}>
+            This version is {STATUS_LABEL[sheet.status].toLowerCase()} and can no longer change.
+            Create a new price sheet to edit prices.
+          </Text>
+        )}
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
@@ -578,12 +733,14 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               estimates are compared against.
             </Text>
             <TextInput style={styles.input} placeholder="Standard minutes" value={standardMinutesInput} onChangeText={setStandardMinutesInput} keyboardType="numeric" />
-            <Button
-              label={standardDurationState.kind === 'working' ? 'Saving...' : 'Save Standard Duration'}
-              onPress={() => { const value = Number(standardMinutesInput); if (Number.isNaN(value) || value <= 0) return; void handleSaveStandardDuration(value); }}
-              disabled={standardDurationState.kind === 'working'}
-              style={styles.action}
-            />
+            <View style={styles.actionRow}>
+              <Button
+                label={standardDurationState.kind === 'working' ? 'Saving...' : 'Save Standard Duration'}
+                onPress={() => { const value = Number(standardMinutesInput); if (Number.isNaN(value) || value <= 0) return; void handleSaveStandardDuration(value); }}
+                disabled={standardDurationState.kind === 'working'}
+                size="sm"
+              />
+            </View>
             {standardDurationState.kind === 'failed' ? <ErrorState message={standardDurationState.message} /> : null}
             {standardDurationState.kind === 'done' ? <Text style={styles.note}>{standardDurationState.message}</Text> : null}
           </Card>
@@ -591,12 +748,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 
         {areaAdjustmentsRepo ? (
           <Card style={styles.card}>
-            <Text style={styles.heading}>Area Adjustments</Text>
+            <Text style={styles.heading}>Price Area Adjustments</Text>
             {areaAdjustments.length > 0
               ? areaAdjustments.map((adjustment) => (
                   <ListItem
                     key={adjustment.id}
-                    title={adjustment.serviceAreaId}
+                    title={areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}
                     subtitle={
                       adjustment.adjustmentType === 'percent'
                         ? `${adjustment.adjustmentValue}%`
@@ -606,22 +763,41 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                 ))
               : null}
 
-            <TextInput
-              style={styles.input}
-              placeholder="Service area ID"
-              value={serviceAreaIdInput}
-              onChangeText={setServiceAreaIdInput}
+            {serviceAreas.length === 0 ? (
+              <Text style={styles.note}>No service areas yet — add them under Service Areas.</Text>
+            ) : (
+              <View style={styles.chipRow}>
+                <Checkbox
+                  label="All"
+                  checked={serviceAreas.length > 0 && selectedAreaIds.length === serviceAreas.length}
+                  onChange={(checked) => setSelectedAreaIds(checked ? serviceAreas.map((area) => area.id) : [])}
+                  style={styles.chip}
+                />
+                {serviceAreas.map((area) => (
+                  <Checkbox
+                    key={area.id}
+                    label={area.name}
+                    checked={selectedAreaIds.includes(area.id)}
+                    onChange={(checked) =>
+                      setSelectedAreaIds((prev) =>
+                        checked ? [...prev, area.id] : prev.filter((id) => id !== area.id)
+                      )
+                    }
+                    style={styles.chip}
+                  />
+                ))}
+              </View>
+            )}
+            <Select
+              label="Type"
+              value={adjustmentTypeInput}
+              options={[
+                { label: 'Percent', value: 'percent' },
+                { label: 'Flat', value: 'flat' },
+              ]}
+              onChange={(v) => setAdjustmentTypeInput(v === 'flat' ? 'flat' : 'percent')}
+              style={styles.action}
             />
-            <View style={styles.action}>
-              <Button
-                label={adjustmentTypeInput === 'percent' ? 'Type: Percent' : 'Type: Flat'}
-                variant="outline"
-                size="sm"
-                onPress={() =>
-                  setAdjustmentTypeInput((prev) => (prev === 'percent' ? 'flat' : 'percent'))
-                }
-              />
-            </View>
             <TextInput
               style={styles.input}
               placeholder="Adjustment value"
@@ -629,16 +805,18 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               onChangeText={setAdjustmentValueInput}
               keyboardType="numeric"
             />
-            <Button
-              label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save Adjustment'}
-              onPress={() => {
-                const value = Number(adjustmentValueInput);
-                if (!serviceAreaIdInput || Number.isNaN(value)) return;
-                void handleSaveAreaAdjustment(serviceAreaIdInput, adjustmentTypeInput, value);
-              }}
-              disabled={areaAdjustmentState.kind === 'working'}
-              style={styles.action}
-            />
+            <View style={styles.actionRow}>
+              <Button
+                label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save Adjustment'}
+                onPress={() => {
+                  const value = Number(adjustmentValueInput);
+                  if (selectedAreaIds.length === 0 || Number.isNaN(value)) return;
+                  void handleSaveAreaAdjustments(selectedAreaIds, adjustmentTypeInput, value);
+                }}
+                disabled={areaAdjustmentState.kind === 'working'}
+                size="sm"
+              />
+            </View>
 
             {areaAdjustmentState.kind === 'failed' ? (
               <ErrorState message={areaAdjustmentState.message} />
@@ -667,7 +845,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: spacing.sm,
   },
   heading: {
     color: colors.text,
@@ -677,10 +860,48 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  helpHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  bullet: {
+    fontSize: typography.size.small,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  metaCard: {
+    paddingVertical: spacing.sm,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  metaCell: {
+    flex: 1,
+  },
+  metaLabel: {
+    fontSize: typography.size.small,
+    color: colors.textMuted,
+  },
+  metaValue: {
+    fontSize: typography.size.body,
+    fontWeight: '600',
+    color: colors.text,
   },
   action: {
     marginBottom: spacing.sm,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: spacing.sm,
+  },
+  chip: {
+    marginRight: spacing.md,
+    marginBottom: spacing.xs,
   },
   note: {
     color: colors.textMuted,
@@ -695,5 +916,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     color: colors.text,
     fontFamily: typography.fontFamily.body,
+  },
+  inputMultiline: {
+    minHeight: 72,
+    textAlignVertical: 'top',
   },
 });

@@ -359,6 +359,17 @@ export function createTimeOffRepository(): TimeOffRepository {
       return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
     },
 
+    async listForOrg(organizationId: string): Promise<TimeOffRequest[]> {
+      const { data, error } = await supabase
+        .from('time_off_requests')
+        .select('*')
+        .eq('organization_id', organizationId);
+      if (error) {
+        throw new Error(`listForOrg failed: ${error.message}`);
+      }
+      return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
+    },
+
     async create(
       organizationId: string,
       techId: string,
@@ -1090,5 +1101,16 @@ export function buildFieldTechPorts(): ModulePorts {
     investigations: createJobInvestigationRepository(),
     timeEntries: createTimeEntryRepository(),
     localPrefs: { getBool: getBoolPref, setBool: setBoolPref },
+    techs: {
+      list: async (orgId: string) => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('organization_id', orgId)
+          .order('full_name');
+        if (error) throw error;
+        return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
+      },
+    },
   };
 }

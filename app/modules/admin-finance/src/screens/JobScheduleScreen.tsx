@@ -42,7 +42,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TextInput, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, colors, spacing, radius, typography } from '@jobcore/ui';
+import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
@@ -146,8 +147,9 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
   const [startPickerDate, setStartPickerDate] = useState<Date>(() => (job.scheduledStart ? new Date(job.scheduledStart) : new Date()));
   const [endPickerDate, setEndPickerDate] = useState<Date>(() => (job.scheduledEnd ? new Date(job.scheduledEnd) : new Date()));
   const [androidPicker, setAndroidPicker] = useState<AndroidPickerState>(null);
+  const [anchorDay, setAnchorDay] = useState<Date>(() => new Date());
 
-  useEffect(() => {
+  function resetFromJob(): void {
     const start = splitIsoDateTime(job.scheduledStart);
     const end = splitIsoDateTime(job.scheduledEnd);
     setStartDate(start.date);
@@ -158,6 +160,11 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     setEndPickerDate(job.scheduledEnd ? new Date(job.scheduledEnd) : new Date());
     setSaveError(null);
     setSaved(false);
+    setAnchorDay(job.scheduledStart ? new Date(job.scheduledStart) : new Date());
+  }
+
+  useEffect(() => {
+    resetFromJob();
   }, [job.id]);
 
   // Fallback-only: no price-sheet `estimated_minutes` is currently loaded
@@ -188,6 +195,21 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
       setEndDate(parts.date);
       setEndTime(parts.time);
     }
+  }
+
+  function handleSelectDay(day: Date): void {
+    setAnchorDay(day);
+    const next = new Date(
+      day.getFullYear(),
+      day.getMonth(),
+      day.getDate(),
+      startPickerDate.getHours(),
+      startPickerDate.getMinutes(),
+      0,
+      0
+    );
+    applyPickedDate('start', next);
+    applyPickedDate('end', addMinutes(next, effectiveDefault));
   }
 
   function handleAndroidChange(field: ScheduleField, stage: AndroidStage, event: { type: string }, picked?: Date) {
@@ -330,11 +352,15 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
           {!embedded && <Text style={styles.title}>Schedule</Text>}
           <Text style={styles.subtitle}>{job.address ?? job.description ?? job.id}</Text>
 
-          <Text style={styles.sectionLabel}>Scheduled Start</Text>
-          {renderFieldPicker('start')}
+          <View style={styles.monthNav}>
+            <Button label="Prev" size="sm" variant="outline" onPress={() => setAnchorDay((d) => subMonths(d, 1))} />
+            <Text style={styles.monthTitle}>{format(anchorDay, 'MMMM yyyy')}</Text>
+            <Button label="Next" size="sm" variant="outline" onPress={() => setAnchorDay((d) => addMonths(d, 1))} />
+          </View>
+          <MonthView jobs={[]} anchorDay={anchorDay} onSelectDay={handleSelectDay} />
 
-          <Text style={styles.sectionLabel}>Scheduled End</Text>
-          {renderFieldPicker('end')}
+          <Text style={styles.sectionLabel}>Start time</Text>
+          {renderFieldPicker('start')}
 
           {(() => {
             const delta = (totalTaskMinutes ?? 0) - effectiveDefault;
@@ -350,11 +376,10 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
           {saved && !saveError && <Text style={styles.hintText}>Schedule saved.</Text>}
 
           <View style={styles.actions}>
+            <Button label="Cancel" variant="outline" onPress={resetFromJob} style={styles.action} />
             <Button
-              label={saving ? 'Saving...' : 'Save Schedule'}
-              onPress={() => {
-                void handleSave();
-              }}
+              label={saving ? 'Saving...' : 'Save'}
+              onPress={() => void handleSave()}
               disabled={saving}
               style={styles.action}
             />
@@ -368,6 +393,17 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
 export default JobScheduleScreen;
 
 const styles = StyleSheet.create({
+  monthNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
+  },
+  monthTitle: {
+    fontSize: typography.size.h6,
+    fontWeight: typography.weight.semibold,
+    color: colors.text,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.offWhite,

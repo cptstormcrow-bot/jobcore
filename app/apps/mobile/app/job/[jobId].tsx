@@ -670,9 +670,10 @@ export default function JobDrilldownScreen() {
   // form before moving; a `saving` ref guards `beforeRemove` against a
   // double-fire.
   const savingRef = useRef(false);
+  const skipAutosaveRef = useRef(false);
   const selectRegion = useCallback(
     (next: JobRegion) => {
-      if (!isCreate && dirty && !savingRef.current) {
+      if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
         void handleSaveEdit().finally(() => {
           savingRef.current = false;
@@ -686,7 +687,7 @@ export default function JobDrilldownScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
-      if (!isCreate && dirty && !savingRef.current) {
+      if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
         void handleSaveEdit().finally(() => {
           savingRef.current = false;
@@ -829,6 +830,40 @@ export default function JobDrilldownScreen() {
     ]);
   };
 
+  const handleCancel = (): void => {
+    skipAutosaveRef.current = true;
+    router.back();
+  };
+
+  const handleResetTime = async (): Promise<void> => {
+    if (!job) return;
+    setBusyAction('reset');
+    try {
+      await createJobRepository().resetTimeSegments?.(job.id);
+      setJob({ ...job, totalLaborSeconds: 0 });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const confirmResetTime = (): void => {
+    const title = 'Reset time counters?';
+    const body =
+      'This voids every recorded time segment for this job and sets Total Hours to 0. This cannot be undone.';
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
+        void handleResetTime();
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: () => void handleResetTime() },
+    ]);
+  };
+
   const handleMarkPaid = async (): Promise<void> => {
     if (!job || session.status !== 'authenticated') return;
     if (job.status !== 'completed') {
@@ -897,11 +932,18 @@ export default function JobDrilldownScreen() {
             value={form}
             onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
             serviceAreas={serviceAreas}
-            onCreate={() => void handleSaveCreate()}
-            creating={saving}
             error={saveError}
           />
         </ScrollView>
+        <View style={styles.footer}>
+          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={() => router.back()} />
+          <Button
+            label={saving ? 'Creating…' : 'Create'}
+            disabled={saving}
+            style={styles.footerButton}
+            onPress={() => void handleSaveCreate()}
+          />
+        </View>
       </KeyboardAvoidingView>
     );
   }
@@ -1017,9 +1059,6 @@ export default function JobDrilldownScreen() {
               serviceAreas={serviceAreas}
               hasInvestigation={investigation !== null}
               error={saveError}
-              onSave={() => void handleSaveEdit()}
-              saving={saving}
-              saved={saved}
             />
             <View style={styles.jobDetailPane}>
               <JobDetail job={currentJob} />
@@ -1027,6 +1066,26 @@ export default function JobDrilldownScreen() {
           </>
         )}
       </ScrollView>
+      {region === 'details' && (
+        <View style={styles.footer}>
+          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={handleCancel} />
+          {role === 'admin' && (
+            <Button
+              label={busyAction === 'reset' ? 'Resetting…' : 'Reset'}
+              variant="outline"
+              disabled={busyAction === 'reset'}
+              style={styles.footerButton}
+              onPress={confirmResetTime}
+            />
+          )}
+          <Button
+            label={saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
+            disabled={saving}
+            style={styles.footerButton}
+            onPress={() => void handleSaveEdit()}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -1036,6 +1095,16 @@ const styles = StyleSheet.create({
   scrollBody: { flex: 1 },
   scrollContent: { paddingBottom: spacing.xl },
   jobDetailPane: { marginTop: spacing.md },
+  footer: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.white,
+  },
+  footerButton: { flex: 1 },
   center: {
     flex: 1,
     alignItems: 'center',

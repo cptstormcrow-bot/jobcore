@@ -244,6 +244,14 @@ export async function saveAreaAdjustment(
   adjustmentType: 'percent' | 'flat',
   adjustmentValue: number
 ): Promise<CalculationResult<PriceSheetAreaAdjustment>> {
+  const { data: sheet, error: sheetError } = await client
+    .from('price_sheets')
+    .select('organization_id')
+    .eq('id', priceSheetId)
+    .single();
+  if (sheetError || !sheet) {
+    return { ok: false, reason: sheetError?.message ?? 'Price sheet not found.' };
+  }
   const { data, error } = await client
     .from('price_sheet_area_adjustments')
     .upsert(
@@ -252,6 +260,7 @@ export async function saveAreaAdjustment(
         service_area_id: serviceAreaId,
         adjustment_type: adjustmentType,
         adjustment_value: adjustmentValue,
+        organization_id: sheet.organization_id,
       },
       { onConflict: 'price_sheet_id,service_area_id' }
     )

@@ -39,12 +39,7 @@ export interface JobDetailsFormProps {
   onChange: (patch: Partial<JobFormValues>) => void;
   serviceAreas: { id: string; name: string }[];
   hasInvestigation?: boolean;
-  onCreate?: () => void;
-  creating?: boolean;
   error?: string | null;
-  onSave?: () => void;
-  saving?: boolean;
-  saved?: boolean;
 }
 
 const inputStyleFor = (value: string | null | undefined) =>
@@ -56,12 +51,7 @@ export function JobDetailsForm({
   onChange,
   serviceAreas,
   hasInvestigation,
-  onCreate,
-  creating,
   error,
-  onSave,
-  saving,
-  saved,
 }: JobDetailsFormProps) {
   return (
     <View>
@@ -287,21 +277,7 @@ export function JobDetailsForm({
         labelStyle={styles.fieldLabel}
         inputStyle={inputStyleFor(value.considerations)}
       />
-      {mode === 'create' ? (
-        <Button
-          label={creating ? 'Creating…' : 'Create'}
-          onPress={() => onCreate?.()}
-          disabled={creating}
-          style={styles.field}
-        />
-      ) : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      {mode === 'edit' && onSave && (
-        <View style={styles.saveRow}>
-          <Text style={styles.saveStatus}>{saving ? 'Saving…' : saved ? 'Saved' : ''}</Text>
-          <Button label={saving ? 'Saving…' : 'Save'} disabled={saving} onPress={onSave} />
-        </View>
-      )}
     </View>
   );
 }
@@ -320,6 +296,4 @@ const styles = StyleSheet.create({
   errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.sm },
   copyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
   copyField: { flex: 1 },
-  saveRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 12, marginTop: 16 },
-  saveStatus: { color: colors.textMutedDark, fontSize: typography.size.small },
 });

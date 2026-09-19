@@ -43,6 +43,7 @@ export interface ModulePorts {
   investigations: JobInvestigationRepository;
   timeEntries: TimeEntryRepository;
   localPrefs: { getBool(key: string, defaultValue: boolean): Promise<boolean>; setBool(key: string, value: boolean): Promise<void>; };
+  techs: { list(organizationId: string): Promise<{ id: string; fullName: string }[]> };
 }
 
 let current: ModulePorts | null = null;

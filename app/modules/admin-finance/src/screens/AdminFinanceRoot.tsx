@@ -882,6 +882,7 @@ export function AdminFinanceRoot() {
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
           serviceTasksRepo={ports.serviceTasks}
+          serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
           onPublished={handlePublished}
         />
       ) : subView === 'closeOutQueue' ? (

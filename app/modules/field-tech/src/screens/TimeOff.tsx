@@ -31,10 +31,12 @@ import { View, Text, TextInput, ScrollView, StyleSheet, Pressable, Modal, Keyboa
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
-import { ScreenTitle, Button, colors } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, Select, type CalendarMode, type TimeOffEvent } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
+import { expandTimeOffToEvents } from './DayList';
+import { addDays, addMonths, format } from 'date-fns';
 
 function todayIso(): string {
   const n = new Date();
@@ -79,6 +81,25 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
   const [showRequestModal, setShowRequestModal] = React.useState(false);
 
+  const [techFilter, setTechFilter] = React.useState<string>(session === null ? 'all' : session.userId);
+  const [techs, setTechs] = React.useState<{ id: string; fullName: string }[]>([]);
+
+  React.useEffect(() => {
+    if (session === null) return;
+    let cancelled = false;
+    getModulePorts()
+      .techs.list(session.org.id)
+      .then((result) => {
+        if (!cancelled) setTechs(result);
+      })
+      .catch(() => {
+        /* non-fatal: tech filter simply stays empty */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
   const loadRequests = React.useCallback(() => {
     if (session === null) {
       setLoading(false);
@@ -91,8 +112,12 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
     const { timeOff } = getModulePorts();
 
-    timeOff
-      .listForTech(session.userId)
+    const result: Promise<TimeOffRequest[]> =
+      techFilter === session.userId
+        ? timeOff.listForTech(session.userId)
+        : timeOff.listForOrg(session.org.id).then((all) => all.filter((r) => techFilter === 'all' || r.techId === techFilter));
+
+    result
       .then((result) => {
         if (!cancelled) {
           setRequests(result);
@@ -112,7 +137,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, techFilter]);
 
   React.useEffect(() => {
     const cleanup = loadRequests();
@@ -120,9 +145,20 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
   }, [loadRequests]);
 
   const activeRequests = React.useMemo(() => requests.filter((r) => r.endDate >= todayIso() && isActiveTimeOffStatus(r.status)), [requests]);
+  const [calMode, setCalMode] = React.useState<CalendarMode>('month');
+  const [anchorDay, setAnchorDay] = React.useState(new Date());
+  const events = React.useMemo(() => expandTimeOffToEvents(activeRequests, new Date()), [activeRequests]);
 
   const selectedRequest = selectedId === null ? null : requests.find((r) => r.id === selectedId) ?? null;
   const isAdminAdded = selectedRequest !== null && selectedRequest.createdByAdminId !== null;
+
+  const onPickEvent = (e: TimeOffEvent) => {
+    const r = activeRequests.find((x) => e.id.startsWith(x.id + '-'));
+    if (r && session !== null && r.techId === session.userId) select(r.id);
+  };
+  const onPickDay = () => {
+    if (selectedId === null) setShowRequestModal(true);
+  };
 
   function select(id: string): void {
     const r = requests.find((x) => x.id === id);
@@ -284,18 +320,24 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Request time off</Text>
-        <Text style={styles.label}>Date range</Text>
-        <DateRangeCalendar
-          key={selectedId ?? 'new'}
-          startDate={startDate}
-          endDate={endDate}
-          onChangeStartDate={setStartDate}
-          onChangeEndDate={setEndDate}
-          disabled={submitting || showRequestModal}
-          onSelectMarkedDay={(id) => select(id)}
-          onDayTapped={() => { if (selectedId === null) setShowRequestModal(true); }}
-          markedRanges={activeRequests.map((r) => ({ id: r.id, startDate: r.startDate, endDate: r.endDate }))}
+        <Select
+          value={techFilter}
+          options={[{ label: 'All Techs', value: 'all' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
+          onChange={setTechFilter}
         />
+        <CalendarHeader
+          mode={calMode}
+          onModeChange={setCalMode}
+          label={format(anchorDay, calMode === 'month' ? 'MMMM yyyy' : "'Week of' MMM d")}
+          onPrev={() => setAnchorDay((d) => calMode === 'month' ? addMonths(d, -1) : addDays(d, -7))}
+          onNext={() => setAnchorDay((d) => calMode === 'month' ? addMonths(d, 1) : addDays(d, 7))}
+          onToday={() => setAnchorDay(new Date())}
+        />
+        {calMode === 'week' ? (
+          <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={onPickDay} />
+        ) : (
+          <MonthView variant="list" jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={onPickDay} />
+        )}
       </View>
 
       <View style={styles.section}>

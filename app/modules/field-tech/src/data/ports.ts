@@ -377,6 +377,7 @@ export interface TimeOffRequestDraft {
  */
 export interface TimeOffRepository {
   listForTech(techId: string): Promise<TimeOffRequest[]>;
+  listForOrg(organizationId: string): Promise<TimeOffRequest[]>;
   create(organizationId: string, techId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest>;
   /** Cancels the caller's own existing time-off request, releasing the date. */
   cancel(requestId: string): Promise<void>;
