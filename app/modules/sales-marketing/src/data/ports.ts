@@ -558,6 +558,10 @@ export type TestJobRow = {
  * time, individually or all at once — normal (non-`is_beta`) jobs are never
  * deletable through this or any other port.
  */
+/** Read-only job attribution rows for Marketing Reporting. Reads core jobs only — never commissions / price_sheets / payout_batches (Workstream K exception, :540-545). */
+export type JobReportingRow = { id: string; source: string | null; attachTiming: string | null; isBeta: boolean };
+export interface JobReportingRepository { listJobsForReporting(organizationId: string): Promise<JobReportingRow[]>; }
+
 export interface TestJobsRepository {
   /**
    * Deletes any existing test jobs for this organization, then creates 3

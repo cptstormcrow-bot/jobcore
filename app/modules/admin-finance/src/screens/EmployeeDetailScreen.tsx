@@ -22,11 +22,13 @@
  * per the plan.
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import { DayList } from '@jobcore/field-tech';
 import type { Profile, Job } from '@jobcore/core';
+import { getModulePorts } from '../lib/module-ports';
+import type { ProfilePrivate } from '../data/ports';
 
 export interface EmployeeDetailScreenProps {
   employee: Profile;
@@ -51,6 +53,8 @@ function formatDate(iso: string | null): string {
 }
 
 /** Masks a driver's license number to its last 4 characters, e.g. "•••• 1234". Full value is only ever shown in the editor. */
+function maskSsn(last4: string | null): string { return last4 ? `•••-••-${last4}` : 'Not on file'; }
+
 function maskDriversLicense(value: string | null): string {
   if (!value) return 'Not on file';
   if (value.length <= 4) return value;
@@ -69,6 +73,12 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   const { employee, jobs, skills, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
+  const [priv, setPriv] = useState<ProfilePrivate | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getModulePorts().employees.getPrivate(employee.id).then((r) => { if (!cancelled) setPriv(r); }).catch(() => { if (!cancelled) setPriv(null); });
+    return () => { cancelled = true; };
+  }, [employee.id]);
 
   return (
     <View style={styles.screen}>
@@ -83,6 +93,8 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           {employee.isTest ? <InfoRow label="Test Employee" value="Yes" /> : null}
           <InfoRow label="Address" value={employee.address ?? 'Not on file'} />
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
+          <InfoRow label="SSN" value={maskSsn(priv?.ssnLast4 ?? null)} />
+          <InfoRow label="Emergency Contact" value={priv?.emergencyContactName ? [priv.emergencyContactName, priv.emergencyContactPhone].filter(Boolean).join(' · ') : 'Not on file'} />
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
           <InfoRow label="Hours Worked" value={hoursWorked != null ? hoursWorked.toFixed(1) : 'Not available'} />

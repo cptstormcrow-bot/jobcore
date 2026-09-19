@@ -2,7 +2,7 @@
  * Reports screen — read-only reporting summaries (P3l.4).
  *
  * Wires together the three P3-l pure reporting helpers into one screen:
- * `../reporting/group-by.ts` (`byStatus`, `bySource`, `byAttachTiming`),
+ * `../reporting/group-by.ts` (`byStatus`; `bySource`/`byAttachTiming` moved to Sales & Marketing Reporting),
  * `../reporting/slot-hit-rate.ts` (`slotHitRate`), and
  * `../reporting/revenue.ts` (`commissionTotals`). All three are pure
  * functions with no I/O — this screen owns no fetching, so it takes plain
@@ -27,7 +27,7 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { byStatus, bySource, byAttachTiming } from '../reporting/group-by';
+import { byStatus } from '../reporting/group-by';
 import { slotHitRate, classifyWindow } from '../reporting/slot-hit-rate';
 import { commissionTotals, type CommissionAmountSource } from '../reporting/revenue';
 import { getModuleSession } from '../lib/module-session';
@@ -44,8 +44,6 @@ export interface ReportsScreenProps {
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
 type DrillState =
   | { section: 'status'; key: JobStatus }
-  | { section: 'source'; key: string }
-  | { section: 'attachTiming'; key: string }
   | { section: 'slotHitRate'; key: 'hit' | 'miss' | 'unknown' }
   | { section: 'commissionTotals'; key: 'known' | 'unknown' }
   | null;
@@ -71,7 +69,7 @@ function JobListDrillDown(props: {
 
   return (
     <Card style={styles.card}>
-      <Button label="< Back" variant="outline" size="sm" onPress={onBack} style={styles.backButton} />
+      <Button label="< Back" variant="primary" size="sm" onPress={onBack} style={styles.backButton} />
       {visibleJobs.length === 0 ? (
         <EmptyState title="No jobs" message="No jobs match this group." />
       ) : (
@@ -120,8 +118,6 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
   }
 
   const statusGroups = byStatus(jobs);
-  const sourceGroups = bySource(jobs);
-  const attachTimingGroups = byAttachTiming(jobs);
   const hitRate = slotHitRate(jobs);
   const commissionRecords = commissions ?? [];
   const totals = commissionTotals(commissionRecords);
@@ -165,38 +161,6 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
                 title={status}
                 subtitle={`${groupJobs.length} job(s)`}
                 onPress={() => setDrill({ section: 'status', key: status as JobStatus })}
-              />
-            ))}
-          </Card>
-        )}
-
-        <Text style={styles.groupHeading}>By Source</Text>
-        {drill?.section === 'source' ? (
-          <JobListDrillDown jobs={sourceGroups[drill.key] ?? []} {...backProps} />
-        ) : (
-          <Card style={styles.card}>
-            {Object.entries(sourceGroups).map(([source, groupJobs]) => (
-              <ListItem
-                key={source}
-                title={source}
-                subtitle={`${groupJobs.length} job(s)`}
-                onPress={() => setDrill({ section: 'source', key: source })}
-              />
-            ))}
-          </Card>
-        )}
-
-        <Text style={styles.groupHeading}>By Attach Timing</Text>
-        {drill?.section === 'attachTiming' ? (
-          <JobListDrillDown jobs={attachTimingGroups[drill.key] ?? []} {...backProps} />
-        ) : (
-          <Card style={styles.card}>
-            {Object.entries(attachTimingGroups).map(([timing, groupJobs]) => (
-              <ListItem
-                key={timing}
-                title={timing}
-                subtitle={`${groupJobs.length} job(s)`}
-                onPress={() => setDrill({ section: 'attachTiming', key: timing })}
               />
             ))}
           </Card>

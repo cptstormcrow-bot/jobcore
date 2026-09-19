@@ -47,6 +47,8 @@ import type {
   CallbackTaskRepository,
   CallbackTask,
   CallbackTaskRow,
+  JobReportingRepository,
+  JobReportingRow,
 } from '../../../../modules/sales-marketing/src/data/ports';
 import type { ModulePorts } from '../../../../modules/sales-marketing/src/lib/module-ports';
 import {
@@ -599,6 +601,24 @@ export function createCallbackTaskRepository(): CallbackTaskRepository {
   };
 }
 
+export function createJobReportingRepository(): JobReportingRepository {
+  return {
+    async listJobsForReporting(organizationId) {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, source, attach_timing, is_beta')
+        .eq('organization_id', organizationId);
+      if (error) throw new Error(`listJobsForReporting failed: ${error.message}`);
+      return (data ?? []).map((r) => ({
+        id: String(r.id),
+        source: (r.source as string | null) ?? null,
+        attachTiming: (r.attach_timing as string | null) ?? null,
+        isBeta: Boolean(r.is_beta),
+      }));
+    },
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
@@ -614,5 +634,6 @@ export function buildSalesMarketingPorts(): ModulePorts {
     socialProviders: createSocialProviderRepository(),
     testJobs: createTestJobsRepository(),
     callbackTasks: createCallbackTaskRepository(),
+    jobReporting: createJobReportingRepository(),
   };
 }

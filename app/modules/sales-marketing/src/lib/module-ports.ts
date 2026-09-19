@@ -25,6 +25,7 @@ import type {
   SocialProviderRepository,
   TestJobsRepository,
   CallbackTaskRepository,
+  JobReportingRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -39,6 +40,7 @@ export interface ModulePorts {
   testJobs: TestJobsRepository;
   /** Workstream J: sales callback tasks from completed jobs — see `data/ports.ts`. */
   callbackTasks: CallbackTaskRepository;
+  jobReporting: JobReportingRepository;
 }
 
 let current: ModulePorts | null = null;

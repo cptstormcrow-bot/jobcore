@@ -46,6 +46,10 @@ export interface EmployeeEditorScreenProps {
   onSaved?: () => void;
   /** Fired when the user cancels out of the editor. */
   onCancel?: () => void;
+  isTest?: boolean;
+  onIsTestChange?: (v: boolean) => void;
+  paidTravel?: boolean;
+  onPaidTravelChange?: (v: boolean) => void;
 }
 
 const ROLES: readonly Role[] = ['owner', 'admin', 'tech', 'sales'];
@@ -87,6 +91,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     profile,
     onSaved,
     onCancel,
+    isTest,
+    onIsTestChange,
+    paidTravel,
+    onPaidTravelChange,
   } = props;
   const isEditMode = !!profile;
 
@@ -94,8 +102,12 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [phoneInput, setPhoneInput] = useState(profile?.phone ?? '');
   const [emailInput, setEmailInput] = useState('');
   const [roleInput, setRoleInput] = useState<Role>(profile?.role ?? 'tech');
-  const [isTestInput, setIsTestInput] = useState(profile?.isTest ?? false);
-  const [paidTravelInput, setPaidTravelInput] = useState(profile?.paidTravel ?? false);
+  const [localIsTest, setLocalIsTest] = useState(profile?.isTest ?? false);
+  const isTestInput = isTest ?? localIsTest;
+  const setIsTestInput = onIsTestChange ?? setLocalIsTest;
+  const [localPaidTravel, setLocalPaidTravel] = useState(profile?.paidTravel ?? false);
+  const paidTravelInput = paidTravel ?? localPaidTravel;
+  const setPaidTravelInput = onPaidTravelChange ?? setLocalPaidTravel;
   const [ptpmInput, setPtpmInput] = useState(profile?.paidTravelPolicyMessage ?? DEFAULT_PAID_TRAVEL_POLICY_MESSAGE);
   const [hourlyRateInput, setHourlyRateInput] = useState(
     (((profile as unknown as { defaultHourlyRateCents?: number })?.defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS) / 100).toFixed(2)
@@ -113,11 +125,28 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [driversLicenseInput, setDriversLicenseInput] = useState((profile as unknown as { driversLicenseNumber?: string })?.driversLicenseNumber ?? '');
   const [vehicleStatusInput, setVehicleStatusInput] = useState<string | null>((profile as unknown as { vehicleStatus?: string })?.vehicleStatus ?? null);
   const [toolStatusInput, setToolStatusInput] = useState<string | null>((profile as unknown as { toolStatus?: string })?.toolStatus ?? null);
+  const [ssnLast4Input, setSsnLast4Input] = useState('');
+  const [ecNameInput, setEcNameInput] = useState('');
+  const [ecPhoneInput, setEcPhoneInput] = useState('');
 
   const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
   const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
 
   const session = getModuleSession();
+
+  useEffect(() => {
+    if (!isEditMode || !profile || !employeeRepository) return;
+    let cancelled = false;
+    employeeRepository.getPrivate(profile.id).then((r) => {
+      if (cancelled || !r) return;
+      setSsnLast4Input(r.ssnLast4 ?? '');
+      setEcNameInput(r.emergencyContactName ?? '');
+      setEcPhoneInput(r.emergencyContactPhone ?? '');
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, profile?.id, employeeRepository]);
 
   useEffect(() => {
     if (!isEditMode || !profile || !serviceAreaRepository || !techServiceAreaRepository || !session) return;
@@ -207,6 +236,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   async function handleUpdate(): Promise<void> {
     if (!employeeRepository || !profile) return;
+    if (ssnLast4Input && ssnLast4Input.length !== 4) {
+      setActionState({ kind: 'failed', message: 'SSN: enter exactly the last 4 digits.' });
+      return;
+    }
     setActionState({ kind: 'working' });
     try {
       await employeeRepository.updateEmployee(profile.id, {
@@ -221,6 +254,13 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         paidTravelPolicyMessage: ptpmInput || null,
         defaultHourlyRateCents: Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100),
       });
+      if (session) {
+        await employeeRepository.upsertPrivate(profile.id, session.org.id, {
+          ssnLast4: ssnLast4Input || null,
+          emergencyContactName: ecNameInput || null,
+          emergencyContactPhone: ecPhoneInput || null,
+        });
+      }
       setActionState({ kind: 'done', message: 'Saved.' });
       onSaved?.();
     } catch (error: unknown) {
@@ -327,6 +367,33 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               />
               <TextInput
                 style={styles.input}
+                placeholder="SSN (last 4 digits only)"
+                value={ssnLast4Input}
+                onChangeText={(t) => {
+                  if (/^\d{0,4}$/.test(t)) setSsnLast4Input(t);
+                }}
+                keyboardType="number-pad"
+                maxLength={4}
+                secureTextEntry
+              />
+              <Text style={styles.note}>
+                Stored as last 4 only; shown as •••-••-{ssnLast4Input || '____'}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Emergency Contact Name"
+                value={ecNameInput}
+                onChangeText={setEcNameInput}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Emergency Contact Phone"
+                value={ecPhoneInput}
+                onChangeText={setEcPhoneInput}
+                keyboardType="phone-pad"
+              />
+              <TextInput
+                style={styles.input}
                 placeholder="Hourly Rate"
                 value={hourlyRateInput}
                 onChangeText={setHourlyRateInput}
@@ -345,18 +412,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 options={TOOL_STATUS_OPTIONS}
                 onChange={setToolStatusInput}
                 placeholder="Select status"
-              />
-              <Toggle
-                label="Test Employee"
-                value={isTestInput}
-                onChange={setIsTestInput}
-                style={styles.action}
-              />
-              <Toggle
-                label="Paid Travel"
-                value={paidTravelInput}
-                onChange={setPaidTravelInput}
-                style={styles.action}
               />
               {paidTravelInput && vehicleStatusInput !== 'assigned' ? (
                 <Text style={styles.warning}>
@@ -384,12 +439,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 }}
                 keyboardType="email-address"
                 autoCapitalize="none"
-              />
-              <Toggle
-                label="Test Employee"
-                value={isTestInput}
-                onChange={setIsTestInput}
-                style={styles.action}
               />
             </>
           )}

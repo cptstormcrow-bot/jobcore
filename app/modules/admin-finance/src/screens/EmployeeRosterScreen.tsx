@@ -13,7 +13,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Toggle, colors, spacing, typography } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -29,8 +29,6 @@ export interface EmployeeRosterScreenProps {
   onViewInvitations?: () => void;
   /** Controlled "Show Test Employees" value; falls back to local state when omitted. */
   showTest?: boolean;
-  /** Fired when the "Show Test Employees" toggle changes; falls back to local state when omitted. */
-  onShowTestChange?: (value: boolean) => void;
 }
 
 type LoadState =
@@ -40,11 +38,9 @@ type LoadState =
   | { kind: 'failed'; message: string };
 
 export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
-  const { employees: employeeRepository, onSelectEmployee, onAddEmployee, onViewInvitations, showTest: showTestProp, onShowTestChange } = props;
+  const { employees: employeeRepository, onSelectEmployee, onAddEmployee, onViewInvitations, showTest: showTestProp } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
-  const [localShowTest, setLocalShowTest] = useState(false);
-  const showTest = showTestProp ?? localShowTest;
-  const handleShowTestChange = onShowTestChange ?? setLocalShowTest;
+  const showTest = showTestProp ?? false;
 
   const session = getModuleSession();
 
@@ -114,32 +110,12 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title="Employee Roster" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Button
-          label="Add Employee"
-          onPress={() => onAddEmployee?.()}
-          disabled={!onAddEmployee}
-          style={styles.action}
-        />
-
+        <ScreenTitle title="Employee Roster" />
+        <Button label="Add Employee" style={styles.action} onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
         {onViewInvitations ? (
-          <Button
-            label="Pending Invitations"
-            onPress={() => onViewInvitations?.()}
-            variant="outline"
-            size="sm"
-            style={styles.action}
-          />
+          <Button label="Pending Invitations" variant="outline" style={styles.action} onPress={() => onViewInvitations?.()} />
         ) : null}
-
-        <Toggle
-          label="Show Test Employees"
-          value={showTest}
-          onChange={handleShowTestChange}
-          style={styles.action}
-        />
-
         {visibleEmployees.length === 0 ? (
           <EmptyState title="Employee Roster" message="This organization has no employees on file." />
         ) : (

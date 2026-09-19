@@ -36,7 +36,7 @@ import * as React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
-import type { CampaignLogEntry, MarketingAsset, Review } from '../data/ports';
+import type { CampaignLogEntry, MarketingAsset, Review, JobReportingRow } from '../data/ports';
 import { ScreenTitle, colors } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
@@ -87,6 +87,15 @@ function buildReviewsByPlatform(reviews: readonly Review[]): PlatformCount[] {
     .sort((a, b) => a.platform.localeCompare(b.platform));
 }
 
+function countBy(rows: readonly JobReportingRow[], pick: (r: JobReportingRow) => string | null): Array<{ key: string; count: number }> {
+  const m = new Map<string, number>();
+  for (const r of rows) {
+    const k = pick(r) ?? 'unknown';
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return [...m].map(([key, count]) => ({ key, count })).sort((a, b) => a.key.localeCompare(b.key));
+}
+
 export function Reporting(): React.ReactElement {
   const session = getModuleSession();
   const [loading, setLoading] = React.useState(true);
@@ -97,6 +106,7 @@ export function Reporting(): React.ReactElement {
   const [assetsTotalCount, setAssetsTotalCount] = React.useState(0);
   const [reviewsByPlatform, setReviewsByPlatform] = React.useState<PlatformCount[]>([]);
   const [reviewsTotalCount, setReviewsTotalCount] = React.useState(0);
+  const [jobRows, setJobRows] = React.useState<JobReportingRow[]>([]);
 
   const load = React.useCallback(() => {
     if (session === null) {
@@ -107,15 +117,16 @@ export function Reporting(): React.ReactElement {
     setLoading(true);
     setError(null);
 
-    const { campaignLog, marketingAssets, reviews } = getModulePorts();
+    const { campaignLog, marketingAssets, reviews, jobReporting } = getModulePorts();
     const organizationId = session.org.id;
 
     Promise.all([
       campaignLog.listForOrganization(organizationId),
       marketingAssets.list(organizationId),
       reviews.list(organizationId),
+      jobReporting.listJobsForReporting(organizationId),
     ])
-      .then(([logEntries, assets, publishedReviews]: [CampaignLogEntry[], MarketingAsset[], Review[]]) => {
+      .then(([logEntries, assets, publishedReviews, rows]: [CampaignLogEntry[], MarketingAsset[], Review[], JobReportingRow[]]) => {
         setPostsByPlatformPeriod(buildPostsByPlatformAndPeriod(logEntries));
 
         setAssetsTotalCount(assets.length);
@@ -123,6 +134,8 @@ export function Reporting(): React.ReactElement {
 
         setReviewsByPlatform(buildReviewsByPlatform(publishedReviews));
         setReviewsTotalCount(publishedReviews.length);
+
+        setJobRows(rows);
       })
       .catch((err: unknown) => {
         setError(err instanceof Error ? err.message : 'Failed to load reporting data.');
@@ -199,6 +212,24 @@ export function Reporting(): React.ReactElement {
           {reviewsByPlatform.map((row) => (
             <View key={row.platform} style={styles.row}>
               <Text style={styles.rowLabel}>{row.platform}</Text>
+              <Text style={styles.rowValue}>{row.count}</Text>
+            </View>
+          ))}
+
+          <Text style={styles.sectionTitle}>Jobs by source</Text>
+          {jobRows.length === 0 && <Text style={styles.emptyText}>No jobs yet</Text>}
+          {countBy(jobRows, (r) => r.source).map((row) => (
+            <View key={row.key} style={styles.row}>
+              <Text style={styles.rowLabel}>{row.key}</Text>
+              <Text style={styles.rowValue}>{row.count}</Text>
+            </View>
+          ))}
+
+          <Text style={styles.sectionTitle}>Jobs by attach timing</Text>
+          {jobRows.length === 0 && <Text style={styles.emptyText}>No jobs yet</Text>}
+          {countBy(jobRows, (r) => r.attachTiming).map((row) => (
+            <View key={row.key} style={styles.row}>
+              <Text style={styles.rowLabel}>{row.key}</Text>
               <Text style={styles.rowValue}>{row.count}</Text>
             </View>
           ))}

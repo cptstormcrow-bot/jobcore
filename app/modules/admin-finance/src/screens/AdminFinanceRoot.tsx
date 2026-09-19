@@ -143,6 +143,8 @@ export function AdminFinanceRoot() {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [showTestJobs, setShowTestJobs] = useState(false);
   const [showTestEmployees, setShowTestEmployees] = useState(false);
+  const [editorIsTest, setEditorIsTest] = useState(false);
+  const [editorPaidTravel, setEditorPaidTravel] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -514,10 +516,14 @@ export function AdminFinanceRoot() {
 
   function handleAddEmployee() {
     setSelectedEmployee(null);
+    setEditorIsTest(false);
+    setEditorPaidTravel(false);
     setSubView('employee-editor');
   }
 
   function handleEditEmployee() {
+    setEditorIsTest(selectedEmployee?.isTest ?? false);
+    setEditorPaidTravel(selectedEmployee?.paidTravel ?? false);
     setSubView('employee-editor');
   }
 
@@ -638,7 +644,36 @@ export function AdminFinanceRoot() {
             onToggle: handleShowBlackoutsChange,
           },
         ]
-      : undefined;
+      : subView === 'employee-editor'
+        ? [
+            {
+              id: 'test-employee',
+              label: 'Test Employee',
+              kind: 'toggle',
+              checked: editorIsTest,
+              onToggle: setEditorIsTest,
+            },
+            {
+              id: 'paid-travel',
+              label: 'Paid Travel',
+              kind: 'toggle',
+              checked: editorPaidTravel,
+              onToggle: setEditorPaidTravel,
+            },
+          ]
+        : subView === 'employee-roster'
+          ? [
+              {
+                id: 'show-test-employees',
+                label: 'Show Test Employees',
+                kind: 'toggle',
+                checked: showTestEmployeesRoster,
+                onToggle: (next: boolean) => {
+                  void handleShowTestEmployeesRosterChange(next);
+                },
+              },
+            ]
+          : undefined;
 
   if (!session) {
     return (
@@ -960,7 +995,6 @@ export function AdminFinanceRoot() {
           onAddEmployee={handleAddEmployee}
           onViewInvitations={() => setSubView('employee-invitations')}
           showTest={showTestEmployeesRoster}
-          onShowTestChange={handleShowTestEmployeesRosterChange}
         />
       ) : subView === 'employee-invitations' ? (
         <EmployeeInvitationsScreen
@@ -1003,6 +1037,10 @@ export function AdminFinanceRoot() {
           profile={selectedEmployee ?? undefined}
           onSaved={handleEmployeeEditorSaved}
           onCancel={handleEmployeeEditorCancel}
+          isTest={editorIsTest}
+          onIsTestChange={setEditorIsTest}
+          paidTravel={editorPaidTravel}
+          onPaidTravelChange={setEditorPaidTravel}
         />
       ) : subView === 'blackout-editor' ? (
         <BlackoutEditorScreen

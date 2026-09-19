@@ -224,6 +224,21 @@ export default function TestJobsScreen(): React.ReactElement {
       </View>
       {simulatorReport ? (
         <View style={styles.simulatorPanel}>
+          <View style={styles.simulatorActions}>
+            <Button
+              label="Dismiss"
+              size="sm"
+              variant="primary"
+              onPress={() => setSimulatorReport(null)}
+            />
+            <Button
+              label={simulating ? 'Running…' : 'Run Again'}
+              size="sm"
+              variant="primary"
+              disabled={simulating}
+              onPress={handleRunSimulator}
+            />
+          </View>
           <Text style={styles.simulatorWarning}>
             This run created a real job and wrote real data. Nothing was auto-deleted.
           </Text>
@@ -251,12 +266,6 @@ export default function TestJobsScreen(): React.ReactElement {
               </View>
             </View>
           ))}
-          <Button
-            label="Dismiss"
-            size="sm"
-            variant="outline"
-            onPress={() => setSimulatorReport(null)}
-          />
         </View>
       ) : null}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -314,6 +323,13 @@ const styles = StyleSheet.create({
   },
   simulatorJobId: {
     color: colors.textLight,
+    fontSize: typography.size.h5,
+    fontWeight: typography.weight.semibold,
+  },
+  simulatorActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   simulatorStageRow: {
     flexDirection: 'row',
