@@ -104,6 +104,8 @@ export interface Job {
   organizationId: string;
   status: JobStatus;
   customerId: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
   serviceId: string | null;
   source: string | null;
   payer: string | null;

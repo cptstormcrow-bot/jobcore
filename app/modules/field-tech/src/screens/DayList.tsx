@@ -28,6 +28,7 @@ import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
 import { isActiveTimeOffStatus, type TimeOffRequest } from '../data/ports';
+import { copyToClipboard } from '../lib/clipboard';
 
 /** Props for `DayList`. */
 export interface DayListProps {
@@ -213,7 +214,15 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                 <Text style={styles.bullet}>{'\u2022'}</Text>
                 <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
                 <View style={styles.rowBody}>
-                  <Text style={styles.address}>{item.address ?? 'No address'}</Text>
+                  <Pressable onPress={() => item.address && copyToClipboard(item.address)}>
+                    <Text style={styles.address}>{item.address ?? 'No address'}</Text>
+                  </Pressable>
+                  {item.customerName ? <Text style={styles.meta}>{item.customerName}</Text> : null}
+                  {item.customerPhone ? (
+                    <Pressable onPress={() => copyToClipboard(item.customerPhone ?? '')}>
+                      <Text style={styles.meta}>{item.customerPhone}</Text>
+                    </Pressable>
+                  ) : null}
                   <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
                 </View>
               </View>
@@ -298,7 +307,15 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                     .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime())
                     .map((job) => (
                       <View key={job.id} style={styles.modalJobRow}>
-                        <Text style={styles.address}>{job.address ?? 'No address'}</Text>
+                        <Pressable onPress={() => job.address && copyToClipboard(job.address)}>
+                          <Text style={styles.address}>{job.address ?? 'No address'}</Text>
+                        </Pressable>
+                        {job.customerName ? <Text style={styles.meta}>{job.customerName}</Text> : null}
+                        {job.customerPhone ? (
+                          <Pressable onPress={() => copyToClipboard(job.customerPhone ?? '')}>
+                            <Text style={styles.meta}>{job.customerPhone}</Text>
+                          </Pressable>
+                        ) : null}
                         <Text style={styles.window}>{job.requestedWindow ?? job.scheduledStart ?? 'Unscheduled'}</Text>
                       </View>
                     ))}
@@ -369,6 +386,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMutedDark,
     marginTop: 2,
+  },
+  meta: {
+    fontSize: typography.size.label,
+    color: colors.textMuted,
   },
   weekHeader: {
     marginTop: spacing.lg,

@@ -516,6 +516,7 @@ export interface JobRow {
   completed_at: string | null;
   created_at: string;
   is_beta?: boolean | null;
+  customers?: { name: string | null; phone: string | null } | null;
 }
 
 /**
@@ -532,6 +533,8 @@ export function toJob(row: JobRow): Job {
     organizationId: row.organization_id,
     status: row.status,
     customerId: row.customer_id,
+    customerName: row.customers?.name ?? null,
+    customerPhone: row.customers?.phone ?? null,
     serviceId: row.service_id,
     source: row.source,
     payer: row.payer,

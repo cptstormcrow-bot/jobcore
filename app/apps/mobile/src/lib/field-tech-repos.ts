@@ -512,7 +512,7 @@ export function createTechJobRepository(): TechJobRepository {
     async listAssignedToTech(techId: string) {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*, job_assignments!inner(tech_id)')
+        .select('*, customers(name, phone), job_assignments!inner(tech_id)')
         .eq('job_assignments.tech_id', techId);
       if (error) {
         throw new Error(`listAssignedToTech failed: ${error.message}`);
@@ -523,7 +523,7 @@ export function createTechJobRepository(): TechJobRepository {
     async getById(jobId: string, techId: string) {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*, job_assignments!inner(tech_id)')
+        .select('*, customers(name, phone), job_assignments!inner(tech_id)')
         .eq('id', jobId)
         .eq('job_assignments.tech_id', techId)
         .maybeSingle();
