@@ -62,6 +62,7 @@ import type {
   JobInvestigationInput,
 } from '../../../../modules/field-tech/src/data/ports';
 import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
+import { getBoolPref, setBoolPref } from './local-prefs';
 import { getModuleSession } from '../../../../modules/field-tech/src/lib/module-session';
 import {
   toChecklistTemplate,
@@ -1088,5 +1089,6 @@ export function buildFieldTechPorts(): ModulePorts {
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
     timeEntries: createTimeEntryRepository(),
+    localPrefs: { getBool: getBoolPref, setBool: setBoolPref },
   };
 }
