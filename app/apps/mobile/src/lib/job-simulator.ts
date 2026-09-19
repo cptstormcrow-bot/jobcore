@@ -374,7 +374,7 @@ export async function runJobSimulator(organizationId: string, actorProfile: Prof
             reasonCode: 'job_labor',
             startedAt,
             endedAt: new Date(
-              new Date(startedAt).getTime() + freshJob.totalLaborSeconds * 1000,
+              new Date(startedAt).getTime() + (freshJob.totalLaborSeconds ?? 0) * 1000,
             ).toISOString(),
             source: 'manual',
             createdAt: new Date().toISOString(),

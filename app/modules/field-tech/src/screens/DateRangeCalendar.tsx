@@ -117,10 +117,12 @@ export function DateRangeCalendar({
       // Consumed by MonthView's range check; WeekView only reads eventTime.
       ...( { startDate: r.startDate, endDate: r.endDate } as any ),
     }));
-    if (parsedStart !== null && parsedEnd !== null && isWithinInterval(parsedEnd, { start: parsedStart, end: parsedEnd })) {
+    const pendingKey = parsedStart !== null && parsedEnd !== null ? `${toIsoDate(parsedStart)}|${toIsoDate(parsedEnd)}` : null;
+    const alreadyMarked = pendingKey !== null && markedRanges.some((r) => `${r.startDate}|${r.endDate}` === pendingKey);
+    if (!alreadyMarked && parsedStart !== null && parsedEnd !== null && isWithinInterval(parsedEnd, { start: parsedStart, end: parsedEnd })) {
       events.push({
         id: '__pending-selection__',
-        title: null,
+        title: 'Selected',
         description: null,
         eventTime: `${toIsoDate(parsedStart)}T00:00:00`,
         ...( { startDate: toIsoDate(parsedStart), endDate: toIsoDate(parsedEnd) } as any ),

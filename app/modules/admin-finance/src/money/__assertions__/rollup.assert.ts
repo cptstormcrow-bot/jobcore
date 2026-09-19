@@ -213,3 +213,5 @@ test('AC-8: the whole suite runs with zero setup — no DB, no network, no env v
   assert.equal(typeof process.env.DATABASE_URL, 'undefined');
   assert.equal(typeof process.env.SUPABASE_URL, 'undefined');
 });
+
+test('AC-9 (s3-3): deriveBillableHours returns ok:false and never throws when segments is missing', () => { const result = deriveBillableHours({} as BillableHoursInput); assert.equal(result.ok, false); if (!result.ok) assert.equal(result.reason, 'no time segments for this job'); });

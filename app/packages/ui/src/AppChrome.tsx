@@ -8,23 +8,26 @@ import { getHelpStep, type ScreenKey } from './walkthrough/walkthrough-content';
 import { useWalkthrough } from './walkthrough/WalkthroughProvider';
 import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
 
-export type MenuItem =
-  | {
-      id: string;
-      label: string;
-      onPress: () => void;
-      isActive?: boolean;
-      disabled?: boolean;
-      submenu?: undefined;
-    }
-  | {
-      id: string;
-      label: string;
-      onPress?: () => void;
-      isActive?: boolean;
-      disabled?: boolean;
-      submenu: MenuItem[]; // one level, used only by the Configuration entry
-    };
+export type MenuActionItem = {
+  id: string;
+  label: string;
+  kind?: 'action';
+  onPress?: () => void;
+  isActive?: boolean;
+  disabled?: boolean;
+  submenu?: MenuItem[];
+};
+export type MenuToggleItem = {
+  id: string;
+  label: string;
+  kind: 'toggle';
+  checked: boolean;
+  onToggle: (next: boolean) => void;
+  disabled?: boolean;
+  isActive?: boolean;
+  submenu?: undefined;
+};
+export type MenuItem = MenuActionItem | MenuToggleItem;
 
 export type AppChromeProps = {
   breadcrumbSegments: BreadcrumbSegment[];
@@ -32,6 +35,7 @@ export type AppChromeProps = {
   optionsItems?: MenuItem[];
   showBack?: boolean; // default true
   titleBar?: { title: string; subtitle?: string };
+  titleBarTone?: 'primary' | 'gold';
   helpContext?: { screenKey: ScreenKey; jobStatus?: JobStatus };
 };
 
@@ -62,6 +66,7 @@ function MenuRow({
       <Pressable
         onPress={() => {
           if (item.disabled) return;
+          if (item.kind === 'toggle') { item.onToggle(!item.checked); return; }
           if (hasSubmenu) {
             setExpanded((prev) => !prev);
           } else {
@@ -77,9 +82,9 @@ function MenuRow({
           if (!item.isActive) animateTo(0);
         }}
         disabled={item.disabled}
-        accessibilityRole="button"
+        accessibilityRole={item.kind === 'toggle' ? 'switch' : 'button'}
         accessibilityLabel={item.label}
-        accessibilityState={{ disabled: item.disabled, selected: item.isActive }}
+        accessibilityState={{ disabled: item.disabled, selected: item.isActive, checked: item.kind === 'toggle' ? item.checked : undefined }}
       >
         <Animated.View
           style={[
@@ -97,7 +102,7 @@ function MenuRow({
               item.disabled && styles.rowTextDisabled,
             ]}
           >
-            {item.label}
+            {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
           </Text>
         </Animated.View>
@@ -119,6 +124,7 @@ export function AppChrome({
   optionsItems,
   showBack = true,
   titleBar,
+  titleBarTone = 'primary',
   helpContext,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
@@ -133,12 +139,12 @@ export function AppChrome({
 
   const handleLeafPress = (item: MenuItem) => {
     setHMenuOpen(false);
-    item.onPress?.();
+    if (item.kind !== 'toggle') item.onPress?.();
   };
 
   const handleOptionPress = (item: MenuItem) => {
     setOMenuOpen(false);
-    item.onPress?.();
+    if (item.kind !== 'toggle') item.onPress?.();
   };
 
   const handleBackPress = () => {
@@ -160,12 +166,18 @@ export function AppChrome({
           <Text style={styles.iconText}>☰</Text>
         </Pressable>
         {titleBar && (
-          <View style={styles.titleBar}>
-            <Text style={styles.titleBarTitle} numberOfLines={1}>
+          <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold]}>
+            <Text
+              style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
+              numberOfLines={1}
+            >
               {titleBar.title}
             </Text>
             {titleBar.subtitle ? (
-              <Text style={styles.titleBarSubtitle} numberOfLines={1}>
+              <Text
+                style={[styles.titleBarSubtitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
+                numberOfLines={1}
+              >
                 {titleBar.subtitle}
               </Text>
             ) : null}
@@ -283,6 +295,15 @@ const styles = StyleSheet.create({
     textShadowColor: '#000000',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 2,
+  },
+  titleBarGold: {
+    backgroundColor: colors.gold,
+  },
+  titleBarTextGold: {
+    color: colors.text,
+    opacity: 1,
+    textShadowColor: 'transparent',
+    textShadowRadius: 0,
   },
   wordmarkChip: {
     alignSelf: 'center',

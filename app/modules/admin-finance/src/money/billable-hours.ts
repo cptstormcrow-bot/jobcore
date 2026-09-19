@@ -31,7 +31,7 @@ export interface BillableHoursInput {
 export function deriveBillableHours(
   input: BillableHoursInput
 ): CalculationResult<BillableHours> {
-  const { segments } = input;
+  const segments = input?.segments ?? [];
 
   if (segments.length === 0) {
     return { ok: false, reason: 'no time segments for this job' };

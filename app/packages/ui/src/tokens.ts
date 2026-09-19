@@ -20,6 +20,7 @@ export const colors = {
   textLight: '#495057',
   textMuted: '#868E96',
   textMutedDark: '#78818A',
+  gold: '#E1AF80',
   border: '#E9ECEF',
   overlay: 'rgba(27, 42, 74, 0.85)',
   // Semantic status colors — NOT defined in the brand CSS (source has no status

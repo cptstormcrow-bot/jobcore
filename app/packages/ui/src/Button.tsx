@@ -33,7 +33,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
   // primary uses a lighter tan (#E1AF80) background per user decision; white
   // label text on that tan only reaches ~2.0:1 contrast (fails WCAG AA), so
   // primary's label uses colors.primary (dark navy) instead of white below.
-  const bg = variant === 'primary' ? '#E1AF80' : variant === 'secondary' ? colors.primary : 'transparent';
+  const bg = variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
   // Same contrast reasoning applies to outline-variant text on white: use
   // secondaryDark, not secondary, so label text also clears ~4.2:1. secondary's
   // navy background still contrasts fine with white label text.
