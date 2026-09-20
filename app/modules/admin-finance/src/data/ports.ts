@@ -616,6 +616,7 @@ export interface JobAssignmentDraft {
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
   getInvestigatorTechId(jobId: string): Promise<string | null>;
+  listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
 }
 
 /* ------------------------------------------------------------------ *

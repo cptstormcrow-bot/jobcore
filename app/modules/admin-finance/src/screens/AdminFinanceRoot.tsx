@@ -39,7 +39,6 @@ import { TimeOffQueueScreen } from './TimeOffQueueScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
-import { ReportsJobDetailScreen } from '../screens/ReportsJobDetailScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
@@ -71,7 +70,7 @@ type SubView =
   | 'closeOutQueue' | 'closeOutReview'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'timeOffQueue'
-  | 'reports' | 'reports-job-detail'
+  | 'reports'
   | 'payments'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
@@ -160,7 +159,6 @@ export function AdminFinanceRoot() {
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
-  const [selectedReportsJob, setSelectedReportsJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
   const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
@@ -266,6 +264,22 @@ export function AdminFinanceRoot() {
     return () => {
       cancelled = true;
     };
+  }, [loadState]);
+
+  const [investigatorTechIdByJob, setInvestigatorTechIdByJob] = useState<Record<string, string>>({});
+
+  function refreshInvestigatorTechIds() {
+    const jobs = loadState.kind === 'loaded' ? loadState.jobs : [];
+    if (jobs.length === 0) {
+      return;
+    }
+    void ports.jobAssignments.listInvestigatorTechIds(jobs.map((job) => job.id)).then((byJob) => {
+      setInvestigatorTechIdByJob(byJob);
+    });
+  }
+
+  useEffect(() => {
+    refreshInvestigatorTechIds();
   }, [loadState]);
 
   useEffect(() => {
@@ -392,6 +406,7 @@ export function AdminFinanceRoot() {
       return;
     }
     refreshJobs();
+    refreshInvestigatorTechIds();
   }
 
   useEffect(() => {
@@ -607,16 +622,6 @@ export function AdminFinanceRoot() {
 
   function handleBackToEmployeeDetail() {
     setSubView('employee-detail');
-  }
-
-  function handleSelectReportsJob(job: Job) {
-    setSelectedReportsJob(job);
-    setSubView('reports-job-detail');
-  }
-
-  function handleBackFromReportsJobDetail() {
-    setSelectedReportsJob(null);
-    setSubView('reports');
   }
 
   const [blackoutInitialTechId, setBlackoutInitialTechId] = useState<string | undefined>(undefined);
@@ -1018,6 +1023,7 @@ export function AdminFinanceRoot() {
             techServiceAreas={loadState.techServiceAreas}
             onAssign={handleAssign}
             onAssignInvestigator={handleAssignInvestigator}
+            investigatorTechIdByJob={investigatorTechIdByJob}
             onUnassign={handleUnassign}
             onToggleTestJobsOnly={handleToggleTestJobsOnly}
             onSelectEmployee={(techId) => {
@@ -1034,25 +1040,7 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} onSelectJob={handleSelectReportsJob} />
-        )
-      ) : subView === 'reports-job-detail' ? (
-        selectedReportsJob && loadState.kind === 'loaded' && orgId ? (
-          <ReportsJobDetailScreen
-            job={selectedReportsJob}
-            commissions={loadState.commissions}
-            organizationId={orgId}
-            techName={
-              loadState.kind === 'loaded'
-                ? new Map(loadState.employees.map((t) => [t.id, t.fullName])).get(selectedReportsJob.assignedTechId ?? '')
-                : undefined
-            }
-            onBack={handleBackFromReportsJobDetail}
-          />
-        ) : (
-          <View style={styles.screen}>
-            <EmptyState title="Job" message="No job selected." />
-          </View>
+          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => router.push('/job/' + job.id)} />
         )
       ) : subView === 'employee-roster' ? (
         <EmployeeRosterScreen
@@ -1243,7 +1231,6 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   priceSheetCreate: 'New Price Sheet',
   timeOffQueue: 'Time Off',
   reports: 'Reports',
-  'reports-job-detail': 'Job Detail',
   payments: 'Payments',
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',

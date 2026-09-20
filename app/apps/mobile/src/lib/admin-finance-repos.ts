@@ -883,6 +883,26 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
       if (error) throw new Error(`get investigator tech failed: ${error.message}`);
       return (data?.[0]?.tech_id as string | undefined) ?? null;
     },
+
+    async listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>> {
+      if (jobIds.length === 0) {
+        return {};
+      }
+      const { data, error } = await supabase
+        .from('job_assignments')
+        .select('job_id, tech_id, assigned_at')
+        .in('job_id', jobIds)
+        .eq('kind', 'investigator')
+        .order('assigned_at', { ascending: false });
+      if (error) throw new Error(`list investigator techs failed: ${error.message}`);
+      const result: Record<string, string> = {};
+      for (const row of data ?? []) {
+        if (!(row.job_id in result)) {
+          result[row.job_id] = row.tech_id as string;
+        }
+      }
+      return result;
+    },
   };
 }
 

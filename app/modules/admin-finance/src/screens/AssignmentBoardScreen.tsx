@@ -73,6 +73,7 @@ export interface AssignmentBoardScreenProps {
   onAssign?: (job: Job, techId: string) => void;
   /** Fired to assign a prem-visit investigator tech to a job (AD-32). */
   onAssignInvestigator?: (job: Job, techId: string) => void;
+  investigatorTechIdByJob?: Record<string, string>;
   /** Fired to clear a job's assigned tech (AD-34). */
   onUnassign?: (job: Job) => void;
   /** Fired when an admin toggles a tech's "Assign only to Test Jobs" flag (AD-35). */
@@ -110,6 +111,7 @@ export function AssignmentBoardScreen({
   techServiceAreas,
   onAssign,
   onAssignInvestigator,
+  investigatorTechIdByJob,
   onUnassign,
   onToggleTestJobsOnly,
   showTestJobs,
@@ -150,6 +152,14 @@ export function AssignmentBoardScreen({
     }
     return map;
   }, [jobs, visibleTechs, showTestJobs]);
+
+  const premVisitCountByTech = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const techId of Object.values(investigatorTechIdByJob ?? {})) {
+      map.set(techId, (map.get(techId) ?? 0) + 1);
+    }
+    return map;
+  }, [investigatorTechIdByJob]);
 
   const selectedJob = selectedJobId ? jobs.find((job) => job.id === selectedJobId) ?? null : null;
 
@@ -349,6 +359,7 @@ export function AssignmentBoardScreen({
             poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
               const kind = visitKind[job.id] ?? 'service';
+              const premTechId = investigatorTechIdByJob?.[job.id];
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
@@ -356,6 +367,9 @@ export function AssignmentBoardScreen({
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
                       <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone].filter(Boolean).join(' · ') : 'Unassigned'}</Text>
+                      {premTechId ? (
+                        <Text style={styles.assignedLine}>Prem: {techById.get(premTechId)?.fullName ?? 'Unknown tech'}</Text>
+                      ) : null}
                     </View>
                     <View style={styles.visitKindSegmentRow}>
                       <Button
@@ -419,7 +433,7 @@ export function AssignmentBoardScreen({
             <ListItem
               key={tech.id}
               title={tech.fullName}
-              subtitle={`Jobs Assigned: ${jobsByTech.get(tech.id)?.length ?? 0}`}
+              subtitle={`Jobs Assigned: ${jobsByTech.get(tech.id)?.length ?? 0} · Prem visits: ${premVisitCountByTech.get(tech.id) ?? 0}`}
               onPress={() => onSelectEmployee?.(tech.id)}
               right={
                 <Checkbox

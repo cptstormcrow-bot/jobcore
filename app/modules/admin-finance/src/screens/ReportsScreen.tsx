@@ -76,8 +76,8 @@ function JobListDrillDown(props: {
         visibleJobs.map((job) => (
           <ListItem
             key={job.id}
-            title={job.address ?? job.id}
-            subtitle={job.status}
+            title={job.jobNumber != null ? `Job #${job.jobNumber}` : job.id}
+            subtitle={[job.address, job.status].filter(Boolean).join(' · ')}
             onPress={onSelectJob ? () => onSelectJob(job) : undefined}
           />
         ))
