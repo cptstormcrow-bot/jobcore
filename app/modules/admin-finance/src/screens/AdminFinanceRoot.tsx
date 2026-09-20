@@ -362,6 +362,15 @@ export function AdminFinanceRoot() {
     }
   }
 
+  async function handleToggleTestJobsOnly(techId: string, next: boolean) {
+    try {
+      await employeeRepository.updateEmployee(techId, { testJobsOnly: next });
+      refreshEmployees();
+    } catch (err) {
+      Alert.alert('Update failed', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function handleAssignInvestigator(job: Job, techId: string) {
     if (!session) {
       return;
@@ -1010,6 +1019,11 @@ export function AdminFinanceRoot() {
             onAssign={handleAssign}
             onAssignInvestigator={handleAssignInvestigator}
             onUnassign={handleUnassign}
+            onToggleTestJobsOnly={handleToggleTestJobsOnly}
+            onSelectEmployee={(techId) => {
+              const p = loadState.employees.find((e) => e.id === techId);
+              if (p) handleSelectEmployee(p);
+            }}
             showTestJobs={showTestJobs}
             showTestEmployees={showTestEmployees}
           />

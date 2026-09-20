@@ -39,8 +39,8 @@ import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Platform } from '
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Button, Select, colors, spacing, radius, typography } from '@jobcore/ui';
-import { TechColumn, type TechColumnTech } from '../components/TechColumn';
+import { Card, EmptyState, Button, Select, ListItem, Checkbox, colors, spacing, radius, typography } from '@jobcore/ui';
+import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
@@ -75,6 +75,8 @@ export interface AssignmentBoardScreenProps {
   onAssignInvestigator?: (job: Job, techId: string) => void;
   /** Fired to clear a job's assigned tech (AD-34). */
   onUnassign?: (job: Job) => void;
+  /** Fired when an admin toggles a tech's "Assign only to Test Jobs" flag (AD-35). */
+  onToggleTestJobsOnly?: (techId: string, next: boolean) => void;
   /**
    * Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
    * rows spawned by sales-marketing's "Spawn Test Jobs" flow. Lifted to the
@@ -88,6 +90,7 @@ export interface AssignmentBoardScreenProps {
    * lifted to the caller for the same unmount-survival reason.
    */
   showTestEmployees: boolean;
+  onSelectEmployee?: (techId: string) => void;
 }
 
 interface PendingAssignment {
@@ -108,8 +111,10 @@ export function AssignmentBoardScreen({
   onAssign,
   onAssignInvestigator,
   onUnassign,
+  onToggleTestJobsOnly,
   showTestJobs,
   showTestEmployees,
+  onSelectEmployee,
 }: AssignmentBoardScreenProps) {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -234,8 +239,8 @@ export function AssignmentBoardScreen({
     }
   }
 
-  function eligibleTechs(_job: Job): TechColumnTech[] {
-    return techsWithAvailability;
+  function eligibleTechs(job: Job): TechColumnTech[] {
+    return techsWithAvailability.filter((t) => jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
   }
 
   function handleRowConfirm(job: Job) {
@@ -408,18 +413,24 @@ export function AssignmentBoardScreen({
           </Text>
         ) : null}
 
-        <ScrollView horizontal contentContainerStyle={styles.board}>
-          {techsWithAvailability.map((tech) => (
-            <Pressable key={tech.id} onPress={() => handleSelectTech(tech)}>
-              <TechColumn
-                tech={tech}
-                jobs={jobsByTech.get(tech.id) ?? []}
-                style={styles.column}
-                onSelectJob={(job) => router.push('/job/' + job.id)}
-              />
-            </Pressable>
+        <Card>
+          <Text style={styles.poolTitle}>Employees</Text>
+          {visibleTechs.map((tech) => (
+            <ListItem
+              key={tech.id}
+              title={tech.fullName}
+              subtitle={`Jobs Assigned: ${jobsByTech.get(tech.id)?.length ?? 0}`}
+              onPress={() => onSelectEmployee?.(tech.id)}
+              right={
+                <Checkbox
+                  label="Assign only to Test Jobs"
+                  checked={!!tech.testJobsOnly}
+                  onChange={(next) => onToggleTestJobsOnly?.(tech.id, next)}
+                />
+              }
+            />
           ))}
-        </ScrollView>
+        </Card>
       </ScrollView>
 
       <WarningSheet
