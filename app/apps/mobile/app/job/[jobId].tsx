@@ -9,7 +9,7 @@ import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { AppChrome, Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
-import { JobHeader, type JobRegion } from '../../src/components/JobHeader';
+import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
 import { useSession, signOut } from '../../src/lib/session';
@@ -984,16 +984,19 @@ export default function JobDrilldownScreen() {
       <JobHeader
         job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
         customer={customer}
-        assignedTechName={assignedTechName}
-        serviceAreaName={currentServiceAreaName}
-        techs={eligibleTechOptions}
-        onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
-        assigningTech={assigning !== null}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={jobDetailMenuItems}
-        statusError={actionError}
       />
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+        <JobSummaryRest
+          job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
+          statusError={actionError}
+          assignedTechName={assignedTechName}
+          serviceAreaName={currentServiceAreaName}
+          techs={eligibleTechOptions}
+          onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
+          assigningTech={assigning !== null}
+        />
         {region === 'plan' && (
           <PlanningScreen
             embedded

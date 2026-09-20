@@ -11,36 +11,16 @@ export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 
 export type JobHeaderProps = {
   job: Job;
   customer?: Customer | null;
-  assignedTechName?: string | null;
-  serviceAreaName?: string | null;
-  techs?: { id: string; name: string }[];
-  onAssignTech?: (techId: string | null) => void;
-  assigningTech?: boolean;
   jobDetailMenuItems: MenuItem[];
-  statusError?: string | null;
   totalLaborSeconds: number;
 };
 
 export function JobHeader({
   job,
   customer = null,
-  assignedTechName = null,
-  serviceAreaName = null,
-  techs,
-  onAssignTech,
-  assigningTech,
   jobDetailMenuItems,
-  statusError = null,
   totalLaborSeconds,
 }: JobHeaderProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const paidEligible = job.status === 'completed';
-  const paidHint =
-    !paidEligible && job.status !== 'paid' && job.status !== 'closed'
-      ? 'Complete the job before marking it paid.'
-      : null;
-  const arriveEligible = Boolean(assignedTechName);
-  const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
   const totalHoursLabel =
     totalLaborSeconds > 0
       ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
@@ -60,12 +40,50 @@ export function JobHeader({
         titleBarTone="gold"
         helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
       />
-      <View style={styles.rule} />
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
       <View style={styles.summary}>
         <Text style={styles.customerName}>{customer?.name ?? 'Unknown Customer'}</Text>
         <Text style={styles.summaryLine}>{job.address ?? '—'}</Text>
         <Text style={styles.summaryLine}>{customer?.phone ? `Phone: ${customer.phone}` : 'Phone: —'}</Text>
+      </View>
+      <View style={styles.rule} />
+    </View>
+  );
+}
+
+export default JobHeader;
+
+export type JobSummaryRestProps = {
+  job: Job;
+  assignedTechName?: string | null;
+  serviceAreaName?: string | null;
+  techs?: { id: string; name: string }[];
+  onAssignTech?: (techId: string | null) => void;
+  assigningTech?: boolean;
+  statusError?: string | null;
+};
+
+export function JobSummaryRest({
+  job,
+  assignedTechName = null,
+  serviceAreaName = null,
+  techs,
+  onAssignTech,
+  assigningTech,
+  statusError = null,
+}: JobSummaryRestProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const paidEligible = job.status === 'completed';
+  const paidHint =
+    !paidEligible && job.status !== 'paid' && job.status !== 'closed'
+      ? 'Complete the job before marking it paid.'
+      : null;
+  const arriveEligible = Boolean(assignedTechName);
+  const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
+
+  return (
+    <View style={styles.root}>
+      <View style={styles.summary}>
         <Text style={styles.summaryLine}>Date Created: {new Date(job.createdAt).toLocaleDateString()}</Text>
         <Text style={styles.summaryLine}>
           {[
@@ -115,8 +133,6 @@ export function JobHeader({
     </View>
   );
 }
-
-export default JobHeader;
 
 const styles = StyleSheet.create({
   root: { width: '100%' },
