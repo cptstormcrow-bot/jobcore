@@ -353,6 +353,15 @@ export function AdminFinanceRoot() {
     refreshJobs();
   }
 
+  async function handleUnassign(job: Job) {
+    try {
+      await jobRepository.patchScheduling(job.id, { assignedTechId: null });
+      refreshJobs();
+    } catch (err) {
+      Alert.alert('Unassign failed', err instanceof Error ? err.message : String(err));
+    }
+  }
+
   async function handleAssignInvestigator(job: Job, techId: string) {
     if (!session) {
       return;
@@ -991,6 +1000,7 @@ export function AdminFinanceRoot() {
               (profile): TechColumnTech => ({
                 id: profile.id,
                 fullName: profile.fullName,
+                phone: profile.phone,
                 isTest: profile.isTest,
                 testJobsOnly: profile.testJobsOnly ?? false,
               }),
@@ -999,6 +1009,7 @@ export function AdminFinanceRoot() {
             techServiceAreas={loadState.techServiceAreas}
             onAssign={handleAssign}
             onAssignInvestigator={handleAssignInvestigator}
+            onUnassign={handleUnassign}
             showTestJobs={showTestJobs}
             showTestEmployees={showTestEmployees}
           />

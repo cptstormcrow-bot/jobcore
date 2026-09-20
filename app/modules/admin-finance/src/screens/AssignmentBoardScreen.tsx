@@ -35,7 +35,7 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
@@ -73,6 +73,8 @@ export interface AssignmentBoardScreenProps {
   onAssign?: (job: Job, techId: string) => void;
   /** Fired to assign a prem-visit investigator tech to a job (AD-32). */
   onAssignInvestigator?: (job: Job, techId: string) => void;
+  /** Fired to clear a job's assigned tech (AD-34). */
+  onUnassign?: (job: Job) => void;
   /**
    * Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
    * rows spawned by sales-marketing's "Spawn Test Jobs" flow. Lifted to the
@@ -105,6 +107,7 @@ export function AssignmentBoardScreen({
   techServiceAreas,
   onAssign,
   onAssignInvestigator,
+  onUnassign,
   showTestJobs,
   showTestEmployees,
 }: AssignmentBoardScreenProps) {
@@ -113,11 +116,14 @@ export function AssignmentBoardScreen({
   const [pending, setPending] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
+  const [choice, setChoice] = useState<Record<string, string>>({});
 
   const visibleTechs = useMemo(
     () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
     [techs, showTestEmployees]
   );
+
+  const techById = useMemo(() => new Map(techs.map((t) => [t.id, t])), [techs]);
 
   const poolJobs = useMemo(
     () =>
@@ -213,6 +219,86 @@ export function AssignmentBoardScreen({
     setPending(null);
   }
 
+  function confirmDialog(title: string, body: string, onPress: () => void, onCancel?: () => void) {
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${body}`)) {
+        onPress();
+      } else {
+        onCancel?.();
+      }
+    } else {
+      Alert.alert(title, body, [
+        { text: 'Cancel', style: 'cancel', onPress: onCancel },
+        { text: 'Yes', onPress },
+      ]);
+    }
+  }
+
+  function eligibleTechs(_job: Job): TechColumnTech[] {
+    return techsWithAvailability;
+  }
+
+  function handleRowConfirm(job: Job) {
+    const techId = choice[job.id];
+    if (techId === undefined) {
+      return;
+    }
+    if (techId === '') {
+      confirmDialog(
+        'Unassign job?',
+        'Remove the assigned tech from this job?',
+        () => {
+          onUnassign?.(job);
+          setChoice((prev) => {
+            const next = { ...prev };
+            delete next[job.id];
+            return next;
+          });
+        },
+        () => {
+          setChoice((prev) => {
+            const next = { ...prev };
+            delete next[job.id];
+            return next;
+          });
+        },
+      );
+      return;
+    }
+    const tech = eligibleTechs(job).find((t) => t.id === techId);
+    if (!tech) {
+      return;
+    }
+    if (visitKind[job.id] === 'prem') {
+      confirmDialog(
+        'Assign Prem visit?',
+        `Assign ${tech.fullName} to a Prem visit for this job?`,
+        () => {
+          onAssignInvestigator?.(job, techId);
+          setChoice((prev) => {
+            const next = { ...prev };
+            delete next[job.id];
+            return next;
+          });
+        },
+        () => {
+          setChoice((prev) => {
+            const next = { ...prev };
+            delete next[job.id];
+            return next;
+          });
+        },
+      );
+      return;
+    }
+    setPending({ job, tech });
+    setChoice((prev) => {
+      const next = { ...prev };
+      delete next[job.id];
+      return next;
+    });
+  }
+
   const pendingWarnings = pending
     ? warningsFor(
         pending.job,
@@ -264,6 +350,7 @@ export function AssignmentBoardScreen({
                     <View style={styles.poolRowInfo}>
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
+                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone].filter(Boolean).join(' · ') : 'Unassigned'}</Text>
                     </View>
                     <View style={styles.visitKindSegmentRow}>
                       <Button
@@ -283,17 +370,22 @@ export function AssignmentBoardScreen({
                         priority keeps this tap from also firing the row's
                         select-for-assignment Pressable above. */}
                     <Select
-                      options={techs.map((tech) => ({ label: tech.fullName, value: tech.id }))}
-                      value={null}
-                      placeholder="Assign to..."
-                      onChange={(techId) => {
-                        const tech = techs.find((t) => t.id === techId);
-                        if (tech) {
-                          setPending({ job, tech });
-                        }
-                      }}
+                      options={[
+                        { label: 'Unassigned', value: '' },
+                        ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
+                      ]}
+                      value={choice[job.id] ?? job.assignedTechId ?? ''}
+                      onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                       style={styles.assignSelect}
                     />
+                    {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') && (
+                      <Button
+                        label="Confirm"
+                        variant="primary"
+                        size="sm"
+                        onPress={() => handleRowConfirm(job)}
+                      />
+                    )}
                     <Button
                       label="View"
                       variant="outline"
@@ -415,6 +507,10 @@ const styles = StyleSheet.create({
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
     textTransform: 'capitalize',
+  },
+  assignedLine: {
+    fontSize: typography.size.small,
+    color: colors.textMuted,
   },
   hint: {
     color: colors.textMuted,
