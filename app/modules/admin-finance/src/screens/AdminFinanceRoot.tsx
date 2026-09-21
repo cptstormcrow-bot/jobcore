@@ -1040,7 +1040,7 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => router.push('/job/' + job.id)} />
+          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => router.push('/job/' + job.id)} onBack={() => goTop('overview')} />
         )
       ) : subView === 'employee-roster' ? (
         <EmployeeRosterScreen
