@@ -39,6 +39,7 @@ export interface ReportsScreenProps {
   showTestJobs?: boolean;
   /** Bubbles a job selection up to the parent (level 2 — `ReportsJobDetailScreen.tsx` is wired by AdminFinanceRoot.tsx, not built here). */
   onSelectJob?: (job: Job) => void;
+  onBack?: () => void;
 }
 
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
@@ -87,7 +88,7 @@ function JobListDrillDown(props: {
 }
 
 export function ReportsScreen(props: ReportsScreenProps = {}) {
-  const { jobs, commissions, showTestJobs = false, onSelectJob } = props;
+  const { jobs, commissions, showTestJobs = false, onSelectJob, onBack } = props;
   const [drill, setDrill] = useState<DrillState>(null);
 
   const session = getModuleSession();
@@ -149,6 +150,9 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
     <View style={styles.screen}>
       {banner}
       <ScrollView contentContainerStyle={styles.content}>
+        {onBack ? (
+          <Button label="< Back" variant="primary" size="sm" onPress={onBack} style={styles.backButton} />
+        ) : null}
         <ScreenTitle title="Reports" />
         <Text style={styles.groupHeading}>By Status</Text>
         {drill?.section === 'status' ? (

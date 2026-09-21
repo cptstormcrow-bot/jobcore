@@ -97,6 +97,7 @@ interface JobRow {
   service_area_id: string | null;
   job_number: number | null;
   ingress_instructions: string | null;
+  total_labor_seconds: number | null;
 }
 
 function toJob(row: JobRow): Job {
@@ -129,6 +130,7 @@ function toJob(row: JobRow): Job {
     service_area_id: row.service_area_id,
     jobNumber: row.job_number ?? undefined,
     ingressInstructions: row.ingress_instructions,
+    totalLaborSeconds: row.total_labor_seconds ?? 0,
   } as Job;
 }
 
@@ -137,7 +139,7 @@ const JOB_ROW_COLUMNS =
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
   'en_route_at, in_progress_at, completed_at, created_at, is_beta, house_age_years' +
   ', permit_status, parking_available, rooms, panel_info, considerations, service_area_id, job_number' +
-  ', ingress_instructions';
+  ', ingress_instructions, total_labor_seconds';
 
 // Deep-link `?panel=` -> unified `JobRegion`. `start-checklist`/`completion`
 // have no dedicated region in the unified screen (those flows are reached
@@ -723,7 +725,7 @@ export default function JobDrilldownScreen() {
 
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
-    if (!job.assignedTechId) {
+    if (!(job.assignedTechId ?? investigatorTechId)) {
       Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Arrive can be marked.');
       return;
     }
@@ -951,8 +953,9 @@ export default function JobDrilldownScreen() {
   // Edit-mode: pinned JobHeader (region tabs + action buttons) above a
   // single ScrollView whose body switches on `region`.
   const currentJob = job as Job;
-  const assignedTechName = currentJob.assignedTechId
-    ? techs.find((t) => t.id === currentJob.assignedTechId)?.fullName ?? currentJob.assignedTechId
+  const effectiveTechId = currentJob.assignedTechId ?? investigatorTechId;
+  const assignedTechName = effectiveTechId
+    ? techs.find((t) => t.id === effectiveTechId)?.fullName ?? effectiveTechId
     : null;
   const currentServiceAreaName = currentJob.service_area_id
     ? serviceAreas.find((a) => a.id === currentJob.service_area_id)?.name ?? null
@@ -965,7 +968,7 @@ export default function JobDrilldownScreen() {
     { id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' },
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', label: 'Contact', onPress: handleContact },
-    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !currentJob.assignedTechId },
+    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
     { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
     { id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() },
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },

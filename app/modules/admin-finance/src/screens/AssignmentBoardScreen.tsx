@@ -34,7 +34,7 @@
  * color literals in this file.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
@@ -122,6 +122,7 @@ export function AssignmentBoardScreen({
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
+  useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
 
@@ -339,20 +340,16 @@ export function AssignmentBoardScreen({
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Jobs</Text>
           <View style={styles.categorySegmentRow}>
-            {(['real', 'beta', 'test', 'all'] as const).map((cat) => (
+            {(showTestJobs ? (['real', 'beta', 'test', 'all'] as const) : (['real'] as const)).map((cat) => (
               <Button
                 key={cat}
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
                 variant={category === cat ? 'primary' : 'outline'}
                 size="sm"
-                disabled={cat !== 'real' && !showTestJobs}
                 onPress={() => setCategory(cat)}
               />
             ))}
           </View>
-          {!showTestJobs && (
-            <Text style={styles.empty}>Turn on Show Test Jobs in ⋮ to see Beta/Test/All.</Text>
-          )}
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
@@ -366,9 +363,9 @@ export function AssignmentBoardScreen({
                     <View style={styles.poolRowInfo}>
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
-                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone].filter(Boolean).join(' · ') : 'Unassigned'}</Text>
-                      {premTechId ? (
-                        <Text style={styles.assignedLine}>Prem: {techById.get(premTechId)?.fullName ?? 'Unknown tech'}</Text>
+                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
+                      {job.assignedTechId && premTechId ? (
+                        <Text style={styles.assignedLine}>Prem: {[techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ')}</Text>
                       ) : null}
                     </View>
                     <View style={styles.visitKindSegmentRow}>

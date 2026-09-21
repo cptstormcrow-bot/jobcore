@@ -156,8 +156,12 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     const r = activeRequests.find((x) => e.id.startsWith(x.id + '-'));
     if (r && session !== null && r.techId === session.userId) select(r.id);
   };
-  const onPickDay = () => {
-    if (selectedId === null) setShowRequestModal(true);
+  const onPickDay = (dayIso: string) => {
+    if (selectedId === null) {
+      setStartDate(dayIso);
+      setEndDate(dayIso);
+      setShowRequestModal(true);
+    }
   };
 
   function select(id: string): void {
@@ -334,9 +338,9 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
           onToday={() => setAnchorDay(new Date())}
         />
         {calMode === 'week' ? (
-          <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={onPickDay} />
+          <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={(day) => onPickDay(format(day, 'yyyy-MM-dd'))} />
         ) : (
-          <MonthView variant="list" jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={onPickDay} />
+          <MonthView variant="list" jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={(day) => onPickDay(format(day, 'yyyy-MM-dd'))} />
         )}
       </View>
 
@@ -391,11 +395,9 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
               <Text style={styles.modalRange}>
                 {startDate && endDate ? `${formatDate(startDate)} – ${formatDate(endDate)}` : ''}
               </Text>
-              {selectedRequest !== null ? (
-                <>
-                  <Text style={styles.label}>Date range</Text>
+              <Text style={styles.label}>Date range</Text>
                   <DateRangeCalendar
-                    key={`edit-${selectedRequest.id}`}
+                    key={selectedRequest !== null ? `edit-${selectedRequest.id}` : 'create'}
                     startDate={startDate}
                     endDate={endDate}
                     onChangeStartDate={setStartDate}
@@ -403,8 +405,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
                     disabled={submitting || isAdminAdded}
                     markedRanges={[]}
                   />
-                </>
-              ) : null}
+
               <Text style={styles.label}>Reason (optional)</Text>
               <TextInput
                 style={[styles.input, styles.reasonInput]}

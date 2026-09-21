@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { AppChrome, Button, Select, colors, spacing, typography } from '@jobcore/ui';
+import { AppChrome, Select, colors, spacing, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
@@ -25,6 +25,12 @@ export function JobHeader({
     totalLaborSeconds > 0
       ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
       : null;
+  const scheduledDate = job.scheduledStart ? new Date(job.scheduledStart) : null;
+  const dOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } as const;
+  const tOpts = { hour: 'numeric', minute: '2-digit' } as const;
+  const datePart = scheduledDate ? scheduledDate.toLocaleDateString(undefined, dOpts) : '';
+  const timePart = scheduledDate ? scheduledDate.toLocaleTimeString(undefined, tOpts).toLowerCase() : '';
+  const scheduledLabel = scheduledDate ? `Scheduled - ${datePart} at ${timePart}` : 'Unscheduled';
 
   return (
     <View style={styles.root}>
@@ -45,6 +51,8 @@ export function JobHeader({
         <Text style={styles.customerName}>{customer?.name ?? 'Unknown Customer'}</Text>
         <Text style={styles.summaryLine}>{job.address ?? '—'}</Text>
         <Text style={styles.summaryLine}>{customer?.phone ? `Phone: ${customer.phone}` : 'Phone: —'}</Text>
+        <Text style={styles.summaryLine}>Job #{job.jobNumber ?? '—'}</Text>
+        <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
       </View>
       <View style={styles.rule} />
     </View>
@@ -86,7 +94,7 @@ export function JobSummaryRest({
       <View style={styles.summary}>
         <Text style={styles.summaryLine}>Date Created: {new Date(job.createdAt).toLocaleDateString()}</Text>
         <Text style={styles.summaryLine}>
-          {[
+          Progress: {[
             job.enRouteAt ? 'En route' : null,
             job.inProgressAt ? 'Arrived' : null,
             job.completedAt ? 'Completed' : null,
@@ -97,17 +105,11 @@ export function JobSummaryRest({
         </Text>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
         <View style={styles.techRow}>
-          <Text style={styles.summaryLine}> {assignedTechName ?? 'Unassigned'}</Text>
-          {techs && techs.length > 0 && onAssignTech ? (
-            <Button
-              label="Assign"
-              size="sm"
-              variant="outline"
-              disabled={assigningTech}
-              onPress={() => setPickerOpen((open) => !open)}
-              style={styles.assignButton}
-            />
-          ) : null}
+          <Pressable
+            disabled={!(techs && techs.length > 0 && onAssignTech) || assigningTech}
+            onPress={() => setPickerOpen((open) => !open)}>
+            <Text style={styles.summaryLine}>{assignedTechName ?? 'Unassigned'}</Text>
+          </Pressable>
         </View>
         {pickerOpen && techs && onAssignTech ? (
           <View style={styles.techSelect}>
@@ -159,6 +161,12 @@ const styles = StyleSheet.create({
     fontSize: typography.size.body,
     color: colors.text,
   },
+  summaryLineRight: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: typography.size.body,
+    color: colors.text,
+    textAlign: 'right',
+  },
   rule: {
     height: 3,
     backgroundColor: colors.text,
@@ -167,7 +175,6 @@ const styles = StyleSheet.create({
   },
   techRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   techSelect: { marginTop: spacing.xs },
-  assignButton: { marginLeft: spacing.sm },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
   paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
   arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
