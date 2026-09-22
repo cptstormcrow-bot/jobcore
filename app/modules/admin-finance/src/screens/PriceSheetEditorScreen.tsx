@@ -450,7 +450,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
-  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
+  const [selectedAreaId, setSelectedAreaId] = useState<string>('__all__');
   const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
   const [adjustmentValueInput, setAdjustmentValueInput] = useState('');
   const [standardDuration, setStandardDuration] = useState<PriceSheetStandardDuration | null>(null);
@@ -766,27 +766,16 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
             {serviceAreas.length === 0 ? (
               <Text style={styles.note}>No service areas yet — add them under Service Areas.</Text>
             ) : (
-              <View style={styles.chipRow}>
-                <Checkbox
-                  label="All"
-                  checked={serviceAreas.length > 0 && selectedAreaIds.length === serviceAreas.length}
-                  onChange={(checked) => setSelectedAreaIds(checked ? serviceAreas.map((area) => area.id) : [])}
-                  style={styles.chip}
-                />
-                {serviceAreas.map((area) => (
-                  <Checkbox
-                    key={area.id}
-                    label={area.name}
-                    checked={selectedAreaIds.includes(area.id)}
-                    onChange={(checked) =>
-                      setSelectedAreaIds((prev) =>
-                        checked ? [...prev, area.id] : prev.filter((id) => id !== area.id)
-                      )
-                    }
-                    style={styles.chip}
-                  />
-                ))}
-              </View>
+              <Select
+                label="Area"
+                value={selectedAreaId}
+                options={[
+                  { label: 'All areas', value: '__all__' },
+                  ...serviceAreas.map((area) => ({ label: area.name, value: area.id })),
+                ]}
+                onChange={setSelectedAreaId}
+                style={styles.action}
+              />
             )}
             <Select
               label="Type"
@@ -810,8 +799,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                 label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save Adjustment'}
                 onPress={() => {
                   const value = Number(adjustmentValueInput);
-                  if (selectedAreaIds.length === 0 || Number.isNaN(value)) return;
-                  void handleSaveAreaAdjustments(selectedAreaIds, adjustmentTypeInput, value);
+                  if (Number.isNaN(value)) return;
+                  const areaIds =
+                    selectedAreaId === '__all__'
+                      ? serviceAreas.map((area) => area.id)
+                      : [selectedAreaId];
+                  void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, value);
                 }}
                 disabled={areaAdjustmentState.kind === 'working'}
                 size="sm"

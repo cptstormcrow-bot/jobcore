@@ -128,6 +128,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [ssnLast4Input, setSsnLast4Input] = useState('');
   const [ecNameInput, setEcNameInput] = useState('');
   const [ecPhoneInput, setEcPhoneInput] = useState('');
+  const [privateState, setPrivateState] = useState<'loading' | 'loaded' | 'failed'>(isEditMode ? 'loading' : 'loaded');
 
   const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
   const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
@@ -137,12 +138,17 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   useEffect(() => {
     if (!isEditMode || !profile || !employeeRepository) return;
     let cancelled = false;
+    setPrivateState('loading');
     employeeRepository.getPrivate(profile.id).then((r) => {
-      if (cancelled || !r) return;
-      setSsnLast4Input(r.ssnLast4 ?? '');
-      setEcNameInput(r.emergencyContactName ?? '');
-      setEcPhoneInput(r.emergencyContactPhone ?? '');
-    }).catch(() => {});
+      if (cancelled) return;
+      setSsnLast4Input(r?.ssnLast4 ?? '');
+      setEcNameInput(r?.emergencyContactName ?? '');
+      setEcPhoneInput(r?.emergencyContactPhone ?? '');
+      setPrivateState('loaded');
+    }).catch(() => {
+      if (cancelled) return;
+      setPrivateState('failed');
+    });
     return () => {
       cancelled = true;
     };
@@ -254,18 +260,28 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         paidTravelPolicyMessage: ptpmInput || null,
         defaultHourlyRateCents: Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100),
       });
-      if (session) {
+      if (privateState === 'loaded') {
+        if (!session) {
+          throw new Error('No active session: private details were not saved.');
+        }
         await employeeRepository.upsertPrivate(profile.id, session.org.id, {
           ssnLast4: ssnLast4Input || null,
           emergencyContactName: ecNameInput || null,
           emergencyContactPhone: ecPhoneInput || null,
         });
+      } else if (privateState === 'failed') {
+        throw new Error('Private details could not be loaded; they will not be changed by Save.');
       }
       setActionState({ kind: 'done', message: 'Saved.' });
       onSaved?.();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not save the employee.';
-      setActionState({ kind: 'failed', message });
+      const detail = error instanceof Error ? error.message : undefined;
+      setActionState({
+        kind: 'failed',
+        message: detail
+          ? `Save did not apply — you may not have permission: ${detail}`
+          : 'Save did not apply — you may not have permission',
+      });
     }
   }
 
@@ -353,6 +369,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
           {isEditMode ? (
             <>
+              {privateState === 'failed' ? (
+                <ErrorState message="Private details could not be loaded; they will not be changed by Save." />
+              ) : null}
               <TextInput
                 style={styles.input}
                 placeholder="Address"
@@ -524,6 +543,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           </Card>
         ) : null}
 
+      </ScrollView>
+
+      <View style={styles.footer}>
         <Button
           label={busy ? 'Saving...' : 'Save'}
           onPress={() => {
@@ -533,7 +555,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               void handleCreate();
             }
           }}
-          disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository)}
+          disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository) || privateState === 'loading'}
           style={styles.action}
         />
         <Button
@@ -557,7 +579,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           />
         ) : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -590,6 +612,11 @@ const styles = StyleSheet.create({
   },
   action: {
     marginBottom: spacing.sm,
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: spacing.md,
   },
   note: {
     color: colors.textMuted,

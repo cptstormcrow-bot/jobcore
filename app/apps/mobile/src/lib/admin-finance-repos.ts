@@ -303,6 +303,10 @@ export function createJobRepository(): JobRepository {
       }
     },
 
+    async clearInvestigator(jobId: string): Promise<void> {
+      await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
+    },
+
     async resetTimeSegments(jobId: string): Promise<void> {
       const { error } = await supabase.rpc('reset_job_time_segments', { p_job_id: jobId });
       if (error) {
@@ -707,10 +711,13 @@ export function createEmployeeRepository(): EmployeeRepository {
         patch.test_jobs_only = updates.testJobsOnly;
       }
 
-      const { error } = await supabase.from('profiles').update(patch).eq('id', profileId);
+      const { data, error } = await supabase.from('profiles').update(patch).eq('id', profileId).select('id');
       if (error) {
         logSyncFailure('admin-finance-repos.updateEmployee', error.message, { profileId, updates });
         throw new Error(`updateEmployee failed: ${error.message}`);
+      }
+      if (!data || data.length === 0) {
+        throw new Error('Save did not apply — you may not have permission');
       }
     },
 
@@ -792,7 +799,7 @@ function isDuplicatePendingInvitation(error: PostgrestError): boolean {
 
 export function createInvitationRepository(): InvitationRepository {
   return {
-    async createInvitation(organizationId: string, email: string, role: Role): Promise<void> {
+    async createInvitation(organizationId: string, email: string, role: Role, fullName?: string): Promise<void> {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('invitation.create', occurredAt, { organizationId, email, role });
 
@@ -800,10 +807,7 @@ export function createInvitationRepository(): InvitationRepository {
         organization_id: organizationId,
         email,
         role,
-        // `invitations.full_name` is NOT NULL (app/supabase/0003_invitations_and_signup.sql)
-        // but InvitationRepository.createInvitation carries no fullName param —
-        // see GAPS FOUND in the delivering build report.
-        full_name: email,
+        full_name: fullName?.trim() || email,
       });
       if (error) {
         logSyncFailure('admin-finance-repos.createInvitation', error.message, { organizationId, email, role });
@@ -2632,6 +2636,18 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         estimatedMinutes: row.estimated_minutes,
         rate: row.rate,
       }));
+    },
+
+    async listServices(organizationId: string): Promise<Array<{ id: string; name: string }>> {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .order('name');
+      if (error) {
+        throw new Error(`listServices failed: ${error.message}`);
+      }
+      return (data ?? []) as Array<{ id: string; name: string }>;
     },
 
     async listForJob(jobId: string): Promise<JobPlanTaskRow[]> {

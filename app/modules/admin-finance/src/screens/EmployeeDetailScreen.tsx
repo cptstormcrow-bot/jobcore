@@ -74,9 +74,10 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   const { employee, jobs, skills, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
   const [priv, setPriv] = useState<ProfilePrivate | null>(null);
+  const [privFailed, setPrivFailed] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    getModulePorts().employees.getPrivate(employee.id).then((r) => { if (!cancelled) setPriv(r); }).catch(() => { if (!cancelled) setPriv(null); });
+    getModulePorts().employees.getPrivate(employee.id).then((r) => { if (!cancelled) { setPriv(r); setPrivFailed(false); } }).catch(() => { if (!cancelled) { setPriv(null); setPrivFailed(true); } });
     return () => { cancelled = true; };
   }, [employee.id]);
 
@@ -93,8 +94,8 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           {employee.isTest ? <InfoRow label="Test Employee" value="Yes" /> : null}
           <InfoRow label="Address" value={employee.address ?? 'Not on file'} />
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
-          <InfoRow label="SSN" value={maskSsn(priv?.ssnLast4 ?? null)} />
-          <InfoRow label="Emergency Contact" value={priv?.emergencyContactName ? [priv.emergencyContactName, priv.emergencyContactPhone].filter(Boolean).join(' · ') : 'Not on file'} />
+          <InfoRow label="SSN" value={privFailed ? 'Unavailable' : maskSsn(priv?.ssnLast4 ?? null)} />
+          <InfoRow label="Emergency Contact" value={privFailed ? 'Unavailable' : (priv?.emergencyContactName ? [priv.emergencyContactName, priv.emergencyContactPhone].filter(Boolean).join(' · ') : 'Not on file')} />
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
           <InfoRow label="Hours Worked" value={hoursWorked != null ? hoursWorked.toFixed(1) : 'Not available'} />

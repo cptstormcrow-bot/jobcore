@@ -842,18 +842,41 @@ export default function JobDrilldownScreen() {
     setBusyAction('reset');
     try {
       await createJobRepository().resetTimeSegments?.(job.id);
-      setJob({ ...job, totalLaborSeconds: 0 });
+      await createJobRepository().patchLifecycle(job.id, {
+        enRouteAt: null,
+        inProgressAt: null,
+        completedAt: null,
+      });
+      await createJobRepository().patchScheduling(job.id, {
+        assignedTechId: null,
+        scheduledStart: null,
+        scheduledEnd: null,
+        requestedWindow: null,
+      });
+      await createJobRepository().clearInvestigator(job.id);
+      const updated = await createJobRepository().updateStatus(job.id, 'new');
+      setJob({ ...updated, totalLaborSeconds: 0 });
+      setInvestigatorTechId(null);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : String(error));
+      if (org?.id && jobId) {
+        const { data } = await supabase
+          .from('jobs')
+          .select(JOB_ROW_COLUMNS)
+          .eq('organization_id', org.id)
+          .eq('id', jobId)
+          .maybeSingle<JobRow>();
+        if (data) setJob(toJob(data));
+      }
     } finally {
       setBusyAction(null);
     }
   };
 
   const confirmResetTime = (): void => {
-    const title = 'Reset time counters?';
+    const title = 'Reset job?';
     const body =
-      'This voids every recorded time segment for this job and sets Total Hours to 0. This cannot be undone.';
+      'This returns the job to New: clears schedule, assigned tech, Prem claim, en route / arrived / completed times and logged hours. Customer, details, estimates, payments and contact log are kept.';
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
         void handleResetTime();

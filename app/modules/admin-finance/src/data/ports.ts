@@ -212,6 +212,7 @@ export interface JobRepository {
    */
   updateStatus(jobId: string, status: JobStatus): Promise<Job>;
   markBeta(jobId: string, isBeta: boolean): Promise<void>;
+  clearInvestigator(jobId: string): Promise<void>;
   /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
@@ -417,7 +418,7 @@ export interface EmployeeRepository {
 
 /** Write + read access to pending organization invitations. */
 export interface InvitationRepository {
-  createInvitation(organizationId: string, email: string, role: Role): Promise<void>;
+  createInvitation(organizationId: string, email: string, role: Role, fullName?: string): Promise<void>;
   listPendingInvitations(organizationId: string): Promise<Invitation[]>;
   findPendingInvitation(organizationId: string, email: string): Promise<Invitation | null>;
   revokeInvitation(invitationId: string): Promise<void>;
@@ -1270,6 +1271,7 @@ export interface JobPlanTasksRepository {
   addTask(jobId: string, serviceTaskId: string, quantity: number): Promise<JobPlanTaskRow>;
   updateQuantity(taskRowId: string, quantity: number): Promise<JobPlanTaskRow>;
   removeTask(taskRowId: string): Promise<void>;
+  listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
 }
 
 /**
