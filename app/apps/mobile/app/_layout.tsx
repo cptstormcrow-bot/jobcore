@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Redirect, Stack, useRootNavigationState, useSegments } from 'expo-router';
+import { Redirect, Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -37,6 +37,8 @@ function AuthGate() {
   const onSignIn = segments[0] === 'sign-in' || segments[0] === 'sign-up';
   const rootNavigationState = useRootNavigationState();
   const navigationReady = !!rootNavigationState?.key;
+  const router = useRouter();
+  const [checkingAgain, setCheckingAgain] = useState(false);
 
   // The Stack must always mount unconditionally — expo-router's root navigation
   // state only becomes ready AFTER a navigator (this Stack) has mounted and
@@ -78,13 +80,34 @@ function AuthGate() {
       </View>
     );
   } else if (state.status === 'unprovisioned') {
+    const email = state.session.user.email ?? 'this account';
     overlay = (
       <View style={styles.center}>
         <EmptyState
           title="Account not set up"
-          message="Your sign-in worked, but no profile has been created for you yet. Ask your admin to finish setting up your account."
+          message={`Signed in as ${email}.\n\nYour sign-in worked, but no profile has been created for you yet. Ask your admin to finish setting up your account. Ask your admin to invite this exact email address.`}
         />
-        <Button label="Sign out" variant="outline" onPress={() => void signOut()} style={styles.signOut} />
+        <Button
+          label={checkingAgain ? 'Checking…' : 'Check again'}
+          variant="outline"
+          disabled={checkingAgain}
+          onPress={() => {
+            setCheckingAgain(true);
+            void state.recheck().finally(() => setCheckingAgain(false));
+          }}
+          style={styles.signOut}
+        />
+        <Button
+          label="Sign in as someone else"
+          variant="outline"
+          onPress={() => {
+            void (async () => {
+              await signOut();
+              router.replace('/sign-in');
+            })();
+          }}
+          style={styles.signOut}
+        />
       </View>
     );
   } else if (state.status === 'unauthenticated' && !onSignIn) {

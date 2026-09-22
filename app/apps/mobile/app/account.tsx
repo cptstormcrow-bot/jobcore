@@ -37,6 +37,26 @@ export default function AccountScreen() {
     }
   };
 
+  const confirmSwitchUser = () => {
+    const doSwitchUser = async () => {
+      await signOut();
+      router.replace('/sign-in');
+    };
+    const title = 'Sign in as someone else';
+    const body = 'This will sign you out and return to the sign-in screen.';
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}\n\n${body}`)) {
+        void doSwitchUser();
+      }
+    } else {
+      Alert.alert(title, body, [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Yes', onPress: () => void doSwitchUser() },
+      ]);
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <AppChrome
@@ -52,6 +72,10 @@ export default function AccountScreen() {
             {profile.fullName} · {profile.role}
           </Text>
           <Button label="Sign out" variant="secondary" onPress={confirmSignOut} />
+          <Button label="Sign in as someone else" variant="secondary" onPress={confirmSwitchUser} />
+          <Text style={styles.note}>
+            Each device signs in separately — signing out here does not affect other devices.
+          </Text>
         </Card>
       </View>
     </View>
@@ -79,5 +103,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.md,
     textTransform: 'capitalize',
+  },
+  note: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    marginTop: spacing.sm,
   },
 });

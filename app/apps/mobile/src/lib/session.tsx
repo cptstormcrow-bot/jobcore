@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
@@ -90,7 +90,12 @@ export type SessionState =
   | { status: 'error'; message: string; retry: () => void }
   | { status: 'authenticated'; session: Session; profile: Profile; organization: Organization };
 
-const SessionContext = createContext<SessionState | null>(null);
+// The context/hook value is `SessionState` plus a `recheck()` callable — kept
+// as a separate type (rather than folded into `SessionState` itself) so the
+// state machine's variants stay the single source of truth for `status`.
+export type SessionValue = SessionState & { recheck: () => Promise<void> };
+
+const SessionContext = createContext<SessionValue | null>(null);
 
 /**
  * Outcome of a single resolve attempt. Deliberately distinct from
@@ -184,6 +189,9 @@ export interface SessionProviderProps {
 export function SessionProvider({ children }: SessionProviderProps) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
   const cancelledRef = useRef(false);
+  // Holds the effect-scoped `runCheck` so it stays callable from outside the
+  // effect (as `recheck`) without re-running the auth-listener setup below.
+  const recheckRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -218,8 +226,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
       message: err instanceof Error ? err.message : 'Unable to reach the server.',
     });
 
-    function runCheck() {
-      void withTimeout(
+    function runCheck(): Promise<void> {
+      return withTimeout(
         supabase.auth.getSession(),
         15000,
         'Timed out reaching the server. Check your connection and retry.',
@@ -235,6 +243,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         });
     }
 
+    recheckRef.current = runCheck;
     runCheck();
 
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -251,10 +260,17 @@ export function SessionProvider({ children }: SessionProviderProps) {
     };
   }, []);
 
-  return <SessionContext.Provider value={state}>{children}</SessionContext.Provider>;
+  // Re-runs the profile query for the current auth user and updates status;
+  // exposed so callers (e.g. the unprovisioned-account overlay's "Check
+  // again") can retry without a full remount.
+  const recheck = useCallback((): Promise<void> => recheckRef.current(), []);
+
+  return (
+    <SessionContext.Provider value={{ ...state, recheck }}>{children}</SessionContext.Provider>
+  );
 }
 
-export function useSession(): SessionState {
+export function useSession(): SessionValue {
   const ctx = useContext(SessionContext);
   if (ctx === null) {
     throw new Error('useSession() must be called inside a <SessionProvider>.');

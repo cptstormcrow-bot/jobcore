@@ -35,6 +35,10 @@ export default function SignUpScreen() {
       <View style={styles.body}>
         <ScreenTitle title="Sign Up" subtitle="Create an account" />
 
+        <Text style={styles.notice}>
+          You need an invitation from your admin first. Sign up with the exact email they invited.
+        </Text>
+
         <Card style={styles.card}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -93,6 +97,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   body: { flex: 1, justifyContent: 'center', padding: spacing.lg },
   card: { gap: spacing.xs },
+  notice: {
+    color: colors.textLight,
+    fontSize: typography.size.label,
+    marginBottom: spacing.sm,
+  },
   label: {
     color: colors.textLight,
     fontSize: typography.size.label,

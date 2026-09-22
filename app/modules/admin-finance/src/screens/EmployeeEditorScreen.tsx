@@ -8,7 +8,7 @@
  * (required only to send the invitation — `profiles` has no email column;
  * email lives on the invitation), a role picker among the four `Role`
  * values, and an `is_test` toggle. Submits via
- * `InvitationRepository.createInvitation(organizationId, email, role)`.
+ * `InvitationRepository.createInvitation(organizationId, email, role, fullName?)`.
  *
  * EDIT mode (`profile` prop present): full name, phone, and `is_test` are
  * directly editable and saved via
@@ -207,11 +207,13 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   async function handleCreate(): Promise<void> {
     if (!invitationRepository) return;
+    const fullName = fullNameInput.trim();
+    if (!fullName) return;
     setActionState({ kind: 'working' });
     try {
-      await invitationRepository.createInvitation(session!.org.id, emailInput, roleInput);
+      await invitationRepository.createInvitation(session!.org.id, emailInput, roleInput, fullName);
       setDuplicateConflict(null);
-      setActionState({ kind: 'done', message: 'Invitation created. No email is sent — activate the account manually in Supabase (Authentication → Users → Add user), then share the login with them.' });
+      setActionState({ kind: 'done', message: `Invitation saved for ${fullName}. They must sign up with exactly ${emailInput}; their account is set up automatically on first sign-in.` });
       onSaved?.();
     } catch (error: unknown) {
       if (error instanceof DuplicateInvitationError) {
