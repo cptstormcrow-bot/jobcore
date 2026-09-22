@@ -59,9 +59,8 @@ interface ServiceTasksRepoPort {
       materials?: string | null;
     }
   ): Promise<CalculationResult<ServiceTask>>;
+  listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
 }
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const HELP_BULLETS = [
   'A price sheet is one versioned set of task prices, trip durations and area adjustments.',
@@ -97,6 +96,7 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   const [priceInput, setPriceInput] = useState('');
   const [detailsInput, setDetailsInput] = useState('');
   const [materialsInput, setMaterialsInput] = useState('');
+  const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
   const [drafts, setDrafts] = useState<
     Record<
       string,
@@ -137,6 +137,20 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
       setLoadState({ kind: 'loaded' });
     }
     void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceTasksRepo, organizationId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadServices() {
+      if (!organizationId) return;
+      const result = await serviceTasksRepo.listServices(organizationId);
+      if (cancelled) return;
+      setServices(result);
+    }
+    void loadServices();
     return () => {
       cancelled = true;
     };
@@ -193,10 +207,6 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
 
   async function handleCreate() {
     if (!serviceIdInput || !nameInput) return;
-    if (!UUID_PATTERN.test(serviceIdInput)) {
-      setSaveState({ kind: 'failed', message: 'Service ID must be a valid UUID.' });
-      return;
-    }
     if (!organizationId) {
       setSaveState({ kind: 'failed', message: 'No organization selected yet.' });
       return;
@@ -330,11 +340,11 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
         );
       })}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Service ID"
-        value={serviceIdInput}
-        onChangeText={setServiceIdInput}
+      <Select
+        value={serviceIdInput || null}
+        options={services.map((s) => ({ label: s.name, value: s.id }))}
+        placeholder="Select a service"
+        onChange={setServiceIdInput}
       />
       <TextInput
         style={styles.input}

@@ -945,7 +945,15 @@ export function AdminFinanceRoot() {
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
-          serviceTasksRepo={ports.serviceTasks}
+          serviceTasksRepo={
+            // FX-13 gate repair: module-ports.ts's serviceTasks type is out of
+            // this wave's scope and has not been extended with listServices,
+            // even though the runtime repo (admin-finance-repos.ts) implements
+            // it. Widen the type locally rather than edit the out-of-scope file.
+            ports.serviceTasks as typeof ports.serviceTasks & {
+              listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+            }
+          }
           serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
           onPublished={handlePublished}
         />
