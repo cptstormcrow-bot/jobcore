@@ -40,9 +40,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, Platform } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, colors, spacing, radius, typography } from '@jobcore/ui';
 import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
@@ -64,6 +64,17 @@ export interface JobScheduleScreenProps {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+/** 30-minute-step time-of-day quick picks, 7:00am-7:00pm inclusive. */
+const TIME_OF_DAY_OPTIONS: Array<{ hh: number; mm: number; label: string }> = Array.from(
+  { length: 25 },
+  (_, i) => {
+    const totalMinutes = 7 * 60 + i * 30;
+    const hh = Math.floor(totalMinutes / 60);
+    const mm = totalMinutes % 60;
+    return { hh, mm, label: format(new Date(2000, 0, 1, hh, mm), 'h:mm a') };
+  }
+);
 
 /** Local, honest split — @jobcore/ui's DatePicker has no time-of-day support. */
 function splitIsoDateTime(iso: string | null): { date: string; time: string } {
@@ -212,6 +223,29 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     applyPickedDate('end', addMinutes(next, effectiveDefault));
   }
 
+  function applyTimeOfDay(hh: number, mm: number): void {
+    const next = new Date(
+      startPickerDate.getFullYear(),
+      startPickerDate.getMonth(),
+      startPickerDate.getDate(),
+      hh,
+      mm,
+      0,
+      0
+    );
+    applyPickedDate('start', next);
+    applyPickedDate('end', addMinutes(next, effectiveDefault));
+  }
+
+  function handleClearSchedule(): void {
+    setStartDate('');
+    setStartTime('');
+    setEndDate('');
+    setEndTime('');
+    setSaveError(null);
+    setSaved(false);
+  }
+
   function handleAndroidChange(field: ScheduleField, stage: AndroidStage, event: { type: string }, picked?: Date) {
     if (event.type !== 'set' || !picked) {
       setAndroidPicker(null);
@@ -352,15 +386,37 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
           {!embedded && <Text style={styles.title}>Schedule</Text>}
           <Text style={styles.subtitle}>{job.address ?? job.description ?? job.id}</Text>
 
-          <View style={styles.monthNav}>
-            <Button label="Prev" size="sm" variant="outline" onPress={() => setAnchorDay((d) => subMonths(d, 1))} />
-            <Text style={styles.monthTitle}>{format(anchorDay, 'MMMM yyyy')}</Text>
-            <Button label="Next" size="sm" variant="outline" onPress={() => setAnchorDay((d) => addMonths(d, 1))} />
-          </View>
+          <CalendarHeader
+            mode="month"
+            onModeChange={() => {}}
+            label={format(anchorDay, 'MMMM yyyy')}
+            onPrev={() => setAnchorDay((d) => subMonths(d, 1))}
+            onNext={() => setAnchorDay((d) => addMonths(d, 1))}
+            onToday={() => setAnchorDay(new Date())}
+          />
           <MonthView jobs={[]} anchorDay={anchorDay} onSelectDay={handleSelectDay} />
 
           <Text style={styles.sectionLabel}>Start time</Text>
           {renderFieldPicker('start')}
+
+          <Text style={styles.sectionLabel}>Quick start time</Text>
+          <Select
+            value={`${startPickerDate.getHours()}-${startPickerDate.getMinutes()}`}
+            options={TIME_OF_DAY_OPTIONS.map((opt) => ({
+              label: opt.label,
+              value: `${opt.hh}-${opt.mm}`,
+            }))}
+            placeholder="Select a time"
+            onChange={(value) => {
+              const [hhStr, mmStr] = value.split('-');
+              applyTimeOfDay(Number(hhStr), Number(mmStr));
+            }}
+          />
+
+          <Text style={styles.sectionLabel}>End time (auto)</Text>
+          <Text style={styles.hintText}>
+            {endDate && endTime ? `Scheduled for ${endPickerDate.toLocaleString()}` : 'Not set'}
+          </Text>
 
           {(() => {
             const delta = (totalTaskMinutes ?? 0) - effectiveDefault;
@@ -373,9 +429,17 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
           })()}
 
           {saveError && <Text style={styles.errorText}>{saveError}</Text>}
-          {saved && !saveError && <Text style={styles.hintText}>Schedule saved.</Text>}
+          {saved && !saveError && (
+            <Text style={styles.hintText}>Scheduled for {startPickerDate.toLocaleString()}</Text>
+          )}
 
           <View style={styles.actions}>
+            <Button
+              label="Clear schedule"
+              variant="outline"
+              onPress={handleClearSchedule}
+              style={styles.action}
+            />
             <Button label="Cancel" variant="outline" onPress={resetFromJob} style={styles.action} />
             <Button
               label={saving ? 'Saving...' : 'Save'}
@@ -403,6 +467,12 @@ const styles = StyleSheet.create({
     fontSize: typography.size.h6,
     fontWeight: typography.weight.semibold,
     color: colors.text,
+  },
+  timeOfDayRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
   },
   screen: {
     flex: 1,

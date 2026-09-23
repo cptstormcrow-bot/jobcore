@@ -178,7 +178,7 @@ export function JobDetailsForm({
       />
       {mode === 'edit' && hasInvestigation ? (
         <TextField
-          label="Parking (Prem visit)"
+          label="Parking (Prem)"
           value={value.evisitParking}
           onChangeText={(text) => onChange({ evisitParking: text })}
           placeholder="e.g. Driveway, street only"
@@ -217,7 +217,7 @@ export function JobDetailsForm({
       />
       {mode === 'edit' && hasInvestigation ? (
         <TextField
-          label="Panel (Prem visit)"
+          label="Panel (Prem)"
           value={value.evisitPanel}
           onChangeText={(text) => onChange({ evisitPanel: text })}
           placeholder="e.g. 200A, Square D QO"

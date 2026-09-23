@@ -136,6 +136,7 @@ export interface Job {
   considerations?: string | null;
   ingressInstructions?: string | null;
   totalLaborSeconds: number;
+  needsPremAt?: string | null;
 }
 
 /**

@@ -395,12 +395,12 @@ export function AdminFinanceRoot() {
         ctx: { role: session.role, now: () => new Date().toISOString() },
       });
       if (!result.ok) {
-        Alert.alert('Prem visit assignment failed', result.reason);
+        Alert.alert('Prem assignment failed', result.reason);
         return;
       }
     } catch (error) {
       Alert.alert(
-        'Prem visit assignment failed',
+        'Prem assignment failed',
         error instanceof Error ? error.message : 'Unexpected error.'
       );
       return;

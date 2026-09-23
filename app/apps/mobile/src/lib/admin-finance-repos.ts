@@ -303,6 +303,14 @@ export function createJobRepository(): JobRepository {
       }
     },
 
+    async setNeedsPrem(jobId: string, at: string | null): Promise<void> {
+      const { error } = await supabase.from('jobs').update({ needs_prem_at: at }).eq('id', jobId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.setNeedsPrem', error.message, { jobId, at });
+        throw new Error(`setNeedsPrem failed: ${error.message}`);
+      }
+    },
+
     async clearInvestigator(jobId: string): Promise<void> {
       await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
     },

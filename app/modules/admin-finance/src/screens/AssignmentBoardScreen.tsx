@@ -287,8 +287,8 @@ export function AssignmentBoardScreen({
     }
     if (visitKind[job.id] === 'prem') {
       confirmDialog(
-        'Assign Prem visit?',
-        `Assign ${tech.fullName} to a Prem visit for this job?`,
+        'Assign Prem?',
+        `Assign ${tech.fullName} to the Prem for this job?`,
         () => {
           onAssignInvestigator?.(job, techId);
           setChoice((prev) => {
@@ -430,7 +430,7 @@ export function AssignmentBoardScreen({
             <ListItem
               key={tech.id}
               title={tech.fullName}
-              subtitle={`Jobs Assigned: ${jobsByTech.get(tech.id)?.length ?? 0} · Prem visits: ${premVisitCountByTech.get(tech.id) ?? 0}`}
+              subtitle={`Jobs Assigned: ${jobsByTech.get(tech.id)?.length ?? 0} · Prems: ${premVisitCountByTech.get(tech.id) ?? 0}`}
               onPress={() => onSelectEmployee?.(tech.id)}
               right={
                 <Checkbox

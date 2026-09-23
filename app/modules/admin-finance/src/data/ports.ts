@@ -59,6 +59,7 @@ export interface JobRow {
   ingress_instructions: string | null;
   service_area_id: string | null;
   total_labor_seconds: number | null;
+  needs_prem_at?: string | null;
 }
 
 /**
@@ -126,6 +127,7 @@ export function toJob(row: JobRow): Job {
     ingressInstructions: row.ingress_instructions,
     service_area_id: row.service_area_id,
     totalLaborSeconds: row.total_labor_seconds ?? 0,
+    needsPremAt: row.needs_prem_at ?? null,
   };
 }
 
@@ -212,6 +214,7 @@ export interface JobRepository {
    */
   updateStatus(jobId: string, status: JobStatus): Promise<Job>;
   markBeta(jobId: string, isBeta: boolean): Promise<void>;
+  setNeedsPrem?(jobId: string, at: string | null): Promise<void>;
   clearInvestigator(jobId: string): Promise<void>;
   /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
   /**
