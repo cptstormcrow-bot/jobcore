@@ -203,6 +203,7 @@ export default function JobDrilldownScreen() {
   const session = useSession();
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
+  const isAdmin = role === 'admin';
 
   if (session.status === 'authenticated' && org && role) {
     setModuleSession({ org, role, userId: session.profile.id });
@@ -600,6 +601,7 @@ export default function JobDrilldownScreen() {
    * `status`; `investigatorTechId` local state is the read-back.
    */
   const handleAssignInvestigator = async (techId: string): Promise<void> => {
+    if (!isAdmin) return;
     if (!job || !org?.id) return;
     setAssigning(techId);
     setAssignError(null);
@@ -645,7 +647,10 @@ export default function JobDrilldownScreen() {
     };
   }, [jobId, org?.id]);
 
-  const handleAssign = estimate?.status === 'approved' ? handleAssignInstaller : handleAssignInvestigator;
+  const handleAssign = async (techId: string): Promise<void> => {
+    if (!isAdmin) return;
+    return (estimate?.status === 'approved' ? handleAssignInstaller : handleAssignInvestigator)(techId);
+  };
 
   // Clears the assignment back to the shared "Unassigned" convention
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
@@ -988,7 +993,9 @@ export default function JobDrilldownScreen() {
     { id: 'plan', label: 'Plan', onPress: () => selectRegion('plan'), isActive: region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
-    { id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' },
+    ...(isAdmin
+      ? [{ id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' }]
+      : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', label: 'Contact', onPress: handleContact },
     { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
@@ -1059,7 +1066,7 @@ export default function JobDrilldownScreen() {
             serviceAreas={serviceAreas}
           />
         )}
-        {region === 'assign' && (
+        {region === 'assign' && isAdmin && (
           <AssignTechRegion
             techs={eligibleTechOptions}
             currentTechId={currentJob.assignedTechId ?? investigatorTechId}
