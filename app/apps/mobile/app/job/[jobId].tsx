@@ -98,6 +98,7 @@ interface JobRow {
   job_number: number | null;
   ingress_instructions: string | null;
   total_labor_seconds: number | null;
+  needs_prem_at: string | null;
 }
 
 function toJob(row: JobRow): Job {
@@ -131,6 +132,7 @@ function toJob(row: JobRow): Job {
     jobNumber: row.job_number ?? undefined,
     ingressInstructions: row.ingress_instructions,
     totalLaborSeconds: row.total_labor_seconds ?? 0,
+    needsPremAt: row.needs_prem_at,
   } as Job;
 }
 
@@ -139,7 +141,7 @@ const JOB_ROW_COLUMNS =
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
   'en_route_at, in_progress_at, completed_at, created_at, is_beta, house_age_years' +
   ', permit_status, parking_available, rooms, panel_info, considerations, service_area_id, job_number' +
-  ', ingress_instructions, total_labor_seconds';
+  ', ingress_instructions, total_labor_seconds, needs_prem_at';
 
 // Deep-link `?panel=` -> unified `JobRegion`. `start-checklist`/`completion`
 // have no dedicated region in the unified screen (those flows are reached
@@ -772,6 +774,23 @@ export default function JobDrilldownScreen() {
     }
   };
 
+  const handleToggleNeedsPrem = async (): Promise<void> => {
+    if (!job) return;
+    setBusyAction('needs-prem');
+    setActionError(null);
+    try {
+      const next = job.needsPremAt ? null : new Date().toISOString();
+      await createJobRepository().setNeedsPrem?.(job.id, next);
+      setJob({ ...job, needsPremAt: next });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Needs Prem failed.';
+      setSaveError(message);
+      setActionError(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
   /**
    * Admin/owner-only estimate approval, gated to `estimate?.status ===
    * 'submitted'` at the render call site. Deliberately does NOT call
@@ -996,6 +1015,13 @@ export default function JobDrilldownScreen() {
     ...(isAdmin
       ? [{ id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' }]
       : []),
+    ...(role !== 'tech'
+      ? [{
+          id: 'needs-prem',
+          label: currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem',
+          onPress: () => void handleToggleNeedsPrem(),
+        }]
+      : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', label: 'Contact', onPress: handleContact },
     { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
@@ -1073,7 +1099,7 @@ export default function JobDrilldownScreen() {
             busy={assigning !== null}
             error={assignError}
             onAssign={(techId) => void handleAssign(techId)}
-            label="Assign Technician" indicator={estimate?.status === 'approved' ? null : 'Prem'}
+            label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           />
         )}
         {region === 'schedule' && (
