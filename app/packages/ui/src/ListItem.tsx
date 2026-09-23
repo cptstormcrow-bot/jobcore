@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, typography } from './tokens';
 
 export interface ListItemProps {

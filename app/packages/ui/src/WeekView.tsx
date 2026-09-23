@@ -2,7 +2,8 @@
 // Workstream H: also renders pre-filtered non-job layer events (e.g. time_off) passed in by
 // calendar.tsx. WeekView stays a dumb renderer - it does no fetching or layer/role filtering
 // of its own, it just draws whatever lists it's handed.
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import { colors, typography, spacing, radius } from './tokens';
 import type { Job } from '@jobcore/core';
 import { addDays, startOfWeek, format, isSameDay } from 'date-fns';

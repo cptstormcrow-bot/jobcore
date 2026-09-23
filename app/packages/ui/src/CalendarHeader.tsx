@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, radius } from './tokens';
 
 export type CalendarMode = 'week' | 'month';

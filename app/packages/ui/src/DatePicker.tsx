@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
 
 // Value is an ISO date string ('YYYY-MM-DD') for RN/web portability — this
@@ -67,6 +68,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.body,
+    letterSpacing: typography.letterSpacing.normal,
     color: colors.text,
     backgroundColor: colors.surface,
   },

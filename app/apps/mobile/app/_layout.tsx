@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
-import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay } from '@jobcore/ui';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
@@ -154,6 +154,8 @@ export default function RootLayout() {
     Poppins_700Bold,
     Inter_400Regular,
     Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
   });
 
   useEffect(() => {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, ScrollView, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Pressable, Modal, ScrollView, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
 
 export interface SelectOption {

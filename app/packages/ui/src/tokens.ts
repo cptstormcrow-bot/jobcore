@@ -39,6 +39,8 @@ export const typography = {
     headingMedium: 'Poppins_500Medium',
     body: 'Inter_400Regular',            // body text
     bodyMedium: 'Inter_500Medium',
+    bodySemibold: 'Inter_600SemiBold',
+    bodyBold: 'Inter_700Bold',
   },
   weight: {
     regular: '400',
@@ -51,6 +53,7 @@ export const typography = {
   // to a fixed density-independent value (upper-mid of the clamp range).
   size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13, summary: 8, detail: 10 },
   lineHeight: { heading: 1.2, body: 1.6, relaxed: 1.7 },
+  letterSpacing: { tight: 0, normal: 0.3, wide: 0.5 },
 } as const;
 
 // Source spacing was ad-hoc rem literals (no --space-* tokens); this named scale

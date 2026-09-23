@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
 
 export interface ToggleProps {

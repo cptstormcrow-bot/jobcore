@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Animated, View, Text, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
+import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import { useRouter } from 'expo-router';
 import { colors, spacing, radius, typography } from './tokens';
 import type { BreadcrumbSegment } from './Breadcrumb';

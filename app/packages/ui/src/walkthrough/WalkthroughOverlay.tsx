@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, View, Text, StyleSheet } from 'react-native';
+import { Modal, View, StyleSheet } from 'react-native';
+import { Text } from '../Text';
 import { Button, colors, spacing, typography } from '@jobcore/ui';
 
 import { useWalkthrough } from './WalkthroughProvider';

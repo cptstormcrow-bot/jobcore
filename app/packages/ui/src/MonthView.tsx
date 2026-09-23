@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Text } from './Text';
 import {
   addDays,
   endOfMonth,

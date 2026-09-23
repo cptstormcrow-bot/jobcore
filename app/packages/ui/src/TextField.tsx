@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View, TextInput, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
 
 export interface TextFieldProps {
@@ -75,6 +76,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.body,
+    letterSpacing: typography.letterSpacing.normal,
     color: colors.text,
     backgroundColor: colors.surface,
   },
