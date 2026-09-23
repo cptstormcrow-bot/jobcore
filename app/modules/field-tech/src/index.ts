@@ -34,6 +34,7 @@ import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
 import { Overview } from './screens/Overview';
 import { Reviews } from './screens/Reviews';
+import { PremJobs } from './screens/PremJobs';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import type { MenuItem } from '@jobcore/ui';
@@ -54,7 +55,7 @@ export type { DayListProps } from './screens/DayList';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews';
+type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems';
 
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
@@ -117,6 +118,12 @@ function FieldTechRoot(): React.ReactElement {
       onPress: () => setSubView('timeOff'),
     },
     {
+      id: 'prems',
+      label: 'Prems',
+      isActive: subView === 'prems',
+      onPress: () => setSubView('prems'),
+    },
+    {
       id: 'reviews',
       label: 'Reviews',
       isActive: subView === 'reviews',
@@ -169,6 +176,7 @@ function FieldTechRoot(): React.ReactElement {
     jobs: 'Jobs',
     timeOff: 'Time Off',
     reviews: 'Reviews',
+    prems: 'Prems',
   };
 
   let content: React.ReactElement;
@@ -178,6 +186,9 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'reviews':
       content = React.createElement(Reviews, null);
+      break;
+    case 'prems':
+      content = React.createElement(PremJobs, null);
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {

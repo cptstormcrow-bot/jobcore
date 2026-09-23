@@ -60,6 +60,8 @@ import type {
   TimeEntryRow,
   JobInvestigationRepository,
   JobInvestigationInput,
+  PremQueueRepository,
+  PremQueueItem,
 } from '../../../../modules/field-tech/src/data/ports';
 import type { ModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
 import { getBoolPref, setBoolPref } from './local-prefs';
@@ -1084,6 +1086,80 @@ export function createTimeEntryRepository(): TimeEntryRepository {
 }
 
 /* ------------------------------------------------------------------ *
+ * PremQueueRepository
+ * ------------------------------------------------------------------ */
+
+export function createPremQueueRepository(): PremQueueRepository {
+  return {
+    async listOpen(techId: string): Promise<{ items: PremQueueItem[]; unavailable: boolean }> {
+      const { data: jobRows, error: jobsError } = await supabase
+        .from('jobs')
+        .select('*, customers(name, phone)')
+        .not('needs_prem_at', 'is', null)
+        .order('needs_prem_at', { ascending: true });
+      if (jobsError) {
+        if ((jobsError as { code?: string }).code === '42703') {
+          return { items: [], unavailable: true };
+        }
+        throw jobsError;
+      }
+      const jobs = (jobRows ?? []).map((row) => toJob(row as never));
+      const jobIds = jobs.map((job) => job.id);
+      if (jobIds.length === 0) {
+        return { items: [], unavailable: false };
+      }
+
+      const { data: assignmentRows, error: assignmentsError } = await supabase
+        .from('job_assignments')
+        .select('job_id, tech_id')
+        .eq('kind', 'investigator')
+        .in('job_id', jobIds);
+      if (assignmentsError) throw assignmentsError;
+      const claimedByJobId = new Map<string, string>();
+      for (const row of assignmentRows ?? []) {
+        claimedByJobId.set(row.job_id as string, row.tech_id as string);
+      }
+
+      const { data: investigationRows, error: investigationsError } = await supabase
+        .from('job_investigations')
+        .select('job_id, submitted_at')
+        .eq('tech_id', techId)
+        .in('job_id', jobIds);
+      if (investigationsError) throw investigationsError;
+      const mySubmittedJobIds = new Set(
+        (investigationRows ?? [])
+          .filter((row) => row.submitted_at != null)
+          .map((row) => row.job_id as string)
+      );
+
+      const items: PremQueueItem[] = [];
+      for (const job of jobs) {
+        const claimedBy = claimedByJobId.get(job.id);
+        if (claimedBy && claimedBy !== techId) continue;
+        if (mySubmittedJobIds.has(job.id)) continue;
+        items.push({
+          job,
+          customerName: job.customerName ?? null,
+          customerPhone: job.customerPhone ?? null,
+          claimedByMe: claimedBy === techId,
+        });
+      }
+      return { items, unavailable: false };
+    },
+
+    async claim(organizationId: string, jobId: string, techId: string): Promise<void> {
+      const { error } = await supabase.from('job_assignments').insert({
+        organization_id: organizationId,
+        job_id: jobId,
+        tech_id: techId,
+        kind: 'investigator',
+      });
+      if (error) throw error;
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
@@ -1100,6 +1176,7 @@ export function buildFieldTechPorts(): ModulePorts {
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
     timeEntries: createTimeEntryRepository(),
+    premQueue: createPremQueueRepository(),
     localPrefs: { getBool: getBoolPref, setBool: setBoolPref },
     techs: {
       list: async (orgId: string) => {

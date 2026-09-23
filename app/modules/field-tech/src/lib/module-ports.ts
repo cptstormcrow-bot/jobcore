@@ -28,6 +28,7 @@ import type {
   EstimateRepository,
   TimeEntryRepository,
   JobInvestigationRepository,
+  PremQueueRepository,
 } from '../data/ports';
 
 export interface ModulePorts {
@@ -44,6 +45,7 @@ export interface ModulePorts {
   timeEntries: TimeEntryRepository;
   localPrefs: { getBool(key: string, defaultValue: boolean): Promise<boolean>; setBool(key: string, value: boolean): Promise<void>; };
   techs: { list(organizationId: string): Promise<{ id: string; fullName: string }[]> };
+  premQueue: PremQueueRepository;
 }
 
 let current: ModulePorts | null = null;

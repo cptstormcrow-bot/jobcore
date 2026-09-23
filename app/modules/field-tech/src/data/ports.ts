@@ -517,6 +517,7 @@ export interface JobRow {
   completed_at: string | null;
   created_at: string;
   is_beta?: boolean | null;
+  needs_prem_at?: string | null;
   customers?: { name: string | null; phone: string | null } | null;
 }
 
@@ -552,6 +553,7 @@ export function toJob(row: JobRow): Job {
     createdAt: row.created_at,
     isBeta: row.is_beta === true,
     totalLaborSeconds: 0,
+    needsPremAt: row.needs_prem_at ?? null,
   };
 }
 
@@ -577,6 +579,18 @@ export interface TechJobRepository {
    * job" the same way `getById` above already does.
    */
   updateStatusAsTech(jobId: string, techId: string, status: JobStatus): Promise<Job>;
+}
+
+export interface PremQueueItem {
+  job: Job;
+  customerName: string | null;
+  customerPhone: string | null;
+  claimedByMe: boolean;
+}
+
+export interface PremQueueRepository {
+  listOpen(techId: string): Promise<{ items: PremQueueItem[]; unavailable: boolean }>;
+  claim(organizationId: string, jobId: string, techId: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
