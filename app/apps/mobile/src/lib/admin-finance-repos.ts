@@ -1155,6 +1155,17 @@ export function createServiceTasksRepository() {
       }
       return result;
     },
+    async listServices(organizationId: string): Promise<Array<{ id: string; name: string }>> {
+      const { data, error } = await supabase
+        .from('services')
+        .select('id, name')
+        .eq('organization_id', organizationId)
+        .order('name');
+      if (error) {
+        throw new Error(`listServices failed: ${error.message}`);
+      }
+      return (data ?? []) as Array<{ id: string; name: string }>;
+    },
   };
 }
 
