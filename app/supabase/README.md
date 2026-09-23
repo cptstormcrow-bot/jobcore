@@ -63,6 +63,7 @@ separate follow-on work.
 | `0049_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy and area pricing |
 | `0050_field_ops_segway_and_estimating.sql` | Field ops segway and estimating |
 | `0051_restore_job_notes_gotcha_kind.sql` | Re-adds 'gotcha' alongside other values to job_notes_kind_check |
+| `0065_jobs_needs_prem.sql` | jobs.needs_prem_at + Prem queue RLS + job_assignments write hardening + backfill; dedupes duplicate investigator assignments (keeps latest per job) before creating the one-investigator-per-job unique index |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
