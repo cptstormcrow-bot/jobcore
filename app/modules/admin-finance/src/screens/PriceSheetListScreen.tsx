@@ -25,8 +25,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';

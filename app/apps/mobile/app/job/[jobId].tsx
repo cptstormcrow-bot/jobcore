@@ -3,10 +3,10 @@
 // param. Region switching replaces the old full-screen panel early-returns;
 // Contact/Arrive/Complete/Payment are header actions, not regions.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { AppChrome, Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';

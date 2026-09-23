@@ -19,22 +19,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import {
-  Button,
-  Card,
-  ListItem,
-  EmptyState,
-  LoadingState,
-  ErrorState,
-  ScreenTitle,
-  Select,
-  TextField,
-  colors,
-  spacing,
-  typography,
-} from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type {
   EstimateRepository,

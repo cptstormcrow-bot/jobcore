@@ -35,8 +35,8 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
-import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
+import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';

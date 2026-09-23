@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet } from 'react-native';
-import { Button, colors, spacing, typography } from '@jobcore/ui';
+import { Modal, View, StyleSheet } from 'react-native';
+import { Button, colors, spacing, typography, Text } from '@jobcore/ui';
 
 export interface PaymentSimulationNoticeProps {
   visible: boolean;

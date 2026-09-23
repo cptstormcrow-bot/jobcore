@@ -25,8 +25,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, TextInput, StyleSheet } from 'react-native';
+import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
 

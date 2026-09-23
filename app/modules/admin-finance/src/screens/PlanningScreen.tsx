@@ -29,8 +29,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository, JobInvestigation, JobPlanTasksRepository, JobPlanTaskRow, ServiceTaskCatalogEntry } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';

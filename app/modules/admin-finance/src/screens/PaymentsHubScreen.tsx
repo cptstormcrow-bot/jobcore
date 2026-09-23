@@ -16,8 +16,8 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Text, type LayoutChangeEvent } from 'react-native';
-import { colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, type LayoutChangeEvent } from 'react-native';
+import { colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PaymentsRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatch } from '../money/payout-batch';

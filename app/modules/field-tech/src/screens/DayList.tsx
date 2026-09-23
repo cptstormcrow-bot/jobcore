@@ -20,13 +20,13 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
+import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import { isActiveTimeOffStatus, type TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 

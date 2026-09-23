@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet } from 'react-native';
-import { Button, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Modal, View, StyleSheet } from 'react-native';
+import { Button, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 
 export type JobClockModalMode = 'choice' | 'reason' | 'confirm-next-day' | 'reset-confirm';
 

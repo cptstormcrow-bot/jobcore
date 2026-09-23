@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, Alert } from 'react-native';
+import { View, StyleSheet, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppChrome, Card, Button, LoadingState, colors, spacing, typography } from '@jobcore/ui';
+import { AppChrome, Card, Button, LoadingState, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { useSession, signOut } from '../src/lib/session';
 

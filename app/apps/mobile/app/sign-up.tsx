@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius } from '@jobcore/ui';
+import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { signUp } from '../src/lib/session';
 

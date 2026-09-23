@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius } from '@jobcore/ui';
+import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { signIn } from '../src/lib/session';
 

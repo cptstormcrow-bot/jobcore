@@ -19,8 +19,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, EmptyState, ErrorState, ListItem, LoadingState, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Button, Card, EmptyState, ErrorState, ListItem, LoadingState, ScreenTitle, colors, spacing, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { AuditLogEntry } from '../data/ports';
 import type { CommissionAmountSource } from '../reporting/revenue';

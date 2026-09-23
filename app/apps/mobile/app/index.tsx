@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getEnabledModules } from '@jobcore/module-sdk';
-import { EmptyState, LoadingState, AppChrome, colors, spacing, typography } from '@jobcore/ui';
+import { EmptyState, LoadingState, AppChrome, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 
 import { useSession } from '../src/lib/session';

@@ -17,9 +17,9 @@
  */
 
 import * as React from 'react';
-import { View, Text, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { ScreenTitle, Toggle, colors } from '@jobcore/ui';
+import { ScreenTitle, Toggle, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';

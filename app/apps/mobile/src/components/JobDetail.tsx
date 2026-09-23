@@ -3,9 +3,9 @@
 // resolved from the registry by the caller (P2e.3b). The JobAction type comes from
 // @jobcore/module-sdk (the contract package), never from a module implementation.
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { colors, spacing, typography, radius } from '@jobcore/ui';
+import { colors, spacing, typography, radius, Text } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { supabase } from '../lib/supabase';
 

@@ -13,8 +13,8 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet, Alert, Platform } from 'react-native';
-import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography } from '@jobcore/ui';
+import { View, StyleSheet, Alert, Platform } from 'react-native';
+import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
 
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';

@@ -26,9 +26,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Card, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { Card, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import { awaitingCloseOut, closeOutBlockers, closeOutStatus } from '../domain/closeout';
 import type { CloseOutStatus } from '../domain/closeout';
 

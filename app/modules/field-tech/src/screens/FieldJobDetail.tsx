@@ -16,10 +16,10 @@
  */
 
 import * as React from 'react';
-import { View, Text, Linking, StyleSheet } from 'react-native';
+import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { Button, telUrl, colors, spacing, typography } from '@jobcore/ui';
+import { Button, telUrl, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';

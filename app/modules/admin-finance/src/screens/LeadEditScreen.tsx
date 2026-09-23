@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { Card, Button, EmptyState, ScreenTitle, colors, spacing, radius, typography } from '@jobcore/ui';
+import { View, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { Card, Button, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import type { Lead } from '../domain/lead';

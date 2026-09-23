@@ -4,9 +4,9 @@
 // its create/edit form JSX verbatim (slice 17). No data fetching, no
 // business logic -- this component only renders `value` and reports
 // changes via `onChange`.
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { copyToClipboard } from '../../../../modules/field-tech/src/lib/clipboard';
-import { Button, Checkbox, colors, Select, spacing, TextField, typography } from '@jobcore/ui';
+import { Button, Checkbox, colors, Select, spacing, TextField, typography, Text } from '@jobcore/ui';
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 const UNASSIGNED_SERVICE_AREA = '';

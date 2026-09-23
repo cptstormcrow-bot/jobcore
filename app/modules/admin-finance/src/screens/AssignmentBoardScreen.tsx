@@ -35,11 +35,11 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Button, Select, ListItem, Checkbox, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, EmptyState, Button, Select, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';

@@ -33,11 +33,11 @@
  */
 
 import * as React from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review, JobReportingRow } from '../data/ports';
-import { ScreenTitle, colors } from '@jobcore/ui';
+import { ScreenTitle, colors, Text } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
   platform: string;

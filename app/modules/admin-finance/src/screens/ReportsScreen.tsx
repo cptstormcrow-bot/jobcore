@@ -23,8 +23,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { byStatus } from '../reporting/group-by';

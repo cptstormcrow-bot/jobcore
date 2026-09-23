@@ -37,14 +37,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
@@ -55,7 +48,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
-import { ScreenTitle, colors } from '@jobcore/ui';
+import { ScreenTitle, colors, Text } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 

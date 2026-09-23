@@ -15,8 +15,8 @@
  */
 
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 
 export interface EmployeeJobDetailScreenProps {

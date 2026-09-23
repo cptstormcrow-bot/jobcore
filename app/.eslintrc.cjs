@@ -25,8 +25,29 @@ module.exports = {
   rules: {
     'react/react-in-jsx-scope': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: 'react-native',
+            importNames: ['Text'],
+            message: "Import Text from '@jobcore/ui' (packages/ui: './Text').",
+          },
+        ],
+      },
+    ],
   },
   overrides: [
+    // FX-36: packages/ui/src/Text.tsx is the sole legitimate importer of
+    // react-native's Text — it's the component being wrapped — so the
+    // repo-wide no-restricted-imports guard above is turned off just here.
+    {
+      files: ['packages/ui/src/Text.tsx'],
+      rules: {
+        'no-restricted-imports': 'off',
+      },
+    },
     // S0.4: field-tech/src/domain/transition.ts is the module's sole
     // `applyTransition` call site (see S0.5) — everything else under
     // modules/field-tech/src must go through `transitionJob` instead of

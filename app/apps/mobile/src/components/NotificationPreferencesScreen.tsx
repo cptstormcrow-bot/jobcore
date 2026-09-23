@@ -9,8 +9,8 @@
  */
 
 import React from 'react';
-import { View, ScrollView, StyleSheet, Text, Switch } from 'react-native';
-import { Card, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, Switch } from 'react-native';
+import { Card, ScreenTitle, colors, spacing, Text } from '@jobcore/ui';
 import type { NotificationEventType, NotificationPreferences } from '../lib/notifications';
 
 const EVENT_LABELS: Record<NotificationEventType, string> = {

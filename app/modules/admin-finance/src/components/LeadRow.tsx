@@ -15,8 +15,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { ListItem, colors, spacing, radius, typography } from '@jobcore/ui';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { ListItem, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { classifyLead } from '../domain/lead-readiness';
 

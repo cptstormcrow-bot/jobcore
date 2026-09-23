@@ -11,7 +11,7 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import {
   addMonths,
   addWeeks,
@@ -26,7 +26,7 @@ import {
   isAfter,
   isWithinInterval,
 } from 'date-fns';
-import { CalendarHeader, WeekView, MonthView, colors, type CalendarMode, type TimeOffEvent } from '@jobcore/ui';
+import { CalendarHeader, WeekView, MonthView, colors, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
 
 export interface DateRangeCalendarProps {
   /** ISO `YYYY-MM-DD`, or empty string when unset. */

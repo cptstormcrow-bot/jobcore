@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, Pressable, StyleSheet, RefreshControl, Platform, Alert } from 'react-native';
+import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, RefreshControl, Platform, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { format } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { ScreenTitle, colors, typography, spacing, radius } from '@jobcore/ui';
+import { ScreenTitle, colors, typography, spacing, radius, Text } from '@jobcore/ui';
 import type { PremQueueItem } from '../data/ports';
 
 export function PremJobs(): React.ReactElement {

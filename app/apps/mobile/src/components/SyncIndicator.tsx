@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { colors, spacing, typography } from '@jobcore/ui';
+import { Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { useSyncStatus } from '../lib/sync-status';
 

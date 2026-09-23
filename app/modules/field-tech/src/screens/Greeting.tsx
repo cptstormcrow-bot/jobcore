@@ -21,9 +21,9 @@
  */
 
 import { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, spacing, typography } from '@jobcore/ui';
+import { ScreenTitle, Button, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';

@@ -27,11 +27,11 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
-import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, Select, type CalendarMode, type TimeOffEvent } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, Select, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';

@@ -16,8 +16,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Card, Button, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobDraft } from '../domain/qualify';
 import { getModuleSession } from '../lib/module-session';

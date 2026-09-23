@@ -13,12 +13,12 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
 
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors } from '@jobcore/ui';
+import { colors, Text } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);

@@ -24,8 +24,8 @@
  */
 
 import * as React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { ScreenTitle, colors } from '@jobcore/ui';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { ScreenTitle, colors, Text } from '@jobcore/ui';
 
 /** The four pitch angles a sales rep can build a post around (spec § Pitch picker and composer). */
 export type PitchAngle = 'service_line' | 'community' | 'seasonal' | 'before_after';

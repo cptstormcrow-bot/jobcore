@@ -14,8 +14,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Card, Button, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import type { NewLeadDraft } from '../domain/intake-normalize';
 import { DEFAULT_AXIS_VALUES } from '../domain/intake-normalize';

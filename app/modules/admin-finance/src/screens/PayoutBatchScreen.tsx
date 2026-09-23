@@ -16,8 +16,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import { getModuleSession } from '../lib/module-session';

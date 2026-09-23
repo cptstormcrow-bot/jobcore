@@ -18,8 +18,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Button, Select, colors, spacing, typography } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Button, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 
 export interface AssignTechRegionProps {
   techs: { id: string; name: string }[];

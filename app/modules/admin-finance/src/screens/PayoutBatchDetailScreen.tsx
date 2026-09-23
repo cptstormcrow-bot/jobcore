@@ -12,8 +12,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 
 export interface PayoutBatchDetailScreenProps {

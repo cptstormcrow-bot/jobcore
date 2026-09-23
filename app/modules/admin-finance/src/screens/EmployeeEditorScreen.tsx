@@ -19,8 +19,8 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, Checkbox, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Button, Card, Checkbox, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {

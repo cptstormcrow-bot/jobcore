@@ -18,8 +18,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Button, colors, spacing, radius, typography } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Button, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 
 export const SOURCE_VALUES = ['website', 'costco', 'ikea', 'owm'] as const;
 export const PAYER_VALUES = ['customer', 'partner'] as const;

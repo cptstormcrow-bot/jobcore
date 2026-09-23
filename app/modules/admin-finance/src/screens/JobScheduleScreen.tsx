@@ -40,9 +40,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';

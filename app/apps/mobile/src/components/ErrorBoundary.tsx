@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { colors } from '@jobcore/ui';
+import { colors, Text } from '@jobcore/ui';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

@@ -17,8 +17,8 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Modal } from 'react-native';
-import { Button, Card, colors, spacing, radius, typography } from '@jobcore/ui';
+import { View, StyleSheet, Modal } from 'react-native';
+import { Button, Card, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { AssignmentWarning } from '../domain/assignment-warnings';
 
 export interface WarningSheetProps {

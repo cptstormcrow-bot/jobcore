@@ -26,8 +26,8 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text } from '@jobcore/ui';
 
 import type { PaymentRow, SupabaseSelectClient } from '../data/ports';
 

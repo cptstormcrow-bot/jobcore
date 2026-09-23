@@ -24,8 +24,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Linking } from 'react-native';
-import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography, telUrl } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, Linking } from 'react-native';
+import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography, telUrl, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { validateQualify } from '../domain/qualify';
 import type { ServiceArea } from '../data/ports';

@@ -34,8 +34,8 @@
  */
 
 import * as React from 'react';
-import { View, Text, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { ScreenTitle, colors } from '@jobcore/ui';
+import { View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { ScreenTitle, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';

@@ -17,9 +17,9 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, Pressable, StyleProp, ViewStyle } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { Card, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 
 /**
  * The tech shape this column needs. `@jobcore/core` has no dedicated `Tech`

@@ -18,12 +18,12 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors } from '@jobcore/ui';
+import { colors, Text } from '@jobcore/ui';
 
 /** Job statuses that count as "closed out" — everything else counts as open. */
 const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
