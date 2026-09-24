@@ -945,6 +945,7 @@ export function AdminFinanceRoot() {
           priceSheetId={selectedPriceSheetId ?? undefined}
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
+          ratesRepo={ports.priceSheetRates}
           serviceTasksRepo={
             // FX-13 gate repair: module-ports.ts's serviceTasks type is out of
             // this wave's scope and has not been extended with listServices,

@@ -1045,6 +1045,7 @@ export default function JobDrilldownScreen() {
         customer={customer}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={jobDetailMenuItems}
+        onPressSchedule={() => selectRegion('schedule')}
       />
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest

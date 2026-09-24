@@ -43,6 +43,13 @@ export function Select({
         <Text style={[styles.triggerText, !selected && styles.placeholderText]}>
           {selected ? selected.label : placeholder}
         </Text>
+        <Text
+          style={styles.chevron}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          ▾
+        </Text>
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
@@ -80,6 +87,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -88,12 +98,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   triggerText: {
+    flex: 1,
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.body,
     color: colors.text,
     fontWeight: typography.weight.semibold,
   },
   placeholderText: { color: colors.textMuted, fontWeight: typography.weight.regular },
+  chevron: {
+    marginLeft: spacing.sm,
+    fontSize: typography.size.body,
+    color: colors.textMuted,
+  },
   disabled: { opacity: 0.5 },
   overlay: {
     flex: 1,

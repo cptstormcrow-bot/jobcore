@@ -37,12 +37,26 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
 import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
-import type { PriceSheet, PriceSheetStatus, CalculationResult } from '../money/types';
+import type { PriceSheet, PriceSheetStatus, CalculationResult, PriceSheetRate } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession, useModuleSession } from '../lib/module-session';
+
+/** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
+interface PriceSheetRatesPort {
+  list(priceSheetId: string): Promise<PriceSheetRate[]>;
+  save(
+    priceSheetId: string,
+    serviceId: string,
+    taskId: string | null,
+    attachTiming: string,
+    amount: number,
+    timeEstimateMinutes: number | null
+  ): Promise<CalculationResult<PriceSheetRate>>;
+  remove(rateId: string): Promise<CalculationResult<void>>;
+}
 
 interface ServiceTasksRepoPort {
   list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
@@ -389,6 +403,183 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   );
 }
 
+const ATTACH_TIMING_OPTIONS = [
+  { label: 'At purchase', value: 'at_purchase' },
+  { label: 'Before start', value: 'before_start' },
+  { label: 'After the fact', value: 'after_the_fact' },
+];
+
+type RateRowsCardState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'failed'; message: string };
+
+/**
+ * Editable rate rows for a draft sheet (AD-23/27). Published/archived sheets
+ * render read-only: the `0005:280-307` immutability trigger raises on
+ * UPDATE/DELETE of a non-draft rate, so the form is hidden rather than
+ * offering an action that would just fail server-side.
+ */
+function RateRowsCard({
+  sheet,
+  ratesRepo,
+  serviceTasksRepo,
+}: {
+  sheet: PriceSheet;
+  ratesRepo?: PriceSheetRatesPort;
+  serviceTasksRepo: ServiceTasksRepoPort;
+}) {
+  const session = useModuleSession();
+  const organizationId = session?.org.id;
+  const [rates, setRates] = useState<PriceSheetRate[]>([]);
+  const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadState, setLoadState] = useState<RateRowsCardState>({ kind: 'idle' });
+  const [actionState, setActionState] = useState<RateRowsCardState>({ kind: 'idle' });
+  const [serviceIdInput, setServiceIdInput] = useState('');
+  const [timingInput, setTimingInput] = useState('at_purchase');
+  const [amountInput, setAmountInput] = useState('');
+  const [minutesInput, setMinutesInput] = useState('');
+
+  const serviceNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    services.forEach((s) => map.set(s.id, s.name));
+    return map;
+  }, [services]);
+
+  async function reload() {
+    if (!ratesRepo) return;
+    setLoadState({ kind: 'loading' });
+    const result = await ratesRepo.list(sheet.id);
+    setRates(result);
+    setLoadState({ kind: 'idle' });
+  }
+
+  useEffect(() => {
+    void reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ratesRepo, sheet.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadServices() {
+      if (!organizationId) return;
+      const result = await serviceTasksRepo.listServices(organizationId);
+      if (cancelled) return;
+      setServices(result);
+    }
+    void loadServices();
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceTasksRepo, organizationId]);
+
+  async function handleSave() {
+    if (!ratesRepo || !serviceIdInput) return;
+    const amount = Number(amountInput);
+    if (Number.isNaN(amount)) return;
+    const minutes = minutesInput === '' ? null : Number(minutesInput);
+    if (minutes !== null && Number.isNaN(minutes)) return;
+    setActionState({ kind: 'loading' });
+    const result = await ratesRepo.save(sheet.id, serviceIdInput, null, timingInput, amount, minutes);
+    if (!result.ok) {
+      setActionState({ kind: 'failed', message: result.reason });
+      return;
+    }
+    setServiceIdInput('');
+    setAmountInput('');
+    setMinutesInput('');
+    setActionState({ kind: 'idle' });
+    void reload();
+  }
+
+  async function handleRemove(rateId: string) {
+    if (!ratesRepo) return;
+    setActionState({ kind: 'loading' });
+    const result = await ratesRepo.remove(rateId);
+    if (!result.ok) {
+      setActionState({ kind: 'failed', message: result.reason });
+      return;
+    }
+    setActionState({ kind: 'idle' });
+    void reload();
+  }
+
+  if (!ratesRepo) {
+    return (
+      <Card style={styles.card}>
+        <Text style={styles.heading}>Rate Rows</Text>
+        <Text style={styles.note}>Rates unavailable</Text>
+      </Card>
+    );
+  }
+
+  const editable = sheet.status === 'draft';
+
+  return (
+    <Card style={styles.card}>
+      <Text style={styles.heading}>Rate Rows</Text>
+      {loadState.kind === 'loading' ? <LoadingState label="Loading rates..." /> : null}
+
+      {rates.map((rate) => (
+        <ListItem
+          key={rate.id}
+          title={serviceNameById.get(rate.serviceId) ?? rate.serviceId}
+          subtitle={`${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`}
+          right={
+            editable ? (
+              <Button label="Remove" variant="outline" size="sm" onPress={() => void handleRemove(rate.id)} />
+            ) : undefined
+          }
+        />
+      ))}
+
+      {editable ? (
+        <>
+          <Select
+            value={serviceIdInput || null}
+            options={services.map((s) => ({ label: s.name, value: s.id }))}
+            placeholder="Select a service"
+            onChange={setServiceIdInput}
+          />
+          <Select
+            label="Timing"
+            value={timingInput}
+            options={ATTACH_TIMING_OPTIONS}
+            onChange={setTimingInput}
+            style={styles.action}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Amount ($)"
+            value={amountInput}
+            keyboardType="decimal-pad"
+            onChangeText={setAmountInput}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Minutes"
+            value={minutesInput}
+            keyboardType="numeric"
+            onChangeText={setMinutesInput}
+          />
+          <View style={styles.actionRow}>
+            <Button
+              label={actionState.kind === 'loading' ? 'Saving...' : 'Save Rate'}
+              onPress={() => void handleSave()}
+              disabled={actionState.kind === 'loading'}
+              size="sm"
+            />
+          </View>
+        </>
+      ) : (
+        <Text style={styles.note}>Published sheets are read-only; clone to a new draft to edit.</Text>
+      )}
+
+      {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+    </Card>
+  );
+}
+
 export interface PriceSheetEditorScreenProps {
   priceSheets?: PriceSheetRepository;
   priceSheetId?: string;
@@ -409,6 +600,8 @@ export interface PriceSheetEditorScreenProps {
     ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
   };
   serviceTasksRepo: ServiceTasksRepoPort;
+  /** Rate-rows port (AD-23/27). Absent in read-only hosts — the card shows "Rates unavailable". */
+  ratesRepo?: PriceSheetRatesPort;
   standardDurationRepo?: {
     get(organizationId: string): Promise<PriceSheetStandardDuration | null>;
     upsert(organizationId: string, standardMinutes: number): Promise<PriceSheetStandardDuration>;
@@ -452,6 +645,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     onPublished,
     areaAdjustmentsRepo,
     serviceTasksRepo,
+    ratesRepo,
     standardDurationRepo,
     serviceAreas = [],
   } = props;
@@ -759,25 +953,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
         {areaAdjustmentsRepo ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Price Area Adjustments</Text>
-            {areaAdjustments.length > 0
-              ? areaAdjustments.map((adjustment) => (
-                  <ListItem
-                    key={adjustment.id}
-                    title={areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}
-                    subtitle={
-                      adjustment.adjustmentType === 'percent'
-                        ? `${adjustment.adjustmentValue}%`
-                        : String(adjustment.adjustmentValue)
-                    }
-                  />
-                ))
-              : null}
 
             {serviceAreas.length === 0 ? (
               <Text style={styles.note}>No service areas yet — add them under Service Areas.</Text>
             ) : (
               <Select
-                label="Area"
+                label="Price area"
                 value={selectedAreaId}
                 options={[
                   { label: 'All areas', value: '__all__' },
@@ -787,6 +968,23 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                 style={styles.action}
               />
             )}
+
+            {areaAdjustments.length > 0
+              ? areaAdjustments
+                  .filter((adjustment) => selectedAreaId === '__all__' || adjustment.serviceAreaId === selectedAreaId)
+                  .map((adjustment) => (
+                    <ListItem
+                      key={adjustment.id}
+                      title={areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}
+                      subtitle={
+                        adjustment.adjustmentType === 'percent'
+                          ? `${adjustment.adjustmentValue}%`
+                          : String(adjustment.adjustmentValue)
+                      }
+                    />
+                  ))
+              : null}
+
             <Select
               label="Type"
               value={adjustmentTypeInput}
@@ -832,9 +1030,9 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 
         {serviceTasksRepo ? <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} /> : null}
 
-        <Text style={styles.note}>
-          Rate rows are not editable yet — the read port exposes no rates method.
-        </Text>
+        {sheet ? (
+          <RateRowsCard sheet={sheet} ratesRepo={ratesRepo} serviceTasksRepo={serviceTasksRepo} />
+        ) : null}
       </ScrollView>
     </View>
   );

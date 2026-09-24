@@ -10,9 +10,10 @@
  * values, and an `is_test` toggle. Submits via
  * `InvitationRepository.createInvitation(organizationId, email, role, fullName?)`.
  *
- * EDIT mode (`profile` prop present): full name, phone, and `is_test` are
- * directly editable and saved via
- * `EmployeeRepository.updateEmployee(profileId, { fullName, phone, isTest })`.
+ * EDIT mode (`profile` prop present): full name, phone, `is_test`, and hourly
+ * rate are directly editable and saved via
+ * `EmployeeRepository.updateEmployee(profileId, { fullName, phone, isTest })`,
+ * with the rate persisting to `profiles.hourly_rate_cents` (migration 0066).
  * Role is a separate, immediate action —
  * `EmployeeRepository.setEmployeeRole(profileId, newRole)` — fired the
  * moment a different role is picked, independent of the main save.

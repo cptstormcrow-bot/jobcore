@@ -13,6 +13,7 @@ export type JobHeaderProps = {
   customer?: Customer | null;
   jobDetailMenuItems: MenuItem[];
   totalLaborSeconds: number;
+  onPressSchedule?: () => void;
 };
 
 export function JobHeader({
@@ -20,6 +21,7 @@ export function JobHeader({
   customer = null,
   jobDetailMenuItems,
   totalLaborSeconds,
+  onPressSchedule,
 }: JobHeaderProps) {
   const totalHoursLabel =
     totalLaborSeconds > 0
@@ -30,7 +32,11 @@ export function JobHeader({
   const tOpts = { hour: 'numeric', minute: '2-digit' } as const;
   const datePart = scheduledDate ? scheduledDate.toLocaleDateString(undefined, dOpts) : '';
   const timePart = scheduledDate ? scheduledDate.toLocaleTimeString(undefined, tOpts).toLowerCase() : '';
-  const scheduledLabel = scheduledDate ? `Scheduled - ${datePart} at ${timePart}` : 'Unscheduled';
+  const scheduledLabel = scheduledDate
+    ? `Scheduled - ${datePart} at ${timePart}`
+    : onPressSchedule
+    ? 'Unscheduled ▸'
+    : 'Unscheduled';
 
   return (
     <View style={styles.root}>
@@ -52,7 +58,16 @@ export function JobHeader({
         <Text style={styles.summaryLine}>{job.address ?? '—'}</Text>
         <Text style={styles.summaryLine}>{customer?.phone ? `Phone: ${customer.phone}` : 'Phone: —'}</Text>
         <Text style={styles.summaryLine}>Job #{job.jobNumber ?? '—'}</Text>
-        <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
+        {onPressSchedule ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Adjust schedule"
+            onPress={onPressSchedule}>
+            <Text style={[styles.summaryLineRight, styles.scheduleLink]}>{scheduledLabel}</Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
+        )}
       </View>
       <View style={styles.rule} />
     </View>
@@ -166,6 +181,9 @@ const styles = StyleSheet.create({
     fontSize: typography.size.body,
     color: colors.text,
     textAlign: 'right',
+  },
+  scheduleLink: {
+    color: colors.primary,
   },
   rule: {
     height: 3,
