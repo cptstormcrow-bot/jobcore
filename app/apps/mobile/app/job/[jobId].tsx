@@ -439,11 +439,14 @@ export default function JobDrilldownScreen() {
   }, [isCreate, org?.id, jobId]);
 
   /**
-   * Edit-mode-only combined save: persists the job-detail fields via
-   * `JobRepository.updateDetails` and the customer fields via
-   * `CustomerRepository.update` (existing `customerId`) or `.create()` (no
-   * customer linked to this job yet). Create-mode save is handled by
-   * `handleSaveCreate`.
+   * Edit-mode-only combined save: saves the customer first (updates the
+   * linked row, or creates one and remembers its id immediately so a retry
+   * reuses it rather than creating another), links it to the job through
+   * `JobRepository.updateDetails` when `jobs.customer_id` differs, then
+   * verifies the link succeeded. Only on success are the returned `Job` and
+   * `Customer` committed to state, so the header updates without a reload.
+   * Any failure surfaces `saveError` and never shows "Saved". Create-mode
+   * save is handled by `handleSaveCreate`.
    */
   const handleSaveEdit = async (): Promise<void> => {
     if (!job) return;
@@ -462,8 +465,8 @@ export default function JobDrilldownScreen() {
         considerations: form.considerations,
         ingressInstructions: form.ingressInstructions.trim() || null,
       } as JobDetailsPatch;
-      await createJobRepository().updateDetails(job.id, jobPatch);
 
+      let savedCustomer: Customer;
       if (customerId) {
         const customerPatch: CustomerPatch = {
           name: form.customerName,
@@ -471,7 +474,7 @@ export default function JobDrilldownScreen() {
           email: form.customerEmail,
           address: form.customerAddress,
         };
-        await createCustomerRepository().update(customerId, customerPatch);
+        savedCustomer = await createCustomerRepository().update(customerId, customerPatch);
       } else {
         const customerCreateInput: CustomerCreateInput = {
           organizationId: org.id,
@@ -480,8 +483,17 @@ export default function JobDrilldownScreen() {
           email: form.customerEmail,
           address: form.customerAddress,
         };
-        const created = await createCustomerRepository().create(customerCreateInput);
-        setCustomerId(created.id);
+        savedCustomer = await createCustomerRepository().create(customerCreateInput);
+        setCustomerId(savedCustomer.id);
+      }
+
+      const needsLink = savedCustomer.id !== job.customerId;
+      const updatedJob = await createJobRepository().updateDetails(
+        job.id,
+        needsLink ? { ...jobPatch, customerId: savedCustomer.id } : jobPatch,
+      );
+      if (updatedJob.customerId !== savedCustomer.id) {
+        throw new Error('Customer saved but not linked to this job.');
       }
 
       if (investigation) {
@@ -495,6 +507,9 @@ export default function JobDrilldownScreen() {
         const updatedInvestigation = await createJobInvestigationRepository().upsertForJob(job.id, investigationPatch);
         setInvestigation(updatedInvestigation);
       }
+      setJob(updatedJob);
+      setCustomer(savedCustomer);
+      setCustomerId(savedCustomer.id);
       setDirty(false);
       setSaved(true);
     } catch (err) {

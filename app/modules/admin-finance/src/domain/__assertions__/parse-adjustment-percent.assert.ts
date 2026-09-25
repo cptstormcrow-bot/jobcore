@@ -41,3 +41,15 @@ test('non-numeric string returns null', () => {
 test('percent sign alone returns null', () => {
   assert.equal(parseAdjustmentPercent('%'), null);
 });
+
+test('ASCII leading minus parses to a signed negative number', () => {
+  assert.equal(parseAdjustmentPercent('-15'), -15);
+});
+
+test('Unicode minus sign (U+2212) parses to a signed negative number', () => {
+  assert.equal(parseAdjustmentPercent('−15'), -15);
+});
+
+test('explicit leading plus parses to a positive number', () => {
+  assert.equal(parseAdjustmentPercent('+20'), 20);
+});

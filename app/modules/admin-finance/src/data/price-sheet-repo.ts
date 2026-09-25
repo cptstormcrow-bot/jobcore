@@ -272,6 +272,17 @@ export async function saveAreaAdjustment(
   return { ok: true, value: toPriceSheetAreaAdjustment(data) };
 }
 
+export async function deleteAreaAdjustment(
+  client: SupabaseAreaAdjustmentsClient,
+  id: string
+): Promise<CalculationResult<void>> {
+  const { error } = await client.from('price_sheet_area_adjustments').delete().eq('id', id);
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: undefined };
+}
+
 /* ------------------------------------------------------------------ *
  * price_sheet_rates row (with joined task) → domain type (camelCase)
  * ------------------------------------------------------------------ */
@@ -331,24 +342,28 @@ export async function saveRate(
   taskId: string | null,
   attachTiming: string,
   amount: number,
-  timeEstimateMinutes: number | null
+  timeEstimateMinutes: number | null,
+  id?: string
 ): Promise<CalculationResult<PriceSheetRate>> {
-  const { data, error } = await client
-    .from('price_sheet_rates')
-    .upsert(
-      {
-        price_sheet_id: priceSheetId,
-        service_id: serviceId,
-        task_id: taskId,
-        attach_timing: attachTiming,
-        amount_cents: amount,
-        estimated_minutes: timeEstimateMinutes,
-      },
-      { onConflict: 'price_sheet_id,service_id,attach_timing' }
-    )
-    .select('*')
-    .single();
+  const payload = {
+    price_sheet_id: priceSheetId,
+    service_id: serviceId,
+    task_id: taskId,
+    attach_timing: attachTiming,
+    amount_cents: amount,
+    estimated_minutes: timeEstimateMinutes,
+  };
+  const query = id
+    ? client.from('price_sheet_rates').update(payload).eq('id', id)
+    : client.from('price_sheet_rates').insert(payload);
+  const { data, error } = await query.select('*').single();
   if (error) {
+    if (error.code === '23505') {
+      return {
+        ok: false,
+        reason: 'A rate row for this service/task/timing already exists — edit it instead.',
+      };
+    }
     return { ok: false, reason: error.message };
   }
   return { ok: true, value: toPriceSheetRate(data) };
@@ -380,6 +395,7 @@ export interface ServiceTaskRow {
   category?: string | null;
   active?: boolean;
   price_cents?: number | null;
+  task_number?: number | null;
   details?: string | null;
   materials?: string | null;
 }
@@ -398,6 +414,7 @@ export function toServiceTask(row: ServiceTaskRow): ServiceTask {
     priceCents: row.price_cents ?? null,
     details: row.details ?? null,
     materials: row.materials ?? null,
+    taskNumber: row.task_number ?? null,
   };
 }
 
@@ -428,11 +445,48 @@ export async function saveServiceTask(
   client: SupabaseServiceTasksClient,
   organizationId: string,
   serviceId: string,
-  name: string
+  name: string,
+  extra?: {
+    estimatedMinutes?: number | null;
+    rate?: number | null;
+    category?: string | null;
+    active?: boolean;
+    priceCents?: number | null;
+    details?: string | null;
+    materials?: string | null;
+  }
 ): Promise<CalculationResult<ServiceTask>> {
+  const insertObj: Record<string, unknown> = {
+    organization_id: organizationId,
+    service_id: serviceId,
+    name,
+  };
+  if (extra) {
+    if ('estimatedMinutes' in extra) {
+      insertObj.estimated_minutes = extra.estimatedMinutes;
+    }
+    if ('rate' in extra) {
+      insertObj.rate = extra.rate;
+    }
+    if ('category' in extra) {
+      insertObj.category = extra.category;
+    }
+    if ('active' in extra) {
+      insertObj.active = extra.active;
+    }
+    if ('priceCents' in extra) {
+      insertObj.price_cents = extra.priceCents;
+    }
+    if ('details' in extra) {
+      insertObj.details = extra.details;
+    }
+    if ('materials' in extra) {
+      insertObj.materials = extra.materials;
+    }
+  }
   const { data, error } = await client
     .from('service_tasks')
-    .insert({ organization_id: organizationId, service_id: serviceId, name })
+    .insert(insertObj)
     .select('*')
     .single();
   if (error) {
@@ -441,10 +495,38 @@ export async function saveServiceTask(
   return { ok: true, value: toServiceTask(data) };
 }
 
+export async function deleteServiceTask(
+  client: SupabaseServiceTasksClient,
+  taskId: string
+): Promise<CalculationResult<void>> {
+  const { count, error: countError } = await client
+    .from('price_sheet_rates')
+    .select('id', { count: 'exact', head: true })
+    .eq('task_id', taskId);
+  if (countError) {
+    return { ok: false, reason: countError.message };
+  }
+  if ((count ?? 0) > 0) {
+    return {
+      ok: false,
+      reason: `Used by ${count} rate rows — remove those first, or set Inactive.`,
+    };
+  }
+  const { error } = await client.from('service_tasks').delete().eq('id', taskId);
+  if (error) {
+    if (error.code === '23503') {
+      return { ok: false, reason: 'In use on jobs — set Inactive instead.' };
+    }
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: undefined };
+}
+
 export async function updateServiceTask(
   client: SupabaseServiceTasksClient,
   taskId: string,
   patch: {
+    name?: string;
     estimatedMinutes?: number | null;
     rate?: number | null;
     category?: string | null;
@@ -455,6 +537,9 @@ export async function updateServiceTask(
   }
 ): Promise<CalculationResult<ServiceTask>> {
   const updateObj: Record<string, unknown> = {};
+  if ('name' in patch) {
+    updateObj.name = patch.name;
+  }
   if ('estimatedMinutes' in patch) {
     updateObj.estimated_minutes = patch.estimatedMinutes;
   }
@@ -483,6 +568,9 @@ export async function updateServiceTask(
     .select('*')
     .single();
   if (error) {
+    if (error.code === '23505') {
+      return { ok: false, reason: 'A task with that name already exists for this service.' };
+    }
     return { ok: false, reason: error.message };
   }
   return { ok: true, value: toServiceTask(data) };

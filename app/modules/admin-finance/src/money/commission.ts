@@ -33,20 +33,36 @@ export function assertPriceSheetPublished(
 /** Finds the rate row matching the job's service and attach timing. */
 export function findMatchingRate(
   job: Job,
-  rates: readonly PriceSheetRate[],
+  rates: readonly (PriceSheetRate & { taskId?: string | null })[],
+  taskId?: string | null,
 ): { ok: true; value: PriceSheetRate } | { ok: false; reason: string } {
-  const match = rates.find(
+  const candidates = rates.filter(
     (rate) => rate.serviceId === job.serviceId && rate.attachTiming === job.attachTiming,
   );
-  if (!match) {
-    return {
-      ok: false,
-      reason: `no rate row for service '${job.serviceId ?? 'null'}' / attachTiming '${
-        job.attachTiming ?? 'null'
-      }'`,
-    };
+  const notFound = (): { ok: false; reason: string } => ({
+    ok: false,
+    reason: `no rate row for service '${job.serviceId ?? 'null'}' / attachTiming '${
+      job.attachTiming ?? 'null'
+    }'`,
+  });
+  if (candidates.length === 0) {
+    return notFound();
   }
-  return { ok: true, value: match };
+  if (taskId != null && taskId !== '') {
+    const exact = candidates.find((rate) => rate.taskId === taskId);
+    if (exact) {
+      return { ok: true, value: exact };
+    }
+  }
+  const nullTask = candidates.find((rate) => rate.taskId == null);
+  if (nullTask) {
+    return { ok: true, value: nullTask };
+  }
+  const first = candidates[0];
+  if (!first) {
+    return notFound();
+  }
+  return { ok: true, value: first };
 }
 
 /** Validates that the compensation policy is present and well-formed. */

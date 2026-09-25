@@ -13,9 +13,18 @@
  * validates the remainder via `Number()`/`Number.isFinite` (rejecting
  * malformed input like `'1e'` or `'--5'`). Returns `null` when the input
  * is empty after stripping or does not parse to a finite number.
+ *
+ * A leading sign is accepted after trimming: ASCII `-`, Unicode minus `−`
+ * (normalized to `-` before parsing), or `+`. Optional whitespace between the
+ * sign and the digits is fine (all whitespace is stripped). The result is
+ * signed accordingly (negative for `-`/`−`, positive otherwise).
  */
 export function parseAdjustmentPercent(input: string): number | null {
-  const stripped = input.replace(/%/g, '').replace(/\s/g, '').replace(/^\+/, '');
+  const stripped = input
+    .replace(/%/g, '')
+    .replace(/−/g, '-')
+    .replace(/\s/g, '')
+    .replace(/^\+/, '');
 
   if (stripped === '') {
     return null;

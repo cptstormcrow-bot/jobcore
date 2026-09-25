@@ -54,7 +54,8 @@ import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
 import { BlackoutEditorScreen } from './BlackoutEditorScreen';
 import { EmployeeInvitationsScreen } from './EmployeeInvitationsScreen';
-import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
+import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill, ServiceTask } from '../data/ports';
+import type { CalculationResult } from '../money/types';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { assignInvestigator } from '../flows/assign-investigator';
@@ -953,6 +954,34 @@ export function AdminFinanceRoot() {
             // it. Widen the type locally rather than edit the out-of-scope file.
             ports.serviceTasks as typeof ports.serviceTasks & {
               listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+              save(
+                organizationId: string,
+                serviceId: string,
+                name: string,
+                extra?: {
+                  estimatedMinutes?: number | null;
+                  rate?: number | null;
+                  category?: string | null;
+                  active?: boolean;
+                  priceCents?: number | null;
+                  details?: string | null;
+                  materials?: string | null;
+                }
+              ): Promise<CalculationResult<ServiceTask>>;
+              updateServiceTask(
+                taskId: string,
+                patch: {
+                  name?: string;
+                  estimatedMinutes?: number | null;
+                  rate?: number | null;
+                  category?: string | null;
+                  active?: boolean;
+                  priceCents?: number | null;
+                  details?: string | null;
+                  materials?: string | null;
+                }
+              ): Promise<CalculationResult<ServiceTask>>;
+              remove(taskId: string): Promise<CalculationResult<void>>;
             }
           }
           serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}

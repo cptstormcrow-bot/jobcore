@@ -71,6 +71,7 @@ export interface ModulePorts {
       adjustmentType: 'percent' | 'flat',
       adjustmentValue: number
     ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
+    remove(id: string): Promise<CalculationResult<void>>;
   };
   priceSheetRates: {
     list(priceSheetId: string): Promise<PriceSheetRate[]>;
@@ -80,16 +81,33 @@ export interface ModulePorts {
       taskId: string | null,
       attachTiming: string,
       amount: number,
-      timeEstimateMinutes: number | null
+      timeEstimateMinutes: number | null,
+      id?: string
     ): Promise<CalculationResult<PriceSheetRate>>;
     remove(rateId: string): Promise<CalculationResult<void>>;
   };
   serviceTasks: {
     list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
-    save(organizationId: string, serviceId: string, name: string): Promise<CalculationResult<ServiceTask>>;
+    listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+    save(
+      organizationId: string,
+      serviceId: string,
+      name: string,
+      extra?: {
+        estimatedMinutes?: number | null;
+        rate?: number | null;
+        category?: string | null;
+        active?: boolean;
+        priceCents?: number | null;
+        details?: string | null;
+        materials?: string | null;
+      }
+    ): Promise<CalculationResult<ServiceTask>>;
+    remove(taskId: string): Promise<CalculationResult<void>>;
     updateServiceTask(
       taskId: string,
       patch: {
+        name?: string;
         estimatedMinutes?: number | null;
         rate?: number | null;
         category?: string | null;

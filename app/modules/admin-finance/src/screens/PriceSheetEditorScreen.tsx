@@ -36,7 +36,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
-import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult, PriceSheetRate } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
@@ -44,27 +44,34 @@ import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession, useModuleSession } from '../lib/module-session';
 import { parseAdjustmentPercent } from '../domain/parse-adjustment-percent';
+import { AccordionEditRow } from './AccordionEditRow';
+import { AddTaskDialog } from './AddTaskDialog';
+import { formatServiceTaskNumber } from '../domain/format-service-task-number';
 
 /** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
 interface PriceSheetRatesPort {
-  list(priceSheetId: string): Promise<PriceSheetRate[]>;
+  list(
+    priceSheetId: string
+  ): Promise<Array<PriceSheetRate & { taskId?: string | null; timeEstimateMinutes?: number | null; taskName?: string | null }>>;
   save(
     priceSheetId: string,
     serviceId: string,
     taskId: string | null,
     attachTiming: string,
     amount: number,
-    timeEstimateMinutes: number | null
+    timeEstimateMinutes: number | null,
+    id?: string
   ): Promise<CalculationResult<PriceSheetRate>>;
   remove(rateId: string): Promise<CalculationResult<void>>;
 }
 
 interface ServiceTasksRepoPort {
   list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
-  save(organizationId: string, serviceId: string, name: string): Promise<CalculationResult<ServiceTask>>;
-  updateServiceTask(
-    taskId: string,
-    patch: {
+  save(
+    organizationId: string,
+    serviceId: string,
+    name: string,
+    extra?: {
       estimatedMinutes?: number | null;
       rate?: number | null;
       category?: string | null;
@@ -74,6 +81,20 @@ interface ServiceTasksRepoPort {
       materials?: string | null;
     }
   ): Promise<CalculationResult<ServiceTask>>;
+  updateServiceTask(
+    taskId: string,
+    patch: {
+      name?: string;
+      estimatedMinutes?: number | null;
+      rate?: number | null;
+      category?: string | null;
+      active?: boolean;
+      priceCents?: number | null;
+      details?: string | null;
+      materials?: string | null;
+    }
+  ): Promise<CalculationResult<ServiceTask>>;
+  remove(taskId: string): Promise<CalculationResult<void>>;
   listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
 }
 
@@ -100,24 +121,39 @@ type ServiceTasksCardState =
   | { kind: 'done'; message: string }
   | { kind: 'failed'; message: string };
 
+type ServiceTaskDraft = {
+  name: string;
+  price: string;
+  estimatedMinutes: string;
+  category: string;
+  details: string;
+  materials: string;
+  active: boolean;
+};
+
+function draftFromTask(task: ServiceTask): ServiceTaskDraft {
+  return {
+    name: task.name,
+    price: centsToDollarsText(task.priceCents),
+    estimatedMinutes: task.estimatedMinutes != null ? String(task.estimatedMinutes) : '',
+    category: task.category ?? '',
+    details: task.details ?? '',
+    materials: task.materials ?? '',
+    active: task.active ?? true,
+  };
+}
+
 function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasksRepoPort }) {
   const session = useModuleSession();
   const organizationId = session?.org.id;
   const [tasks, setTasks] = useState<ServiceTask[]>([]);
   const [loadState, setLoadState] = useState<ServiceTasksCardState>({ kind: 'idle' });
-  const [saveState, setSaveState] = useState<ServiceTasksCardState>({ kind: 'idle' });
-  const [nameInput, setNameInput] = useState('');
-  const [serviceIdInput, setServiceIdInput] = useState('');
-  const [priceInput, setPriceInput] = useState('');
-  const [detailsInput, setDetailsInput] = useState('');
-  const [materialsInput, setMaterialsInput] = useState('');
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
-  const [drafts, setDrafts] = useState<
-    Record<
-      string,
-      { estimatedMinutes: string; rate: string; category: string; price: string; details: string; materials: string }
-    >
-  >({});
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<ServiceTaskDraft | null>(null);
+  const [addServiceId, setAddServiceId] = useState('');
+  const [addDialogVisible, setAddDialogVisible] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,21 +170,6 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
         return;
       }
       setTasks(result.value);
-      setDrafts(
-        Object.fromEntries(
-          result.value.map((task) => [
-            task.id,
-            {
-              estimatedMinutes: task.estimatedMinutes != null ? String(task.estimatedMinutes) : '',
-              rate: task.rate != null ? String(task.rate) : '',
-              category: task.category ?? '',
-              price: centsToDollarsText(task.priceCents),
-              details: task.details ?? '',
-              materials: task.materials ?? '',
-            },
-          ])
-        )
-      );
       setLoadState({ kind: 'loaded' });
     }
     void load();
@@ -177,106 +198,65 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
     };
   }, [serviceTasksRepo, organizationId]);
 
-  function updateDraft(
-    taskId: string,
-    field: 'estimatedMinutes' | 'rate' | 'category' | 'price' | 'details' | 'materials',
-    value: string
-  ) {
-    setDrafts((prev) => ({
-      ...prev,
-      [taskId]: {
-        ...(prev[taskId] ?? {
-          estimatedMinutes: '',
-          rate: '',
-          category: '',
-          price: '',
-          details: '',
-          materials: '',
-        }),
-        [field]: value,
-      },
-    }));
-  }
+  const sortedTasks = useMemo(() => {
+    const activeTasks = tasks.filter((t) => t.active !== false);
+    const inactiveTasks = tasks.filter((t) => t.active === false);
+    return [...activeTasks, ...inactiveTasks];
+  }, [tasks]);
 
-  async function commitField(
-    taskId: string,
-    patch: {
-      estimatedMinutes?: number | null;
-      rate?: number | null;
-      category?: string | null;
-      priceCents?: number | null;
-      details?: string | null;
-      materials?: string | null;
-    }
-  ) {
-    const result = await serviceTasksRepo.updateServiceTask(taskId, patch);
-    if (!result.ok) {
-      setLoadState({ kind: 'failed', message: result.reason });
+  function handleToggleRow(task: ServiceTask) {
+    if (expandedTaskId === task.id) {
+      setExpandedTaskId(null);
+      setDraft(null);
       return;
     }
-    setTasks((prev) => prev.map((task) => (task.id === taskId ? result.value : task)));
+    setExpandedTaskId(task.id);
+    setDraft(draftFromTask(task));
   }
 
-  async function handleToggleActive(task: ServiceTask) {
-    const result = await serviceTasksRepo.updateServiceTask(task.id, { active: !task.active });
-    if (!result.ok) {
-      setLoadState({ kind: 'failed', message: result.reason });
-      return;
+  function handleCancelRow() {
+    setExpandedTaskId(null);
+    setDraft(null);
+  }
+
+  async function handleSaveRow(task: ServiceTask): Promise<{ ok: boolean; reason?: string }> {
+    if (!draft) return { ok: false, reason: 'Nothing to save.' };
+    const trimmedName = draft.name.trim();
+    if (trimmedName === '') return { ok: false, reason: 'Name is required.' };
+    const priceCents = dollarsTextToCents(draft.price);
+    if (priceCents === undefined) return { ok: false, reason: 'Price must be a number ≥ 0.' };
+    const trimmedMinutes = draft.estimatedMinutes.trim();
+    const parsedMinutes = trimmedMinutes === '' ? null : Number(trimmedMinutes);
+    if (parsedMinutes !== null && (!Number.isFinite(parsedMinutes) || parsedMinutes < 0)) {
+      return { ok: false, reason: 'Est. minutes must be a number ≥ 0.' };
     }
+    const result = await serviceTasksRepo.updateServiceTask(task.id, {
+      name: trimmedName,
+      priceCents,
+      estimatedMinutes: parsedMinutes,
+      category: draft.category.trim() === '' ? null : draft.category,
+      details: draft.details.trim() === '' ? null : draft.details,
+      materials: draft.materials.trim() === '' ? null : draft.materials,
+      active: draft.active,
+    });
+    if (!result.ok) return { ok: false, reason: result.reason };
     setTasks((prev) => prev.map((t) => (t.id === task.id ? result.value : t)));
+    setExpandedTaskId(null);
+    setDraft(null);
+    setStatusMessage(`Saved ${result.value.name} at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+    return { ok: true };
   }
 
-  async function handleCreate() {
-    if (!serviceIdInput || !nameInput) {
-      setSaveState({ kind: 'failed', message: 'Pick a service and enter a task name.' });
-      return;
-    }
-    if (!organizationId) {
-      setSaveState({ kind: 'failed', message: 'No organization selected yet.' });
-      return;
-    }
-    setSaveState({ kind: 'loading' });
-    try {
-      const result = await serviceTasksRepo.save(organizationId, serviceIdInput, nameInput);
-      if (!result.ok) {
-        setSaveState({ kind: 'failed', message: result.reason });
-        return;
-      }
-      setTasks((prev) => [...prev, result.value]);
-      setDrafts((prev) => ({
-        ...prev,
-        [result.value.id]: {
-          estimatedMinutes: result.value.estimatedMinutes != null ? String(result.value.estimatedMinutes) : '',
-          rate: result.value.rate != null ? String(result.value.rate) : '',
-          category: result.value.category ?? '',
-          price: centsToDollarsText(result.value.priceCents),
-          details: result.value.details ?? '',
-          materials: result.value.materials ?? '',
-        },
-      }));
-      const priceCents = dollarsTextToCents(priceInput);
-      if (priceInput !== '' || detailsInput !== '' || materialsInput !== '') {
-        const updateResult = await serviceTasksRepo.updateServiceTask(result.value.id, {
-          ...(priceCents === undefined ? {} : { priceCents }),
-          details: detailsInput === '' ? null : detailsInput,
-          materials: materialsInput === '' ? null : materialsInput,
-        });
-        if (!updateResult.ok) {
-          setSaveState({ kind: 'failed', message: updateResult.reason });
-          return;
-        }
-      }
-      setNameInput('');
-      setServiceIdInput('');
-      setPriceInput('');
-      setDetailsInput('');
-      setMaterialsInput('');
-      setSaveState({ kind: 'done', message: 'Task added.' });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not add task.';
-      setSaveState({ kind: 'failed', message });
-    }
+  async function handleDeleteRow(taskId: string): Promise<{ ok: boolean; reason?: string }> {
+    const result = await serviceTasksRepo.remove(taskId);
+    if (!result.ok) return { ok: false, reason: result.reason };
+    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setExpandedTaskId(null);
+    setDraft(null);
+    return { ok: true };
   }
+
+  const addServiceName = services.find((s) => s.id === addServiceId)?.name;
 
   return (
     <Card style={styles.card}>
@@ -284,140 +264,107 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
       {loadState.kind === 'loading' ? <LoadingState label="Loading service tasks..." /> : null}
       {loadState.kind === 'failed' ? <ErrorState message={loadState.message} /> : null}
 
-      {tasks.map((task) => {
-        const draft = drafts[task.id] ?? {
-          estimatedMinutes: '',
-          rate: '',
-          category: '',
-          price: '',
-          details: '',
-          materials: '',
-        };
-        return (
-          <View key={task.id} style={styles.action}>
-            <ListItem title={task.name} subtitle={task.serviceId} />
-            <TextInput
-              style={styles.input}
-              placeholder="Estimated minutes"
-              value={draft.estimatedMinutes}
-              keyboardType="numeric"
-              onChangeText={(text) => updateDraft(task.id, 'estimatedMinutes', text)}
-              onBlur={() => {
-                const parsed = draft.estimatedMinutes === '' ? null : Number(draft.estimatedMinutes);
-                if (parsed !== null && Number.isNaN(parsed)) return;
-                void commitField(task.id, { estimatedMinutes: parsed });
-              }}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Rate"
-              value={draft.rate}
-              keyboardType="numeric"
-              onChangeText={(text) => updateDraft(task.id, 'rate', text)}
-              onBlur={() => {
-                const parsed = draft.rate === '' ? null : Number(draft.rate);
-                if (parsed !== null && Number.isNaN(parsed)) return;
-                void commitField(task.id, { rate: parsed });
-              }}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Category"
-              value={draft.category}
-              onChangeText={(text) => updateDraft(task.id, 'category', text)}
-              onBlur={() =>
-                void commitField(task.id, { category: draft.category === '' ? null : draft.category })
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Price ($)"
-              value={draft.price}
-              keyboardType="decimal-pad"
-              onChangeText={(text) => updateDraft(task.id, 'price', text)}
-              onBlur={() => {
-                const cents = dollarsTextToCents(draft.price);
-                if (cents === undefined) return;
-                void commitField(task.id, { priceCents: cents });
-              }}
-            />
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              placeholder="Details"
-              value={draft.details}
-              multiline
-              numberOfLines={3}
-              onChangeText={(text) => updateDraft(task.id, 'details', text)}
-              onBlur={() =>
-                void commitField(task.id, { details: draft.details === '' ? null : draft.details })
-              }
-            />
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              placeholder="Materials"
-              value={draft.materials}
-              multiline
-              numberOfLines={3}
-              onChangeText={(text) => updateDraft(task.id, 'materials', text)}
-              onBlur={() =>
-                void commitField(task.id, { materials: draft.materials === '' ? null : draft.materials })
-              }
-            />
-            <Button
-              label={task.active ? 'Active' : 'Inactive'}
-              variant="outline"
-              size="sm"
-              onPress={() => void handleToggleActive(task)}
-            />
-          </View>
-        );
-      })}
+      {sortedTasks.map((task) => (
+        <AccordionEditRow
+          key={task.id}
+          title={task.name}
+          subtitle={formatServiceTaskNumber(task)}
+          tag={task.active === false ? 'Inactive' : undefined}
+          expanded={expandedTaskId === task.id}
+          onToggle={() => handleToggleRow(task)}
+          onSave={() => handleSaveRow(task)}
+          onCancel={handleCancelRow}
+          onDelete={() => handleDeleteRow(task.id)}
+          testID={`service-task-${task.id}`}
+        >
+          {draft && expandedTaskId === task.id ? (
+            <View>
+              <TextInput
+                style={styles.input}
+                placeholder="Name"
+                value={draft.name}
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, name: text } : prev))}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Price ($)"
+                value={draft.price}
+                keyboardType="decimal-pad"
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, price: text } : prev))}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Est. minutes"
+                value={draft.estimatedMinutes}
+                keyboardType="numeric"
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, estimatedMinutes: text } : prev))}
+              />
+              <TextInput
+                style={[styles.input, styles.inputMultiline]}
+                placeholder="Details"
+                value={draft.details}
+                multiline
+                numberOfLines={3}
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, details: text } : prev))}
+              />
+              <TextInput
+                style={[styles.input, styles.inputMultiline]}
+                placeholder="Materials"
+                value={draft.materials}
+                multiline
+                numberOfLines={3}
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, materials: text } : prev))}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Category"
+                value={draft.category}
+                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, category: text } : prev))}
+              />
+              <Toggle
+                label="Active"
+                value={draft.active}
+                onChange={(value) => setDraft((prev) => (prev ? { ...prev, active: value } : prev))}
+                style={styles.toggleRow}
+              />
+            </View>
+          ) : null}
+        </AccordionEditRow>
+      ))}
 
-      <Select
-        value={serviceIdInput || null}
-        options={services.map((s) => ({ label: s.name, value: s.id }))}
-        placeholder="Select a service"
-        onChange={setServiceIdInput}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="New task name"
-        value={nameInput}
-        onChangeText={setNameInput}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price ($)"
-        value={priceInput}
-        keyboardType="decimal-pad"
-        onChangeText={setPriceInput}
-      />
-      <TextInput
-        style={[styles.input, styles.inputMultiline]}
-        placeholder="Details"
-        value={detailsInput}
-        multiline
-        numberOfLines={3}
-        onChangeText={setDetailsInput}
-      />
-      <TextInput
-        style={[styles.input, styles.inputMultiline]}
-        placeholder="Materials"
-        value={materialsInput}
-        multiline
-        numberOfLines={3}
-        onChangeText={setMaterialsInput}
-      />
       <View style={styles.actionRow}>
+        <Select
+          value={addServiceId || null}
+          options={services.map((s) => ({ label: s.name, value: s.id }))}
+          placeholder="Select a service"
+          onChange={setAddServiceId}
+        />
         <Button
-          label={saveState.kind === 'loading' ? 'Saving...' : 'Add Task'}
-          onPress={() => void handleCreate()}
-          disabled={saveState.kind === 'loading'}
+          label="+ Add Task"
+          onPress={() => setAddDialogVisible(true)}
+          disabled={!addServiceId}
           size="sm"
         />
       </View>
-      {saveState.kind === 'failed' ? <ErrorState message={saveState.message} /> : null}
-      {saveState.kind === 'done' ? <Text style={styles.note}>{saveState.message}</Text> : null}
+
+      <AddTaskDialog
+        visible={addDialogVisible}
+        serviceName={addServiceName}
+        onCancel={() => setAddDialogVisible(false)}
+        onCreate={({ name, extra }) => {
+          if (!organizationId || !addServiceId) {
+            return Promise.resolve({ ok: false, reason: 'Select a service first.' } as const);
+          }
+          return serviceTasksRepo.save(organizationId, addServiceId, name, extra);
+        }}
+        onCreated={(task) => {
+          setTasks((prev) => [...prev, task]);
+          setAddDialogVisible(false);
+          setStatusMessage(`Saved ${task.name} at ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`);
+        }}
+      />
+
+      {statusMessage ? <Text style={styles.note}>{statusMessage}</Text> : null}
     </Card>
   );
 }
@@ -434,10 +381,9 @@ type RateRowsCardState =
   | { kind: 'failed'; message: string };
 
 /**
- * Editable rate rows for a draft sheet (AD-23/27). Published/archived sheets
- * render read-only: the `0005:280-307` immutability trigger raises on
- * UPDATE/DELETE of a non-draft rate, so the form is hidden rather than
- * offering an action that would just fail server-side.
+ * Editable rate rows (AD-23/27). 0067 dropped the draft-only immutability
+ * trigger, so published sheets are editable the same as drafts — there is no
+ * `editable` gate here.
  */
 function RateRowsCard({
   sheet,
@@ -450,10 +396,13 @@ function RateRowsCard({
 }) {
   const session = useModuleSession();
   const organizationId = session?.org.id;
-  const [rates, setRates] = useState<Array<PriceSheetRate & { taskName?: string | null }>>([]);
+  const [rates, setRates] = useState<
+    Array<PriceSheetRate & { taskId?: string | null; timeEstimateMinutes?: number | null; taskName?: string | null }>
+  >([]);
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
   const [loadState, setLoadState] = useState<RateRowsCardState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<RateRowsCardState>({ kind: 'idle' });
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [serviceIdInput, setServiceIdInput] = useState('');
   const [timingInput, setTimingInput] = useState('at_purchase');
   const [amountInput, setAmountInput] = useState('');
@@ -461,6 +410,18 @@ function RateRowsCard({
   const [taskIdInput, setTaskIdInput] = useState<string | null>(null);
   const [taskOptions, setTaskOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [taskLoadError, setTaskLoadError] = useState<string | null>(null);
+
+  const [expandedRateId, setExpandedRateId] = useState<string | null>(null);
+  const [editTaskId, setEditTaskId] = useState<string | null>(null);
+  const [editTiming, setEditTiming] = useState('at_purchase');
+  const [editAmount, setEditAmount] = useState('');
+  const [editMinutes, setEditMinutes] = useState('');
+  const [taskOptionsByService, setTaskOptionsByService] = useState<Record<string, Array<{ id: string; name: string }>>>(
+    {}
+  );
+
+  const [autoOpenedServiceIds, setAutoOpenedServiceIds] = useState<Set<string>>(new Set());
+  const [addTaskDialogVisible, setAddTaskDialogVisible] = useState(false);
 
   const serviceNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -471,9 +432,13 @@ function RateRowsCard({
   async function reload() {
     if (!ratesRepo) return;
     setLoadState({ kind: 'loading' });
-    const result = await ratesRepo.list(sheet.id);
-    setRates(result);
-    setLoadState({ kind: 'idle' });
+    try {
+      const result = await ratesRepo.list(sheet.id);
+      setRates(result);
+      setLoadState({ kind: 'idle' });
+    } catch (err) {
+      setLoadState({ kind: 'failed', message: err instanceof Error ? err.message : 'Failed to load rates.' });
+    }
   }
 
   useEffect(() => {
@@ -511,12 +476,25 @@ function RateRowsCard({
       }
       setTaskLoadError(null);
       setTaskOptions(result.value.map((t) => ({ id: t.id, name: t.name })));
+      setTaskOptionsByService((prev) => ({ ...prev, [serviceIdInput]: result.value.map((t) => ({ id: t.id, name: t.name })) }));
+      if (result.value.length === 0 && !autoOpenedServiceIds.has(serviceIdInput)) {
+        setAutoOpenedServiceIds((prev) => new Set(prev).add(serviceIdInput));
+        setAddTaskDialogVisible(true);
+      }
     }
     void loadTasks();
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceTasksRepo, organizationId, serviceIdInput]);
+
+  async function ensureTaskOptionsForService(serviceId: string) {
+    if (!organizationId || taskOptionsByService[serviceId]) return;
+    const result = await serviceTasksRepo.list(organizationId, serviceId);
+    if (!result.ok) return;
+    setTaskOptionsByService((prev) => ({ ...prev, [serviceId]: result.value.map((t) => ({ id: t.id, name: t.name })) }));
+  }
 
   function handleServiceChange(serviceId: string) {
     setServiceIdInput(serviceId);
@@ -535,24 +513,61 @@ function RateRowsCard({
       setActionState({ kind: 'failed', message: result.reason });
       return;
     }
+    const savedServiceName = serviceNameById.get(serviceIdInput) ?? serviceIdInput;
     setServiceIdInput('');
     setAmountInput('');
     setMinutesInput('');
     setTaskIdInput(null);
     setActionState({ kind: 'idle' });
+    setStatusMessage(`Saved rate for ${savedServiceName} at ${new Date().toLocaleTimeString()}`);
     void reload();
   }
 
-  async function handleRemove(rateId: string) {
-    if (!ratesRepo) return;
-    setActionState({ kind: 'loading' });
-    const result = await ratesRepo.remove(rateId);
-    if (!result.ok) {
-      setActionState({ kind: 'failed', message: result.reason });
+  function handleToggleRate(rateId: string) {
+    if (expandedRateId === rateId) {
+      setExpandedRateId(null);
       return;
     }
-    setActionState({ kind: 'idle' });
+    const rate = rates.find((r) => r.id === rateId);
+    if (rate) {
+      setEditTaskId(rate.taskId ?? null);
+      setEditTiming(rate.attachTiming);
+      setEditAmount(String(rate.amount));
+      setEditMinutes(rate.timeEstimateMinutes != null ? String(rate.timeEstimateMinutes) : '');
+      void ensureTaskOptionsForService(rate.serviceId);
+    }
+    setExpandedRateId(rateId);
+  }
+
+  async function handleSaveEdit(rate: {
+    id: string;
+    serviceId: string;
+  }): Promise<{ ok: boolean; reason?: string }> {
+    if (!ratesRepo) return { ok: false, reason: 'Rates unavailable' };
+    const amount = Number(editAmount);
+    if (Number.isNaN(amount)) return { ok: false, reason: 'Amount must be a number.' };
+    const minutes = editMinutes === '' ? null : Number(editMinutes);
+    if (minutes !== null && Number.isNaN(minutes)) return { ok: false, reason: 'Minutes must be a number.' };
+    const result = await ratesRepo.save(sheet.id, rate.serviceId, editTaskId, editTiming, amount, minutes, rate.id);
+    if (!result.ok) {
+      return { ok: false, reason: result.reason };
+    }
+    const savedServiceName = serviceNameById.get(rate.serviceId) ?? rate.serviceId;
+    setStatusMessage(`Saved rate for ${savedServiceName} at ${new Date().toLocaleTimeString()}`);
+    setExpandedRateId(null);
     void reload();
+    return { ok: true };
+  }
+
+  async function handleDeleteEdit(rateId: string): Promise<{ ok: boolean; reason?: string }> {
+    if (!ratesRepo) return { ok: false, reason: 'Rates unavailable' };
+    const result = await ratesRepo.remove(rateId);
+    if (!result.ok) {
+      return { ok: false, reason: result.reason };
+    }
+    setExpandedRateId(null);
+    void reload();
+    return { ok: true };
   }
 
   if (!ratesRepo) {
@@ -564,82 +579,132 @@ function RateRowsCard({
     );
   }
 
-  const editable = sheet.status === 'draft';
+  const addFormTaskOptions =
+    serviceIdInput && taskOptions.length === 0 && !taskLoadError
+      ? []
+      : taskOptions;
 
   return (
     <Card style={styles.card}>
       <Text style={styles.heading}>Rate Rows</Text>
       {loadState.kind === 'loading' ? <LoadingState label="Loading rates..." /> : null}
+      {loadState.kind === 'failed' ? <ErrorState message={loadState.message} /> : null}
 
       {rates.map((rate) => (
-        <ListItem
+        <AccordionEditRow
           key={rate.id}
-          title={serviceNameById.get(rate.serviceId) ?? rate.serviceId}
-          subtitle={
-            rate.taskName
-              ? `${rate.attachTiming} · ${centsToDollarsText(rate.amount)} · ${rate.taskName}`
-              : `${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`
-          }
-          right={
-            editable ? (
-              <Button label="Remove" variant="outline" size="sm" onPress={() => void handleRemove(rate.id)} />
-            ) : undefined
-          }
-        />
-      ))}
-
-      {editable ? (
-        <>
-          <Text style={styles.note}>One rate per service + timing; the task labels that rate.</Text>
-          <Select
-            value={serviceIdInput || null}
-            options={services.map((s) => ({ label: s.name, value: s.id }))}
-            placeholder="Select a service"
-            onChange={handleServiceChange}
-          />
+          title={`${serviceNameById.get(rate.serviceId) ?? rate.serviceId} · ${rate.taskName ?? 'All tasks'}`}
+          subtitle={`${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`}
+          expanded={expandedRateId === rate.id}
+          onToggle={() => handleToggleRate(rate.id)}
+          onSave={() => handleSaveEdit(rate)}
+          onCancel={() => setExpandedRateId(null)}
+          onDelete={() => handleDeleteEdit(rate.id)}
+        >
           <Select
             label="Task"
-            value={taskIdInput ?? ''}
-            options={[{ label: 'None', value: '' }, ...taskOptions.map((t) => ({ label: t.name, value: t.id }))]}
-            placeholder="None"
-            onChange={(value) => setTaskIdInput(value === '' ? null : value)}
+            value={editTaskId ?? ''}
+            options={[
+              { label: 'All tasks', value: '' },
+              ...(taskOptionsByService[rate.serviceId] ?? []).map((t) => ({ label: t.name, value: t.id })),
+            ]}
+            onChange={(value) => setEditTaskId(value === '' ? null : value)}
           />
-          {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
           <Select
             label="Timing"
-            value={timingInput}
+            value={editTiming}
             options={ATTACH_TIMING_OPTIONS}
-            onChange={setTimingInput}
+            onChange={setEditTiming}
             style={styles.action}
           />
           <TextInput
             style={styles.input}
             placeholder="Amount ($)"
-            value={amountInput}
+            value={editAmount}
             keyboardType="decimal-pad"
-            onChangeText={setAmountInput}
+            onChangeText={setEditAmount}
           />
           <TextInput
             style={styles.input}
             placeholder="Minutes"
-            value={minutesInput}
+            value={editMinutes}
             keyboardType="numeric"
-            onChangeText={setMinutesInput}
+            onChangeText={setEditMinutes}
           />
-          <View style={styles.actionRow}>
-            <Button
-              label={actionState.kind === 'loading' ? 'Saving...' : 'Save Rate'}
-              onPress={() => void handleSave()}
-              disabled={actionState.kind === 'loading'}
-              size="sm"
-            />
-          </View>
-        </>
-      ) : (
-        <Text style={styles.note}>Published sheets are read-only; clone to a new draft to edit.</Text>
-      )}
+        </AccordionEditRow>
+      ))}
+
+      <Text style={styles.note}>One rate per service + timing; the task labels that rate.</Text>
+      <Select
+        value={serviceIdInput || null}
+        options={services.map((s) => ({ label: s.name, value: s.id }))}
+        placeholder="Select a service"
+        onChange={handleServiceChange}
+      />
+      <Select
+        label="Task"
+        value={taskIdInput ?? ''}
+        options={[{ label: 'All tasks', value: '' }, ...addFormTaskOptions.map((t) => ({ label: t.name, value: t.id }))]}
+        placeholder="All tasks"
+        onChange={(value) => setTaskIdInput(value === '' ? null : value)}
+      />
+      {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
+      {serviceIdInput && taskOptions.length === 0 && !taskLoadError ? (
+        <Button label="+ Add Task" variant="outline" size="sm" onPress={() => setAddTaskDialogVisible(true)} />
+      ) : null}
+      <Select
+        label="Timing"
+        value={timingInput}
+        options={ATTACH_TIMING_OPTIONS}
+        onChange={setTimingInput}
+        style={styles.action}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Amount ($)"
+        value={amountInput}
+        keyboardType="decimal-pad"
+        onChangeText={setAmountInput}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Minutes"
+        value={minutesInput}
+        keyboardType="numeric"
+        onChangeText={setMinutesInput}
+      />
+      <View style={styles.actionRow}>
+        <Button
+          label={actionState.kind === 'loading' ? 'Saving...' : 'Save Rate'}
+          onPress={() => void handleSave()}
+          disabled={actionState.kind === 'loading'}
+          size="sm"
+        />
+      </View>
 
       {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+      {statusMessage ? <Text style={styles.note}>{statusMessage}</Text> : null}
+
+      <AddTaskDialog
+        visible={addTaskDialogVisible}
+        serviceName={serviceNameById.get(serviceIdInput)}
+        onCancel={() => setAddTaskDialogVisible(false)}
+        onCreate={(input) => {
+          if (!organizationId || !serviceIdInput) {
+            return Promise.resolve({ ok: false, reason: 'No service selected.' });
+          }
+          return serviceTasksRepo.save(organizationId, serviceIdInput, input.name, input.extra);
+        }}
+        onCreated={(task) => {
+          setAddTaskDialogVisible(false);
+          setTaskIdInput(task.id);
+          setTaskOptions((prev) => [...prev, { id: task.id, name: task.name }]);
+          setTaskOptionsByService((prev) => ({
+            ...prev,
+            [serviceIdInput]: [...(prev[serviceIdInput] ?? []), { id: task.id, name: task.name }],
+          }));
+        }}
+      />
     </Card>
   );
 }
@@ -662,6 +727,7 @@ export interface PriceSheetEditorScreenProps {
       adjustmentType: 'percent' | 'flat',
       adjustmentValue: number
     ): Promise<CalculationResult<PriceSheetAreaAdjustment>>;
+    remove(id: string): Promise<CalculationResult<void>>;
   };
   serviceTasksRepo: ServiceTasksRepoPort;
   /** Rate-rows port (AD-23/27). Absent in read-only hosts — the card shows "Rates unavailable". */
@@ -694,6 +760,40 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
+/** Signed adjustment value → status-line label, e.g. "−15%" / "+$20.00". */
+function formatSignedAdjustment(adjustmentType: 'percent' | 'flat', value: number): string {
+  const sign = value < 0 ? '−' : '+';
+  const abs = Math.abs(value);
+  return adjustmentType === 'percent' ? `${sign}${abs}%` : `${sign}$${abs.toFixed(2)}`;
+}
+
+/** Signed adjustment value → accordion-row subtitle, e.g. "−15%" / "+$20.00 flat". */
+function formatSignedAdjustmentSubtitle(adjustmentType: 'percent' | 'flat', value: number): string {
+  const base = formatSignedAdjustment(adjustmentType, value);
+  return adjustmentType === 'flat' ? `${base} flat` : base;
+}
+
+/**
+ * Handles a leading sign character typed into an adjustment value input:
+ * `-`/`−` flips the toggle to negative, `+` flips it to positive, and either
+ * way the input itself is left holding only the magnitude.
+ */
+function applySignedValueInput(
+  text: string,
+  setValueInput: (value: string) => void,
+  setSign: (sign: '+' | '-') => void
+): void {
+  if (text.startsWith('-') || text.startsWith('−')) {
+    setSign('-');
+    setValueInput(text.slice(1));
+  } else if (text.startsWith('+')) {
+    setSign('+');
+    setValueInput(text.slice(1));
+  } else {
+    setValueInput(text);
+  }
+}
+
 /** Domain status → display label. No DB vocabulary reaches this screen. */
 const STATUS_LABEL: Record<PriceSheetStatus, string> = {
   draft: 'Draft',
@@ -721,6 +821,11 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [selectedAreaId, setSelectedAreaId] = useState<string>('__all__');
   const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
   const [adjustmentValueInput, setAdjustmentValueInput] = useState('');
+  const [adjustmentSignInput, setAdjustmentSignInput] = useState<'+' | '-'>('+');
+  const [expandedAdjustmentId, setExpandedAdjustmentId] = useState<string | null>(null);
+  const [rowDraftType, setRowDraftType] = useState<'percent' | 'flat'>('percent');
+  const [rowDraftValueInput, setRowDraftValueInput] = useState('');
+  const [rowDraftSign, setRowDraftSign] = useState<'+' | '-'>('+');
   const [standardDuration, setStandardDuration] = useState<PriceSheetStandardDuration | null>(null);
   const [standardMinutesInput, setStandardMinutesInput] = useState('60');
   const [standardDurationState, setStandardDurationState] = useState<ActionState>({ kind: 'idle' });
@@ -910,8 +1015,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     if (okCount === areaIds.length) {
       const areaLabel =
         selectedAreaId === '__all__' ? 'All areas' : areaNameById.get(selectedAreaId) ?? selectedAreaId;
-      const sign = adjustmentValue > 0 ? '+' : '';
-      const valueLabel = adjustmentType === 'percent' ? `${sign}${adjustmentValue}%` : `${sign}${adjustmentValue}`;
+      const valueLabel = formatSignedAdjustment(adjustmentType, adjustmentValue);
       const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
       setAreaAdjustmentState({ kind: 'done', message: `Saved ${valueLabel} for ${areaLabel} at ${time}` });
     } else {
@@ -920,6 +1024,53 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
         message: lastFailureMessage || `Saved ${okCount} of ${areaIds.length} areas.`,
       });
     }
+  }
+
+  function startRowEdit(adjustment: PriceSheetAreaAdjustment): void {
+    setExpandedAdjustmentId(adjustment.id);
+    setRowDraftType(adjustment.adjustmentType);
+    setRowDraftSign(adjustment.adjustmentValue < 0 ? '-' : '+');
+    setRowDraftValueInput(String(Math.abs(adjustment.adjustmentValue)));
+  }
+
+  async function handleRowSave(
+    adjustment: PriceSheetAreaAdjustment
+  ): Promise<{ ok: boolean; reason?: string }> {
+    if (!areaAdjustmentsRepo || !priceSheetId) {
+      return { ok: false, reason: 'Area adjustments are unavailable.' };
+    }
+    const pct = parseAdjustmentPercent(rowDraftValueInput);
+    if (pct === null) {
+      return { ok: false, reason: 'Enter a number, e.g. 20' };
+    }
+    const signedValue = rowDraftSign === '-' ? -Math.abs(pct) : Math.abs(pct);
+    const result = await areaAdjustmentsRepo.save(priceSheetId, adjustment.serviceAreaId, rowDraftType, signedValue);
+    if (!result.ok) {
+      return { ok: false, reason: result.reason };
+    }
+    const saved = result.value;
+    setAreaAdjustments((prev) => prev.map((item) => (item.id === adjustment.id ? saved : item)));
+    setExpandedAdjustmentId(null);
+    const areaLabel = areaNameById.get(saved.serviceAreaId) ?? saved.serviceAreaId;
+    const valueLabel = formatSignedAdjustment(saved.adjustmentType, saved.adjustmentValue);
+    const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    setAreaAdjustmentState({ kind: 'done', message: `Saved ${valueLabel} for ${areaLabel} at ${time}` });
+    return { ok: true };
+  }
+
+  async function handleRowDelete(
+    adjustment: PriceSheetAreaAdjustment
+  ): Promise<{ ok: boolean; reason?: string }> {
+    if (!areaAdjustmentsRepo) {
+      return { ok: false, reason: 'Area adjustments are unavailable.' };
+    }
+    const result = await areaAdjustmentsRepo.remove(adjustment.id);
+    if (!result.ok) {
+      return { ok: false, reason: result.reason };
+    }
+    setAreaAdjustments((prev) => prev.filter((item) => item.id !== adjustment.id));
+    setExpandedAdjustmentId(null);
+    return { ok: true };
   }
 
   async function handleSaveStandardDuration(value: number): Promise<void> {
@@ -1042,15 +1193,55 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               ? areaAdjustments
                   .filter((adjustment) => selectedAreaId === '__all__' || adjustment.serviceAreaId === selectedAreaId)
                   .map((adjustment) => (
-                    <ListItem
+                    <AccordionEditRow
                       key={adjustment.id}
                       title={areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}
-                      subtitle={
-                        adjustment.adjustmentType === 'percent'
-                          ? `${adjustment.adjustmentValue}%`
-                          : String(adjustment.adjustmentValue)
-                      }
-                    />
+                      subtitle={formatSignedAdjustmentSubtitle(adjustment.adjustmentType, adjustment.adjustmentValue)}
+                      expanded={expandedAdjustmentId === adjustment.id}
+                      onToggle={() => {
+                        if (expandedAdjustmentId === adjustment.id) {
+                          setExpandedAdjustmentId(null);
+                        } else {
+                          startRowEdit(adjustment);
+                        }
+                      }}
+                      onSave={() => handleRowSave(adjustment)}
+                      onCancel={() => setExpandedAdjustmentId(null)}
+                      onDelete={() => handleRowDelete(adjustment)}
+                      testID={`area-adjustment-row-${adjustment.id}`}
+                    >
+                      <Select
+                        label="Type"
+                        value={rowDraftType}
+                        options={[
+                          { label: 'Percent', value: 'percent' },
+                          { label: 'Flat', value: 'flat' },
+                        ]}
+                        onChange={(v) => setRowDraftType(v === 'flat' ? 'flat' : 'percent')}
+                        style={styles.action}
+                      />
+                      <View style={styles.signRow}>
+                        <Pressable
+                          onPress={() => setRowDraftSign('+')}
+                          style={[styles.signButton, rowDraftSign === '+' ? styles.signButtonActive : undefined]}
+                        >
+                          <Text style={styles.signButtonText}>+</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => setRowDraftSign('-')}
+                          style={[styles.signButton, rowDraftSign === '-' ? styles.signButtonActive : undefined]}
+                        >
+                          <Text style={styles.signButtonText}>{'−'}</Text>
+                        </Pressable>
+                        <TextInput
+                          style={[styles.input, styles.signInput]}
+                          placeholder="Adjustment value"
+                          value={rowDraftValueInput}
+                          onChangeText={(text) => applySignedValueInput(text, setRowDraftValueInput, setRowDraftSign)}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </AccordionEditRow>
                   ))
               : null}
 
@@ -1064,13 +1255,27 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               onChange={(v) => setAdjustmentTypeInput(v === 'flat' ? 'flat' : 'percent')}
               style={styles.action}
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Adjustment value"
-              value={adjustmentValueInput}
-              onChangeText={setAdjustmentValueInput}
-              keyboardType="numeric"
-            />
+            <View style={styles.signRow}>
+              <Pressable
+                onPress={() => setAdjustmentSignInput('+')}
+                style={[styles.signButton, adjustmentSignInput === '+' ? styles.signButtonActive : undefined]}
+              >
+                <Text style={styles.signButtonText}>+</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setAdjustmentSignInput('-')}
+                style={[styles.signButton, adjustmentSignInput === '-' ? styles.signButtonActive : undefined]}
+              >
+                <Text style={styles.signButtonText}>{'−'}</Text>
+              </Pressable>
+              <TextInput
+                style={[styles.input, styles.signInput]}
+                placeholder="Adjustment value"
+                value={adjustmentValueInput}
+                onChangeText={(text) => applySignedValueInput(text, setAdjustmentValueInput, setAdjustmentSignInput)}
+                keyboardType="numeric"
+              />
+            </View>
             <View style={styles.actionRow}>
               <Button
                 label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save'}
@@ -1080,11 +1285,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                     setAreaAdjustmentState({ kind: 'failed', message: 'Enter a number, e.g. 20' });
                     return;
                   }
+                  const signedValue = adjustmentSignInput === '-' ? -Math.abs(pct) : Math.abs(pct);
                   const areaIds =
                     selectedAreaId === '__all__'
                       ? serviceAreas.map((area) => area.id)
                       : [selectedAreaId];
-                  void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, pct);
+                  void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, signedValue);
                 }}
                 disabled={areaAdjustmentState.kind === 'working'}
                 size="sm"
@@ -1167,6 +1373,9 @@ const styles = StyleSheet.create({
   action: {
     marginBottom: spacing.sm,
   },
+  toggleRow: {
+    marginBottom: spacing.sm,
+  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -1193,5 +1402,32 @@ const styles = StyleSheet.create({
   inputMultiline: {
     minHeight: 72,
     textAlignVertical: 'top',
+  },
+  signRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  signButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signButtonActive: {
+    borderColor: colors.text,
+    backgroundColor: colors.surfaceAlt,
+  },
+  signButtonText: {
+    fontSize: typography.size.body,
+    color: colors.text,
+  },
+  signInput: {
+    flex: 1,
+    marginBottom: 0,
   },
 });

@@ -168,6 +168,7 @@ export type JobDetailsPatch = Partial<Pick<Job, 'address' | 'description' | 'hou
   considerations?: string | null;
   scheduledStart?: string | null;
   scheduledEnd?: string | null;
+  customerId?: string | null;
 };
 
 /* ------------------------------------------------------------------ *
@@ -1245,6 +1246,8 @@ export interface ServiceTask {
   priceCents?: number | null;
   details?: string | null;
   materials?: string | null;
+  /** service_tasks.task_number (migration 0067); display via formatServiceTaskNumber. */
+  taskNumber?: number | null;
 }
 
 export interface JobPlanTaskRow {
@@ -1266,6 +1269,7 @@ export interface ServiceTaskCatalogEntry {
   category: string | null;
   estimatedMinutes: number | null;
   rate: number | null;
+  taskNumber?: number | null;
 }
 
 export interface JobPlanTasksRepository {

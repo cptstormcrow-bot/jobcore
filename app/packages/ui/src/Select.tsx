@@ -121,15 +121,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     maxHeight: '80%',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   row: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   rowText: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontSize: 15,
     color: colors.text,
   },
   rowTextSelected: {

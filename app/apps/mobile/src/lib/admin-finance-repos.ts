@@ -15,6 +15,7 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { enqueue } from './offline-db';
 import { logSyncFailure } from './log';
@@ -97,7 +98,7 @@ import type {
   PriceSheetRow,
   PriceSheetRateRow,
 } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
-import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, updateServiceTask as updateServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, deleteAreaAdjustment as deleteAreaAdjustmentRepo, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, updateServiceTask as updateServiceTaskRepo, deleteServiceTask as deleteServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import type { PriceSheetRateWithTaskRow } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import { getStandardDuration, upsertStandardDuration } from '../../../../modules/admin-finance/src/data/price-sheet-standard-duration-repo';
 import type {
@@ -326,22 +327,25 @@ export function createJobRepository(): JobRepository {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('job.update_details', occurredAt, { jobId, patch });
 
+      const update: Record<string, unknown> = {
+        address: patch.address,
+        description: patch.description,
+        house_age_years: patch.houseAgeYears,
+        ingress_instructions: patch.ingressInstructions,
+        scheduled_start: patch.scheduledStart,
+        scheduled_end: patch.scheduledEnd,
+        service_area_id: patch.serviceAreaId,
+        permit_status: patch.permitStatus,
+        parking_available: patch.parkingAvailable,
+        rooms: patch.rooms,
+        panel_info: patch.panelInfo,
+        considerations: patch.considerations,
+      };
+      if ('customerId' in patch) update.customer_id = patch.customerId ?? null;
+
       const { data, error } = await supabase
         .from('jobs')
-        .update({
-          address: patch.address,
-          description: patch.description,
-          house_age_years: patch.houseAgeYears,
-          ingress_instructions: patch.ingressInstructions,
-          scheduled_start: patch.scheduledStart,
-          scheduled_end: patch.scheduledEnd,
-          service_area_id: patch.serviceAreaId,
-          permit_status: patch.permitStatus,
-          parking_available: patch.parkingAvailable,
-          rooms: patch.rooms,
-          panel_info: patch.panelInfo,
-          considerations: patch.considerations,
-        })
+        .update(update)
         .eq('id', jobId)
         .select('*')
         .single();
@@ -1047,6 +1051,18 @@ export function createPriceSheetAreaAdjustmentsRepository() {
       }
       return result;
     },
+    async remove(id: string): Promise<CalculationResult<void>> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('price_sheet_area_adjustment.remove', occurredAt, { id });
+      const result = await deleteAreaAdjustmentRepo(
+        supabase as unknown as Parameters<typeof deleteAreaAdjustmentRepo>[0],
+        id
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.deleteAreaAdjustment', result.reason, { id });
+      }
+      return result;
+    },
   };
 }
 
@@ -1068,7 +1084,8 @@ export function createPriceSheetRatesRepository() {
       taskId: string | null,
       attachTiming: string,
       amount: number,
-      timeEstimateMinutes: number | null
+      timeEstimateMinutes: number | null,
+      id?: string
     ) {
       const occurredAt = new Date().toISOString();
       await enqueueMutation('price_sheet_rate.save', occurredAt, {
@@ -1078,6 +1095,7 @@ export function createPriceSheetRatesRepository() {
         attachTiming,
         amount,
         timeEstimateMinutes,
+        id,
       });
       const result = await saveRateRepo(
         supabase as unknown as Parameters<typeof saveRateRepo>[0],
@@ -1086,7 +1104,8 @@ export function createPriceSheetRatesRepository() {
         taskId,
         attachTiming,
         amount,
-        timeEstimateMinutes
+        timeEstimateMinutes,
+        id
       );
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.saveRate', result.reason, {
@@ -1125,23 +1144,50 @@ export function createServiceTasksRepository() {
       );
       return result;
     },
-    async save(organizationId: string, serviceId: string, name: string) {
+    async save(
+      organizationId: string,
+      serviceId: string,
+      name: string,
+      extra?: {
+        estimatedMinutes?: number | null;
+        rate?: number | null;
+        category?: string | null;
+        active?: boolean;
+        priceCents?: number | null;
+        details?: string | null;
+        materials?: string | null;
+      }
+    ) {
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('service_task.save', occurredAt, { organizationId, serviceId, name });
+      await enqueueMutation('service_task.save', occurredAt, { organizationId, serviceId, name, extra });
       const result = await saveServiceTaskRepo(
         supabase as unknown as Parameters<typeof saveServiceTaskRepo>[0],
         organizationId,
         serviceId,
-        name
+        name,
+        extra
       );
       if (!result.ok) {
-        logSyncFailure('admin-finance-repos.saveServiceTask', result.reason, { organizationId, serviceId, name });
+        logSyncFailure('admin-finance-repos.saveServiceTask', result.reason, { organizationId, serviceId, name, extra });
+      }
+      return result;
+    },
+    async remove(taskId: string): Promise<CalculationResult<void>> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('service_task.remove', occurredAt, { taskId });
+      const result = await deleteServiceTaskRepo(
+        supabase as unknown as Parameters<typeof deleteServiceTaskRepo>[0],
+        taskId
+      );
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.deleteServiceTask', result.reason, { taskId });
       }
       return result;
     },
     async updateServiceTask(
       taskId: string,
       patch: {
+        name?: string;
         estimatedMinutes?: number | null;
         rate?: number | null;
         category?: string | null;
@@ -2654,6 +2700,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         category: row.category,
         estimatedMinutes: row.estimated_minutes,
         rate: row.rate,
+        taskNumber: null,
       }));
     },
 
