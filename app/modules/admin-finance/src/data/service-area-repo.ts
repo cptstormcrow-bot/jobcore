@@ -42,7 +42,8 @@ export async function listServiceAreas(
   const { data, error } = await client
     .from('service_areas')
     .select('*')
-    .eq('organization_id', organizationId);
+    .eq('organization_id', organizationId)
+    .order('name');
   if (error) {
     return { ok: false, reason: error.message };
   }

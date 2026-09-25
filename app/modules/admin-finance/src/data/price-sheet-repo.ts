@@ -280,10 +280,10 @@ export async function saveAreaAdjustment(
  * Mirrors `price_sheet_rates` joined with its optional `service_tasks` row
  * (Slice D task-level pricing). `task_id` and `estimated_minutes` are the
  * task-pricing columns (`estimated_minutes` added by migration 0024;
- * `task_id` is a forward-referenced column this repo assumes but no
- * migration has added yet — see build report Deviations); `service_tasks`
- * is the optional embedded join Supabase returns when the caller selects
- * it.
+ * `task_id` added by migration 0066 as a FK to `service_tasks(id)`);
+ * `service_tasks` is the optional embedded join Supabase returns only when
+ * the caller's select embeds it (e.g. `select('*, service_tasks(name)')`) —
+ * callers must do this for `taskName` to populate.
  */
 export interface PriceSheetRateWithTaskRow {
   id: string;

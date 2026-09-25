@@ -54,7 +54,7 @@ export function Select({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
           <View style={styles.sheet}>
-            <ScrollView style={{ maxHeight: '100%' }}>
+            <ScrollView style={{ maxHeight: '100%' }} showsVerticalScrollIndicator>
               {options.map((item) => (
                 <Pressable
                   key={item.value}
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   sheet: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    maxHeight: '60%',
+    maxHeight: '80%',
     paddingVertical: spacing.sm,
   },
   row: {

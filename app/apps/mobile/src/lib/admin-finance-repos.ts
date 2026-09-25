@@ -1055,7 +1055,7 @@ export function createPriceSheetRatesRepository() {
     async list(priceSheetId: string) {
       const { data, error } = await supabase
         .from('price_sheet_rates')
-        .select('*')
+        .select('*, service_tasks(name)')
         .eq('price_sheet_id', priceSheetId);
       if (error) {
         throw new Error(`listRates failed: ${error.message}`);

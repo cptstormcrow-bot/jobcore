@@ -43,6 +43,7 @@ import type { PriceSheetRepo } from '../data/price-sheet-repo';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession, useModuleSession } from '../lib/module-session';
+import { parseAdjustmentPercent } from '../domain/parse-adjustment-percent';
 
 /** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
 interface PriceSheetRatesPort {
@@ -160,9 +161,15 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
     let cancelled = false;
     async function loadServices() {
       if (!organizationId) return;
-      const result = await serviceTasksRepo.listServices(organizationId);
-      if (cancelled) return;
-      setServices(result);
+      try {
+        const result = await serviceTasksRepo.listServices(organizationId);
+        if (cancelled) return;
+        setServices(result);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        setLoadState({ kind: 'failed', message: `Could not load services: ${message}` });
+      }
     }
     void loadServices();
     return () => {
@@ -220,43 +227,55 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   }
 
   async function handleCreate() {
-    if (!serviceIdInput || !nameInput) return;
+    if (!serviceIdInput || !nameInput) {
+      setSaveState({ kind: 'failed', message: 'Pick a service and enter a task name.' });
+      return;
+    }
     if (!organizationId) {
       setSaveState({ kind: 'failed', message: 'No organization selected yet.' });
       return;
     }
     setSaveState({ kind: 'loading' });
-    const result = await serviceTasksRepo.save(organizationId, serviceIdInput, nameInput);
-    if (!result.ok) {
-      setSaveState({ kind: 'failed', message: result.reason });
-      return;
+    try {
+      const result = await serviceTasksRepo.save(organizationId, serviceIdInput, nameInput);
+      if (!result.ok) {
+        setSaveState({ kind: 'failed', message: result.reason });
+        return;
+      }
+      setTasks((prev) => [...prev, result.value]);
+      setDrafts((prev) => ({
+        ...prev,
+        [result.value.id]: {
+          estimatedMinutes: result.value.estimatedMinutes != null ? String(result.value.estimatedMinutes) : '',
+          rate: result.value.rate != null ? String(result.value.rate) : '',
+          category: result.value.category ?? '',
+          price: centsToDollarsText(result.value.priceCents),
+          details: result.value.details ?? '',
+          materials: result.value.materials ?? '',
+        },
+      }));
+      const priceCents = dollarsTextToCents(priceInput);
+      if (priceInput !== '' || detailsInput !== '' || materialsInput !== '') {
+        const updateResult = await serviceTasksRepo.updateServiceTask(result.value.id, {
+          ...(priceCents === undefined ? {} : { priceCents }),
+          details: detailsInput === '' ? null : detailsInput,
+          materials: materialsInput === '' ? null : materialsInput,
+        });
+        if (!updateResult.ok) {
+          setSaveState({ kind: 'failed', message: updateResult.reason });
+          return;
+        }
+      }
+      setNameInput('');
+      setServiceIdInput('');
+      setPriceInput('');
+      setDetailsInput('');
+      setMaterialsInput('');
+      setSaveState({ kind: 'done', message: 'Task added.' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not add task.';
+      setSaveState({ kind: 'failed', message });
     }
-    setTasks((prev) => [...prev, result.value]);
-    setDrafts((prev) => ({
-      ...prev,
-      [result.value.id]: {
-        estimatedMinutes: result.value.estimatedMinutes != null ? String(result.value.estimatedMinutes) : '',
-        rate: result.value.rate != null ? String(result.value.rate) : '',
-        category: result.value.category ?? '',
-        price: centsToDollarsText(result.value.priceCents),
-        details: result.value.details ?? '',
-        materials: result.value.materials ?? '',
-      },
-    }));
-    const priceCents = dollarsTextToCents(priceInput);
-    if (priceInput !== '' || detailsInput !== '' || materialsInput !== '') {
-      void serviceTasksRepo.updateServiceTask(result.value.id, {
-        ...(priceCents === undefined ? {} : { priceCents }),
-        details: detailsInput === '' ? null : detailsInput,
-        materials: materialsInput === '' ? null : materialsInput,
-      });
-    }
-    setNameInput('');
-    setServiceIdInput('');
-    setPriceInput('');
-    setDetailsInput('');
-    setMaterialsInput('');
-    setSaveState({ kind: 'done', message: 'Task added.' });
   }
 
   return (
@@ -431,7 +450,7 @@ function RateRowsCard({
 }) {
   const session = useModuleSession();
   const organizationId = session?.org.id;
-  const [rates, setRates] = useState<PriceSheetRate[]>([]);
+  const [rates, setRates] = useState<Array<PriceSheetRate & { taskName?: string | null }>>([]);
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
   const [loadState, setLoadState] = useState<RateRowsCardState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<RateRowsCardState>({ kind: 'idle' });
@@ -439,6 +458,9 @@ function RateRowsCard({
   const [timingInput, setTimingInput] = useState('at_purchase');
   const [amountInput, setAmountInput] = useState('');
   const [minutesInput, setMinutesInput] = useState('');
+  const [taskIdInput, setTaskIdInput] = useState<string | null>(null);
+  const [taskOptions, setTaskOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [taskLoadError, setTaskLoadError] = useState<string | null>(null);
 
   const serviceNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -473,6 +495,34 @@ function RateRowsCard({
     };
   }, [serviceTasksRepo, organizationId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTasks() {
+      if (!organizationId || !serviceIdInput) {
+        setTaskOptions([]);
+        return;
+      }
+      const result = await serviceTasksRepo.list(organizationId, serviceIdInput);
+      if (cancelled) return;
+      if (!result.ok) {
+        setTaskLoadError(result.reason);
+        setTaskOptions([]);
+        return;
+      }
+      setTaskLoadError(null);
+      setTaskOptions(result.value.map((t) => ({ id: t.id, name: t.name })));
+    }
+    void loadTasks();
+    return () => {
+      cancelled = true;
+    };
+  }, [serviceTasksRepo, organizationId, serviceIdInput]);
+
+  function handleServiceChange(serviceId: string) {
+    setServiceIdInput(serviceId);
+    setTaskIdInput(null);
+  }
+
   async function handleSave() {
     if (!ratesRepo || !serviceIdInput) return;
     const amount = Number(amountInput);
@@ -480,7 +530,7 @@ function RateRowsCard({
     const minutes = minutesInput === '' ? null : Number(minutesInput);
     if (minutes !== null && Number.isNaN(minutes)) return;
     setActionState({ kind: 'loading' });
-    const result = await ratesRepo.save(sheet.id, serviceIdInput, null, timingInput, amount, minutes);
+    const result = await ratesRepo.save(sheet.id, serviceIdInput, taskIdInput, timingInput, amount, minutes);
     if (!result.ok) {
       setActionState({ kind: 'failed', message: result.reason });
       return;
@@ -488,6 +538,7 @@ function RateRowsCard({
     setServiceIdInput('');
     setAmountInput('');
     setMinutesInput('');
+    setTaskIdInput(null);
     setActionState({ kind: 'idle' });
     void reload();
   }
@@ -524,7 +575,11 @@ function RateRowsCard({
         <ListItem
           key={rate.id}
           title={serviceNameById.get(rate.serviceId) ?? rate.serviceId}
-          subtitle={`${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`}
+          subtitle={
+            rate.taskName
+              ? `${rate.attachTiming} · ${centsToDollarsText(rate.amount)} · ${rate.taskName}`
+              : `${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`
+          }
           right={
             editable ? (
               <Button label="Remove" variant="outline" size="sm" onPress={() => void handleRemove(rate.id)} />
@@ -535,12 +590,21 @@ function RateRowsCard({
 
       {editable ? (
         <>
+          <Text style={styles.note}>One rate per service + timing; the task labels that rate.</Text>
           <Select
             value={serviceIdInput || null}
             options={services.map((s) => ({ label: s.name, value: s.id }))}
             placeholder="Select a service"
-            onChange={setServiceIdInput}
+            onChange={handleServiceChange}
           />
+          <Select
+            label="Task"
+            value={taskIdInput ?? ''}
+            options={[{ label: 'None', value: '' }, ...taskOptions.map((t) => ({ label: t.name, value: t.id }))]}
+            placeholder="None"
+            onChange={(value) => setTaskIdInput(value === '' ? null : value)}
+          />
+          {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
           <Select
             label="Timing"
             value={timingInput}
@@ -844,7 +908,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
       }
     }
     if (okCount === areaIds.length) {
-      setAreaAdjustmentState({ kind: 'done', message: `Saved ${okCount} of ${areaIds.length} areas.` });
+      const areaLabel =
+        selectedAreaId === '__all__' ? 'All areas' : areaNameById.get(selectedAreaId) ?? selectedAreaId;
+      const sign = adjustmentValue > 0 ? '+' : '';
+      const valueLabel = adjustmentType === 'percent' ? `${sign}${adjustmentValue}%` : `${sign}${adjustmentValue}`;
+      const time = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      setAreaAdjustmentState({ kind: 'done', message: `Saved ${valueLabel} for ${areaLabel} at ${time}` });
     } else {
       setAreaAdjustmentState({
         kind: 'failed',
@@ -1004,15 +1073,18 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
             />
             <View style={styles.actionRow}>
               <Button
-                label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save Adjustment'}
+                label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save'}
                 onPress={() => {
-                  const value = Number(adjustmentValueInput);
-                  if (Number.isNaN(value)) return;
+                  const pct = parseAdjustmentPercent(adjustmentValueInput);
+                  if (pct === null) {
+                    setAreaAdjustmentState({ kind: 'failed', message: 'Enter a number, e.g. 20' });
+                    return;
+                  }
                   const areaIds =
                     selectedAreaId === '__all__'
                       ? serviceAreas.map((area) => area.id)
                       : [selectedAreaId];
-                  void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, value);
+                  void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, pct);
                 }}
                 disabled={areaAdjustmentState.kind === 'working'}
                 size="sm"
