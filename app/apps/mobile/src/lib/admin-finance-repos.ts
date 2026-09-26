@@ -341,7 +341,7 @@ export function createJobRepository(): JobRepository {
         panel_info: patch.panelInfo,
         considerations: patch.considerations,
       };
-      if ('customerId' in patch) update.customer_id = patch.customerId ?? null;
+      if (patch.customerId !== undefined) update.customer_id = patch.customerId;
 
       const { data, error } = await supabase
         .from('jobs')

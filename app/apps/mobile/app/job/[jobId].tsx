@@ -448,7 +448,7 @@ export default function JobDrilldownScreen() {
    * Any failure surfaces `saveError` and never shows "Saved". Create-mode
    * save is handled by `handleSaveCreate`.
    */
-  const handleSaveEdit = async (): Promise<void> => {
+  const runSaveEdit = async (): Promise<void> => {
     if (!job) return;
     if (!org?.id) return;
     setSaving(true);
@@ -517,6 +517,15 @@ export default function JobDrilldownScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSaveEdit = async (): Promise<void> => {
+    if (saveInFlightRef.current) return saveInFlightRef.current;
+    const p = runSaveEdit().finally(() => {
+      if (saveInFlightRef.current === p) saveInFlightRef.current = null;
+    });
+    saveInFlightRef.current = p;
+    return p;
   };
 
   /**
@@ -694,6 +703,7 @@ export default function JobDrilldownScreen() {
   // form before moving; a `saving` ref guards `beforeRemove` against a
   // double-fire.
   const savingRef = useRef(false);
+  const saveInFlightRef = useRef<Promise<void> | null>(null);
   const skipAutosaveRef = useRef(false);
   const selectRegion = useCallback(
     (next: JobRegion) => {
