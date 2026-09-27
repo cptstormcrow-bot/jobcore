@@ -58,7 +58,7 @@ Forward contracts:
 - Carried: FC1 (C2 org-consistency constraint), FC3 (M1 `customerAddress` input), FC6 (`patchLifecycle` `'key' in patch` idiom alignment).
 - Open: chip `task_4afe6e43` (deliver-plan.ps1 goal-slug bypass); chip `task_f9aac49a` (brs-scanner hardcoded to admin build-report root).
 - New: `customer.saveForJob` mutation needs a replay handler once offline replay is wired; orphan-customer cleanup pending Jeff's explicit go (check other FK tables first before any delete).
-- Rule 41 (prior lineage contracts evaluated before writing this report): carried #1 (authenticated Sales & Marketing visual check), #3 (five unfinished-bucket files uncommitted), #10 (price-sheet migration 0032 schema catch-up); re-deferred #4, #6, #7, #8, #9, #11 (each needs Jeff's design call or sign-in, unrelated to this change).
+- Rule 41 (prior lineage contracts evaluated before writing this report): carried #1 (authenticated Sales & Marketing visual check), #3 (five unfinished-bucket files uncommitted), #5 — Plan verification: live visual/simulator check of the job-detail save fix (from 2026-09-25_job-detail-save-customer-edits-fix.md; prior disposition "visual part CARRIED, tsc part CLOSED"). Disposition: CARRIED (re-deferred) — in-session 8081 navigation was denied and Jeff skipped the test plan 2026-09-26., #10 (price-sheet migration 0032 schema catch-up); re-deferred #4, #6, #7, #8, #9, #11 (each needs Jeff's design call or sign-in, unrelated to this change).
 Test plan: skipped by Jeff 2026-09-26.
 
 ## Deviations / Defects
@@ -86,5 +86,6 @@ Test plan: skipped by Jeff 2026-09-26.
 11. The Bash tool's commit-composing step lost its result to an internal tool error; the commit
     was confirmed to have actually landed via a follow-up `git log` read rather than the tool's own
     return.
+12. Rule 41 accounting initially omitted prior item #5 (visual check CARRIED); caught by Themis at closeout, added.
 
 Test plan: skipped by Jeff 2026-09-26.
