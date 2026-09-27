@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isScheduledOnLocalDate, expandTimeOffToEvents } from '../DayList';
+import { isScheduledOnLocalDate, expandTimeOffToEvents } from '../day-list-helpers';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest, TimeOffStatus } from '../../data/ports';
 
