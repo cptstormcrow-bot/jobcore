@@ -124,6 +124,15 @@ export function JobDetailsForm({
         labelStyle={styles.fieldLabel}
         inputStyle={inputStyleFor(value.customerEmail)}
       />
+      <TextField
+        label="Address"
+        value={value.customerAddress}
+        onChangeText={(text) => onChange({ customerAddress: text })}
+        placeholder="Address"
+        style={[styles.field, styles.fieldTight]}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.customerAddress)}
+      />
       <View style={[styles.field, styles.fieldTight]}>
         <Text style={styles.sectionLabel}>Service area</Text>
         <Select

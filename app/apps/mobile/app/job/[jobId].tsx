@@ -529,13 +529,13 @@ export default function JobDrilldownScreen() {
     setSaveError(null);
     try {
       let newCustomerId: string | null = null;
-      if (form.customerName || form.customerPhone || form.customerEmail) {
+      if (form.customerName || form.customerPhone || form.customerEmail || form.customerAddress) {
         const customerCreateInput: CustomerCreateInput = {
           organizationId: org.id,
           name: form.customerName,
           phone: form.customerPhone,
           email: form.customerEmail,
-          address: '',
+          address: form.customerAddress,
         };
         const created = await createCustomerRepository().create(customerCreateInput);
         newCustomerId = created.id;
