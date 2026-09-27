@@ -2133,6 +2133,21 @@ export function createCustomerRepository(): CustomerRepository {
       }
       return toCustomer(data as CustomerRow);
     },
+
+    async saveForJob(jobId: string, patch: CustomerPatch): Promise<Customer> {
+      const occurredAt = new Date().toISOString();
+      await enqueueMutation('customer.saveForJob', occurredAt, { jobId, patch });
+
+      const { data, error } = await supabase.rpc('save_job_customer', {
+        p_job_id: jobId,
+        p_customer: patch,
+      });
+      if (error) {
+        logSyncFailure('admin-finance-repos.saveForJobCustomer', error.message, { jobId, patch });
+        throw new Error(`saveForJob customer failed: ${error.message}`);
+      }
+      return toCustomer(data as CustomerRow);
+    },
   };
 }
 

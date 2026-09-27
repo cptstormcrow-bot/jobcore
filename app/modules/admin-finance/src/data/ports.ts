@@ -687,6 +687,8 @@ export interface CustomerRepository {
   getById(id: string): Promise<Customer | null>;
   create(input: CustomerCreateInput): Promise<Customer>;
   update(id: string, patch: CustomerPatch): Promise<Customer>;
+  /** Atomic: update the job's linked customer, or create one and link it to the job (RPC save_job_customer). */
+  saveForJob(jobId: string, patch: CustomerPatch): Promise<Customer>;
 }
 
 /* ------------------------------------------------------------------ *

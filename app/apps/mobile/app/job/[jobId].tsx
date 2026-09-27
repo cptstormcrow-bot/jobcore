@@ -448,9 +448,9 @@ export default function JobDrilldownScreen() {
    * Any failure surfaces `saveError` and never shows "Saved". Create-mode
    * save is handled by `handleSaveCreate`.
    */
-  const runSaveEdit = async (): Promise<void> => {
-    if (!job) return;
-    if (!org?.id) return;
+  const runSaveEdit = async (): Promise<boolean> => {
+    if (!job) return false;
+    if (!org?.id) return false;
     setSaving(true);
     setSaveError(null);
     try {
@@ -466,32 +466,15 @@ export default function JobDrilldownScreen() {
         ingressInstructions: form.ingressInstructions.trim() || null,
       } as JobDetailsPatch;
 
-      let savedCustomer: Customer;
-      if (customerId) {
-        const customerPatch: CustomerPatch = {
-          name: form.customerName,
-          phone: form.customerPhone,
-          email: form.customerEmail,
-          address: form.customerAddress,
-        };
-        savedCustomer = await createCustomerRepository().update(customerId, customerPatch);
-      } else {
-        const customerCreateInput: CustomerCreateInput = {
-          organizationId: org.id,
-          name: form.customerName,
-          phone: form.customerPhone,
-          email: form.customerEmail,
-          address: form.customerAddress,
-        };
-        savedCustomer = await createCustomerRepository().create(customerCreateInput);
-        setCustomerId(savedCustomer.id);
-      }
+      const customerPatch: CustomerPatch = {
+        name: form.customerName,
+        phone: form.customerPhone,
+        email: form.customerEmail,
+        address: form.customerAddress,
+      };
+      const savedCustomer = await createCustomerRepository().saveForJob(job.id, customerPatch);
 
-      const needsLink = savedCustomer.id !== job.customerId;
-      const updatedJob = await createJobRepository().updateDetails(
-        job.id,
-        needsLink ? { ...jobPatch, customerId: savedCustomer.id } : jobPatch,
-      );
+      const updatedJob = await createJobRepository().updateDetails(job.id, jobPatch);
       if (updatedJob.customerId !== savedCustomer.id) {
         throw new Error('Customer saved but not linked to this job.');
       }
@@ -512,14 +495,19 @@ export default function JobDrilldownScreen() {
       setCustomerId(savedCustomer.id);
       setDirty(false);
       setSaved(true);
+      return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed.');
+      return false;
     } finally {
       setSaving(false);
     }
   };
 
-  const handleSaveEdit = async (): Promise<void> => {
+  // Awaitable and deduped: concurrent callers share one in-flight promise;
+  // resolves `true` on success, `false` on failure, so callers can gate
+  // navigation on save success.
+  const handleSaveEdit = async (): Promise<boolean> => {
     if (saveInFlightRef.current) return saveInFlightRef.current;
     const p = runSaveEdit().finally(() => {
       if (saveInFlightRef.current === p) saveInFlightRef.current = null;
@@ -701,10 +689,13 @@ export default function JobDrilldownScreen() {
 
   // Save-follows-selection: switching regions autosaves a dirty edit-mode
   // form before moving; a `saving` ref guards `beforeRemove` against a
-  // double-fire.
+  // double-fire. `handleSaveEdit` dedupes concurrent calls onto one in-flight
+  // promise and is awaitable, resolving `true` on success.
   const savingRef = useRef(false);
-  const saveInFlightRef = useRef<Promise<void> | null>(null);
+  const saveInFlightRef = useRef<Promise<boolean> | null>(null);
   const skipAutosaveRef = useRef(false);
+  const leaveAfterFailRef = useRef(false);
+  const leavePendingRef = useRef(false);
   const selectRegion = useCallback(
     (next: JobRegion) => {
       if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
@@ -720,13 +711,17 @@ export default function JobDrilldownScreen() {
   );
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', () => {
-      if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
-        savingRef.current = true;
-        void handleSaveEdit().finally(() => {
-          savingRef.current = false;
-        });
-      }
+    // Web browser back button cannot be prevented (known limit).
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (isCreate || !dirty || skipAutosaveRef.current || leaveAfterFailRef.current) return;
+      e.preventDefault();
+      if (leavePendingRef.current) return;
+      leavePendingRef.current = true;
+      void handleSaveEdit().then((ok) => {
+        leavePendingRef.current = false;
+        if (ok) { skipAutosaveRef.current = true; navigation.dispatch(e.data.action); }
+        else { leaveAfterFailRef.current = true; }
+      });
     });
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -747,6 +742,7 @@ export default function JobDrilldownScreen() {
       return merged;
     });
     setDirty(true);
+    leaveAfterFailRef.current = false;
     setSaved(false);
   };
 
