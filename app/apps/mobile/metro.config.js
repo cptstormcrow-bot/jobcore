@@ -1,4 +1,5 @@
 const path = require('path');
+const os = require('os');
 const { getDefaultConfig } = require('expo/metro-config');
 
 const projectRoot = __dirname;
@@ -15,6 +16,7 @@ const config = getDefaultConfig(projectRoot);
 // against the wrong origin directory, producing
 // "Unable to resolve module ./../../node_modules/expo-router/entry.js".
 config.watchFolders = [workspaceRoot];
+config.maxWorkers = Math.max(1, os.cpus().length - 2);
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),
   path.resolve(workspaceRoot, 'node_modules'),
