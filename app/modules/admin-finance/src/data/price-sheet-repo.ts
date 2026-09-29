@@ -99,6 +99,7 @@ export interface PriceSheetAreaAdjustmentRow {
   service_area_id: string;
   adjustment_type: string;
   adjustment_value: number;
+  adjustment_target: string;
   created_at: string;
   updated_at: string;
 }
@@ -109,6 +110,7 @@ export interface PriceSheetAreaAdjustment {
   serviceAreaId: string;
   adjustmentType: 'percent' | 'flat';
   adjustmentValue: number;
+  adjustmentTarget: 'materials' | 'labor' | 'total';
   createdAt: string;
   updatedAt: string;
 }
@@ -127,6 +129,10 @@ export function toPriceSheetAreaAdjustment(row: PriceSheetAreaAdjustmentRow): Pr
     serviceAreaId: row.service_area_id,
     adjustmentType: row.adjustment_type,
     adjustmentValue: row.adjustment_value,
+    adjustmentTarget:
+      row.adjustment_target === 'materials' || row.adjustment_target === 'labor'
+        ? row.adjustment_target
+        : 'total',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -261,6 +267,7 @@ export async function saveAreaAdjustment(
         adjustment_type: adjustmentType,
         adjustment_value: adjustmentValue,
         organization_id: sheet.organization_id,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: 'price_sheet_id,service_area_id' }
     )
