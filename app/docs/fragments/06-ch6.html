@@ -62,8 +62,13 @@
     </li>
     <li>
       <strong>A reconciliation screen</strong> — <code>screens/ReconciliationView.tsx</code>
-      exists as a built component, though with no route registered to reach it (the module's
-      <code>routes</code> array currently points only at a placeholder root screen).
+      is built and routed inside the module. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
+      — <code>modules/payment-review/src/index.ts</code> imports
+      <code>./screens/ReconciliationView</code> and routes it at <code>payment-review</code>
+      through <code>PaymentReviewScreen</code> (wired in commit <code>2dc4fc7</code>,
+      2026-08-17). The route is live in the module only: the running app still cannot reach it
+      until the host registers <code>paymentReviewModule</code> and injects a Supabase client
+      via <code>setSupabaseClient</code> (see the Open Gap row below).
     </li>
   </ul>
 
@@ -76,7 +81,7 @@
       <tr><td>Domain logic (<code>transition.ts</code>, providers)</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td><code>mark-paid</code> job action</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td>Handoff wiring</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
-      <tr><td>Reconciliation screen</td><td>Built, no route</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td>Reconciliation screen</td><td>Built, routed in-module</td><td><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></td></tr>
       <tr><td>Compile-time registration in <code>apps/mobile/src/modules.ts</code></td><td>Not done</td><td><span class="jc-badge jc-badge--gap">⚪ Open Gap</span></td></tr>
     </tbody>
   </table>
