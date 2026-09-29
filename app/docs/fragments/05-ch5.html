@@ -4,12 +4,12 @@
 <p class="jc-lede">The Sales &amp; Marketing module (<code>modules/sales-marketing</code>)
 covers review curation, marketing-post composition, and organic-post reporting. It
 registers with <code>requiredRoles: ['sales', 'admin', 'owner']</code> — a field tech
-sees no Sales &amp; Marketing entry. <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>
-— the module's four real screens exist and are code-complete, but
-<code>modules/sales-marketing/src/index.ts</code> currently registers a placeholder
-root (<code>SalesMarketingPlaceholder</code>) instead of importing
-<code>./screens/SalesMarketingRoot</code>, so none of the walkthrough below is reachable
-from the running app today.</p>
+sees no Sales &amp; Marketing entry. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
+— <code>modules/sales-marketing/src/index.ts</code> imports
+<code>./screens/SalesMarketingRoot</code> and routes it at <code>sales-marketing</code>
+(wired in commit <code>2dc4fc7</code>, 2026-08-17), so a sales-role user lands on
+<code>/m/sales-marketing</code> after login and every screen in the walkthrough below is
+reachable from the running app.</p>
 
 <h2 id="ch5-scope-note">What This Module Is, and Is Not</h2>
 <p>Despite the chapter title suggesting a full sales pipeline, this module does not
@@ -26,14 +26,13 @@ posting activity. The persona walkthrough below reflects that reality, not the
 pipeline language in this chapter's working title.</p>
 
 <h2 id="ch5-typical-day">A Typical Day — Sales/Marketing</h2>
-<p>Dana runs sales and marketing for a two-truck outfit. Once
-<code>SalesMarketingRoot</code> is wired into <code>index.ts</code>'s routes, Dana's day
+<p>Dana runs sales and marketing for a two-truck outfit. Dana's day
 inside JobCore looks like this. Each stop below cross-references the real screen file
 and the job-lifecycle states in play, by name, per Chapter 2.</p>
 
 <h3 id="ch5-day-review-library">Morning: Review Library</h3>
 <p>Dana opens <strong>Review Library</strong>
-(<code>screens/ReviewLibrary.tsx</code>) <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>
+(<code>screens/ReviewLibrary.tsx</code>) <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
 to see which customer reviews from recently <a href="#state-closed">closed</a> jobs are
 worth featuring. The list only ever shows reviews the office has already marked
 <code>publish_ok = true</code> — the screen has no code path to display an unpublished
@@ -49,7 +48,7 @@ commission, price-sheet, or payout data ever appears here, by construction, sinc
 
 <h3 id="ch5-day-pitch-picker">Mid-Morning: Pitch Picker</h3>
 <p>Dana wants to build a post and opens <strong>Pitch Picker</strong>
-(<code>screens/PitchPicker.tsx</code>) <span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>,
+(<code>screens/PitchPicker.tsx</code>) <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>,
 which presents four pitch angles: Service line, Community, Seasonal, and Before/after.
 Picking one hands the angle straight to Composer as a pre-filter for candidate assets —
 no navigator is involved; <code>SalesMarketingRoot</code> wires all four screens as
@@ -59,7 +58,7 @@ Chapter 4), so "navigate to Composer" here means a caller-supplied
 
 <h3 id="ch5-day-composer">Composing the Post</h3>
 <p>In <strong>Composer</strong> (<code>screens/Composer.tsx</code>)
-<span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span>, Dana works
+<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>, Dana works
 through several honest guardrails:</p>
 <ul>
 <li><strong>Suggested caption is a template, not a claim.</strong> The suggestion is
@@ -94,7 +93,7 @@ external process this codebase cannot shorten (see
 
 <h3 id="ch5-day-reporting">End of Day: Reporting</h3>
 <p>Dana checks <strong>Reporting</strong> (<code>screens/Reporting.tsx</code>)
-<span class="jc-badge jc-badge--not-wired">🟡 Built, Not Wired</span> for three
+<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span> for three
 client-side aggregations pulled from real ports: posts by platform and month (from
 <code>campaign_log</code>), assets used vs. total marketing assets (from
 <code>marketing_assets</code>, counting <code>approved_for_public</code>), and reviews
