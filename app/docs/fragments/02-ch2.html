@@ -6,7 +6,7 @@ transition table — <code>TRANSITIONS</code> in
 <code>packages/core/src/state-machine.ts</code> — is the <strong>only</strong> place
 transition legality is decided. No screen, module, or hook reimplements this logic
 with a scattered <code>if</code>; every UI affordance asks <code>canTransition</code>
-instead. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+instead. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></p>
 
 <h2 id="ch2-spine">The Job Spine</h2>
 <p>The main line runs:</p>
@@ -185,7 +185,7 @@ transition rather than silently dropping the row.</p>
 (<code>supabase/0001_foundation.sql</code>, lines 45–56) has no dedicated columns
 for any of them. All five ride inside the table's existing <code>metadata</code>
 jsonb column instead. Rows are insert-only and never updated.
-<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></p>
 
 <h2 id="ch2-rls">Platform Foundation: Tenant Isolation (RLS) Hardening</h2>
 <p>The job-lifecycle table above sits on top of Postgres Row Level Security, and that
@@ -227,6 +227,6 @@ only and does not block the manual's claims about the payment/review module.</p>
 <p>All four suites were reverified against production on 2026-08-13:
 <code>AC-7</code> PASS, <code>AC-8.2</code> PASS, <code>AC-RV-2</code> diagnosed
 (no defect), <code>AC-12.1c</code> PASS.
-<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></p>
 
 </section>

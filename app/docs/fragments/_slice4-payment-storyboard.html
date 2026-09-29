@@ -24,7 +24,7 @@
       (<code>issue_handoff_token</code> RPC, <code>modules/payment-review/src/domain/handoff.ts</code>)
       to the public handoff web app at <code>web/handoff/</code>. QR *rendering* is explicitly out of
       scope for this slice per the file's own TODO — only the token/URL is issued.
-      <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></li>
+      <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
     <li>Customer picks a payment method on the handoff site; the state machine settles into
       <a href="#state-paid">state-paid</a> once a <code>payments</code> row reaches
       <code>confirmed</code> (webhook) or <code>manual_confirmed</code> (tech/office manual entry).</li>
@@ -60,7 +60,7 @@
           <code>checkout.session.completed</code> or <code>payment_intent.succeeded</code> updates the
           matching <code>payments</code> row (looked up by <code>external_ref</code>) to
           <code>status='confirmed'</code>. No card data (PAN/CVV/card_number) is ever read or logged.</td>
-        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+        <td><span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></td>
       </tr>
       <tr>
         <td>Card (PayPal)</td>
@@ -69,7 +69,7 @@
           (transmission-id/time/cert-url/auth-algo/sig headers + OAuth2 client-credentials token),
           then on <code>PAYMENT.CAPTURE.COMPLETED</code> or <code>CHECKOUT.ORDER.APPROVED</code>
           updates the matching <code>payments</code> row to <code>status='confirmed'</code>.</td>
-        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+        <td><span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></td>
       </tr>
       <tr>
         <td>Cash</td>
@@ -80,14 +80,14 @@
           tech-confirm UI flow (governed by the <code>payments_tech_confirm_whitelist</code> trigger,
           0010_payment_review.sql, which restricts a non-admin caller to setting only
           <code>status='manual_confirmed'</code>, <code>confirmed_at</code>, <code>confirmed_by</code>).</td>
-        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+        <td><span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></td>
       </tr>
       <tr>
         <td>Check</td>
         <td><code>modules/payment-review/src/domain/providers/check.ts</code></td>
         <td>Identical pattern to Cash — no <code>confirm</code> method, <code>buildHandoffAction</code>
           returns <code>null</code>, manual tech/office confirmation via the same whitelist trigger.</td>
-        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+        <td><span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></td>
       </tr>
       <tr>
         <td>P2P link (Venmo / CashApp / Zelle)</td>
@@ -97,7 +97,7 @@
           (<code>P2PLinkConfig</code>); the bare <code>P2PLinkProvider</code> export has no config bound
           and always returns <code>null</code> — a caller needing a real handoff must use the factory.
           Settlement is manual confirmation, same whitelist-trigger path as Cash/Check.</td>
-        <td><span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span></td>
+        <td><span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></td>
       </tr>
     </tbody>
   </table>

@@ -27,7 +27,7 @@
     and <code>add-pay-period-note</code> ("Add Pay Period Note"). These are registered on the module object
     and available to the host's job-action menu wiring, but this slice did not trace their end-to-end
     invocation path from a job card into a working screen, so they're marked
-    <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span> rather than Built &amp; Live.
+    <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span> rather than Built &amp; Live.
   </p>
   <p>
     Everything else under <code>modules/admin-finance/src/screens/</code> —
@@ -39,7 +39,7 @@
     price sheets, reimbursements, reporting) sitting behind a rich domain and money layer
     (<code>src/domain/</code>, <code>src/money/</code>, <code>src/reporting/</code>, <code>src/flows/</code>).
     None of it appears in <code>adminFinanceModule.routes</code> or <code>navEntries</code>, so none of it is
-    reachable by navigating the running app today. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+    reachable by navigating the running app today. <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     <code>LeadInboxScreen</code> (titled "Leads") and <code>QualifyScreen</code> are the exception —
     reachable via the Leads tab, described below.
     The walkthroughs below narrate this fuller screen set as the module's intended day-to-day shape, with
@@ -78,7 +78,7 @@
       <code>flows/assign-job.ts</code> and <code>domain/assignment-warnings.ts</code>, would drive
       <a href="#state-scheduled">state-scheduled</a> → <a href="#state-assigned">state-assigned</a>, cross-
       checking the <code>AxisPicker</code>/<code>TechColumn</code> components and surfacing conflicts via
-      <code>WarningSheet</code>. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      <code>WarningSheet</code>. <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Resolve a reschedule.</strong> When a tech or the state machine reports
@@ -102,13 +102,13 @@
       <a href="#state-completed">state-completed</a> / <a href="#state-paid">state-paid</a> and pushes them
       to <a href="#state-closed">state-closed</a> — the same plain OFFICE transition Chapter 2 documents,
       with no precondition on that specific step.
-      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Maintain price sheets.</strong> <code>PriceSheetListScreen</code> /
       <code>PriceSheetEditorScreen</code>, over <code>data/price-sheet-repo.ts</code> and
       <code>data/price-sheet-feed.ts</code>, are the intended home for the <code>view-price-sheet</code>
-      jobAction's underlying data. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      jobAction's underlying data. <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Check the audit trail.</strong> Per-job audit/activity history no longer lives on a
@@ -116,7 +116,7 @@
       <code>ReportsScreen</code>: Admin &amp; Finance &gt; Reports &gt; a group &gt; a job, landing on
       that job's detail screen's Activity section, which shows who changed what — useful for
       confirming who forced a transition like a reschedule resolution or a manual close-out.
-      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
   </ol>
 
@@ -130,7 +130,7 @@
     <li>
       <strong>Review reimbursements.</strong> <code>ReimbursementQueueScreen</code>, over
       <code>data/reimbursement-repo.ts</code>, is where tech-submitted expense reimbursements would be
-      reviewed and approved. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      reviewed and approved. <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Run payout batches.</strong> <code>PayoutBatchScreen</code>, over
@@ -140,7 +140,7 @@
       periods roll up billable hours, bonuses, and commission into a batch a tech gets paid from. The
       money-layer test coverage (<code>money/__assertions__/</code>: payout-freeze, publish-plan, rollup)
       suggests the calculation logic itself is more mature than its screen's reachability.
-      <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Confirm cash/check/P2P payments an Admin or tech reported.</strong> Jobs reaching
@@ -152,13 +152,13 @@
     <li>
       <strong>Pull reports.</strong> <code>ReportsScreen</code>, over <code>reporting/revenue.ts</code>,
       <code>reporting/group-by.ts</code>, and <code>reporting/slot-hit-rate.ts</code>, is the intended
-      revenue/utilization reporting surface. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+      revenue/utilization reporting surface. <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
     </li>
     <li>
       <strong>Add a pay-period note.</strong> The <code>add-pay-period-note</code> jobAction is the
       per-job hook into this reconciliation work, though — as with <code>view-price-sheet</code> — this
       slice did not verify its end-to-end wiring from a job card.
-      <span class="jc-badge jc-badge-built-unverified">🟠 Built, Unverified</span>
+      <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span>
     </li>
   </ol>
 

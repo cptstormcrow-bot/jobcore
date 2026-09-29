@@ -4,7 +4,7 @@
   <section class="jc-appendix" id="appendix-a-platform-notes">
     <h2 id="appendix-a-platform-notes">Appendix A: Platform Notes</h2>
     <p>
-      <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>
+      <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
       JobCore's mobile app workstream targets iOS first. An Android build is a tracked
       workstream, not yet delivered — there is no Android-specific screen inventory to
       document in this manual. Field Techs, Sales/Marketing staff, and Admin/Accountant
@@ -21,7 +21,7 @@
   <section class="jc-appendix" id="appendix-b-handoff-deep-links">
     <h2 id="appendix-b-handoff-deep-links">Appendix B: Handoff &amp; Deep Links</h2>
     <p>
-      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
       The customer-facing handoff page (`web/handoff`) is where a homeowner lands to pay
       or review a job outside the mobile app. Token resolution is implemented in
       <code>router.ts</code>'s <code>readTokenFromLocation()</code>:
@@ -50,7 +50,7 @@
     </p>
     <h3 id="appendix-b-awaiting-payment-screen">The awaiting_payment screen</h3>
     <p>
-      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
       For a customer-paid job, the handoff page opens at <code>awaiting_payment</code>,
       rendered by <code>awaitingPayment.ts</code>'s <code>renderAwaitingPayment()</code>.
       This is the real, on-site payment-provider picker: it lists the job's enabled
@@ -77,7 +77,7 @@
   <section class="jc-appendix" id="appendix-c-component-reference">
     <h2 id="appendix-c-component-reference">Appendix C: Component Reference</h2>
     <p>
-      <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>
+      <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
       JobCore's shared UI package (<code>packages/ui</code>) is the mockup/component
       catalog used across the mobile app's module screens. As built today, it exports:
     </p>
@@ -94,7 +94,7 @@
       <li><code>DatePicker</code></li>
     </ul>
     <p class="jc-footnote" id="appendix-c-footnote-barrel-export">
-      <span class="jc-badge jc-badge--built-not-wired">🟡 Built, Not Wired</span>
+      <span class="jc-badge jc-badge-not-wired">🟡 Built, Not Wired</span>
       <strong>Footnote:</strong> <code>Checkbox.tsx</code> and <code>Toggle.tsx</code>
       exist as component source in <code>packages/ui/src</code> and are compiled to
       <code>dist/Checkbox.js</code> and <code>dist/Toggle.js</code>, but neither is

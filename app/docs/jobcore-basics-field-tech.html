@@ -38,7 +38,7 @@ with <code>requiredRoles: ['owner', 'admin', 'tech']</code> and
 (<code>modules/field-tech/src/index.ts</code>). Every screen in this module is ZERO
 financial fields by construction — hours, commissions, reimbursements, and bonus live
 only on the <a href="#ch4-day-earnings">Earnings</a> stop below, never on the job-detail
-or completion screens. <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span></p>
+or completion screens. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></p>
 
 <h2 id="ch4-typical-day">A Typical Day — Service Technician</h2>
 <p>Marcus is a field tech for a two-truck outfit. This is the fullest persona
@@ -50,7 +50,7 @@ override forbids importing <code>applyTransition</code> directly from
 
 <h3 id="ch4-day-daylist">Morning: Day List</h3>
 <p>Marcus opens the app and lands on <strong>DayList</strong>
-(<code>screens/DayList.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+(<code>screens/DayList.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>,
 the module's default route when no per-job flow is active
 (<code>FieldTechRoot</code>'s <code>subView === 'jobs'</code> tab). The list shows only
 jobs assigned to Marcus — not by any client-side filter, but purely because
@@ -62,7 +62,7 @@ job stands out from one already <a href="#state-accepted">accepted</a> or
 
 <h3 id="ch4-day-greeting">First Stop: Greeting</h3>
 <p>Tapping a freshly assigned job opens <strong>Greeting</strong>
-(<code>screens/Greeting.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+(<code>screens/Greeting.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>,
 offering Marcus accept/decline on a job in <a href="#state-assigned">state-assigned</a>.
 Decline requires a non-empty reason — the screen writes a <code>job_notes</code> row
 (<code>kind='decline_reason'</code>) before calling
@@ -75,7 +75,7 @@ forward, not by a dedicated button firing its own transition.</p>
 
 <h3 id="ch4-day-onmyway">Heading Out: On My Way</h3>
 <p>From <strong>StartChecklist</strong> (<code>screens/StartChecklist.tsx</code>)
-<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span> Marcus taps
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span> Marcus taps
 "On my way," which fires <code>transitionJob(job, 'en_route', ctx)</code> — this is the
 same <code>jobActions</code> entry (<code>id: 'on-my-way'</code>) the shared Job Detail
 action bar exposes, registered in <code>fieldTechModule.jobActions</code>. The job is
@@ -94,11 +94,11 @@ submission in the module's sync-readable singleton (so
 <code>transitionJob(job, 'in_progress', ctx)</code> — the state-completed precondition
 Chapter 2 calls the <a href="#ch2-preconditions">start-checklist precondition</a>. Job is
 now <a href="#state-in_progress">state-in_progress</a>.
-<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span></p>
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></p>
 
 <h3 id="ch4-day-jobdetail">Mid-Job: Field Job Detail</h3>
 <p>Marcus can check job specifics any time on <strong>FieldJobDetail</strong>
-(<code>screens/FieldJobDetail.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>,
+(<code>screens/FieldJobDetail.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>,
 a module-local detail screen — deliberately not the shared <code>apps/mobile</code>
 <code>JobDetail.tsx</code>, since field-tech's isolation rule forbids importing
 anything from <code>apps/mobile</code>. Tap-to-call uses a caller-supplied
@@ -107,7 +107,7 @@ construction rule as every other screen in this module.</p>
 
 <h3 id="ch4-day-completion">Finishing Up: Completion</h3>
 <p>When the work is done, Marcus opens <strong>Completion</strong>
-(<code>screens/Completion.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>.
+(<code>screens/Completion.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>.
 He checks off the completion checklist, captures at least one after-photo
 (<code>ports.photos.create</code>, kind <code>'after'</code>), and types quality notes —
 the submit button stays disabled until all three are satisfied. Ordering here is
@@ -131,7 +131,7 @@ still a gap.</p>
 <p>Once Marcus submits Completion, the customer is handed off via a signed, expiring,
 single-job-scoped QR token (<code>issue_handoff_token</code> RPC,
 <code>modules/payment-review/src/domain/handoff.ts</code>) to the public handoff web app
-at <code>web/handoff/</code>. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span>
+at <code>web/handoff/</code>. <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span>
 QR code <em>rendering</em> is explicitly out of scope here — only the token/URL is
 issued today; Marcus hands the phone to the homeowner or the homeowner scans a code
 Marcus doesn't yet have a screen to display.</p>
@@ -140,7 +140,7 @@ Marcus doesn't yet have a screen to display.</p>
 <p><em>Storyboarded, not built</em> — a homeowner-satisfaction confirmation step ahead
 of payment capture, the moment where the homeowner would sign off on the work before
 being asked to pay. No such gate exists in <code>state-machine.ts</code>, the
-payment-review module, or the handoff screens. <span class="jc-badge jc-badge--open-gap">⚪ Open Gap (Roadmap)</span>
+payment-review module, or the handoff screens. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
 Today the homeowner goes straight from Marcus's handoff into picking a payment method.</p>
 
 <h3 id="ch4-payment-methods">The Four Payment Methods</h3>
@@ -150,19 +150,19 @@ reaches <a href="#state-completed">state-completed</a>):</p>
 <ul>
 <li><strong>Card (Stripe)</strong> — <code>supabase/functions/stripe-webhook/index.ts</code>
 confirms the matching <code>payments</code> row via signature-verified webhook. No card
-data is ever read or logged. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+data is ever read or logged. <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
 <li><strong>Card (PayPal)</strong> — <code>supabase/functions/paypal-webhook/index.ts</code>
 confirms via PayPal's server-side signature-verification API.
-<span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+<span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
 <li><strong>Cash</strong> — <code>modules/payment-review/src/domain/providers/cash.ts</code>,
 not webhook-capable by design; Marcus (or the office) confirms receipt in person, which
 sets <code>status='manual_confirmed'</code> under a whitelist trigger that restricts a
-non-admin caller to only that status/confirmed-at/confirmed-by. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+non-admin caller to only that status/confirmed-at/confirmed-by. <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
 <li><strong>Check</strong> — <code>modules/payment-review/src/domain/providers/check.ts</code>,
-same manual-confirmation pattern as Cash. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+same manual-confirmation pattern as Cash. <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
 <li><strong>P2P link (Venmo / CashApp / Zelle)</strong> — <code>modules/payment-review/src/domain/providers/p2p-link.ts</code>,
 an org-configured handle/URL the homeowner pays to directly, settled by the same manual
-confirmation as Cash/Check. <span class="jc-badge jc-badge--built-unverified">🟠 Built, Unverified</span></li>
+confirmation as Cash/Check. <span class="jc-badge jc-badge-unverified">🟠 Built, Unverified</span></li>
 </ul>
 <p>Once a <code>payments</code> row reaches <code>confirmed</code> (webhook) or
 <code>manual_confirmed</code> (manual entry), the job settles into
@@ -177,7 +177,7 @@ Marcus would never see it even if it were reachable. It isn't: confirmed by dire
 search, the <code>payment-review</code> module is NOT registered in
 <code>apps/mobile/src/modules.ts</code> today — no reference to it exists there. The
 module, its screen, and this jobAction are unreachable from the running mobile app.
-<span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span> See Chapter 6 for
+<span class="jc-badge jc-badge-not-reachable">🔴 Not Reachable</span> See Chapter 6 for
 the module's full architecture/status detail.</p>
 
 <h3 id="ch4-payment-closing">Office Closes It Out</h3>
@@ -189,7 +189,7 @@ outside his screens.</p>
 
 <h2 id="ch4-day-earnings">End of Day: Earnings</h2>
 <p>Marcus checks <strong>Earnings</strong> (<code>screens/Earnings.tsx</code>)
-<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span> — the one screen
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span> — the one screen
 in this module that's allowed to show money. Derived hours use
 <code>job.inProgressAt</code>/<code>job.completedAt</code>, the device-clock
 <code>occurred_at</code> stamps written by <code>applyTransition</code> — never
