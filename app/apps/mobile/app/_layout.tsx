@@ -9,6 +9,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } f
 import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay } from '@jobcore/ui';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
+import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
 import { SyncIndicator } from '../src/components/SyncIndicator';
 import { countPending } from '../src/lib/offline-db';
@@ -112,6 +113,8 @@ function AuthGate() {
     );
   } else if (state.status === 'unauthenticated' && !onSignIn) {
     overlay = <Redirect href="/sign-in" />;
+  } else if (state.status === 'authenticated' && onSignIn && state.profile.role === 'admin' && getEnabledModules(state.organization, 'admin').some((m) => m.id === 'admin-finance')) {
+    overlay = <Redirect href="/m/admin-finance" />;
   } else if (state.status === 'authenticated' && onSignIn) {
     overlay = <Redirect href="/" />;
   }
