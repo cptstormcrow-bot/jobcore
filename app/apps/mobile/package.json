@@ -9,7 +9,8 @@
     "ios": "expo run:ios",
     "build:preview": "eas build --profile preview",
     "build:production": "eas build --profile production",
-    "submit:production": "eas submit --profile production"
+    "submit:production": "eas submit --profile production",
+    "build:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
