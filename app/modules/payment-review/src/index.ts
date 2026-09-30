@@ -1,5 +1,5 @@
 /**
- * payment-review module registration (P5.S2 scaffold; P5.S4 wires the real
+ * payment-review module registration (retired; payment review lives under Admin & Finance → Payments; P5.S2 scaffold; P5.S4 wires the real
  * `hasPaymentRecord` probe).
  *
  * Mirrors `modules/field-tech/src/index.ts`'s registration shape: this file
@@ -19,7 +19,8 @@ import { hasSettledPaymentForJob, type SupabaseSelectClient } from './data/ports
 import { ReconciliationView } from './screens/ReconciliationView';
 
 /**
- * Injection seam for the Supabase client `hasSettledPaymentForJob` queries.
+ * Injection seam for the Supabase client `hasSettledPaymentForJob` queries
+ * (module retired; payment review lives under Admin & Finance → Payments).
  * Optional-shaped like `module-session.ts`'s session getter (no module has
  * a real Supabase client wired into this module yet — that lands with the
  * real screens, S3+) — `getSupabaseClient` returns `null` rather than
@@ -53,7 +54,8 @@ function PaymentReviewScreen(): React.ReactElement {
 }
 
 /**
- * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.
+ * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`
+ * (module retired; payment review lives under Admin & Finance → Payments).
  * Mirrors field-tech's `buildTransitionCtx` shape: no `module-session`/
  * `module-ports` wiring exists for this module yet (that lands with the
  * real screens), so `hasSubmittedStartChecklist`/`hasAfterPhotos`/
@@ -89,9 +91,11 @@ function buildTransitionCtx(): Ctx {
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
+ * Module retired; payment review lives under Admin & Finance → Payments.
+ *
  * displayName / requiredRoles / navEntries follow field-tech's pattern:
  * a documented placeholder assumption for this scaffold slice, not a spec
- * value. owner/admin see this module; a tech does not, since the
+ * value. owner/admin saw this module while active; a tech did not, since the
  * payment/review handoff flow in this slice is admin-facing configuration
  * only.
  */

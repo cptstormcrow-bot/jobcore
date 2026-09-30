@@ -1,4 +1,7 @@
 /**
+ * (Retired and unregistered; payment review lives under Admin & Finance →
+ * Payments.)
+ *
  * payment-review's sole call site for the shared state machine's
  * applyTransition. Structurally identical to field-tech's
  * `domain/transition.ts` (S2 scaffolding) — see that file's header for the

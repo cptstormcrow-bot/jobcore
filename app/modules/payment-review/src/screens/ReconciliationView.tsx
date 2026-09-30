@@ -1,6 +1,10 @@
 /**
  * Reconciliation screen for the payment-review module.
  *
+ * (retired; payment review lives under Admin & Finance → Payments; module
+ * retired and unregistered — this screen is no longer reachable from any
+ * menu or tab.)
+ *
  * Shows two sections:
  *  - Needs attention: payments whose `status` is `'pending'` or `'failed'`
  *    (queried against the `payments` table's `status` column).

@@ -14,6 +14,7 @@ import { qualifyLead } from '../../../../modules/admin-finance/src/flows/qualify
 import { approveEstimate } from '../../../../modules/admin-finance/src/flows/approve-estimate';
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
 import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
+import { SETTLED_PAYMENT_STATUSES } from '../../../../modules/admin-finance/src/data/ports';
 import { rollUpPeriodPay, type PayrollTech, type PayPeriod } from '../../../../modules/admin-finance/src/money/rollup';
 import type { Lead } from '../../../../modules/admin-finance/src/domain/lead';
 import type { CompensationPolicy, PriceSheetRate, TimeSegment } from '../../../../modules/admin-finance/src/money/types';
@@ -316,7 +317,6 @@ export async function runJobSimulator(organizationId: string, actorProfile: Prof
     } else {
       const payments = createPaymentsRepository();
       const existing = await payments.listForJob(job.id);
-      const SETTLED_PAYMENT_STATUSES = ['settled', 'paid'];
       const settled = existing.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
       const amount = approvedTotalCost || 0;
       if (!settled) {
