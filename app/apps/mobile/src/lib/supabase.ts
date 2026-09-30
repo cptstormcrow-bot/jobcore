@@ -96,7 +96,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
     'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and ' +
       'EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env (see app/.env.example), or supply ' +
       '`extra.supabaseUrl` / `extra.supabaseAnonKey` in app.json. ' +
-      'EXPO_PUBLIC_* vars are inlined at build time — restart the bundler after editing .env.',
+      'EXPO_PUBLIC_* vars are inlined at bundle time from apps/mobile/.env — restart the bundler after editing .env. ' +
+      'For the release APK, run `npm run build:apk` (gradlew assembleRelease) in the main checkout where .env exists; ' +
+      'without it the APK ships with no Supabase config (the build preflight blocks this).',
   );
 }
 

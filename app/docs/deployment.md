@@ -99,6 +99,47 @@ variable configuration (per-profile, via `eas env` or the EAS dashboard) so
 that `development`/`preview`/`production` builds can point at different
 Supabase projects if needed (e.g. a staging project for `preview`).
 
+## Local Android APK build
+
+A standalone release APK can be built locally with Gradle, replacing the EAS
+cloud build for this APK. The app stays on Expo SDK 52. iOS is a separate,
+later track.
+
+Run from `app/apps/mobile`:
+
+```
+npm run build:apk
+```
+
+This wraps `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1`.
+It runs three stages:
+
+1. **PREFLIGHT** — checks that `android/` and `.env` are present, finds a
+   JDK >= 17, and finds the Android SDK build-tools.
+2. **BUILD** — maps a short `subst` drive (default `Z:`), runs
+   `gradlew assembleRelease`, and always unmaps the drive in a `finally` block.
+3. **VERIFY** — `apksigner verify`, `aapt` badging check, and a SHA256 hash.
+
+Output: Gradle writes `android/app/build/outputs/apk/release/app-release.apk`;
+the script copies it to `app/apps/mobile/jobcore-<version>-vc<versionCode>.apk`.
+
+Flags:
+
+- `-PreflightOnly` — run only the PREFLIGHT stage.
+- `-Abi <abi>` — build a single ABI (e.g. `arm64-v8a`).
+- `-JavaHome <path>` — use this JDK instead of auto-detection.
+- `-Drive 'Z:'` — the `subst` drive letter to map.
+
+Notes and pitfalls:
+
+- **Run it in the main checkout** (`E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\apps\mobile`).
+  `android/` and `.env` are gitignored and exist only there, so worktrees fail
+  PREFLIGHT by design.
+- The release APK is signed with the debug keystore, so it is sideload-only and
+  not suitable for the Play Store.
+- A stale system `JAVA_HOME` (e.g. Java 1.4) is skipped with a WARN; the script
+  falls back to Android Studio's bundled `jbr` (JDK 21). Override with `-JavaHome`.
+
 ## What this document does not cover
 
 - Actually creating or linking an EAS project — that requires an

@@ -69,6 +69,43 @@ accepting the port-8082 fallback:
     tasklist /FI "PID eq <PID from previous line>"
     taskkill /PID <PID> /F
 
+## Build a sideload APK (Android)
+
+The APK is the preferred on-device path for a phone; the Expo dev server above remains the
+development loop.
+
+```
+npm run build:apk
+```
+
+This runs `scripts/build-apk.ps1` in three stages:
+
+1. **PREFLIGHT** — checks prerequisites (Java, Android SDK build-tools, `android/`, `.env`).
+2. **BUILD** — maps a short `subst` drive and runs `gradlew assembleRelease`; the drive is always
+   unmapped afterwards.
+3. **VERIFY** — `apksigner` signature check, `aapt` badging check, and a SHA256 of the APK.
+
+Output: `jobcore-<version>-vc<versionCode>.apk` in this folder (copied from
+`android/app/build/outputs/apk/release/app-release.apk`).
+
+Flags (pass after `--` so npm appends them to the script):
+
+| Flag | Purpose |
+| --- | --- |
+| `-PreflightOnly` | Check prerequisites without building: `npm run build:apk -- -PreflightOnly` |
+| `-Abi <abi>` | Build a single ABI, e.g. `-Abi arm64-v8a` |
+| `-JavaHome <path>` | Use a specific JDK instead of auto-detection |
+| `-Drive 'Z:'` | Choose the `subst` drive letter |
+
+Notes:
+
+- Requires `android/` and `.env` (both gitignored, present in the main checkout only). Never commit
+  `.env` values.
+- Signed with the debug keystore, so the APK is sideload-only (not for the Play Store).
+- A stale system `JAVA_HOME` (Java 1.4) is skipped; the Android Studio `jbr` (JDK 21) is used.
+  Override with `-JavaHome`.
+- Full procedure: `app/docs/deployment.md`.
+
 ## Status — dependencies are installed
 
 **`npm install` has been run from `Jobcore/app/`.** `node_modules` and `package-lock.json`

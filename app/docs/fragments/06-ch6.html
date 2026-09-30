@@ -92,4 +92,15 @@
     <a href="09-ch7.html#ch7-roadmap">Chapter 7's open-gap roadmap</a> for this item's tracking
     entry.
   </p>
+
+  <h2 id="ch6-android-install">Getting the App on an Android Phone</h2>
+  <p>
+    The Android app is a sideload APK built on the office PC with <code>npm run build:apk</code>
+    (run from <code>app/apps/mobile</code> in the main checkout, which holds the
+    <code>android/</code> folder and the <code>.env</code> config). The script checks the setup,
+    builds, then verifies the APK; the finished APK is copied to the Desktop and installed on the
+    phone by hand (allow "install unknown apps"). It is not a Play Store build (signed with a
+    debug key), so it is for our own phones only. Full steps: <code>app/docs/deployment.md</code>,
+    "Local Android APK build".
+  </p>
 </section>
