@@ -5,6 +5,7 @@ import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
+import { SETTLED_PAYMENT_STATUSES } from './data/ports';
 import { submitEstimate } from './flows/submit-estimate';
 import { approveEstimate } from './flows/approve-estimate';
 
@@ -54,9 +55,8 @@ export const adminFinanceModule: JobcoreModule = {
       id: 'close-out-and-mark-paid',
       label: 'Close Out & Mark Paid',
       onInvoke: async (job: Job) => {
-        // Distinct id from payment-review's own 'mark-paid' (jobActions ids
-        // are not checked for uniqueness across modules — Workstream D
-        // deregisters that one; until then both are live).
+        // Distinct id from the retired payment-review module's 'mark-paid'
+        // (folded into this module as 'admin-finance-mark-paid' below).
         //
         // `closeOutJob` (flows/close-out-job.ts) needs `calendarEvents`
         // (CalendarEventRepository) plus a resolved `compensationPolicy` and
@@ -82,16 +82,24 @@ export const adminFinanceModule: JobcoreModule = {
     // Folded in from the retired payment-review module (Workstream D).
     // Renamed from payment-review's own `mark-paid` id to avoid a future
     // collision now that both actions live in the same module's jobActions
-    // array. Same transition: `transitionJob(job, 'paid', ctx)`, but `ctx`
-    // comes from this module's own `buildTransitionCtx()` (real injected
-    // `session.role`), not payment-review's hardcoded `role: 'admin'`
-    // scaffold.
+    // array. `ctx` comes from this module's own `buildTransitionCtx()` (real
+    // injected `session.role`). `completed -> paid` needs a payment record
+    // when the payer is the customer, but `readSyncProbe` only accepts a
+    // synchronous boolean (a Promise probe always fails closed), so the
+    // payments are awaited FIRST and passed in as a resolved closure. A
+    // transition does not persist, so on success the new status is saved
+    // through `jobs.updateStatus`.
     {
       id: 'admin-finance-mark-paid',
       label: 'Mark Paid',
       onInvoke: async (job: Job) => {
-        const ctx = buildTransitionCtx();
+        const ports = getModulePorts();
+        const ps = await ports.payments.listForJob(job.id);
+        const settled =
+          job.payer !== 'customer' || ps.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
+        const ctx: Ctx = { ...buildTransitionCtx(), hasPaymentRecord: () => settled };
         await transitionJob(job, 'paid', ctx);
+        await ports.jobs.updateStatus(job.id, 'paid');
       },
     },
     {
@@ -130,7 +138,7 @@ export const adminFinanceModule: JobcoreModule = {
       },
     },
   ],
-  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0014_job_planning.sql'],
+  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0033_job_planning.sql'],
 };
 
 export default adminFinanceModule;
