@@ -13,6 +13,8 @@ import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
 import { useSession, signOut } from '../../src/lib/session';
+import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
+import { useModuleInjection } from '../../src/lib/useModuleInjection';
 import { supabase } from '../../src/lib/supabase';
 import {
   createJobRepository,
@@ -206,6 +208,13 @@ export default function JobDrilldownScreen() {
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const isAdmin = role === 'admin';
+  const enabledIds: string[] =
+    session.status === 'authenticated'
+      ? getEnabledModules(session.organization, session.profile.role).map((m) => m.id)
+      : [];
+  useModuleInjection(session, enabledIds.includes('admin-finance') ? 'admin-finance' : undefined);
+  useModuleInjection(session, enabledIds.includes('field-tech') ? 'field-tech' : undefined);
+  useModuleInjection(session, enabledIds.includes('sales-marketing') ? 'sales-marketing' : undefined);
 
   if (session.status === 'authenticated' && org && role) {
     setModuleSession({ org, role, userId: session.profile.id });
@@ -958,8 +967,8 @@ export default function JobDrilldownScreen() {
         now: () => new Date().toISOString(),
         hasPaymentRecord: () => true,
       });
-      setJob(updated);
       await createJobRepository().updateStatus(job.id, 'paid');
+      setJob(updated);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Mark paid failed.';
       setSaveError(message);
@@ -967,6 +976,60 @@ export default function JobDrilldownScreen() {
     } finally {
       setBusyAction(null);
     }
+  };
+
+  const SKIPPED_MODULE_ACTION_IDS = ['admin-finance-mark-paid', 'close-out-and-mark-paid'];
+  const moduleActions: JobAction[] =
+    session.status === 'authenticated' && job
+      ? getEnabledModules(session.organization, session.profile.role)
+          .flatMap((m) => m.jobActions ?? [])
+          .filter(
+            (a) =>
+              !SKIPPED_MODULE_ACTION_IDS.includes(a.id) &&
+              !!a.onInvoke &&
+              (!a.visibleWhen || a.visibleWhen(job)),
+          )
+      : [];
+
+  const runModuleAction = async (action: JobAction): Promise<void> => {
+    if (!job || !action.onInvoke) return;
+    setBusyAction(action.id);
+    setActionError(null);
+    try {
+      await action.onInvoke(job);
+      if (org?.id && jobId) {
+        const { data } = await supabase
+          .from('jobs')
+          .select(JOB_ROW_COLUMNS)
+          .eq('organization_id', org.id)
+          .eq('id', jobId)
+          .maybeSingle<JobRow>();
+        if (data) setJob(toJob(data));
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `${action.label} failed.`;
+      setSaveError(message);
+      setActionError(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const confirmModuleAction = (action: JobAction): void => {
+    const title = action.label;
+    const body = `${action.label} for this job?`;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}
+
+${body}`)) {
+        void runModuleAction(action);
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: () => void runModuleAction(action) },
+    ]);
   };
 
   if (loading) {
@@ -1047,7 +1110,9 @@ export default function JobDrilldownScreen() {
     { id: 'contact', label: 'Contact', onPress: handleContact },
     { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
     { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
-    { id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() },
+    ...(isAdmin || (role as string | undefined) === 'owner'
+      ? [{ id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() }]
+      : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
       id: 'configuration',
@@ -1078,6 +1143,19 @@ export default function JobDrilldownScreen() {
           onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
           assigningTech={assigning !== null}
         />
+        {moduleActions.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {moduleActions.map((action) => (
+              <Button
+                key={action.id}
+                label={busyAction === action.id ? `${action.label}…` : action.label}
+                variant="outline"
+                onPress={() => confirmModuleAction(action)}
+                disabled={busyAction !== null}
+              />
+            ))}
+          </View>
+        )}
         {region === 'plan' && (
           <PlanningScreen
             embedded
