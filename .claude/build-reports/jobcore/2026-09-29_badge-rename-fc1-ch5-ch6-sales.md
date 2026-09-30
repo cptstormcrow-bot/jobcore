@@ -79,6 +79,7 @@ Forward contracts: none
 ## Deviations / Defects
 - D1 — Premise mismatch: FC1 predicted --live 1 + ~10 and --not-wired 5 in ch5 and sales-payments; measured --live 6 and --not-wired 0 in each, because 5081aa7 had already converted the --not-wired spans to --live. Per-file totals still matched FC1 (9 / 6 / 15).
 - D2 — Blocked step: part (b) push + PR not done; the repo has no git remote (`git remote -v` empty). Awaiting Jeff's remote URL; no remote added.
+- Superseded 2026-09-30: no push was needed, because the repo has no remote. The work landed locally instead. Merge commit `f11cad6` merged `main` into `claude/blissful-ishizaka-daaa0b` (the conflicts in `05-ch5.html` and `jobcore-basics-sales-payments.html` were resolved `--ours`; they were proved identical via patch-id). Then `main` was fast-forwarded `f3ae3b4` → `f11cad6` with `git fetch . HEAD:main`. Nothing was pushed.
 - D3 — Constraint breach: before an earlier compaction, agent `.output` transcript files were tailed via the shell; stopped once flagged.
 - D4 — Rule 18 breach: the Wave 2 Spot dispatch went out without the one-line chat narration (persona in description only).
 - D5 — Hound return defect: Nestor's memory-file hand-back (jobcore-supabase-migration-pending.md, E:\Jeff commit b8b3d5a) reported only line 20 changed; git also showed line 8 (benign auto-stamped `modified:` timestamp).
