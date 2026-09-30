@@ -4,7 +4,7 @@
 <p class="jc-lede">The Sales &amp; Marketing module (<code>modules/sales-marketing</code>)
 covers review curation, marketing-post composition, and organic-post reporting. It
 registers with <code>requiredRoles: ['sales', 'admin', 'owner']</code> — a field tech
-sees no Sales &amp; Marketing entry. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
+sees no Sales &amp; Marketing entry. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
 — <code>modules/sales-marketing/src/index.ts</code> imports
 <code>./screens/SalesMarketingRoot</code> and routes it at <code>sales-marketing</code>
 (wired in commit <code>2dc4fc7</code>, 2026-08-17), so a sales-role user lands on
@@ -18,7 +18,7 @@ for driving a job through <a href="#state-new">new</a> → <a href="#state-quali
 → <a href="#state-scheduled">scheduled</a> → <a href="#state-assigned">assigned</a> —
 those state transitions exist on the job spine (Chapter 2) and are exercised by other
 parts of the app (office/admin job creation and scheduling), not by anything in
-<code>modules/sales-marketing</code>. <span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span>
+<code>modules/sales-marketing</code>. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
 A dedicated lead-pipeline UI inside this module is not built. What this module
 <em>does</em> build is the marketing side of the business: curating published customer
 reviews, composing social posts from real job evidence, and reporting on organic
@@ -32,7 +32,7 @@ and the job-lifecycle states in play, by name, per Chapter 2.</p>
 
 <h3 id="ch5-day-review-library">Morning: Review Library</h3>
 <p>Dana opens <strong>Review Library</strong>
-(<code>screens/ReviewLibrary.tsx</code>) <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
+(<code>screens/ReviewLibrary.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>
 to see which customer reviews from recently <a href="#state-closed">closed</a> jobs are
 worth featuring. The list only ever shows reviews the office has already marked
 <code>publish_ok = true</code> — the screen has no code path to display an unpublished
@@ -48,7 +48,7 @@ commission, price-sheet, or payout data ever appears here, by construction, sinc
 
 <h3 id="ch5-day-pitch-picker">Mid-Morning: Pitch Picker</h3>
 <p>Dana wants to build a post and opens <strong>Pitch Picker</strong>
-(<code>screens/PitchPicker.tsx</code>) <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>,
+(<code>screens/PitchPicker.tsx</code>) <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>,
 which presents four pitch angles: Service line, Community, Seasonal, and Before/after.
 Picking one hands the angle straight to Composer as a pre-filter for candidate assets —
 no navigator is involved; <code>SalesMarketingRoot</code> wires all four screens as
@@ -58,7 +58,7 @@ Chapter 4), so "navigate to Composer" here means a caller-supplied
 
 <h3 id="ch5-day-composer">Composing the Post</h3>
 <p>In <strong>Composer</strong> (<code>screens/Composer.tsx</code>)
-<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>, Dana works
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span>, Dana works
 through several honest guardrails:</p>
 <ul>
 <li><strong>Suggested caption is a template, not a claim.</strong> The suggestion is
@@ -84,7 +84,7 @@ channel <code>'manual'</code>. No API dependency, no App Review requirement.</li
 the <code>meta-publish</code> social provider (an org-level config flag, default OFF).
 With the flag off, no provider resolves and zero network calls to the Meta Edge
 Function — or to <code>graph.facebook.com</code> — ever occur; the screen states plainly
-that direct posting is unavailable rather than showing a broken button. <span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span>
+that direct posting is unavailable rather than showing a broken button. <span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span>
 Direct publishing additionally depends on Meta App Review approval for
 <code>pages_manage_posts</code> and <code>instagram_content_publish</code> — a multi-week
 external process this codebase cannot shorten (see
@@ -93,7 +93,7 @@ external process this codebase cannot shorten (see
 
 <h3 id="ch5-day-reporting">End of Day: Reporting</h3>
 <p>Dana checks <strong>Reporting</strong> (<code>screens/Reporting.tsx</code>)
-<span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span> for three
+<span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span> for three
 client-side aggregations pulled from real ports: posts by platform and month (from
 <code>campaign_log</code>), assets used vs. total marketing assets (from
 <code>marketing_assets</code>, counting <code>approved_for_public</code>), and reviews
@@ -110,12 +110,12 @@ construction.</p>
 registered through a barrel (<code>domain/providers/index.ts</code>) that Composer and
 Reporting resolve through — never a concrete provider import. Today the barrel carries
 one provider, <code>MetaPublishProvider</code> (<code>domain/providers/meta.ts</code>).
-<span class="jc-badge jc-badge--gap">⚪ Open Gap (Roadmap)</span> A future LinkedIn,
+<span class="jc-badge jc-badge-open-gap">⚪ Open Gap (Roadmap)</span> A future LinkedIn,
 Nextdoor, or Google Business Profile provider is a new registered file, not a composer
 refactor — none of those exist yet.</p>
 
 <h2 id="ch5-token-storage">Token Storage</h2>
-<p><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span> Long-lived Meta Page
+<p><span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span> Long-lived Meta Page
 access tokens are stored server-side in Supabase only, in a table with zero
 authenticated-role RLS policies — reachable only by the <code>meta-publish</code> Edge
 Function's service-role key. They are never present in the app bundle and never stored
