@@ -19,6 +19,7 @@
     "@jobcore/core": "*",
     "@jobcore/field-tech": "*",
     "@jobcore/module-sdk": "*",
+    "@jobcore/payment-review": "*",
     "@jobcore/sales-marketing": "*",
     "@jobcore/ui": "*",
     "@opentelemetry/api": "^1.9.1",

@@ -58,7 +58,7 @@ export interface PaymentRow {
  * shapes without widening to the full `@supabase/supabase-js` generic
  * client type.
  */
-type PaymentQueryResult = Promise<{ data: PaymentRow[] | null; error: { message: string } | null }>;
+type PaymentQueryResult = PromiseLike<{ data: PaymentRow[] | null; error: { message: string } | null }>;
 
 interface PaymentFilterChain {
   in(column: string, values: readonly string[]): PaymentQueryResult;
