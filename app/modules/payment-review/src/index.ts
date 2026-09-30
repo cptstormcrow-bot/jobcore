@@ -1,31 +1,28 @@
 /**
- * payment-review module registration (P5.S2 scaffold; P5.S4 wires the real
- * `hasPaymentRecord` probe).
+ * payment-review module registration.
  *
  * Mirrors `modules/field-tech/src/index.ts`'s registration shape: this file
  * assembles the `JobcoreModule` object and exports it — the host is the sole
- * caller of `registerModule`. `requiredRoles`/`routes`/`navEntries`/
- * `jobActions` remain S2 placeholders; screens and providers land in later
- * slices.
+ * caller of `registerModule`. payment-review is a read-only reconciliation
+ * screen (`ReconciliationView`); it registers no job actions. Mark Paid is
+ * owned by admin-finance, not this module.
  */
 
 import * as React from 'react';
 import { LoadingState } from '@jobcore/ui';
 import type { JobcoreModule } from '@jobcore/module-sdk';
-import type { Ctx, Job } from '@jobcore/core';
 
-import { transitionJob } from './domain/transition';
-import { hasSettledPaymentForJob, type SupabaseSelectClient } from './data/ports';
+import type { SupabaseSelectClient } from './data/ports';
 import { ReconciliationView } from './screens/ReconciliationView';
 
+export type { SupabaseSelectClient };
+
 /**
- * Injection seam for the Supabase client `hasSettledPaymentForJob` queries.
- * Optional-shaped like `module-session.ts`'s session getter (no module has
- * a real Supabase client wired into this module yet — that lands with the
- * real screens, S3+) — `getSupabaseClient` returns `null` rather than
- * throwing, and `buildTransitionCtx`'s `hasPaymentRecord` fails closed
- * (returns `false`) when it is unset, matching `readSyncProbe`'s
- * fail-closed discipline in `state-machine.ts`.
+ * Injection seam for the Supabase client `ReconciliationView` queries.
+ * The host (`apps/mobile/app/m/[moduleId].tsx`) injects the client
+ * synchronously in render and clears it (`null`) on unmount.
+ * Optional-shaped like `module-session.ts`'s session getter —
+ * `getSupabaseClient` returns `null` rather than throwing.
  */
 let currentClient: SupabaseSelectClient | null = null;
 
@@ -39,7 +36,7 @@ function getSupabaseClient(): SupabaseSelectClient | null {
 }
 
 /**
- * Root screen for the payment-review route: renders the real
+ * Root screen for the payment-review route: renders the read-only
  * `ReconciliationView` once a Supabase client has been injected via
  * `setSupabaseClient`, falling back to `@jobcore/ui`'s `LoadingState`
  * before that.
@@ -53,64 +50,20 @@ function PaymentReviewScreen(): React.ReactElement {
 }
 
 /**
- * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.
- * Mirrors field-tech's `buildTransitionCtx` shape: no `module-session`/
- * `module-ports` wiring exists for this module yet (that lands with the
- * real screens), so `hasSubmittedStartChecklist`/`hasAfterPhotos`/
- * `hasQualityNotes` remain fixed stand-ins. `hasPaymentRecord` (P5.S4) is
- * the real probe: a partner-paid job (`job.payer !== 'customer'`) skips the
- * payment requirement entirely (P5 acceptance criteria 1-2), matching
- * field-tech's own `hasPaymentRecord` wiring in
- * `modules/field-tech/src/index.ts`; a customer-paid job is satisfied only
- * by a `payments` row in `('confirmed', 'manual_confirmed')`, queried via
- * `hasSettledPaymentForJob` (`./data/ports.ts`).
- */
-function buildTransitionCtx(): Ctx {
-  return {
-    role: 'admin',
-    now: () => new Date().toISOString(),
-    hasSubmittedStartChecklist: async () => true,
-    hasAfterPhotos: async () => true,
-    hasQualityNotes: async () => true,
-    hasPaymentRecord: async (job: Job) => {
-      if (job.payer !== 'customer') {
-        return true;
-      }
-      const client = getSupabaseClient();
-      if (client === null) {
-        return false;
-      }
-      return hasSettledPaymentForJob(client, job.id);
-    },
-  };
-}
-
-/**
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
- * displayName / requiredRoles / navEntries follow field-tech's pattern:
- * a documented placeholder assumption for this scaffold slice, not a spec
- * value. owner/admin see this module; a tech does not, since the
- * payment/review handoff flow in this slice is admin-facing configuration
- * only.
+ * displayName / requiredRoles / navEntries follow field-tech's pattern.
+ * owner/admin see this module; a tech does not, since the reconciliation
+ * screen is admin-facing. No `jobActions`: the host's job menu is
+ * hard-wired and admin-finance alone owns Mark Paid.
  */
 export const paymentReviewModule: JobcoreModule = {
   id: 'payment-review',
   displayName: 'Payment & Review',
   requiredRoles: ['owner', 'admin'],
   routes: [{ path: 'payment-review', component: PaymentReviewScreen }],
-  navEntries: [{ icon: 'card', label: 'Payment & Review', order: 30 }],
-  jobActions: [
-    {
-      id: 'mark-paid',
-      label: 'Mark Paid',
-      onInvoke: async (job: Job) => {
-        const ctx = buildTransitionCtx();
-        await transitionJob(job, 'paid', ctx);
-      },
-    },
-  ],
+  navEntries: [{ icon: 'card', label: 'Payment & Review', order: 40 }],
   migrations: ['0010_payment_review.sql'],
 };
 

@@ -81,11 +81,9 @@ export interface SupabaseSelectClient {
  * module-family's fail-closed row-mapper discipline (`toJob`,
  * `toReimbursement`, etc.) even though no domain object is constructed here.
  *
- * Does NOT apply the `payer !== 'customer'` exemption — that is
- * `requirePaymentSettled`'s (state-machine.ts) job, and this module's own
- * `Ctx.hasPaymentRecord` wiring (`index.ts`'s `buildTransitionCtx`) applies
- * it before ever calling this function, mirroring field-tech's
- * `hasPaymentRecord` wiring in `modules/field-tech/src/index.ts`.
+ * Does NOT apply the `payer !== 'customer'` exemption — callers own that
+ * check. Async: resolves `true` when at least one settled row exists, and
+ * `false` on a query error or null data (fail closed).
  */
 export async function hasSettledPaymentForJob(
   client: SupabaseSelectClient,

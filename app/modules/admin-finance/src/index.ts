@@ -5,6 +5,7 @@ import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
+import { SETTLED_PAYMENT_STATUSES } from './data/ports';
 import { submitEstimate } from './flows/submit-estimate';
 import { approveEstimate } from './flows/approve-estimate';
 
@@ -86,12 +87,22 @@ export const adminFinanceModule: JobcoreModule = {
     // comes from this module's own `buildTransitionCtx()` (real injected
     // `session.role`), not payment-review's hardcoded `role: 'admin'`
     // scaffold.
+    //
+    // `ctx.hasPaymentRecord` is a SYNCHRONOUS probe (state-machine.ts
+    // `readSyncProbe` fails closed on a Promise), so the payment list is
+    // resolved BEFORE `transitionJob` is called and the probe just returns
+    // the pre-computed boolean. `settled` = a payment with status
+    // `confirmed` | `manual_confirmed` (SETTLED_PAYMENT_STATUSES); jobs whose
+    // payer is not `customer` skip the payment check entirely.
     {
       id: 'admin-finance-mark-paid',
       label: 'Mark Paid',
       onInvoke: async (job: Job) => {
-        const ctx = buildTransitionCtx();
-        await transitionJob(job, 'paid', ctx);
+        const ps = await getModulePorts().payments.listForJob(job.id);
+        const settled =
+          job.payer !== 'customer' || ps.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
+        await transitionJob(job, 'paid', { ...buildTransitionCtx(), hasPaymentRecord: () => settled });
+        await getModulePorts().jobs.updateStatus(job.id, 'paid');
       },
     },
     {
@@ -130,7 +141,7 @@ export const adminFinanceModule: JobcoreModule = {
       },
     },
   ],
-  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0014_job_planning.sql'],
+  migrations: ['0005_money.sql', '0006_job_service_area.sql', '0010_payment_review.sql', '0033_job_planning.sql'],
 };
 
 export default adminFinanceModule;
