@@ -82,25 +82,17 @@ export function SalesMarketingRoot(): React.ReactElement {
         isActive: subView === 'callbackTasks',
         onPress: () => setSubView('callbackTasks'),
       },
-      {
-        id: 'loginsSignInOut',
-        label: 'Logins/Sign in/out',
-        onPress: () => router.push('/account'),
-      },
-      {
-        id: 'configuration',
-        label: 'Configuration',
-        onPress: () => {},
-        submenu: [
-          {
-            id: 'configSettings',
-            label: 'Settings',
-            onPress: () => router.push('/config/settings'),
-          },
-        ],
-      },
     ],
-    [subView, router],
+    [subView],
+  );
+
+  const gearItems = React.useMemo(
+    () => [
+      { id: 'gearLogin', label: 'Sign Out', onPress: () => router.push('/account') },
+      { id: 'gearSettings', label: 'Settings', onPress: () => router.push('/config/settings') },
+      { id: 'gearProfile', label: 'Profile', onPress: () => router.push('/profile') },
+    ],
+    [router],
   );
 
   let content: React.ReactElement;
@@ -143,6 +135,10 @@ export function SalesMarketingRoot(): React.ReactElement {
     React.createElement(AppChrome, {
       breadcrumbSegments: [{ label: 'Sales & Marketing' }],
       menuItems,
+      showBack: false,
+      compactMenu: true,
+      gearItems,
+      gearTitle: 'Configurations',
       optionsItems: [],
       titleBar: { title: 'Sales & Marketing', subtitle: SUBVIEW_LABELS[subView] },
     }),

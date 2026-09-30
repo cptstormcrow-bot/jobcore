@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Redirect, Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
+import { Redirect, Stack, useRootNavigationState, useRouter, useSegments, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -23,6 +23,12 @@ installGlobalErrorHandler();
 
 SplashScreen.preventAutoHideAsync();
 
+// Sales-role users may only be on these paths (plus /m/sales-marketing itself). New Sales routes must be added here.
+const SALES_ALLOWED = ['/account', '/config/settings', '/profile'];
+function isSalesAllowed(p: string): boolean {
+  return p === '/m/sales-marketing' || p.startsWith('/m/sales-marketing/') || SALES_ALLOWED.includes(p);
+}
+
 /**
  * Auth gate. Reads the session state and decides what the router may render:
  *   loading         → centered spinner
@@ -35,11 +41,14 @@ SplashScreen.preventAutoHideAsync();
 function AuthGate() {
   const state = useSession();
   const segments = useSegments();
+  const pathname = usePathname();
   const onSignIn = segments[0] === 'sign-in' || segments[0] === 'sign-up';
   const rootNavigationState = useRootNavigationState();
   const navigationReady = !!rootNavigationState?.key;
   const router = useRouter();
   const [checkingAgain, setCheckingAgain] = useState(false);
+  const salesBlocked =
+    state.status === 'authenticated' && state.profile.role === 'sales' && !isSalesAllowed(pathname);
 
   // The Stack must always mount unconditionally — expo-router's root navigation
   // state only becomes ready AFTER a navigator (this Stack) has mounted and
@@ -113,6 +122,8 @@ function AuthGate() {
     );
   } else if (state.status === 'unauthenticated' && !onSignIn) {
     overlay = <Redirect href="/sign-in" />;
+  } else if (salesBlocked) {
+    overlay = <Redirect href="/m/sales-marketing" />;
   } else if (state.status === 'authenticated' && onSignIn && state.profile.role === 'admin' && getEnabledModules(state.organization, 'admin').some((m) => m.id === 'admin-finance')) {
     overlay = <Redirect href="/m/admin-finance" />;
   } else if (state.status === 'authenticated' && onSignIn) {
@@ -122,7 +133,7 @@ function AuthGate() {
   const isRedirect =
     overlay !== null &&
     navigationReady &&
-    ((state.status === 'unauthenticated' && !onSignIn) || (state.status === 'authenticated' && onSignIn));
+    ((state.status === 'unauthenticated' && !onSignIn) || (state.status === 'authenticated' && onSignIn) || salesBlocked);
 
   return (
     <View style={styles.flex}>
