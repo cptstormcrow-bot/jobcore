@@ -56,7 +56,7 @@ Constraints: docs-only, no app-code edits; no assembler exists, so the page is s
 
 Forward contracts: none
 
-Rule 41 pre-write gate: evaluated. Prior jobcore-lineage open contracts — 2026-09-20 (JD-08; service_task_id/task_id threading into commission), 2026-09-25..09-27 (FC1–FC8; FC6 `patchLifecycle` `'key' in patch` idiom alignment carried at 2026-09-27 report line 49), 2026-09-28 (four tooling items: offline root cause, supabase-js native/EAS untested, SDK 52→57 plan-only, not-performed list) — are app-code or tooling items in other lineages; none is resolvable in a docs-only task. The ch5 fix 5081aa7 had no build report and no contracts. Incidental hits 2026-09-04_leads-screen-create-edit-job.md:28 and 2026-09-09_admin-finance-reports-drilldown-audit-log-removal.md:20 concern admin-finance docs, not ch5/ch6 — no contract.
+Rule 41 pre-write gate: evaluated. Prior jobcore-lineage open contracts — 2026-09-20 (JD-08; service_task_id/task_id threading into commission), 2026-09-25..09-27 (FC1–FC8; FC6 `patchLifecycle` `'key' in patch` idiom alignment carried at 2026-09-27 report line 49), 2026-09-28 (four tooling items: offline root cause, supabase-js native/EAS untested, SDK 52→57 plan-only, not-performed list) — are app-code or tooling items in other lineages; none is resolvable in a docs-only task. CORRECTION (2026-09-29): the ch5 fix 5081aa7 DOES have a build report — .claude/build-reports/jobcore/2026-09-29_jobcore-sales-marketing-ch5-wired-docs.md (commit f3ae3b4), which exists only on the unmerged branch claude/awesome-cerf-336760, not on this branch or main. It declares two Forward contracts: (1) 26 prior-lineage decision rows handed to the session "Resolve JobCore decision items"; (2) Jeff merges claude/awesome-cerf-336760 and runs the tsc -b --force check. Neither is resolvable in this docs-only task; both stay with the ch5 lineage. Incidental hits 2026-09-04_leads-screen-create-edit-job.md:28 and 2026-09-09_admin-finance-reports-drilldown-audit-log-removal.md:20 concern admin-finance docs, not ch5/ch6 — no contract.
 
 ## Test plan
 
@@ -68,6 +68,7 @@ Test plan: declined (Jeff, Rule 43 — "No test plan")
 (b) EDIT 1 anchor narrowed to a 3→7-line replacement vs the plan's wording; rendered result identical to plan intent.
 (c) First commit attempt via PowerShell `git commit -m @'...'@` split args on embedded quotes (`error: pathspec ... did not match`); nothing committed; retried via Bash `git commit -F - <<'EOF'` — succeeded, no side effects.
 (d) Rule 41 scan-pattern misses: anchored `^\**Forward contracts` missed `## Forward contracts` headings; unanchored pattern hit GOAL prose (09-27 line 2). Fixed by `^(##\s*|\**)Forward contracts` / reading by line number.
+(e) Rule 41 gate defect, corrected 2026-09-29: the gate scanned only this branch's working tree, so it missed the ch5 build report that lives on the unmerged branch claude/awesome-cerf-336760 (commit f3ae3b4), and line 59 wrongly said the ch5 fix had no report and no contracts. Found when Jeff challenged the claim; line 59 was corrected in place. Lesson: a Rule 41 lineage scan must also run `git log --all -S"<commit-or-topic>" -- .claude/build-reports/` so reports on other branches are found.
 No rule breaches; no app code touched.
 
 ## Out-of-scope flags (not acted on — docs-only task)
