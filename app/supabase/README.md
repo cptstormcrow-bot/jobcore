@@ -22,7 +22,7 @@ separate follow-on work.
 | File | Purpose |
 |------|---------|
 | `0001_foundation.sql` | Types, tables (`organizations`, `profiles`, `audit_log`), the `current_org_id()` tenancy helper, RLS + every policy |
-| `0002_profiles_role_column_guard.sql` | Column-level `revoke update (role)` — closes the self-escalation gap that 4.4 below probes |
+| `0002_profiles_role_column_guard.sql` | Column-level `revoke update (role)` — **ineffective** against the table-level `UPDATE` grant; superseded by `0071_profiles_sensitive_column_guard.sql`, which actually closes the self-escalation gap that 4.4 below probes |
 | `0003_invitations_and_signup.sql` | `invitations` table + RLS, `signup_attempts` (RLS on, no policies), and the `handle_new_user()` signup trigger that turns a pending invitation into a profile |
 | `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
 | `0005_money.sql` | P3 admin/finance money core — `publication_status`, `reimbursement_status`, `payout_batch_status` enums, the `is_org_admin()` tenancy helper, and the rate-publication / reimbursement / payout-batch schema with RLS |
@@ -64,12 +64,15 @@ separate follow-on work.
 | `0050_field_ops_segway_and_estimating.sql` | Field ops segway and estimating |
 | `0051_restore_job_notes_gotcha_kind.sql` | Re-adds 'gotcha' alongside other values to job_notes_kind_check |
 | `0065_jobs_needs_prem.sql` | jobs.needs_prem_at + Prem queue RLS + job_assignments write hardening + backfill; dedupes duplicate investigator assignments (keeps latest per job) before creating the one-investigator-per-job unique index |
+| `0071_profiles_sensitive_column_guard.sql` | `BEFORE UPDATE` trigger `guard_profiles_sensitive_columns` on `profiles` — `id`/`organization_id`/`role`/`created_at` immutable for API roles, org admins limited to non-immutable columns, everyone else to `full_name`/`phone` on their own row (SQLSTATE `42501` on violation); revokes insert/update/delete/truncate on `profiles` from `anon` and truncate from `authenticated`. Supersedes the ineffective 0002 revoke |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
+| `tests/0071_profiles_sensitive_column_guard_rls.hosted.test.sql` | Hosted variant of `tests/0071_profiles_sensitive_column_guard_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `seed.sql` | One organization with all three modules enabled + one user per role, plus 9 services, 31 service areas (real San Diego County community rows per Master Spec §4), 6 customers, 4 leads, 5 jobs, 3 job assignments |
 | `tests/0001_foundation_rls.test.sql` | Foundation assertions — `audit_log` immutability (5.3 / 5.4 below) and the profiles recursion canary. Wrapped in `begin; … rollback;` |
 | `tests/0004_scheduling_rls.test.sql` | Scheduling assertions — org isolation (3.1 / 3.5) and a tech seeing only their own assigned jobs (AC-7). Wrapped in `begin; … rollback;` |
+| `tests/0071_profiles_sensitive_column_guard_rls.test.sql` | Profiles sensitive-column guard assertions — 10 cases covering role/org/id/created_at immutability, tech self-edit limited to full_name/phone, admin edits, anon revokes. Wrapped in `begin; … rollback;` |
 
 ## Apply order
 
@@ -148,20 +151,36 @@ instead of by hand:
 | `tests/0001_foundation_rls.test.sql` | 5.2 (append still permitted), 5.3, 5.4, and the recursion smoke test — from both an owner and a tech session |
 | `tests/0004_scheduling_rls.test.sql` | 3.1, 3.5, and AC-7 (a tech sees only their assigned jobs) |
 | `tests/0013_rls_fixes_rls.test.sql` | jobs_select_org (supersedes 0004's AC-7/AC-7b/AC-7c under the stricter is_org_sales_or_above() policy), jobs_update_org (net-new — admin-only update, no prior local suite covered this policy), reviews_insert_anon (supersedes 0010's AC-RV-2/AC-RV-2b/AC-RV-2c under the new job_exists_in_org() SECURITY DEFINER helper) |
+| `tests/0071_profiles_sensitive_column_guard_rls.test.sql` | AC-4.4 (role cannot be self-changed) plus the rest of the 0071 rules: immutable columns, admin vs. self allow-list, anon/truncate revokes |
 
 Each file opens `begin;`, sets `role authenticated` plus `request.jwt.claims` per block, raises an
 exception naming the failed criterion on any mismatch, and closes `rollback;`. The same service-role
 warning applies: run them as an authenticated session or every assertion passes vacuously.
 
-Both suites have been executed against the hosted project and both passed. On a hosted project, run
+The 0001 and 0004 suites have been executed against the hosted project and both passed. On a hosted project, run
 the `.hosted.test.sql` variants (which carry the real auth uuids), not the placeholder-id originals.
 
 `tests/0013_rls_fixes_rls.test.sql` / `.hosted.test.sql` has NOT yet been executed against the
 hosted project (tooling blocked as of `.crib/a3-verify-unblock-brief.md`); treat as a manual/deferred
 verification step until that's resolved.
 
-No dedicated suite exists (or is needed) for `0002_profiles_role_column_guard` — already covered by
-`0001_foundation_rls.test.sql`'s AC-4.4. `0006_job_service_area` and `0009_idempotency_keys` add no
+Migration 0071 was pushed live and the hosted suite was executed on 2026-09-30. It ran as the single-case files in `tests/0071_hosted_cases/`, each via `supabase db query --linked --file`, because the CLI rejects `$$` blocks. Each case ends in `rollback;`, and a post-run check confirmed the seed admin/tech rows were unchanged. Result: 10 of 10 as expected. Cases 02, 07 and 10 first failed with 42804, a test-authoring defect: the CASE expression needed a `::public.user_role` cast. They passed after the fix. The local `.test.sql` (placeholder ids) has not been run, because there is no local database.
+
+| Case | Scenario | Result |
+|------|----------|--------|
+| 01 | tech edits own full_name/phone | allowed (1 row) |
+| 02 | tech changes own role | blocked 42501 |
+| 03 | tech changes own hourly_rate_cents | blocked 42501 |
+| 04 | tech flips own active flag | blocked 42501 |
+| 05 | tech updates another user's row | blocked by RLS (0 rows — the trigger never fires) |
+| 06 | admin updates a tech's hourly_rate_cents and active | allowed (1 row) |
+| 07 | admin sets a tech's role directly | blocked 42501 |
+| 08 | admin changes role via `admin_set_employee_role()` | allowed (1 row) |
+| 09 | anon update | blocked 42501 (privilege revoked) |
+| 10 | postgres/owner session (control) | allowed (1 row, rolled back) |
+
+No dedicated suite exists (or is needed) for `0002_profiles_role_column_guard` — its AC-4.4 probe is
+superseded by `0071_profiles_sensitive_column_guard_rls.test.sql`. `0006_job_service_area` and `0009_idempotency_keys` add no
 RLS policies (service-role-only internal tables) and need no suite either.
 
 ### AC-3 — tenant isolation
@@ -184,7 +203,7 @@ cross-tenant leakage when only one org exists.
 | 4.1 | `tech@` | `update organizations set name = 'x'` | 0 rows affected — only `owner` may update the org |
 | 4.2 | `owner@` | `update organizations set name = 'SD Assembly Pros'` | 1 row affected |
 | 4.3 | `tech@` | `update profiles set full_name = 'Renamed' where id = <tech id>` | 1 row — self-edit is allowed to every role |
-| 4.4 | `tech@` | `update profiles set role = 'owner' where id = <tech id>` | denied — `0002` revokes `update (role)` from `authenticated`; the error is a *permission* error, not 0 rows |
+| 4.4 | `tech@` | `update profiles set role = 'owner' where id = <tech id>` | denied — `0071`'s `guard_profiles_sensitive_columns` trigger rejects it (SQLSTATE `42501`); the error is a *permission* error, not 0 rows. Test body: `tests/0071_profiles_sensitive_column_guard_rls.test.sql` |
 | 4.5 | `sales@` | `update profiles set full_name='x' where id = <tech id>` | 0 rows — not self, not admin |
 | 4.6 | `admin@` | same as 4.5 | 1 row — `profiles_update_admin` |
 | 4.7 | `admin@` | insert a profile with `organization_id` = another org's id | denied by `WITH CHECK` |
@@ -210,13 +229,21 @@ broken the `security definer` indirection; it is why every policy is expressed t
 
 `profiles_update_self` permits a user to update their own row, and its `WITH CHECK` constrains `id`
 and `organization_id` but **not `role`** — as written, a `tech` could promote themselves. Postgres
-RLS cannot express a per-column check, so the fix lives one layer down in the privilege system:
-`0002_profiles_role_column_guard.sql` issues a column-level `revoke update (role) on public.profiles
-from authenticated`. Column privileges are checked *before* RLS, so the write is refused regardless
-of what any policy would have permitted.
+RLS cannot express a per-column check. `0002_profiles_role_column_guard.sql` tried to close this with a
+column-level `revoke update (role) on public.profiles from authenticated`, but that revoke was a
+**no-op**: `authenticated`/`anon` hold a *table-level* `UPDATE` grant, and a column-level revoke cannot
+carve a column out of a table-level grant. Any signed-in user could still change their own role, pay
+and active flag.
 
-Role changes are therefore service-role or admin-portal operations only. Test 4.4 above still exists
-as the regression probe: if it ever starts succeeding, 0002 was not applied.
+The gap is actually closed by `0071_profiles_sensitive_column_guard.sql`, a `BEFORE UPDATE` trigger
+(`public.guard_profiles_sensitive_columns`) that applies to API roles: `id`, `organization_id`, `role`
+and `created_at` are immutable (role changes only via `public.admin_set_employee_role()`, 0029); org
+admins may change other columns; everyone else may change only `full_name` and `phone` on their own
+row. Violations raise SQLSTATE `42501`. Test 4.4 above is the regression probe: if it ever starts
+succeeding, 0071 was not applied.
+
+Note for any future offline-replay `send`: treat SQLSTATE `42501` as a permanent failure and never
+retry it.
 
 ## Signup provisioning (0003)
 

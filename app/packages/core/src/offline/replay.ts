@@ -69,7 +69,7 @@ export function resolveConflict(local: Job, server: Job): Job {
  * Options for `replayQueue`.
  */
 export interface ReplayOptions {
-  /** Injected transport; `core` never knows what Supabase is. */
+  /** Injected transport; `core` never knows what Supabase is. Treat SQLSTATE 42501 (permission denied) as permanent: never re-queue it. */
   send: (mutation: QueuedMutation) => Promise<void>;
   /** Called after a mutation is successfully sent. */
   markDone: (id: string) => void | Promise<void>;
