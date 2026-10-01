@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 
+const UNASSIGNED_VALUE = '__unassigned__';
+
 export interface AssignTechRegionProps {
   techs: { id: string; name: string }[];
   currentTechId?: string | null;
   busy?: boolean;
   error?: string | null;
   onAssign: (techId: string) => void;
+  /** When supplied, an "Unassigned" choice is listed first so an admin can reset the job. */
+  onUnassign?: () => void;
   label?: string;
   indicator?: string | null;
 }
@@ -18,10 +22,13 @@ export function AssignTechRegion({
   busy = false,
   error = null,
   onAssign,
+  onUnassign,
   label = 'Assign Technician',
   indicator = null,
 }: AssignTechRegionProps) {
   const [selectedId, setSelectedId] = useState<string | null>(currentTechId);
+  const techOptions = techs.map((tech) => ({ label: tech.name, value: tech.id }));
+  const options = onUnassign ? [{ label: 'Unassigned', value: UNASSIGNED_VALUE }, ...techOptions] : techOptions;
 
   return (
     <View style={styles.root}>
@@ -32,14 +39,14 @@ export function AssignTechRegion({
       )}
       <Select
         value={selectedId}
-        options={techs.map((tech) => ({ label: tech.name, value: tech.id }))}
+        options={options}
         onChange={setSelectedId}
         disabled={busy}
         placeholder="Select a technician"
       />
       <Button
         label="Assign"
-        onPress={() => selectedId && onAssign(selectedId)}
+        onPress={() => (selectedId === UNASSIGNED_VALUE ? onUnassign?.() : selectedId && onAssign(selectedId))}
         disabled={!selectedId || busy}
         style={styles.button}
       />

@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, AppChrome, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 
 import { useSession } from '../src/lib/session';
+import { landingRouteFor } from '../src/lib/landing';
 
 /**
  * Registry-driven launcher (P1 build item 6).
@@ -37,9 +38,14 @@ export default function HomeScreen() {
   const { organization, profile } = state;
   const modules = getEnabledModules(organization, profile.role);
 
+  const landing = landingRouteFor(profile.role, modules.map((m) => m.id));
+  if (landing) {
+    return <Redirect href={landing} />;
+  }
+
   const menuItems: MenuItem[] = [
     ...modules.map((m) => ({ id: m.id, label: m.displayName, onPress: () => router.push(`/m/${m.id}`) })),
-    { id: 'logins', label: 'Logins/Sign in/out', onPress: () => router.push('/account') },
+    { id: 'logins', label: 'Logins', onPress: () => router.push('/account') },
     {
       id: 'configuration',
       label: 'Configuration',

@@ -129,23 +129,12 @@ function FieldTechRoot(): React.ReactElement {
       isActive: subView === 'reviews',
       onPress: () => setSubView('reviews'),
     },
-    {
-      id: 'loginsSignInOut',
-      label: 'Logins/Sign in/out',
-      onPress: () => router.push('/account'),
-    },
-    {
-      id: 'configuration',
-      label: 'Configuration',
-      onPress: () => {},
-      submenu: [
-        {
-          id: 'configSettings',
-          label: 'Settings',
-          onPress: () => router.push('/config/settings'),
-        },
-      ],
-    },
+  ];
+
+  const gearItems = [
+    { id: 'gearLogin', label: 'Logins', onPress: () => router.push('/account') },
+    { id: 'gearSettings', label: 'Settings', onPress: () => router.push('/config/settings') },
+    { id: 'gearProfile', label: 'Profile', onPress: () => router.push('/profile') },
   ];
 
   const jobsOptions: MenuItem[] = [
@@ -213,6 +202,10 @@ function FieldTechRoot(): React.ReactElement {
     React.createElement(AppChrome, {
       breadcrumbSegments: [{ label: 'Field Tech' }],
       menuItems,
+      showBack: false,
+      compactMenu: true,
+      gearItems,
+      gearTitle: 'Configurations',
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
     }),

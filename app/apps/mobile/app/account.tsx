@@ -71,8 +71,10 @@ export default function AccountScreen() {
           <Text style={styles.who}>
             {profile.fullName} · {profile.role}
           </Text>
-          <Button label="Sign out" variant="secondary" onPress={confirmSignOut} />
-          <Button label="Sign in as someone else" variant="secondary" onPress={confirmSwitchUser} />
+          <View style={styles.actions}>
+            <Button label="Sign out" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSignOut} />
+            <Button label="Sign in as someone else" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSwitchUser} />
+          </View>
           <Text style={styles.note}>
             Each device signs in separately — signing out here does not affect other devices.
           </Text>
@@ -104,6 +106,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     textTransform: 'capitalize',
   },
+  buttonRow: { flexDirection: 'row', gap: spacing.sm },
+  actions: { flexDirection: 'row', gap: spacing.sm },
+  actionBtn: { flex: 1, minWidth: 0 },
   note: {
     color: colors.textMuted,
     fontSize: typography.size.label,

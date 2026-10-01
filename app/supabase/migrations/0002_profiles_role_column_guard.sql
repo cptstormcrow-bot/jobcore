@@ -1,3 +1,7 @@
+-- NOTE (2026-09-29): the `revoke update (role)` below is INEFFECTIVE — authenticated/anon hold a
+-- table-level UPDATE grant and a column-level revoke cannot carve a column out of it. The gap is
+-- actually closed by 0071_profiles_sensitive_column_guard.sql (BEFORE UPDATE trigger). Comment-only
+-- note; the SQL in this already-applied migration is unchanged.
 -- Jobcore P1 — S3 forward contract #4 / S4 forward contract #8
 -- Closes the self-role-escalation gap: profiles_update_self (0001_foundation.sql)
 -- lets a user update their own profile row, and RLS has no column granularity —

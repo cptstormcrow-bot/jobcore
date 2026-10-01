@@ -20,7 +20,7 @@ values (
   '00000000-0000-4000-8000-000000000001',
   'SD Assembly Pros',
   'sd-assembly-pros',
-  '{admin-finance,field-tech,sales-marketing}'
+  '{admin-finance,field-tech,sales-marketing,payment-review}'
 )
 on conflict (id) do nothing;
 
@@ -172,6 +172,30 @@ values
   ('00000000-0000-4000-8000-00000000041f', '00000000-0000-4000-8000-000000000001',
    'Scripps Ranch', now())
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- 5b. Test employees — every service area and every skill (mirrors the live
+-- 2026-09-29 insert so any test employee can be assigned to any job).
+-- Keyed on the fixed seed profile ids (Dev Tech, Dev Sales) because the seed
+-- does not set is_test. Re-runnable: on conflict do nothing.
+-- ---------------------------------------------------------------------------
+
+insert into public.tech_service_areas (organization_id, tech_id, service_area_id)
+select p.organization_id, p.id, sa.id
+from public.profiles p
+join public.service_areas sa on sa.organization_id = p.organization_id
+where p.id in ('00000000-0000-4000-8000-000000000103',
+               '00000000-0000-4000-8000-000000000104')
+on conflict do nothing;
+
+insert into public.tech_skills (organization_id, tech_id, skill)
+select p.organization_id, p.id, s.skill
+from public.profiles p
+cross join unnest(array['installation','service_repair','electrical',
+                        'segway_investigation','estimating','customer_service']) as s(skill)
+where p.id in ('00000000-0000-4000-8000-000000000103',
+               '00000000-0000-4000-8000-000000000104')
+on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
 -- 6. Customers

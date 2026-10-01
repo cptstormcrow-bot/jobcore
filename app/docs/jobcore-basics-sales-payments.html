@@ -216,8 +216,13 @@ in any client-visible or client-readable table; this module's own ports
     </li>
     <li>
       <strong>A reconciliation screen</strong> — <code>screens/ReconciliationView.tsx</code>
-      exists as a built component, though with no route registered to reach it (the module's
-      <code>routes</code> array currently points only at a placeholder root screen).
+      is built and routed inside the module. <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span>
+      — <code>modules/payment-review/src/index.ts</code> imports
+      <code>./screens/ReconciliationView</code> and routes it at <code>payment-review</code>
+      through <code>PaymentReviewScreen</code> (wired in commit <code>2dc4fc7</code>,
+      2026-08-17). The route is live in the module only: the running app still cannot reach it
+      until the host registers <code>paymentReviewModule</code> and injects a Supabase client
+      via <code>setSupabaseClient</code> (see the Open Gap row below).
     </li>
   </ul>
 
@@ -230,7 +235,7 @@ in any client-visible or client-readable table; this module's own ports
       <tr><td>Domain logic (<code>transition.ts</code>, providers)</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td><code>mark-paid</code> job action</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td>Handoff wiring</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
-      <tr><td>Reconciliation screen</td><td>Built, no route</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
+      <tr><td>Reconciliation screen</td><td>Built, routed in-module</td><td><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></td></tr>
       <tr><td>Compile-time registration in <code>apps/mobile/src/modules.ts</code></td><td>Not done</td><td><span class="jc-badge jc-badge--gap">⚪ Open Gap</span></td></tr>
     </tbody>
   </table>
@@ -240,6 +245,17 @@ in any client-visible or client-readable table; this module's own ports
     every capability in this chapter remains code-complete and unreachable. See
     <a href="jobcore-basics-appendices.html">Chapter 7's open-gap roadmap</a> for this item's tracking
     entry.
+  </p>
+
+  <h2 id="ch6-android-install">Getting the App on an Android Phone</h2>
+  <p>
+    The Android app is a sideload APK built on the office PC with <code>npm run build:apk</code>
+    (run from <code>app/apps/mobile</code> in the main checkout, which holds the
+    <code>android/</code> folder and the <code>.env</code> config). The script checks the setup,
+    builds, then verifies the APK; the finished APK is copied to the Desktop and installed on the
+    phone by hand (allow "install unknown apps"). It is not a Play Store build (signed with a
+    debug key), so it is for our own phones only. Full steps: <code>app/docs/deployment.md</code>,
+    "Local Android APK build".
   </p>
 </section>
 

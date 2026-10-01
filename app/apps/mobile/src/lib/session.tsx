@@ -339,3 +339,70 @@ export async function signOut(): Promise<string | null> {
   const { error } = await supabase.auth.signOut();
   return error ? error.message : null;
 }
+
+/**
+ * Change the signed-in user's password. Returns an error message on failure
+ * and `null` on success.
+ *
+ * Wrapped in withTimeout() for the same reason as signIn() above: updateUser()
+ * persists the refreshed session via the SecureStore chunking adapter (see
+ * supabase.ts), and a hung native SecureStore call would otherwise leave the
+ * UI stuck with no error path.
+ */
+export async function updatePassword(newPassword: string): Promise<string | null> {
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.updateUser({ password: newPassword }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Password change failed. Please try again.';
+    return message;
+  }
+}
+
+/**
+ * Update the signed-in user's display name on their profiles row. Returns an
+ * error message on failure and `null` on success. The caller trims/validates.
+ *
+ * An RLS-filtered UPDATE affects 0 rows without raising an error, so an empty
+ * result is treated as failure. Wrapped in withTimeout() like signIn() above.
+ */
+export async function updateFullName(userId: string, fullName: string): Promise<string | null> {
+  try {
+    const { data, error } = await withTimeout(
+      Promise.resolve(supabase.from('profiles').update({ full_name: fullName }).eq('id', userId).select('id')),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    if (error) return error.message;
+    if (!data || data.length === 0) return 'Could not save your name. Please try again.';
+    return null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not save your name. Please try again.';
+    return message;
+  }
+}
+
+/**
+ * Change the signed-in user's email. Returns an error message on failure and
+ * `null` on success. Supabase sends a confirmation email, and the address does
+ * not change until it is confirmed.
+ *
+ * Wrapped in withTimeout() for the same reason as updatePassword() above.
+ */
+export async function updateEmail(email: string): Promise<string | null> {
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.updateUser({ email }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not update your email. Please try again.';
+    return message;
+  }
+}

@@ -6,7 +6,7 @@ import { colors, spacing, radius, typography } from './tokens';
 export interface ButtonProps {
   label: string;
   onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'accent';
   size?: 'sm' | 'md' | 'lg' | 'tab';
   disabled?: boolean;
   fullWidth?: boolean;
@@ -34,11 +34,11 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
   // primary uses a lighter tan (#E1AF80) background per user decision; white
   // label text on that tan only reaches ~2.0:1 contrast (fails WCAG AA), so
   // primary's label uses colors.primary (dark navy) instead of white below.
-  const bg = variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
+  const bg = variant === 'accent' ? colors.accent : variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
   // Same contrast reasoning applies to outline-variant text on white: use
   // secondaryDark, not secondary, so label text also clears ~4.2:1. secondary's
   // navy background still contrasts fine with white label text.
-  const labelColor = isOutline ? colors.secondaryDark : variant === 'primary' ? colors.text : colors.white;
+  const labelColor = isOutline ? colors.secondaryDark : variant === 'accent' ? colors.primary : variant === 'primary' ? colors.text : colors.white;
   return (
     <Pressable
       onPress={onPress}
@@ -61,7 +61,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
         fullWidth && { alignSelf: 'stretch' },
       ]}
     >
-      <Text style={[styles.label, variant === 'primary' && styles.labelPrimary, { color: labelColor, fontSize: fontBySize[size] }]}>{label}</Text>
+      <Text style={[styles.label, (variant === 'primary' || variant === 'accent') && styles.labelPrimary, { color: labelColor, fontSize: fontBySize[size] }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -86,6 +86,6 @@ const styles = StyleSheet.create({
   },
   outline: { borderColor: colors.secondary },
   disabled: { opacity: 0.5 },
-  label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold },
+  label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, textAlign: 'center' },
   labelPrimary: { fontFamily: typography.fontFamily.headingBold, fontWeight: typography.weight.bold },
 });

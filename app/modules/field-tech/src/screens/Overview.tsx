@@ -21,9 +21,14 @@ import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
+import { isBetaVisible } from '@jobcore/core';
+import { isScheduledOnLocalDate } from './day-list-helpers';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { colors, Text } from '@jobcore/ui';
+
+/** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
+const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 
 /** Job statuses that count as "closed out" — everything else counts as open. */
 const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
@@ -88,7 +93,12 @@ export function Overview(): React.ReactElement {
     const techId = session.userId;
 
     async function load(): Promise<void> {
-      const assignedJobs = await jobs.listAssignedToTech(techId);
+      const allAssignedJobs = await jobs.listAssignedToTech(techId);
+      const showTestJobs = await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false);
+      const today = new Date();
+      const assignedJobs = allAssignedJobs
+        .filter((job) => isBetaVisible(job, showTestJobs))
+        .filter((job) => isScheduledOnLocalDate(job, today));
       const openJobs = assignedJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status));
 
       const [timeOffRequests, reimbursementRequests, notesByJob, photosByJob, checklistByJob] =

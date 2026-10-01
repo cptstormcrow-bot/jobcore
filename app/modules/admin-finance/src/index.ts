@@ -82,12 +82,18 @@ export const adminFinanceModule: JobcoreModule = {
     // Folded in from the retired payment-review module (Workstream D).
     // Renamed from payment-review's own `mark-paid` id to avoid a future
     // collision now that both actions live in the same module's jobActions
-    // array. `ctx` comes from this module's own `buildTransitionCtx()` (real
-    // injected `session.role`). `completed -> paid` needs a payment record
-    // when the payer is the customer, but `readSyncProbe` only accepts a
-    // synchronous boolean (a Promise probe always fails closed), so the
-    // payments are awaited FIRST and passed in as a resolved closure. A
-    // transition does not persist, so on success the new status is saved
+    // array. Same transition: `transitionJob(job, 'paid', ctx)`, but `ctx`
+    // comes from this module's own `buildTransitionCtx()` (real injected
+    // `session.role`), not payment-review's hardcoded `role: 'admin'`
+    // scaffold.
+    //
+    // `ctx.hasPaymentRecord` is a SYNCHRONOUS probe (state-machine.ts
+    // `readSyncProbe` fails closed on a Promise), so the payment list is
+    // resolved BEFORE `transitionJob` is called and the probe just returns
+    // the pre-computed boolean. `settled` = a payment with status
+    // `confirmed` | `manual_confirmed` (SETTLED_PAYMENT_STATUSES); jobs whose
+    // payer is not `customer` skip the payment check entirely.
+    // A transition does not persist, so on success the new status is saved
     // through `jobs.updateStatus`.
     {
       id: 'admin-finance-mark-paid',

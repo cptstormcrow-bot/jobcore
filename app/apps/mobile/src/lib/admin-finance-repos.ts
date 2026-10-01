@@ -229,7 +229,7 @@ export function createJobRepository(): JobRepository {
     async listForOrganization(organizationId: string): Promise<Job[]> {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*')
+        .select('*, customers(name)')
         .eq('organization_id', organizationId);
       if (error) {
         throw new Error(`listForOrganization failed: ${error.message}`);
@@ -918,6 +918,14 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
         }
       }
       return result;
+    },
+
+    async removeForJob(jobId: string): Promise<void> {
+      const { error } = await supabase.from('job_assignments').delete().eq('job_id', jobId);
+      if (error) {
+        logSyncFailure('admin-finance-repos.removeJobAssignments', error.message, { jobId });
+        throw new Error(`remove job assignments failed: ${error.message}`);
+      }
     },
   };
 }

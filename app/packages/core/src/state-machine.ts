@@ -153,6 +153,8 @@ export const TRANSITIONS: readonly Transition[] = [
   { from: 'qualified', to: 'cancelled', roles: OFFICE },
   { from: 'scheduled', to: 'cancelled', roles: OFFICE },
   { from: 'assigned', to: 'cancelled', roles: OFFICE },
+  // office unassigns the tech; the job returns to Scheduled.
+  { from: 'assigned', to: 'scheduled', roles: OFFICE },
   { from: 'accepted', to: 'cancelled', roles: OFFICE },
 ];
 

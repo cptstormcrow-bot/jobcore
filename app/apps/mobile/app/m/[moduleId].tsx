@@ -3,10 +3,10 @@ import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { EmptyState, LoadingState, colors } from '@jobcore/ui';
-
 import { useSession } from '../../src/lib/session';
 import { useModuleInjection } from '../../src/lib/useModuleInjection';
-
+import { setSupabaseClient as setPaymentReviewSupabaseClient } from '@jobcore/payment-review';
+import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
 /**
@@ -36,6 +36,17 @@ export default function ModuleScreen() {
 
   useModuleInjection(state, module?.id);
 
+
+  // Host-side injection for payment-review's Supabase client seam. See the
+  // admin-finance block above for why this runs synchronously in render.
+  // Double cast: a direct cast trips TS2589 (supabase-js generics vs. port).
+  if (state.status === 'authenticated' && module?.id === 'payment-review') {
+    setPaymentReviewSupabaseClient(supabase as unknown as Parameters<typeof setPaymentReviewSupabaseClient>[0]);
+  }
+  useEffect(() => {
+    if (module?.id !== 'payment-review') return undefined;
+    return () => setPaymentReviewSupabaseClient(null);
+  }, [module?.id]);
 
   // The root layout gates on status, so this branch is defensive only.
   if (state.status !== 'authenticated') {

@@ -31,7 +31,9 @@
       "@jobcore/field-tech": ["modules/field-tech/src/index.ts"],
       "@jobcore/field-tech/*": ["modules/field-tech/src/*"],
       "@jobcore/sales-marketing": ["modules/sales-marketing/src/index.ts"],
-      "@jobcore/sales-marketing/*": ["modules/sales-marketing/src/*"]
+      "@jobcore/sales-marketing/*": ["modules/sales-marketing/src/*"],
+      "@jobcore/payment-review": ["modules/payment-review/src/index.ts"],
+      "@jobcore/payment-review/*": ["modules/payment-review/src/*"]
     }
   },
   "exclude": ["node_modules", "**/dist", "**/.expo"]

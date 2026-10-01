@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { useRouter } from 'expo-router';
@@ -38,16 +38,24 @@ export type AppChromeProps = {
   titleBar?: { title: string; subtitle?: string };
   titleBarTone?: 'primary' | 'gold';
   helpContext?: { screenKey: ScreenKey; jobStatus?: JobStatus };
+  gearItems?: MenuActionItem[]; // items for a \u2699 menu at the top-right of the drawer header (opt-in)
+  gearTitle?: string; // optional highlighted title row at the top of the gear menu
+  compactMenu?: boolean; // tighter drawer rows (opt-in)
+  fitMenu?: boolean; // admin-only taller drawer sheet (opt-in)
+  logoMenuItems?: MenuActionItem[]; // in-menu logo switcher list (opt-in)
+  onLogoPress?: () => void; // logo acts as Back (opt-in)
 };
 
 function MenuRow({
   item,
   depth = 0,
   onLeafPress,
+  compact,
 }: {
   item: MenuItem;
   depth?: number;
   onLeafPress: (item: MenuItem) => void;
+  compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const hasSubmenu = !!item.submenu && item.submenu.length > 0;
@@ -94,6 +102,7 @@ function MenuRow({
             item.isActive && styles.rowActive,
             item.disabled && styles.rowDisabled,
             { backgroundColor: animatedBg },
+            compact && styles.rowCompact,
           ]}
         >
           <Text
@@ -111,7 +120,7 @@ function MenuRow({
       {hasSubmenu && expanded && (
         <View>
           {item.submenu!.map((child) => (
-            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} />
+            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} compact={compact} />
           ))}
         </View>
       )}
@@ -127,10 +136,31 @@ export function AppChrome({
   titleBar,
   titleBarTone = 'primary',
   helpContext,
+  gearItems,
+  gearTitle,
+  compactMenu,
+  fitMenu,
+  logoMenuItems,
+  onLogoPress,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const [hMenuOpen, setHMenuOpen] = useState(false);
   const [oMenuOpen, setOMenuOpen] = useState(false);
+  const [gMenuOpen, setGMenuOpen] = useState(false);
+  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
+  const logoTappable = !!logoMenuItems?.length || !!onLogoPress;
+  const handleLogoPress = () => {
+    if (logoMenuItems?.length) {
+      setLogoMenuOpen((v) => !v);
+    } else {
+      setHMenuOpen(false);
+      onLogoPress?.();
+    }
+  };
+  const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : menuItems;
+  useEffect(() => {
+    if (!hMenuOpen) setLogoMenuOpen(false);
+  }, [hMenuOpen]);
   const canGoBack = router.canGoBack();
   const { standaloneStep, showHelp, dismissHelp } = useWalkthrough();
   const helpStep = helpContext ? getHelpStep(helpContext.screenKey, helpContext.jobStatus) : undefined;
@@ -146,6 +176,12 @@ export function AppChrome({
   const handleOptionPress = (item: MenuItem) => {
     setOMenuOpen(false);
     if (item.kind !== 'toggle') item.onPress?.();
+  };
+
+  const handleGearPress = (item: MenuActionItem) => {
+    setHMenuOpen(false);
+    setGMenuOpen(false);
+    item.onPress?.();
   };
 
   const handleBackPress = () => {
@@ -197,10 +233,25 @@ export function AppChrome({
 
       <Modal visible={hMenuOpen} transparent animationType="fade" onRequestClose={() => setHMenuOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setHMenuOpen(false)}>
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, fitMenu && styles.sheetFit]}>
             <ScrollView style={{ maxHeight: '100%' }}>
-              <View style={styles.wordmarkChip}>
-                <Text style={styles.wordmarkText}>JobCore©</Text>
+              <View style={styles.wordmarkRow}>
+                <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined}>
+                <View style={styles.wordmarkChip}>
+                  <Text style={styles.wordmarkText}>JobCore©</Text>
+                </View>
+                </Pressable>
+                {gearItems?.length ? (
+                  <Pressable
+                    onPress={() => { setHMenuOpen(false); setTimeout(() => setGMenuOpen(true), 300); }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Settings menu"
+                    hitSlop={8}
+                    style={styles.gearButton}
+                  >
+                    <Text style={styles.iconText}>{'\u2699\uFE0E'}</Text>
+                  </Pressable>
+                ) : null}
               </View>
               <View style={styles.divider} />
               {showBack && (
@@ -211,15 +262,15 @@ export function AppChrome({
                     accessibilityRole="button"
                     accessibilityLabel="Back"
                     accessibilityState={{ disabled: !canGoBack }}
-                    style={[styles.row, !canGoBack && styles.rowDisabled]}
+                    style={[styles.row, !canGoBack && styles.rowDisabled, compactMenu && styles.rowCompact]}
                   >
                     <Text style={[styles.rowText, !canGoBack && styles.rowTextDisabled]}>‹ Back</Text>
                   </Pressable>
                   <View style={styles.divider} />
                 </>
               )}
-              {menuItems.map((item) => (
-                <MenuRow key={item.id} item={item} onLeafPress={handleLeafPress} />
+              {drawerItems.map((item) => (
+                <MenuRow key={item.id} item={item} onLeafPress={handleLeafPress} compact={compactMenu} />
               ))}
             </ScrollView>
           </View>
@@ -243,6 +294,33 @@ export function AppChrome({
           </View>
         </Pressable>
       </Modal>
+
+      {gearItems?.length ? (
+        <Modal visible={gMenuOpen} transparent animationType="fade" onRequestClose={() => setGMenuOpen(false)}>
+          <Pressable style={styles.overlay} onPress={() => setGMenuOpen(false)}>
+            <View style={[styles.sheet, styles.sheetFramed]}>
+              <ScrollView style={{ maxHeight: '100%' }}>
+                {gearTitle ? (
+                  <>
+                    <View style={styles.wordmarkRow}>
+                      <View style={styles.wordmarkChip}>
+                        <Text style={styles.wordmarkText}>{gearTitle}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.divider} />
+                  </>
+                ) : null}
+                {gearItems.map((item, i) => (
+                  <View key={item.id}>
+                    {i > 0 ? <View style={styles.gearSeparator} /> : null}
+                    <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
 
       <WalkthroughHelpCallout />
     </View>
@@ -306,6 +384,21 @@ const styles = StyleSheet.create({
     textShadowColor: 'transparent',
     textShadowRadius: 0,
   },
+  wordmarkRow: {
+    position: 'relative',
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gearButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   wordmarkChip: {
     alignSelf: 'center',
     backgroundColor: colors.accent,
@@ -334,6 +427,20 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
+  sheetFramed: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  gearSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginHorizontal: spacing.md,
+  },
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -345,6 +452,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  rowCompact: {
+    minHeight: 44,
+    paddingVertical: spacing.xs,
+  },
+  sheetFit: { maxHeight: '90%' },
+  gearTitle: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
   },
   rowActive: {
     backgroundColor: colors.accent,
