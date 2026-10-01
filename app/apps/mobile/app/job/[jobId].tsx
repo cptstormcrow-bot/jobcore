@@ -14,6 +14,8 @@ import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDeta
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
+import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
+import { useModuleInjection } from '../../src/lib/useModuleInjection';
 import { supabase } from '../../src/lib/supabase';
 import {
   createJobRepository,
@@ -208,6 +210,13 @@ export default function JobDrilldownScreen() {
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const isAdmin = role === 'admin';
+  const enabledIds: string[] =
+    session.status === 'authenticated'
+      ? getEnabledModules(session.organization, session.profile.role).map((m) => m.id)
+      : [];
+  useModuleInjection(session, enabledIds.includes('admin-finance') ? 'admin-finance' : undefined);
+  useModuleInjection(session, enabledIds.includes('field-tech') ? 'field-tech' : undefined);
+  useModuleInjection(session, enabledIds.includes('sales-marketing') ? 'sales-marketing' : undefined);
 
   if (session.status === 'authenticated' && org && role) {
     setModuleSession({ org, role, userId: session.profile.id });
@@ -258,13 +267,17 @@ export default function JobDrilldownScreen() {
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
   const [pendingReassignTechId, setPendingReassignTechId] = useState<string | null>(null);
-  useEffect(() => { setAssignError(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // Expo Router reuses this screen across jobs: drop stale errors on job change.
+  useEffect(() => {
+    setAssignError(null);
+    setActionError(null);
+  }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
@@ -709,10 +722,56 @@ export default function JobDrilldownScreen() {
         setInvestigatorTechId(null);
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
+      const message = err instanceof Error ? err.message : 'Unassign failed.';
+      setAssignError(message);
+      setActionError(message);
     } finally {
       setAssigning(null);
     }
+  };
+
+  // Same confirm pattern as confirmApproveEstimate (window.confirm on web,
+  // Alert.alert on native); every assign / reassign / unassign goes through it.
+  const confirmThen = (title: string, body: string, run: () => void): void => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
+        run();
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: run },
+    ]);
+  };
+
+  const techNameFor = (id: string | null | undefined): string =>
+    (id ? techs.find((t) => t.id === id)?.fullName : undefined) ?? 'the selected tech';
+
+  const requestAssign = (techId: string): void => {
+    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
+    const isInstaller = estimate?.status === 'approved';
+    // Investigator reassign already opens the WarningSheet; do not double-confirm.
+    if (!isInstaller && investigatorTechId && investigatorTechId !== techId) {
+      void handleAssign(techId);
+      return;
+    }
+    const currentId = job?.assignedTechId ?? investigatorTechId;
+    if (currentId) {
+      confirmThen(
+        'Reassign tech?',
+        `Reassign ${label} from ${techNameFor(currentId)} to ${techNameFor(techId)}?`,
+        () => void handleAssign(techId),
+      );
+      return;
+    }
+    confirmThen('Assign tech?', `Assign ${techNameFor(techId)} to ${label}?`, () => void handleAssign(techId));
+  };
+
+  const requestUnassign = (): void => {
+    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
+    const currentId = job?.assignedTechId ?? investigatorTechId;
+    confirmThen('Unassign tech?', `Remove ${techNameFor(currentId)} from ${label}?`, () => void handleUnassign());
   };
 
   // Save-follows-selection: switching regions autosaves a dirty edit-mode
@@ -987,8 +1046,8 @@ export default function JobDrilldownScreen() {
         now: () => new Date().toISOString(),
         hasPaymentRecord: () => true,
       });
-      setJob(updated);
       await createJobRepository().updateStatus(job.id, 'paid');
+      setJob(updated);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Mark paid failed.';
       setSaveError(message);
@@ -996,6 +1055,47 @@ export default function JobDrilldownScreen() {
     } finally {
       setBusyAction(null);
     }
+  };
+
+  const SKIPPED_MODULE_ACTION_IDS = ['admin-finance-mark-paid', 'close-out-and-mark-paid'];
+  const moduleActions: JobAction[] =
+    session.status === 'authenticated' && job
+      ? getEnabledModules(session.organization, session.profile.role)
+          .flatMap((m) => m.jobActions ?? [])
+          .filter(
+            (a) =>
+              !SKIPPED_MODULE_ACTION_IDS.includes(a.id) &&
+              !!a.onInvoke &&
+              (!a.visibleWhen || a.visibleWhen(job)),
+          )
+      : [];
+
+  const runModuleAction = async (action: JobAction): Promise<void> => {
+    if (!job || !action.onInvoke) return;
+    setBusyAction(action.id);
+    setActionError(null);
+    try {
+      await action.onInvoke(job);
+      if (org?.id && jobId) {
+        const { data } = await supabase
+          .from('jobs')
+          .select(JOB_ROW_COLUMNS)
+          .eq('organization_id', org.id)
+          .eq('id', jobId)
+          .maybeSingle<JobRow>();
+        if (data) setJob(toJob(data));
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `${action.label} failed.`;
+      setSaveError(message);
+      setActionError(message);
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const confirmModuleAction = (action: JobAction): void => {
+    confirmThen(action.label, `${action.label} for this job?`, () => void runModuleAction(action));
   };
 
   if (loading) {
@@ -1122,7 +1222,7 @@ export default function JobDrilldownScreen() {
           assignedTechName={assignedTechName}
           serviceAreaName={currentServiceAreaName}
           techs={eligibleTechOptions}
-          onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
+          onAssignTech={(techId) => (techId ? requestAssign(techId) : requestUnassign())}
           assigningTech={assigning !== null}
         />
         <WarningSheet
@@ -1137,6 +1237,19 @@ export default function JobDrilldownScreen() {
             if (next) void handleAssignInvestigator(next, true);
           }}
         />
+        {moduleActions.length > 0 && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+            {moduleActions.map((action) => (
+              <Button
+                key={action.id}
+                label={busyAction === action.id ? `${action.label}…` : action.label}
+                variant="outline"
+                onPress={() => confirmModuleAction(action)}
+                disabled={busyAction !== null}
+              />
+            ))}
+          </View>
+        )}
         {region === 'plan' && (
           <PlanningScreen
             embedded
@@ -1180,15 +1293,18 @@ export default function JobDrilldownScreen() {
           />
         )}
         {region === 'assign' && isAdmin && (
-          <AssignTechRegion
-            techs={eligibleTechOptions}
-            currentTechId={currentJob.assignedTechId ?? investigatorTechId}
-            busy={assigning !== null}
-            error={assignError}
-            onAssign={(techId) => void handleAssign(techId)}
-            onUnassign={() => void handleUnassign()}
-            label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
-          />
+          <>
+            <Text>{assignedTechName ? `Tech: ${assignedTechName}` : 'Unassigned'}</Text>
+            <AssignTechRegion
+              techs={eligibleTechOptions}
+              currentTechId={currentJob.assignedTechId ?? investigatorTechId}
+              busy={assigning !== null}
+              error={assignError}
+              onAssign={(techId) => requestAssign(techId)}
+              onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => requestUnassign() : undefined}
+              label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+            />
+          </>
         )}
         {region === 'schedule' && (
           <JobScheduleScreen

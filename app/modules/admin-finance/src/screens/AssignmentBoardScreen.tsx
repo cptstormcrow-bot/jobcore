@@ -257,6 +257,10 @@ export function AssignmentBoardScreen({
     }
   }
 
+  function jobNo(job: Job): string {
+    return job.jobNumber != null ? `#${job.jobNumber}` : '#—';
+  }
+
   function eligibleTechs(job: Job): TechColumnTech[] {
     return techsWithAvailability.filter((t) => jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
   }
@@ -268,7 +272,7 @@ export function AssignmentBoardScreen({
     }
     if (techId === '') {
       confirmDialog(
-        'Unassign job?',
+        `Unassign job ${jobNo(job)}?`,
         'Remove the assigned tech from this job?',
         () => {
           onUnassign?.(job);
@@ -294,7 +298,7 @@ export function AssignmentBoardScreen({
     }
     if (visitKind[job.id] === 'prem') {
       confirmDialog(
-        'Assign Prem?',
+        `Assign Prem for job ${jobNo(job)}?`,
         `Assign ${tech.fullName} to the Prem for this job?`,
         () => {
           onAssignInvestigator?.(job, techId);
@@ -375,14 +379,15 @@ export function AssignmentBoardScreen({
                       <Text style={styles.poolRowText}>
                         {job.jobNumber != null ? `#${job.jobNumber}` : '#—'}
                       </Text>
-                      {job.customerName ? <Text style={styles.poolRowText}>{job.customerName}</Text> : null}
+                      {job.customerName ? <Text style={styles.poolRowCustomer}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
-                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
+                      <Text style={styles.assignedLine}>{job.assignedTechId ? 'Tech: ' + [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
                       {job.assignedTechId && premTechId ? (
                         <Text style={styles.assignedLine}>Prem: {[techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ')}</Text>
                       ) : null}
                     </View>
+                    <View style={styles.poolRowControls}>
                     <View style={styles.visitKindSegmentRow}>
                       <Button
                         label="Service"
@@ -403,28 +408,27 @@ export function AssignmentBoardScreen({
                     <Select
                       options={[
                         { label: 'Unassigned', value: '' },
-                        ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
+                        ...eligibleTechs(job).map((t) => ({ label: t.isTest ? `${t.fullName} (test)` : t.fullName, value: t.id })),
                       ]}
                       value={choice[job.id] ?? job.assignedTechId ?? ''}
                       onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                       style={styles.assignSelect}
                     />
-                    <View style={styles.confirmSlot}>
-                      {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? (
-                        <Button
-                          label="Confirm"
-                          variant="primary"
-                          size="sm"
-                          onPress={() => handleRowConfirm(job)}
-                        />
-                      ) : null}
-                    </View>
+                    <Button
+                      label="Confirm"
+                      variant="primary"
+                      size="sm"
+                      disabled={!(job.id in choice && choice[job.id] !== (job.assignedTechId ?? ''))}
+                      style={job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? undefined : styles.confirmDimmed}
+                      onPress={() => handleRowConfirm(job)}
+                    />
                     <Button
                       label="View"
                       variant="outline"
                       size="sm"
                       onPress={() => router.push('/job/' + job.id)}
                     />
+                    </View>
                   </View>
                 </Pressable>
               );
@@ -464,16 +468,17 @@ export function AssignmentBoardScreen({
       <WarningSheet
         visible={pending !== null}
         warnings={pendingWarnings}
+        title={pending ? `Assign job ${jobNo(pending.job)} to ${pending.tech.fullName}?` : undefined}
         onConfirm={handleConfirm}
         onCancel={handleCancelWarning}
       />
       <WarningSheet
         visible={reassign !== null}
         warnings={[]}
-        title="Reassign job?"
+        title={reassign ? `Reassign job ${jobNo(reassign.job)}?` : 'Reassign job?'}
         message={
           reassign
-            ? `Move job #${reassign.job.jobNumber ?? '—'} from ${
+            ? `Move job ${jobNo(reassign.job)} from ${
                 techById.get(reassign.job.assignedTechId ?? '')?.fullName ?? 'Unknown tech'
               } to ${reassign.tech.fullName}?`
             : ''
@@ -546,9 +551,23 @@ const styles = StyleSheet.create({
   poolRowSelected: {
     backgroundColor: colors.info,
   },
-  confirmSlot: {
-    width: 90,
-    marginRight: spacing.sm,
+  poolRowControls: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    width: 320,
+    flexShrink: 0,
+  },
+  confirmDimmed: {
+    opacity: 0.4,
+  },
+  poolRowCustomer: {
+    color: colors.text,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.bold,
   },
   poolRowInfo: {
     flex: 1,
@@ -562,7 +581,7 @@ const styles = StyleSheet.create({
   },
   assignSelect: {
     width: 140,
-    marginRight: spacing.sm,
+    minHeight: 44,
   },
   poolRowStatus: {
     color: colors.textMuted,

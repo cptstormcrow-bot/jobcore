@@ -24,7 +24,8 @@ import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors, Text } from '@jobcore/ui';
+import type { ReimbursementRequest, TimeOffRequest } from '../data/ports';
+import { colors, Select, Text } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -40,7 +41,8 @@ const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
 
 export interface OverviewProps {
   onOpenJob?: (jobId: string) => void;
-  onOpenTimeOff?: () => void;
+  onOpenTimeOff?: (requestId?: string) => void;
+  onOpenReimbursements?: () => void;
 }
 
 type TileKey =
@@ -56,7 +58,7 @@ type TileKey =
   | 'checklistOpen'
   | 'checklistSubmitted';
 
-interface OverviewCounts {
+export interface OverviewCounts {
   assignedJobs: number;
   openJobs: number;
   timeOffPending: number;
@@ -84,19 +86,87 @@ const EMPTY_COUNTS: OverviewCounts = {
   checklistSubmitted: 0,
 };
 
+/** Inputs for {@link computeOverviewCounts}; per-job arrays align with `jobs`. */
+export interface OverviewCountInputs {
+  jobs: readonly Job[];
+  timeOff: readonly { status: string }[];
+  reimbursements: readonly { status: string }[];
+  /** Note count per job (same order as `jobs`). */
+  notesPerJob: readonly number[];
+  /** Photo count per job (same order as `jobs`). */
+  photosPerJob: readonly number[];
+  /** Per job: [open, submitted] checklist instance counts. */
+  checklistPerJob: readonly (readonly [number, number])[];
+}
+
+/** Pure: derives every Overview tile count. No React, no hooks. */
+export function computeOverviewCounts(input: OverviewCountInputs): OverviewCounts {
+  const countStatus = (list: readonly { status: string }[], status: string): number =>
+    list.filter((item) => item.status === status).length;
+  let checklistOpen = 0;
+  let checklistSubmitted = 0;
+  for (const [open, submitted] of input.checklistPerJob) {
+    checklistOpen += open;
+    checklistSubmitted += submitted;
+  }
+  return {
+    assignedJobs: input.jobs.length,
+    openJobs: input.jobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status)).length,
+    timeOffPending: countStatus(input.timeOff, 'pending'),
+    timeOffApproved: countStatus(input.timeOff, 'approved'),
+    reimbursementsPending: countStatus(input.reimbursements, 'pending'),
+    reimbursementsApproved: countStatus(input.reimbursements, 'approved'),
+    reimbursementsRejected: countStatus(input.reimbursements, 'rejected'),
+    jobNotes: input.notesPerJob.reduce((sum, n) => sum + n, 0),
+    jobPhotos: input.photosPerJob.reduce((sum, n) => sum + n, 0),
+    checklistOpen,
+    checklistSubmitted,
+  };
+}
+
+function jobDate(job: Job): string {
+  return job.scheduledStart === null ? 'Unscheduled' : job.scheduledStart.slice(0, 10);
+}
+
 /**
  * Overview screen: a read-only wrapping grid of count cards summarizing the
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
  * and checklist instances. No forms, no writes, no navigation.
  */
-export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): React.ReactElement {
+export function Overview({ onOpenJob, onOpenTimeOff, onOpenReimbursements }: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
+  const isAdmin = session !== null && (session.role === 'owner' || session.role === 'admin');
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
   const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
   const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [timeOffList, setTimeOffList] = React.useState<TimeOffRequest[]>([]);
+  const [reimbList, setReimbList] = React.useState<ReimbursementRequest[]>([]);
+  const [selectedTechId, setSelectedTechId] = React.useState<string>('');
+  const [techs, setTechs] = React.useState<{ id: string; label: string }[]>([]);
+
+  React.useEffect(() => {
+    if (session === null || !isAdmin) return;
+    let cancelled = false;
+    getModulePorts()
+      .techs.list(session.org.id)
+      .then((result) => {
+        if (cancelled) return;
+        setTechs(
+          result
+            .filter((t) => t.role === 'tech' && t.active === true)
+            .map((t) => ({ id: t.id, label: t.isTest === true ? `${t.fullName} (test)` : t.fullName })),
+        );
+      })
+      .catch(() => {
+        /* non-fatal: picker simply shows "All techs" only */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, isAdmin]);
 
   React.useEffect(() => {
     if (session === null) {
@@ -110,9 +180,13 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
 
     const { jobs, timeOff, reimbursements, notes, photos, checklist } = getModulePorts();
     const techId = session.userId;
+    const pickedTechId = selectedTechId === '' ? undefined : selectedTechId;
 
     async function load(): Promise<void> {
-      const allAssignedJobs = await jobs.listAssignedToTech(techId);
+      if (session === null) return;
+      const allAssignedJobs = isAdmin
+        ? await jobs.listForOrg(session.org.id, pickedTechId)
+        : await jobs.listAssignedToTech(techId);
       const showTestJobs = await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false);
       const assignedJobs = allAssignedJobs
         .filter((job) => isBetaVisible(job, showTestJobs));
@@ -120,8 +194,12 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
 
       const [timeOffRequests, reimbursementRequests, notesByJob, photosByJob, checklistByJob] =
         await Promise.all([
-          timeOff.listForTech(techId),
-          reimbursements.listForTech(techId),
+          isAdmin
+            ? timeOff
+                .listForOrg(session.org.id)
+                .then((all) => all.filter((r) => pickedTechId === undefined || r.techId === pickedTechId))
+            : timeOff.listForTech(techId),
+          isAdmin ? reimbursements.listForOrg(session.org.id, pickedTechId) : reimbursements.listForTech(techId),
           Promise.all(assignedJobs.map((job) => notes.listForJob(job.id))),
           Promise.all(assignedJobs.map((job) => photos.listForJob(job.id))),
           Promise.all(
@@ -134,23 +212,16 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
           ),
         ]);
 
-      const jobNotes = notesByJob.reduce((sum, list) => sum + list.length, 0);
-      const jobPhotos = photosByJob.reduce((sum, list) => sum + list.length, 0);
-
-      let checklistOpen = 0;
-      let checklistSubmitted = 0;
-      for (const [startInstance, completionInstance] of checklistByJob) {
-        for (const instance of [startInstance, completionInstance]) {
-          if (instance === null) {
-            continue;
-          }
-          if (instance.submittedAt === null) {
-            checklistOpen += 1;
-          } else {
-            checklistSubmitted += 1;
-          }
+      const checklistPerJob = checklistByJob.map((pair): [number, number] => {
+        let open = 0;
+        let submitted = 0;
+        for (const instance of pair) {
+          if (instance === null) continue;
+          if (instance.submittedAt === null) open += 1;
+          else submitted += 1;
         }
-      }
+        return [open, submitted];
+      });
 
       const pick = (flags: boolean[]): Job[] => assignedJobs.filter((_, i) => flags[i]);
       const lists: Record<string, Job[]> = {
@@ -158,28 +229,24 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
         open: openJobs,
         notes: pick(notesByJob.map((l) => l.length > 0)),
         photos: pick(photosByJob.map((l) => l.length > 0)),
-        checklistOpen: pick(checklistByJob.map((pair) => pair.some((x) => x !== null && x.submittedAt === null))),
-        checklistSubmitted: pick(checklistByJob.map((pair) => pair.some((x) => x !== null && x.submittedAt !== null))),
+        checklistOpen: pick(checklistPerJob.map(([open]) => open > 0)),
+        checklistSubmitted: pick(checklistPerJob.map(([, submitted]) => submitted > 0)),
       };
 
       if (!cancelled) {
         setJobLists(lists);
-        setCounts({
-          assignedJobs: assignedJobs.length,
-          openJobs: openJobs.length,
-          timeOffPending: timeOffRequests.filter((request) => request.status === 'pending').length,
-          timeOffApproved: timeOffRequests.filter((request) => request.status === 'approved').length,
-          reimbursementsPending: reimbursementRequests.filter((request) => request.status === 'pending')
-            .length,
-          reimbursementsApproved: reimbursementRequests.filter((request) => request.status === 'approved')
-            .length,
-          reimbursementsRejected: reimbursementRequests.filter((request) => request.status === 'rejected')
-            .length,
-          jobNotes,
-          jobPhotos,
-          checklistOpen,
-          checklistSubmitted,
-        });
+        setTimeOffList(timeOffRequests);
+        setReimbList(reimbursementRequests);
+        setCounts(
+          computeOverviewCounts({
+            jobs: assignedJobs,
+            timeOff: timeOffRequests,
+            reimbursements: reimbursementRequests,
+            notesPerJob: notesByJob.map((l) => l.length),
+            photosPerJob: photosByJob.map((l) => l.length),
+            checklistPerJob,
+          }),
+        );
       }
     }
 
@@ -198,7 +265,7 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, isAdmin, selectedTechId]);
 
   if (session === null) {
     return (
@@ -239,20 +306,47 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
   ];
 
   if (activeTile !== null) {
-    const rows = jobLists[activeTile.key] ?? [];
+    const key = activeTile.key;
+    const rows = jobLists[key] ?? [];
+    const statusOf: Partial<Record<TileKey, string>> = {
+      timeOffPending: 'pending',
+      timeOffApproved: 'approved',
+      reimbPending: 'pending',
+      reimbApproved: 'approved',
+      reimbRejected: 'rejected',
+    };
+    const wanted = statusOf[key];
+    const isTimeOff = key === 'timeOffPending' || key === 'timeOffApproved';
+    const isReimb = key === 'reimbPending' || key === 'reimbApproved' || key === 'reimbRejected';
+    const timeOffRows = isTimeOff ? timeOffList.filter((r) => r.status === wanted) : [];
+    const reimbRows = isReimb ? reimbList.filter((r) => r.status === wanted) : [];
+    const isEmpty = isTimeOff ? timeOffRows.length === 0 : isReimb ? reimbRows.length === 0 : rows.length === 0;
     return (
       <View style={styles.container}>
         <Pressable onPress={() => setActiveTile(null)} style={styles.row}>
           <Text style={styles.cardLabel}>‹ Back to overview</Text>
         </Pressable>
         <Text style={styles.sectionTitle}>{activeTile.label}</Text>
-        {rows.length === 0 ? <Text style={styles.emptyText}>No jobs.</Text> : null}
+        {isEmpty ? <Text style={styles.emptyText}>{isTimeOff ? 'No time off.' : isReimb ? 'No reimbursements.' : 'No jobs.'}</Text> : null}
         {rows.map((job) => (
           <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.row}>
             <Text style={styles.cardValue}>
               {job.jobNumber != null ? `#${job.jobNumber}` : 'Job'} {job.customerName ?? ''}
             </Text>
             <Text style={styles.cardLabel}>{job.address ?? ''}</Text>
+            <Text style={styles.cardLabel}>{`${jobDate(job)} · ${job.status}`}</Text>
+          </Pressable>
+        ))}
+        {timeOffRows.map((request) => (
+          <Pressable key={request.id} onPress={() => onOpenTimeOff?.(request.id)} style={styles.row}>
+            <Text style={styles.cardValue}>{`${request.startDate} – ${request.endDate}`}</Text>
+            <Text style={styles.cardLabel}>{request.status}</Text>
+          </Pressable>
+        ))}
+        {reimbRows.map((request) => (
+          <Pressable key={request.id} onPress={() => onOpenReimbursements?.()} style={styles.row}>
+            <Text style={styles.cardValue}>{`$${(request.amountCents / 100).toFixed(2)}`}</Text>
+            <Text style={styles.cardLabel}>{request.status}</Text>
           </Pressable>
         ))}
       </View>
@@ -262,18 +356,21 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Overview</Text>
+      {isAdmin ? (
+        <Select
+          value={selectedTechId}
+          options={[{ label: 'All techs', value: '' }, ...techs.map((t) => ({ label: t.label, value: t.id }))]}
+          onChange={setSelectedTechId}
+        />
+      ) : null}
       <View style={styles.grid}>
         {cards.map((card) => (
           <Pressable
             key={card.label}
+            accessibilityRole="button"
+            accessibilityLabel={`${card.label}: ${card.value}`}
             style={styles.card}
-            onPress={() => {
-              if (card.key === 'timeOffPending' || card.key === 'timeOffApproved') {
-                onOpenTimeOff?.();
-              } else {
-                setActiveTile({ key: card.key, label: card.label });
-              }
-            }}
+            onPress={() => setActiveTile({ key: card.key, label: card.label })}
           >
             <Text style={styles.cardValue}>{card.value}</Text>
             <Text style={styles.cardLabel}>{card.label}</Text>
