@@ -36,6 +36,8 @@ export interface EmployeeDetailScreenProps {
   jobs: Job[];
   /** This employee's assigned skills, already filtered by the caller — same pattern as `jobs`. */
   skills?: string[];
+  /** This employee's service areas (names), supplied by the caller. */
+  serviceAreas?: string[];
   hoursWorked?: number;
   onEdit: () => void;
   onBack: () => void;
@@ -72,7 +74,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
-  const { employee, jobs, skills, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
+  const { employee, jobs, skills, serviceAreas, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
   const [priv, setPriv] = useState<ProfilePrivate | null>(null);
   const [privFailed, setPrivFailed] = useState(false);
   useEffect(() => {
@@ -86,7 +88,15 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title={employee.fullName} />
 
-        <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.action} />
+        <View style={styles.actionsRow}>
+          <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.actionInline} />
+          <Button label="Edit" size="sm" onPress={onEdit} style={styles.actionInline} />
+          {employee.active ? (
+            <Button label="Deactivate" variant="secondary" size="sm" onPress={onDeactivate} style={styles.actionInline} />
+          ) : (
+            <Button label="Reactivate" variant="secondary" size="sm" onPress={onReactivate} style={styles.actionInline} />
+          )}
+        </View>
 
         <Card style={styles.card}>
           <InfoRow label="Role" value={employee.role} />
@@ -111,6 +121,15 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           )}
         </Card>
 
+        <Text style={styles.heading}>Service Areas</Text>
+        <Card style={styles.card}>
+          {serviceAreas && serviceAreas.length > 0 ? (
+            <Text style={styles.note}>{serviceAreas.join(', ')}</Text>
+          ) : (
+            <Text style={styles.note}>No service areas on file for this employee.</Text>
+          )}
+        </Card>
+
         <Text style={styles.heading}>Schedule</Text>
         <Card style={styles.card}>
           <DayList techId={employee.id} />
@@ -131,15 +150,6 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
             <Text style={styles.note}>No jobs on file for this employee.</Text>
           )}
         </Card>
-
-        <View style={styles.actionsRow}>
-          <Button label="Edit" onPress={onEdit} style={styles.actionInline} />
-          {employee.active ? (
-            <Button label="Deactivate" variant="secondary" onPress={onDeactivate} style={styles.actionInline} />
-          ) : (
-            <Button label="Reactivate" variant="secondary" onPress={onReactivate} style={styles.actionInline} />
-          )}
-        </View>
       </ScrollView>
     </View>
   );
@@ -165,12 +175,11 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.sm,
   },
-  action: {
-    marginBottom: spacing.sm,
-  },
   actionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   actionInline: {
     flex: 1,

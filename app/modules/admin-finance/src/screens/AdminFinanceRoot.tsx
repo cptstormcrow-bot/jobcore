@@ -1149,6 +1149,15 @@ export function AdminFinanceRoot() {
                 ? loadState.techSkills.filter((s) => s.techId === selectedEmployee.id).map((s) => s.skill)
                 : []
             }
+            serviceAreas={
+              loadState.kind === 'loaded'
+                ? loadState.techServiceAreas
+                    .filter((tsa) => tsa.techId === selectedEmployee.id)
+                    .map((tsa) => loadState.serviceAreas.find((a) => a.id === tsa.serviceAreaId)?.name)
+                    .filter((n): n is string => Boolean(n))
+                    .sort((x, y) => x.localeCompare(y))
+                : []
+            }
             hoursWorked={employeeHoursWorked ?? undefined}
             onEdit={handleEditEmployee}
             onBack={handleBackToRoster}
