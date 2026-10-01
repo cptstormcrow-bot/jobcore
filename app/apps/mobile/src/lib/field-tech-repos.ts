@@ -435,6 +435,16 @@ export function createTimeOffRepository(): TimeOffRepository {
 
 export function createReimbursementRequestRepository(): ReimbursementRequestRepository {
   return {
+    async listForOrg(organizationId: string, techId?: string): Promise<ReimbursementRequest[]> {
+      let query = supabase.from('reimbursements').select('*').eq('organization_id', organizationId);
+      if (techId) query = query.eq('user_id', techId);
+      const { data, error } = await query;
+      if (error) {
+        throw new Error(`listForOrg failed: ${error.message}`);
+      }
+      return ((data ?? []) as ReimbursementRequestRow[]).map(toReimbursementRequest);
+    },
+
     async listForTech(techId: string): Promise<ReimbursementRequest[]> {
       const { data, error } = await supabase
         .from('reimbursements')
@@ -520,17 +530,46 @@ export function createJobNoteRepository(): JobNoteRepository {
  * TechJobRepository
  * ------------------------------------------------------------------ */
 
+async function queryJobs(organizationId: string | null, techId: string | null, label: string) {
+  const byId = new Map<string, ReturnType<typeof toJob>>();
+  const collect = (rows: unknown[] | null) => {
+    for (const row of rows ?? []) {
+      const job = toJob(row as never);
+      if (!byId.has(job.id)) byId.set(job.id, job);
+    }
+  };
+  if (techId === null) {
+    let all = supabase.from('jobs').select('*, customers(name, phone)');
+    if (organizationId) all = all.eq('organization_id', organizationId);
+    const { data, error } = await all;
+    if (error) throw new Error(`${label} failed: ${error.message}`);
+    collect(data);
+    return [...byId.values()];
+  }
+  let viaAssignment = supabase
+    .from('jobs')
+    .select('*, customers(name, phone), job_assignments!inner(tech_id)')
+    .eq('job_assignments.tech_id', techId);
+  if (organizationId) viaAssignment = viaAssignment.eq('organization_id', organizationId);
+  const first = await viaAssignment;
+  if (first.error) throw new Error(`${label} failed: ${first.error.message}`);
+  collect(first.data);
+  let viaColumn = supabase.from('jobs').select('*, customers(name, phone)').eq('assigned_tech_id', techId);
+  if (organizationId) viaColumn = viaColumn.eq('organization_id', organizationId);
+  const second = await viaColumn;
+  if (second.error) throw new Error(`${label} failed: ${second.error.message}`);
+  collect(second.data);
+  return [...byId.values()];
+}
+
 export function createTechJobRepository(): TechJobRepository {
   return {
     async listAssignedToTech(techId: string) {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*, customers(name, phone), job_assignments!inner(tech_id)')
-        .eq('job_assignments.tech_id', techId);
-      if (error) {
-        throw new Error(`listAssignedToTech failed: ${error.message}`);
-      }
-      return (data ?? []).map((row) => toJob(row as never));
+      return queryJobs(null, techId, 'listAssignedToTech');
+    },
+
+    async listForOrg(organizationId: string, techId?: string) {
+      return queryJobs(organizationId, techId ?? null, 'listForOrg');
     },
 
     async getById(jobId: string, techId: string) {
@@ -1148,6 +1187,15 @@ export function createPremQueueRepository(): PremQueueRepository {
     },
 
     async claim(organizationId: string, jobId: string, techId: string): Promise<void> {
+      const { error: clearError } = await supabase
+        .from('job_assignments')
+        .delete()
+        .eq('job_id', jobId)
+        .eq('kind', 'investigator');
+      if (clearError) {
+        logSyncFailure('field-tech-repos.claim', clearError.message, { organizationId, jobId, techId });
+        throw new Error('clear job assignment failed: ' + clearError.message);
+      }
       const { error } = await supabase.from('job_assignments').insert({
         organization_id: organizationId,
         job_id: jobId,
@@ -1182,11 +1230,19 @@ export function buildFieldTechPorts(): ModulePorts {
       list: async (orgId: string) => {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name')
+          .select('id, full_name, role, active, is_test')
           .eq('organization_id', orgId)
           .order('full_name');
         if (error) throw error;
-        return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
+        return (data ?? []).map(
+          (r: { id: string; full_name: string; role?: string; active?: boolean; is_test?: boolean }) => ({
+            id: r.id,
+            fullName: r.full_name,
+            role: r.role,
+            active: r.active,
+            isTest: r.is_test,
+          }),
+        );
       },
     },
   };

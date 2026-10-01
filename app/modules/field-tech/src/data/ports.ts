@@ -566,6 +566,8 @@ export function toJob(row: JobRow): Job {
  */
 export interface TechJobRepository {
   listAssignedToTech(techId: string): Promise<Job[]>;
+  /** All org jobs on all dates; when techId is given, only that tech's jobs. */
+  listForOrg(organizationId: string, techId?: string): Promise<Job[]>;
   getById(jobId: string, techId: string): Promise<Job | null>;
   /**
    * Persists the result of an in-memory `applyTransition`/`transitionJob`
@@ -731,6 +733,7 @@ export interface ReimbursementRequestDraft {
  */
 export interface ReimbursementRequestRepository {
   listForTech(techId: string): Promise<ReimbursementRequest[]>;
+  listForOrg(organizationId: string, techId?: string): Promise<ReimbursementRequest[]>;
   create(organizationId: string, techId: string, draft: ReimbursementRequestDraft): Promise<ReimbursementRequest>;
 }
 

@@ -1090,7 +1090,7 @@ export function AdminFinanceRoot() {
         ) : (
           <AssignmentBoardScreen
             jobs={loadState.jobs.filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))}
-            techs={loadState.employees.map(
+            techs={loadState.employees.filter((e) => e.role === 'tech' && e.active).map(
               (profile): TechColumnTech => ({
                 id: profile.id,
                 fullName: profile.fullName,
