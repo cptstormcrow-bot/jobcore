@@ -154,7 +154,7 @@ export function AdminFinanceRoot() {
   const [subView, setSubView] = useState<SubView>('overview');
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [showTestJobs, setShowTestJobs] = useState(false);
-  const [showTestEmployees, setShowTestEmployees] = useState(false);
+  const [showTestEmployees, setShowTestEmployees] = useState(true);
   const [editorIsTest, setEditorIsTest] = useState(false);
   const [editorPaidTravel, setEditorPaidTravel] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
@@ -310,7 +310,7 @@ export function AdminFinanceRoot() {
     void (async () => {
       const [jobs, employees, employeesRoster, blackouts] = await Promise.all([
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
-        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, false),
+        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, true),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, false),
         ports.localPrefs.getBool(SHOW_BLACKOUTS_KEY, true),
       ]);
@@ -1090,13 +1090,15 @@ export function AdminFinanceRoot() {
         ) : (
           <AssignmentBoardScreen
             jobs={loadState.jobs.filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))}
-            techs={loadState.employees.filter((e) => e.role === 'tech' && e.active).map(
+            techs={loadState.employees.map(
               (profile): TechColumnTech => ({
                 id: profile.id,
                 fullName: profile.fullName,
                 phone: profile.phone,
                 isTest: profile.isTest,
                 testJobsOnly: profile.testJobsOnly ?? false,
+                role: profile.role,
+                active: profile.active,
               }),
             )}
             resolveServiceAreaId={(job) => job.service_area_id ?? null}
@@ -1147,6 +1149,15 @@ export function AdminFinanceRoot() {
             skills={
               loadState.kind === 'loaded'
                 ? loadState.techSkills.filter((s) => s.techId === selectedEmployee.id).map((s) => s.skill)
+                : []
+            }
+            serviceAreas={
+              loadState.kind === 'loaded'
+                ? loadState.techServiceAreas
+                    .filter((tsa) => tsa.techId === selectedEmployee.id)
+                    .map((tsa) => loadState.serviceAreas.find((a) => a.id === tsa.serviceAreaId)?.name)
+                    .filter((n): n is string => Boolean(n))
+                    .sort((x, y) => x.localeCompare(y))
                 : []
             }
             hoursWorked={employeeHoursWorked ?? undefined}

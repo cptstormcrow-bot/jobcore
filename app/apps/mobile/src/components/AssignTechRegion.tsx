@@ -33,6 +33,9 @@ export function AssignTechRegion({
   return (
     <View style={styles.root}>
       <Text style={styles.label}>{label}</Text>
+      <Text style={styles.label}>
+        {`Tech: ${techs.find((t) => t.id === currentTechId)?.name ?? (currentTechId ? 'Assigned' : 'Unassigned')}`}
+      </Text>
       {indicator ? <Text style={styles.indicator}>{indicator}</Text> : null}
       {techs.length === 0 && (
         <Text style={styles.hint}>No active technicians in this organization</Text>

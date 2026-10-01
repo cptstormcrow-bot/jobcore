@@ -32,10 +32,9 @@ import { Greeting } from './screens/Greeting';
 import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
-import { Overview } from './screens/Overview';
+import { Overview, type OverviewProps } from './screens/Overview';
 import { Reviews } from './screens/Reviews';
 import { PremJobs } from './screens/PremJobs';
-import { Reimbursements } from './screens/Reimbursements';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import type { MenuItem } from '@jobcore/ui';
@@ -56,7 +55,7 @@ export type { DayListProps } from './screens/DayList';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems' | 'reimbursements';
+type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems';
 
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
@@ -130,17 +129,6 @@ function FieldTechRoot(): React.ReactElement {
       isActive: subView === 'reviews',
       onPress: () => setSubView('reviews'),
     },
-    {
-      id: 'reimbursements',
-      label: 'Reimbursements',
-      isActive: subView === 'reimbursements',
-      onPress: () => setSubView('reimbursements'),
-    },
-  ];
-
-  const moduleSwitchItems = [
-    { id: 'logo-admin-finance', label: 'Admin & Finance', onPress: () => router.push('/m/admin-finance') },
-    { id: 'logo-sales-marketing', label: 'Sales & Marketing', onPress: () => router.push('/m/sales-marketing') },
   ];
 
   const gearItems = [
@@ -178,7 +166,6 @@ function FieldTechRoot(): React.ReactElement {
     timeOff: 'Time Off',
     reviews: 'Reviews',
     prems: 'Prems',
-    reimbursements: 'Reimbursements',
   };
 
   let content: React.ReactElement;
@@ -191,9 +178,6 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'prems':
       content = React.createElement(PremJobs, null);
-      break;
-    case 'reimbursements':
-      content = React.createElement(Reimbursements, null);
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {
@@ -208,15 +192,9 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'overview':
     default:
-      content = React.createElement(Overview, {
-        onOpenJob: (id: string) => {
-          setSelectedJobId(id);
-        },
-        onOpenTimeOff: (id?: string) => {
-          setSelectedTimeOffId(id);
-          setSubView('timeOff');
-        },
-        onOpenReimbursements: () => setSubView('reimbursements'),
+      content = React.createElement<OverviewProps>(Overview, {
+        onOpenJob: (jobId: string) => setSelectedJobId(jobId),
+        onOpenTimeOff: () => setSubView('timeOff'),
       });
       break;
   }
@@ -233,9 +211,10 @@ function FieldTechRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
-      ...(session.role === 'owner' || session.role === 'admin'
-        ? { logoMenuItems: moduleSwitchItems }
-        : { onLogoPress: () => setSubView('overview') }),
+      onTitlePress: () => {
+        setSelectedJobId(null);
+        setSubView('overview');
+      },
     }),
     content,
   );
@@ -259,31 +238,28 @@ export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, Field
  * reimplemented — `canTransition`/`applyTransition` (via `transitionJob`)
  * remain the sole owners of the precondition logic itself.
  */
-async function buildTransitionCtx(job: Job): Promise<Ctx> {
+function buildTransitionCtx(): Ctx {
   const session = getModuleSession();
   const ports = getModulePorts();
-
-  // The state machine's probes are read synchronously (a Promise-returning
-  // probe always fails closed), so await every input first and hand back
-  // sync closures over the resolved values.
-  const [instance, photos, notes] = await Promise.all([
-    ports.checklist.getInstanceForJob(job.id, 'start'),
-    ports.photos.listForJob(job.id),
-    ports.notes.listForJob(job.id),
-  ]);
-  const startChecklistSubmitted = instance !== null && instance.submittedAt !== null;
-  const afterPhotosPresent = photos.some((photo) => photo.kind === 'after');
-  const qualityNotesPresent = notes.some((note) => note.kind === 'quality_notes');
 
   return {
     role: session ? session.role : 'tech',
     now: () => new Date().toISOString(),
-    hasSubmittedStartChecklist: () => startChecklistSubmitted,
-    hasAfterPhotos: () => afterPhotosPresent,
-    hasQualityNotes: () => qualityNotesPresent,
+    hasSubmittedStartChecklist: async (job: Job) => {
+      const instance = await ports.checklist.getInstanceForJob(job.id, 'start');
+      return instance !== null && instance.submittedAt !== null;
+    },
+    hasAfterPhotos: async (job: Job) => {
+      const photos = await ports.photos.listForJob(job.id);
+      return photos.some((photo) => photo.kind === 'after');
+    },
+    hasQualityNotes: async (job: Job) => {
+      const notes = await ports.notes.listForJob(job.id);
+      return notes.some((note) => note.kind === 'quality_notes');
+    },
     // field-tech never records a payment record itself; a job whose payer
     // is not the customer satisfies this precondition without one.
-    hasPaymentRecord: () => job.payer !== 'customer',
+    hasPaymentRecord: async (job: Job) => job.payer !== 'customer',
   };
 }
 
@@ -328,7 +304,7 @@ export const fieldTechModule: JobcoreModule = {
       id: 'on-my-way',
       label: 'On my way',
       onInvoke: async (job: Job) => {
-        const ctx = await buildTransitionCtx(job);
+        const ctx = buildTransitionCtx();
         const transitioned = await transitionJob(job, 'en_route', ctx);
         await persistTransition(job, transitioned);
       },
@@ -337,7 +313,7 @@ export const fieldTechModule: JobcoreModule = {
       id: 'start-job',
       label: 'Start',
       onInvoke: async (job: Job) => {
-        const ctx = await buildTransitionCtx(job);
+        const ctx = buildTransitionCtx();
         const transitioned = await transitionJob(job, 'in_progress', ctx);
         await persistTransition(job, transitioned);
       },
@@ -346,7 +322,7 @@ export const fieldTechModule: JobcoreModule = {
       id: 'accept-job',
       label: 'Accept',
       onInvoke: async (job: Job) => {
-        const ctx = await buildTransitionCtx(job);
+        const ctx = buildTransitionCtx();
         const transitioned = await transitionJob(job, 'accepted', ctx);
         await persistTransition(job, transitioned);
         if (job.scheduledStart === null) {

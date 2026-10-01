@@ -12,9 +12,8 @@ import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
+import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
-import { getEnabledModules, type JobAction } from '@jobcore/module-sdk';
-import { useModuleInjection } from '../../src/lib/useModuleInjection';
 import { supabase } from '../../src/lib/supabase';
 import {
   createJobRepository,
@@ -209,13 +208,6 @@ export default function JobDrilldownScreen() {
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const isAdmin = role === 'admin';
-  const enabledIds: string[] =
-    session.status === 'authenticated'
-      ? getEnabledModules(session.organization, session.profile.role).map((m) => m.id)
-      : [];
-  useModuleInjection(session, enabledIds.includes('admin-finance') ? 'admin-finance' : undefined);
-  useModuleInjection(session, enabledIds.includes('field-tech') ? 'field-tech' : undefined);
-  useModuleInjection(session, enabledIds.includes('sales-marketing') ? 'sales-marketing' : undefined);
 
   if (session.status === 'authenticated' && org && role) {
     setModuleSession({ org, role, userId: session.profile.id });
@@ -265,17 +257,14 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [pendingReassignTechId, setPendingReassignTechId] = useState<string | null>(null);
+  useEffect(() => { setAssignError(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  // Expo Router reuses this screen across jobs: drop stale errors on job change.
-  useEffect(() => {
-    setAssignError(null);
-    setActionError(null);
-  }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
@@ -628,14 +617,23 @@ export default function JobDrilldownScreen() {
    * `JobAssignmentRepository.create`, per this file's own top-of-file NOTE
    * on the installer/investigator split. Never touches `assignedTechId`/
    * `status`; `investigatorTechId` local state is the read-back.
+   * Reassignment is delete-then-insert inside the repo's `create()`; unassigning
+   * an investigator calls `removeInvestigator`.
    */
-  const handleAssignInvestigator = async (techId: string): Promise<void> => {
+  const handleAssignInvestigator = async (techId: string, confirmed = false): Promise<void> => {
     if (!isAdmin) return;
     if (!job || !org?.id) return;
+    if (!confirmed && investigatorTechId && investigatorTechId !== techId) {
+      setPendingReassignTechId(techId);
+      return;
+    }
     setAssigning(techId);
     setAssignError(null);
     setActionError(null);
     try {
+      if (confirmed && investigatorTechId && investigatorTechId !== techId) {
+        await createJobRepository().clearInvestigator(job.id);
+      }
       await createJobAssignmentRepository().create(org.id, {
         jobId: job.id,
         techId,
@@ -683,7 +681,8 @@ export default function JobDrilldownScreen() {
 
   // Clears the assignment back to the shared "Unassigned" convention
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
-  // the clear via patchScheduling, investigator picks clear locally only.
+  // the clear via patchScheduling; unassigning an investigator calls
+  // removeInvestigator (reassignment is delete-then-insert in the repo's create()).
   const handleUnassign = async (): Promise<void> => {
     if (!isAdmin) return;
     if (!job) return;
@@ -705,54 +704,15 @@ export default function JobDrilldownScreen() {
         }
         setJob(result.job);
       } else {
-        await createJobRepository().clearInvestigator(job.id);
+        if (!investigatorTechId) return;
+        await createJobAssignmentRepository().removeInvestigator(job.id);
         setInvestigatorTechId(null);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unassign failed.';
-      setAssignError(message);
-      setActionError(message);
+      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
     } finally {
       setAssigning(null);
     }
-  };
-
-  // Same confirm pattern as confirmApproveEstimate (window.confirm on web,
-  // Alert.alert on native); every assign / reassign / unassign goes through it.
-  const confirmThen = (title: string, body: string, run: () => void): void => {
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
-        run();
-      }
-      return;
-    }
-    Alert.alert(title, body, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes', onPress: run },
-    ]);
-  };
-
-  const techNameFor = (id: string | null | undefined): string =>
-    (id ? techs.find((t) => t.id === id)?.fullName : undefined) ?? 'the selected tech';
-
-  const requestAssign = (techId: string): void => {
-    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
-    const currentId = job?.assignedTechId ?? investigatorTechId;
-    if (currentId) {
-      confirmThen(
-        'Reassign tech?',
-        `Reassign ${label} from ${techNameFor(currentId)} to ${techNameFor(techId)}?`,
-        () => void handleAssign(techId),
-      );
-      return;
-    }
-    confirmThen('Assign tech?', `Assign ${techNameFor(techId)} to ${label}?`, () => void handleAssign(techId));
-  };
-
-  const requestUnassign = (): void => {
-    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
-    const currentId = job?.assignedTechId ?? investigatorTechId;
-    confirmThen('Unassign tech?', `Remove ${techNameFor(currentId)} from ${label}?`, () => void handleUnassign());
   };
 
   // Save-follows-selection: switching regions autosaves a dirty edit-mode
@@ -966,12 +926,7 @@ export default function JobDrilldownScreen() {
         scheduledEnd: null,
         requestedWindow: null,
       });
-      try {
-        await createJobRepository().clearInvestigator(job.id);
-      } catch (clearErr) {
-        setActionError(clearErr instanceof Error ? clearErr.message : String(clearErr));
-        return;
-      }
+      await createJobRepository().clearInvestigator(job.id);
       const updated = await createJobRepository().updateStatus(job.id, 'new');
       setJob({ ...updated, totalLaborSeconds: 0 });
       setInvestigatorTechId(null);
@@ -1032,8 +987,8 @@ export default function JobDrilldownScreen() {
         now: () => new Date().toISOString(),
         hasPaymentRecord: () => true,
       });
-      await createJobRepository().updateStatus(job.id, 'paid');
       setJob(updated);
+      await createJobRepository().updateStatus(job.id, 'paid');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Mark paid failed.';
       setSaveError(message);
@@ -1041,60 +996,6 @@ export default function JobDrilldownScreen() {
     } finally {
       setBusyAction(null);
     }
-  };
-
-  const SKIPPED_MODULE_ACTION_IDS = ['admin-finance-mark-paid', 'close-out-and-mark-paid'];
-  const moduleActions: JobAction[] =
-    session.status === 'authenticated' && job
-      ? getEnabledModules(session.organization, session.profile.role)
-          .flatMap((m) => m.jobActions ?? [])
-          .filter(
-            (a) =>
-              !SKIPPED_MODULE_ACTION_IDS.includes(a.id) &&
-              !!a.onInvoke &&
-              (!a.visibleWhen || a.visibleWhen(job)),
-          )
-      : [];
-
-  const runModuleAction = async (action: JobAction): Promise<void> => {
-    if (!job || !action.onInvoke) return;
-    setBusyAction(action.id);
-    setActionError(null);
-    try {
-      await action.onInvoke(job);
-      if (org?.id && jobId) {
-        const { data } = await supabase
-          .from('jobs')
-          .select(JOB_ROW_COLUMNS)
-          .eq('organization_id', org.id)
-          .eq('id', jobId)
-          .maybeSingle<JobRow>();
-        if (data) setJob(toJob(data));
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : `${action.label} failed.`;
-      setSaveError(message);
-      setActionError(message);
-    } finally {
-      setBusyAction(null);
-    }
-  };
-
-  const confirmModuleAction = (action: JobAction): void => {
-    const title = action.label;
-    const body = `${action.label} for this job?`;
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm(`${title}
-
-${body}`)) {
-        void runModuleAction(action);
-      }
-      return;
-    }
-    Alert.alert(title, body, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes', onPress: () => void runModuleAction(action) },
-    ]);
   };
 
   if (loading) {
@@ -1175,7 +1076,7 @@ ${body}`)) {
     { id: 'contact', label: 'Contact', onPress: handleContact },
     { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
     { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
-    ...(isAdmin || (role as string | undefined) === 'owner'
+    ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() }]
       : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
@@ -1221,22 +1122,21 @@ ${body}`)) {
           assignedTechName={assignedTechName}
           serviceAreaName={currentServiceAreaName}
           techs={eligibleTechOptions}
-          onAssignTech={(techId) => (techId ? requestAssign(techId) : requestUnassign())}
+          onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
           assigningTech={assigning !== null}
         />
-        {moduleActions.length > 0 && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-            {moduleActions.map((action) => (
-              <Button
-                key={action.id}
-                label={busyAction === action.id ? `${action.label}…` : action.label}
-                variant="outline"
-                onPress={() => confirmModuleAction(action)}
-                disabled={busyAction !== null}
-              />
-            ))}
-          </View>
-        )}
+        <WarningSheet
+          visible={pendingReassignTechId !== null}
+          warnings={[]}
+          title="Reassign job?"
+          message={`Move job #${job?.jobNumber ?? ''} from ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId ?? ''} to ${techs.find((t) => t.id === pendingReassignTechId)?.fullName ?? pendingReassignTechId ?? ''}?`}
+          onCancel={() => setPendingReassignTechId(null)}
+          onConfirm={() => {
+            const next = pendingReassignTechId;
+            setPendingReassignTechId(null);
+            if (next) void handleAssignInvestigator(next, true);
+          }}
+        />
         {region === 'plan' && (
           <PlanningScreen
             embedded
@@ -1280,18 +1180,15 @@ ${body}`)) {
           />
         )}
         {region === 'assign' && isAdmin && (
-          <>
-            <Text>{assignedTechName ? `Tech: ${assignedTechName}` : 'Unassigned'}</Text>
-            <AssignTechRegion
-              techs={eligibleTechOptions}
-              currentTechId={currentJob.assignedTechId ?? investigatorTechId}
-              busy={assigning !== null}
-              error={assignError}
-              onAssign={(techId) => requestAssign(techId)}
-              onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => requestUnassign() : undefined}
-              label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
-            />
-          </>
+          <AssignTechRegion
+            techs={eligibleTechOptions}
+            currentTechId={currentJob.assignedTechId ?? investigatorTechId}
+            busy={assigning !== null}
+            error={assignError}
+            onAssign={(techId) => void handleAssign(techId)}
+            onUnassign={() => void handleUnassign()}
+            label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+          />
         )}
         {region === 'schedule' && (
           <JobScheduleScreen

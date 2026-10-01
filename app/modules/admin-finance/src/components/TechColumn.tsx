@@ -59,6 +59,8 @@ export interface TechColumnTech {
   coversServiceArea?: boolean;
   phone?: string | null;
   testJobsOnly?: boolean;
+  role?: string;
+  active?: boolean;
 }
 
 export interface TechColumnProps {

@@ -38,7 +38,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { isBetaVisible } from '@jobcore/core';
+import { isBetaVisible, isTestVisible } from '@jobcore/core';
 import { Card, EmptyState, Button, Select, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
@@ -90,7 +90,7 @@ export interface AssignmentBoardScreenProps {
    * via `isTestVisible`, mirroring `showTestJobs`/`isBetaVisible` above. Also
    * lifted to the caller for the same unmount-survival reason.
    */
-  showTestEmployees?: boolean; // DEPRECATED: no longer gates anything; parent toggle can be removed
+  showTestEmployees: boolean;
   onSelectEmployee?: (techId: string) => void;
 }
 
@@ -115,17 +115,28 @@ export function AssignmentBoardScreen({
   onUnassign,
   onToggleTestJobsOnly,
   showTestJobs,
+  showTestEmployees,
   onSelectEmployee,
 }: AssignmentBoardScreenProps) {
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
+  const [reassign, setReassign] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
 
-  const visibleTechs = techs;
+  const visibleTechs = useMemo(
+    () =>
+      techs.filter(
+        (tech) =>
+          (tech.role === undefined || tech.role === 'tech') &&
+          tech.active !== false &&
+          isTestVisible(tech, showTestEmployees),
+      ),
+    [techs, showTestEmployees]
+  );
 
   const techById = useMemo(() => new Map(techs.map((t) => [t.id, t])), [techs]);
 
@@ -246,10 +257,6 @@ export function AssignmentBoardScreen({
     }
   }
 
-  function jobLabel(job: Job): string {
-    return job.jobNumber != null ? `#${job.jobNumber}` : 'this job';
-  }
-
   function eligibleTechs(job: Job): TechColumnTech[] {
     return techsWithAvailability.filter((t) => jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
   }
@@ -261,7 +268,7 @@ export function AssignmentBoardScreen({
     }
     if (techId === '') {
       confirmDialog(
-        `Unassign ${jobLabel(job)}?`,
+        'Unassign job?',
         'Remove the assigned tech from this job?',
         () => {
           onUnassign?.(job);
@@ -287,7 +294,7 @@ export function AssignmentBoardScreen({
     }
     if (visitKind[job.id] === 'prem') {
       confirmDialog(
-        `Assign ${jobLabel(job)} Prem to ${tech.fullName}?`,
+        'Assign Prem?',
         `Assign ${tech.fullName} to the Prem for this job?`,
         () => {
           onAssignInvestigator?.(job, techId);
@@ -307,35 +314,8 @@ export function AssignmentBoardScreen({
       );
       return;
     }
-    const rowWarnings = warningsFor(
-      job,
-      jobsByTech.get(tech.id) ?? [],
-      resolveServiceAreaId(job),
-      resolveTimeOffForTech ? resolveTimeOffForTech(tech.id) : [],
-      tech.id,
-      techServiceAreas ?? [],
-    );
-    const testTechOnRealJob = tech.isTest && jobCategoryOf(job) === 'real';
-    const fromTech = job.assignedTechId ? techById.get(job.assignedTechId) : undefined;
-    const assignTitle = job.assignedTechId
-      ? `Reassign ${jobLabel(job)} from ${fromTech?.fullName ?? 'Unknown tech'} to ${tech.fullName}?`
-      : `Assign ${jobLabel(job)} to ${tech.fullName}?`;
-    const proceed = () => {
-      if (rowWarnings.length > 0) {
-        setPending({ job, tech });
-      } else {
-        onAssign?.(job, tech.id);
-      }
-    };
-    if (rowWarnings.length === 0 || testTechOnRealJob) {
-      // With warnings, the WarningSheet is the confirmation; otherwise confirm here.
-      confirmDialog(
-        assignTitle,
-        testTechOnRealJob
-          ? `Warning: ${tech.fullName} is a test employee and this is not a test job.`
-          : 'No conflicts found.',
-        proceed,
-      );
+    if (job.assignedTechId && job.assignedTechId !== techId) {
+      setReassign({ job, tech });
     } else {
       setPending({ job, tech });
     }
@@ -392,16 +372,17 @@ export function AssignmentBoardScreen({
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
                     <View style={styles.poolRowInfo}>
-                      <Text style={styles.poolRowCustomer}>{job.customerName ?? 'No customer on file'}</Text>
+                      <Text style={styles.poolRowText}>
+                        {job.jobNumber != null ? `#${job.jobNumber}` : '#—'}
+                      </Text>
+                      {job.customerName ? <Text style={styles.poolRowText}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
-                      <Text style={styles.assignedLine}>{job.jobNumber != null ? `#${job.jobNumber}` : 'No job number'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
-                      <Text style={styles.assignedLine}>{job.assignedTechId ? `Tech: ${techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech'}` : 'Unassigned'}</Text>
-                      {premTechId ? (
+                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
+                      {job.assignedTechId && premTechId ? (
                         <Text style={styles.assignedLine}>Prem: {[techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ')}</Text>
                       ) : null}
                     </View>
-                    <View style={styles.poolRowControls}>
                     <View style={styles.visitKindSegmentRow}>
                       <Button
                         label="Service"
@@ -422,27 +403,28 @@ export function AssignmentBoardScreen({
                     <Select
                       options={[
                         { label: 'Unassigned', value: '' },
-                        ...eligibleTechs(job).map((t) => ({ label: t.isTest ? `${t.fullName} (test)` : t.fullName, value: t.id })),
+                        ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
                       ]}
                       value={choice[job.id] ?? job.assignedTechId ?? ''}
                       onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                       style={styles.assignSelect}
                     />
-                    <Button
-                      label="Confirm"
-                      variant="primary"
-                      size="sm"
-                      disabled={!(job.id in choice && choice[job.id] !== (job.assignedTechId ?? ''))}
-                      style={job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? undefined : styles.confirmDimmed}
-                      onPress={() => handleRowConfirm(job)}
-                    />
+                    <View style={styles.confirmSlot}>
+                      {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? (
+                        <Button
+                          label="Confirm"
+                          variant="primary"
+                          size="sm"
+                          onPress={() => handleRowConfirm(job)}
+                        />
+                      ) : null}
+                    </View>
                     <Button
                       label="View"
                       variant="outline"
                       size="sm"
                       onPress={() => router.push('/job/' + job.id)}
                     />
-                    </View>
                   </View>
                 </Pressable>
               );
@@ -484,6 +466,24 @@ export function AssignmentBoardScreen({
         warnings={pendingWarnings}
         onConfirm={handleConfirm}
         onCancel={handleCancelWarning}
+      />
+      <WarningSheet
+        visible={reassign !== null}
+        warnings={[]}
+        title="Reassign job?"
+        message={
+          reassign
+            ? `Move job #${reassign.job.jobNumber ?? '—'} from ${
+                techById.get(reassign.job.assignedTechId ?? '')?.fullName ?? 'Unknown tech'
+              } to ${reassign.tech.fullName}?`
+            : ''
+        }
+        onConfirm={() => {
+          if (reassign) onAssign?.(reassign.job, reassign.tech.id);
+          setReassign(null);
+          setSelectedJobId(null);
+        }}
+        onCancel={() => setReassign(null)}
       />
     </View>
   );
@@ -546,28 +546,14 @@ const styles = StyleSheet.create({
   poolRowSelected: {
     backgroundColor: colors.info,
   },
+  confirmSlot: {
+    width: 90,
+    marginRight: spacing.sm,
+  },
   poolRowInfo: {
     flex: 1,
     flexShrink: 1,
     marginRight: spacing.sm,
-  },
-  poolRowControls: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-    width: 320,
-    flexShrink: 0,
-  },
-  confirmDimmed: {
-    opacity: 0.4,
-  },
-  poolRowCustomer: {
-    color: colors.text,
-    fontSize: typography.size.body,
-    fontFamily: typography.fontFamily.body,
-    fontWeight: typography.weight.bold,
   },
   poolRowText: {
     color: colors.text,
@@ -576,7 +562,7 @@ const styles = StyleSheet.create({
   },
   assignSelect: {
     width: 140,
-    minHeight: 44,
+    marginRight: spacing.sm,
   },
   poolRowStatus: {
     color: colors.textMuted,

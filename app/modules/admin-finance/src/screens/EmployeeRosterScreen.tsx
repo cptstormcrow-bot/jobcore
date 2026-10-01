@@ -106,7 +106,7 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
     );
   }
 
-  const visibleEmployees = loadState.employees.filter((profile) => isTestVisible(profile, showTest));
+  const visibleEmployees = loadState.employees.filter((profile) => isTestVisible(profile, showTest) && profile.role !== 'owner');
 
   return (
     <View style={styles.screen}>

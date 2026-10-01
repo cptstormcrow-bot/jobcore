@@ -6,6 +6,8 @@
  * dependency arrives as a parameter, and the status edge goes through
  * `domain/transition.ts`'s `transitionJob` (assigned -> scheduled), never a
  * direct `job.status =` write.
+ * Unassign works at any status; only 'assigned' steps back to 'scheduled' —
+ * every other status keeps its status and just loses its tech/assignments.
  *
  * Validate-then-write, fail closed: the job is re-read, the transition is
  * computed and the status is checked BEFORE any write happens, so a refused
@@ -38,12 +40,8 @@ export async function unassignJob(
     let transitioned: Job | null = null;
     if (fresh.status === 'assigned') {
       transitioned = await transitionJob(fresh, 'scheduled', deps.ctx);
-    } else if (fresh.status !== 'scheduled' && fresh.status !== 'qualified') {
-      return {
-        ok: false,
-        reason: 'This job is past assignment and cannot be unassigned.',
-      };
     }
+    // Any other status: no status change — only the assignment links and tech are cleared.
 
     // Writes.
     await deps.assignments.removeForJob(fresh.id);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { ComponentProps } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import type { Job } from '@jobcore/core';
@@ -114,7 +114,6 @@ export function JobSummaryRest({
   assigningTech,
   statusError = null,
 }: JobSummaryRestProps) {
-  const [pickerOpen, setPickerOpen] = useState(false);
   const paidEligible = job.status === 'completed';
   const paidHint =
     !paidEligible && job.status !== 'paid' && job.status !== 'closed'
@@ -138,24 +137,22 @@ export function JobSummaryRest({
             .join(' · ') || 'Not started'}
         </Text>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
-        <View style={styles.techRow}>
-          <Pressable
-            disabled={!(techs && techs.length > 0 && onAssignTech) || assigningTech}
-            onPress={() => setPickerOpen((open) => !open)}>
-            <Text style={styles.summaryLine}>{assignedTechName ?? 'Unassigned'}</Text>
-          </Pressable>
-        </View>
-        {pickerOpen && techs && onAssignTech ? (
-          <View style={styles.techSelect}>
-            <Select
-              value={job.assignedTechId ?? ''}
-              options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
-              placeholder="Choose technician"
-              disabled={assigningTech}
-              onChange={(techId) => { setPickerOpen(false); onAssignTech(techId || null); }}
-            />
+        {techs && onAssignTech ? (
+          <View style={styles.techRow}>
+            <Text style={styles.summaryLine}>Tech:</Text>
+            <View style={styles.techSelect}>
+              <Select
+                value={job.assignedTechId ?? ''}
+                options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
+                placeholder="Choose technician"
+                disabled={assigningTech}
+                onChange={(techId) => { onAssignTech(techId || null); }}
+              />
+            </View>
           </View>
-        ) : null}
+        ) : (
+          <Text style={styles.summaryLine}>Tech: {assignedTechName ?? 'Unassigned'}</Text>
+        )}
         <View style={styles.techRow}>
           {serviceAreaName ? (
             <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
@@ -210,8 +207,8 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: spacing.sm,
   },
-  techRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  techSelect: { marginTop: spacing.xs },
+  techRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  techSelect: { flex: 1 },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
   paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
   arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
