@@ -875,6 +875,25 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
     async create(organizationId: string, draft: JobAssignmentDraft): Promise<void> {
       await enqueueMutation('job_assignment.create', draft.assignedAt, { organizationId, ...draft });
 
+      // Investigator re-assignment: the partial unique index (0065) allows one investigator row
+      // per job and supabase-js upsert cannot target a partial index, so delete the old row then
+      // insert. Delete-then-insert (not update) keeps the BEFORE INSERT time-off blackout trigger
+      // (0035, deny_job_assignment_on_time_off) firing for the new assignee.
+      const isInvestigator = draft.kind === 'investigator';
+      let priorTechId: string | null = null;
+      if (isInvestigator) {
+        priorTechId = await this.getInvestigatorTechId(draft.jobId);
+        const { error: delError } = await supabase
+          .from('job_assignments')
+          .delete()
+          .eq('job_id', draft.jobId)
+          .eq('kind', 'investigator');
+        if (delError) {
+          logSyncFailure('admin-finance-repos.createJobAssignment', delError.message, { organizationId, draft });
+          throw new Error(`create job assignment failed: ${delError.message}`);
+        }
+      }
+
       const { error } = await supabase.from('job_assignments').insert({
         organization_id: organizationId,
         job_id: draft.jobId,
@@ -882,6 +901,19 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
         assigned_at: draft.assignedAt,
         kind: draft.kind ?? 'installer',
       });
+      if (error && isInvestigator && priorTechId && priorTechId !== draft.techId) {
+        try {
+          await supabase.from('job_assignments').insert({
+            organization_id: organizationId,
+            job_id: draft.jobId,
+            tech_id: priorTechId,
+            assigned_at: draft.assignedAt,
+            kind: 'investigator',
+          });
+        } catch {
+          // best-effort restore of the prior investigator; the original error is thrown below
+        }
+      }
       if (error) {
         logSyncFailure('admin-finance-repos.createJobAssignment', error.message, { organizationId, draft });
         throw new Error(`create job assignment failed: ${error.message}`);
@@ -898,6 +930,18 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
         .limit(1);
       if (error) throw new Error(`get investigator tech failed: ${error.message}`);
       return (data?.[0]?.tech_id as string | undefined) ?? null;
+    },
+
+    async removeInvestigator(jobId: string): Promise<void> {
+      const { error } = await supabase
+        .from('job_assignments')
+        .delete()
+        .eq('job_id', jobId)
+        .eq('kind', 'investigator');
+      if (error) {
+        logSyncFailure('admin-finance-repos.removeInvestigator', error.message, { jobId });
+        throw new Error(`remove investigator failed: ${error.message}`);
+      }
     },
 
     async listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>> {

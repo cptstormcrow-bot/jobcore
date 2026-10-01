@@ -614,6 +614,8 @@ export default function JobDrilldownScreen() {
    * `JobAssignmentRepository.create`, per this file's own top-of-file NOTE
    * on the installer/investigator split. Never touches `assignedTechId`/
    * `status`; `investigatorTechId` local state is the read-back.
+   * Reassignment is delete-then-insert inside the repo's `create()`; unassigning
+   * an investigator calls `removeInvestigator`.
    */
   const handleAssignInvestigator = async (techId: string): Promise<void> => {
     if (!isAdmin) return;

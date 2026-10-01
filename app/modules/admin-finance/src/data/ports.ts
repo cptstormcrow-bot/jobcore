@@ -623,6 +623,8 @@ export interface JobAssignmentDraft {
 export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
   getInvestigatorTechId(jobId: string): Promise<string | null>;
+  /** Removes the job's investigator assignment, if any; no-op when none. */
+  removeInvestigator(jobId: string): Promise<void>;
   listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
   /** Deletes every assignment row (installer and investigator) for the job; used by unassign. */
   removeForJob(jobId: string): Promise<void>;
