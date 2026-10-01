@@ -271,6 +271,8 @@ export interface JobPhotoDraft {
 export interface JobPhotoRepository {
   listForJob(jobId: string): Promise<JobPhoto[]>;
   create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto>;
+  /** Returns a short-lived signed URL for a photo's storage path, or null if it can't be signed. Optional so stub ports keep compiling. */
+  getSignedUrl?(storagePath: string): Promise<string | null>;
 }
 
 /** Result of a successful camera capture — the host-uploaded storage path plus optional geotag. */

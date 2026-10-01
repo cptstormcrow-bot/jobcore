@@ -16,11 +16,11 @@
  */
 
 import * as React from 'react';
-import { View, Linking, StyleSheet } from 'react-native';
+import { View, Image, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import { Button, telUrl, colors, spacing, typography, Text } from '@jobcore/ui';
-import type { JobNote } from '../data/ports';
+import type { JobNote, JobPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -50,7 +50,7 @@ function mapsUrl(address: string): string {
 
 /**
  * Module-local job detail screen. Shows requested vs scheduled timing
- * distinctly, tap-to-call / tap-to-map actions, and read-only admin notes.
+ * distinctly, tap-to-call / tap-to-map actions, read-only admin notes, and read-only job photos.
  * Renders nothing financial.
  */
 export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): React.ReactElement {
@@ -58,6 +58,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
   const [job, setJob] = React.useState<Job | null>(null);
   const [adminNotes, setAdminNotes] = React.useState<JobNote[]>([]);
+  const [photos, setPhotos] = React.useState<Array<JobPhoto & { uri: string | null }>>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -81,6 +82,16 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
         if (cancelled) return;
         setJob(loadedJob);
         setAdminNotes(notes.filter((note) => note.kind === 'admin_correction'));
+        try {
+          const rows = await ports.photos.listForJob(jobId);
+          const signed = await Promise.all(
+            rows.map(async (p) => ({ ...p, uri: (await ports.photos.getSignedUrl?.(p.storagePath)) ?? null })),
+          );
+          if (cancelled) return;
+          setPhotos(signed);
+        } catch {
+          if (!cancelled) setPhotos([]);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Failed to load job.');
@@ -187,6 +198,19 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
           ))
         )}
       </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Photos</Text>
+        {photos.length === 0 ? (
+          <Text style={styles.value}>No photos.</Text>
+        ) : (
+          <View style={styles.photoRow}>
+            {photos.filter((p) => p.uri).map((p) => (
+              <Image key={p.id} source={{ uri: p.uri as string }} style={styles.photoImage} />
+            ))}
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -202,6 +226,17 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.md,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  photoImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 4,
+    backgroundColor: colors.border,
   },
   sectionTitle: {
     fontSize: typography.size.h6,

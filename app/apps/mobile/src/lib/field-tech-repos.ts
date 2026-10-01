@@ -318,6 +318,11 @@ export function createJobPhotoRepository(): JobPhotoRepository {
       return ((data ?? []) as JobPhotoRow[]).map(toJobPhoto);
     },
 
+    async getSignedUrl(storagePath: string): Promise<string | null> {
+      const { data } = await supabase.storage.from('job-photos').createSignedUrl(storagePath, 3600);
+      return data?.signedUrl ?? null;
+    },
+
     async create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto> {
       await enqueueMutation('job_photo.create', draft.occurredAt, { organizationId, ...draft });
 
