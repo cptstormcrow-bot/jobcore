@@ -60,6 +60,7 @@ export interface JobRow {
   service_area_id: string | null;
   total_labor_seconds: number | null;
   needs_prem_at?: string | null;
+  customers?: { name: string | null } | null;
 }
 
 /**
@@ -100,6 +101,7 @@ export function toJob(row: JobRow): Job {
   return {
     id: row.id,
     jobNumber: row.job_number ?? null,
+    customerName: row.customers?.name ?? null,
     organizationId: row.organization_id,
     status: row.status,
     customerId: row.customer_id,
@@ -622,6 +624,8 @@ export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
   getInvestigatorTechId(jobId: string): Promise<string | null>;
   listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
+  /** Deletes every assignment row (installer and investigator) for the job; used by unassign. */
+  removeForJob(jobId: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *

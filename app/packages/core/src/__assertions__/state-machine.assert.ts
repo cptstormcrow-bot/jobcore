@@ -221,3 +221,13 @@ test('TRANSITIONS table: every edge has at least one role and a valid from/to pa
     assert.ok(t.roles.length > 0, `edge ${t.from}->${t.to} has no roles`);
   }
 });
+
+test('canTransition: office (admin) may unassign assigned -> scheduled; field (tech) may not', () => {
+  const job = makeJob({ status: 'assigned' });
+  assert.deepEqual(canTransition(job, 'scheduled', makeCtx({ role: 'admin' })), { ok: true });
+  const rejected = canTransition(job, 'scheduled', makeCtx({ role: 'tech' }));
+  assert.equal(rejected.ok, false);
+  if (!rejected.ok) {
+    assert.match(rejected.reason, /role 'tech' is not permitted/);
+  }
+});

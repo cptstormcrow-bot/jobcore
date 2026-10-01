@@ -39,6 +39,7 @@ import { SETTLED_PAYMENT_STATUSES } from '../../../../modules/admin-finance/src/
 import { candidatesFor } from '../../../../modules/admin-finance/src/domain/segway-candidates';
 import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qualify';
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
+import { unassignJob } from '../../../../modules/admin-finance/src/flows/unassign-job';
 import { approveEstimate } from '../../../../modules/admin-finance/src/flows/approve-estimate';
 import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
 import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
@@ -670,13 +671,25 @@ export default function JobDrilldownScreen() {
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
   // the clear via patchScheduling, investigator picks clear locally only.
   const handleUnassign = async (): Promise<void> => {
+    if (!isAdmin) return;
     if (!job) return;
     setAssigning('unassign');
     setActionError(null);
     try {
       if (estimate?.status === 'approved') {
-        const updated = await createJobRepository().patchScheduling(job.id, { assignedTechId: null });
-        setJob(updated);
+        if (session.status !== 'authenticated' || !org?.id) return;
+        const result = await unassignJob(job, {
+          jobs: createJobRepository(),
+          assignments: createJobAssignmentRepository(),
+          calendarEvents: createCalendarEventRepository(),
+          ctx: { role: session.profile.role, now: () => new Date().toISOString() },
+        });
+        if (!result.ok) {
+          setAssignError(result.reason);
+          setActionError(result.reason);
+          return;
+        }
+        setJob(result.job);
       } else {
         setInvestigatorTechId(null);
       }
@@ -1059,13 +1072,29 @@ export default function JobDrilldownScreen() {
     },
   ];
 
+  const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
+    .filter((item) => item.id !== 'needs-prem' && item.id !== 'sign-out' && item.id !== 'configuration')
+    .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
+  const isTech = role === 'tech';
+  const techJobMenuItems: MenuItem[] = jobDetailMenuItems.filter((item) => item.id !== 'sign-out' && item.id !== 'configuration');
+
   return (
     <View style={styles.root}>
       <JobHeader
         job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
         customer={customer}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
-        jobDetailMenuItems={jobDetailMenuItems}
+        jobDetailMenuItems={isAdmin ? adminJobMenuItems : isTech ? techJobMenuItems : jobDetailMenuItems}
+        showBack={isAdmin || isTech ? false : undefined}
+        compactMenu={isAdmin || isTech || undefined}
+        fitMenu={isAdmin || isTech || undefined}
+        gearItems={isAdmin || isTech ? [
+          { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
+          { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+          { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+        ] : undefined}
+        gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
+        onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
         onPressSchedule={() => selectRegion('schedule')}
       />
       <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
@@ -1093,6 +1122,12 @@ export default function JobDrilldownScreen() {
         {region === 'evisit' && (
           <JobInvestigationScreen jobId={currentJob.id} embedded />
         )}
+        {isAdmin && region === 'evisit' ? (
+          <Button
+            label={currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem'}
+            onPress={() => void handleToggleNeedsPrem()}
+          />
+        ) : null}
         {region === 'estimate' && role === 'tech' && (
           <JobEstimateEditor jobId={currentJob.id} embedded />
         )}
@@ -1121,6 +1156,7 @@ export default function JobDrilldownScreen() {
             busy={assigning !== null}
             error={assignError}
             onAssign={(techId) => void handleAssign(techId)}
+            onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => void handleUnassign() : undefined}
             label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           />
         )}

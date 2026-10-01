@@ -58,6 +58,7 @@ import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill, ServiceTas
 import type { CalculationResult } from '../money/types';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
+import { unassignJob } from '../flows/unassign-job';
 import { assignInvestigator } from '../flows/assign-investigator';
 import { qualifyLead } from '../flows/qualify-lead';
 import { closeOutJob } from '../flows/close-out-job';
@@ -77,6 +78,16 @@ type SubView =
   | 'employee-invitations'
   | 'blackout-editor'
   | 'calendar';
+
+const TOP: Partial<Record<SubView, SubView>> = {
+  leadCreate: 'leadInbox', qualify: 'leadInbox', leadEdit: 'leadInbox',
+  planning: 'jobs', jobEstimate: 'jobs',
+  closeOutReview: 'closeOutQueue',
+  priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
+  'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
+  'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
+  'blackout-editor': 'timeOffQueue',
+};
 
 type LoadState =
   | { kind: 'idle' }
@@ -369,8 +380,20 @@ export function AdminFinanceRoot() {
   }
 
   async function handleUnassign(job: Job) {
+    if (!session) {
+      return;
+    }
     try {
-      await jobRepository.patchScheduling(job.id, { assignedTechId: null });
+      const result = await unassignJob(job, {
+        jobs: jobRepository,
+        assignments: ports.jobAssignments,
+        calendarEvents: ports.calendarEvents,
+        ctx: { role: session.role, now: () => new Date().toISOString() },
+      });
+      if (!result.ok) {
+        Alert.alert('Unassign failed', result.reason);
+        return;
+      }
       refreshJobs();
     } catch (err) {
       Alert.alert('Unassign failed', err instanceof Error ? err.message : String(err));
@@ -763,31 +786,35 @@ export function AdminFinanceRoot() {
   return (
     <View style={styles.screen}>
       <AppChrome
+        showBack={false}
+        compactMenu
+        fitMenu
+        gearTitle="Configuration"
+        gearItems={[
+          { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
+          { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+          { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+        ]}
+        logoMenuItems={[
+          { id: 'logo-field-tech', label: 'Field Tech', onPress: () => router.push('/m/field-tech') },
+          { id: 'logo-sales-marketing', label: 'Sales & Marketing', onPress: () => router.push('/m/sales-marketing') },
+        ]}
         optionsItems={optionsItems}
         helpContext={{ screenKey: 'admin-finance' }}
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
         menuItems={[
-          { id: 'overview', label: 'Overview', onPress: () => goTop('overview') },
-          { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox') },
-          { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs') },
-          { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard') },
-          { id: 'closeOutQueue', label: 'Close-Outs', onPress: () => goTop('closeOutQueue') },
-          { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList') },
-          { id: 'payments', label: 'Payments', onPress: () => goTop('payments') },
-          { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue') },
-          { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar') },
-          { id: 'reports', label: 'Reports', onPress: () => goTop('reports') },
-          { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster') },
-          { id: 'logins', label: 'Logins', onPress: () => router.push('/account') },
-          {
-            id: 'configuration',
-            label: 'Configuration',
-            onPress: () => {},
-            submenu: [
-              { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-            ],
-          },
+          { id: 'overview', label: 'Overview', onPress: () => goTop('overview'), isActive: (TOP[subView] ?? subView) === 'overview' },
+          { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox'), isActive: (TOP[subView] ?? subView) === 'leadInbox' },
+          { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs'), isActive: (TOP[subView] ?? subView) === 'jobs' },
+          { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard'), isActive: (TOP[subView] ?? subView) === 'assignmentBoard' },
+          { id: 'closeOutQueue', label: 'Close-Outs', onPress: () => goTop('closeOutQueue'), isActive: (TOP[subView] ?? subView) === 'closeOutQueue' },
+          { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
+          { id: 'payments', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
+          { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue'), isActive: (TOP[subView] ?? subView) === 'timeOffQueue' },
+          { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
+          { id: 'reports', label: 'Reports', onPress: () => goTop('reports'), isActive: (TOP[subView] ?? subView) === 'reports' },
+          { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster'), isActive: (TOP[subView] ?? subView) === 'employee-roster' },
         ]}
       />
 
@@ -808,7 +835,7 @@ export function AdminFinanceRoot() {
             <Card style={styles.card}>
               <ListItem
                 title="Jobs"
-                subtitle={`${loadState.jobs.length} on file for this organization`}
+                subtitle={`${loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length} on file for this organization`}
                 onPress={() => setSubView('jobs')}
               />
             </Card>
@@ -848,22 +875,37 @@ export function AdminFinanceRoot() {
               style={styles.card}
             />
             {(() => {
-              const unassignedJobs = loadState.jobs.filter(
-                (job) => !job.assignedTechId && isBetaVisible(job, showTestJobs),
+              const visibleJobs = loadState.jobs.filter(
+                (job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status),
               );
-              return unassignedJobs.length === 0 ? (
-                <EmptyState title="No jobs" message="This organization has no unassigned jobs on file." />
-              ) : (
+              if (visibleJobs.length === 0) {
+                return <EmptyState title="No jobs" message="This organization has no jobs on file." />;
+              }
+              // Unassigned first so jobs still needing a tech stay at the top.
+              const orderedJobs = [
+                ...visibleJobs.filter((job) => !job.assignedTechId),
+                ...visibleJobs.filter((job) => !!job.assignedTechId),
+              ];
+              return (
                 <Card style={styles.card}>
-                  {unassignedJobs.map((job) => (
-                    <ListItem
-                      key={job.id}
-                      title={job.address ?? job.description ?? job.id}
-                      subtitle={formatDate(job.scheduledStart)}
-                      onPress={() => router.push('/job/' + job.id)}
-                      right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
-                    />
-                  ))}
+                  {orderedJobs.map((job) => {
+                    const techName = job.assignedTechId
+                      ? loadState.employees.find((e) => e.id === job.assignedTechId)?.fullName ?? 'Assigned'
+                      : null;
+                    const jobLabel = job.jobNumber != null ? `Job #${job.jobNumber}` : null;
+                    const footer = [jobLabel, techName].filter(Boolean).join(' · ') || undefined;
+                    return (
+                      <ListItem
+                        key={job.id}
+                        title={job.address ?? job.description ?? job.id}
+                        subtitle={formatDate(job.scheduledStart)}
+                        overline={job.customerName ?? undefined}
+                        footer={footer}
+                        onPress={() => router.push('/job/' + job.id)}
+                        right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
+                      />
+                    );
+                  })}
                 </Card>
               );
             })()}

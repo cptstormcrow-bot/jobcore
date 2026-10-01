@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { useRouter } from 'expo-router';
@@ -41,6 +41,9 @@ export type AppChromeProps = {
   gearItems?: MenuActionItem[]; // items for a \u2699 menu at the top-right of the drawer header (opt-in)
   gearTitle?: string; // optional highlighted title row at the top of the gear menu
   compactMenu?: boolean; // tighter drawer rows (opt-in)
+  fitMenu?: boolean; // admin-only taller drawer sheet (opt-in)
+  logoMenuItems?: MenuActionItem[]; // in-menu logo switcher list (opt-in)
+  onLogoPress?: () => void; // logo acts as Back (opt-in)
 };
 
 function MenuRow({
@@ -136,11 +139,28 @@ export function AppChrome({
   gearItems,
   gearTitle,
   compactMenu,
+  fitMenu,
+  logoMenuItems,
+  onLogoPress,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const [hMenuOpen, setHMenuOpen] = useState(false);
   const [oMenuOpen, setOMenuOpen] = useState(false);
   const [gMenuOpen, setGMenuOpen] = useState(false);
+  const [logoMenuOpen, setLogoMenuOpen] = useState(false);
+  const logoTappable = !!logoMenuItems?.length || !!onLogoPress;
+  const handleLogoPress = () => {
+    if (logoMenuItems?.length) {
+      setLogoMenuOpen((v) => !v);
+    } else {
+      setHMenuOpen(false);
+      onLogoPress?.();
+    }
+  };
+  const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : menuItems;
+  useEffect(() => {
+    if (!hMenuOpen) setLogoMenuOpen(false);
+  }, [hMenuOpen]);
   const canGoBack = router.canGoBack();
   const { standaloneStep, showHelp, dismissHelp } = useWalkthrough();
   const helpStep = helpContext ? getHelpStep(helpContext.screenKey, helpContext.jobStatus) : undefined;
@@ -213,12 +233,14 @@ export function AppChrome({
 
       <Modal visible={hMenuOpen} transparent animationType="fade" onRequestClose={() => setHMenuOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setHMenuOpen(false)}>
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, fitMenu && styles.sheetFit]}>
             <ScrollView style={{ maxHeight: '100%' }}>
               <View style={styles.wordmarkRow}>
+                <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined}>
                 <View style={styles.wordmarkChip}>
                   <Text style={styles.wordmarkText}>JobCore©</Text>
                 </View>
+                </Pressable>
                 {gearItems?.length ? (
                   <Pressable
                     onPress={() => { setHMenuOpen(false); setTimeout(() => setGMenuOpen(true), 300); }}
@@ -247,7 +269,7 @@ export function AppChrome({
                   <View style={styles.divider} />
                 </>
               )}
-              {menuItems.map((item) => (
+              {drawerItems.map((item) => (
                 <MenuRow key={item.id} item={item} onLeafPress={handleLeafPress} compact={compactMenu} />
               ))}
             </ScrollView>
@@ -435,6 +457,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: spacing.xs,
   },
+  sheetFit: { maxHeight: '90%' },
   gearTitle: {
     backgroundColor: colors.accent,
     paddingHorizontal: spacing.md,

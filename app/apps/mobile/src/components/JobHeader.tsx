@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { ComponentProps } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { AppChrome, Select, colors, spacing, typography, Text } from '@jobcore/ui';
@@ -14,6 +15,12 @@ export type JobHeaderProps = {
   jobDetailMenuItems: MenuItem[];
   totalLaborSeconds: number;
   onPressSchedule?: () => void;
+  gearItems?: ComponentProps<typeof AppChrome>['gearItems'];
+  showBack?: ComponentProps<typeof AppChrome>['showBack'];
+  compactMenu?: ComponentProps<typeof AppChrome>['compactMenu'];
+  fitMenu?: ComponentProps<typeof AppChrome>['fitMenu'];
+  onLogoPress?: ComponentProps<typeof AppChrome>['onLogoPress'];
+  gearTitle?: ComponentProps<typeof AppChrome>['gearTitle'];
 };
 
 export function JobHeader({
@@ -22,6 +29,12 @@ export function JobHeader({
   jobDetailMenuItems,
   totalLaborSeconds,
   onPressSchedule,
+  gearItems,
+  showBack,
+  compactMenu,
+  fitMenu,
+  onLogoPress,
+  gearTitle,
 }: JobHeaderProps) {
   const totalHoursLabel =
     totalLaborSeconds > 0
@@ -51,6 +64,12 @@ export function JobHeader({
         titleBar={{ title: customer?.name ?? 'Unknown Customer', subtitle: job.address ?? undefined }}
         titleBarTone="gold"
         helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
+        gearItems={gearItems}
+        showBack={showBack}
+        compactMenu={compactMenu}
+        fitMenu={fitMenu}
+        onLogoPress={onLogoPress}
+        gearTitle={gearTitle}
       />
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
       <View style={styles.summary}>

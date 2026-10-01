@@ -6,26 +6,30 @@ import { colors, spacing, typography } from './tokens';
 export interface ListItemProps {
   title: string;
   subtitle?: string;
+  overline?: string;
+  footer?: string;
   onPress?: () => void;
   right?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }
 
-export function ListItem({ title, subtitle, onPress, right, style }: ListItemProps) {
+export function ListItem({ title, subtitle, overline, footer, onPress, right, style }: ListItemProps) {
   // A static (non-interactive) row gets no button role/label — only rows
   // with an onPress are announced as actionable, matching RN's own
   // guidance that accessibilityRole="button" implies tappability.
   const interactiveProps = onPress
     ? {
         accessibilityRole: 'button' as const,
-        accessibilityLabel: subtitle ? `${title}, ${subtitle}` : title,
+        accessibilityLabel: [overline, title, subtitle, footer].filter(Boolean).join(', '),
       }
     : {};
   return (
     <Pressable onPress={onPress} {...interactiveProps} style={[styles.row, style]}>
       <View style={styles.content}>
+        {overline ? <Text style={styles.overline}>{overline}</Text> : null}
         <Text style={styles.title}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        {footer ? <Text style={styles.footer}>{footer}</Text> : null}
       </View>
       {right ? <View style={styles.right}>{right}</View> : null}
     </Pressable>
@@ -49,5 +53,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
   },
   subtitle: { color: colors.textMuted, fontSize: typography.size.small },
+  overline: { color: colors.textMuted, fontSize: typography.size.small },
+  footer: { color: colors.textMuted, fontSize: typography.size.small },
   right: { marginLeft: 'auto' },
 });
