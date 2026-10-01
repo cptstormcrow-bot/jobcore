@@ -15,11 +15,13 @@ import {
   clearModuleSession as clearSalesMarketingModuleSession,
   setModulePorts as setSalesMarketingModulePorts,
 } from '../../../../modules/sales-marketing/src/index';
+import { setSupabaseClient as setPaymentReviewSupabaseClient } from '@jobcore/payment-review';
 
 import { useSession } from '../../src/lib/session';
 import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 import { buildSalesMarketingPorts } from '../../src/lib/sales-marketing-repos';
+import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 
 /**
@@ -110,6 +112,17 @@ export default function ModuleScreen() {
   useEffect(() => {
     if (module?.id !== 'sales-marketing') return undefined;
     return () => clearSalesMarketingModuleSession();
+  }, [module?.id]);
+
+  // Host-side injection for payment-review's Supabase client seam. See the
+  // admin-finance block above for why this runs synchronously in render.
+  // Double cast: a direct cast trips TS2589 (supabase-js generics vs. port).
+  if (state.status === 'authenticated' && module?.id === 'payment-review') {
+    setPaymentReviewSupabaseClient(supabase as unknown as Parameters<typeof setPaymentReviewSupabaseClient>[0]);
+  }
+  useEffect(() => {
+    if (module?.id !== 'payment-review') return undefined;
+    return () => setPaymentReviewSupabaseClient(null);
   }, [module?.id]);
 
   // The root layout gates on status, so this branch is defensive only.

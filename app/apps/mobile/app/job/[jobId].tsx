@@ -949,6 +949,7 @@ export default function JobDrilldownScreen() {
 
   const handleMarkPaid = async (): Promise<void> => {
     if (!job || session.status !== 'authenticated') return;
+    if (session.profile.role !== 'owner' && session.profile.role !== 'admin') return;
     if (job.status !== 'completed') {
       const message = 'Complete the job before marking it paid.';
       setSaveError(message);
@@ -1060,7 +1061,9 @@ export default function JobDrilldownScreen() {
     { id: 'contact', label: 'Contact', onPress: handleContact },
     { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
     { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
-    { id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() },
+    ...(role === 'owner' || role === 'admin'
+      ? [{ id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() }]
+      : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
       id: 'configuration',
