@@ -313,7 +313,10 @@ export function createJobRepository(): JobRepository {
     },
 
     async clearInvestigator(jobId: string): Promise<void> {
-      await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
+      const { error } = await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
+      if (error) {
+        throw new Error(`clear investigator failed: ${error.message}`);
+      }
     },
 
     async resetTimeSegments(jobId: string): Promise<void> {
@@ -875,6 +878,17 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
     async create(organizationId: string, draft: JobAssignmentDraft): Promise<void> {
       await enqueueMutation('job_assignment.create', draft.assignedAt, { organizationId, ...draft });
 
+      // Replace semantics, one row per job+kind, so reassign never hits the partial unique index.
+      const { error: clearError } = await supabase
+        .from('job_assignments')
+        .delete()
+        .eq('job_id', draft.jobId)
+        .eq('kind', draft.kind ?? 'installer');
+      if (clearError) {
+        logSyncFailure('admin-finance-repos.createJobAssignment', clearError.message, { organizationId, draft });
+        throw new Error(`clear job assignment failed: ${clearError.message}`);
+      }
+
       const { error } = await supabase.from('job_assignments').insert({
         organization_id: organizationId,
         job_id: draft.jobId,
@@ -920,8 +934,12 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
       return result;
     },
 
-    async removeForJob(jobId: string): Promise<void> {
-      const { error } = await supabase.from('job_assignments').delete().eq('job_id', jobId);
+    async removeForJob(jobId: string, kind?: 'installer' | 'investigator'): Promise<void> {
+      let query = supabase.from('job_assignments').delete().eq('job_id', jobId);
+      if (kind) {
+        query = query.eq('kind', kind);
+      }
+      const { error } = await query;
       if (error) {
         logSyncFailure('admin-finance-repos.removeJobAssignments', error.message, { jobId });
         throw new Error(`remove job assignments failed: ${error.message}`);

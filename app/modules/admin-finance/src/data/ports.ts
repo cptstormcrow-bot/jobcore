@@ -624,8 +624,8 @@ export interface JobAssignmentRepository {
   create(organizationId: string, draft: JobAssignmentDraft): Promise<void>;
   getInvestigatorTechId(jobId: string): Promise<string | null>;
   listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
-  /** Deletes every assignment row (installer and investigator) for the job; used by unassign. */
-  removeForJob(jobId: string): Promise<void>;
+  /** Deletes the job's assignment rows; pass kind to limit the delete (unassign omits it = all rows). */
+  removeForJob(jobId: string, kind?: 'installer' | 'investigator'): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
