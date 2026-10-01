@@ -35,6 +35,8 @@ export interface JobRow {
   organization_id: string;
   status: string;
   customer_id: string | null;
+  /** Present only when the query joins `customers(name)`. */
+  customers?: { name: string | null } | null;
   service_id: string | null;
   source: string | null;
   payer: string | null;
@@ -103,6 +105,7 @@ export function toJob(row: JobRow): Job {
     organizationId: row.organization_id,
     status: row.status,
     customerId: row.customer_id,
+    customerName: row.customers?.name ?? null,
     serviceId: row.service_id,
     source: row.source,
     payer: row.payer,
@@ -217,13 +220,16 @@ export interface JobRepository {
   markBeta(jobId: string, isBeta: boolean): Promise<void>;
   setNeedsPrem?(jobId: string, at: string | null): Promise<void>;
   clearInvestigator(jobId: string): Promise<void>;
+  /** Delete every Service (installer) `job_assignments` row for this job so the
+   *  job leaves the previous tech's list on unassign/reassign. Throws on error. */
+  clearInstaller(jobId: string): Promise<void>;
   /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
    * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
    * logs the transition, writes its one commission row, and resolves any
    * open/retrying close_out_failures row — via the `close_out_job_write`
-   * Postgres RPC (supabase/0026_close_out_write_rpc.sql). Replaces the three
+   * Postgres RPC (supabase/migrations/0026_close_out_write_rpc.sql). Replaces the three
    * separate non-atomic writes previously issued from
    * flows/close-out-job.ts (updateStatus + calendarEvents.logTransition +
    * commissions.create). Called only from the close-out flow, after its own
@@ -284,7 +290,7 @@ export interface PayPeriodRepository {
  *
  * `markQualified` stamps the SAME two columns `toLead`/`LeadRow` already
  * declare (`leads.qualified_at`, `leads.converted_job_id` —
- * `supabase/0004_scheduling.sql:64-82`) — no schema or domain-type widening
+ * `supabase/migrations/0004_scheduling.sql:64-82`) — no schema or domain-type widening
  * needed, unlike `JobRepository.create`'s `serviceAreaId` case. AC-2: "stamps
  * `converted_job_id` on the lead."
  */
@@ -346,7 +352,7 @@ export interface TechRepository {
 /**
  * Minimal local `Invitation` type — `@jobcore/core` has no dedicated
  * `Invitation` export, so this mirrors the Supabase `invitations` table
- * (`app/supabase/0003_invitations_and_signup.sql`) at the domain-field
+ * (`app/supabase/migrations/0003_invitations_and_signup.sql`) at the domain-field
  * level this module needs, rather than defining a shared type upstream.
  */
 export interface Invitation {
@@ -430,7 +436,7 @@ export interface InvitationRepository {
 
 /**
  * Mirrors the Supabase `tech_service_areas` table
- * (`app/supabase/0020_field_ops_segway_and_estimating.sql`). Snake_case wire
+ * (`app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`). Snake_case wire
  * shape consumed by `domain/segway-candidates.ts`'s `candidatesFor` after
  * mapping through `toTechServiceArea`.
  */
@@ -521,7 +527,7 @@ export interface TechServiceAreaRepository {
 
 /**
  * Mirrors the Supabase `tech_skills` table
- * (`app/supabase/0031_employee_profile_fields.sql`). Snake_case wire shape of
+ * (`app/supabase/migrations/0031_employee_profile_fields.sql`). Snake_case wire shape of
  * `TechSkill`, mirroring `TechServiceAreaRow` above.
  */
 export interface TechSkillRow {
@@ -602,7 +608,7 @@ export interface ServiceAreaRepository {
 
 /**
  * Fields needed to insert one `job_assignments` row
- * (`app/supabase/0004_scheduling.sql`: `id`, `organization_id`, `job_id`,
+ * (`app/supabase/migrations/0004_scheduling.sql`: `id`, `organization_id`, `job_id`,
  * `tech_id`, `assigned_at`, `created_at` — `id`/`organization_id`/
  * `created_at` are implementation-assigned, so this draft carries only the
  * caller-supplied fields).
@@ -697,7 +703,7 @@ export interface CustomerRepository {
  * ------------------------------------------------------------------ */
 
 /**
- * Write access to `commissions` (`app/supabase/0005_money.sql`). Insert-only —
+ * Write access to `commissions` (`app/supabase/migrations/0005_money.sql`). Insert-only —
  * a commission is immutable once written (`commissions_immutable_trg`); the
  * one correction path is voiding, which is a separate concern for a later
  * slice, not this port.
@@ -828,7 +834,7 @@ export interface CloseOutFailureRepository {
  * Close-out photo/notes ports (Rule 38 Slice 1 — supporting
  * `CloseOutReviewScreen`'s photos/notes props; thin wrappers over the
  * already-shipped `job_photos`/`job_notes` tables,
- * `app/supabase/0007_field_tech_tables.sql`).
+ * `app/supabase/migrations/0007_field_tech_tables.sql`).
  * ------------------------------------------------------------------ */
 
 /** One close-out photo captured for a job. Mirrors `CloseOutReviewScreen.tsx`'s `CloseOutPhoto`. */
@@ -853,7 +859,7 @@ export interface JobNoteRepository {
 /* ------------------------------------------------------------------ *
  * Job contact log port — itemized customer-contact history (phone/text/
  * email/other) per job, backed by the `job_contact_log` table
- * (`app/supabase/0052_job_contact_log.sql`).
+ * (`app/supabase/migrations/0052_job_contact_log.sql`).
  * ------------------------------------------------------------------ */
 
 /**
@@ -976,7 +982,7 @@ export interface AuditLogRepository {
 
 /* ------------------------------------------------------------------ *
  * Calendar event port (Workstream E — `calendar_events` table,
- * `app/supabase/0014_calendar_events.sql`). `writeAudit()` is confirmed
+ * `app/supabase/migrations/0014_calendar_events.sql`). `writeAudit()` is confirmed
  * dead code (zero call sites), so calendar-event logging is an explicit
  * helper each transition call site invokes directly, not an optional
  * `Ctx.writeCalendarEvent?` hook on `applyTransition`.
@@ -984,7 +990,7 @@ export interface AuditLogRepository {
 
 /**
  * Fields needed to insert one `calendar_events` row
- * (`app/supabase/0014_calendar_events.sql`: `id`, `organization_id`,
+ * (`app/supabase/migrations/0014_calendar_events.sql`: `id`, `organization_id`,
  * `job_id`, `kind`, `title`, `description`, `event_time`, `created_by`,
  * `created_at` — `id`/`created_at` are implementation-assigned, and
  * `created_by` is stamped from the authenticated caller, not passed here).
@@ -1012,7 +1018,7 @@ export interface CalendarEventRepository {
 /* ------------------------------------------------------------------ *
  * Payments port (Workstream D — folded in from the retired
  * `payment-review` module's `modules/payment-review/src/data/ports.ts`.
- * Mirrors `payments` table, `app/supabase/0010_payment_review.sql:32-45`.
+ * Mirrors `payments` table, `app/supabase/migrations/0010_payment_review.sql:32-45`.
  * Replaces payment-review's raw prop-injected `SupabaseSelectClient` with
  * admin-finance's richer ports seam, consistent with every other
  * repository in this file.
@@ -1295,7 +1301,7 @@ export type { PriceSheetStatus };
 
 /* ------------------------------------------------------------------ *
  * Job investigation port (Segway investigation dispatch —
- * `app/supabase/0023_field_ops_segway_and_estimating.sql`'s
+ * `app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`'s
  * `job_investigations` table). One evolving row per job, same
  * getForJob/upsertForJob shape as `JobPlanningRepository`; `0038_job_
  * investigations_unique_job.sql` adds the `job_id` unique constraint that

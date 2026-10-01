@@ -229,7 +229,7 @@ export function createJobRepository(): JobRepository {
     async listForOrganization(organizationId: string): Promise<Job[]> {
       const { data, error } = await supabase
         .from('jobs')
-        .select('*')
+        .select('*, customers(name)')
         .eq('organization_id', organizationId);
       if (error) {
         throw new Error(`listForOrganization failed: ${error.message}`);
@@ -313,7 +313,17 @@ export function createJobRepository(): JobRepository {
     },
 
     async clearInvestigator(jobId: string): Promise<void> {
-      await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
+      const { error } = await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator').select();
+      if (error) {
+        throw new Error(`clearInvestigator failed: ${error.message}`);
+      }
+    },
+
+    async clearInstaller(jobId: string): Promise<void> {
+      const { error } = await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'installer').select();
+      if (error) {
+        throw new Error(`clearInstaller failed: ${error.message}`);
+      }
     },
 
     async resetTimeSegments(jobId: string): Promise<void> {
@@ -1403,7 +1413,7 @@ export function createPayoutBatchesRepository(): PayoutBatchRepo {
 /* ------------------------------------------------------------------ *
  * Close-out photos/notes (Rule 38 Slice 2 — thin CRUD over the
  * already-shipped `job_photos`/`job_notes` tables,
- * `app/supabase/0007_field_tech_tables.sql`). Both tables require a
+ * `app/supabase/migrations/0007_field_tech_tables.sql`). Both tables require a
  * NOT NULL `organization_id`; `job_photos` additionally requires a NOT
  * NULL `tech_id`. Neither is carried by the port method signatures
  * (`add(jobId, uri)` / `upsert(jobId, notes)`), so both are resolved
@@ -2011,7 +2021,7 @@ export function createCalendarEventRepository(): CalendarEventRepository {
 
 /**
  * Direct-write admin implementation: `time_off_requests_admin_all` RLS
- * (`app/supabase/0007_field_tech_tables.sql` L280-284) already grants org
+ * (`app/supabase/migrations/0007_field_tech_tables.sql` L280-284) already grants org
  * admins full read/write on `time_off_requests`. Approve/deny are no longer
  * exposed here — a database trigger auto-decides each request.
  */
@@ -2549,8 +2559,8 @@ export function createEstimateRepository(): EstimateRepository {
 
 /* ------------------------------------------------------------------ *
  * JobInvestigationRepository (mirrors `job_investigations`,
- * `app/supabase/0023_field_ops_segway_and_estimating.sql`; unique
- * `job_id` constraint added by `app/supabase/0038_job_investigations_unique_job.sql`
+ * `app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`; unique
+ * `job_id` constraint added by `app/supabase/migrations/0038_job_investigations_unique_job.sql`
  * so `upsertForJob` can use `onConflict: 'job_id'`, same idiom as
  * `JobPlanningRepository.upsertForJob` above). Not yet declared in
  * `ports.ts` — this shape is defined locally until a `ModulePorts` slot

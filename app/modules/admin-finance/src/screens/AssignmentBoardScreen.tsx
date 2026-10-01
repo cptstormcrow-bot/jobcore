@@ -45,6 +45,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
+import { DEV_NO_TECH_DISTINCTION } from '../dev-flags';
 
 export interface AssignmentBoardScreenProps {
   /** Jobs in `qualified` or `scheduled` status — the board's whole scope. */
@@ -125,9 +126,10 @@ export function AssignmentBoardScreen({
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
+  const [rowMessage, setRowMessage] = useState<Record<string, string>>({});
 
   const visibleTechs = useMemo(
-    () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
+    () => techs.filter((tech) => DEV_NO_TECH_DISTINCTION || isTestVisible(tech, showTestEmployees)),
     [techs, showTestEmployees]
   );
 
@@ -251,12 +253,19 @@ export function AssignmentBoardScreen({
   }
 
   function eligibleTechs(job: Job): TechColumnTech[] {
-    return techsWithAvailability.filter((t) => jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
+    return techsWithAvailability.filter((t) => DEV_NO_TECH_DISTINCTION || jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
   }
 
   function handleRowConfirm(job: Job) {
+    setRowMessage((prev) => {
+      if (!(job.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[job.id];
+      return next;
+    });
     const techId = choice[job.id];
     if (techId === undefined) {
+      setRowMessage((prev) => ({ ...prev, [job.id]: 'Pick a tech first.' }));
       return;
     }
     if (techId === '') {
@@ -283,6 +292,7 @@ export function AssignmentBoardScreen({
     }
     const tech = eligibleTechs(job).find((t) => t.id === techId);
     if (!tech) {
+      setRowMessage((prev) => ({ ...prev, [job.id]: 'That tech is not available for this job.' }));
       return;
     }
     if (visitKind[job.id] === 'prem') {
@@ -361,12 +371,15 @@ export function AssignmentBoardScreen({
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
                     <View style={styles.poolRowInfo}>
+                      {job.customerName ? <Text style={styles.poolRowText}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
+                      <Text style={styles.poolRowStatus}>Job #{job.jobNumber}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
-                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
-                      {job.assignedTechId && premTechId ? (
+                      <Text style={styles.assignedLine}>{job.assignedTechId ? 'Tech: ' + (techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech') + (techById.get(job.assignedTechId)?.phone ? ' · ' + techById.get(job.assignedTechId)?.phone : '') : 'Tech: Unassigned'}</Text>
+                      {premTechId ? (
                         <Text style={styles.assignedLine}>Prem: {[techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ')}</Text>
                       ) : null}
+                      {rowMessage[job.id] ? <Text style={styles.rowMessage}>{rowMessage[job.id]}</Text> : null}
                     </View>
                     <View style={styles.visitKindSegmentRow}>
                       <Button
@@ -385,22 +398,29 @@ export function AssignmentBoardScreen({
                     {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                         priority keeps this tap from also firing the row's
                         select-for-assignment Pressable above. */}
+                    <View style={styles.buttonCluster}>
                     <Select
                       options={[
                         { label: 'Unassigned', value: '' },
                         ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
                       ]}
-                      value={choice[job.id] ?? job.assignedTechId ?? ''}
+                      value={choice[job.id] ?? (kind === 'prem' ? (premTechId ?? '') : (job.assignedTechId ?? ''))}
                       onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                       style={styles.assignSelect}
                     />
-                    {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') && (
-                      <Button
-                        label="Confirm"
-                        variant="primary"
-                        size="sm"
-                        onPress={() => handleRowConfirm(job)}
-                      />
+                    {job.id in choice && choice[job.id] !== (kind === 'prem' ? (premTechId ?? '') : (job.assignedTechId ?? '')) ? (
+                      <View style={styles.confirmSlot}>
+                        <Button
+                          label="Confirm"
+                          variant="primary"
+                          size="sm"
+                          onPress={() => handleRowConfirm(job)}
+                        />
+                      </View>
+                    ) : (
+                      <View style={[styles.confirmSlot, styles.confirmPlaceholder]} pointerEvents="none">
+                        <Button label="Confirm" variant="primary" size="sm" onPress={() => {}} />
+                      </View>
                     )}
                     <Button
                       label="View"
@@ -408,6 +428,7 @@ export function AssignmentBoardScreen({
                       size="sm"
                       onPress={() => router.push('/job/' + job.id)}
                     />
+                    </View>
                   </View>
                 </Pressable>
               );
@@ -512,6 +533,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.info,
   },
   poolRowInfo: {
+    flex: 1,
     flexShrink: 1,
     marginRight: spacing.sm,
   },
@@ -523,6 +545,23 @@ const styles = StyleSheet.create({
   assignSelect: {
     width: 140,
     marginRight: spacing.sm,
+  },
+  buttonCluster: {
+    width: 330,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  confirmSlot: {
+    width: 90,
+    marginRight: spacing.sm,
+  },
+  confirmPlaceholder: {
+    opacity: 0,
+  },
+  rowMessage: {
+    color: colors.danger,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
   },
   poolRowStatus: {
     color: colors.textMuted,

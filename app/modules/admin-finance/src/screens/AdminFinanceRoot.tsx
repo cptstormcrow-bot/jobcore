@@ -21,7 +21,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Text } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
 import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
@@ -160,6 +160,8 @@ export function AdminFinanceRoot() {
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
+  const [unassignError, setUnassignError] = useState<string | null>(null);
+  const [assignNotice, setAssignNotice] = useState<string | null>(null);
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
   const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
   const [calendarMode, setCalendarMode] = useState<CalendarMode>('month');
@@ -339,6 +341,8 @@ export function AdminFinanceRoot() {
   }
 
   async function handleAssign(job: Job, techId: string) {
+    setUnassignError(null);
+    setAssignNotice(null);
     if (!session) {
       return;
     }
@@ -350,6 +354,7 @@ export function AdminFinanceRoot() {
         ctx: { role: session.role, now: () => new Date().toISOString() },
       });
       if (!result.ok) {
+        setUnassignError(`Assignment failed: ${result.reason}`);
         Alert.alert('Assignment failed', result.reason);
         return;
       }
@@ -357,6 +362,7 @@ export function AdminFinanceRoot() {
       // `assignJob` returns a reason for the failures it anticipates, but a
       // repository or state-machine throw would otherwise escape as an
       // unhandled rejection and surface only as a red error overlay.
+      setUnassignError(`Assignment failed: ${error instanceof Error ? error.message : 'Unexpected error.'}`);
       Alert.alert('Assignment failed', error instanceof Error ? error.message : 'Unexpected error.');
       return;
     }
@@ -364,15 +370,23 @@ export function AdminFinanceRoot() {
     // just-assigned job keeps showing under "Unassigned", which reads as a
     // failed assign and invites a second Confirm press against a stale
     // in-memory status.
+    const assignedTech = loadState.kind === 'loaded' ? loadState.employees.find((e) => e.id === techId) : undefined;
+    setAssignNotice(`Assigned ${assignedTech?.fullName ?? 'technician'} to Job #${job.jobNumber}`);
     refreshJobs();
   }
 
   async function handleUnassign(job: Job) {
     try {
+      setUnassignError(null);
       await jobRepository.patchScheduling(job.id, { assignedTechId: null });
+      await ports.jobs.clearInvestigator(job.id);
+      await ports.jobs.clearInstaller(job.id);
       refreshJobs();
+      refreshInvestigatorTechIds();
     } catch (err) {
-      Alert.alert('Unassign failed', err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      setUnassignError(`Unassign failed: ${message}`);
+      Alert.alert('Unassign failed', message);
     }
   }
 
@@ -392,6 +406,7 @@ export function AdminFinanceRoot() {
     try {
       const result = await assignInvestigator(job, techId, {
         assignments: ports.jobAssignments,
+        jobs: ports.jobs,
         ctx: { role: session.role, now: () => new Date().toISOString() },
       });
       if (!result.ok) {
@@ -1009,9 +1024,12 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
+          <>
+          {unassignError && <ErrorState message={unassignError} />}
+          {assignNotice ? <Text style={styles.assignNotice}>{assignNotice}</Text> : null}
           <AssignmentBoardScreen
             jobs={loadState.jobs.filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))}
-            techs={loadState.employees.map(
+            techs={loadState.employees.filter((e) => e.role === 'tech' && e.active).map(
               (profile): TechColumnTech => ({
                 id: profile.id,
                 fullName: profile.fullName,
@@ -1034,6 +1052,7 @@ export function AdminFinanceRoot() {
             showTestJobs={showTestJobs}
             showTestEmployees={showTestEmployees}
           />
+          </>
         )
       ) : subView === 'reports' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -1262,4 +1281,5 @@ const styles = StyleSheet.create({
   card: { marginBottom: spacing.md },
   calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   calendarTechSelect: { width: 180 },
+  assignNotice: { color: colors.primary, padding: spacing.sm, fontWeight: '600' },
 });

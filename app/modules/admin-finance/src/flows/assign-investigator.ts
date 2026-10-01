@@ -3,7 +3,11 @@
  *
  * Mirrors `assign-job.ts`'s orchestration idiom, but scoped to just the
  * investigator leg:
- *   1. Insert one `job_assignments` row via `JobAssignmentRepository.create`,
+ *   1. Clear any existing investigator row for the job via
+ *      `JobRepository.clearInvestigator` (a partial unique index,
+ *      `job_assignments_one_investigator_per_job`, allows only one Prem
+ *      row per job — assigning REPLACES it).
+ *   2. Insert one `job_assignments` row via `JobAssignmentRepository.create`,
  *      with `kind: 'investigator'` — distinguishing this row from the
  *      default `'installer'` assignment `assign-job.ts` creates.
  *
@@ -13,7 +17,7 @@
  * `assigned_tech_id`. Only the eventual installer assignment — Phase 2,
  * untouched by this flow — is allowed to do either of those things.
  *
- * `job_assignments.kind` (`app/supabase/0023_field_ops_segway_and_estimating.sql`
+ * `job_assignments.kind` (`app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`
  * lines 50-52) is a `text not null default 'installer' check (kind in
  * ('installer','investigator'))` column — `kind: 'investigator'` is a valid
  * value this flow writes explicitly, same `JobAssignmentDraft`/
@@ -28,10 +32,12 @@
  */
 
 import type { Ctx, Job } from '@jobcore/core';
-import type { JobAssignmentRepository } from '../data/ports';
+import type { JobAssignmentRepository, JobRepository } from '../data/ports';
 
 export interface AssignInvestigatorDeps {
   assignments: JobAssignmentRepository;
+  /** Removes the job's existing Prem row first, so assigning replaces it. */
+  jobs: Pick<JobRepository, 'clearInvestigator'>;
   ctx: Ctx;
 }
 
@@ -40,8 +46,9 @@ export type AssignInvestigatorResult =
   | { ok: false; reason: string };
 
 /**
- * Assigns an investigator (`techId`) to `job`. Writes a `job_assignments`
- * row with `kind: 'investigator'` only — never patches `job.assignedTechId`
+ * Assigns an investigator (`techId`) to `job`, replacing any existing one:
+ * clears the job's investigator row, then writes a `job_assignments`
+ * row with `kind: 'investigator'` — never patches `job.assignedTechId`
  * and never advances `job.status`.
  */
 export async function assignInvestigator(
@@ -51,6 +58,7 @@ export async function assignInvestigator(
 ): Promise<AssignInvestigatorResult> {
   const assignedAt = deps.ctx.now();
   try {
+    await deps.jobs.clearInvestigator(job.id);
     await deps.assignments.create(job.organizationId, {
       jobId: job.id,
       techId,
@@ -60,7 +68,7 @@ export async function assignInvestigator(
   } catch (err) {
     return {
       ok: false,
-      reason: err instanceof Error ? err.message : 'Failed to create investigator assignment.',
+      reason: err instanceof Error ? err.message : 'Failed to assign investigator.',
     };
   }
 

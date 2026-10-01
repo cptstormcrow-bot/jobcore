@@ -2,14 +2,17 @@
  * Overview screen for the field-tech module.
  *
  * A READ-ONLY dashboard rendered by the module's own SubView tab switch
- * (no props). It resolves session/ports via `lib/module-session.ts` and
+ * (optional onOpenJob/onOpenTimeOff props). It resolves session/ports via `lib/module-session.ts` and
  * `lib/module-ports.ts` — never constructs them locally — and pulls a small
  * set of count-based cards from the six field-tech repositories:
  * `jobs`, `timeOff`, `reimbursements`, `notes`, `photos`, `checklist`.
  *
- * No cross-module navigation mailbox exists, so no card wires a navigation
- * action — this screen is purely informational, and the module's own tab
- * row is the only navigation surface.
+ * Below the cards it lists every assigned job ("Assigned jobs", same array as
+ * the assigned-jobs count) and every approved time-off entry ("Approved time
+ * off", same array as the approved count). Each row is tappable: the optional
+ * `onOpenJob(jobId)` / `onOpenTimeOff(timeOffId)` props are called on tap
+ * (wired by the host; a no-op when absent). The cards themselves stay static
+ * (no ScrollView here) — the lists are the drill-down.
  *
  * `notes`, `photos`, and `checklist` only expose `listForJob(jobId)` /
  * `getInstanceForJob(jobId, kind)` (no tech-scoped list method), so their
@@ -18,9 +21,10 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
+import type { TimeOffRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { colors, Text } from '@jobcore/ui';
@@ -65,10 +69,18 @@ const EMPTY_COUNTS: OverviewCounts = {
 /**
  * Overview screen: a read-only wrapping grid of count cards summarizing the
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
- * and checklist instances. No forms, no writes, no navigation.
+ * and checklist instances, plus tappable job/time-off lists. No forms, no writes.
  */
-export function Overview(): React.ReactElement {
+export function Overview({
+  onOpenJob,
+  onOpenTimeOff,
+}: {
+  onOpenJob?: (jobId: string) => void;
+  onOpenTimeOff?: (timeOffId: string) => void;
+}): React.ReactElement {
   const session = getModuleSession();
+  const [assignedList, setAssignedList] = React.useState<Job[]>([]);
+  const [approvedTimeOffList, setApprovedTimeOffList] = React.useState<TimeOffRequest[]>([]);
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
   const [loading, setLoading] = React.useState(true);
@@ -126,6 +138,8 @@ export function Overview(): React.ReactElement {
       }
 
       if (!cancelled) {
+        setAssignedList(assignedJobs);
+        setApprovedTimeOffList(timeOffRequests.filter((request) => request.status === 'approved'));
         setCounts({
           assignedJobs: assignedJobs.length,
           openJobs: openJobs.length,
@@ -211,6 +225,41 @@ export function Overview(): React.ReactElement {
           </View>
         ))}
       </View>
+
+      <Text style={styles.listTitle}>Assigned jobs</Text>
+      {assignedList.length === 0 ? (
+        <Text style={styles.emptyText}>No assigned jobs yet.</Text>
+      ) : (
+        assignedList.map((job) => (
+          <Pressable
+            key={job.id}
+            accessibilityRole="button"
+            onPress={() => onOpenJob?.(job.id)}
+            style={styles.row}
+          >
+            <Text style={styles.rowTitle}>{`Job #${job.jobNumber ?? ''}`}</Text>
+            {job.customerName ? <Text style={styles.rowLine}>{job.customerName}</Text> : null}
+            <Text style={styles.rowLine}>{job.address ?? ''}</Text>
+          </Pressable>
+        ))
+      )}
+
+      <Text style={styles.listTitle}>Approved time off</Text>
+      {approvedTimeOffList.length === 0 ? (
+        <Text style={styles.emptyText}>No approved time off.</Text>
+      ) : (
+        approvedTimeOffList.map((entry) => (
+          <Pressable
+            key={entry.id}
+            accessibilityRole="button"
+            onPress={() => onOpenTimeOff?.(entry.id)}
+            style={styles.row}
+          >
+            <Text style={styles.rowTitle}>{`${entry.startDate} – ${entry.endDate}`}</Text>
+            {entry.reason ? <Text style={styles.rowLine}>{entry.reason}</Text> : null}
+          </Pressable>
+        ))
+      )}
     </View>
   );
 }
@@ -252,6 +301,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMutedDark,
     marginTop: 4,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  row: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  rowTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  rowLine: {
+    fontSize: 12,
+    color: colors.textMutedDark,
+    marginTop: 2,
   },
   emptyText: {
     color: colors.textMutedDark,

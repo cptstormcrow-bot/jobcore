@@ -7,7 +7,7 @@
  * (sqlite, Supabase fetch, fixtures, whatever) behind these interfaces.
  * No sqlite, no fetch, no fixtures, no React live here.
  *
- * Row shapes mirror `app/supabase/0007_field_tech_tables.sql` field-for-field.
+ * Row shapes mirror `app/supabase/migrations/0007_field_tech_tables.sql` field-for-field.
  */
 
 import type { Job, JobStatus } from '@jobcore/core';
@@ -270,6 +270,8 @@ export interface JobPhotoDraft {
 /** Read + insert access to job photos. Insert-only write — no update/delete needed by this module. */
 export interface JobPhotoRepository {
   listForJob(jobId: string): Promise<JobPhoto[]>;
+  /** Optional host-implemented signed URL for a photo's `storagePath`; null when unavailable. */
+  signedUrlFor?(storagePath: string): Promise<string | null>;
   create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto>;
 }
 
@@ -595,7 +597,7 @@ export interface PremQueueRepository {
 
 /* ------------------------------------------------------------------ *
  * Calendar event port (Workstream E — `calendar_events` table,
- * `app/supabase/0014_calendar_events.sql`). Mirrors
+ * `app/supabase/migrations/0014_calendar_events.sql`). Mirrors
  * `admin-finance/src/data/ports.ts`'s `CalendarEventRepository` —
  * `writeAudit()` is confirmed dead code (zero call sites), so calendar-
  * event logging is an explicit helper each transition call site invokes
@@ -604,7 +606,7 @@ export interface PremQueueRepository {
 
 /**
  * Fields needed to insert one `calendar_events` row
- * (`app/supabase/0014_calendar_events.sql`) from a tech-facing call site.
+ * (`app/supabase/migrations/0014_calendar_events.sql`) from a tech-facing call site.
  * `id`/`created_at` are implementation-assigned, and `created_by` is
  * stamped from the authenticated tech, not passed here.
  */
@@ -854,7 +856,7 @@ export interface TimeEntryRepository {
 
 /* ------------------------------------------------------------------ *
  * job_investigations (Segway investigation dispatch —
- * `app/supabase/0023_field_ops_segway_and_estimating.sql`'s
+ * `app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`'s
  * `job_investigations` table). Mirrors
  * `admin-finance/src/data/ports.ts`'s `JobInvestigation` type shape
  * field-for-field for consistency; this module's repository is scoped to

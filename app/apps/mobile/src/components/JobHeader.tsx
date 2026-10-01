@@ -84,6 +84,8 @@ export type JobSummaryRestProps = {
   onAssignTech?: (techId: string | null) => void;
   assigningTech?: boolean;
   statusError?: string | null;
+  assignKind?: 'service' | 'prem';
+  onAssignKindChange?: (kind: 'service' | 'prem') => void;
 };
 
 export function JobSummaryRest({
@@ -94,6 +96,8 @@ export function JobSummaryRest({
   onAssignTech,
   assigningTech,
   statusError = null,
+  assignKind,
+  onAssignKindChange,
 }: JobSummaryRestProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const paidEligible = job.status === 'completed';
@@ -119,6 +123,25 @@ export function JobSummaryRest({
             .join(' · ') || 'Not started'}
         </Text>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
+        {onAssignKindChange ? (
+          <View style={styles.assignKindRow}>
+            {(['service', 'prem'] as const).map((kind) => {
+              const selected = (assignKind ?? 'service') === kind;
+              return (
+                <Pressable
+                  key={kind}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  onPress={() => onAssignKindChange(kind)}
+                  style={[styles.assignKindOption, selected && styles.assignKindOptionSelected]}>
+                  <Text style={[styles.assignKindText, selected && styles.assignKindTextSelected]}>
+                    {kind === 'service' ? 'Service' : 'Prem'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
         <View style={styles.techRow}>
           <Pressable
             disabled={!(techs && techs.length > 0 && onAssignTech) || assigningTech}
@@ -193,6 +216,22 @@ const styles = StyleSheet.create({
   },
   techRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   techSelect: { marginTop: spacing.xs },
+  assignKindRow: { flexDirection: 'row', gap: spacing.xs, marginTop: spacing.xs },
+  assignKindOption: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: 'transparent',
+  },
+  assignKindOptionSelected: { backgroundColor: colors.primary },
+  assignKindText: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: typography.size.body,
+    color: colors.primary,
+  },
+  assignKindTextSelected: { color: colors.surface },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
   paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
   arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },

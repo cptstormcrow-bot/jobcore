@@ -13,6 +13,7 @@ import { approveEstimate } from './flows/approve-estimate';
 // `./lib/module-session.ts` for the seam's full contract.
 export type { ModuleSession } from './lib/module-session';
 export { setModuleSession, clearModuleSession } from './lib/module-session';
+export { DEV_NO_TECH_DISTINCTION } from './dev-flags';
 
 /**
  * Assembles the `Ctx` this module's transition-driving flows need to call

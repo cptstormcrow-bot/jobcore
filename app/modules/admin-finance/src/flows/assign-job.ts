@@ -13,7 +13,7 @@
  *      includes `assignedTechId` (`data/ports.ts`), so no new job-write
  *      method was needed for this part.
  *   2. (P3g.6a) Insert one `job_assignments` row via the new
- *      `JobAssignmentRepository.create` (`app/supabase/0004_scheduling.sql`
+ *      `JobAssignmentRepository.create` (`app/supabase/migrations/0004_scheduling.sql`
  *      shape: `job_id`, `tech_id`, `assigned_at`).
  *   3. (P3g.6b) Advance the job's status through the board's two possible
  *      starting points — `qualified` and `scheduled` — to `assigned`, via
@@ -52,7 +52,7 @@ export interface AssignJobDeps {
   jobs: JobRepository;
   assignments: JobAssignmentRepository;
   /**
-   * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs each
+   * Workstream E (`app/supabase/migrations/0014_calendar_events.sql`) — logs each
    * transition below (`qualified` -> `scheduled` when it fires, and
    * `-> assigned` when the job isn't already `assigned`) as a calendar event.
    */
@@ -108,6 +108,8 @@ export async function assignJob(
   // incorrectly patched with no assignment row to back it.
   const assignedAt = deps.ctx.now();
   try {
+    // Replace any existing installer so a re-assign never hits a duplicate key.
+    await deps.jobs.clearInstaller(job.id);
     await deps.assignments.create(job.organizationId, {
       jobId: job.id,
       techId,

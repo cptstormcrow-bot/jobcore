@@ -204,6 +204,11 @@ function FieldTechRoot(): React.ReactElement {
     case 'overview':
     default:
       content = React.createElement(Overview, null);
+      // R3.9: Overview drill-down taps (inserted; L206 kept as-is per insert-only rule)
+      content = React.createElement(Overview, {
+        onOpenJob: (id: string) => setSelectedJobId(id),
+        onOpenTimeOff: (id: string) => { setSelectedTimeOffId(id); setSubView('timeOff'); },
+      });
       break;
   }
 

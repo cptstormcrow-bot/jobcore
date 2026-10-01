@@ -16,11 +16,11 @@
  */
 
 import * as React from 'react';
-import { View, Linking, StyleSheet } from 'react-native';
+import { View, Image, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import { Button, telUrl, colors, spacing, typography, Text } from '@jobcore/ui';
-import type { JobNote } from '../data/ports';
+import type { JobNote, JobPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -34,6 +34,13 @@ export interface FieldJobDetailProps {
    * to reach outside its own data seam to get it.
    */
   customerPhone?: string | null;
+  /**
+   * Optional host-supplied resolver turning a photo `storagePath` into a
+   * displayable image URI (e.g. a signed storage URL). The "Photos" section
+   * renders only when this is provided — module isolation forbids a direct
+   * storage call here.
+   */
+  resolvePhotoUri?: (storagePath: string) => Promise<string | null>;
 }
 
 function formatDateTime(value: string | null): string {
@@ -53,11 +60,13 @@ function mapsUrl(address: string): string {
  * distinctly, tap-to-call / tap-to-map actions, and read-only admin notes.
  * Renders nothing financial.
  */
-export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): React.ReactElement {
+export function FieldJobDetail({ jobId, customerPhone, resolvePhotoUri }: FieldJobDetailProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
   const [adminNotes, setAdminNotes] = React.useState<JobNote[]>([]);
+  const [photoUris, setPhotoUris] = React.useState<{ id: string; uri: string }[]>([]);
+  const [photosError, setPhotosError] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -95,6 +104,37 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
       cancelled = true;
     };
   }, [jobId, session]);
+
+  React.useEffect(() => {
+    const photosPort = getModulePorts().photos;
+    const resolve =
+      resolvePhotoUri ??
+      (photosPort.signedUrlFor ? (p: string) => photosPort.signedUrlFor!(p) : undefined);
+    if (!session || !resolve) return;
+    let cancelled = false;
+    async function loadPhotos() {
+      setPhotosError(false);
+      try {
+        const rows: JobPhoto[] = await photosPort.listForJob(jobId);
+        const resolved = await Promise.all(
+          rows.map(async (photo) => ({
+            id: photo.id,
+            uri: await resolve!(photo.storagePath),
+          })),
+        );
+        if (cancelled) return;
+        setPhotoUris(
+          resolved.filter((p): p is { id: string; uri: string } => Boolean(p.uri)),
+        );
+      } catch {
+        if (!cancelled) setPhotosError(true);
+      }
+    }
+    void loadPhotos();
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, session, resolvePhotoUri]);
 
   const handleCall = React.useCallback(() => {
     if (!customerPhone) return;
@@ -187,6 +227,28 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
           ))
         )}
       </View>
+
+      {resolvePhotoUri || getModulePorts().photos.signedUrlFor ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Photos</Text>
+          {photosError ? (
+            <Text style={styles.error}>Could not load photos.</Text>
+          ) : photoUris.length === 0 ? (
+            <Text style={styles.value}>No photos yet.</Text>
+          ) : (
+            <View style={styles.photoRow}>
+              {photoUris.map((photo) => (
+                <Image
+                  key={photo.id}
+                  source={{ uri: photo.uri }}
+                  style={styles.photoThumb}
+                  resizeMode="cover"
+                />
+              ))}
+            </View>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -222,6 +284,16 @@ const styles = StyleSheet.create({
   noteTimestamp: {
     fontSize: typography.size.detail,
     color: colors.textMutedDark,
+  },
+  photoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  photoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 6,
   },
   error: {
     color: colors.danger,

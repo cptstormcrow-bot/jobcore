@@ -47,7 +47,7 @@ import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens
 import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobEstimateEditor } from '../../../../modules/field-tech/src/screens/JobEstimateEditor';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
-import { setModuleSession } from '@jobcore/admin-finance';
+import { setModuleSession, DEV_NO_TECH_DISTINCTION } from '@jobcore/admin-finance';
 import {
   setModuleSession as setFieldTechModuleSession,
   clearModuleSession as clearFieldTechModuleSession,
@@ -57,7 +57,7 @@ import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 // NOTE (slice 5, carried forward): the assignment data model has no `kind`
 // column on the row itself distinguishing installer/investigator beyond the
 // `job_assignments.kind` check-constraint column added in
-// 0023_field_ops_segway_and_estimating.sql. Installer assignment continues
+// 0050_field_ops_segway_and_estimating.sql. Installer assignment continues
 // through `assignJob()` (patches `assignedTechId` + advances status via
 // `transitionJob`); investigator assignment goes through the separate
 // `assignInvestigator()` flow (writes a `job_assignments` row with
@@ -255,6 +255,7 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [assignKind, setAssignKind] = useState<'service' | 'prem'>('service');
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
@@ -323,7 +324,7 @@ export default function JobDrilldownScreen() {
   const eligibleTechOptions = useMemo(
     () =>
       candidatesFor(techs.map((t) => t.id), form.serviceAreaId, techServiceAreas)
-        .filter((c) => c.coversServiceArea)
+        .filter((c) => DEV_NO_TECH_DISTINCTION || c.coversServiceArea)
         .map((c) => {
           const tech = techs.find((t) => t.id === c.techId);
           return { id: c.techId, name: tech?.fullName ?? c.techId };
@@ -366,6 +367,8 @@ export default function JobDrilldownScreen() {
   // whichever role is viewing (mirrors calendar.tsx's org-scoped query note).
   // Skipped entirely in create-mode -- there is no row to load yet.
   useEffect(() => {
+    setAssignError(null);
+    setActionError(null);
     if (isCreate) {
       setJob(null);
       setForm(EMPTY_JOB_FORM);
@@ -621,6 +624,7 @@ export default function JobDrilldownScreen() {
     setAssignError(null);
     setActionError(null);
     try {
+      await createJobRepository().clearInvestigator(job.id);
       await createJobAssignmentRepository().create(org.id, {
         jobId: job.id,
         techId,
@@ -663,7 +667,7 @@ export default function JobDrilldownScreen() {
 
   const handleAssign = async (techId: string): Promise<void> => {
     if (!isAdmin) return;
-    return (estimate?.status === 'approved' ? handleAssignInstaller : handleAssignInvestigator)(techId);
+    return (estimate?.status !== 'approved' && assignKind === 'prem' ? handleAssignInvestigator : handleAssignInstaller)(techId);
   };
 
   // Clears the assignment back to the shared "Unassigned" convention
@@ -672,16 +676,22 @@ export default function JobDrilldownScreen() {
   const handleUnassign = async (): Promise<void> => {
     if (!job) return;
     setAssigning('unassign');
+    setAssignError(null);
     setActionError(null);
     try {
       if (estimate?.status === 'approved') {
         const updated = await createJobRepository().patchScheduling(job.id, { assignedTechId: null });
         setJob(updated);
       } else {
+        await createJobRepository().patchScheduling(job.id, { assignedTechId: null });
+        await createJobRepository().clearInvestigator(job.id);
+        await createJobRepository().clearInstaller(job.id);
         setInvestigatorTechId(null);
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
+      const message = err instanceof Error ? err.message : 'Unassign failed.';
+      setAssignError(message);
+      setActionError(message);
     } finally {
       setAssigning(null);
     }
@@ -697,12 +707,17 @@ export default function JobDrilldownScreen() {
   const leaveAfterFailRef = useRef(false);
   const leavePendingRef = useRef(false);
   const selectRegion = useCallback(
-    (next: JobRegion) => {
+    async (next: JobRegion) => {
       if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
-        void handleSaveEdit().finally(() => {
+        let ok = false;
+        try {
+          ok = await handleSaveEdit();
+        } finally {
           savingRef.current = false;
-        });
+        }
+        // Save failed: stay on the current tab; handleSaveEdit already set saveError.
+        if (!ok) return;
       }
       setRegion(next);
     },
@@ -1077,6 +1092,8 @@ export default function JobDrilldownScreen() {
           techs={eligibleTechOptions}
           onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
           assigningTech={assigning !== null}
+          assignKind={isAdmin && estimate?.status !== 'approved' ? assignKind : undefined}
+          onAssignKindChange={isAdmin && estimate?.status !== 'approved' ? setAssignKind : undefined}
         />
         {region === 'plan' && (
           <PlanningScreen
