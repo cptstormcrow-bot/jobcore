@@ -35,6 +35,7 @@ import { FieldJobDetail } from './screens/FieldJobDetail';
 import { Overview } from './screens/Overview';
 import { Reviews } from './screens/Reviews';
 import { PremJobs } from './screens/PremJobs';
+import { Reimbursements } from './screens/Reimbursements';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
 import type { MenuItem } from '@jobcore/ui';
@@ -55,7 +56,7 @@ export type { DayListProps } from './screens/DayList';
  * covers the screens that render with no per-job prop: the day's job list
  * and the tech's own time-off requests.
  */
-type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems';
+type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems' | 'reimbursements';
 
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
@@ -129,6 +130,17 @@ function FieldTechRoot(): React.ReactElement {
       isActive: subView === 'reviews',
       onPress: () => setSubView('reviews'),
     },
+    {
+      id: 'reimbursements',
+      label: 'Reimbursements',
+      isActive: subView === 'reimbursements',
+      onPress: () => setSubView('reimbursements'),
+    },
+  ];
+
+  const moduleSwitchItems = [
+    { id: 'logo-admin-finance', label: 'Admin & Finance', onPress: () => router.push('/m/admin-finance') },
+    { id: 'logo-sales-marketing', label: 'Sales & Marketing', onPress: () => router.push('/m/sales-marketing') },
   ];
 
   const gearItems = [
@@ -166,6 +178,7 @@ function FieldTechRoot(): React.ReactElement {
     timeOff: 'Time Off',
     reviews: 'Reviews',
     prems: 'Prems',
+    reimbursements: 'Reimbursements',
   };
 
   let content: React.ReactElement;
@@ -178,6 +191,9 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'prems':
       content = React.createElement(PremJobs, null);
+      break;
+    case 'reimbursements':
+      content = React.createElement(Reimbursements, null);
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {
@@ -192,7 +208,16 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'overview':
     default:
-      content = React.createElement(Overview, null);
+      content = React.createElement(Overview, {
+        onOpenJob: (id: string) => {
+          setSelectedJobId(id);
+        },
+        onOpenTimeOff: (id?: string) => {
+          setSelectedTimeOffId(id);
+          setSubView('timeOff');
+        },
+        onOpenReimbursements: () => setSubView('reimbursements'),
+      });
       break;
   }
 
@@ -208,6 +233,9 @@ function FieldTechRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
+      ...(session.role === 'owner' || session.role === 'admin'
+        ? { logoMenuItems: moduleSwitchItems }
+        : { onLogoPress: () => setSubView('overview') }),
     }),
     content,
   );
