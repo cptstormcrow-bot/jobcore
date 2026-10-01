@@ -271,6 +271,11 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // Expo Router reuses this screen across jobs: drop stale errors on job change.
+  useEffect(() => {
+    setAssignError(null);
+    setActionError(null);
+  }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
@@ -700,13 +705,54 @@ export default function JobDrilldownScreen() {
         }
         setJob(result.job);
       } else {
+        await createJobRepository().clearInvestigator(job.id);
         setInvestigatorTechId(null);
       }
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
+      const message = err instanceof Error ? err.message : 'Unassign failed.';
+      setAssignError(message);
+      setActionError(message);
     } finally {
       setAssigning(null);
     }
+  };
+
+  // Same confirm pattern as confirmApproveEstimate (window.confirm on web,
+  // Alert.alert on native); every assign / reassign / unassign goes through it.
+  const confirmThen = (title: string, body: string, run: () => void): void => {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
+        run();
+      }
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: run },
+    ]);
+  };
+
+  const techNameFor = (id: string | null | undefined): string =>
+    (id ? techs.find((t) => t.id === id)?.fullName : undefined) ?? 'the selected tech';
+
+  const requestAssign = (techId: string): void => {
+    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
+    const currentId = job?.assignedTechId ?? investigatorTechId;
+    if (currentId) {
+      confirmThen(
+        'Reassign tech?',
+        `Reassign ${label} from ${techNameFor(currentId)} to ${techNameFor(techId)}?`,
+        () => void handleAssign(techId),
+      );
+      return;
+    }
+    confirmThen('Assign tech?', `Assign ${techNameFor(techId)} to ${label}?`, () => void handleAssign(techId));
+  };
+
+  const requestUnassign = (): void => {
+    const label = job?.jobNumber ? `#${job.jobNumber}` : 'this job';
+    const currentId = job?.assignedTechId ?? investigatorTechId;
+    confirmThen('Unassign tech?', `Remove ${techNameFor(currentId)} from ${label}?`, () => void handleUnassign());
   };
 
   // Save-follows-selection: switching regions autosaves a dirty edit-mode
@@ -920,7 +966,12 @@ export default function JobDrilldownScreen() {
         scheduledEnd: null,
         requestedWindow: null,
       });
-      await createJobRepository().clearInvestigator(job.id);
+      try {
+        await createJobRepository().clearInvestigator(job.id);
+      } catch (clearErr) {
+        setActionError(clearErr instanceof Error ? clearErr.message : String(clearErr));
+        return;
+      }
       const updated = await createJobRepository().updateStatus(job.id, 'new');
       setJob({ ...updated, totalLaborSeconds: 0 });
       setInvestigatorTechId(null);
@@ -1170,7 +1221,7 @@ ${body}`)) {
           assignedTechName={assignedTechName}
           serviceAreaName={currentServiceAreaName}
           techs={eligibleTechOptions}
-          onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
+          onAssignTech={(techId) => (techId ? requestAssign(techId) : requestUnassign())}
           assigningTech={assigning !== null}
         />
         {moduleActions.length > 0 && (
@@ -1229,15 +1280,18 @@ ${body}`)) {
           />
         )}
         {region === 'assign' && isAdmin && (
-          <AssignTechRegion
-            techs={eligibleTechOptions}
-            currentTechId={currentJob.assignedTechId ?? investigatorTechId}
-            busy={assigning !== null}
-            error={assignError}
-            onAssign={(techId) => void handleAssign(techId)}
-            onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => void handleUnassign() : undefined}
-            label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
-          />
+          <>
+            <Text>{assignedTechName ? `Tech: ${assignedTechName}` : 'Unassigned'}</Text>
+            <AssignTechRegion
+              techs={eligibleTechOptions}
+              currentTechId={currentJob.assignedTechId ?? investigatorTechId}
+              busy={assigning !== null}
+              error={assignError}
+              onAssign={(techId) => requestAssign(techId)}
+              onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => requestUnassign() : undefined}
+              label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+            />
+          </>
         )}
         {region === 'schedule' && (
           <JobScheduleScreen
