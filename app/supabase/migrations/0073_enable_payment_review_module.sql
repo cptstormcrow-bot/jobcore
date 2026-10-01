@@ -1,4 +1,4 @@
--- 0071_enable_payment_review_module.sql
+-- 0073_enable_payment_review_module.sql
 -- Enables the payment-review module for every existing organization that does
 -- not already have it. The module is registered in apps/mobile/src/modules.ts and
 -- resolved via getEnabledModules(org, role), so it only appears once the org's
