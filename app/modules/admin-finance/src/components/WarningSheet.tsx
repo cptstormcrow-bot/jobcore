@@ -26,17 +26,30 @@ export interface WarningSheetProps {
   warnings: AssignmentWarning[];
   onConfirm: () => void;
   onCancel: () => void;
+  /** Optional heading override; defaults to the existing hardcoded heading. */
+  title?: string;
+  /** Optional body override shown when there are no warnings; defaults to 'No conflicts found.' */
+  message?: string;
 }
 
-export function WarningSheet({ visible, warnings, onConfirm, onCancel }: WarningSheetProps) {
+export function WarningSheet({
+  visible,
+  warnings,
+  onConfirm,
+  onCancel,
+  title,
+  message,
+}: WarningSheetProps) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.overlay}>
         <Card style={styles.sheet}>
           <Text style={styles.title}>
-            {warnings.length === 0 ? 'Confirm assignment' : 'Review before assigning'}
+            {title ?? (warnings.length === 0 ? 'Confirm assignment' : 'Review before assigning')}
           </Text>
-          {warnings.length === 0 ? (
+          {message !== undefined ? (
+            <Text style={styles.body}>{message}</Text>
+          ) : warnings.length === 0 ? (
             <Text style={styles.body}>No conflicts found.</Text>
           ) : (
             warnings.map((warning, index) => (

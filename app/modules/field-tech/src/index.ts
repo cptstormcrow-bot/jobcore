@@ -32,7 +32,7 @@ import { Greeting } from './screens/Greeting';
 import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
-import { Overview } from './screens/Overview';
+import { Overview, type OverviewProps } from './screens/Overview';
 import { Reviews } from './screens/Reviews';
 import { PremJobs } from './screens/PremJobs';
 import { getModuleSession } from './lib/module-session';
@@ -192,7 +192,10 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'overview':
     default:
-      content = React.createElement(Overview, null);
+      content = React.createElement<OverviewProps>(Overview, {
+        onOpenJob: (jobId: string) => setSelectedJobId(jobId),
+        onOpenTimeOff: () => setSubView('timeOff'),
+      });
       break;
   }
 
@@ -208,6 +211,10 @@ function FieldTechRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
+      onTitlePress: () => {
+        setSelectedJobId(null);
+        setSubView('overview');
+      },
     }),
     content,
   );

@@ -64,6 +64,7 @@ export default function AccountScreen() {
         menuItems={[]}
         optionsItems={[]}
         titleBar={{ title: 'Account' }}
+        onTitlePress={() => router.replace('/')}
       />
       <View style={styles.content}>
         <Card>

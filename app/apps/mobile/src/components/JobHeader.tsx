@@ -139,7 +139,7 @@ export function JobSummaryRest({
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
         {techs && onAssignTech ? (
           <View style={styles.techRow}>
-            <Text style={styles.summaryLine}>Assigned to:</Text>
+            <Text style={styles.summaryLine}>Tech:</Text>
             <View style={styles.techSelect}>
               <Select
                 value={job.assignedTechId ?? ''}
@@ -151,7 +151,7 @@ export function JobSummaryRest({
             </View>
           </View>
         ) : (
-          <Text style={styles.summaryLine}>Assigned to: {assignedTechName ?? 'Unassigned'}</Text>
+          <Text style={styles.summaryLine}>Tech: {assignedTechName ?? 'Unassigned'}</Text>
         )}
         <View style={styles.techRow}>
           {serviceAreaName ? (

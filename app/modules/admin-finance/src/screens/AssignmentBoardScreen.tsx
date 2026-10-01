@@ -121,13 +121,20 @@ export function AssignmentBoardScreen({
   const router = useRouter();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingAssignment | null>(null);
+  const [reassign, setReassign] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
 
   const visibleTechs = useMemo(
-    () => techs.filter((tech) => isTestVisible(tech, showTestEmployees)),
+    () =>
+      techs.filter(
+        (tech) =>
+          (tech.role === undefined || tech.role === 'tech') &&
+          tech.active !== false &&
+          isTestVisible(tech, showTestEmployees),
+      ),
     [techs, showTestEmployees]
   );
 
@@ -307,7 +314,11 @@ export function AssignmentBoardScreen({
       );
       return;
     }
-    setPending({ job, tech });
+    if (job.assignedTechId && job.assignedTechId !== techId) {
+      setReassign({ job, tech });
+    } else {
+      setPending({ job, tech });
+    }
     setChoice((prev) => {
       const next = { ...prev };
       delete next[job.id];
@@ -361,6 +372,10 @@ export function AssignmentBoardScreen({
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
                     <View style={styles.poolRowInfo}>
+                      <Text style={styles.poolRowText}>
+                        {job.jobNumber != null ? `#${job.jobNumber}` : '#—'}
+                      </Text>
+                      {job.customerName ? <Text style={styles.poolRowText}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
                       <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
@@ -394,14 +409,16 @@ export function AssignmentBoardScreen({
                       onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                       style={styles.assignSelect}
                     />
-                    {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') && (
-                      <Button
-                        label="Confirm"
-                        variant="primary"
-                        size="sm"
-                        onPress={() => handleRowConfirm(job)}
-                      />
-                    )}
+                    <View style={styles.confirmSlot}>
+                      {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? (
+                        <Button
+                          label="Confirm"
+                          variant="primary"
+                          size="sm"
+                          onPress={() => handleRowConfirm(job)}
+                        />
+                      ) : null}
+                    </View>
                     <Button
                       label="View"
                       variant="outline"
@@ -449,6 +466,24 @@ export function AssignmentBoardScreen({
         warnings={pendingWarnings}
         onConfirm={handleConfirm}
         onCancel={handleCancelWarning}
+      />
+      <WarningSheet
+        visible={reassign !== null}
+        warnings={[]}
+        title="Reassign job?"
+        message={
+          reassign
+            ? `Move job #${reassign.job.jobNumber ?? '—'} from ${
+                techById.get(reassign.job.assignedTechId ?? '')?.fullName ?? 'Unknown tech'
+              } to ${reassign.tech.fullName}?`
+            : ''
+        }
+        onConfirm={() => {
+          if (reassign) onAssign?.(reassign.job, reassign.tech.id);
+          setReassign(null);
+          setSelectedJobId(null);
+        }}
+        onCancel={() => setReassign(null)}
       />
     </View>
   );
@@ -511,7 +546,12 @@ const styles = StyleSheet.create({
   poolRowSelected: {
     backgroundColor: colors.info,
   },
+  confirmSlot: {
+    width: 90,
+    marginRight: spacing.sm,
+  },
   poolRowInfo: {
+    flex: 1,
     flexShrink: 1,
     marginRight: spacing.sm,
   },

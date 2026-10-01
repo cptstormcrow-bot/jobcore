@@ -12,6 +12,7 @@ import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
+import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import {
@@ -256,6 +257,8 @@ export default function JobDrilldownScreen() {
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [pendingReassignTechId, setPendingReassignTechId] = useState<string | null>(null);
+  useEffect(() => { setAssignError(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
@@ -617,13 +620,20 @@ export default function JobDrilldownScreen() {
    * Reassignment is delete-then-insert inside the repo's `create()`; unassigning
    * an investigator calls `removeInvestigator`.
    */
-  const handleAssignInvestigator = async (techId: string): Promise<void> => {
+  const handleAssignInvestigator = async (techId: string, confirmed = false): Promise<void> => {
     if (!isAdmin) return;
     if (!job || !org?.id) return;
+    if (!confirmed && investigatorTechId && investigatorTechId !== techId) {
+      setPendingReassignTechId(techId);
+      return;
+    }
     setAssigning(techId);
     setAssignError(null);
     setActionError(null);
     try {
+      if (confirmed && investigatorTechId && investigatorTechId !== techId) {
+        await createJobRepository().clearInvestigator(job.id);
+      }
       await createJobAssignmentRepository().create(org.id, {
         jobId: job.id,
         techId,
@@ -671,7 +681,8 @@ export default function JobDrilldownScreen() {
 
   // Clears the assignment back to the shared "Unassigned" convention
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
-  // the clear via patchScheduling, investigator picks clear locally only.
+  // the clear via patchScheduling; unassigning an investigator calls
+  // removeInvestigator (reassignment is delete-then-insert in the repo's create()).
   const handleUnassign = async (): Promise<void> => {
     if (!isAdmin) return;
     if (!job) return;
@@ -693,6 +704,8 @@ export default function JobDrilldownScreen() {
         }
         setJob(result.job);
       } else {
+        if (!investigatorTechId) return;
+        await createJobAssignmentRepository().removeInvestigator(job.id);
         setInvestigatorTechId(null);
       }
     } catch (err) {
@@ -1112,6 +1125,18 @@ export default function JobDrilldownScreen() {
           onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
           assigningTech={assigning !== null}
         />
+        <WarningSheet
+          visible={pendingReassignTechId !== null}
+          warnings={[]}
+          title="Reassign job?"
+          message={`Move job #${job?.jobNumber ?? ''} from ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId ?? ''} to ${techs.find((t) => t.id === pendingReassignTechId)?.fullName ?? pendingReassignTechId ?? ''}?`}
+          onCancel={() => setPendingReassignTechId(null)}
+          onConfirm={() => {
+            const next = pendingReassignTechId;
+            setPendingReassignTechId(null);
+            if (next) void handleAssignInvestigator(next, true);
+          }}
+        />
         {region === 'plan' && (
           <PlanningScreen
             embedded
@@ -1161,7 +1186,7 @@ export default function JobDrilldownScreen() {
             busy={assigning !== null}
             error={assignError}
             onAssign={(techId) => void handleAssign(techId)}
-            onUnassign={(currentJob.assignedTechId ?? investigatorTechId) ? () => void handleUnassign() : undefined}
+            onUnassign={() => void handleUnassign()}
             label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           />
         )}

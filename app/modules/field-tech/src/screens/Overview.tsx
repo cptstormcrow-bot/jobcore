@@ -18,11 +18,10 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { isScheduledOnLocalDate } from './day-list-helpers';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { colors, Text } from '@jobcore/ui';
@@ -38,6 +37,24 @@ const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
   'declined',
   'cancelled',
 ]);
+
+export interface OverviewProps {
+  onOpenJob?: (jobId: string) => void;
+  onOpenTimeOff?: () => void;
+}
+
+type TileKey =
+  | 'assigned'
+  | 'open'
+  | 'timeOffPending'
+  | 'timeOffApproved'
+  | 'reimbPending'
+  | 'reimbApproved'
+  | 'reimbRejected'
+  | 'notes'
+  | 'photos'
+  | 'checklistOpen'
+  | 'checklistSubmitted';
 
 interface OverviewCounts {
   assignedJobs: number;
@@ -72,10 +89,12 @@ const EMPTY_COUNTS: OverviewCounts = {
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
  * and checklist instances. No forms, no writes, no navigation.
  */
-export function Overview(): React.ReactElement {
+export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
+  const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
+  const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
@@ -95,10 +114,8 @@ export function Overview(): React.ReactElement {
     async function load(): Promise<void> {
       const allAssignedJobs = await jobs.listAssignedToTech(techId);
       const showTestJobs = await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false);
-      const today = new Date();
       const assignedJobs = allAssignedJobs
-        .filter((job) => isBetaVisible(job, showTestJobs))
-        .filter((job) => isScheduledOnLocalDate(job, today));
+        .filter((job) => isBetaVisible(job, showTestJobs));
       const openJobs = assignedJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status));
 
       const [timeOffRequests, reimbursementRequests, notesByJob, photosByJob, checklistByJob] =
@@ -135,7 +152,18 @@ export function Overview(): React.ReactElement {
         }
       }
 
+      const pick = (flags: boolean[]): Job[] => assignedJobs.filter((_, i) => flags[i]);
+      const lists: Record<string, Job[]> = {
+        assigned: assignedJobs,
+        open: openJobs,
+        notes: pick(notesByJob.map((l) => l.length > 0)),
+        photos: pick(photosByJob.map((l) => l.length > 0)),
+        checklistOpen: pick(checklistByJob.map((pair) => pair.some((x) => x !== null && x.submittedAt === null))),
+        checklistSubmitted: pick(checklistByJob.map((pair) => pair.some((x) => x !== null && x.submittedAt !== null))),
+      };
+
       if (!cancelled) {
+        setJobLists(lists);
         setCounts({
           assignedJobs: assignedJobs.length,
           openJobs: openJobs.length,
@@ -196,29 +224,60 @@ export function Overview(): React.ReactElement {
     );
   }
 
-  const cards: Array<{ label: string; value: number }> = [
-    { label: 'Assigned jobs', value: counts.assignedJobs },
-    { label: 'Open jobs', value: counts.openJobs },
-    { label: 'Time off pending', value: counts.timeOffPending },
-    { label: 'Time off approved', value: counts.timeOffApproved },
-    { label: 'Reimbursements pending', value: counts.reimbursementsPending },
-    { label: 'Reimbursements approved', value: counts.reimbursementsApproved },
-    { label: 'Reimbursements rejected', value: counts.reimbursementsRejected },
-    { label: 'Job notes', value: counts.jobNotes },
-    { label: 'Job photos', value: counts.jobPhotos },
-    { label: 'Checklist open', value: counts.checklistOpen },
-    { label: 'Checklist submitted', value: counts.checklistSubmitted },
+  const cards: Array<{ key: TileKey; label: string; value: number }> = [
+    { key: 'assigned', label: 'Assigned jobs', value: counts.assignedJobs },
+    { key: 'open', label: 'Open jobs', value: counts.openJobs },
+    { key: 'timeOffPending', label: 'Time off pending', value: counts.timeOffPending },
+    { key: 'timeOffApproved', label: 'Time off approved', value: counts.timeOffApproved },
+    { key: 'reimbPending', label: 'Reimbursements pending', value: counts.reimbursementsPending },
+    { key: 'reimbApproved', label: 'Reimbursements approved', value: counts.reimbursementsApproved },
+    { key: 'reimbRejected', label: 'Reimbursements rejected', value: counts.reimbursementsRejected },
+    { key: 'notes', label: 'Job notes', value: counts.jobNotes },
+    { key: 'photos', label: 'Job photos', value: counts.jobPhotos },
+    { key: 'checklistOpen', label: 'Checklist open', value: counts.checklistOpen },
+    { key: 'checklistSubmitted', label: 'Checklist submitted', value: counts.checklistSubmitted },
   ];
+
+  if (activeTile !== null) {
+    const rows = jobLists[activeTile.key] ?? [];
+    return (
+      <View style={styles.container}>
+        <Pressable onPress={() => setActiveTile(null)} style={styles.row}>
+          <Text style={styles.cardLabel}>‹ Back to overview</Text>
+        </Pressable>
+        <Text style={styles.sectionTitle}>{activeTile.label}</Text>
+        {rows.length === 0 ? <Text style={styles.emptyText}>No jobs.</Text> : null}
+        {rows.map((job) => (
+          <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.row}>
+            <Text style={styles.cardValue}>
+              {job.jobNumber != null ? `#${job.jobNumber}` : 'Job'} {job.customerName ?? ''}
+            </Text>
+            <Text style={styles.cardLabel}>{job.address ?? ''}</Text>
+          </Pressable>
+        ))}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Overview</Text>
       <View style={styles.grid}>
         {cards.map((card) => (
-          <View key={card.label} style={styles.card}>
+          <Pressable
+            key={card.label}
+            style={styles.card}
+            onPress={() => {
+              if (card.key === 'timeOffPending' || card.key === 'timeOffApproved') {
+                onOpenTimeOff?.();
+              } else {
+                setActiveTile({ key: card.key, label: card.label });
+              }
+            }}
+          >
             <Text style={styles.cardValue}>{card.value}</Text>
             <Text style={styles.cardLabel}>{card.label}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
     </View>
@@ -262,6 +321,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMutedDark,
     marginTop: 4,
+  },
+  row: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    paddingVertical: 10,
   },
   emptyText: {
     color: colors.textMutedDark,

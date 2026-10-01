@@ -44,6 +44,7 @@ export type AppChromeProps = {
   fitMenu?: boolean; // admin-only taller drawer sheet (opt-in)
   logoMenuItems?: MenuActionItem[]; // in-menu logo switcher list (opt-in)
   onLogoPress?: () => void; // logo acts as Back (opt-in)
+  onTitlePress?: () => void; // header logo/title press -> overview (opt-in)
 };
 
 function MenuRow({
@@ -142,6 +143,7 @@ export function AppChrome({
   fitMenu,
   logoMenuItems,
   onLogoPress,
+  onTitlePress,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const [hMenuOpen, setHMenuOpen] = useState(false);
@@ -157,6 +159,22 @@ export function AppChrome({
       onLogoPress?.();
     }
   };
+  const wrapTitle = (node: React.ReactElement): React.ReactElement =>
+    onTitlePress ? (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Go to overview"
+        onPress={() => {
+          setGMenuOpen(false);
+          setHMenuOpen(false);
+          onTitlePress();
+        }}
+      >
+        {node}
+      </Pressable>
+    ) : (
+      node
+    );
   const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : menuItems;
   useEffect(() => {
     if (!hMenuOpen) setLogoMenuOpen(false);
@@ -202,7 +220,7 @@ export function AppChrome({
         >
           <Text style={styles.iconText}>☰</Text>
         </Pressable>
-        {titleBar && (
+        {titleBar && wrapTitle(
           <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold]}>
             <Text
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
@@ -303,9 +321,11 @@ export function AppChrome({
                 {gearTitle ? (
                   <>
                     <View style={styles.wordmarkRow}>
+                      {wrapTitle(
                       <View style={styles.wordmarkChip}>
                         <Text style={styles.wordmarkText}>{gearTitle}</Text>
                       </View>
+                      )}
                     </View>
                     <View style={styles.divider} />
                   </>
