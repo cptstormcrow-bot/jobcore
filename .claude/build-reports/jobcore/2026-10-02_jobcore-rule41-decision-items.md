@@ -103,3 +103,24 @@ Probed with Bash `test -e` in the same turn. W = `E:/Jeff/Codespace/SDAssemblyPr
 | E:/Jeff/.claude/plans/resolve-jobcore-decision-items-rule-41-hand-off-2026-09-29.md | present |
 | W/.claude/build-reports/jobcore/2026-09-28_jobcore-supabase-bump-offline-start-tooling-commit-sdk-plan.md (glob) | present |
 | W/.claude/build-reports/jobcore/2026-09-27_jobcore-c2-fk-m1-address-orphan-cleanup.md (glob) | present |
+
+## Addendum 2026-10-02 - task pricing migration live (FC #9)
+
+- FC #9: DONE. The 0032 re-apply migration is live on hosted.
+- Deviation: the migration was renamed 0072 -> 0074 because main already had 0072 and 0073 (number collision). Jeff chose "Rename ours to 0074" and "Copy 0074 into main, push there".
+- Evidence:
+  - W commit b1372a4 (fix(jobcore): renumber task pricing reapply migration to 0074).
+  - File app/supabase/migrations/0074_reapply_0032_task_pricing_alter.sql, SHA256 C87AEB8F681AA57713B2CD15F833D542C6EA26F410F33147D106779B18B18491.
+  - Copy into MAIN APP migrations: COPIED hash=MATCH migrations-status=only-0074 (untracked in main; not committed there).
+  - Dry run listed only 0074.
+  - Push output: "Applying migration 0074_reapply_0032_task_pricing_alter.sql... Finished supabase db push."
+  - migration list: 0070-0074 present under both Local and Remote.
+- Catalog check (column adjustment_target + constraint price_sheet_area_adjustments_target_check): BLOCKED by the auto-mode classifier ("[Auto-Mode Bypass]"); pending a Jeff dashboard SQL editor run. Expected col_count 1, con_count 1.
+
+### Additional deviations / defects
+11. (minor) Comment fixes at 0032 L52 and 0074 L1 were made by main-session Edits (each under 200 chars, Rule 30 carve-out) instead of Nestor as planned.
+12. (minor) Tried `npx supabase db query --linked` on local CLI v1.226.4, which has no such subcommand; should have consulted the db-query-quirks memory first.
+13. (blocked, not a defect) `npx -y supabase@2.116.0 db query --linked` was denied by the auto-mode classifier; not worked around. Only Jeff can clear it (dashboard run or permission rule).
+
+### Still open
+- FC #21 edge-function deploy still needs its own explicit go.
