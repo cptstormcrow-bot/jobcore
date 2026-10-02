@@ -127,13 +127,10 @@
   <h3 id="axis-1-compile-time-registration">Axis 1 — Compile-Time Registration</h3>
   <p>
     A module must be imported and registered in
-    <code>apps/mobile/src/modules.ts</code> (lines 11–18) — the one file in
-    <code>apps/mobile</code> permitted to name a specific module by id. As of this writing, three
-    modules are registered there: <code>admin-finance</code>, <code>field-tech</code>, and
-    <code>sales-marketing</code>. <strong>The fourth module, <code>payment-review</code>, is built
-    but is NOT registered</strong> — its code exists and compiles, but
-    <code>registerModule()</code> is never called for it, so it cannot appear in the app no matter
-    what any organization enables. This is exactly Chapter 6's status.
+    <code>apps/mobile/src/modules.ts</code> (lines 11–20) — the one file in
+    <code>apps/mobile</code> permitted to name a specific module by id. As of this writing, all
+    four modules are registered there, including <code>payment-review</code>. Payment &amp; Review
+    is owner/admin-only and is not shown in the logo menu (see Chapter 6).
   </p>
   <h3 id="axis-2-runtime-enablement">Axis 2 — Runtime Per-Org Enablement</h3>
   <p>

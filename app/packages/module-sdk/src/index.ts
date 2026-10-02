@@ -74,6 +74,13 @@ export interface JobcoreModule {
   requiredRoles: Role[]; // gates visibility AND is mirrored in RLS
   routes: ModuleRoute[]; // screens contributed to the navigator
   navEntries: NavEntry[]; // icon, label, sort order
+  /**
+   * When true, the module stays registered, role-gated and routable at /m/<id>,
+   * but is left out of the logo module switcher (moduleSwitcherItems). For a
+   * module reached from inside another module, where a switcher entry would
+   * duplicate it.
+   */
+  hideFromSwitcher?: boolean;
   jobActions?: JobAction[]; // buttons injected into the shared Job Detail screen
   hooks?: {
     onJobStatusChange?(e: JobStatusEvent): Promise<void>;
@@ -133,6 +140,7 @@ export function moduleSwitcherItems(
   const org = { enabledModules: Array.from(registry.keys()) } as unknown as Organization;
   return getEnabledModules(org, role as Role)
     .filter((m) => m.id !== currentId)
+    .filter((m) => !m.hideFromSwitcher)
     .map((m) => ({ label: m.displayName, route: `/m/${m.id}` }));
 }
 

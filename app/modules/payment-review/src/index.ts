@@ -55,7 +55,7 @@ function PaymentReviewScreen(): React.ReactElement {
  * Module ids are pinned byte-for-byte by supabase/seed.sql's
  * organizations.enabled_modules value — do not rename.
  *
- * displayName / requiredRoles / navEntries follow field-tech's pattern.
+ * displayName / requiredRoles / navEntries follow field-tech's pattern; hideFromSwitcher does not (see below).
  * owner/admin see this module; a tech does not, since the reconciliation
  * screen is admin-facing. No `jobActions`: the host's job menu is
  * hard-wired and admin-finance alone owns Mark Paid.
@@ -66,6 +66,8 @@ export const paymentReviewModule: JobcoreModule = {
   requiredRoles: ['owner', 'admin'],
   routes: [{ path: 'payment-review', component: PaymentReviewScreen }],
   navEntries: [{ icon: 'card', label: 'Payment & Review', order: 40 }],
+  // Reached via Admin Finance → Review; a logo-switcher entry would duplicate it. /m/payment-review still routes.
+  hideFromSwitcher: true,
   migrations: ['0010_payment_review.sql'],
 };
 

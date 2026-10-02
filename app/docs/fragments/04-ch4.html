@@ -146,11 +146,8 @@ confirmation as Cash/Check. <span class="jc-badge jc-badge--built-unverified">�
 (id <code>mark-paid</code>) on <code>paymentReviewModule</code>
 (<code>modules/payment-review/src/index.ts</code>) — but it is restricted to
 <code>requiredRoles: ['owner', 'admin']</code> (OFFICE), not <code>tech</code>, so
-Marcus would never see it even if it were reachable. It isn't: confirmed by direct
-search, the <code>payment-review</code> module is NOT registered in
-<code>apps/mobile/src/modules.ts</code> today — no reference to it exists there. The
-module, its screen, and this jobAction are unreachable from the running mobile app.
-<span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span> See Chapter 6 for
+Marcus would never see it: the <code>payment-review</code> module is registered in <code>apps/mobile/src/modules.ts</code>, but it is owner/admin-only and not in the logo menu.
+See Chapter 6 for
 the module's full architecture/status detail.</p>
 
 <h3 id="ch4-payment-closing">Office Closes It Out</h3>

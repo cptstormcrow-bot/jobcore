@@ -35,17 +35,13 @@
       (plain OFFICE transition, no precondition).</li>
   </ol>
 
-  <h2 id="storyboard-mark-paid-not-registered">"Mark Paid" is not registered in the mobile app</h2>
+  <h2 id="storyboard-mark-paid-not-registered">"Mark Paid" is office-only</h2>
   <p>
     <strong>Mark Paid</strong> is a <code>jobAction</code> (id <code>mark-paid</code>) defined on
     <code>paymentReviewModule</code> in <code>modules/payment-review/src/index.ts</code>, restricted to
     <code>requiredRoles: ['owner', 'admin']</code> (OFFICE) — its <code>onInvoke</code> calls
-    <code>transitionJob(job, 'paid', ctx)</code>. Confirmed by direct search: this module is
-    <strong>NOT YET registered</strong> in <code>apps/mobile/src/modules.ts</code> — no reference to
-    <code>payment-review</code> or <code>paymentReviewModule</code> exists in that file. The module,
-    its screen, and this jobAction are unreachable from the running mobile app today.
-    <span class="jc-badge jc-badge-not-reachable">🔴 Not Reachable</span> — see Chapter 6 for full
-    architecture/status detail.
+    <code>transitionJob(job, 'paid', ctx)</code>. This module is registered in
+    <code>apps/mobile/src/modules.ts</code>, but it is owner/admin-only and not listed in the logo menu.
   </p>
 
   <h2 id="storyboard-methods">The four payment methods</h2>

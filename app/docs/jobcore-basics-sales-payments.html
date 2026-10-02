@@ -156,14 +156,12 @@ in any client-visible or client-readable table; this module's own ports
   <h1 id="ch6-title">Chapter 6 — Payment &amp; Review</h1>
 
   <div class="jc-callout jc-callout--gap" role="note">
-    <span class="jc-badge jc-badge--not-reachable">⚪ Open Gap (Not Registered)</span>
+    <span class="jc-badge jc-badge--not-reachable">Registered, Not in Menu</span>
     <p>
-      The <code>payment-review</code> module is <strong>built but not reachable</strong> in the
-      running mobile app today. Its domain logic, payment providers, and the
-      <code>mark-paid</code> job action all exist in the codebase — but the module is not
-      compile-time registered in <code>apps/mobile/src/modules.ts</code>, so JobCore's module
-      system never loads it. No screen, route, or nav entry from this module appears anywhere
-      in the app as currently built.
+      The <code>payment-review</code> module is <strong>registered</strong> in
+      <code>apps/mobile/src/modules.ts</code> (owner/admin only) but is not listed in the logo
+      menu. Owners and admins reach its Reconciliation view via Admin Finance → Review, and it
+      still opens directly at <code>/m/payment-review</code>.
     </p>
   </div>
 
@@ -172,19 +170,17 @@ in any client-visible or client-readable table; this module's own ports
     Chapter 1, "What Is JobCore?": a module must clear
     <em>axis 1 (compile-time registration)</em> before axis 2 (runtime per-organization
     enablement) is even relevant. <code>apps/mobile/src/modules.ts</code> is the single file
-    permitted to name a specific module and currently imports and registers exactly three:
-    <code>adminFinanceModule</code>, <code>fieldTechModule</code>, and
-    <code>salesMarketingModule</code>. <code>paymentReviewModule</code> is absent from that list.
-    An organization could set <code>payment-review</code> in its
-    <code>enabled_modules</code> config and it would still not appear — axis 1 fails before axis 2
-    is ever checked. Because there is nothing to walk in the running app, this chapter is
+    permitted to name a specific module and currently imports and registers all four modules:
+    <code>adminFinanceModule</code>, <code>fieldTechModule</code>,
+    <code>salesMarketingModule</code>, and <code>paymentReviewModule</code>, which is left out
+    of the logo menu on purpose. This chapter is
     architecture-and-status only: no "A Typical Day" persona narrative and no "Try It" section, per
     the pattern set in Chapters 3–5.
   </p>
 
   <h2 id="ch6-what-it-contains">What the Module Contains</h2>
   <p>
-    Despite being inert today, <code>modules/payment-review/src/</code> is a substantially built
+    Although it is not in the logo menu, <code>modules/payment-review/src/</code> is a substantially built
     module, not a stub. It exposes:
   </p>
   <ul>
@@ -220,9 +216,9 @@ in any client-visible or client-readable table; this module's own ports
       — <code>modules/payment-review/src/index.ts</code> imports
       <code>./screens/ReconciliationView</code> and routes it at <code>payment-review</code>
       through <code>PaymentReviewScreen</code> (wired in commit <code>2dc4fc7</code>,
-      2026-08-17). The route is live in the module only: the running app still cannot reach it
-      until the host registers <code>paymentReviewModule</code> and injects a Supabase client
-      via <code>setSupabaseClient</code> (see the Open Gap row below).
+      2026-08-17). The module is registered and the host injects its Supabase client
+      (<code>app/m/[moduleId].tsx</code>); it opens at <code>/m/payment-review</code> and is not
+      in the logo menu.
     </li>
   </ul>
 
@@ -236,13 +232,12 @@ in any client-visible or client-readable table; this module's own ports
       <tr><td><code>mark-paid</code> job action</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td>Handoff wiring</td><td>Built</td><td><span class="jc-badge jc-badge--not-reachable">🔴 Not Reachable</span></td></tr>
       <tr><td>Reconciliation screen</td><td>Built, routed in-module</td><td><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></td></tr>
-      <tr><td>Compile-time registration in <code>apps/mobile/src/modules.ts</code></td><td>Not done</td><td><span class="jc-badge jc-badge--gap">⚪ Open Gap</span></td></tr>
+      <tr><td>Compile-time registration in <code>apps/mobile/src/modules.ts</code></td><td>Done (not in the logo menu)</td><td><span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></td></tr>
     </tbody>
   </table>
   <p>
-    Registering this module is a one-line, build-time change (adding the import and
-    <code>registerModule(paymentReviewModule)</code> call), not a rewrite — but until it happens,
-    every capability in this chapter remains code-complete and unreachable. See
+    This module is registered but left out of the logo menu on purpose; reach it via
+    Admin Finance → Review, or directly at <code>/m/payment-review</code>. See
     <a href="jobcore-basics-appendices.html">Chapter 7's open-gap roadmap</a> for this item's tracking
     entry.
   </p>
