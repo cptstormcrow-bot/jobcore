@@ -22,7 +22,7 @@ import * as React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { router, useRouter } from 'expo-router';
 import { AppChrome, Breadcrumb } from '@jobcore/ui';
-import type { JobcoreModule } from '@jobcore/module-sdk';
+import { moduleSwitcherItems, type JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
 import { DayList, type DayListProps } from './screens/DayList';
@@ -37,7 +37,7 @@ import { Reviews } from './screens/Reviews';
 import { PremJobs } from './screens/PremJobs';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
-import type { MenuItem } from '@jobcore/ui';
+import type { MenuItem, MenuActionItem } from '@jobcore/ui';
 import { transitionJob } from './domain/transition';
 
 export type { ModuleSession } from './lib/module-session';
@@ -137,6 +137,21 @@ function FieldTechRoot(): React.ReactElement {
     { id: 'gearProfile', label: 'Profile', onPress: () => router.push('/profile') },
   ];
 
+  const logoMenuItems: MenuActionItem[] = [
+    {
+      id: 'logo-/m/field-tech',
+      label: 'Field Tech',
+      onPress: () => router.push('/m/field-tech' as never),
+      isActive: true,
+    },
+    ...moduleSwitcherItems('field-tech', session.role).map((row) => ({
+      id: 'logo-' + row.route,
+      label: row.label,
+      onPress: () => router.push(row.route as never),
+      isActive: false,
+    })),
+  ];
+
   const jobsOptions: MenuItem[] = [
     {
       id: 'show-test-jobs',
@@ -209,6 +224,7 @@ function FieldTechRoot(): React.ReactElement {
       compactMenu: true,
       gearItems,
       gearTitle: 'Configurations',
+      logoMenuItems,
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
       onTitlePress: () => {

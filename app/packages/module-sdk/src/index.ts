@@ -117,6 +117,25 @@ export function getEnabledModules(org: Organization, role: Role): JobcoreModule[
   return enabled.sort((a, b) => lowestNavOrder(a) - lowestNavOrder(b));
 }
 
+/**
+ * Module-switcher rows for owner/admin: every registered module visible to `role`
+ * (per getEnabledModules), excluding `currentId`. Returns [] for any other role.
+ * No org is available here, so the org-enabled gate is not applied: every registered
+ * module is treated as enabled and only the role gate (requiredRoles) filters.
+ */
+export function moduleSwitcherItems(
+  currentId: string,
+  role: string | null | undefined,
+): { label: string; route: string }[] {
+  if (role !== 'owner' && role !== 'admin') {
+    return [];
+  }
+  const org = { enabledModules: Array.from(registry.keys()) } as unknown as Organization;
+  return getEnabledModules(org, role as Role)
+    .filter((m) => m.id !== currentId)
+    .map((m) => ({ label: m.displayName, route: `/m/${m.id}` }));
+}
+
 /** Lowest NavEntry.order for a module; modules with no nav entries sort last. */
 function lowestNavOrder(m: JobcoreModule): number {
   let lowest = Number.POSITIVE_INFINITY;

@@ -16,6 +16,8 @@ import type { SupabaseSelectClient } from './data/ports';
 import { ReconciliationView } from './screens/ReconciliationView';
 
 export type { SupabaseSelectClient };
+export { ReconciliationView };
+export type { ReconciliationViewProps } from './screens/ReconciliationView';
 
 /**
  * Injection seam for the Supabase client `ReconciliationView` queries.

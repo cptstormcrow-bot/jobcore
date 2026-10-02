@@ -15,6 +15,8 @@ import { AssignTechRegion } from '../../src/components/AssignTechRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
+import { getEnabledModules } from '@jobcore/module-sdk';
+import { landingRouteFor } from '../../src/lib/landing';
 import {
   createJobRepository,
   createCustomerRepository,
@@ -221,6 +223,18 @@ export default function JobDrilldownScreen() {
   const session = useSession();
   const org = session.status === 'authenticated' ? session.organization : undefined;
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
+  const goBackOrLanding = (): void => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    if (session.status === 'authenticated') {
+      const ids = getEnabledModules(session.organization, session.profile.role).map((m) => m.id);
+      router.replace(landingRouteFor(session.profile.role, ids) as never);
+    } else {
+      router.replace('/sign-in');
+    }
+  };
   const isAdmin = role === 'admin';
 
   if (session.status === 'authenticated' && org && role) {
@@ -1028,7 +1042,7 @@ export default function JobDrilldownScreen() {
 
   const handleCancel = (): void => {
     skipAutosaveRef.current = true;
-    router.back();
+    goBackOrLanding();
   };
 
   const handleResetTime = async (): Promise<void> => {
@@ -1156,7 +1170,7 @@ export default function JobDrilldownScreen() {
           />
         </ScrollView>
         <View style={styles.footer}>
-          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={() => router.back()} />
+          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={goBackOrLanding} />
           <Button
             label={saving ? 'Creating…' : 'Create'}
             disabled={saving}

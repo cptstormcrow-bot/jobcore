@@ -15,6 +15,8 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import { ReconciliationView } from '@jobcore/payment-review';
+import type { SupabaseSelectClient as PaymentReviewClient } from '@jobcore/payment-review';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { enqueue } from './offline-db';
@@ -2907,6 +2909,10 @@ export function buildAdminFinancePorts(): ModulePorts {
     investigations: createJobInvestigationRepository(),
     jobPlanTasks: createJobPlanTasksRepository(),
     timeEntries: createTimeEntryRepository(),
+    paymentReview: {
+      ReconciliationView,
+      client: supabase as unknown as PaymentReviewClient,
+    },
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,

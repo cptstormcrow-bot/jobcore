@@ -47,6 +47,8 @@ import type { CalculationResult, PriceSheetRate } from '../money/types';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
+import type { ComponentType } from 'react';
+import type { ReconciliationViewProps, SupabaseSelectClient } from '@jobcore/payment-review';
 
 export interface ModulePorts {
   jobs: JobRepository;
@@ -134,6 +136,11 @@ export interface ModulePorts {
   investigations: JobInvestigationRepository;
   jobPlanTasks: JobPlanTasksRepository;
   timeEntries: TimeEntryRepository;
+  /** payment-review's read-only ReconciliationView plus the host-supplied Supabase client to pass as its `client` prop. */
+  paymentReview: {
+    ReconciliationView: ComponentType<ReconciliationViewProps>;
+    client: SupabaseSelectClient;
+  };
   /**
    * Durable on-device key/value boolean preference storage — persists across
    * in-app navigation, app restarts, and logout/login. Backed by SecureStore

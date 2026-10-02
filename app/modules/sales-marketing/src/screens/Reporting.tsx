@@ -51,7 +51,7 @@ function periodOf(isoTimestamp: string): string {
   return isoTimestamp.slice(0, 7);
 }
 
-function buildPostsByPlatformAndPeriod(entries: readonly CampaignLogEntry[]): PlatformPeriodCount[] {
+export function buildPostsByPlatformAndPeriod(entries: readonly CampaignLogEntry[]): PlatformPeriodCount[] {
   const buckets = new Map<string, PlatformPeriodCount>();
   for (const entry of entries) {
     const platform = entry.platform ?? 'unknown';
@@ -77,7 +77,7 @@ interface PlatformCount {
   count: number;
 }
 
-function buildReviewsByPlatform(reviews: readonly Review[]): PlatformCount[] {
+export function buildReviewsByPlatform(reviews: readonly Review[]): PlatformCount[] {
   const buckets = new Map<string, number>();
   for (const review of reviews) {
     buckets.set(review.platform, (buckets.get(review.platform) ?? 0) + 1);

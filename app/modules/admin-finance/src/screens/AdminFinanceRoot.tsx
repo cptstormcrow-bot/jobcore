@@ -28,6 +28,7 @@ import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, W
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
+import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
@@ -73,7 +74,7 @@ type SubView =
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'timeOffQueue'
   | 'reports'
-  | 'payments'
+  | 'payments' | 'paymentReview'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
   | 'blackout-editor'
@@ -935,8 +936,18 @@ export function AdminFinanceRoot() {
           { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
         ]}
         logoMenuItems={[
-          { id: 'logo-field-tech', label: 'Field Tech', onPress: () => router.push('/m/field-tech') },
-          { id: 'logo-sales-marketing', label: 'Sales & Marketing', onPress: () => router.push('/m/sales-marketing') },
+          {
+            id: 'logo-/m/admin-finance',
+            label: 'Admin & Finance',
+            onPress: () => router.push('/m/admin-finance' as never),
+            isActive: true,
+          },
+          ...moduleSwitcherItems('admin-finance', session.role).map((row) => ({
+            id: 'logo-' + row.route,
+            label: row.label,
+            onPress: () => router.push(row.route as never),
+            isActive: false,
+          })),
         ]}
         optionsItems={optionsItems}
         helpContext={{ screenKey: 'admin-finance' }}
@@ -950,6 +961,7 @@ export function AdminFinanceRoot() {
           { id: 'closeOutQueue', label: 'Close-Outs', onPress: () => goTop('closeOutQueue'), isActive: (TOP[subView] ?? subView) === 'closeOutQueue' },
           { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
           { id: 'payments', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
+          { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
           { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue'), isActive: (TOP[subView] ?? subView) === 'timeOffQueue' },
           { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
           { id: 'reports', label: 'Reports', onPress: () => goTop('reports'), isActive: (TOP[subView] ?? subView) === 'reports' },
@@ -1221,6 +1233,11 @@ export function AdminFinanceRoot() {
           scrollToSection={paymentsScrollTarget}
           onScrollHandled={() => setPaymentsScrollTarget(null)}
         />
+      ) : subView === 'paymentReview' ? (
+        (() => {
+          const { ReconciliationView, client } = getModulePorts().paymentReview;
+          return <ReconciliationView client={client} />;
+        })()
       ) : subView === 'assignmentBoard' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />
@@ -1469,26 +1486,13 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   timeOffQueue: 'Time Off',
   reports: 'Reports',
   payments: 'Payments',
+  paymentReview: 'Review',
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
   'employee-job-detail': 'Employee Job Detail',
   'employee-invitations': 'Pending Invitations',
   calendar: 'Calendar',
 };
-
-const TOP_LEVEL_TABS: Array<{ key: SubView; label: string }> = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'leadInbox', label: 'Leads' },
-  { key: 'jobs', label: 'Jobs' },
-  { key: 'assignmentBoard', label: 'Assignments' },
-  { key: 'closeOutQueue', label: 'Close-Outs' },
-  { key: 'priceSheetList', label: 'Price Sheets' },
-  { key: 'payments', label: 'Payments' },
-  { key: 'timeOffQueue', label: 'Time Off' },
-  { key: 'calendar', label: 'Calendar' },
-  { key: 'reports', label: 'Reports' },
-  { key: 'employee-roster', label: 'Employees' },
-];
 
 export default AdminFinanceRoot;
 

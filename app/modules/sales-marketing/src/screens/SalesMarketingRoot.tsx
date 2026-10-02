@@ -17,6 +17,9 @@ import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { EmptyState, AppChrome } from '@jobcore/ui';
+import { moduleSwitcherItems } from '@jobcore/module-sdk';
+
+import { Overview } from './Overview';
 
 import { ReviewLibrary } from './ReviewLibrary';
 import { PitchPicker, type PitchAngle } from './PitchPicker';
@@ -25,9 +28,10 @@ import { Reporting } from './Reporting';
 import { CallbackTasks } from './CallbackTasks';
 import { getModuleSession } from '../lib/module-session';
 
-type SubView = 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
+type SubView = 'overview' | 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
 const SUBVIEW_LABELS: Record<SubView, string> = {
+  overview: 'Overview',
   reviewLibrary: 'Review Library',
   pitchPicker: 'Pitch Picker',
   composer: 'Composer',
@@ -37,7 +41,7 @@ const SUBVIEW_LABELS: Record<SubView, string> = {
 
 export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
-  const [subView, setSubView] = React.useState<SubView>('reviewLibrary');
+  const [subView, setSubView] = React.useState<SubView>('overview');
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
   // No service/service-area picker exists yet anywhere in this module —
   // these stay null until one lands; Composer already treats both as
@@ -52,6 +56,12 @@ export function SalesMarketingRoot(): React.ReactElement {
 
   const menuItems = React.useMemo(
     () => [
+      {
+        id: 'overview',
+        label: 'Overview',
+        isActive: subView === 'overview',
+        onPress: () => setSubView('overview'),
+      },
       {
         id: 'reviewLibrary',
         label: 'Review Library',
@@ -82,8 +92,20 @@ export function SalesMarketingRoot(): React.ReactElement {
         isActive: subView === 'callbackTasks',
         onPress: () => setSubView('callbackTasks'),
       },
+      {
+        id: 'logo-/m/sales-marketing',
+        label: 'Sales & Marketing',
+        isActive: true,
+        onPress: () => router.push('/m/sales-marketing' as never),
+      },
+      ...moduleSwitcherItems('sales-marketing', getModuleSession()?.role).map((row) => ({
+        id: `switch:${row.route}`,
+        label: row.label,
+        isActive: false,
+        onPress: () => router.push(row.route as never),
+      })),
     ],
-    [subView],
+    [subView, router],
   );
 
   const gearItems = React.useMemo(
@@ -124,8 +146,11 @@ export function SalesMarketingRoot(): React.ReactElement {
       content = React.createElement(CallbackTasks, null);
       break;
     case 'reviewLibrary':
-    default:
       content = React.createElement(ReviewLibrary, null);
+      break;
+    case 'overview':
+    default:
+      content = React.createElement(Overview, null);
       break;
   }
 

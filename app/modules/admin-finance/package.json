@@ -17,6 +17,7 @@
     "@jobcore/core": "*",
     "@jobcore/field-tech": "*",
     "@jobcore/module-sdk": "*",
+    "@jobcore/payment-review": "*",
     "@jobcore/ui": "*",
     "expo-clipboard": "~7.0.0"
   },

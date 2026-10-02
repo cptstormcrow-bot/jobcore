@@ -68,7 +68,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.sectionHeading}>Payment Review</Text>
+        <Text style={styles.sectionHeading}>Payments</Text>
         <PaymentsScreen payments={payments} />
 
         <Text style={styles.sectionHeading}>Reimbursements</Text>

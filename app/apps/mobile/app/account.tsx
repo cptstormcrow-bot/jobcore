@@ -3,7 +3,9 @@ import { View, StyleSheet, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AppChrome, Card, Button, LoadingState, colors, spacing, typography, Text } from '@jobcore/ui';
 
+import { getEnabledModules } from '@jobcore/module-sdk';
 import { useSession, signOut } from '../src/lib/session';
+import { landingRouteFor } from '../src/lib/landing';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -64,7 +66,10 @@ export default function AccountScreen() {
         menuItems={[]}
         optionsItems={[]}
         titleBar={{ title: 'Account' }}
-        onTitlePress={() => router.replace('/')}
+        onTitlePress={() => {
+          const ids = getEnabledModules(organization, profile.role).map((m) => m.id);
+          router.replace(landingRouteFor(profile.role, ids) as never);
+        }}
       />
       <View style={styles.content}>
         <Card>

@@ -8,6 +8,7 @@ import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } fro
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, AppVersionProvider } from '@jobcore/ui';
 import { getAppVersion } from '../src/lib/appVersion';
+import { landingRouteFor } from '../src/lib/landing';
 
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
 import { getEnabledModules } from '@jobcore/module-sdk';
@@ -39,7 +40,7 @@ function isSalesAllowed(p: string): boolean {
  *   disabled        → account deactivated: message + sign-out
  *   unprovisioned   → signed in, no profile row: message + sign-out
  *   unauthenticated → redirect to /sign-in (unless already there)
- *   authenticated   → the Stack (redirects to / if still sitting on /sign-in)
+ *   authenticated   → the Stack; from /, /sign-in or /sign-up, replaces to the role landing route
  */
 function AuthGate() {
   const state = useSession();
@@ -52,6 +53,20 @@ function AuthGate() {
   const [checkingAgain, setCheckingAgain] = useState(false);
   const salesBlocked =
     state.status === 'authenticated' && state.profile.role === 'sales' && !isSalesAllowed(pathname);
+  // Role landing: one path for fresh login and relaunch. Same role/module source as before
+  // (state.profile.role + getEnabledModules(state.organization, role)).
+  const landingTarget =
+    state.status === 'authenticated'
+      ? landingRouteFor(
+          state.profile.role,
+          getEnabledModules(state.organization, state.profile.role).map((m) => m.id),
+        )
+      : null;
+  const needsLanding =
+    navigationReady && landingTarget !== null && (onSignIn || pathname === '/') && pathname !== landingTarget;
+  useEffect(() => {
+    if (needsLanding && landingTarget && !salesBlocked) router.replace(landingTarget as never);
+  }, [needsLanding, landingTarget, salesBlocked, router]);
 
   // The Stack must always mount unconditionally — expo-router's root navigation
   // state only becomes ready AFTER a navigator (this Stack) has mounted and
@@ -127,16 +142,18 @@ function AuthGate() {
     overlay = <Redirect href="/sign-in" />;
   } else if (salesBlocked) {
     overlay = <Redirect href="/m/sales-marketing" />;
-  } else if (state.status === 'authenticated' && onSignIn && state.profile.role === 'admin' && getEnabledModules(state.organization, 'admin').some((m) => m.id === 'admin-finance')) {
-    overlay = <Redirect href="/m/admin-finance" />;
-  } else if (state.status === 'authenticated' && onSignIn) {
-    overlay = <Redirect href="/" />;
+  } else if (needsLanding) {
+    overlay = (
+      <View style={styles.center}>
+        <LoadingState label="Loading…" />
+      </View>
+    );
   }
 
   const isRedirect =
     overlay !== null &&
     navigationReady &&
-    ((state.status === 'unauthenticated' && !onSignIn) || (state.status === 'authenticated' && onSignIn) || salesBlocked);
+    ((state.status === 'unauthenticated' && !onSignIn) || salesBlocked);
 
   return (
     <View style={styles.flex}>

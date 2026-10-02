@@ -6,6 +6,7 @@
     { "path": "../../packages/core" },
     { "path": "../../packages/module-sdk" },
     { "path": "../../packages/ui" },
+    { "path": "../payment-review" },
     { "path": "../field-tech" }
   ]
 }

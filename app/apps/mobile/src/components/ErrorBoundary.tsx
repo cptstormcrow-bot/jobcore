@@ -32,7 +32,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   handleGoBack = (): void => {
-    router.back();
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
   };
 
   override render(): React.ReactNode {
