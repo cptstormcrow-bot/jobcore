@@ -55,6 +55,7 @@ Rule 41 lineage evaluation (prior open contracts):
 4. S10 scratchpad crib never written (Rule 38 process miss).
 5. S5 and S7 hound tails returned empty; results recovered from hand-backs.
 6. CRLF warnings at commit — benign.
+7. Rule 29 defect (delivery claim): a pre-compaction status claimed the report copy was already in E:\Jeff\Desktop\Build-Reports\, but that folder did not exist. Post-compaction, Nestor created the folder and delivered the copy (SHA-256 verified). Caught by Themis (task_id themis-ledger-jobcore-20261002-rolelogin), advisory, medium.
 
 ## Delivery
 
