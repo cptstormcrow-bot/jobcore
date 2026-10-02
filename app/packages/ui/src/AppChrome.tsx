@@ -8,6 +8,8 @@ import type { JobStatus } from '@jobcore/core';
 import { getHelpStep, type ScreenKey } from './walkthrough/walkthrough-content';
 import { useWalkthrough } from './walkthrough/WalkthroughProvider';
 import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
+import { useAppVersion } from './AppVersionContext';
+import { formatVersionLabel } from './formatVersionLabel';
 
 export type MenuActionItem = {
   id: string;
@@ -159,6 +161,7 @@ export function AppChrome({
       onLogoPress?.();
     }
   };
+  const appVersion = useAppVersion();
   const wrapTitle = (node: React.ReactElement): React.ReactElement =>
     onTitlePress ? (
       <Pressable
@@ -259,7 +262,7 @@ export function AppChrome({
                   <Text style={styles.wordmarkText}>JobCore©</Text>
                 </View>
                 </Pressable>
-                {gearItems?.length ? (
+                {true ? (
                   <Pressable
                     onPress={() => { setHMenuOpen(false); setTimeout(() => setGMenuOpen(true), 300); }}
                     accessibilityRole="button"
@@ -313,29 +316,33 @@ export function AppChrome({
         </Pressable>
       </Modal>
 
-      {gearItems?.length ? (
+      {true ? (
         <Modal visible={gMenuOpen} transparent animationType="fade" onRequestClose={() => setGMenuOpen(false)}>
           <Pressable style={styles.overlay} onPress={() => setGMenuOpen(false)}>
             <View style={[styles.sheet, styles.sheetFramed]}>
               <ScrollView style={{ maxHeight: '100%' }}>
-                {gearTitle ? (
+                {true ? (
                   <>
                     <View style={styles.wordmarkRow}>
                       {wrapTitle(
                       <View style={styles.wordmarkChip}>
-                        <Text style={styles.wordmarkText}>{gearTitle}</Text>
+                        <Text style={styles.wordmarkText}>{gearTitle ?? 'Configuration'}</Text>
                       </View>
                       )}
                     </View>
                     <View style={styles.divider} />
                   </>
                 ) : null}
-                {gearItems.map((item, i) => (
+                {(gearItems ?? []).map((item, i) => (
                   <View key={item.id}>
                     {i > 0 ? <View style={styles.gearSeparator} /> : null}
                     <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} />
                   </View>
                 ))}
+                <View style={styles.gearSeparator} />
+                <View style={styles.row}>
+                  <Text style={[styles.rowText, styles.rowTextDisabled]}>{formatVersionLabel(appVersion)}</Text>
+                </View>
               </ScrollView>
             </View>
           </Pressable>

@@ -1,0 +1,13 @@
+#!/bin/sh
+# Warn-only Conventional Commits check. Always exits 0.
+subject=$(head -n 1 "$1" 2>/dev/null)
+[ -z "$subject" ] && exit 0
+case "$subject" in
+  "Merge "*|'Revert "'*|"fixup!"*|"squash!"*) exit 0 ;;
+esac
+if ! printf '%s\n' "$subject" | grep -Eq '^(feat|fix|perf|docs|chore|test|refactor|ci|style|build|revert)(\(.+\))?!?: '; then
+  echo "WARNING: commit subject is not Conventional Commits, so it will not drive a version bump." >&2
+  echo "  Allowed types: feat fix perf docs chore test refactor ci style build revert" >&2
+  echo "  Example: feat(scope): add thing" >&2
+fi
+exit 0

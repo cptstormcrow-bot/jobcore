@@ -1,0 +1,294 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="versioning guide">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/app/docs/versioning-guide.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobCore Versioning Guide</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--text:#1d2530;--muted:#5a6675;--accent:#1f5fbf;--accent-bg:#e7f0fd;--border:#d6dce4;--code-bg:#eef1f5;--code-text:#16202b;--warn-bg:#fff6dc;--warn-border:#e2b93b;--ok-bg:#e5f6ea;--ok-border:#4aa66a}
+@media (prefers-color-scheme:dark){:root{--bg:#10151b;--card:#18202a;--text:#e6ebf1;--muted:#9aa7b6;--accent:#7db0ff;--accent-bg:#1b2c45;--border:#2c3745;--code-bg:#0c1117;--code-text:#d8e2ee;--warn-bg:#3a3012;--warn-border:#a98a22;--ok-bg:#15301f;--ok-border:#3b8a58}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:17px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:16px}
+header h1{margin:.2em 0 .1em;font-size:1.9rem;line-height:1.2}
+header p{color:var(--muted);margin:0}
+nav.toc{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:16px 0}
+nav.toc summary{font-weight:700;cursor:pointer}
+nav.toc ol{margin:.5em 0 0;padding-left:1.4em;columns:1}
+nav.toc a{color:var(--accent);text-decoration:none}
+@media (min-width:1180px){
+ .wrap{max-width:860px;position:relative}
+ nav.toc{position:fixed;top:24px;left:calc(50% + 450px);width:230px;max-height:calc(100vh - 48px);overflow:auto;margin:0;font-size:.85rem}
+}
+section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px 18px 14px;margin:18px 0}
+h2{font-size:1.4rem;margin:.9em 0 .4em}
+h3{font-size:1.1rem;margin:1em 0 .3em}
+p,li{overflow-wrap:anywhere}
+.box{border-left:5px solid var(--accent);background:var(--accent-bg);border-radius:6px;padding:10px 14px;margin:12px 0}
+.warn{border-left-color:var(--warn-border);background:var(--warn-bg)}
+.ok{border-left-color:var(--ok-border);background:var(--ok-bg)}
+code{background:var(--code-bg);color:var(--code-text);padding:1px 5px;border-radius:4px;font:.9em ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;overflow-wrap:anywhere}
+.cmd{position:relative;margin:10px 0}
+.cmd pre{margin:0;background:var(--code-bg);color:var(--code-text);padding:12px 70px 12px 12px;border-radius:8px;overflow-x:auto;font:.88em ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.cmd button{position:absolute;top:6px;right:6px;border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:6px;padding:4px 10px;font:inherit;font-size:.8rem;cursor:pointer}
+.tw{overflow-x:auto;margin:10px 0;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{border:1px solid var(--border);padding:7px 9px;text-align:left;vertical-align:top}
+th{background:var(--accent-bg)}
+.ladder{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.ladder span.v{background:var(--accent-bg);border:1px solid var(--accent);border-radius:8px;padding:6px 12px;font-weight:700;font-family:ui-monospace,Consolas,monospace}
+dt{font-weight:700;margin-top:.7em}
+dd{margin:0 0 0 1em}
+footer{color:var(--muted);font-size:.85rem;margin:24px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <meta name="classification" content="sdassemblypros/jobcore">
+  <meta name="description" content="versioning guide">
+  <meta name="origin" content="Codespace/SDAssemblyPros/Jobcore/app/docs/versioning-guide.html">
+  <meta name="keywords" content="sdassemblypros, jobcore">
+<h1>JobCore Versioning Guide</h1>
+<p>How JobCore's version number goes up, mostly by itself. Written for the owner, not for programmers.</p>
+</header>
+
+<nav class="toc"><details open><summary>Contents</summary>
+<ol>
+<li><a href="#s1">In 30 seconds</a></li>
+<li><a href="#s2">What a version number means</a></li>
+<li><a href="#s3">Below 1.0, and going to 1.0</a></li>
+<li><a href="#s4">Commit message cheat sheet</a></li>
+<li><a href="#s5">The routine, step by step</a></li>
+<li><a href="#s6">What the release command changes</a></li>
+<li><a href="#s7">Where you see the version</a></li>
+<li><a href="#s8">APK build messages</a></li>
+<li><a href="#s9">The commit-msg hook</a></li>
+<li><a href="#s10">Worked examples</a></li>
+<li><a href="#s11">Troubleshooting</a></li>
+<li><a href="#s12">Glossary</a></li>
+<li><a href="#s13">Where the code lives</a></li>
+</ol></details></nav>
+
+<section id="s1">
+<h2>1. In 30 seconds</h2>
+<div class="box">
+<p><strong>The idea:</strong> every change saved to the project (a "commit") has a label at the start of its description, like <code>feat:</code> or <code>fix:</code>. When a milestone is finished you run one command, <code>npm run release</code>. It reads those labels since the last release, works out the new version number, updates the files that hold it, writes a change list, and stamps the point in history with a tag such as <code>v0.3.0</code>. Nothing is sent over the internet.</p>
+<ul>
+<li><code>feat:</code> = new feature = middle number goes up (0.2.0 to 0.3.0).</li>
+<li><code>fix:</code> or <code>perf:</code> = repair or speed-up = last number goes up (0.3.0 to 0.3.1).</li>
+<li><code>docs:</code>, <code>chore:</code>, <code>test:</code> and friends = no release.</li>
+<li>Preview first with <code>npm run release:dry</code>. It changes nothing.</li>
+</ul>
+</div>
+</section>
+
+<section id="s2">
+<h2>2. What a version number means</h2>
+<p>A version looks like <code>MAJOR.MINOR.PATCH</code>, for example <code>0.3.1</code>. This scheme is called SemVer (semantic versioning). Each of the three numbers has a job:</p>
+<ul>
+<li><strong>PATCH</strong> (last number): small repairs and speed-ups. Nothing new to learn.</li>
+<li><strong>MINOR</strong> (middle number): something new was added. Resets PATCH to 0.</li>
+<li><strong>MAJOR</strong> (first number): a big, possibly incompatible change. Resets the other two to 0.</li>
+</ul>
+<div class="ladder" aria-label="Example version sequence">
+<span class="v">0.2.0</span> then a feature <span class="v">0.3.0</span> then a fix <span class="v">0.3.1</span> then a feature <span class="v">0.4.0</span>
+</div>
+<p>Alongside the version, each release also adds one to two build counters: <code>versionCode</code> for Android and <code>buildNumber</code> for iOS. These are plain counting numbers the phone stores use to tell builds apart. They go up by 1 every release and are shown in the app as "build N".</p>
+<p>The master copy of the version lives in <code>expo.version</code> inside <code>apps/mobile/app.json</code>. The release command copies it into <code>apps/mobile/package.json</code> and the top-level <code>package.json</code> so all three agree.</p>
+</section>
+
+<section id="s3">
+<h2>3. Below 1.0, and going to 1.0</h2>
+<p>A version starting with 0 means "still being shaped". By convention, while the first number is 0, even a breaking change only bumps the middle number, not the first one. JobCore follows that: below 1.0 a breaking change bumps MINOR.</p>
+<p>Going to 1.0 is a decision, not an automatic step. The release command never produces 1.0 by itself while below 1.0. When you decide JobCore is ready to be called a stable 1.0, that promotion is done by hand. Ask a developer or Claude to do it, and say so explicitly. Once the number is 1 or higher, a breaking change bumps MAJOR as normal.</p>
+</section>
+
+<section id="s4">
+<h2>4. Commit message cheat sheet</h2>
+<p>The first line of a commit message is the "subject". Its format is <code>type: description</code> or <code>type(area): description</code>. Add <code>!</code> before the colon for a breaking change, or put a line starting <code>BREAKING CHANGE:</code> in the commit's longer body.</p>
+<div class="tw"><table>
+<thead><tr><th>Type</th><th>Example subject</th><th>What it does to the version</th></tr></thead>
+<tbody>
+<tr><td><code>feat</code></td><td><code>feat(jobs): add photo upload</code></td><td>MINOR up (0.3.0 to 0.4.0)</td></tr>
+<tr><td><code>fix</code></td><td><code>fix(login): stop double submit</code></td><td>PATCH up (0.3.0 to 0.3.1)</td></tr>
+<tr><td><code>perf</code></td><td><code>perf(list): load jobs faster</code></td><td>PATCH up</td></tr>
+<tr><td>breaking (<code>!</code> or <code>BREAKING CHANGE:</code>)</td><td><code>feat(api)!: rename job status</code></td><td>MINOR up while below 1.0 (MAJOR from 1.0 on)</td></tr>
+<tr><td><code>docs</code></td><td><code>docs: update deployment notes</code></td><td>No release</td></tr>
+<tr><td><code>chore</code></td><td><code>chore: tidy scripts</code></td><td>No release</td></tr>
+<tr><td><code>test</code></td><td><code>test: cover pricing</code></td><td>No release</td></tr>
+<tr><td><code>refactor</code></td><td><code>refactor: simplify menu code</code></td><td>No release</td></tr>
+<tr><td><code>ci</code>, <code>style</code>, <code>build</code></td><td><code>build: update tooling</code></td><td>No release</td></tr>
+<tr><td>anything else</td><td><code>Fixed some stuff</code></td><td>Warning printed, commit ignored, no release</td></tr>
+</tbody></table></div>
+<p>When several commits are in play, the biggest bump wins (a feature beats a fix). Commit subjects beginning <code>Merge</code>, <code>Revert</code>, <code>fixup!</code> or <code>squash!</code> are skipped silently without a warning.</p>
+</section>
+
+<section id="s5">
+<h2>5. The routine, step by step</h2>
+<p>Do this at the end of a milestone, from the <code>app</code> folder of the project.</p>
+<ol>
+<li>Finish the work and make the milestone commit as usual.
+</li>
+<li>Preview what a release would do (safe, writes nothing):
+<div class="cmd"><pre>npm run release:dry</pre><button type="button">Copy</button></div></li>
+<li>Read the output: it shows the plan (old tag to new version, bump level, number of commits) and the draft change list. If it says <code>nothing to release</code>, there were no feat/fix/perf/breaking commits, and you are done.</li>
+<li>Happy with it? Do the real thing:
+<div class="cmd"><pre>npm run release</pre><button type="button">Copy</button></div></li>
+<li>It prints <code>Released vX.Y.Z (committed and tagged locally; not pushed).</code></li>
+<li>Write the build report for the milestone (it comes after the release, so it can quote the new version).</li>
+<li>Build the APK when needed (see section 8).</li>
+</ol>
+<div class="box warn"><p><strong>Order matters:</strong> release after the milestone commit, before the build report. The release command makes its own commit, so the working copy of the four release files must be clean first.</p></div>
+</section>
+
+<section id="s6">
+<h2>6. What <code>npm run release</code> changes</h2>
+<p>It does these things, in order:</p>
+<ol>
+<li>Finds the last <code>v*</code> tag and reads every commit since then.</li>
+<li>Works out the bump (section 4) and the new version.</li>
+<li>Edits four files:</li>
+</ol>
+<div class="tw"><table>
+<thead><tr><th>File</th><th>Change</th></tr></thead>
+<tbody>
+<tr><td><code>apps/mobile/app.json</code></td><td><code>expo.version</code> set to the new version; <code>android.versionCode</code> +1; <code>ios.buildNumber</code> +1</td></tr>
+<tr><td><code>apps/mobile/package.json</code></td><td><code>version</code> set to the new version</td></tr>
+<tr><td><code>package.json</code> (app root)</td><td><code>version</code> set to the new version</td></tr>
+<tr><td><code>CHANGELOG.md</code></td><td>New dated section added at the top, grouped as Breaking, Features, Fixes, Performance</td></tr>
+</tbody></table></div>
+<ol start="4">
+<li>Makes one commit named <code>chore(release): vX.Y.Z</code> containing just those four files.</li>
+<li>Creates a tag <code>vX.Y.Z</code> on that commit.</li>
+</ol>
+<div class="box ok"><p>The command <strong>never pushes</strong>. The commit and tag stay on this computer. With <code>--dry</code> (that is, <code>npm run release:dry</code>) nothing is written, committed or tagged.</p></div>
+<p><strong>Any branch can release.</strong> The new version is the larger of: (a) what the commits since this branch's last tag compute to, and (b) the highest <code>v*</code> tag anywhere in the repository bumped by the same level. This stops two branches from handing out the same number. If the winning tag already exists, the command stops (see section 11).</p>
+</section>
+
+<section id="s7">
+<h2>7. Where you see the version in the app</h2>
+<ul>
+<li><strong>The gear menu (&#9881;)</strong>: the very bottom row of the menu, on every screen that has the gear. It looks like <code>Version 0.3.0 (build 4)</code>.</li>
+<li><strong>The Settings screen</strong>: the same text appears there.</li>
+<li>If the app cannot work out its version, the text reads <code>Version unknown</code>. If there is no build number, it reads just <code>Version 0.3.0</code>.</li>
+</ul>
+<p>The label is built by <code>formatVersionLabel.ts</code>, so both places always match.</p>
+</section>
+
+<section id="s8">
+<h2>8. The APK build script messages</h2>
+<p>An APK is the installable Android app file. The script <code>apps/mobile/scripts/build-apk.ps1</code> runs a "preflight" (a checklist) before building. Two parts relate to versions.</p>
+<h3>SYNCED lines</h3>
+<p>Android keeps its own copy of the version in <code>android/app/build.gradle</code>, which is not saved in git. If it differs from <code>app.json</code>, the script fixes it and prints:</p>
+<div class="cmd"><pre>SYNCED: versionCode 3 -> 4
+SYNCED: versionName 0.3.0 -> 0.4.0</pre><button type="button">Copy</button></div>
+<p>(numbers will differ). This only appears when something was out of date. <strong>What to do:</strong> nothing. It is the script helping. No SYNCED lines means everything already matched.</p>
+<h3>The WARN line</h3>
+<div class="cmd"><pre>WARN: 3 releasable commit(s) since v0.3.0 &mdash; run 'npm run release' before building a release APK.</pre><button type="button">Copy</button></div>
+<p>It means there are feat, fix, perf or breaking commits since the last tag that have not been given a version yet. The build still goes ahead; this is only a reminder. <strong>What to do:</strong> stop, run <code>npm run release</code>, then build so the APK carries the right number. If there is no <code>v*</code> tag at all, the warning stays silent.</p>
+</section>
+
+<section id="s9">
+<h2>9. The commit-msg hook</h2>
+<p>A "hook" is a small script git runs automatically. The <code>commit-msg</code> hook checks the first line of each new commit and, if it does not follow the format in section 4, prints:</p>
+<div class="cmd"><pre>WARNING: commit subject is not Conventional Commits, so it will not drive a version bump.
+  Allowed types: feat fix perf docs chore test refactor ci style build revert
+  Example: feat(scope): add thing</pre><button type="button">Copy</button></div>
+<p>It <strong>only warns and never blocks</strong> a commit. Merge, Revert, fixup! and squash! subjects are not warned about. Turn it on once per copy of the project:</p>
+<div class="cmd"><pre>git config core.hooksPath .githooks</pre><button type="button">Copy</button></div>
+</section>
+
+<section id="s10">
+<h2>10. Worked examples</h2>
+<h3>Example A: a feature and a fix</h3>
+<p>Last tag <code>v0.2.0</code>. Commits since: <code>feat: add photo upload</code>, <code>fix: crash on empty list</code>, <code>docs: update notes</code>.</p>
+<p>The feature wins. Result: <strong>0.3.0</strong>. The change list shows one Feature and one Fix; the docs commit is not listed.</p>
+<h3>Example B: only fixes and housekeeping</h3>
+<p>Last tag <code>v0.3.0</code>. Commits: <code>fix: wrong total on invoice</code>, <code>perf: faster job list</code>, <code>chore: tidy</code>.</p>
+<p>Result: <strong>0.3.1</strong> (patch).</p>
+<h3>Example C: nothing releasable</h3>
+<p>Last tag <code>v0.3.1</code>. Commits: <code>docs: typo</code>, <code>test: add case</code>, <code>refactor: rename file</code>.</p>
+<p>The command prints <code>nothing to release</code> and changes nothing.</p>
+<h3>Example D: a breaking change before 1.0</h3>
+<p>Last tag <code>v0.3.1</code>. Commit: <code>feat(jobs)!: change status names</code>.</p>
+<p>Below 1.0 a breaking change counts as minor. Result: <strong>0.4.0</strong>, with the item listed under Breaking.</p>
+<h3>Example E: another branch is ahead</h3>
+<p>This branch's last tag is <code>v0.2.0</code> and it has a <code>feat</code>, so it computes 0.3.0. But another branch already tagged <code>v0.3.0</code>, the highest tag in the repo. The rule bumps that highest tag by the same level, giving <strong>0.4.0</strong>.</p>
+</section>
+
+<section id="s11">
+<h2>11. Troubleshooting</h2>
+<p>Messages are printed to the screen exactly as below, and the command stops with nothing changed (except where noted).</p>
+<div class="tw"><table>
+<thead><tr><th>Message</th><th>Meaning</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td><code>No v* tag found: release needs a baseline. Tag v0.2.0 on the 0.2.0 release commit (`git tag -a v0.2.0 &lt;sha&gt; -m "v0.2.0"`, find sha with `git log -S'"version": "0.2.0"' --format=%H -- apps/mobile/app.json`).</code></td><td>The tool counts commits since the last tag, but this copy of the repo has no tag yet.</td><td>Run the find-sha command from the message to get the commit's ID, then the tag command with that ID. Tags are local only, so each computer that releases needs the baseline tag. The baseline is <code>v0.2.0</code>, and another session is producing the 0.2.0 build.</td></tr>
+<tr><td><code>Release files have uncommitted changes:</code> followed by a list of files</td><td>One of the four release files (the two <code>package.json</code> files, <code>app.json</code>, <code>CHANGELOG.md</code>) has unsaved edits. The release commit would sweep them in.</td><td>Commit or discard those edits, then run again. Other unrelated dirty files do not block it.</td></tr>
+<tr><td><code>Tag vX.Y.Z already exists; aborting.</code></td><td>The new number it picked is already used as a tag.</td><td>Look at <code>git tag -l "v*"</code>. Usually you are on a branch behind, or the release was already done. Do not delete tags to force it; ask a developer.</td></tr>
+<tr><td><code>nothing to release</code> (not an error)</td><td>No feat, fix, perf or breaking commits since the last tag.</td><td>Nothing to do.</td></tr>
+<tr><td><code>WARN: Non-conventional subject (ignored): abc1234 Some message</code> (a warning, the command keeps going)</td><td>A commit's first line did not follow section 4, so it was skipped.</td><td>Nothing required. If it should have counted, the fix is a new correctly labelled commit.</td></tr>
+</tbody></table></div>
+<p>If git itself prints some other error, the command passes that text along unchanged and exits; copy it to a developer or Claude.</p>
+</section>
+
+<section id="s12">
+<h2>12. Glossary</h2>
+<dl>
+<dt>Commit</dt><dd>A saved snapshot of the project with a short description.</dd>
+<dt>Subject</dt><dd>The first line of a commit's description. The label that drives versions is here.</dd>
+<dt>Conventional Commits</dt><dd>A simple naming habit: <code>type: description</code>.</dd>
+<dt>SemVer</dt><dd>MAJOR.MINOR.PATCH numbering, explained in section 2.</dd>
+<dt>Tag</dt><dd>A named bookmark on a commit, such as <code>v0.3.0</code>. Here they are never pushed.</dd>
+<dt>Baseline</dt><dd>The first tag, <code>v0.2.0</code>, that counting starts from.</dd>
+<dt>Breaking change</dt><dd>A change that can break something that worked before.</dd>
+<dt>Dry run</dt><dd>A rehearsal that shows what would happen without doing it. <code>npm run release:dry</code>.</dd>
+<dt>versionCode / buildNumber</dt><dd>Build counters for Android / iOS, +1 per release.</dd>
+<dt>Changelog</dt><dd>The file <code>CHANGELOG.md</code>, a running list of what changed in each version.</dd>
+<dt>Hook</dt><dd>A script git runs automatically at certain moments.</dd>
+<dt>APK</dt><dd>The installable Android app file.</dd>
+<dt>Preflight</dt><dd>The checklist the APK script runs before building.</dd>
+<dt>Push</dt><dd>Sending local work to a shared online copy. The release command never does this.</dd>
+</dl>
+</section>
+
+<section id="s13">
+<h2>13. Where the code lives</h2>
+<p>Paths are relative to the <code>app</code> folder unless noted.</p>
+<div class="tw"><table>
+<thead><tr><th>What</th><th>Path</th></tr></thead>
+<tbody>
+<tr><td>Release tool (bump logic)</td><td><code>scripts/release.mjs</code></td></tr>
+<tr><td>Tests for the bump logic</td><td><code>scripts/__assertions__/release-bump.assert.ts</code></td></tr>
+<tr><td>Commands <code>release</code> and <code>release:dry</code></td><td><code>package.json</code> (scripts)</td></tr>
+<tr><td>Master version, build counters</td><td><code>apps/mobile/app.json</code></td></tr>
+<tr><td>Mirrored versions</td><td><code>apps/mobile/package.json</code>, <code>package.json</code></td></tr>
+<tr><td>Change list</td><td><code>CHANGELOG.md</code></td></tr>
+<tr><td>Commit-message hook</td><td><code>.githooks/commit-msg</code> (in the repository root, one level above <code>app</code>)</td></tr>
+<tr><td>APK SYNC and WARN logic</td><td><code>apps/mobile/scripts/build-apk.ps1</code></td></tr>
+<tr><td>Version text in the gear menu</td><td><code>packages/ui/src/AppChrome.tsx</code></td></tr>
+<tr><td>Version text formatting</td><td><code>packages/ui/src/formatVersionLabel.ts</code></td></tr>
+<tr><td>Version in Settings</td><td><code>apps/mobile/app/config/settings.tsx</code></td></tr>
+<tr><td>Short written summary</td><td><code>docs/deployment.md</code>, "Versioning"</td></tr>
+</tbody></table></div>
+</section>
+
+<footer>JobCore versioning guide. If this page and the code ever disagree, the code in section 13 is right.</footer>
+</div>
+<script>
+document.querySelectorAll('.cmd button').forEach(function(b){
+  b.addEventListener('click',function(){
+    var t=b.parentNode.querySelector('pre').innerText;
+    function done(){var o=b.textContent;b.textContent='Copied';setTimeout(function(){b.textContent=o},1200)}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){})}
+    else{var a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){}document.body.removeChild(a)}
+  });
+});
+</script>
+</body>
+</html>

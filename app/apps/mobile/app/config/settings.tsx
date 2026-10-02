@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { AppChrome, EmptyState, spacing, colors } from '@jobcore/ui';
+import { AppChrome, EmptyState, Text, spacing, colors, useAppVersion, formatVersionLabel } from '@jobcore/ui';
 
 export default function SettingsScreen() {
+  const appVersion = useAppVersion();
   return (
     <View style={styles.container}>
       <AppChrome
@@ -15,6 +16,7 @@ export default function SettingsScreen() {
         title="Settings"
         message="Settings are coming soon."
       />
+      <Text style={styles.version}>{formatVersionLabel(appVersion)}</Text>
     </View>
   );
 }
@@ -24,5 +26,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.offWhite,
     padding: spacing.md,
+  },
+  version: {
+    textAlign: 'center',
+    color: colors.textMuted,
+    marginTop: spacing.md,
   },
 });

@@ -105,6 +105,9 @@ Notes:
 - A stale system `JAVA_HOME` (Java 1.4) is skipped; the Android Studio `jbr` (JDK 21) is used.
   Override with `-JavaHome`.
 - Full procedure: `app/docs/deployment.md`.
+- Versioning and releases: see the "Versioning" subsection in `app/docs/deployment.md`
+  (`npm run release:dry` / `npm run release`).
+- The app version shows in the ⚙ menu footer and on Settings.
 
 ## Status — dependencies are installed
 

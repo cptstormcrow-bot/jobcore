@@ -124,6 +124,19 @@ if ($hasAndroid -and $appOk) {
         if ($mVc.Success) { $gVc = $mVc.Groups[1].Value }
         if ($mVn.Success) { $gVn = $mVn.Groups[1].Value }
         if ($mId.Success) { $gId = $mId.Groups[1].Value }
+        # SYNC versionCode/versionName from app.json (build.gradle is gitignored); idempotent.
+        $gNew = $g
+        if ($mVc.Success -and $gVc -ne $versionCode) {
+            $gNew = [regex]::Replace($gNew, 'versionCode\s+\d+', { param($x) 'versionCode ' + $versionCode })
+            Write-Host ("SYNCED: versionCode {0} -> {1}" -f $gVc, $versionCode)
+            $gVc = $versionCode
+        }
+        if ($mVn.Success -and $gVn -ne $version) {
+            $gNew = [regex]::Replace($gNew, 'versionName\s+"[^"]+"', { param($x) 'versionName "' + $version + '"' })
+            Write-Host ("SYNCED: versionName {0} -> {1}" -f $gVn, $version)
+            $gVn = $version
+        }
+        if ($gNew -ne $g) { [IO.File]::WriteAllText($gradlePath, $gNew) }
         Write-Check ($gVc -eq $versionCode) 'build.gradle versionCode matches app.json' ("gradle='{0}' app.json='{1}'; {2}" -f $gVc, $versionCode, $PrebuildHint)
         Write-Check ($gVn -eq $version) 'build.gradle versionName matches app.json' ("gradle='{0}' app.json='{1}'; {2}" -f $gVn, $version, $PrebuildHint)
         Write-Check ($gId -eq $package) 'build.gradle applicationId matches package' ("gradle='{0}' app.json='{1}'; {2}" -f $gId, $package, $PrebuildHint)
@@ -131,6 +144,20 @@ if ($hasAndroid -and $appOk) {
         Write-Check $false 'android/app/build.gradle' $PrebuildHint
     }
 }
+
+# WARN: releasable commits since last v* tag (never fails the build)
+try {
+    $lastTag = (& git -C $MobileRoot describe --tags --abbrev=0 --match 'v*' 2>$null | Select-Object -First 1)
+    if ($LASTEXITCODE -eq 0 -and $lastTag) {
+        $subjects = @(& git -C $MobileRoot log "$lastTag..HEAD" --format=%s 2>$null)
+        if ($LASTEXITCODE -eq 0) {
+            $rel = @($subjects | Where-Object { $_ -match '^(feat|fix|perf)(\(.+\))?!?: ' -or $_ -match '!:' }).Count
+            if ($rel -gt 0) {
+                Write-Host ('WARN: {0} releasable commit(s) since {1} ' -f $rel, $lastTag) -NoNewline; Write-Host ([string][char]0x2014 + " run 'npm run release' before building a release APK.")
+            }
+        }
+    }
+} catch { }
 
 $envPath = Join-Path $MobileRoot '.env'
 if (Test-Path $envPath) {

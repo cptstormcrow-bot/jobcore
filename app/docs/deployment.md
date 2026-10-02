@@ -140,6 +140,20 @@ Notes and pitfalls:
 - A stale system `JAVA_HOME` (e.g. Java 1.4) is skipped with a WARN; the script
   falls back to Android Studio's bundled `jbr` (JDK 21). Override with `-JavaHome`.
 
+### Versioning
+
+- Conventional Commits drive SemVer. Below 1.0: `feat` bumps minor; `fix`/`perf` bump
+  patch; a breaking change bumps minor.
+- Preview with `npm run release:dry`. Run `npm run release` at milestone close (after the
+  commit, before the build report). It bumps the `app.json`/`package.json` versions plus
+  `versionCode`/`buildNumber`, writes `CHANGELOG.md`, commits, and makes a local tag
+  `vX.Y.Z`. Tags are never pushed.
+- The baseline tag is `v0.2.0`.
+- `build-apk.ps1` PREFLIGHT syncs `versionCode`/`versionName` into `build.gradle`
+  (`SYNCED:` lines) and warns when releasable commits are untagged.
+- The `commit-msg` hook is warn-only; enable it with `git config core.hooksPath .githooks`.
+- Plain-language guide: [versioning-guide.html](versioning-guide.html).
+
 ## What this document does not cover
 
 - Actually creating or linking an EAS project — that requires an

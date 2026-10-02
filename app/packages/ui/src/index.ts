@@ -24,3 +24,4 @@ export * from './walkthrough/walkthrough-content';
 export * from './walkthrough/WalkthroughProvider';
 export * from './walkthrough/WalkthroughOverlay';
 export * from './walkthrough/WalkthroughHelpCallout';
+export * from './AppVersionContext';
