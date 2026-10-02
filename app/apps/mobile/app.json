@@ -4,18 +4,18 @@
     "slug": "jobcore",
     "scheme": "jobcore",
     "owner": "wolfgaard-studio",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.sdassemblypros.jobcore",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "supportsTablet": true
     },
     "android": {
       "package": "com.sdassemblypros.jobcore.v2",
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       "expo-router",
