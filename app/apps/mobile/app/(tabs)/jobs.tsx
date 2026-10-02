@@ -32,6 +32,7 @@ interface JobRow {
   completed_at: string | null;
   created_at: string;
   is_beta: boolean;
+  service_area_id: string | null;
 }
 
 function toJob(row: JobRow): Job {
@@ -55,6 +56,7 @@ function toJob(row: JobRow): Job {
     completedAt: row.completed_at,
     createdAt: row.created_at,
     isBeta: row.is_beta,
+    service_area_id: row.service_area_id,
     totalLaborSeconds: 0,
   };
 }
@@ -62,7 +64,7 @@ function toJob(row: JobRow): Job {
 const JOB_ROW_COLUMNS =
   'id, organization_id, status, customer_id, service_id, source, payer, attach_timing, ' +
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
-  'en_route_at, in_progress_at, completed_at, created_at, is_beta';
+  'en_route_at, in_progress_at, completed_at, created_at, is_beta, service_area_id';
 
 export default function JobsScreen() {
   const router = useRouter();
