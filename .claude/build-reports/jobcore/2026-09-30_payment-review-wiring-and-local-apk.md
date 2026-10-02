@@ -30,6 +30,7 @@ Decisions (Jeff): revive payment-review; admin-finance owns Mark Paid; local Gra
 
 - build-apk.log, Stage 3 VERIFY: "PASS apksigner verify" and "PASS badging: com.sdassemblypros.jobcore.v2 0.1.2 (vc 2)"; SHA-256 and size match the table above. (The log has no literal "VERIFY PASSED" string; both Stage 3 checks read PASS.)
 - Hosted profiles-guard suite (app/supabase/tests/0031_employee_profile_fields_rls.test.sql), run against hosted with Jeff's explicit approval: PASS for AC-31.1, AC-31.2, AC-31.3, AC-31.4 inside begin/rollback; post-check found 0 leftover rows; scratch SQL cleaned up (Rule 14).
+- Footprint: UNVERIFIED — no baseline state file .claude/state/ledger-reconciliation/jobcore.json exists; APK 0.1.2/vc2 is 82.9 MB, recorded without baseline comparison.
 
 ## Commits
 
@@ -51,6 +52,9 @@ Test plan: v1 at E:\Jeff\Desktop\20261001_test-apk-0.1.2-smoke_testplan_v1.html,
 - profiles-guard contract: HONORED (hosted PASS).
 - account.tsx contract: HONORED.
 - Lineage scan: 44 contracts (4 resolvable / 20 need input / 6 superseded / 14 honored). Crib: E:\Jeff\AppData\Local\Temp\claude\E--Jeff-Codespace-SDAssemblyPros-Jobcore--claude-worktrees-focused-wozniak-8a887a\9a89fccf-b938-4231-a5a3-026884e2aa9d\scratchpad\rule41-scan.md (scan output is unverified; run verify-open-items.ps1 before listing any row to Jeff, Rule 45). Unknown: hosted apply status of 0030, 0033, 0034, 0043 was not probed.
+- 09-26 offline customer-save replay: offline customer saves are not replayed; needs a saveForJob mutation handler. Status CARRIED, resolvable, not fixed in this change → Forward contract #6. Source: .claude/build-reports/jobcore/2026-09-26_jobcore-save-followups-rpc-trigger-awaitsave.md:60
+- 09-30 offline profiles 42501 replay: queued profile writes rejected with 42501 should be treated as a permanent failure, not retried. CARRIED → Forward contract #7. Source: .claude/build-reports/jobcore/2026-09-30_profiles-sensitive-column-guard.md:53
+- 09-02 Jobs-tab gap: Jobs tab unreachable for owner/admin. CARRIED, stale → Forward contract #8. No "Jobs tab" match in .claude/build-reports/jobcore/2026-09-02_*; source: this report's Paid-flow findings line ("The Jobs tab is unreachable for owner/admin").
 
 ## Forward contracts:
 
@@ -59,6 +63,9 @@ Test plan: v1 at E:\Jeff\Desktop\20261001_test-apk-0.1.2-smoke_testplan_v1.html,
 3. APK smoke test v1 phone results are pending; any FAIL produces a v2 fix loop.
 4. The iPhone build is a later, separate track.
 5. Paid-flow defects below are unfixed and owed a follow-up.
+6. Offline customer saves are not replayed; add a saveForJob mutation handler (carried from 2026-09-26 report, not fixed here).
+7. Queued profile writes rejected with 42501 must be treated as a permanent failure, not retried (carried from 2026-09-30 profiles-guard report).
+8. The Jobs tab is unreachable for owner/admin (carried from 09-02; unfixed, see Paid-flow findings).
 
 ## Deviations / Defects
 
@@ -85,6 +92,10 @@ Test plan: v1 at E:\Jeff\Desktop\20261001_test-apk-0.1.2-smoke_testplan_v1.html,
 - The main checkout was dirty, which forced WIP commit df3c3ad and merge a84cf37.
 - The test plan had to be re-standardized to the pass-green/fail-red format.
 - Autocompact thrashed 27 times.
+
+**Reconcile / Desktop copy**
+- Desktop Build-Reports copy was made at E:\Jeff\Desktop\Build-Reports\ despite JobCore canonical-root memory (jobcore-build-report-canonical-root.md L44-L48) discontinuing that step for JobCore; left in place pending Jeff's call.
+- Themis closeout reconcile returned PARTIAL-RECONCILE (two offline-replay items implicit-carried, Jobs-tab gap stale-carried, footprint unstated); amended in this revision.
 
 **Paid-flow findings (unfixed)**
 - The button reads "Paid", not "Mark Paid".
