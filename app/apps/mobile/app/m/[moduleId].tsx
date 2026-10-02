@@ -36,9 +36,8 @@ export default function ModuleScreen() {
 
   useModuleInjection(state, module?.id);
 
-
-  // Host-side injection for payment-review's Supabase client seam. See the
-  // admin-finance block above for why this runs synchronously in render.
+  // Host-side injection for payment-review's Supabase client seam. Runs
+  // synchronously in render for the same reason as useModuleInjection.
   // Double cast: a direct cast trips TS2589 (supabase-js generics vs. port).
   if (state.status === 'authenticated' && module?.id === 'payment-review') {
     setPaymentReviewSupabaseClient(supabase as unknown as Parameters<typeof setPaymentReviewSupabaseClient>[0]);

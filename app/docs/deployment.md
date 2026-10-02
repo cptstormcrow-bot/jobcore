@@ -89,7 +89,9 @@ publishable values belong here:
   ship in the client because access is enforced by Postgres Row Level
   Security (RLS) policies, not by keeping the key secret.
 
-See `.env.example` at the repo root for the full list and expected shape.
+See `apps/mobile/.env.example` (the single canonical template, beside the
+`apps/mobile/.env` that Expo loads at build time) for the full list and
+expected shape.
 **Never** put the Supabase `service_role` key, or any other secret, behind an
 `EXPO_PUBLIC_*` name — anything with that prefix ships to every device that
 installs the app.
@@ -139,6 +141,35 @@ Notes and pitfalls:
   not suitable for the Play Store.
 - A stale system `JAVA_HOME` (e.g. Java 1.4) is skipped with a WARN; the script
   falls back to Android Studio's bundled `jbr` (JDK 21). Override with `-JavaHome`.
+
+Build environment and logging:
+
+- `sdk.dir` is resolved from `android/local.properties` first, then from
+  `ANDROID_HOME` / `ANDROID_SDK_ROOT`.
+- The script sets `NODE_OPTIONS=--max-old-space-size=4096` for the JS bundle
+  step and uses a process-scoped `JAVA_HOME` (Android Studio's bundled `jbr`),
+  never the system one.
+- Full Gradle output is teed to `apps/mobile/build-apk-gradle.log`. A non-zero
+  Gradle exit fails the script. `gradlew --stop` runs before the temporary
+  `subst` drive is released.
+
+Post-build checks:
+
+- `apksigner` (build-tools 34.0.0) verifies the signing cert. The SHA-256
+  digest check matches by prefix `fac61745` and suffix `3b9c` only, not the
+  full digest (the debug keystore).
+- The APK is also opened as a zip to confirm `assets/index.android.bundle`
+  exists.
+
+Native config caveat:
+
+- Expo config plugins (e.g. the `expo-image-picker` plugin in `app.json`, which
+  adds camera/photo permission strings) only reach `android/` at
+  `expo prebuild`. `android/` is gitignored, so an existing prebuilt
+  `android/` won't pick up a newly added plugin until prebuild re-runs.
+- Check `android/app/src/main/AndroidManifest.xml` for the CAMERA / media
+  permissions before trusting a build.
+- Do not use `expo prebuild --clean` or `gradlew clean` on a shared checkout.
 
 ## What this document does not cover
 

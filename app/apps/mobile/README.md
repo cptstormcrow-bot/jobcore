@@ -34,7 +34,7 @@ load if either is missing:
 | `EXPO_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (publishable) key |
 
-See `app/.env.example` at the monorepo root. `EXPO_PUBLIC_*` values are **inlined into the
+See `apps/mobile/.env.example` (the single canonical template, beside the app). `EXPO_PUBLIC_*` values are **inlined into the
 bundle at build time**, so they must be non-secret — the anon key is safe only because every
 table is RLS-gated. Restart the bundler after editing `.env`; the inlining happens at bundle
 time, not at runtime.

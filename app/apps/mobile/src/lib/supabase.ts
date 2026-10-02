@@ -94,7 +94,7 @@ const supabaseAnonKey = extra.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABAS
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
     'Supabase is not configured. Set EXPO_PUBLIC_SUPABASE_URL and ' +
-      'EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env (see app/.env.example), or supply ' +
+      'EXPO_PUBLIC_SUPABASE_ANON_KEY in your .env (see apps/mobile/.env.example), or supply ' +
       '`extra.supabaseUrl` / `extra.supabaseAnonKey` in app.json. ' +
       'EXPO_PUBLIC_* vars are inlined at bundle time from apps/mobile/.env — restart the bundler after editing .env. ' +
       'For the release APK, run `npm run build:apk` (gradlew assembleRelease) in the main checkout where .env exists; ' +
