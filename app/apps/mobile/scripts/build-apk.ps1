@@ -165,13 +165,34 @@ if ($jdk) { Write-Host ("      JDK: {0} (major {1})" -f $jdk, $jdkMajor) }
 
 # Android SDK
 $sdk = ''
-if ($env:ANDROID_HOME) { $sdk = $env:ANDROID_HOME }
-elseif ($env:ANDROID_SDK_ROOT) { $sdk = $env:ANDROID_SDK_ROOT }
-else { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+# Prefer sdk.dir from android\local.properties (unescape \\ and \:)
+$localProps = Join-Path $androidDir 'local.properties'
+if (Test-Path $localProps) {
+    foreach ($lpLine in (Get-Content $localProps)) {
+        $lpm = [regex]::Match([string]$lpLine, '^\s*sdk\.dir\s*=\s*(.+?)\s*$')
+        if ($lpm.Success) {
+            $lpCand = $lpm.Groups[1].Value.Replace('\\', '\').Replace('\:', ':')
+            if (Test-Path $lpCand -PathType Container) { $sdk = $lpCand }
+            break
+        }
+    }
+}
+if (-not $sdk) {
+    if ($env:ANDROID_HOME) { $sdk = $env:ANDROID_HOME }
+    elseif ($env:ANDROID_SDK_ROOT) { $sdk = $env:ANDROID_SDK_ROOT }
+    else { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+}
 $apksigner = ''
 $aapt = ''
 $btDir = Join-Path $sdk 'build-tools'
 if (Test-Path $btDir) {
+    $pref = Join-Path $btDir '34.0.0'
+    if ((Test-Path (Join-Path $pref 'apksigner.bat')) -and (Test-Path (Join-Path $pref 'aapt.exe'))) {
+        $apksigner = Join-Path $pref 'apksigner.bat'
+        $aapt = Join-Path $pref 'aapt.exe'
+    }
+}
+if ((Test-Path $btDir) -and -not $apksigner) {
     $dirs = Get-ChildItem -Path $btDir -Directory | Sort-Object { try { [version]($_.Name -replace '[^\d\.].*$', '') } catch { [version]'0.0' } } -Descending
     foreach ($d in $dirs) {
         $s = Join-Path $d.FullName 'apksigner.bat'
@@ -205,13 +226,17 @@ try {
 
     $env:JAVA_HOME = $jdk
     $env:PATH = (Join-Path $jdk 'bin') + ';' + $env:PATH
+    $env:NODE_OPTIONS = '--max-old-space-size=4096'
 
     Push-Location "$Drive\apps\mobile\android"
     try {
         $gargs = @('assembleRelease')
         if ($Abi) { $gargs += "-PreactNativeArchitectures=$Abi" }
-        & .\gradlew.bat @gargs
-        if ($LASTEXITCODE -ne 0) { throw "gradlew assembleRelease failed (exit $LASTEXITCODE)" }
+        $gradleLog = Join-Path $MobileRoot 'build-apk-gradle.log'
+        & .\gradlew.bat @gargs 2>&1 | Tee-Object -FilePath $gradleLog
+        $gradleExit = $LASTEXITCODE
+        Write-Host ("Gradle log: {0}" -f $gradleLog)
+        if ($gradleExit -ne 0) { throw "gradlew assembleRelease failed (exit $gradleExit)" }
     } finally {
         Pop-Location
     }
@@ -222,6 +247,13 @@ try {
     Write-Host ("Copied APK to {0}" -f $outApk)
 } finally {
     if ($substDone) {
+        try {
+            $gwDir = "$Drive\apps\mobile\android"
+            if (Test-Path (Join-Path $gwDir 'gradlew.bat')) {
+                Push-Location $gwDir
+                try { & .\gradlew.bat --stop 2>&1 | Out-Null } finally { Pop-Location }
+            }
+        } catch { }
         & subst $Drive /D
         if (Test-Path "$Drive\") {
             Write-Host "WARNING: drive $Drive still mapped after subst /D"
@@ -246,6 +278,33 @@ if ($LASTEXITCODE -ne 0) {
         $t = [string]$l
         if ($t -match 'Signer #1 certificate DN' -or $t -match 'Signer #1 certificate SHA-256 digest') { Write-Host ("      {0}" -f $t.Trim()) }
     }
+    # Expected debug-keystore digest is only known in truncated form (fac61745...3b9c): compare by prefix AND suffix.
+    $certDigest = ''
+    foreach ($l in $sigOut) {
+        $dm = [regex]::Match([string]$l, 'SHA-256 digest:\s*([0-9A-Fa-f: ]+)')
+        if ($dm.Success) { $certDigest = ($dm.Groups[1].Value.ToLower() -replace '[:\s]', ''); break }
+    }
+    if ($certDigest.StartsWith('fac61745') -and $certDigest.EndsWith('3b9c')) {
+        Write-Host 'PASS  cert digest'
+    } else {
+        Write-Host 'FAIL  cert digest'
+        $bad++
+    }
+}
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = $null
+try {
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($outApk)
+    $hasBundle = $false
+    foreach ($ze in $zip.Entries) { if ($ze.FullName -eq 'assets/index.android.bundle') { $hasBundle = $true; break } }
+    if ($hasBundle) { Write-Host 'PASS  assets/index.android.bundle present' }
+    else { Write-Host 'FAIL  assets/index.android.bundle missing'; $bad++ }
+} catch {
+    Write-Host 'FAIL  apk zip unreadable'
+    $bad++
+} finally {
+    if ($zip) { $zip.Dispose() }
 }
 
 $badging = & $aapt dump badging $outApk 2>&1

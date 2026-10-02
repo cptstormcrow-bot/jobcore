@@ -24,6 +24,13 @@
       "expo-asset",
       "expo-font",
       "expo-media-library",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Jobcore needs access to your photos so you can attach job photos.",
+          "cameraPermission": "Jobcore needs camera access so you can take job photos."
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
