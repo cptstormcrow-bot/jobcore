@@ -485,12 +485,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   sheetFit: { maxHeight: '90%' },
-  gearTitle: {
-    backgroundColor: colors.accent,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
   rowActive: {
     backgroundColor: colors.accent,
   },
