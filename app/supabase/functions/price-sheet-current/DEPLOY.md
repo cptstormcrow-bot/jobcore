@@ -10,7 +10,7 @@ This is a public, unauthenticated price-feed endpoint — a GET-only sibling
 to `stripe-webhook`/`paypal-webhook` in directory layout and in relying on a
 service-role Supabase client for all DB access (never anon/authenticated),
 because the `price_sheets` and `price_sheet_rates` RLS policies are
-admin-only in every direction (see `supabase/0005_money.sql`).
+admin-only in every direction (see `supabase/migrations/0005_money.sql`).
 
 ## 1. Deploy the function
 
@@ -69,10 +69,12 @@ organization has a published price sheet:
   "effective_from": "2026-08-01",
   "published_at": "2026-08-01T12:00:00.000Z",
   "rates": [
-    { "service_id": "<uuid>", "attach_timing": "at_purchase", "amount_cents": 5000 }
+    { "service_id": "<uuid>", "attach_timing": "at_purchase", "task_id": null, "amount_cents": 5000 }
   ]
 }
 ```
+
+Each rate's `task_id` is `null` for a service-level rate, or the id of a service task for a task-level rate.
 
 A non-GET request (e.g. `curl -X POST ...`) should return `405 Method Not
 Allowed`. If no organization has a published sheet, the function returns

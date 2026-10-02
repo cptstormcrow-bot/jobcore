@@ -5,7 +5,7 @@
  * Runs under `node --experimental-strip-types --test` — zero new
  * dependencies, zero setup: no DB, no network, no env vars, no Deno import.
  * Fixture data only, mirroring price_sheets / price_sheet_rates row shapes
- * from supabase/0005_money.sql.
+ * from supabase/migrations/0005_money.sql.
  */
 
 import test from 'node:test';
@@ -47,7 +47,7 @@ test('AC: a published sheet maps to the correct FeedBody', () => {
   assert.equal(feed?.effective_from, '2026-08-01');
   assert.equal(feed?.published_at, '2026-08-01T12:00:00.000Z');
   assert.deepEqual(feed?.rates, [
-    { service_id: 'service-1', attach_timing: 'at_purchase', amount_cents: 5000 },
+    { service_id: 'service-1', task_id: null, attach_timing: 'at_purchase', amount_cents: 5000 },
   ]);
 });
 
@@ -69,7 +69,7 @@ test('AC: a superseded sheet is excluded even when a published sheet coexists', 
   assert.ok(feed);
   assert.equal(feed?.organization_id, published.organization_id);
   assert.deepEqual(feed?.rates, [
-    { service_id: 'service-new', attach_timing: 'at_purchase', amount_cents: 5000 },
+    { service_id: 'service-new', task_id: null, attach_timing: 'at_purchase', amount_cents: 5000 },
   ]);
 });
 
@@ -85,8 +85,17 @@ test('AC: multiple rates on the published sheet all map correctly', () => {
   assert.ok(feed);
   assert.equal(feed?.rates.length, 3);
   assert.deepEqual(feed?.rates, [
-    { service_id: 'service-a', attach_timing: 'at_purchase', amount_cents: 1000 },
-    { service_id: 'service-b', attach_timing: 'after_the_fact', amount_cents: 2500 },
-    { service_id: 'service-c', attach_timing: null, amount_cents: 750 },
+    { service_id: 'service-a', task_id: null, attach_timing: 'at_purchase', amount_cents: 1000 },
+    { service_id: 'service-b', task_id: null, attach_timing: 'after_the_fact', amount_cents: 2500 },
+    { service_id: 'service-c', task_id: null, attach_timing: null, amount_cents: 750 },
   ]);
+});
+
+test('AC: a task-level rate carries its task_id through to the feed', () => {
+  const sheet = makeSheet();
+  const rate = makeRate({ task_id: 'task-a' });
+
+  const feed = buildFeed([sheet], [rate]);
+  assert.ok(feed);
+  assert.equal(feed?.rates[0].task_id, 'task-a');
 });

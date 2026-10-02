@@ -6,7 +6,7 @@
 // Node fixture test in __assertions__/build-feed.assert.ts.
 //
 // Row shapes below mirror the `price_sheets` / `price_sheet_rates` table
-// definitions in supabase/0005_money.sql exactly (column names/types).
+// definitions in supabase/migrations/0005_money.sql exactly (column names/types).
 
 /** Mirrors public.publication_status (0005_money.sql). */
 export type PublicationStatus = 'draft' | 'published' | 'superseded';
@@ -29,6 +29,7 @@ export interface PriceSheetRateRow {
   price_sheet_id: string;
   service_id: string;
   attach_timing: AttachTiming;
+  task_id?: string | null;
   amount_cents: number;
 }
 
@@ -36,6 +37,7 @@ export interface PriceSheetRateRow {
 export interface FeedRate {
   service_id: string;
   attach_timing: AttachTiming;
+  task_id: string | null; // null = service-level rate
   amount_cents: number;
 }
 
@@ -71,6 +73,7 @@ export function buildFeed(
     rates: publishedRates.map((r) => ({
       service_id: r.service_id,
       attach_timing: r.attach_timing,
+      task_id: r.task_id ?? null,
       amount_cents: r.amount_cents,
     })),
   };

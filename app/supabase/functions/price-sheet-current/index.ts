@@ -4,7 +4,7 @@
 //
 // GET-only transport. Fetches `price_sheets` + `price_sheet_rates` via a
 // SERVICE-ROLE Supabase client only (never anon/authenticated), because both
-// tables' RLS policies (see supabase/0005_money.sql) are admin-only in every
+// tables' RLS policies (see supabase/migrations/0005_money.sql) are admin-only in every
 // direction and this endpoint is a public, unauthenticated feed. No auth
 // check is added by design, matching the stripe-webhook/paypal-webhook
 // pattern of an unauthenticated-caller function whose access control is the
@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
   if (sheetIds.length > 0) {
     const { data: rates, error: ratesError } = await supabase
       .from("price_sheet_rates")
-      .select("price_sheet_id, service_id, attach_timing, amount_cents")
+      .select("price_sheet_id, service_id, attach_timing, task_id, amount_cents")
       .in("price_sheet_id", sheetIds);
 
     if (ratesError) {
