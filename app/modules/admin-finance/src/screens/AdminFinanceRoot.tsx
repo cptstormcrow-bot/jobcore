@@ -21,7 +21,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Text } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
 import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
@@ -279,20 +279,50 @@ export function AdminFinanceRoot() {
   }, [loadState]);
 
   const [investigatorTechIdByJob, setInvestigatorTechIdByJob] = useState<Record<string, string>>({});
+  const [boardError, setBoardError] = useState<string | null>(null);
 
-  function refreshInvestigatorTechIds() {
+  // Turns a raw repository/database error into a plain sentence for the board.
+  function friendlyAssignError(err: unknown): string {
+    const message = err instanceof Error ? err.message : String(err ?? '');
+    const stripped = message.replace(/^create job assignment failed: /, '').trim();
+    if (/duplicate key|unique constraint/i.test(stripped)) {
+      return 'This job already has a Prem tech linked. Refresh and try again.';
+    }
+    if (stripped === '') {
+      return 'Something went wrong. Please try again.';
+    }
+    return stripped;
+  }
+
+  const refreshInvestigatorTechIds = useCallback(() => {
     const jobs = loadState.kind === 'loaded' ? loadState.jobs : [];
     if (jobs.length === 0) {
       return;
     }
-    void ports.jobAssignments.listInvestigatorTechIds(jobs.map((job) => job.id)).then((byJob) => {
-      setInvestigatorTechIdByJob(byJob);
-    });
-  }
+    void ports.jobAssignments
+      .listInvestigatorTechIds(jobs.map((job) => job.id))
+      .then((byJob) => {
+        setInvestigatorTechIdByJob(byJob);
+      })
+      .catch((error: unknown) => {
+        console.error('Failed to load Prem tech links', error);
+      });
+  }, [loadState, ports.jobAssignments]);
 
   useEffect(() => {
     refreshInvestigatorTechIds();
-  }, [loadState]);
+  }, [refreshInvestigatorTechIds]);
+
+  const boardJobs = useMemo(
+    () =>
+      (loadState.kind === 'loaded' ? loadState.jobs : [])
+        .filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))
+        .map((j) => ({
+          ...j,
+          customerName: j.customerName || (j.customerId ? customerNames[j.customerId] || null : null),
+        })),
+    [loadState, customerNames],
+  );
 
   useEffect(() => {
     const employees = loadState.kind === 'loaded' ? loadState.employees : [];
@@ -354,22 +384,80 @@ export function AdminFinanceRoot() {
     if (!session) {
       return;
     }
-    try {
-      const result = await assignJob(job, techId, {
-        jobs: jobRepository,
-        assignments: ports.jobAssignments,
-        calendarEvents: ports.calendarEvents,
-        ctx: { role: session.role, now: () => new Date().toISOString() },
-      });
-      if (!result.ok) {
-        Alert.alert('Assignment failed', result.reason);
+    setBoardError(null);
+    const assignDeps = {
+      jobs: jobRepository,
+      assignments: ports.jobAssignments,
+      calendarEvents: ports.calendarEvents,
+      ctx: { role: session.role, now: () => new Date().toISOString() },
+    };
+    // Service swap: a different Service tech is already set. unassignJob clears
+    // every link on the job (Prem included), so remember the Prem tech first and
+    // re-link it after the new Service tech is assigned.
+    const isServiceSwap = job.assignedTechId != null && job.assignedTechId !== techId;
+    let rememberedPremTechId: string | null = null;
+    let swapJob: Job = job;
+    if (isServiceSwap) {
+      try {
+        rememberedPremTechId = await ports.jobAssignments.getInvestigatorTechId(job.id);
+        const unassigned = await unassignJob(job, assignDeps);
+        if (!unassigned.ok) {
+          Alert.alert('Assignment failed', unassigned.reason);
+          setBoardError(friendlyAssignError(new Error(unassigned.reason)));
+          refreshInvestigatorTechIds();
+          return;
+        }
+        swapJob = unassigned.job;
+      } catch (error) {
+        const message = friendlyAssignError(error);
+        Alert.alert('Assignment failed', message);
+        setBoardError(message);
+        refreshJobs();
+        refreshInvestigatorTechIds();
         return;
+      }
+    }
+    let assignFailure: string | null = null;
+    try {
+      const result = await assignJob(swapJob, techId, assignDeps);
+      if (!result.ok) {
+        assignFailure = result.reason;
+      } else if (result.job) {
+        swapJob = result.job;
       }
     } catch (error) {
       // `assignJob` returns a reason for the failures it anticipates, but a
       // repository or state-machine throw would otherwise escape as an
       // unhandled rejection and surface only as a red error overlay.
-      Alert.alert('Assignment failed', error instanceof Error ? error.message : 'Unexpected error.');
+      assignFailure = friendlyAssignError(error);
+    }
+    if (rememberedPremTechId) {
+      // Try the re-link even if assignJob failed, so the Prem tech isn't lost.
+      try {
+        const relinked = await assignInvestigator(swapJob, rememberedPremTechId, {
+          assignments: ports.jobAssignments,
+          ctx: assignDeps.ctx,
+        });
+        if (!relinked.ok) {
+          throw new Error(relinked.reason);
+        }
+      } catch (error) {
+        if (assignFailure === null) {
+          const message =
+            "The new Service tech is assigned, but the Prem tech couldn't be re-added: " +
+            friendlyAssignError(error);
+          Alert.alert('Prem re-link failed', message);
+          setBoardError(message);
+        }
+      }
+    }
+    if (assignFailure !== null) {
+      Alert.alert('Assignment failed', assignFailure);
+      setBoardError(friendlyAssignError(new Error(assignFailure)));
+      if (isServiceSwap) {
+        refreshJobs();
+      }
+      refreshInvestigatorTechIds();
       return;
     }
     // The board renders from `loadState.jobs`. Without this refresh the
@@ -377,12 +465,16 @@ export function AdminFinanceRoot() {
     // failed assign and invites a second Confirm press against a stale
     // in-memory status.
     refreshJobs();
+    refreshInvestigatorTechIds();
   }
 
   async function handleUnassign(job: Job) {
     if (!session) {
       return;
     }
+    setBoardError(null);
+    // unassignJob calls removeForJob, which deletes every assignment row for
+    // the job (Prem included), so Prem-only jobs unassign through the same path.
     try {
       const result = await unassignJob(job, {
         jobs: jobRepository,
@@ -392,11 +484,15 @@ export function AdminFinanceRoot() {
       });
       if (!result.ok) {
         Alert.alert('Unassign failed', result.reason);
+        setBoardError(friendlyAssignError(new Error(result.reason)));
         return;
       }
       refreshJobs();
+      refreshInvestigatorTechIds();
     } catch (err) {
       Alert.alert('Unassign failed', err instanceof Error ? err.message : String(err));
+      setBoardError(friendlyAssignError(err));
+      refreshInvestigatorTechIds();
     }
   }
 
@@ -413,20 +509,63 @@ export function AdminFinanceRoot() {
     if (!session) {
       return;
     }
+    setBoardError(null);
+    const premDeps = {
+      assignments: ports.jobAssignments,
+      ctx: { role: session.role, now: () => new Date().toISOString() },
+    };
+    // Fresh read: the board's Prem map can be stale.
+    let oldPremTechId: string | null = null;
     try {
-      const result = await assignInvestigator(job, techId, {
-        assignments: ports.jobAssignments,
-        ctx: { role: session.role, now: () => new Date().toISOString() },
-      });
-      if (!result.ok) {
-        Alert.alert('Prem assignment failed', result.reason);
+      oldPremTechId = await ports.jobAssignments.getInvestigatorTechId(job.id);
+    } catch (error) {
+      const message = friendlyAssignError(error);
+      Alert.alert('Prem assignment failed', message);
+      setBoardError(message);
+      return;
+    }
+    if (oldPremTechId && oldPremTechId !== techId) {
+      try {
+        await ports.jobAssignments.removeInvestigator(job.id);
+      } catch {
+        // Checked by the re-read below.
+      }
+      let stillLinked: string | null = oldPremTechId;
+      try {
+        stillLinked = await ports.jobAssignments.getInvestigatorTechId(job.id);
+      } catch {
+        stillLinked = oldPremTechId;
+      }
+      if (stillLinked) {
+        const message =
+          "The current Prem tech couldn't be removed, so nothing was changed. Refresh and try again.";
+        Alert.alert('Prem assignment failed', message);
+        setBoardError(message);
+        refreshInvestigatorTechIds();
         return;
       }
+    }
+    let failure: string | null = null;
+    try {
+      const result = await assignInvestigator(job, techId, premDeps);
+      if (!result.ok) {
+        failure = friendlyAssignError(new Error(result.reason));
+      }
     } catch (error) {
-      Alert.alert(
-        'Prem assignment failed',
-        error instanceof Error ? error.message : 'Unexpected error.'
-      );
+      failure = friendlyAssignError(error);
+    }
+    if (failure !== null) {
+      Alert.alert('Prem assignment failed', failure);
+      setBoardError(failure);
+      if (oldPremTechId && oldPremTechId !== techId) {
+        // One best-effort re-link of the old Prem tech; its error is ignored.
+        try {
+          await assignInvestigator(job, oldPremTechId, premDeps);
+        } catch {
+          // ignored
+        }
+      }
+      refreshInvestigatorTechIds();
       return;
     }
     refreshJobs();
@@ -1088,8 +1227,14 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
+          <>
+          {boardError ? (
+            <Text style={{ color: colors.danger, paddingHorizontal: spacing.md, paddingVertical: spacing.sm }}>
+              {boardError}
+            </Text>
+          ) : null}
           <AssignmentBoardScreen
-            jobs={loadState.jobs.filter((j) => !BOARD_HIDDEN_STATUSES.has(j.status))}
+            jobs={boardJobs}
             techs={loadState.employees.map(
               (profile): TechColumnTech => ({
                 id: profile.id,
@@ -1115,6 +1260,7 @@ export function AdminFinanceRoot() {
             showTestJobs={showTestJobs}
             showTestEmployees={showTestEmployees}
           />
+          </>
         )
       ) : subView === 'reports' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (

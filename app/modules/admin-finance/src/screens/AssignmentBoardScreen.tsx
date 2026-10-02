@@ -103,6 +103,18 @@ export function jobCategoryOf(job: Pick<Job, 'isBeta' | 'source'>): 'real' | 'be
   return job.source === 'job-simulator' ? 'test' : job.isBeta ? 'beta' : 'real';
 }
 
+function friendlyAssignError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err ?? '');
+  const stripped = message.replace(/^create job assignment failed:\s*/i, '').trim();
+  if (/duplicate key|unique constraint/i.test(stripped)) {
+    return 'This job already has a Prem tech linked. Refresh and try again.';
+  }
+  if (!stripped) {
+    return 'Something went wrong. Please try again.';
+  }
+  return stripped;
+}
+
 export function AssignmentBoardScreen({
   jobs,
   techs,
@@ -126,6 +138,7 @@ export function AssignmentBoardScreen({
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
+  const [rowError, setRowError] = useState<Record<string, string>>({});
 
   const visibleTechs = useMemo(
     () =>
@@ -227,15 +240,20 @@ export function AssignmentBoardScreen({
     setPending({ job: selectedJob, tech });
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!pending || !onAssign) {
       setPending(null);
       setSelectedJobId(null);
       return;
     }
-    onAssign(pending.job, pending.tech.id);
+    const { job, tech } = pending;
     setPending(null);
     setSelectedJobId(null);
+    try {
+      await onAssign(job, tech.id);
+    } catch (err) {
+      setJobError(job.id, friendlyAssignError(err));
+    }
   }
 
   function handleCancelWarning() {
@@ -258,7 +276,34 @@ export function AssignmentBoardScreen({
   }
 
   function eligibleTechs(job: Job): TechColumnTech[] {
-    return techsWithAvailability.filter((t) => jobCategoryOf(job) !== 'real' || !t.testJobsOnly);
+    const list = techs.filter((t) => t.role === 'tech' && t.active !== false);
+    for (const id of [job.assignedTechId ?? null, investigatorTechIdByJob?.[job.id] ?? null]) {
+      if (id && !list.some((t) => t.id === id)) {
+        const extra = techById.get(id);
+        if (extra) list.push(extra);
+      }
+    }
+    return list;
+  }
+
+  function clearChoice(jobId: string) {
+    setChoice((prev) => {
+      const next = { ...prev };
+      delete next[jobId];
+      return next;
+    });
+  }
+
+  function setJobError(jobId: string, message: string | null) {
+    setRowError((prev) => {
+      const next = { ...prev };
+      if (message === null) {
+        delete next[jobId];
+      } else {
+        next[jobId] = message;
+      }
+      return next;
+    });
   }
 
   function handleRowConfirm(job: Job) {
@@ -266,25 +311,20 @@ export function AssignmentBoardScreen({
     if (techId === undefined) {
       return;
     }
+    setJobError(job.id, null);
     if (techId === '') {
       confirmDialog(
         'Unassign job?',
         'Remove the assigned tech from this job?',
-        () => {
-          onUnassign?.(job);
-          setChoice((prev) => {
-            const next = { ...prev };
-            delete next[job.id];
-            return next;
-          });
+        async () => {
+          clearChoice(job.id);
+          try {
+            await onUnassign?.(job);
+          } catch (err) {
+            setJobError(job.id, friendlyAssignError(err));
+          }
         },
-        () => {
-          setChoice((prev) => {
-            const next = { ...prev };
-            delete next[job.id];
-            return next;
-          });
-        },
+        () => clearChoice(job.id),
       );
       return;
     }
@@ -296,21 +336,15 @@ export function AssignmentBoardScreen({
       confirmDialog(
         'Assign Prem?',
         `Assign ${tech.fullName} to the Prem for this job?`,
-        () => {
-          onAssignInvestigator?.(job, techId);
-          setChoice((prev) => {
-            const next = { ...prev };
-            delete next[job.id];
-            return next;
-          });
+        async () => {
+          clearChoice(job.id);
+          try {
+            await onAssignInvestigator?.(job, techId);
+          } catch (err) {
+            setJobError(job.id, friendlyAssignError(err));
+          }
         },
-        () => {
-          setChoice((prev) => {
-            const next = { ...prev };
-            delete next[job.id];
-            return next;
-          });
-        },
+        () => clearChoice(job.id),
       );
       return;
     }
@@ -319,11 +353,7 @@ export function AssignmentBoardScreen({
     } else {
       setPending({ job, tech });
     }
-    setChoice((prev) => {
-      const next = { ...prev };
-      delete next[job.id];
-      return next;
-    });
+    clearChoice(job.id);
   }
 
   const pendingWarnings = pending
@@ -367,64 +397,84 @@ export function AssignmentBoardScreen({
             poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
               const kind = visitKind[job.id] ?? 'service';
-              const premTechId = investigatorTechIdByJob?.[job.id];
+              const serviceId = job.assignedTechId ?? null;
+              const premId = investigatorTechIdByJob?.[job.id] ?? null;
+              const serviceName = serviceId ? techById.get(serviceId)?.fullName ?? 'unknown tech' : null;
+              const premName = premId ? techById.get(premId)?.fullName ?? 'unknown tech' : null;
+              const techLine =
+                serviceName && premName && serviceId !== premId
+                  ? `Tech: ${serviceName} · Prem: ${premName}`
+                  : serviceName
+                    ? `Tech: ${serviceName}`
+                    : premName
+                      ? `Tech: ${premName} (Prem)`
+                      : 'Unassigned';
+              const picked = choice[job.id];
+              const showConfirm =
+                picked !== undefined &&
+                (picked === ''
+                  ? Boolean(serviceId || premId)
+                  : kind === 'prem'
+                    ? picked !== premId
+                    : picked !== serviceId);
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
-                    <View style={styles.poolRowInfo}>
-                      <Text style={styles.poolRowText}>
-                        {job.jobNumber != null ? `#${job.jobNumber}` : '#—'}
-                      </Text>
-                      {job.customerName ? <Text style={styles.poolRowText}>{job.customerName}</Text> : null}
+                    <View style={styles.rowLeft}>
+                      {job.customerName ? <Text style={styles.rowCustomer}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
-                      <Text style={styles.poolRowStatus}>{job.status.replace(/_/g, ' ')}</Text>
-                      <Text style={styles.assignedLine}>{job.assignedTechId ? [techById.get(job.assignedTechId)?.fullName ?? 'Unknown tech', techById.get(job.assignedTechId)?.phone ?? 'No phone'].join(' · ') : premTechId ? [techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ') : 'Unassigned'}</Text>
-                      {job.assignedTechId && premTechId ? (
-                        <Text style={styles.assignedLine}>Prem: {[techById.get(premTechId)?.fullName ?? 'Unknown tech', techById.get(premTechId)?.phone ?? 'No phone'].join(' · ')}</Text>
-                      ) : null}
+                      <Text style={styles.assignedLine}>{techLine}</Text>
+                      {job.jobNumber != null ? <Text style={styles.assignedLine}>{`Job #${job.jobNumber}`}</Text> : null}
+                      {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     </View>
-                    <View style={styles.visitKindSegmentRow}>
-                      <Button
-                        label="Service"
-                        variant={kind === 'service' ? 'primary' : 'outline'}
-                        size="sm"
-                        onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))}
-                      />
-                      <Button
-                        label="Prem"
-                        variant={kind === 'prem' ? 'primary' : 'outline'}
-                        size="sm"
-                        onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))}
-                      />
-                    </View>
-                    {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
-                        priority keeps this tap from also firing the row's
-                        select-for-assignment Pressable above. */}
-                    <Select
-                      options={[
-                        { label: 'Unassigned', value: '' },
-                        ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
-                      ]}
-                      value={choice[job.id] ?? job.assignedTechId ?? ''}
-                      onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
-                      style={styles.assignSelect}
-                    />
-                    <View style={styles.confirmSlot}>
-                      {job.id in choice && choice[job.id] !== (job.assignedTechId ?? '') ? (
+                    <View style={styles.rowActions}>
+                      <View style={styles.kindSlot}>
                         <Button
-                          label="Confirm"
-                          variant="primary"
+                          label="Service"
+                          variant={kind === 'service' ? 'primary' : 'outline'}
                           size="sm"
-                          onPress={() => handleRowConfirm(job)}
+                          onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))}
                         />
-                      ) : null}
+                      </View>
+                      <View style={styles.kindSlot}>
+                        <Button
+                          label="Prem"
+                          variant={kind === 'prem' ? 'primary' : 'outline'}
+                          size="sm"
+                          onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))}
+                        />
+                      </View>
+                      {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
+                          priority keeps this tap from also firing the row's
+                          select-for-assignment Pressable above. */}
+                      <Select
+                        options={[
+                          { label: 'Unassigned', value: '' },
+                          ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
+                        ]}
+                        value={picked ?? serviceId ?? premId ?? ''}
+                        onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
+                        style={styles.assignSelect}
+                      />
+                      <View style={styles.confirmSlot}>
+                        {showConfirm ? (
+                          <Button
+                            label="Confirm"
+                            variant="primary"
+                            size="sm"
+                            onPress={() => handleRowConfirm(job)}
+                          />
+                        ) : null}
+                      </View>
+                      <View style={styles.viewSlot}>
+                        <Button
+                          label="View"
+                          variant="outline"
+                          size="sm"
+                          onPress={() => router.push('/job/' + job.id)}
+                        />
+                      </View>
                     </View>
-                    <Button
-                      label="View"
-                      variant="outline"
-                      size="sm"
-                      onPress={() => router.push('/job/' + job.id)}
-                    />
                   </View>
                 </Pressable>
               );
@@ -478,10 +528,17 @@ export function AssignmentBoardScreen({
               } to ${reassign.tech.fullName}?`
             : ''
         }
-        onConfirm={() => {
-          if (reassign) onAssign?.(reassign.job, reassign.tech.id);
+        onConfirm={async () => {
+          const target = reassign;
           setReassign(null);
           setSelectedJobId(null);
+          if (!target) return;
+          setJobError(target.job.id, null);
+          try {
+            await onAssign?.(target.job, target.tech.id);
+          } catch (err) {
+            setJobError(target.job.id, friendlyAssignError(err));
+          }
         }}
         onCancel={() => setReassign(null)}
       />
@@ -573,6 +630,35 @@ const styles = StyleSheet.create({
   assignedLine: {
     fontSize: typography.size.small,
     color: colors.textMuted,
+  },
+  rowLeft: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: spacing.sm,
+  },
+  rowCustomer: {
+    color: colors.text,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+  },
+  rowError: {
+    color: colors.danger,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    marginTop: spacing.xs,
+  },
+  rowActions: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  kindSlot: {
+    width: 84,
+    marginRight: spacing.xs,
+  },
+  viewSlot: {
+    width: 70,
   },
   hint: {
     color: colors.textMuted,

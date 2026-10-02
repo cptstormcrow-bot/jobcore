@@ -69,6 +69,20 @@ import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 // job -> app -> mobile -> apps -> app-root, matching admin-finance-repos.ts's own
 // identical 4-levels-up relative import from apps/mobile/src/lib/.
 
+/**
+ * Turns a raw assignment error into a plain sentence for the admin Job page.
+ * Users never see raw database text.
+ */
+function friendlyAssignError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  const message = raw.replace(/^create job assignment failed: /, '').trim();
+  if (/duplicate key|unique constraint/i.test(message)) {
+    return 'This job already has a Prem tech linked. Refresh the page and try again.';
+  }
+  if (!message) return 'Something went wrong. Please try again.';
+  return message;
+}
+
 /** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
 interface JobRow {
   id: string;
@@ -265,6 +279,7 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  useEffect(() => { setActionError(null); }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
@@ -351,9 +366,15 @@ export default function JobDrilldownScreen() {
     void createJobInvestigationRepository().getForJob(job.id).then((value) => {
       if (!cancelled) setInvestigation(value);
     });
-    void createJobAssignmentRepository().getInvestigatorTechId(job.id).then((value) => {
-      if (!cancelled) setInvestigatorTechId(value);
-    });
+    setInvestigatorTechId(null);
+    void createJobAssignmentRepository()
+      .getInvestigatorTechId(job.id)
+      .then((value) => {
+        if (!cancelled) setInvestigatorTechId(value);
+      })
+      .catch(() => {
+        if (!cancelled) setInvestigatorTechId(null);
+      });
     return () => { cancelled = true; };
   }, [isCreate, job?.id]);
 
@@ -585,26 +606,76 @@ export default function JobDrilldownScreen() {
    */
   const handleAssignInstaller = async (techId: string): Promise<void> => {
     if (!job || session.status !== 'authenticated' || !org?.id) return;
+    const orgId = org.id;
     setAssigning(techId);
     setAssignError(null);
     setActionError(null);
+    const fail = (message: string) => {
+      setAssignError(message);
+      setActionError(message);
+    };
+    const deps = {
+      jobs: createJobRepository(),
+      assignments: createJobAssignmentRepository(),
+      calendarEvents: createCalendarEventRepository(),
+      ctx: { role: session.profile.role, now: () => new Date().toISOString() },
+    };
     try {
-      const result = await assignJob(job, techId, {
-        jobs: createJobRepository(),
-        assignments: createJobAssignmentRepository(),
-        calendarEvents: createCalendarEventRepository(),
-        ctx: { role: session.profile.role, now: () => new Date().toISOString() },
-      });
+      if (job.assignedTechId && job.assignedTechId !== techId) {
+        // Reassign Service: remember the Prem tech (unassign clears every
+        // link), unassign, assign the new tech, then re-link the Prem tech.
+        const premTechId = await deps.assignments.getInvestigatorTechId(job.id);
+        const unassigned = await unassignJob(job, deps);
+        if (!unassigned.ok) {
+          fail(friendlyAssignError(unassigned.reason));
+          return;
+        }
+        setJob(unassigned.job);
+        let assignFailure: string | null = null;
+        try {
+          const assigned = await assignJob(unassigned.job, techId, deps);
+          if (assigned.ok) {
+            setJob(assigned.job);
+          } else {
+            assignFailure = friendlyAssignError(assigned.reason);
+          }
+        } catch (err) {
+          assignFailure = friendlyAssignError(err);
+        }
+        let relinkFailure: string | null = null;
+        if (premTechId) {
+          try {
+            await deps.assignments.create(orgId, {
+              jobId: job.id,
+              techId: premTechId,
+              assignedAt: new Date().toISOString(),
+              kind: 'investigator',
+            });
+            setInvestigatorTechId(premTechId);
+          } catch (err) {
+            relinkFailure = friendlyAssignError(err);
+            setInvestigatorTechId(null);
+          }
+        } else {
+          setInvestigatorTechId(null);
+        }
+        if (assignFailure) {
+          fail(assignFailure);
+          return;
+        }
+        if (relinkFailure) {
+          fail("The new Service tech is assigned, but the Prem tech couldn't be re-added: " + relinkFailure);
+        }
+        return;
+      }
+      const result = await assignJob(job, techId, deps);
       if (!result.ok) {
-        setAssignError(result.reason);
-        setActionError(result.reason);
+        fail(friendlyAssignError(result.reason));
         return;
       }
       setJob(result.job);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Assignment failed.';
-      setAssignError(message);
-      setActionError(message);
+      fail(friendlyAssignError(err));
     } finally {
       setAssigning(null);
     }
@@ -627,24 +698,62 @@ export default function JobDrilldownScreen() {
       setPendingReassignTechId(techId);
       return;
     }
+    const orgId = org.id;
+    const targetJobId = job.id;
     setAssigning(techId);
     setAssignError(null);
     setActionError(null);
-    try {
-      if (confirmed && investigatorTechId && investigatorTechId !== techId) {
-        await createJobRepository().clearInvestigator(job.id);
-      }
-      await createJobAssignmentRepository().create(org.id, {
-        jobId: job.id,
-        techId,
-        assignedAt: new Date().toISOString(),
-        kind: 'investigator',
-      });
-      setInvestigatorTechId(techId);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Assignment failed.';
+    const fail = (message: string) => {
       setAssignError(message);
       setActionError(message);
+    };
+    const assignments = createJobAssignmentRepository();
+    try {
+      const previousTechId = await assignments.getInvestigatorTechId(targetJobId);
+      if (previousTechId && previousTechId !== techId) {
+        try {
+          await assignments.removeInvestigator(targetJobId);
+        } catch (err) {
+          fail(friendlyAssignError(err));
+          return;
+        }
+        const stillLinked = await assignments.getInvestigatorTechId(targetJobId);
+        if (stillLinked) {
+          fail("The current Prem tech couldn't be removed, so nothing was changed. Refresh the page and try again.");
+          return;
+        }
+      }
+      try {
+        await assignments.create(orgId, {
+          jobId: targetJobId,
+          techId,
+          assignedAt: new Date().toISOString(),
+          kind: 'investigator',
+        });
+      } catch (err) {
+        fail(friendlyAssignError(err));
+        if (previousTechId && previousTechId !== techId) {
+          try {
+            await assignments.create(orgId, {
+              jobId: targetJobId,
+              techId: previousTechId,
+              assignedAt: new Date().toISOString(),
+              kind: 'investigator',
+            });
+            setInvestigatorTechId(previousTechId);
+          } catch {
+            setInvestigatorTechId(null);
+          }
+        }
+        return;
+      }
+      setInvestigatorTechId(techId);
+      setAssignError(null);
+      setActionError(null);
+      const refreshed = await createJobRepository().getById(targetJobId);
+      if (refreshed) setJob(refreshed);
+    } catch (err) {
+      fail(friendlyAssignError(err));
     } finally {
       setAssigning(null);
     }
@@ -686,30 +795,42 @@ export default function JobDrilldownScreen() {
   const handleUnassign = async (): Promise<void> => {
     if (!isAdmin) return;
     if (!job) return;
+    if (session.status !== 'authenticated' || !org?.id) return;
     setAssigning('unassign');
+    setAssignError(null);
     setActionError(null);
+    const fail = (message: string) => {
+      setAssignError(message);
+      setActionError(message);
+    };
     try {
-      if (estimate?.status === 'approved') {
-        if (session.status !== 'authenticated' || !org?.id) return;
-        const result = await unassignJob(job, {
-          jobs: createJobRepository(),
-          assignments: createJobAssignmentRepository(),
-          calendarEvents: createCalendarEventRepository(),
-          ctx: { role: session.profile.role, now: () => new Date().toISOString() },
-        });
-        if (!result.ok) {
-          setAssignError(result.reason);
-          setActionError(result.reason);
+      const assignments = createJobAssignmentRepository();
+      const premTechId = await assignments.getInvestigatorTechId(job.id);
+      if (premTechId) {
+        await assignments.removeInvestigator(job.id);
+        const stillLinked = await assignments.getInvestigatorTechId(job.id);
+        if (stillLinked) {
+          fail("The Prem tech couldn't be removed. Refresh the page and try again.");
           return;
         }
-        setJob(result.job);
-      } else {
-        if (!investigatorTechId) return;
-        await createJobAssignmentRepository().removeInvestigator(job.id);
         setInvestigatorTechId(null);
       }
+      const result = await unassignJob(job, {
+        jobs: createJobRepository(),
+        assignments,
+        calendarEvents: createCalendarEventRepository(),
+        ctx: { role: session.profile.role, now: () => new Date().toISOString() },
+      });
+      if (!result.ok) {
+        fail(friendlyAssignError(result.reason));
+        return;
+      }
+      setInvestigatorTechId(null);
+      setJob(result.job);
+      setAssignError(null);
+      setActionError(null);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Unassign failed.');
+      fail(friendlyAssignError(err));
     } finally {
       setAssigning(null);
     }
