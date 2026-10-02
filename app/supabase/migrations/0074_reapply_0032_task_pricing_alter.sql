@@ -1,4 +1,4 @@
--- Jobcore - migration 0072: re-apply 0032's adjustment_target ALTER
+-- Jobcore - migration 0074: re-apply 0032's adjustment_target ALTER
 --
 -- Fixes an ordering bug: 0032 ran before 0049 created
 -- public.price_sheet_area_adjustments, so on a fresh `db reset` its ALTER

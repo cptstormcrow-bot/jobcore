@@ -49,7 +49,7 @@ create policy service_tasks_admin_all
 -- ---------------------------------------------------------------------------
 
 -- Guarded: on a fresh db reset this table is created later by 0049, so the
--- ALTER is skipped here and re-applied by migration 0072 below.
+-- ALTER is skipped here and re-applied by migration 0074 below.
 DO $guard$ BEGIN
   IF to_regclass('public.price_sheet_area_adjustments') IS NOT NULL THEN
     alter table public.price_sheet_area_adjustments
