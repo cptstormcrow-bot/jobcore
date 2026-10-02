@@ -22,7 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
-import type { Job } from '@jobcore/core';
+import type { Job, JobStatus } from '@jobcore/core';
 import type {
   EstimateRepository,
   JobEstimate,
@@ -88,6 +88,19 @@ const KIND_LABEL: Record<EstimateLineItemKind, string> = {
   labor: 'Labor',
   other: 'Other',
 };
+
+/** Once a job is Scheduled or later its estimate is read-only. */
+const ESTIMATE_LOCKED_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>([
+  'scheduled',
+  'assigned',
+  'accepted',
+  'en_route',
+  'in_progress',
+  'completed',
+  'paid',
+  'closed',
+  'archived',
+]);
 
 function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;
@@ -208,6 +221,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     : 0;
 
   async function handlePriceSheetQuickAdd(): Promise<void> {
+    if (locked) return;
     if (!selectedRate) {
       setActionState({ kind: 'failed', message: 'Pick a rate.' });
       return;
@@ -259,7 +273,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     };
   }, [estimates, job.id]);
 
+  const locked = ESTIMATE_LOCKED_STATUSES.has(job.status);
+  const statusLabel = job.status.replace(/_/g, ' ');
   const busy = actionState.kind === 'working';
+  const inputsOff = busy || locked;
 
   const totals = lineItems.reduce(
     (acc, item) => {
@@ -273,6 +290,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   );
 
   async function handleAddLineItem(): Promise<void> {
+    if (locked) return;
     const quantity = Number(quantityInput);
     const unitCost = Number(unitCostInput);
     if (!descriptionInput.trim()) {
@@ -305,6 +323,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   function beginEdit(item: JobEstimateLineItem): void {
+    if (locked) return;
     setEditingId(item.id);
     setEditDescriptionInput(item.description);
     setEditQuantityInput(String(item.quantity));
@@ -319,6 +338,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   async function handleSaveEdit(item: JobEstimateLineItem): Promise<void> {
+    if (locked) return;
     const quantity = Number(editQuantityInput);
     const unitCost = Number(editUnitCostInput);
     if (!editDescriptionInput.trim() || Number.isNaN(quantity) || Number.isNaN(unitCost)) {
@@ -343,6 +363,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   async function handleRemoveLineItem(item: JobEstimateLineItem): Promise<void> {
+    if (locked) return;
     setActionState({ kind: 'working' });
     try {
       await estimates.removeLineItem(item.id);
@@ -434,6 +455,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         <Text style={styles.guidance}>
           Give the customer a number before you hang up. Submit once they accept.
         </Text>
+        {locked ? (
+          <Text style={styles.note}>
+            Estimate locked — this job is {statusLabel}. Estimates can only be changed before the job is scheduled.
+          </Text>
+        ) : null}
 
         <Card style={styles.card}>
           <ListItem title="Status" subtitle={estimate?.status ?? 'draft'} />
@@ -463,21 +489,21 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     label="Description"
                     value={editDescriptionInput}
                     onChangeText={setEditDescriptionInput}
-                    disabled={busy}
+                    disabled={inputsOff}
                     style={styles.field}
                   />
                   <TextField
                     label="Quantity"
                     value={editQuantityInput}
                     onChangeText={setEditQuantityInput}
-                    disabled={busy}
+                    disabled={inputsOff}
                     style={styles.field}
                   />
                   <TextField
                     label="Unit Cost"
                     value={editUnitCostInput}
                     onChangeText={setEditUnitCostInput}
-                    disabled={busy}
+                    disabled={inputsOff}
                     style={styles.field}
                   />
                   <Button
@@ -485,7 +511,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     onPress={() => {
                       void handleSaveEdit(item);
                     }}
-                    disabled={busy}
+                    disabled={inputsOff}
                     style={styles.action}
                   />
                   <Button
@@ -501,7 +527,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   key={item.id}
                   title={`${KIND_LABEL[item.kind]} — ${item.description}`}
                   subtitle={`${item.quantity} x ${formatCurrency(item.unitCost)} = ${formatCurrency(item.lineTotal)}`}
-                  onPress={() => beginEdit(item)}
+                  onPress={locked ? undefined : () => beginEdit(item)}
                   right={
                     <Button
                       label="Remove"
@@ -510,7 +536,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                       onPress={() => {
                         void handleRemoveLineItem(item);
                       }}
-                      disabled={busy}
+                      disabled={inputsOff}
                     />
                   }
                 />
@@ -527,7 +553,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 variant={addMode === 'manual' ? 'primary' : 'outline'}
                 size="sm"
                 onPress={() => setAddMode('manual')}
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.action}
               />
               <Button
@@ -535,7 +561,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 variant={addMode === 'priceSheet' ? 'primary' : 'outline'}
                 size="sm"
                 onPress={() => setAddMode('priceSheet')}
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.action}
               />
             </View>
@@ -556,6 +582,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                         variant={selectedAreaId === area.id ? 'primary' : 'outline'}
                         size="sm"
                         onPress={() => setSelectedAreaId(selectedAreaId === area.id ? null : area.id)}
+                        disabled={inputsOff}
                         style={styles.action}
                       />
                     ))}
@@ -573,6 +600,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                       variant={selectedRateId === rate.id ? 'primary' : 'outline'}
                       size="sm"
                       onPress={() => setSelectedRateId(rate.id)}
+                      disabled={inputsOff}
                       style={styles.action}
                     />
                   ))}
@@ -586,7 +614,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 value={rateQuantityInput}
                 onChangeText={setRateQuantityInput}
                 placeholder="1"
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.field}
               />
 
@@ -599,7 +627,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 onPress={() => {
                   void handlePriceSheetQuickAdd();
                 }}
-                disabled={busy || !selectedRateId}
+                disabled={inputsOff || !selectedRateId}
                 style={styles.action}
               />
             </>
@@ -610,7 +638,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 value={kindInput}
                 options={KIND_OPTIONS}
                 onChange={(value) => setKindInput((value as EstimateLineItemKind) ?? 'material')}
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.field}
               />
               <TextField
@@ -618,7 +646,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 value={descriptionInput}
                 onChangeText={setDescriptionInput}
                 placeholder="Description"
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.field}
               />
               <TextField
@@ -626,7 +654,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 value={quantityInput}
                 onChangeText={setQuantityInput}
                 placeholder="1"
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.field}
               />
               <TextField
@@ -634,7 +662,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 value={unitCostInput}
                 onChangeText={setUnitCostInput}
                 placeholder="0.00"
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.field}
               />
               <Button
@@ -642,7 +670,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 onPress={() => {
                   void handleAddLineItem();
                 }}
-                disabled={busy}
+                disabled={inputsOff}
                 style={styles.action}
               />
             </>
