@@ -33,7 +33,7 @@ import type { CalendarEventRepository, CloseOutFailureRepository, CommissionRepo
 export interface CloseOutJobDeps {
   ctx: Ctx;
   /**
-   * Workstream E (`app/supabase/0014_calendar_events.sql`) — persists the
+   * Workstream E (`app/supabase/migrations/0014_calendar_events.sql`) — persists the
    * `completed` -> `paid` transition below (`transitionJob` never writes to
    * the repository — see its doc comment) and logs it as a calendar event.
    */

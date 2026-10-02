@@ -233,7 +233,7 @@ export async function applyTransition(job: Job, to: JobStatus, ctx: Ctx): Promis
   // row and nothing throws. Awaited: a failing sink rejects the transition rather
   // than silently dropping the row. Rows are INSERT-only and never UPDATEd.
   // `fromState`/`toState` and both clocks ride in `metadata` — the shipped
-  // audit_log table (supabase/0001_foundation.sql L45-56) has no columns for them.
+  // audit_log table (supabase/migrations/0001_foundation.sql L45-56) has no columns for them.
   await ctx.writeAudit?.({
     organizationId: job.organizationId,
     entity: 'job',

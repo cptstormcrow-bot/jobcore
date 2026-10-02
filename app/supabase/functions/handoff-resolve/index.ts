@@ -8,7 +8,7 @@
 //   POST /:token/providers/:providerId/handoff     -> HandoffAction
 //
 // No Supabase auth session exists for the customer holding the QR code
-// (supabase/0010_payment_review.sql, handoff_tokens RLS comment), so this
+// (supabase/migrations/0010_payment_review.sql, handoff_tokens RLS comment), so this
 // function runs entirely under the service role, same rationale as
 // stripe-webhook/paypal-webhook. No card data (PAN, CVV, card number) is
 // ever read, touched, or logged here.

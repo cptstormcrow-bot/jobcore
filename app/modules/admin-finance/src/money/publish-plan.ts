@@ -12,9 +12,9 @@
  * `sheet.version` to validate ordering against `priorPublished.version`.
  * Rewriting `version` at publish would collide with
  * `price_sheets_organization_id_version_key unique (organization_id,
- * version)` (`app/supabase/0005_money.sql:89`).
+ * version)` (`app/supabase/migrations/0005_money.sql:89`).
  *
- * The DB's `publication_status` enum (`app/supabase/0005_money.sql:11-15`)
+ * The DB's `publication_status` enum (`app/supabase/migrations/0005_money.sql:11-15`)
  * uses `'draft' | 'published' | 'superseded'`. This module's
  * `PriceSheetStatus` (`./types.ts`) is the existing, reused vocabulary and
  * is mirrored exactly as declared there — no new status type is introduced

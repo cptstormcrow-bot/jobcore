@@ -14,7 +14,7 @@
  * alter a batch that has already been frozen.
  *
  * Field naming and amount shape mirror `payout_batches` / `payout_lines`
- * (P3a.4, `app/supabase/0005_money.sql:188-224`): batch carries
+ * (P3a.4, `app/supabase/migrations/0005_money.sql:188-224`): batch carries
  * `organizationId`, `periodStart`, `periodEnd`; each line carries
  * `hoursAmount`, `commissionAmount`, `bonusAmount`, `reimbursementAmount`,
  * and `totalAmount` — all integer cents (`Money`) — plus the `userId` the

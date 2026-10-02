@@ -84,7 +84,7 @@
           <li>
             <strong>Set up payment providers in advance.</strong> Before any job can reach
             <a href="#state-completed">state-completed</a>, an Admin flips on the org's accepted payment methods
-            in the <code>payment_providers</code> table (<code>supabase/0010_payment_review.sql</code>) —
+            in the <code>payment_providers</code> table (<code>supabase/migrations/0010_payment_review.sql</code>) —
             per-organization <code>enabled</code> flags plus client-safe config (a handle, a publishable key,
             never a secret). RLS on this table is admin-only
             (<code>payment_providers_admin_all</code>: <code>organization_id = current_org_id() AND

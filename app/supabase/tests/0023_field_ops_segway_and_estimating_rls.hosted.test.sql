@@ -1,7 +1,7 @@
 -- HOSTED VARIANT: real auth.users UUIDs substituted for the local-dev placeholder ids.
--- Jobcore - RLS assertions for 0023_field_ops_segway_and_estimating.sql
+-- Jobcore - RLS assertions for 0050_field_ops_segway_and_estimating.sql
 --
--- Hand-applied. Run this file in the SQL editor AFTER 0001..0023 and seed.hosted.sql.
+-- Hand-applied. Run this file in the SQL editor AFTER migrations/0001..0023 and seed.hosted.sql.
 -- Each block raises an exception on failure and is silent on success.
 --
 -- Run as a normal authenticated session, NOT the service role. The service role

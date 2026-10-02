@@ -14,7 +14,7 @@
  * — it does not redefine them, only maps them to/from the Supabase row shape.
  *
  * Field naming mirrors `payout_batches` / `payout_lines` (P3a.4,
- * `app/supabase/0005_money.sql:188-224`): all amount columns are integer
+ * `app/supabase/migrations/0005_money.sql:188-224`): all amount columns are integer
  * cents (`Money`, `../money/types.ts`), matching `payout-batch.ts`'s
  * `FrozenPayoutLine` discipline.
  */
@@ -26,7 +26,7 @@ import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
  * payout_batches / payout_lines rows (snake_case) → domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors the Supabase `payout_batches` table (`app/supabase/0005_money.sql` L188-206). */
+/** Mirrors the Supabase `payout_batches` table (`app/supabase/migrations/0005_money.sql` L188-206). */
 export interface PayoutBatchRow {
   id: string;
   organization_id: string;
@@ -37,7 +37,7 @@ export interface PayoutBatchRow {
 }
 
 /**
- * Mirrors the Supabase `payout_lines` table (`app/supabase/0005_money.sql`
+ * Mirrors the Supabase `payout_lines` table (`app/supabase/migrations/0005_money.sql`
  * L207-224). All amount columns are integer cents, matching
  * `payout-batch.ts`'s `FrozenPayoutLine.hoursAmount` etc.
  */
@@ -109,7 +109,7 @@ export interface PayoutBatchRepo {
 
   /**
    * Marks a batch approved (`status` transitions to `'approved'` per the
-   * Supabase `payout_batch_status` enum, `app/supabase/0005_money.sql`).
+   * Supabase `payout_batch_status` enum, `app/supabase/migrations/0005_money.sql`).
    * Mirrors `ReimbursementRepo.approve`'s shape so `PayoutBatchScreen.tsx`
    * can follow the same per-row approve pattern as
    * `ReimbursementQueueScreen.tsx`.
@@ -118,7 +118,7 @@ export interface PayoutBatchRepo {
 
   /**
    * Marks a batch paid (`status` transitions to `'paid'` per the Supabase
-   * `payout_batch_status` enum, `app/supabase/0005_money.sql`). Mirrors
+   * `payout_batch_status` enum, `app/supabase/migrations/0005_money.sql`). Mirrors
    * `approve`'s shape so `PayoutBatchScreen.tsx` can follow the same
    * per-row mark-paid pattern as the approve action.
    */

@@ -6,7 +6,7 @@
  * `HandoffAction` and `PaymentStatus` — all three are new to P5.
  *
  * `PaymentStatus` mirrors the `payments.status` check constraint exactly
- * (supabase/0010_payment_review.sql): 'pending' | 'confirmed' | 'failed' |
+ * (supabase/migrations/0010_payment_review.sql): 'pending' | 'confirmed' | 'failed' |
  * 'manual_confirmed'. Any future status value is added there first.
  */
 
@@ -20,7 +20,7 @@ export interface Money {
 
 /**
  * Mirrors the Postgres `payments.status` check constraint
- * (supabase/0010_payment_review.sql, `payments_status_check`).
+ * (supabase/migrations/0010_payment_review.sql, `payments_status_check`).
  */
 export type PaymentStatus = 'pending' | 'confirmed' | 'failed' | 'manual_confirmed';
 

@@ -18,7 +18,7 @@ Plan frontmatter (line 9): `status: COMPLETE — CLOSED WITH DEFERRALS (S5.3, S5
 
 ## Tables / policies involved (from actual migration files, not just plan prose)
 
-### `app/supabase/0008_field_tech_jobs_rls.sql` (field-tech jobs RLS, applies after 0005)
+### `app/supabase/migrations/0008_field_tech_jobs_rls.sql` (field-tech jobs RLS, applies after 0005)
 - `jobs_update_tech` policy (for update, to authenticated) on `public.jobs`:
   - USING/WITH CHECK: `organization_id = public.current_org_id() AND EXISTS (select 1 from public.job_assignments ja where ja.job_id = jobs.id and ja.tech_id = auth.uid())`
   - i.e. an unassigned tech (no matching `job_assignments` row) fails both USING and WITH CHECK → row invisible/unwritable.
@@ -27,7 +27,7 @@ Plan frontmatter (line 9): `status: COMPLETE — CLOSED WITH DEFERRALS (S5.3, S5
   - USING: `organization_id = public.current_org_id() AND user_id = auth.uid()`
   - This is additive to `commissions_admin_all` from 0005 (admin-only insert/update/delete) — confirms "another tech's commissions unreadable" (line 210) since a tech only sees rows where `user_id = auth.uid()`.
 
-### `app/supabase/0005_money.sql` (price_sheets / payout_batches / commissions base RLS — reimbursements template referenced at plan line 224)
+### `app/supabase/migrations/0005_money.sql` (price_sheets / payout_batches / commissions base RLS — reimbursements template referenced at plan line 224)
 - `price_sheets_admin_all` (line 475) — admin-only in every direction; comment (lines 472-474): "price_sheets - admin-only in every direction. A non-admin caller (e.g. a tech) must see zero rows; there is no non-admin select policy at all, and with RLS enabled the absence of a policy is a denial." → directly backs S5.4's "`price_sheets`/`payout_batches` return zero rows".
 - `price_sheet_rates_admin_all` (line 483) — admin-only, joins up to parent `price_sheets` row.
 - `compensation_policies_admin_all` (line 504).
@@ -37,16 +37,16 @@ Plan frontmatter (line 9): `status: COMPLETE — CLOSED WITH DEFERRALS (S5.3, S5
 - `payout_lines_admin_all` (line 548).
 - Tables enabled for RLS: `price_sheets` (464), `commissions` (467), `payout_batches` (469).
 
-### Field-tech tables added in `supabase/0007_field_tech_tables.sql` (per plan S0.1, line 87)
-New tables referenced by S5.4's "jobs/checklist/photo/time-off rows": `checklist_templates`, `checklist_instances`, `checklist_items`, `job_photos`, `time_off_requests`, `job_notes` — plan states "each with RLS enabled" with tech-self-scoped + admin-all policies (acceptance signal: `pg_policies` shows every new table RLS-enabled). Did not independently re-verify the exact policy SQL text for these tables in this pass — 0007 file was not opened; only 0008 and 0005 were read in full. If exact policy names for checklist/photo/time-off are needed, read `app/supabase/0007_field_tech_tables.sql` directly.
+### Field-tech tables added in `supabase/migrations/0007_field_tech_tables.sql` (per plan S0.1, line 87)
+New tables referenced by S5.4's "jobs/checklist/photo/time-off rows": `checklist_templates`, `checklist_instances`, `checklist_items`, `job_photos`, `time_off_requests`, `job_notes` — plan states "each with RLS enabled" with tech-self-scoped + admin-all policies (acceptance signal: `pg_policies` shows every new table RLS-enabled). Did not independently re-verify the exact policy SQL text for these tables in this pass — 0007 file was not opened; only 0008 and 0005 were read in full. If exact policy names for checklist/photo/time-off are needed, read `app/supabase/migrations/0007_field_tech_tables.sql` directly.
 
 ## Migration 0012 (marketing)
-`app/supabase/0012_marketing.sql` exists in the repo. Not read in this pass (out of scope for the S5.4 negative-access spec text itself — flagged here since the requesting task pairs "0012 marketing" + "S5.4 negative-access" as the two things the hosted RLS test suite must cover). Prior recon on migrations 0005-0012 exists at `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.crib\a1-verify-migrations-0005-0012.md` — check that file for 0012-specific findings before re-deriving them.
+`app/supabase/migrations/0012_marketing.sql` exists in the repo. Not read in this pass (out of scope for the S5.4 negative-access spec text itself — flagged here since the requesting task pairs "0012 marketing" + "S5.4 negative-access" as the two things the hosted RLS test suite must cover). Prior recon on migrations 0005-0012 exists at `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.crib\a1-verify-migrations-0005-0012.md` — check that file for 0012-specific findings before re-deriving them.
 
 ## File:line references
 - Plan spec table: `E:\Jeff\.claude\plans\jobcore-p4-field-tech-module-rolling-slice-implementation.md:153` (S5.4 row), `:156` (concurrency), `:196`, `:209-210` (verification steps), `:9` (deferred status)
-- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0008_field_tech_jobs_rls.sql` — full file (jobs_update_tech policy, whitelist trigger, commissions_select_own policy)
-- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0005_money.sql:464-548` — RLS enable + admin-only/self-scoped policies for price_sheets, price_sheet_rates, compensation_policies, commissions, reimbursements, payout_batches, payout_lines
-- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0007_field_tech_tables.sql` — new field-tech tables (checklist/photo/time-off); not opened this pass, needs follow-up read if exact policy SQL required
-- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0012_marketing.sql` — exists, not read this pass
+- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0008_field_tech_jobs_rls.sql` — full file (jobs_update_tech policy, whitelist trigger, commissions_select_own policy)
+- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0005_money.sql:464-548` — RLS enable + admin-only/self-scoped policies for price_sheets, price_sheet_rates, compensation_policies, commissions, reimbursements, payout_batches, payout_lines
+- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0007_field_tech_tables.sql` — new field-tech tables (checklist/photo/time-off); not opened this pass, needs follow-up read if exact policy SQL required
+- `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0012_marketing.sql` — exists, not read this pass
 - Related prior recon: `E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.crib\a1-verify-migrations-0005-0012.md`

@@ -1,5 +1,5 @@
 -- Jobcore — Fix regression: 0018_job_notes_gotcha_kind.sql added 'gotcha' as
--- a valid job_notes.kind value, but 0023_field_ops_segway_and_estimating.sql
+-- a valid job_notes.kind value, but 0050_field_ops_segway_and_estimating.sql
 -- later dropped and rebuilt the same CHECK constraint (to add
 -- 're_estimate_flag') without preserving 'gotcha', silently dropping it from
 -- the live constraint. Re-add it alongside all five existing values so no

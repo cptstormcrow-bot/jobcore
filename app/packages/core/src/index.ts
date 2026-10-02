@@ -70,7 +70,7 @@ export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
 export const DEFAULT_HOURLY_RATE_CENTS = 2500;
 
 /**
- * Mirrors the Postgres `job_status` enum (supabase/0004_scheduling.sql).
+ * Mirrors the Postgres `job_status` enum (supabase/migrations/0004_scheduling.sql).
  * Order matches the SQL `create type` exactly — a later ALTER TYPE migration
  * is the only sanctioned way to add a member.
  */
@@ -123,7 +123,7 @@ export interface Job {
   service_area_id?: string | null;
   /**
    * Workstream K (beta-test jobs): mirrors `jobs.is_beta`
-   * (`supabase/0018_beta_test_jobs.sql`). Marks rows spawned by the
+   * (`supabase/migrations/0018_beta_test_jobs.sql`). Marks rows spawned by the
    * sales-marketing "Spawn Test Jobs" flow so every job-list site can hide
    * them unless the viewer opts in via `isBetaVisible`/"Show Test Jobs".
    */
@@ -203,7 +203,7 @@ export interface JobTransitionAudit {
 /**
  * P2c.2a: the payload of one immutable `audit_log` row.
  *
- * Mirrors the SHIPPED `audit_log` table (supabase/0001_foundation.sql L45-56),
+ * Mirrors the SHIPPED `audit_log` table (supabase/migrations/0001_foundation.sql L45-56),
  * whose columns are `id, organization_id, actor_id, action, entity, entity_id,
  * metadata, created_at`. Three are deliberately absent here: `id` is
  * server-assigned (`bigint generated always as identity`), `created_at` is

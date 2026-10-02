@@ -105,7 +105,7 @@
   <h2 id="storyboard-admin-enablement">Per-org provider enablement ("flip the switch in advance")</h2>
   <p>
     Which methods a given organization offers is controlled by the <code>payment_providers</code> table
-    (<code>supabase/0010_payment_review.sql</code>): <code>organization_id</code>, <code>provider_id</code>,
+    (<code>supabase/migrations/0010_payment_review.sql</code>): <code>organization_id</code>, <code>provider_id</code>,
     <code>enabled</code> boolean, and a client-safe <code>config</code> jsonb (a handle, a publishable
     key — <strong>never</strong> a secret key or any card data, enforced by naming convention plus a
     repo-wide grep check). RLS on this table is <strong>admin-only</strong> (<code>payment_providers_admin_all</code>

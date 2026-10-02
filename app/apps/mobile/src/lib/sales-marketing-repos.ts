@@ -382,7 +382,7 @@ export function createSocialProviderRepository(): SocialProviderRepository {
  * delete any existing `is_beta = true` rows for this org, then insert
  * exactly 3 new `jobs` rows at `status = 'new'` (the job lifecycle's
  * intake/sales-handoff stage — `packages/core/src/index.ts`'s `JobStatus`
- * union, `supabase/0004_scheduling.sql`'s `jobs` table default) with
+ * union, `supabase/migrations/0004_scheduling.sql`'s `jobs` table default) with
  * `is_beta = true` and placeholder address/description text only. No
  * customer/service/financial rows are created — `customer_id`/`service_id`
  * stay null (both nullable) and no `commissions`/`price_sheets`/

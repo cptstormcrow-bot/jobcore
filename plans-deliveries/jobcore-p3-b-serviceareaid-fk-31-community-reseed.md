@@ -67,7 +67,7 @@ order first, then the 5 FAQ/Contact-only names appended at the end:
 
 ## Files to change
 
-1. **`Jobcore\app\supabase\0006_job_service_area.sql`** (new file) — mirrors `0005_money.sql` style:
+1. **`Jobcore\app\supabase\migrations\0006_job_service_area.sql`** (new file) — mirrors `0005_money.sql` style:
    `alter table public.jobs add column service_area_id uuid references public.service_areas(id) on
    delete set null;` plus a supporting index. Own migration file so it reverts independently of the
    reseed, per the ledger row's own rationale. Confirmed as the correct next filename — already

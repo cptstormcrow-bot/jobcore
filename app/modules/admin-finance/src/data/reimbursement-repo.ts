@@ -9,7 +9,7 @@
  * repo port for reimbursements specifically.
  *
  * SPEC: a reimbursement is never a deduction against commission
- * (`app/supabase/0005_money.sql` L166-167) — this file adds no field or
+ * (`app/supabase/migrations/0005_money.sql` L166-167) — this file adds no field or
  * function that links a reimbursement to a `CommissionLine`.
  */
 
@@ -19,7 +19,7 @@ import type { CalculationResult } from '../money/types';
  * reimbursements row (snake_case) → domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors the `reimbursement_status` enum (`app/supabase/0005_money.sql` L20-25). */
+/** Mirrors the `reimbursement_status` enum (`app/supabase/migrations/0005_money.sql` L20-25). */
 export type ReimbursementStatus = 'pending' | 'approved' | 'rejected' | 'paid';
 
 const REIMBURSEMENT_STATUSES: readonly ReimbursementStatus[] = [
@@ -34,7 +34,7 @@ function isReimbursementStatus(value: string): value is ReimbursementStatus {
 }
 
 /**
- * Mirrors the Supabase `reimbursements` table (`app/supabase/0005_money.sql`
+ * Mirrors the Supabase `reimbursements` table (`app/supabase/migrations/0005_money.sql`
  * L168-181). `status` is left `string`, not `ReimbursementStatus` — it is
  * untrusted wire data until `toReimbursement` validates it, matching
  * `price-sheet-repo.ts`'s `PriceSheetRow.status` discipline.

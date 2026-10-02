@@ -47,7 +47,7 @@ the project is provisioned. Gated ACs are reported as OPEN, never as PASSED.
 
 | # | Microslice | Status | Commit | Build report | Forward contracts |
 |---|-----------|--------|--------|--------------|-------------------|
-| P2a.1 | `app/supabase/0004_scheduling.sql` — sections 1 Types + 2 Tables + indexes | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | enum value list is the state machine's source of truth (P2b.1) |
+| P2a.1 | `app/supabase/migrations/0004_scheduling.sql` — sections 1 Types + 2 Tables + indexes | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | enum value list is the state machine's source of truth (P2b.1) |
 | P2a.2 | `0004_scheduling.sql` section 3 — RLS policies | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | tech-sees-own-jobs rule asserted in P2f.1 |
 | P2a.3 | `app/supabase/seed.sql` — customers/services/service_areas/leads/jobs/job_assignments rows | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | UUID blocks 02NN–07NN reserved |
 | P2a.4 | Enum-pointer fix — the state-machine table lives in `00-MASTER-SPEC.md` §10, not in the P2 spec; correct both `02-P2-scheduling-core.md` and `.claude\checkpoints\2026-07-27_162410_checkpoint.md` | DONE | ad3bb4d | .claude\build-reports\jobcore-p1s5-p2-scheduling\2026-07-27_p2a-scheduling-schema-rls-seed.md | §10 is the sole enum source for P2b.1 |

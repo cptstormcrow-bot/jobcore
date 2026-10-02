@@ -17,10 +17,10 @@ import type { ServiceTask } from './ports';
  * ------------------------------------------------------------------ */
 
 /**
- * Mirrors the Supabase `price_sheets` table (`app/supabase/0005_money.sql`).
+ * Mirrors the Supabase `price_sheets` table (`app/supabase/migrations/0005_money.sql`).
  *
  * VOCABULARY NOTE: the DB `publication_status` enum
- * (`app/supabase/0005_money.sql:11-15`) is `'draft' | 'published' |
+ * (`app/supabase/migrations/0005_money.sql:11-15`) is `'draft' | 'published' |
  * 'superseded'`, but the app-side `PriceSheetStatus` (`../money/types.ts`)
  * is `'draft' | 'published' | 'archived'` — it uses `'archived'` where the
  * DB uses `'superseded'`. `status` is left `string` here, not
@@ -73,7 +73,7 @@ export function toPriceSheet(row: PriceSheetRow): PriceSheet {
  * price_sheet_rates row (snake_case) → domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors the Supabase `price_sheet_rates` table (`app/supabase/0005_money.sql`). */
+/** Mirrors the Supabase `price_sheet_rates` table (`app/supabase/migrations/0005_money.sql`). */
 export interface PriceSheetRateRow {
   id: string;
   price_sheet_id: string;
@@ -190,7 +190,7 @@ export interface SupabaseRpcClient {
 
 /**
  * Applies a `PublishPlan` (`../money/publish-plan.ts`'s `planPublish`) by
- * invoking the `publish_price_sheet(uuid)` RPC (`app/supabase/0005_money.sql`,
+ * invoking the `publish_price_sheet(uuid)` RPC (`app/supabase/migrations/0005_money.sql`,
  * line 395). The RPC re-derives the organization's prior-published sheet and
  * performs the demote/promote pair itself, inside one `security definer`
  * transaction — it only needs the draft's id
@@ -391,7 +391,7 @@ export async function deleteRate(
  * service_tasks row (snake_case) → domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors the Supabase `service_tasks` table (`app/supabase/0032_price_sheet_task_pricing.sql`). */
+/** Mirrors the Supabase `service_tasks` table (`app/supabase/migrations/0032_price_sheet_task_pricing.sql`). */
 export interface ServiceTaskRow {
   id: string;
   organization_id: string;
@@ -589,7 +589,7 @@ export async function updateServiceTask(
 
 /**
  * Vocabulary established by migration 0023's comment
- * (`app/supabase/0023_field_ops_segway_and_estimating.sql`, lines 194-197):
+ * (`app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`, lines 194-197):
  * "Standard/Engineered/Unclassified classification itself is derived (not
  * persisted) at query time from price_sheet_rates."
  *

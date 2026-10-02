@@ -244,7 +244,7 @@ P3p.6  verify + commit + report
 ```
 
 **P3-o — jobs RLS narrowing (after P3-b, before P3-m)**
-`app\supabase\0004_scheduling.sql:221-279` — `jobs_select_org` carries **no role predicate**, and
+`app\supabase\migrations\0004_scheduling.sql:221-279` — `jobs_select_org` carries **no role predicate**, and
 permissive policies **OR** together, so a tech sees *every* job in the org; `jobs_select_tech` (which
 joins through `job_assignments`, not `assigned_tech_id`) narrows nothing. Jeff selected **"Keep it as
 P3-o in this phase."**
@@ -265,8 +265,8 @@ P3o.5  commit + report
 - `Jobcore\handoff\P3-CONTEXT-PROTOCOL.md` — receives the preamble; records the batch concept, the
   runner decision, and the `P3a.2` correction
 - `Jobcore\app\package.json` — `engines.node` `">=20"` → `">=22.6"` (P3-0.4)
-- `Jobcore\app\supabase\0005_money.sql` — net new, EXEC-GATED, three batches
-- `Jobcore\app\supabase\0006_job_service_area.sql`, `0007_jobs_select_narrowing.sql` — net new
+- `Jobcore\app\supabase\migrations\0005_money.sql` — net new, EXEC-GATED, three batches
+- `Jobcore\app\supabase\migrations\0006_job_service_area.sql`, `0007_jobs_select_narrowing.sql` — net new
 - `Jobcore\app\packages\ui\src\tokens.ts` — P3-p brand corrections
 - `Jobcore\app\modules\admin-finance\src\` — `money/`, `data/`, `lib/`, `screens/` and
   `__assertions__/` now exist (`ee4a4f8`, `705613f`, `2724914`); `index.ts` is 26 lines with the

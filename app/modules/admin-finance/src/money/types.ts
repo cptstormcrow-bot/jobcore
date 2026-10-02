@@ -8,7 +8,7 @@ export type Money = number;
 
 /**
  * Mirrors the `jobs.attach_timing` / `leads.attach_timing` columns
- * (supabase/0004_scheduling.sql L78, L97). NO CHECK constraint enumerates
+ * (supabase/migrations/0004_scheduling.sql L78, L97). NO CHECK constraint enumerates
  * allowed values there — both columns are plain `text` — so this is left as
  * `string` rather than a byte-matched union.
  */

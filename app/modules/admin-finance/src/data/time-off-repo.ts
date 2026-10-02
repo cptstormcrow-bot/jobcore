@@ -8,7 +8,7 @@
  * approve/deny). This file owns the admin-wide row type, the row->domain
  * mapper, and the repo port for organization-scoped time-off review.
  *
- * Mirrors `time_off_requests` (`app/supabase/0007_field_tech_tables.sql`
+ * Mirrors `time_off_requests` (`app/supabase/migrations/0007_field_tech_tables.sql`
  * L101-115): `status` starts `'pending'`, moves to `'approved'`/`'denied'`
  * only via an org admin, enforced by the `time_off_requests_admin_all` RLS
  * policy (L280-284 of the same migration) rather than by this file.
@@ -24,7 +24,7 @@
  * time_off_requests row (snake_case) -> domain type (camelCase)
  * ------------------------------------------------------------------ */
 
-/** Mirrors `time_off_requests_status_check`, as widened by `app/supabase/0019_time_off_auto_decide.sql` (originally `app/supabase/0007_field_tech_tables.sql` L111-112) to include `'cancelled'`. */
+/** Mirrors `time_off_requests_status_check`, as widened by `app/supabase/migrations/0019_time_off_auto_decide.sql` (originally `app/supabase/migrations/0007_field_tech_tables.sql` L111-112) to include `'cancelled'`. */
 export type TimeOffStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
 
 const TIME_OFF_STATUSES: readonly TimeOffStatus[] = ['pending', 'approved', 'denied', 'cancelled'];

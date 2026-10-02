@@ -1,7 +1,7 @@
 -- HOSTED VARIANT: real auth.users UUIDs substituted for the local-dev placeholder ids.
 -- Jobcore - RPC assertions for 0039_issue_estimate_token_rpc.sql
 --
--- Hand-applied. Run this file in the SQL editor AFTER 0001..0039 and seed.sql.
+-- Hand-applied. Run this file in the SQL editor AFTER migrations/0001..0039 and seed.sql.
 -- Each block raises an exception on failure and is silent on success.
 --
 -- Run as a normal authenticated session, NOT the service role. The service role

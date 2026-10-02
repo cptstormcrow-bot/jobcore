@@ -1,6 +1,6 @@
 -- Jobcore - RLS assertions for 0008_field_tech_jobs_rls.sql (P3b)
 --
--- Hand-applied. Run this file in the SQL editor AFTER 0001..0008 and seed.sql.
+-- Hand-applied. Run this file in the SQL editor AFTER migrations/0001..0008 and seed.sql.
 -- Each block raises an exception on failure and is silent on success.
 --
 -- Run as a normal authenticated session, NOT the service role. The service role

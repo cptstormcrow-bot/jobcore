@@ -3,7 +3,7 @@
  * unfilled for `PaymentProvider`. The Composer and Reporting screens resolve
  * a provider only through `getProvider`/`listProviders`, never via a direct
  * import of `./meta` — that indirection, plus the unconstrained-`text`
- * `post_targets.platform` column (app/supabase/0012_marketing.sql), is what
+ * `post_targets.platform` column (app/supabase/migrations/0012_marketing.sql), is what
  * makes AC-8 true: adding a second `SocialProvider` (e.g. LinkedIn) is a new
  * `linkedin.ts` file registered below, no Composer change required.
  */

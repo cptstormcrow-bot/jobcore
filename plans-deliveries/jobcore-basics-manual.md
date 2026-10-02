@@ -58,7 +58,7 @@ directly.
    live for a given install: **compile-time registration** (`apps/mobile/src/modules.ts:11-18`
    calls `registerModule()` per module the mobile build includes — today that's admin-finance,
    field-tech, and sales-marketing; payment-review is never registered there) and **runtime
-   per-org enablement** (`organizations.enabled_modules text[]`, `supabase/0001_foundation.sql:27`,
+   per-org enablement** (`organizations.enabled_modules text[]`, `supabase/migrations/0001_foundation.sql:27`,
    filtered through `getEnabledModules()` in `packages/module-sdk/src/index.ts:101-114`). Chapter 6
    is the concrete example of the first axis: built and contract-satisfying, but absent from the
    mobile registry.
@@ -195,7 +195,7 @@ provenance discrepancy — the claim is true):
   4 failing suites: AC-7 (root cause not yet known at that point), AC-8.2 (genuine RLS/trigger
   defect), AC-RV-2 (genuine RLS/grant defect), AC-12.1c (test-authoring gap, not a defect).
 - **`E:\Jeff\.claude\build-reports\jobcore-p2-supabase-hosted\2026-08-13_rls-defect-fixes.md`**
-  — same-day follow-up. 3 genuine production defects fixed via `supabase/0013_rls_fixes.sql`
+  — same-day follow-up. 3 genuine production defects fixed via `supabase/migrations/0013_rls_fixes.sql`
   (idempotent, standalone-runnable, 55 lines):
   1. `jobs_select_org` SELECT policy — now requires both `organization_id = current_org_id()` AND
      `is_org_sales_or_above()`.
@@ -231,7 +231,7 @@ migration filename and date), not as a vague "security was improved" claim.
 6. Manual scope vs. per-org `enabled_modules` → confirmed by direct research this turn: module
    subsets are real at both a compile-time axis (`apps/mobile/src/modules.ts:11-18` registers only
    3 of 4 modules) and a runtime axis (`organizations.enabled_modules text[]`,
-   `supabase/0001_foundation.sql:27`, filtered via `getEnabledModules()` in
+   `supabase/migrations/0001_foundation.sql:27`, filtered via `getEnabledModules()` in
    `packages/module-sdk/src/index.ts:101-114`; the dev-seed org enables only 3 —
    `supabase/seed.sql:18-24`). The manual is **not** filtered by either axis: it documents
    JobCore's full module surface (all 4 modules across the 5 files) as a static as-built
@@ -268,7 +268,7 @@ dispatch = one output file (or the shared pair), per Rule 38's per-file default.
 | # | Slice | Reads (inside the dispatch only) | Writes | Blocks on |
 |---|---|---|---|---|
 | 1 | Build-state crib file | This plan's Content Architecture + Self-Resolved Defaults sections (passed verbatim in the dispatch prompt) | `...\scratchpad\jobcore-basics-build-state.md` — chapter list, file mapping, badge legend, token→CSS map, RLS facts, persona pattern, per-chapter status rows; a payment-collection storyboard status row (slice 4) | nothing (first slice) |
-| 2 | Front Matter + Ch1 (What Is JobCore?) | Crib file; `packages/module-sdk/src/index.ts`; `apps/mobile/src/modules.ts:11-18`; `supabase/0001_foundation.sql:27`; `00-MASTER-SPEC.md` §module system | `app/docs/fragments/00-front-matter.html`, `app/docs/fragments/01-ch1.html` | Slice 1 |
+| 2 | Front Matter + Ch1 (What Is JobCore?) | Crib file; `packages/module-sdk/src/index.ts`; `apps/mobile/src/modules.ts:11-18`; `supabase/migrations/0001_foundation.sql:27`; `00-MASTER-SPEC.md` §module system | `app/docs/fragments/00-front-matter.html`, `app/docs/fragments/01-ch1.html` | Slice 1 |
 | 3 | Ch2 (Job Lifecycle & Platform Foundations) | Crib file; `packages/core/src/state-machine.ts`; both 2026-08-13 RLS build reports (paths in Verified Content above) | `app/docs/fragments/02-ch2.html` | Slice 2 (cites Ch1's module vocabulary) |
 | 4 | Payment-collection storyboard | Crib file; `packages/core/src/state-machine.ts` (`requirePaymentSettled`); `app/supabase/functions/stripe-webhook/index.ts`; `app/supabase/functions/paypal-webhook/index.ts`; `app/modules/payment-review/src/domain/providers/{cash,check,p2p-link}.ts`; `app/modules/payment-review/src/domain/handoff.ts`; `app/modules/payment-review/src/index.ts` (mark-paid jobAction); `0010_payment_review.sql` (lines 12-22 payment_providers table, 26-31 card capture, 109-143 manual-confirm, 157-161 admin-only RLS); `app/modules/field-tech/src/screens/Completion.tsx`; `../web/handoff/src/screens/awaitingPayment.ts` and `../web/handoff/src/screens/{confirming,review,done}.ts` | `...\scratchpad\jobcore-basics-payment-storyboard.md` — sequenced steps from `in_progress → completed` through `paid`, each of the 4 payment methods badged per the 5-tier system, the storyboarded homeowner-satisfaction-confirmation gate (flagged as new/proposed), the "Mark Paid is OFFICE-role, in a not-yet-registered module" honest note, plus the admin "flip the switch" `payment_providers` enablement fact for Ch3 to cite | Slice 3 |
 | 5 | Ch3 (Admin & Finance, dual persona) | Crib file; `modules/admin-finance` source; Ch2's state-name vocabulary (from crib, not re-derived); Slice 4's payment-storyboard crib fragment (the admin "flip the switch" fact only) | `app/docs/fragments/03-ch3.html` | Slices 3, 4 |
@@ -328,7 +328,7 @@ its own context — no slice's inputs persist past its own dispatch.
 - Confirm "Training" appears exactly once across the whole manual — in Chapter 7's roadmap — with
   no content about it anywhere else.
 - Spot-check Chapter 2/7 (core file): confirm the RLS hardening section cites both build report
-  filenames, the 2026-08-13 date, and `supabase/0013_rls_fixes.sql` by name.
+  filenames, the 2026-08-13 date, and `supabase/migrations/0013_rls_fixes.sql` by name.
 - Confirm rendered colors match `packages/ui/src/tokens.ts` (sample 3–4 hex values against the
   CSS custom properties in `jobcore-basics-shared.css`).
 - Print-preview at least the core file (baseline check) and tab through it once for visible

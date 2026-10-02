@@ -8,8 +8,8 @@
  * No sqlite, no fetch, no fixtures, no React live here. Mirrors
  * `modules/field-tech/src/data/ports.ts`'s shape exactly.
  *
- * Row shapes mirror `app/supabase/0010_payment_review.sql` (reviews) and
- * `app/supabase/0012_marketing.sql` (everything else) field-for-field.
+ * Row shapes mirror `app/supabase/migrations/0010_payment_review.sql` (reviews) and
+ * `app/supabase/migrations/0012_marketing.sql` (everything else) field-for-field.
  *
  * Scope fence (P6 plan): this module's ports NEVER expose a query touching
  * `commissions`, `price_sheets`, or `payout_batches` — those remain
@@ -539,7 +539,7 @@ export type TestJobRow = {
 
 /**
  * Workstream K. Touches the core `jobs` table (`is_beta`,
- * `app/supabase/0018_beta_test_jobs.sql`) rather than any table this module
+ * `app/supabase/migrations/0018_beta_test_jobs.sql`) rather than any table this module
  * otherwise owns — an intentional, narrow exception to this file's usual
  * reviews/marketing/post scope, kept here only because "Spawn Test Jobs"
  * lives in this module's UI. No RLS change, no synthetic payment/commission
@@ -586,9 +586,9 @@ export interface TestJobsRepository {
 
 /**
  * Mirrors the composed row an open-callback-task query returns: `jobs`
- * (`app/supabase/0004_scheduling.sql`) filtered to `status = 'completed'`,
+ * (`app/supabase/migrations/0004_scheduling.sql`) filtered to `status = 'completed'`,
  * left-joined to `customers` for contact info and to the new
- * `sales_callback_status` (`app/supabase/0017_sales_callback_status.sql`)
+ * `sales_callback_status` (`app/supabase/migrations/0017_sales_callback_status.sql`)
  * for done/not-done state. Not a single-table row like this file's other
  * `XxxRow` shapes — `jobs` is not otherwise queried by this module (it is
  * not on the scope-fence list above; `commissions`/`price_sheets`/

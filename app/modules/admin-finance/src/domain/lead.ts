@@ -1,7 +1,7 @@
 /**
  * Lead domain type (P3e.1).
  *
- * Mirrors the Supabase `leads` table (`supabase/0004_scheduling.sql:64-82`)
+ * Mirrors the Supabase `leads` table (`supabase/migrations/0004_scheduling.sql:64-82`)
  * exactly — the website's nine intake columns (source_form, name, phone,
  * email, service, preferred_date, preferred_time, address, project_details)
  * plus the same source/payer/attach_timing/qualified_at/converted_job_id

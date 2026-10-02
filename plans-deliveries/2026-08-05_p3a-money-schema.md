@@ -13,8 +13,8 @@ Goal slug: `jobcore-p3-admin-finance`
 Plan of record: ledger rows P3a.1-P3a.8 in `Jobcore\handoff\P3-SLICE-LEDGER.md`
 Spec of record: `Jobcore\03-P3-admin-finance.md`
 Commit: b25c99e - docs(handoff): correct falsified P3a.2 row - CHECK is introduced, not byte-matched (P3 ledger held at exactly 200 lines)
-Commit: 426e368 - feat(admin-finance): P3-a money schema - 0005_money.sql (1 file changed, 552 insertions(+); `create mode 100644 app/supabase/0005_money.sql`)
-Files: `app/supabase/0005_money.sql` (CREATED, 552 lines); ledger of record `handoff/P3-SLICE-LEDGER.md` rows P3a.1-P3a.8
+Commit: 426e368 - feat(admin-finance): P3-a money schema - 0005_money.sql (1 file changed, 552 insertions(+); `create mode 100644 app/supabase/migrations/0005_money.sql`)
+Files: `app/supabase/migrations/0005_money.sql` (CREATED, 552 lines); ledger of record `handoff/P3-SLICE-LEDGER.md` rows P3a.1-P3a.8
 
 This group is DB-GATED. Per Rule 15 R-A the ungated core (structural SQL) proceeded on its own
 track and is verified below; every acceptance criterion that requires a provisioned Postgres is
@@ -119,11 +119,11 @@ This reconciliation is disclosed in the body of commit `426e368`.
 ## Verification
 
 All commands run from the main session (not asserted by a hound), against
-`E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0005_money.sql`.
+`E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0005_money.sql`.
 
 Sweep 1 - census and hard constraints (Rule 29-B provenance):
 
-    $p='E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0005_money.sql'
+    $p='E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0005_money.sql'
     "LINES=" + (Get-Content $p).Count
     "NONASCII=" + [bool]([IO.File]::ReadAllText($p) -match '[^\x00-\x7F]')
     "DOLLARQ=" + ([regex]::Matches([IO.File]::ReadAllText($p),'\$\$')).Count
@@ -150,7 +150,7 @@ Verbatim output:
 
 Sweep 2 - CHECK values and full object census:
 
-    $p='E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\0005_money.sql'
+    $p='E:\Jeff\Codespace\SDAssemblyPros\Jobcore\app\supabase\migrations\0005_money.sql'
     Select-String -Path $p -Pattern 'attach_timing in|total_amount =' | ForEach-Object { "$($_.LineNumber): $($_.Line.Trim())" }
     Select-String -Path $p -Pattern '^create (table|type|trigger|policy|or replace function|unique index|index)' | ForEach-Object { "$($_.LineNumber): $($_.Line.Trim())" }
 
@@ -180,9 +180,9 @@ both present and correct. Object census: enums at 11/20/30; functions at 54 (`is
 
 Commit provenance for `426e368`:
 
-    cd "E:/Jeff/Codespace/SDAssemblyPros/Jobcore" && git add app/supabase/0005_money.sql && git status --short -- app/supabase/0005_money.sql && git commit -m "..." (x5)
+    cd "E:/Jeff/Codespace/SDAssemblyPros/Jobcore" && git add app/supabase/migrations/0005_money.sql && git status --short -- app/supabase/migrations/0005_money.sql && git commit -m "..." (x5)
 
-Output: `A  app/supabase/0005_money.sql`; `[main 426e368] feat(admin-finance): P3-a money schema -
+Output: `A  app/supabase/migrations/0005_money.sql`; `[main 426e368] feat(admin-finance): P3-a money schema -
 0005_money.sql`; `1 file changed, 552 insertions(+)`. The pathspec named that one file and nothing
 else - the foreign entries `app/supabase/README.md`, `seed.sql`, `seed.hosted.sql`, and the two
 hosted test files were correctly left unstaged.

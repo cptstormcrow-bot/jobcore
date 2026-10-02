@@ -8,7 +8,7 @@
  * pattern (a narrow `SupabaseSelectClient` surface, not the full
  * `@supabase/supabase-js` `SupabaseClient` type).
  *
- * Row shape mirrors `app/supabase/0010_payment_review.sql`'s `payments`
+ * Row shape mirrors `app/supabase/migrations/0010_payment_review.sql`'s `payments`
  * table (L32-45) field-for-field.
  */
 

@@ -12,7 +12,7 @@ two routes `web/handoff/src/api.ts` calls: `GET /:token` and
 no-user-session pattern as `stripe-webhook`/`paypal-webhook`, but public and
 token-scoped rather than provider-signed — the customer holding the QR code
 has no Supabase auth session at all (see the `handoff_tokens` RLS comment in
-`supabase/0010_payment_review.sql`).
+`supabase/migrations/0010_payment_review.sql`).
 
 ## 1. Deploy the function
 

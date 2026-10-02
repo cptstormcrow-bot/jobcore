@@ -15,7 +15,7 @@
  * `serviceAreaId` is a caller-supplied parameter, not read off `job` — same
  * reason `qualify.ts`'s `buildJobFromLead` takes it as a parameter:
  * `@jobcore/core`'s `Job` type deliberately does not declare
- * `serviceAreaId` (`supabase/0006_job_service_area.sql` added the column;
+ * `serviceAreaId` (`supabase/migrations/0006_job_service_area.sql` added the column;
  * the shared `Job` type was not widened for it), so this module always
  * carries the value alongside the job rather than on it.
  */

@@ -6,7 +6,7 @@
  * assume an authenticated session) — this is a documented placeholder
  * hitting a same-origin `/api/handoff/*` surface that does not exist yet.
  * A later slice wires the real endpoint (Supabase Edge Function, or a thin
- * server validating `handoff_tokens` per `app/supabase/0011_handoff_token_issue.sql`)
+ * server validating `handoff_tokens` per `app/supabase/migrations/0011_handoff_token_issue.sql`)
  * behind this exact function signature.
  */
 

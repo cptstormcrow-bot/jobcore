@@ -28,8 +28,8 @@
 | `app/packages/core/src/clocks.ts` | NEW | `ClockConfig`, `DEFAULT_CLOCK_CONFIG` (5 min = 300000 ms), `evaluateSkew` |
 | `app/packages/core/src/index.ts` | M | optional `writeAudit?` / `serverNow?` / `clockConfig?` seams on `Ctx`; barrel re-export |
 | `app/packages/core/src/state-machine.ts` | M | imports `evaluateSkew`, replaces `void clockPair;`, emits exactly one insert-only audit row per transition |
-| `app/supabase/0001_foundation.sql` | M | foundation schema touch-up |
-| `app/supabase/0003_invitations_and_signup.sql` | NEW | invitations + signup |
+| `app/supabase/migrations/0001_foundation.sql` | M | foundation schema touch-up |
+| `app/supabase/migrations/0003_invitations_and_signup.sql` | NEW | invitations + signup |
 | `app/apps/mobile/src/lib/supabase.ts` | M | client wiring |
 | `app/.gitignore` | M | ignore hygiene |
 | `02-P2-scheduling-core.md` | M | Rule 31 docs-ride: L19 stale `0002_scheduling.sql` pointer corrected to `0004_scheduling.sql` |

@@ -2,7 +2,7 @@
  * Handoff token issuance (P5.S5).
  *
  * Thin wrapper around the `issue_handoff_token` RPC declared in
- * `app/supabase/0011_handoff_token_issue.sql` — mirrors
+ * `app/supabase/migrations/0011_handoff_token_issue.sql` — mirrors
  * `modules/admin-finance/src/data/payout-batch-repo.ts`'s
  * `SupabaseRpcClient`-minimal-client discipline (just `rpc`, not the full
  * `SupabaseClient` type, no hard `@supabase/supabase-js` import) rather than

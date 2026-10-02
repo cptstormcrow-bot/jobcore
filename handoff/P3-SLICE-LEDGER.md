@@ -14,7 +14,7 @@ See `P3-CONTEXT-PROTOCOL.md` for P2 contracts, sizing rule, and close-out ritual
 | P3-0.2 | Protocol amendment — preamble absorbed, batch concept + P3a.2 correction recorded; ctx: P3-CONTEXT-PROTOCOL.md — DONE |
 | P3-0.3 | Test-runner decision (keep node:test, keep shim, raise engines) recorded in protocol; report: content landed in P3-CONTEXT-PROTOCOL.md this pass — DONE |
 | P3-0.4 | `app/package.json` `engines.node` `">=20"` -> `">=22.6"` — one-line edit, no dependency install; ctx: `app/package.json:19` — DONE 15e0f7b |
-## P3-a — `app/supabase/0005_money.sql` (EXEC-GATED)
+## P3-a — `app/supabase/migrations/0005_money.sql` (EXEC-GATED)
 | # | Microslice | Status | Commit | Build report | Context in | Context out | Forward contracts |
 |---|---|---|---|---|---|---|---|
 | P3a.1 | Enums (`publication_status`, `reimbursement_status`, `payout_batch_status`) + `public.is_org_admin()` helper, `security definer / stable / search_path=''` | DONE 426e368 | | | `0001_foundation.sql:74-89,111-117`; enum doctrine `0004_scheduling.sql:8-10` | | |

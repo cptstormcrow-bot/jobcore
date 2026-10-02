@@ -3,7 +3,7 @@
  *
  * `plans/jobcore-service-area.md` §3: filters/flags technician candidates
  * for a job by whether they have a `tech_service_areas` coverage row
- * (`app/supabase/0020_field_ops_segway_and_estimating.sql`) matching the
+ * (`app/supabase/migrations/0050_field_ops_segway_and_estimating.sql`) matching the
  * job's resolved service area.
  *
  * Pure — no DB, no network, no clock read — mirroring

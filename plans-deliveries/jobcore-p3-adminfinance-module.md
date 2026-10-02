@@ -121,7 +121,7 @@ slice answered more than one question and rule 2 was violated.
 
 | Group | Scope | Gate |
 |---|---|---|
-| **P3-a** | `app/supabase/0005_money.sql` — enums, `is_org_admin()`, the 7 money tables, immutability triggers, `publish_price_sheet()` RPC, RLS on all 7 | EXEC-GATED |
+| **P3-a** | `app/supabase/migrations/0005_money.sql` — enums, `is_org_admin()`, the 7 money tables, immutability triggers, `publish_price_sheet()` RPC, RLS on all 7 | EXEC-GATED |
 | **P3-b** | `0006_job_service_area.sql` (nullable `jobs.service_area_id` FK) + additive 20-row `seed.sql` reseed to 26 + `supabase/README.md` ride | EXEC-GATED |
 | **P3-c** | **Money core, pure TS** — `money/types.ts`, `calculateCommission`, `deriveBillableHours`, `BonusRule`/`NullBonusRule`, `rollUpPeriodPay`, assertions | **UNGATED** |
 | **P3-d** | Module shell — `data/ports.ts`, `lib/module-session.ts`, `AdminFinanceRoot.tsx`, manifest fill in `src/index.ts` | ungated |

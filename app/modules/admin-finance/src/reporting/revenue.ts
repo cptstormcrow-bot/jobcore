@@ -12,7 +12,7 @@
  * `../money/payout-batch.ts` (`FrozenPayoutLine`, frozen amount columns).
  *
  * KNOWN LIMITATION — no "revenue" figure exists in this schema. Checked
- * `app/supabase/0005_money.sql`'s `commissions` table (id, organization_id,
+ * `app/supabase/migrations/0005_money.sql`'s `commissions` table (id, organization_id,
  * job_id, user_id, price_sheet_id, compensation_policy_id, amount_cents,
  * voided_at, created_at, updated_at) and `../money/types.ts`'s
  * `CommissionLine` (jobId, priceSheetId, compensationPolicyId, amount): the

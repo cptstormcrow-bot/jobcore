@@ -2,7 +2,7 @@
  * Per-platform composer guidance (JobCore P6 plan §5) — character limits and
  * aspect-ratio guidance the Composer surfaces while a draft's caption/assets
  * are edited. Keyed by plain platform strings, matching `post_targets.platform`
- * (an unconstrained `text` column, app/supabase/0012_marketing.sql) and
+ * (an unconstrained `text` column, app/supabase/migrations/0012_marketing.sql) and
  * `SocialProvider.platforms` (./providers/types.ts) — deliberately not an
  * enum, so a new platform is a new map entry, not a type change (AC-8).
  *

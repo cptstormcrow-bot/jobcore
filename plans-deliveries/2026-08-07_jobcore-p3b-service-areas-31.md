@@ -24,7 +24,7 @@ implementation with "make it all a reality."
 
 Five files changed, additive and idempotent throughout:
 
-- `app/supabase/0006_job_service_area.sql` (new) — migration adding
+- `app/supabase/migrations/0006_job_service_area.sql` (new) — migration adding
   `jobs.service_area_id` (nullable uuid FK, `on delete set null`) plus index.
 - `app/supabase/seed.sql`, `app/supabase/seed.hosted.sql` — 25 new
   community rows appended via `on conflict (id) do nothing`; original 6

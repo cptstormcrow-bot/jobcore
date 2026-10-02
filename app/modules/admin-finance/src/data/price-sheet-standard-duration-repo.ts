@@ -2,7 +2,7 @@
  * Repo layer for `price_sheet_standard_duration` (T21).
  *
  * Mirrors the Supabase `price_sheet_standard_duration` table
- * (`app/supabase/0047_price_sheet_standard_duration.sql`): an org-scoped
+ * (`app/supabase/migrations/0047_price_sheet_standard_duration.sql`): an org-scoped
  * singleton row (`organization_id` is itself the primary key) holding the
  * baseline/standard job duration compared against real price-sheet-sourced
  * job durations.

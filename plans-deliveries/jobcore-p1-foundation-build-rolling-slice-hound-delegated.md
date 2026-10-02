@@ -120,7 +120,7 @@ E:\Jeff\Codespace\SDAssemblyPros\app\
   packages/core/                  Role, Organization, Profile shared types (minimal at P1)
   packages/ui/                    tokens.ts + Button Card ListItem EmptyState LoadingState ErrorState
   modules/admin-finance/  modules/field-tech/  modules/sales-marketing/
-  supabase/0001_foundation.sql  supabase/seed.sql
+  supabase/migrations/0001_foundation.sql  supabase/seed.sql
   HANDOFF.md                    ← S8: Android Studio + Mac Mini iOS handoff (PIB, stack-exact)
 ```
 
@@ -173,7 +173,7 @@ from the local CSS, that token ships as a documented placeholder and the slice r
 than inventing a brand.
 
 ### S3 — Supabase foundation SQL *(agent)*
-`supabase/0001_foundation.sql`: `organizations`, `profiles`, `audit_log` exactly as specified, RLS
+`supabase/migrations/0001_foundation.sql`: `organizations`, `profiles`, `audit_log` exactly as specified, RLS
 enabled on all three, a `current_org_id()` `security definer stable` helper reading the caller's
 `profiles.organization_id`, and every policy expressed through it. `profiles.role` is a Postgres
 enum `('owner','admin','tech','sales')`. `supabase/seed.sql`: one organization with

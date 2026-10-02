@@ -139,7 +139,7 @@
   <p>
     Independently of registration, each organization carries an
     <code>enabled_modules text[]</code> column (<code>organizations.enabled_modules</code>,
-    <code>supabase/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
+    <code>supabase/migrations/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
     includes a module only if <em>both</em> the org's <code>enabled_modules</code> list contains the
     module's id <em>and</em> the requesting user's role is in the module's
     <code>requiredRoles</code> — fail-closed on both counts, so an empty <code>requiredRoles</code>
@@ -337,7 +337,7 @@ transition rather than silently dropping the row.</p>
 <p>The row records <code>fromState</code>, <code>toState</code>,
 <code>occurredAt</code>, <code>syncedAt</code>, <code>skewMs</code>, and
 <code>skewed</code> — but the shipped <code>audit_log</code> table
-(<code>supabase/0001_foundation.sql</code>, lines 45–56) has no dedicated columns
+(<code>supabase/migrations/0001_foundation.sql</code>, lines 45–56) has no dedicated columns
 for any of them. All five ride inside the table's existing <code>metadata</code>
 jsonb column instead. Rows are insert-only and never updated.
 <span class="jc-badge jc-badge--live">🟢 Built &amp; Live</span></p>
@@ -359,7 +359,7 @@ RLS/trigger defect), <code>AC-RV-2</code> (genuine RLS/grant defect), and
 <p>Source:
 <code>E:\Jeff\.claude\build-reports\jobcore-p2-supabase-hosted\2026-08-13_rls-defect-fixes.md</code>.
 Three genuine production defects were fixed via
-<code>supabase/0013_rls_fixes.sql</code> (idempotent, standalone-runnable, 55 lines):</p>
+<code>supabase/migrations/0013_rls_fixes.sql</code> (idempotent, standalone-runnable, 55 lines):</p>
 <ol>
 <li><code>jobs_select_org</code> SELECT policy — now requires both
 <code>organization_id = current_org_id()</code> <strong>and</strong>

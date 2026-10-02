@@ -66,7 +66,7 @@
   <p>
     Independently of registration, each organization carries an
     <code>enabled_modules text[]</code> column (<code>organizations.enabled_modules</code>,
-    <code>supabase/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
+    <code>supabase/migrations/0001_foundation.sql</code> line 27). <code>getEnabledModules(org, role)</code>
     includes a module only if <em>both</em> the org's <code>enabled_modules</code> list contains the
     module's id <em>and</em> the requesting user's role is in the module's
     <code>requiredRoles</code> — fail-closed on both counts, so an empty <code>requiredRoles</code>

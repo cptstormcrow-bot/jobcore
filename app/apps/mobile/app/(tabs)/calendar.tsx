@@ -64,7 +64,7 @@ const JOB_ROW_COLUMNS =
   'en_route_at, in_progress_at, completed_at, created_at, is_beta';
 
 // Workstream E: calendar.tsx now sources from the unified `calendar_events` log
-// (see supabase/0014_calendar_events.sql) instead of querying `jobs` directly,
+// (see supabase/migrations/0014_calendar_events.sql) instead of querying `jobs` directly,
 // matching admin-finance-repos.ts / field-tech-repos.ts. calendar_events carries
 // no job-detail columns itself, so job-linked rows embed the `jobs` row via the
 // job_id FK for display (address/status/scheduled time).
@@ -106,7 +106,7 @@ export default function CalendarScreen() {
   const orgId = s.status === 'authenticated' ? s.organization.id : undefined;
 
   // Org-scoped query only, no client-side tech filter: calendar_events_select_org /
-  // calendar_events_select_tech RLS policies (supabase/0014_calendar_events.sql) OR
+  // calendar_events_select_tech RLS policies (supabase/migrations/0014_calendar_events.sql) OR
   // together server-side, so an org-scoped query already returns the RLS-correct row
   // set for every role. NOTE: a tech's RLS grant only covers job_id-linked rows, so
   // non-job kinds (e.g. time_off) are invisible to tech-role viewers regardless of the

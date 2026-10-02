@@ -39,7 +39,7 @@ export interface QualifyLeadDeps {
   leads: LeadRepository;
   customers: CustomerRepository;
   /**
-   * Workstream E (`app/supabase/0014_calendar_events.sql`) — logs the
+   * Workstream E (`app/supabase/migrations/0014_calendar_events.sql`) — logs the
    * `new` -> `qualified` transition below as a calendar event. Required,
    * not optional: `writeAudit()` is confirmed dead code, so this explicit
    * call is the only record of the transition outside `jobs.status`.

@@ -2,7 +2,7 @@
 -- Jobcore - RLS assertions for 0007_field_tech_tables.sql (P4 - checklist
 -- templates/instances/items, job_photos, time_off_requests, job_notes)
 --
--- Hand-applied. Run this file in the SQL editor AFTER 0001..0007 and seed.sql.
+-- Hand-applied. Run this file in the SQL editor AFTER migrations/0001..0007 and seed.sql.
 -- Each block raises an exception on failure and is silent on success.
 --
 -- Run as a normal authenticated session, NOT the service role. The service role

@@ -52,7 +52,7 @@ internal layout is satisfied inside it). Do **not** re-create what section 3 lis
 | # | Item | Notes |
 |---|------|-------|
 | 2 | `apps/mobile` Expo shell | Expo managed + Expo Router, EAS iOS+Android, brand name as config in `app.json`. |
-| 3 | `supabase/0001_foundation.sql` | `organizations` / `profiles` / `audit_log`; RLS on all three; `current_org_id()` helper used in every policy. |
+| 3 | `supabase/migrations/0001_foundation.sql` | `organizations` / `profiles` / `audit_log`; RLS on all three; `current_org_id()` helper used in every policy. |
 | 4 | Auth | Email/password, `SessionProvider` + `useSession()`, SecureStore persistence, explicit loading/unauth states. |
 | 8 | `packages/ui` | Tokens + `Button/Card/ListItem/EmptyState/LoadingState/ErrorState`, styled to match sdassemblypro.com. |
 | 9 | `supabase/seed.sql` | One org + one user per role. |

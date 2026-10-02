@@ -5,14 +5,14 @@
  *
  * `platform` is deliberately a plain string everywhere in this module, not
  * an enum — it mirrors the unconstrained `text` `post_targets.platform`
- * column (app/supabase/0012_marketing.sql) so that AC-8 ("adding a second
+ * column (app/supabase/migrations/0012_marketing.sql) so that AC-8 ("adding a second
  * `SocialProvider` requires no change to the composer") never requires a
  * type change here either.
  */
 
 /**
  * Mirrors the Postgres `post_drafts.status` check constraint
- * (app/supabase/0012_marketing.sql, `post_drafts_status_check`):
+ * (app/supabase/migrations/0012_marketing.sql, `post_drafts_status_check`):
  * 'draft' | 'approved' | 'posted' | 'failed'.
  */
 export type PostStatus = 'draft' | 'approved' | 'posted' | 'failed';

@@ -10,7 +10,7 @@ SQL only. No Supabase **client** lives here — `src/lib/supabase.ts` (with the 
 storage adapter) is S4's work, not S3's.
 
 **A hosted Supabase project now exists** (ref `vogkxkcceahtwyovpxsg`). All thirteen migrations
-(`0001_foundation.sql` through `0013_rls_fixes.sql`) live in this directory and have been applied to
+(`migrations/0001_foundation.sql` through `migrations/0013_rls_fixes.sql`) live in `supabase/migrations/` and have been applied to
 it, the four auth users have been created, and `seed.hosted.sql` has been applied (`public.profiles`
 holds 4 rows). Both hosted RLS suites have been run against it and both passed — but that coverage
 is limited to `0001_foundation` and `0004_scheduling`; the newer RLS-bearing migrations (`0005` money,
@@ -21,49 +21,7 @@ separate follow-on work.
 
 | File | Purpose |
 |------|---------|
-| `0001_foundation.sql` | Types, tables (`organizations`, `profiles`, `audit_log`), the `current_org_id()` tenancy helper, RLS + every policy |
-| `0002_profiles_role_column_guard.sql` | Column-level `revoke update (role)` — closes the self-escalation gap that 4.4 below probes |
-| `0003_invitations_and_signup.sql` | `invitations` table + RLS, `signup_attempts` (RLS on, no policies), and the `handle_new_user()` signup trigger that turns a pending invitation into a profile |
-| `0004_scheduling.sql` | P2 scheduling core — `job_status` enum (13 values), tables `customers`, `services`, `service_areas`, `leads`, `jobs`, `job_assignments` (each with an `organization_id` FK + index), RLS enabled on all six with 25 policies scoped through `current_org_id()`; a tech's read on `jobs` resolves through `job_assignments` |
-| `0005_money.sql` | P3 admin/finance money core — `publication_status`, `reimbursement_status`, `payout_batch_status` enums, the `is_org_admin()` tenancy helper, and the rate-publication / reimbursement / payout-batch schema with RLS |
-| `0006_job_service_area.sql` | Adds a nullable `service_area_id` FK (+ index) on `jobs` referencing `service_areas`, `on delete set null` |
-| `0007_field_tech_tables.sql` | P4 field-tech job-execution tables + RLS |
-| `0008_field_tech_jobs_rls.sql` | Tech `UPDATE` policy on `jobs` (column-whitelisted via trigger), plus a commissions tech self-select policy |
-| `0009_idempotency_keys.sql` | Adds `idempotency_key` columns + unique partial indexes to `audit_log` and `job_photos` for offline-queue replay dedup |
-| `0010_payment_review.sql` | P5 payment + review — org-level `payment_providers` config plus the payment/review schema, RLS |
-| `0011_handoff_token_issue.sql` | P5.S5 handoff token issuance — `issue_handoff_token(p_job_id uuid)`, a signed, expiring, single-job-scoped token inserted into `public.handoff_tokens` (0010) |
-| `0012_marketing.sql` | Adds `reviews.sort_order` + index, `job_photos.customer_consent`; creates `marketing_assets`, `post_drafts`, `post_draft_assets`, `post_targets`, `campaign_log`, `social_providers`, `social_provider_credentials` tables with RLS; dual-consent trigger on `post_draft_assets` |
-| `0013_rls_fixes.sql` | RLS defect fixes for hosted-suite findings (0004 AC-7, 0008 AC-8.2, 0010 AC-RV-2) — supersedes `jobs_select_org`, `jobs_update_org`, and `reviews_insert_anon`; adds `job_exists_in_org()` helper; idempotent, apply after `0012_marketing.sql` |
-| `0014_calendar_events.sql` | Calendar events core table + RLS |
-| `0015_job_detail_extensions.sql` | Job-detail extension columns/tables |
-| `0016_job_status_backfill.sql` | Backfills `job_status` data for pre-existing rows |
-| `0017_sales_callback_status.sql` | Sales callback status tracking |
-| `0018_job_notes_gotcha_kind.sql` | Adds a `gotcha` kind to job notes |
-| `0018_beta_test_jobs.sql` | Adds `jobs.is_beta boolean NOT NULL DEFAULT false` — backs the "Spawn Test Jobs" feature |
-| `0019_time_off_auto_decide.sql` | Time-off requests auto-decided at insert (no admin approve/deny step); adds `decide_time_off_request()` trigger function and `cancel_time_off_request(uuid)` RPC |
-| `0020_job_detail_extensions_read_access.sql` | Read-access RLS for job-detail extensions |
-| `0021_payout_lines_freeze.sql` | Payout lines freeze |
-| `0022_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy + area pricing schema |
-| `0022_close_out_failures.sql` | Close-out failure tracking |
-| `0023_close_out_override_rpcs.sql` | Admin override RPCs for close-out |
-| `0023_field_ops_segway_and_estimating.sql` | Field-ops segway + estimating schema |
-| `0024_time_tracking_and_variance.sql` | Time tracking + variance schema |
-| `0025_reimbursement_review_rpcs.sql` | Reimbursement review RPCs |
-| `0026_close_out_write_rpc.sql` | Close-out write RPC |
-| `0027_beta_test_source.sql` | Widens `jobs_source_check` to allow `'beta-test'` — unblocks the "Spawn Test Jobs" feature's synthetic-row insert. |
-| `0033_job_planning.sql` | Job planning schema |
-| `0034_price_sheet_archive.sql` | Adds `public.archive_price_sheet` function for archiving a price sheet — applied 2026-09-04 (linked DB, `db query --file`) |
-| `0038_job_investigations_unique_job.sql` | applied 2026-09-05 (unique constraint job_investigations_job_id_key, verified via pg_constraint) |
-| `0040_jobs_job_number.sql` | Sequential job number on `jobs`, numbered GLOBALLY across organizations (not per-org), by design (plan decision S1, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
-| `0041_service_areas_zip_codes.sql` | Zip-code list on `service_areas` for address-based auto-select (plan decision S2, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
-| `0042_job_planning_evisit_columns.sql` | Plan region's own editable copy of the E-visit fields (ingress/logistics/parking/state) on `job_planning_details`, seeded from `job_investigations` client-side where null, then diverges (plan decision 9, 2026-09-03) — applied 2026-09-04 (linked DB, `db query --file`) |
-| `0044_jobs_ingress_instructions.sql` | Adds nullable `jobs.ingress_instructions` text column (gate codes, meetup notes) for the mobile Job Details form. |
-| `0045_service_areas_zip_backfill.sql` | applied 2026-09-05 — backfills `service_areas.zip_codes` for 31 existing San Diego service areas (91 zips total, verified via SELECT count); enables auto zip→service-area match on the Job Details form. |
-| `0048_job_notes_gotcha_kind.sql` | Adds 'gotcha' to job_notes_kind_check |
-| `0049_referrer_taxonomy_and_area_pricing.sql` | Referrer taxonomy and area pricing |
-| `0050_field_ops_segway_and_estimating.sql` | Field ops segway and estimating |
-| `0051_restore_job_notes_gotcha_kind.sql` | Re-adds 'gotcha' alongside other values to job_notes_kind_check |
-| `0065_jobs_needs_prem.sql` | jobs.needs_prem_at + Prem queue RLS + job_assignments write hardening + backfill; dedupes duplicate investigator assignments (keeps latest per job) before creating the one-investigator-per-job unique index |
+| `migrations/` | All schema migrations (`migrations/0001_foundation.sql` onward), applied in filename order. Root-level copies no longer exist. Notable: `migrations/0001_foundation.sql` (types, tables, `current_org_id()` helper, RLS), `migrations/0002_profiles_role_column_guard.sql` (closes the self-escalation gap that 4.4 below probes), `migrations/0003_invitations_and_signup.sql` (invitations + signup trigger), `migrations/0004_scheduling.sql` (P2 scheduling core) |
 | `seed.hosted.sql` | Prepared hosted variant of `seed.sql` — `auth.users` insert block removed, the four seed uuids substituted globally; apply this instead of `seed.sql` against a hosted project |
 | `tests/0001_foundation_rls.hosted.test.sql` | Hosted variant of `tests/0001_foundation_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
 | `tests/0004_scheduling_rls.hosted.test.sql` | Hosted variant of `tests/0004_scheduling_rls.test.sql`, carrying the real auth uuids in place of the placeholder ids |
@@ -75,11 +33,11 @@ separate follow-on work.
 
 Order is not cosmetic — each step depends on the previous one existing.
 
-1. **`0001_foundation.sql`** — creates the enum, the three tables, the `security definer` helper, and
+1. **`migrations/0001_foundation.sql`** — creates the enum, the three tables, the `security definer` helper, and
    enables RLS. Run it first; `seed.sql` inserts into tables it creates.
-2. **`0002_profiles_role_column_guard.sql`** — revokes `update (role)` from `authenticated`. A
+2. **`migrations/0002_profiles_role_column_guard.sql`** — revokes `update (role)` from `authenticated`. A
    column-level `REVOKE` can only be issued against a column that exists, so it must follow 0001.
-3. **`0003_invitations_and_signup.sql`** — the `invitations` table and the `on_auth_user_created`
+3. **`migrations/0003_invitations_and_signup.sql`** — the `invitations` table and the `on_auth_user_created`
    trigger. Depends on `public.user_role` and `public.current_org_id()` from 0001.
    **Apply this before creating any auth user below** — the trigger only provisions profiles for
    users created *after* it exists.
@@ -94,7 +52,7 @@ Order is not cosmetic — each step depends on the previous one existing.
      done: `seed.hosted.sql` is the prepared hosted variant with the auth.users block removed and all
      four uuids substituted globally — apply that file instead of `seed.sql` on a hosted project, and
      leave `seed.sql` untouched for local dev.
-5. **`0004_scheduling.sql`** — the P2 scheduling core. Depends on `public.organizations` and
+5. **`migrations/0004_scheduling.sql`** — the P2 scheduling core. Depends on `public.organizations` and
    `public.current_org_id()` from 0001; must follow 0003 (no ordering dependency on 0002).
 6. **`seed.sql`** — org, then profiles, then the scheduling data (services, service areas,
    customers, leads, jobs, job assignments). Re-runnable (`on conflict do nothing`). Leads insert with `converted_job_id` set to null; a
@@ -104,27 +62,22 @@ Order is not cosmetic — each step depends on the previous one existing.
 7. **`tests/*.test.sql`** — run last, after the seed. Each file asserts against the seed identifiers
    and rolls itself back, so the database is unchanged either way.
 
-All migrations through `0026_close_out_write_rpc.sql` have been applied to the hosted project (ref
+Migrations live in `supabase/migrations/` and apply in filename order. All migrations through
+`migrations/0026_close_out_write_rpc.sql` have been applied to the hosted project (ref
 `vogkxkcceahtwyovpxsg`). Files `0001`-`0013` were applied in order per each file's own "apply after"
-header. Files `0014`-`0026` were applied in this order: `0014`, `0015`, `0016`, `0017`,
-`0018_job_notes_gotcha_kind`, `0018_beta_test_jobs`, `0019_time_off_auto_decide`,
-`0020_job_detail_extensions_read_access`, `0022_referrer_taxonomy_and_area_pricing`,
-`0022_close_out_failures`, `0023_close_out_override_rpcs`, `0023_field_ops_segway_and_estimating`,
-`0024_time_tracking_and_variance`, `0026_close_out_write_rpc`.
+header.
 
-Two gaps in the numbering are known and resolved: `0022_close_out_failures.sql` and
-`0026_close_out_write_rpc.sql` each carry a header comment naming a dependency (`0021`, `0025`
-respectively) that never existed on disk or in git history — resolved as apply-after-previous-in-chain,
-i.e. `0022_close_out_failures` applied immediately after `0022_referrer_taxonomy_and_area_pricing`, and
-`0026_close_out_write_rpc` applied immediately after `0024_time_tracking_and_variance`.
+Two gaps in the numbering are known and resolved: `migrations/0022_close_out_failures.sql` and
+`migrations/0026_close_out_write_rpc.sql` each carry a header comment naming a dependency (`0021`, `0025`
+respectively) that never existed on disk or in git history — resolved as apply-after-previous-in-chain.
 
-`0027_beta_test_source.sql` was applied after `0026_close_out_write_rpc.sql` via the same
+`migrations/0027_beta_test_source.sql` was applied after `migrations/0026_close_out_write_rpc.sql` via the same
 `supabase db query --file <path> --linked` command, to fix a `jobs_source_check` violation
 discovered during live verification of Spawn Test Jobs.
 
 Applied via the Supabase CLI: `npx -y supabase@latest db query --file <path> --linked` (not `db push`
-or `db execute`, which do not apply to this repo's non-timestamped `supabase/*.sql` file layout).
-`0019_time_off_auto_decide.sql` required a workaround to apply: its dollar-quoted function bodies use a
+or `db execute`, which do not apply to this repo's non-timestamped `supabase/migrations/*.sql` file layout).
+`migrations/0019_time_off_auto_decide.sql` required a workaround to apply: its dollar-quoted function bodies use a
 bare `$` delimiter (`as $ ... $;`) instead of the conventional `$tag$`, which the CLI's `db query --file`
 Management-API path mis-parses as a syntax error. It was applied from a scratchpad copy with the bare
 `$` swapped to `$body$` (semantically identical dollar-quoting) — the tracked source file on disk was
@@ -201,7 +154,7 @@ cross-tenant leakage when only one org exists.
 
 ### Recursion smoke test
 
-If `0001_foundation.sql` is ever edited so a `profiles` policy reads `profiles` **inline** instead of
+If `migrations/0001_foundation.sql` is ever edited so a `profiles` policy reads `profiles` **inline** instead of
 through `current_org_id()`, step 3.2 will fail with
 `infinite recursion detected in policy for relation "profiles"`. That error is the canary for having
 broken the `security definer` indirection; it is why every policy is expressed through the helper.
@@ -211,7 +164,7 @@ broken the `security definer` indirection; it is why every policy is expressed t
 `profiles_update_self` permits a user to update their own row, and its `WITH CHECK` constrains `id`
 and `organization_id` but **not `role`** — as written, a `tech` could promote themselves. Postgres
 RLS cannot express a per-column check, so the fix lives one layer down in the privilege system:
-`0002_profiles_role_column_guard.sql` issues a column-level `revoke update (role) on public.profiles
+`migrations/0002_profiles_role_column_guard.sql` issues a column-level `revoke update (role) on public.profiles
 from authenticated`. Column privileges are checked *before* RLS, so the write is refused regardless
 of what any policy would have permitted.
 
@@ -257,4 +210,4 @@ Public price feed for the current published price sheet per organization. Reads 
 
 ### handoff-resolve
 Token-based payment-handoff resolution API for the review/handoff flow (GET /:token, POST /:token/providers/:providerId/handoff). Service-role client only, no Supabase auth session. Deploy REQUIRES --no-verify-jwt (verify_jwt = false) — see functions/handoff-resolve/DEPLOY.md.
-| `0046_job_plan_tasks.sql` | applied 2026-09-05 — Adds job_plan_tasks table (per-job catalog task list, live-linked to service_tasks) and extends service_tasks with estimated_minutes, rate, category, active columns. |
+| `migrations/0046_job_plan_tasks.sql` | applied 2026-09-05 — Adds job_plan_tasks table (per-job catalog task list, live-linked to service_tasks) and extends service_tasks with estimated_minutes, rate, category, active columns. |

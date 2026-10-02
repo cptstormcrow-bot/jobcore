@@ -37,7 +37,7 @@ one the ledger mandates a fixture-provable pure function for:
   `stripe-webhook`/`paypal-webhook`.
 - **`handler.ts`** — pure `buildFeed(sheet, rates): FeedBody` (row P3j.2a/P3j.2b). Selects *only*
   published sheets and their rates — nothing else. No Deno/DB dependency, so it's fixture-testable in
-  plain Node. `FeedBody` shape, derived from `app/supabase/0005_money.sql`'s `price_sheets` /
+  plain Node. `FeedBody` shape, derived from `app/supabase/migrations/0005_money.sql`'s `price_sheets` /
   `price_sheet_rates` tables:
   ```ts
   interface FeedBody {
@@ -72,7 +72,7 @@ specifically to `price-sheet-current`; `handoff-resolve` belongs to a different 
 with no ledger-mandated split, and forcing artificial symmetry would add an untested seam for no
 benefit. Design validated field-for-field against `web/handoff/src/types.ts` (`ProviderSummary`,
 `HandoffJobData`, `HandoffState`) and `web/handoff/src/api.ts` (route shapes), and against the DB
-schema in `app/supabase/0010_payment_review.sql` (`payment_providers`, `payments`, `handoff_tokens`,
+schema in `app/supabase/migrations/0010_payment_review.sql` (`payment_providers`, `payments`, `handoff_tokens`,
 `reviews`, `review_requests`).
 
 - **`index.ts`**:
