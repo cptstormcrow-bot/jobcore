@@ -1,11 +1,10 @@
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Ctx, Job } from '@jobcore/core';
 import { router } from 'expo-router';
-import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
-import { SETTLED_PAYMENT_STATUSES } from './data/ports';
+import { markJobPaid } from './flows/mark-paid';
 import { submitEstimate } from './flows/submit-estimate';
 import { approveEstimate } from './flows/approve-estimate';
 
@@ -99,13 +98,7 @@ export const adminFinanceModule: JobcoreModule = {
       id: 'admin-finance-mark-paid',
       label: 'Mark Paid',
       onInvoke: async (job: Job) => {
-        const ports = getModulePorts();
-        const ps = await ports.payments.listForJob(job.id);
-        const settled =
-          job.payer !== 'customer' || ps.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
-        const ctx: Ctx = { ...buildTransitionCtx(), hasPaymentRecord: () => settled };
-        await transitionJob(job, 'paid', ctx);
-        await ports.jobs.updateStatus(job.id, 'paid');
+        await markJobPaid(job, getModulePorts(), buildTransitionCtx());
       },
     },
     {

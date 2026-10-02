@@ -38,6 +38,7 @@ import { PremJobs } from './screens/PremJobs';
 import { Reimbursements } from './screens/Reimbursements';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
+import { buildTransitionCtxFrom, persistTransitionWith } from './lib/transition-ctx';
 import type { MenuItem } from '@jobcore/ui';
 import { transitionJob } from './domain/transition';
 
@@ -267,31 +268,7 @@ export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, Field
  * remain the sole owners of the precondition logic itself.
  */
 async function buildTransitionCtx(job: Job): Promise<Ctx> {
-  const session = getModuleSession();
-  const ports = getModulePorts();
-
-  // The state machine's probes are read synchronously (a Promise-returning
-  // probe always fails closed), so await every input first and hand back
-  // sync closures over the resolved values.
-  const [instance, photos, notes] = await Promise.all([
-    ports.checklist.getInstanceForJob(job.id, 'start'),
-    ports.photos.listForJob(job.id),
-    ports.notes.listForJob(job.id),
-  ]);
-  const startChecklistSubmitted = instance !== null && instance.submittedAt !== null;
-  const afterPhotosPresent = photos.some((photo) => photo.kind === 'after');
-  const qualityNotesPresent = notes.some((note) => note.kind === 'quality_notes');
-
-  return {
-    role: session ? session.role : 'tech',
-    now: () => new Date().toISOString(),
-    hasSubmittedStartChecklist: () => startChecklistSubmitted,
-    hasAfterPhotos: () => afterPhotosPresent,
-    hasQualityNotes: () => qualityNotesPresent,
-    // field-tech never records a payment record itself; a job whose payer
-    // is not the customer satisfies this precondition without one.
-    hasPaymentRecord: () => job.payer !== 'customer',
-  };
+  return buildTransitionCtxFrom(job, getModuleSession(), getModulePorts());
 }
 
 /**
@@ -302,17 +279,7 @@ async function buildTransitionCtx(job: Job): Promise<Ctx> {
  * singleton, not a fresh construction.
  */
 async function persistTransition(originalJob: Job, transitionedJob: Job): Promise<void> {
-  const session = getModuleSession();
-  const ports = getModulePorts();
-  const techId = session ? session.userId : originalJob.assignedTechId ?? '';
-
-  await ports.jobs.updateStatusAsTech(transitionedJob.id, techId, transitionedJob.status);
-  await ports.calendarEvents.logOwnTransition(
-    transitionedJob.organizationId,
-    transitionedJob.id,
-    originalJob.status,
-    transitionedJob.status,
-  );
+  await persistTransitionWith(originalJob, transitionedJob, getModuleSession(), getModulePorts());
 }
 
 /**
