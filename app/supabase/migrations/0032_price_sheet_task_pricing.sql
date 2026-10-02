@@ -1,5 +1,5 @@
 -- Jobcore - migration 0032: service task pricing
--- Apply after 0022_referrer_taxonomy_and_area_pricing.
+-- Apply after 0049_referrer_taxonomy_and_area_pricing.
 --
 -- Adds:
 --   1. service_tasks - per-service task catalog rows used by the price sheet
@@ -48,12 +48,18 @@ create policy service_tasks_admin_all
 -- 2. price_sheet_area_adjustments.adjustment_target
 -- ---------------------------------------------------------------------------
 
-alter table public.price_sheet_area_adjustments
-  add column if not exists adjustment_target text not null default 'total';
+-- Guarded: on a fresh db reset this table is created later by 0049, so the
+-- ALTER is skipped here and re-applied by migration 0072 below.
+DO $guard$ BEGIN
+  IF to_regclass('public.price_sheet_area_adjustments') IS NOT NULL THEN
+    alter table public.price_sheet_area_adjustments
+      add column if not exists adjustment_target text not null default 'total';
 
-alter table public.price_sheet_area_adjustments
-  drop constraint if exists price_sheet_area_adjustments_target_check;
+    alter table public.price_sheet_area_adjustments
+      drop constraint if exists price_sheet_area_adjustments_target_check;
 
-alter table public.price_sheet_area_adjustments
-  add constraint price_sheet_area_adjustments_target_check
-  check (adjustment_target in ('materials', 'labor', 'total'));
+    alter table public.price_sheet_area_adjustments
+      add constraint price_sheet_area_adjustments_target_check
+      check (adjustment_target in ('materials', 'labor', 'total'));
+  END IF;
+END $guard$;
