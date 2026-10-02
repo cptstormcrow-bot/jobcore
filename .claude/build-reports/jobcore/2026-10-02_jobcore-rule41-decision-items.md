@@ -115,7 +115,8 @@ Probed with Bash `test -e` in the same turn. W = `E:/Jeff/Codespace/SDAssemblyPr
   - Dry run listed only 0074.
   - Push output: "Applying migration 0074_reapply_0032_task_pricing_alter.sql... Finished supabase db push."
   - migration list: 0070-0074 present under both Local and Remote.
-- Catalog check (column adjustment_target + constraint price_sheet_area_adjustments_target_check): BLOCKED by the auto-mode classifier ("[Auto-Mode Bypass]"); pending a Jeff dashboard SQL editor run. Expected col_count 1, con_count 1.
+- Catalog check (column adjustment_target + constraint price_sheet_area_adjustments_target_check): BLOCKED by the auto-mode classifier ("[Auto-Mode Bypass]"); verified by Jeff dashboard SQL editor run (see below). Expected col_count 1, con_count 1.
+- **Live schema verified 2026-10-02:** Jeff ran the check query in the Supabase dashboard SQL Editor (auto-mode blocked `db query --linked` from the session). Result: `col_count = 1` (price_sheet_area_adjustments.adjustment_target present), `con_count = 1` (price_sheet_area_adjustments_target_check present), `mig_0074 = 1` (0074 recorded in supabase_migrations.schema_migrations). The 0074 verification debt is closed.
 
 ### Additional deviations / defects
 11. (minor) Comment fixes at 0032 L52 and 0074 L1 were made by main-session Edits (each under 200 chars, Rule 30 carve-out) instead of Nestor as planned.
