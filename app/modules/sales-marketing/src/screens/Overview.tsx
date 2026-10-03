@@ -5,8 +5,8 @@
  */
 
 import * as React from 'react';
-import { View, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
-import { ScreenTitle, colors, Text } from '@jobcore/ui';
+import { View, ActivityIndicator, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import type { CallbackTask, Review, CampaignLogEntry, MarketingAsset } from '../data/ports';
@@ -14,7 +14,9 @@ import { buildPostsByPlatformAndPeriod, buildReviewsByPlatform } from './Reporti
 
 const TOP_N = 3;
 
-export function Overview(): React.ReactElement {
+type OverviewProps = { onOpenReviewLibrary?: () => void };
+
+export function Overview({ onOpenReviewLibrary }: OverviewProps): React.ReactElement {
   const session = getModuleSession();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -74,7 +76,6 @@ export function Overview(): React.ReactElement {
 
   return (
     <View style={styles.container}>
-      <ScreenTitle title="Overview" />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.sectionTitle}>Open callback tasks ({tasks.length})</Text>
         {tasks.length === 0 && <Text style={styles.emptyText}>No open callback tasks.</Text>}
@@ -85,7 +86,13 @@ export function Overview(): React.ReactElement {
           </View>
         ))}
 
-        <Text style={styles.sectionTitle}>Recent reviews</Text>
+        {onOpenReviewLibrary !== undefined ? (
+          <Pressable accessibilityRole="link" onPress={onOpenReviewLibrary}>
+            <Text style={[styles.sectionTitle, styles.sectionLink]}>Recent reviews</Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.sectionTitle}>Recent reviews</Text>
+        )}
         {recentReviews.length === 0 && <Text style={styles.emptyText}>No reviews yet.</Text>}
         {recentReviews.map((r) => (
           <View key={r.id} style={styles.row}>
@@ -127,10 +134,11 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 24 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: { fontSize: 16, fontWeight: '600', marginTop: 16, marginBottom: 8, color: colors.text },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, paddingLeft: 16 },
+  sectionLink: { color: colors.info, textDecorationLine: 'underline' },
   rowLabel: { flex: 1 },
   rowValue: { fontWeight: '600' },
-  emptyText: { opacity: 0.7 },
+  emptyText: { opacity: 0.7, paddingLeft: 16 },
   errorText: { color: colors.danger },
 });
 

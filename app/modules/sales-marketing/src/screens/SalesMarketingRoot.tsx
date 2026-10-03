@@ -156,7 +156,7 @@ export function SalesMarketingRoot(): React.ReactElement {
       break;
     case 'overview':
     default:
-      content = React.createElement(Overview, null);
+      content = React.createElement(Overview, { onOpenReviewLibrary: () => setSubView('reviewLibrary') });
       break;
   }
 
