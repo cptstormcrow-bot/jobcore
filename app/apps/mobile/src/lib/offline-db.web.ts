@@ -41,3 +41,7 @@ export async function replayPending(
 ): Promise<ReplayResult> {
   return { sent: 0, failed: 0 };
 }
+
+export async function replayOfflineQueue(): Promise<ReplayResult> {
+  return { sent: 0, failed: 0 };
+}

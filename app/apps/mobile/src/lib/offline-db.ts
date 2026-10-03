@@ -16,6 +16,7 @@ import type {
   ReplayResult,
 } from '@jobcore/core';
 import { logSyncFailure } from './log';
+import { supabase } from './supabase';
 
 export const OFFLINE_DB_NAME = 'jobcore-offline.db';
 
@@ -103,11 +104,112 @@ export async function replayPending(
   send: (mutation: QueuedMutation) => Promise<void>
 ): Promise<ReplayResult> {
   const pending = await listPending();
-  // No transport is baked in — send is injected by the caller, so this
-  // module never imports Supabase.
+  // send is injected by the caller; replayOfflineQueue below supplies the
+  // Supabase transport.
   return replayQueue(pending, {
     send,
     markDone: (id) => markDone(id),
     markFailed: (id) => markFailed(id),
   });
 }
+
+// ---------------------------------------------------------------------------
+// Supabase transport. Every handler is an `update ... eq(id)` that re-applies
+// the same values, so replaying a row whose direct write already landed is
+// harmless. Mappings mirror the inline ones in admin-finance-repos.ts.
+// Create-style ops are NOT replayable: their drafts carry no client-side id,
+// so an insert/upsert would duplicate the row; they throw (row -> failed).
+// ---------------------------------------------------------------------------
+
+type Json = Record<string, any>;
+
+async function applyUpdate(table: string, id: string, values: Json): Promise<void> {
+  if (Object.keys(values).length === 0) return;
+  const { error } = await supabase.from(table).update(values).eq('id', id);
+  if (error) throw new Error(`${table} update failed: ${error.message}`);
+}
+
+export async function send(row: QueuedMutation): Promise<void> {
+  const p = JSON.parse(row.payload) as Json;
+  switch (row.op) {
+    case 'job.patch_scheduling':
+      return applyUpdate('jobs', p.jobId, {
+        assigned_tech_id: p.patch.assignedTechId,
+        scheduled_start: p.patch.scheduledStart,
+        scheduled_end: p.patch.scheduledEnd,
+        requested_window: p.patch.requestedWindow,
+      });
+    case 'job.patch_lifecycle': {
+      const u: Json = {};
+      if (p.patch.enRouteAt !== undefined) u.en_route_at = p.patch.enRouteAt;
+      if (p.patch.inProgressAt !== undefined) u.in_progress_at = p.patch.inProgressAt;
+      if (p.patch.completedAt !== undefined) u.completed_at = p.patch.completedAt;
+      return applyUpdate('jobs', p.jobId, u);
+    }
+    case 'job.markBeta':
+      return applyUpdate('jobs', p.jobId, { is_beta: p.isBeta });
+    case 'job.update_details': {
+      const u: Json = {
+        address: p.patch.address,
+        description: p.patch.description,
+        house_age_years: p.patch.houseAgeYears,
+        ingress_instructions: p.patch.ingressInstructions,
+        scheduled_start: p.patch.scheduledStart,
+        scheduled_end: p.patch.scheduledEnd,
+        service_area_id: p.patch.serviceAreaId,
+        permit_status: p.patch.permitStatus,
+        parking_available: p.patch.parkingAvailable,
+        rooms: p.patch.rooms,
+        panel_info: p.patch.panelInfo,
+        considerations: p.patch.considerations,
+      };
+      if (p.patch.customerId !== undefined) u.customer_id = p.patch.customerId;
+      return applyUpdate('jobs', p.jobId, u);
+    }
+    case 'job.update_status':
+      return applyUpdate('jobs', p.jobId, { status: p.status });
+    case 'lead.mark_qualified':
+      return applyUpdate('leads', p.leadId, {
+        qualified_at: p.qualifiedAt,
+        converted_job_id: p.jobId,
+      });
+    case 'employee.update': {
+      const m: Record<string, string> = {
+        fullName: 'full_name',
+        phone: 'phone',
+        isTest: 'is_test',
+        address: 'address',
+        driversLicenseNumber: 'drivers_license_number',
+        vehicleStatus: 'vehicle_status',
+        toolStatus: 'tool_status',
+        paidTravel: 'paid_travel',
+        paidTravelPolicyMessage: 'paid_travel_policy_message',
+        defaultHourlyRateCents: 'hourly_rate_cents',
+        testJobsOnly: 'test_jobs_only',
+      };
+      const u: Json = {};
+      for (const [k, col] of Object.entries(m)) {
+        if (p.updates[k] !== undefined) u[col] = p.updates[k];
+      }
+      return applyUpdate('profiles', p.profileId, u);
+    }
+    case 'employee.deactivate':
+      return applyUpdate('profiles', p.profileId, { active: false });
+    case 'employee.reactivate':
+      return applyUpdate('profiles', p.profileId, { active: true });
+    case 'time_off_request.cancel':
+      return applyUpdate('time_off_requests', p.requestId, { status: 'cancelled' });
+    case 'customer.update':
+      return applyUpdate('customers', p.id, p.patch);
+    case 'payout_batch.approve':
+      return applyUpdate('payout_batches', p.batchId, { status: 'approved' });
+    case 'payout_batch.mark_paid':
+      return applyUpdate('payout_batches', p.batchId, { status: 'paid' });
+    default:
+      throw new Error(
+        `offline replay: no idempotent handler for op "${row.op}" (create-style or unmapped ops are not replayable)`
+      );
+  }
+}
+
+export const replayOfflineQueue = (): Promise<ReplayResult> => replayPending(send);

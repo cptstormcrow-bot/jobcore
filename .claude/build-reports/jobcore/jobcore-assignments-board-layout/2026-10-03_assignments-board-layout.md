@@ -59,9 +59,10 @@ Line counts via `[IO.File]::ReadAllLines('<path>').Length` (Rule 29-B).
 
 ## Forward contracts
 
-1. `rowActions` row has no flexWrap: on a ~360dp card the Select trigger gets only ~84dp and long tech names ellipsize. Follow-up if Jeff's phone check shows truncation.
+1. ADDRESSED 2026-10-03: `rowActions` row has no flexWrap: on a ~360dp card the Select trigger gets only ~84dp and long tech names ellipsize. Follow-up if Jeff's phone check shows truncation. (Fix: rowActions gains flexWrap 'wrap'; assignSelect now flexGrow 1, flexBasis 160, minWidth 160 so the picker wraps to its own line instead of ellipsizing.)
 2. `persistentScrollbar` verified only by code review for Android tablet; it is a no-op on web/iOS.
-3. Offline queue still accumulates silently with no UI now that the pill is gone. The `replay` drain remains unwired (sync-status.tsx:59-61). SyncIndicator.tsx is dead code pending a decision to delete or rewire.
+3. Offline queue still accumulates silently with no UI now that the pill is gone. The `replay` drain remains unwired (sync-status.tsx:59-61). SyncIndicator.tsx is dead code pending a decision to delete or rewire. — ADDRESSED 2026-10-03: drain wired. app/apps/mobile/src/lib/offline-db.ts now exports replayOfflineQueue (idempotent Supabase send, op→handler map); app/apps/mobile/app/_layout.tsx passes replay={replayOfflineQueue} to <SyncStatusProvider>; offline-db.web.ts has a no-op counterpart.
+4. FC4 — create/rpc offline ops become replayable once repos carry a client-generated id (repo change, not scheduled).
 
 ## Test plan
 
@@ -83,6 +84,15 @@ Declined by Jeff 2026-10-03 ("skip the test plan"). No test plan written, checke
 12. S7 Karen record lookup blocked (CLI `db query` not a subcommand in v1.226.4; anon-key RLS returns 0 rows; no seed rows). Resolved by Jeff declining the test plan.
 
 Not deviations (note): AppChrome.tsx has 3 pre-existing `no-constant-condition` lint errors and 3 unused-var warnings, out of scope per "Only Fix these identified items". `handleSelectTech` is unused, pre-existing at HEAD. The planned deletion of dead styles. The S6 risk row on EmployeeDetailScreen/AdminFinanceRoot (other sessions' dirty files) is covered by scoped pathspec.
+
+### Addendum 2026-10-03 — open-item fixes
+
+- FC1 flexWrap fix applied to AssignmentBoardScreen.tsx rowActions/assignSelect (same report, line 62).
+- FC3 drain wired as above. Replay runs only on SyncStatusProvider mount and manual refresh(); no NetInfo/AppState trigger exists.
+- Double-send mitigated: handlers are idempotent `update ... eq(id)`; 13 ops handled: job.patch_scheduling, job.patch_lifecycle, job.markBeta, job.update_details, job.update_status, lead.mark_qualified, employee.update, employee.deactivate, employee.reactivate, time_off_request.cancel, customer.update, payout_batch.approve, payout_batch.mark_paid.
+- Residual: create-style ops (job.create, lead.create, audit_log.write) and multi-step/rpc ops (lead.update, close_out_job_write) throw "no idempotent handler" and are marked failed; `failed` rows never auto-retry (core replay.ts). Making them replayable needs the repos to put a client-generated id in the payload — repos files were out of scope.
+- No tests exist for offline-db/sync-status; tsc clean after the change.
+- FC2 (device check of persistentScrollbar) remains open; needs an APK on device.
 
 ## Lead Gate / Milestone Verdict
 

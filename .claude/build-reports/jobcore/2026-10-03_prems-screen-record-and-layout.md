@@ -59,7 +59,7 @@ Test plan: E:\Jeff\Codespace\SDAssemblyPros\Jobcore\.claude\test-plans\2026-10-0
 ## Forward contracts
 
 Forward contracts:
-- FC-1: the field-tech manual app/docs/jobcore-basics-field-tech.html has no Prem section; content is owed using the labels Claim / Record / Submit.
+- FC-1: ADDRESSED 2026-10-03: the field-tech manual app/docs/jobcore-basics-field-tech.html now has the section "Prem Jobs: Claim and Record" (id ch4-prem-record) using the labels Claim / Record / Submit.
 - FC-2: iOS safe-area top is unverified for the fixed 24pt paddingTop in AppChrome.
 - FC-3: (tabs)/jobs stacks a native header on the AppChrome offset, and settings is now 40pt; revisit if the phone check shows crowding.
 - Any further bump (paddingTop 24 to 32, pill margin 0) waits for Jeff's phone check of the test plan.

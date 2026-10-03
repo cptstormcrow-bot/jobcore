@@ -13,7 +13,7 @@ import { landingRouteFor } from '../src/lib/landing';
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
-import { countPending } from '../src/lib/offline-db';
+import { countPending, replayOfflineQueue } from '../src/lib/offline-db';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
 
 // Side-effect import: registers every compiled-in module exactly once, before any
@@ -200,9 +200,8 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <SessionProvider>
           {/* Mounted at the root so sync status is app-wide
-              across every screen. `replay` is deliberately left unwired here until
-              a Supabase transport exists. */}
-          <SyncStatusProvider countPending={countPending}>
+              across every screen. Replay runs on mount/refresh; handlers are idempotent. */}
+          <SyncStatusProvider countPending={countPending} replay={replayOfflineQueue}>
             <StatusBar style="auto" />
             <AuthGate />
           </SyncStatusProvider>

@@ -600,8 +600,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   assignSelect: {
-    flex: 2,
-    minWidth: 0,
+    flexGrow: 1,
+    flexBasis: 160,
+    minWidth: 160,
     width: 'auto',
     marginRight: spacing.xs,
   },
@@ -634,6 +635,7 @@ const styles = StyleSheet.create({
   },
   rowActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     marginTop: spacing.xs,
   },

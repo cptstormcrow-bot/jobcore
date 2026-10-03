@@ -184,6 +184,22 @@ after Marcus has already moved on to his next job. His own visible arc on this j
 at <a href="#state-completed">completed</a>; everything from the QR handoff onward runs
 outside his screens.</p>
 
+<h2 id="ch4-prem-record">Prem Jobs: Claim and Record</h2>
+<p>The <strong>Prem jobs</strong> screen (<code>screens/PremJobs.tsx</code>) lists
+jobs that need a Prem investigation. Each job card carries one button on its action
+row, and the label depends on who holds the job.</p>
+<ul>
+<li><strong>Claim</strong> shows on a job nobody has taken. Tap it and confirm with
+<strong>Yes</strong>. The list reloads in place, with no manual refresh.</li>
+<li><strong>Record</strong> replaces Claim on a job you have claimed. Tap
+<strong>Record</strong> to open the Prem report for that job.</li>
+<li>On the report screen, the final button reads <strong>Submit</strong>
+(it used to read "Submit Investigation").</li>
+</ul>
+<p>Caveat: if another tech claims the job first, you see "Already claimed by another
+tech" and the list reloads, so the card shows the new state.
+<span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span></p>
+
 <h2 id="ch4-day-earnings">End of Day: Earnings</h2>
 <p>Marcus checks <strong>Earnings</strong> (<code>screens/Earnings.tsx</code>)
 <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span> — the one screen
