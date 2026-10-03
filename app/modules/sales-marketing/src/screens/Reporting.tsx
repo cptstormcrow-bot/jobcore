@@ -35,7 +35,7 @@
 import * as React from 'react';
 import { View, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
-import { getModuleSession } from '../lib/module-session';
+import { useModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review, JobReportingRow } from '../data/ports';
 import { ScreenTitle, colors, Text } from '@jobcore/ui';
 
@@ -97,7 +97,7 @@ function countBy(rows: readonly JobReportingRow[], pick: (r: JobReportingRow) =>
 }
 
 export function Reporting(): React.ReactElement {
-  const session = getModuleSession();
+  const session = useModuleSession();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 

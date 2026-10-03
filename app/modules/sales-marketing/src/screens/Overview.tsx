@@ -8,7 +8,7 @@ import * as React from 'react';
 import { View, ActivityIndicator, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
-import { getModuleSession } from '../lib/module-session';
+import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask, Review, CampaignLogEntry, MarketingAsset } from '../data/ports';
 import { buildPostsByPlatformAndPeriod, buildReviewsByPlatform } from './Reporting';
 
@@ -17,7 +17,7 @@ const TOP_N = 3;
 type OverviewProps = { onOpenReviewLibrary?: () => void };
 
 export function Overview({ onOpenReviewLibrary }: OverviewProps): React.ReactElement {
-  const session = getModuleSession();
+  const session = useModuleSession();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [tasks, setTasks] = React.useState<CallbackTask[]>([]);

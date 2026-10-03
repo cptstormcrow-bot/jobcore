@@ -42,7 +42,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 
-import { getModuleSession } from '../lib/module-session';
+import { useModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
@@ -128,6 +128,7 @@ export function Composer({
   const [error, setError] = useState<string | null>(null);
   const [manualLogged, setManualLogged] = useState(false);
   const [directResult, setDirectResult] = useState<PostResult | null>(null);
+  const session = useModuleSession();
 
   // Load candidate assets and this org's Meta enablement, then create the
   // draft row itself. Nothing here posts anything — it only assembles.
@@ -225,7 +226,6 @@ export function Composer({
     if (draftId === null || approved || busy) {
       return;
     }
-    const session = getModuleSession();
     if (session === null) {
       setError('No active session — cannot approve draft.');
       return;
@@ -253,7 +253,6 @@ export function Composer({
     if (!approved || draftId === null || busy) {
       return;
     }
-    const session = getModuleSession();
     if (session === null) {
       setError('No active session — cannot export.');
       return;

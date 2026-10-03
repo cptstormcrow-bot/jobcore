@@ -21,11 +21,11 @@ import { View, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-
 import { isBetaVisible } from '@jobcore/core';
 import { ScreenTitle, Toggle, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
-import { getModuleSession } from '../lib/module-session';
+import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
 
 export function CallbackTasks(): React.ReactElement {
-  const session = getModuleSession();
+  const session = useModuleSession();
 
   const [tasks, setTasks] = React.useState<CallbackTask[]>([]);
   const [loading, setLoading] = React.useState(true);

@@ -26,7 +26,7 @@ import { PitchPicker, type PitchAngle } from './PitchPicker';
 import { Composer } from './Composer';
 import { Reporting } from './Reporting';
 import { CallbackTasks } from './CallbackTasks';
-import { getModuleSession } from '../lib/module-session';
+import { useModuleSession } from '../lib/module-session';
 
 type SubView = 'overview' | 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
@@ -41,6 +41,7 @@ const SUBVIEW_LABELS: Record<SubView, string> = {
 
 export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
+  const session = useModuleSession();
   const [subView, setSubView] = React.useState<SubView>('overview');
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
   // No service/service-area picker exists yet anywhere in this module —
@@ -104,14 +105,14 @@ export function SalesMarketingRoot(): React.ReactElement {
         isActive: true,
         onPress: () => router.push('/m/sales-marketing' as never),
       },
-      ...moduleSwitcherItems('sales-marketing', getModuleSession()?.role).map((row) => ({
+      ...moduleSwitcherItems('sales-marketing', session?.role).map((row) => ({
         id: `logo-${row.route}`,
         label: row.label,
         isActive: false,
         onPress: () => router.push(row.route as never),
       })),
     ],
-    [router],
+    [router, session?.role],
   );
 
   const gearItems = React.useMemo(
@@ -129,7 +130,6 @@ export function SalesMarketingRoot(): React.ReactElement {
       content = React.createElement(PitchPicker, { onNavigateToComposer: handleNavigateToComposer });
       break;
     case 'composer': {
-      const session = getModuleSession();
       content =
         session !== null && pitchAngle !== null
           ? React.createElement(Composer, {

@@ -41,13 +41,39 @@ function notify(): void {
 }
 
 /**
+ * Subscribes to changes in the injected session. Returns an unsubscribe
+ * function. Intended for use via `useModuleSession` below; exposed
+ * directly for any non-hook consumer that needs it.
+ */
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/**
+ * Structural equality check for `ModuleSession` — gates `notify()` in
+ * `setModuleSession` so re-injecting an unchanged session doesn't trigger
+ * a re-render.
+ */
+function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.org.id === b.org.id && a.role === b.role && a.userId === b.userId;
+}
+
+/**
  * Injection point for the host. Pass an already-narrowed `ModuleSession`
  * once the host has resolved its own session, or `null` to clear it
  * (e.g. on sign-out). This is the ONLY function that may write `current`.
  */
 export function setModuleSession(session: ModuleSession | null): void {
+  const changed = !sessionsEqual(current, session);
   current = session;
-  notify();
+  if (changed) {
+    notify();
+  }
 }
 
 /**
@@ -62,8 +88,7 @@ export function getModuleSession(): ModuleSession | null {
 
 /** Convenience wrapper — equivalent to `setModuleSession(null)`. */
 export function clearModuleSession(): void {
-  current = null;
-  notify();
+  setModuleSession(null);
 }
 
 /**
@@ -76,12 +101,5 @@ export function clearModuleSession(): void {
  * `setModuleSession`/`clearModuleSession` fire.
  */
 export function useModuleSession(): ModuleSession | null {
-  return useSyncExternalStore(
-    (listener) => {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
-    getModuleSession,
-    getModuleSession,
-  );
+  return useSyncExternalStore(subscribe, getModuleSession);
 }
