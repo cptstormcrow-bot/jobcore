@@ -34,7 +34,7 @@ Run from `app/` in Bash:
 - `npx tsc -b --force packages/core packages/ui packages/module-sdk modules/admin-finance modules/field-tech modules/sales-marketing` gave BUILD_EXIT=0.
 - `npx tsc -p apps/mobile/tsconfig.json --noEmit` gave TSC_EXIT=0.
 - `npm test` gave TEST_EXIT=0, "# tests 192 # pass 192 # fail 0".
-- Open items: `powershell -NoProfile -File E:\Jeff\.claude\scripts\verify-open-items.ps1 -InputJson <scratchpad>\open-items.json -OutFile <scratchpad>\open-items-verified.md` gave 36 items, 35 open, 1 dropped (R6 L26 stale-dist type-check, "anchor not found").
+- Open items: `powershell -NoProfile -File E:\Jeff\.claude\scripts\verify-open-items.ps1 -InputJson <scratchpad>\open-items.json -OutFile <scratchpad>\open-items-verified.md` gave 36 items, 35 open, 1 dropped (R6 L26 stale-dist type-check, "anchor not found"). (+2 prior contracts closed-superseded after Themis follow-up; see Rule 41)
 
 Test plan: declined (Jeff: "I do not want a test plan this time").
 
@@ -50,6 +50,8 @@ Outcome of the prior lineage's forward contracts and open items, with Jeff's dis
 |---|---|
 | FIXED now | FC6 (R7:28, R8:58, R9:49) fixed in 5bb25c9; plan flip (R9:77) fixed in b84a23a; R6 L22/L24/L25 and R10 FC1 fixed in 7c08180 |
 | CLOSED as superseded (Jeff) | Screen/device checks: S&M visual R1:21, time-off/month view R3:42, restyle device checklist R4:82, leads walk-through R5:61, S&M visual R7:32, S&M visual R8:61, job-detail visual R8:61, Address visual R9:52, gear menu device check R10:60, email-change test R10:61; and 0032/0074 R9:79 |
+| closed — superseded (Jeff decision 2026-10-02) | Live Case A/B payment-transition tap check (merge-payment paid buttons) — `2026-09-09_merge-payment-paid-buttons.md:48` |
+| closed — superseded (Jeff decision 2026-10-02) | Remove dead `styles.gearTitle` in AppChrome.tsx (R10 FC2) — `2026-09-29_sales-role-navigation.md:34` |
 | Dropped | R6 L26 (anchor not found) |
 | Carried chips | task_4afe6e43, task_f9aac49a (from R9) |
 
@@ -88,3 +90,4 @@ Outcome of the prior lineage's forward contracts and open items, with Jeff's dis
 6. A bare "go" was initially read as approval; corrected ("go" = continue only). "(b) then (d)" was corrected to "(b) only".
 7. PowerShell commit quoting broke one commit attempt; switched to a Bash heredoc.
 8. Untouched and excluded: the untracked `app/supabase/migrations/0074_reapply_0032_task_pricing_alter.sql` and the modified `app/packages/ui/src/AppChrome.tsx` (not part of this change) were left out by scoped pathspecs.
+- Themis follow-up (2026-10-02): Gap 1 — merge-payment Case A/B forward contract was missing from the Rule 41 table; confirmed real, now closed-superseded. Gap 2 — resolved via R10 FC3 inheritance (already listed). L51 'fixed' label confirmed accurate. Minor: R10 FC2 (gearTitle) now closed-superseded. Footprint grade D: 47 files / 326,031 bytes vs baseline 12 files / 78,539 bytes (+315%).
