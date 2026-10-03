@@ -55,11 +55,11 @@
     "ReportsJobDetailScreen shows assigned technician's real name (not raw id) when techName is supplied by caller.",
     "ReportsJobDetailScreen falls back to raw assignedTechId (or \"Unassigned\") when techName is not supplied.",
     "AdminFinanceRoot correctly resolves selectedReportsJob.assignedTechId to a display name via the techs Map and passes it as techName to ReportsJobDetailScreen.",
-    "EmployeeDetailScreen \"Hours Worked\" row shows a formatted number (one decimal place) when hoursWorked is provided.",
-    "EmployeeDetailScreen \"Hours Worked\" row shows \"Not available\" when hoursWorked is null/undefined.",
-    "AdminFinanceRoot fetches employee hours via getModulePorts().timeEntries.listForEmployee(profileId) on selecting an employee, and passes the computed value as hoursWorked to EmployeeDetailScreen.",
-    "Hours computation correctly skips time entries with a null clockOutAt.",
-    "Hours computation guards against negative duration (e.g. clockOutAt before clockInAt)."
+    "EmployeeDetailScreen \"Hours Worked\" row shows three stacked lines (\"This week\", \"This month\", \"This year\"), each a number with one decimal place, when hoursWorked is provided as a {week, month, year} object.",
+    "EmployeeDetailScreen \"Hours Worked\" row shows \"Not available\" when the hoursWorked object is null/undefined.",
+    "AdminFinanceRoot fetches employee hours via getModulePorts().timeEntries.listForEmployee(profileId) on selecting an employee, buckets them with bucketHours (domain/hoursBuckets.ts), and passes the resulting { week, month, year } object as hoursWorked to EmployeeDetailScreen.",
+    "bucketHours (domain/hoursBuckets.ts) correctly skips time entries with a null clockOutAt.",
+    "bucketHours (domain/hoursBuckets.ts) guards against negative duration (e.g. clockOutAt before clockInAt)."
   ];
 
   function loadState() {

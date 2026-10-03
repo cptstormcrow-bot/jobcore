@@ -1,21 +1,18 @@
 /**
  * Employee detail / drilldown screen (Employee Roster feature).
  *
- * Read-heavy scope ONLY. Jobs are supplied by the caller, already filtered
- * to this employee's assigned + completed jobs — this screen does no
- * fetching of its own, mirroring `PriceSheetEditorScreen.tsx`'s prop-driven
- * data pattern but WITHOUT a load state machine, since there is nothing to
- * load here.
+ * Read-heavy scope ONLY. This screen does no fetching of its own, mirroring
+ * `PriceSheetEditorScreen.tsx`'s prop-driven data pattern but WITHOUT a load
+ * state machine, since there is nothing to load here.
+ *
+ * Contents, top to bottom: the employee name header, the Back/Edit/Deactivate
+ * action buttons, a detail card (one label/value row per field), the Skills
+ * card (wrapped chips), and the Service Areas card.
  *
  * Navigation is caller-supplied callback props only (no router, no Modal,
- * in this module) — `onEdit`, `onBack`, `onSelectJob`, `onDeactivate`,
- * `onReactivate`, named to match `PriceSheetEditorScreen.tsx`'s
- * `onSave`/`onPublished` verb-first convention.
- *
- * `WeekView` (`@jobcore/ui`) is a dumb renderer with no fetching/filtering
- * of its own (see its header comment) — this screen forwards the employee's
- * jobs and its own `onSelectJob` prop straight through, and `anchorDay`
- * defaults to "today" since no anchor is supplied by the caller.
+ * in this module) — `onEdit`, `onBack`, `onDeactivate`, `onReactivate`,
+ * named to match `PriceSheetEditorScreen.tsx`'s `onSave`/`onPublished`
+ * verb-first convention.
  *
  * Deactivate/Reactivate is a simple callback invocation with no local
  * loading/error state — the caller (a later pipeline stage) owns that,
@@ -24,34 +21,22 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
-import { DayList } from '@jobcore/field-tech';
-import type { Profile, Job } from '@jobcore/core';
+import { Button, Card, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import type { Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
 import type { ProfilePrivate } from '../data/ports';
 
 export interface EmployeeDetailScreenProps {
   employee: Profile;
-  /** This employee's assigned + completed jobs, already filtered by the caller. */
-  jobs: Job[];
-  /** This employee's assigned skills, already filtered by the caller — same pattern as `jobs`. */
+  /** This employee's assigned skills, already filtered by the caller. */
   skills?: string[];
   /** This employee's service areas (names), supplied by the caller. */
   serviceAreas?: string[];
-  hoursWorked?: number;
+  hoursWorked?: { week: number; month: number; year: number };
   onEdit: () => void;
   onBack: () => void;
-  onSelectJob: (job: Job) => void;
   onDeactivate: () => void;
   onReactivate: () => void;
-}
-
-/** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
-function formatDate(iso: string | null): string {
-  if (!iso) return 'Not scheduled';
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return 'Not scheduled';
-  return parsed.toLocaleDateString();
 }
 
 /** Masks a driver's license number to its last 4 characters, e.g. "•••• 1234". Full value is only ever shown in the editor. */
@@ -63,18 +48,22 @@ function maskDriversLicense(value: string | null): string {
   return `•••• ${value.slice(-4)}`;
 }
 
-/** Local label/value row for the identity-fields card — value dominant, label secondary (inverse of `ListItem`'s hierarchy), used only here. */
-function InfoRow({ label, value }: { label: string; value: string }) {
+/** Local label/value row for the identity-fields card — fixed label column, flexible value column, used only here. */
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <View style={styles.infoLabelCell}>
+        <Text style={styles.infoLabel}>{`${label}:`}</Text>
+      </View>
+      <View style={styles.infoValueCell}>
+        {typeof value === 'string' ? <Text style={styles.infoValue}>{value}</Text> : value}
+      </View>
     </View>
   );
 }
 
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
-  const { employee, jobs, skills, serviceAreas, hoursWorked, onEdit, onBack, onSelectJob, onDeactivate, onReactivate } = props;
+  const { employee, skills, serviceAreas, hoursWorked, onEdit, onBack, onDeactivate, onReactivate } = props;
   const [priv, setPriv] = useState<ProfilePrivate | null>(null);
   const [privFailed, setPrivFailed] = useState(false);
   useEffect(() => {
@@ -108,14 +97,31 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Emergency Contact" value={privFailed ? 'Unavailable' : (priv?.emergencyContactName ? [priv.emergencyContactName, priv.emergencyContactPhone].filter(Boolean).join(' · ') : 'Not on file')} />
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
-          <InfoRow label="Hours Worked" value={hoursWorked != null ? hoursWorked.toFixed(1) : 'Not available'} />
+          <InfoRow
+            label="Hours Worked"
+            value={
+              hoursWorked ? (
+                <View>
+                  <Text style={styles.infoValue}>{`This week: ${hoursWorked.week.toFixed(1)}`}</Text>
+                  <Text style={styles.infoValue}>{`This month: ${hoursWorked.month.toFixed(1)}`}</Text>
+                  <Text style={styles.infoValue}>{`This year: ${hoursWorked.year.toFixed(1)}`}</Text>
+                </View>
+              ) : 'Not available'
+            }
+          />
           <InfoRow label="Hourly Rate" value={employee.defaultHourlyRateCents != null ? `$${(employee.defaultHourlyRateCents / 100).toFixed(2)}/hr` : 'Not set'} />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>
         <Card style={styles.card}>
           {skills && skills.length > 0 ? (
-            skills.map((skill) => <ListItem key={skill} title={skill} />)
+            <View style={styles.chipWrap}>
+              {skills.map((skill) => (
+                <View key={skill} style={styles.chip}>
+                  <Text style={styles.chipText}>{skill}</Text>
+                </View>
+              ))}
+            </View>
           ) : (
             <Text style={styles.note}>No skills on file for this employee.</Text>
           )}
@@ -127,27 +133,6 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
             <Text style={styles.note}>{serviceAreas.join(', ')}</Text>
           ) : (
             <Text style={styles.note}>No service areas on file for this employee.</Text>
-          )}
-        </Card>
-
-        <Text style={styles.heading}>Schedule</Text>
-        <Card style={styles.card}>
-          <DayList techId={employee.id} />
-        </Card>
-
-        <Text style={styles.heading}>Job History</Text>
-        <Card style={styles.card}>
-          {jobs.length > 0 ? (
-            jobs.map((job) => (
-              <ListItem
-                key={job.id}
-                title={job.address ?? 'No address'}
-                subtitle={`${job.status} · ${formatDate(job.scheduledStart)}`}
-                onPress={() => onSelectJob(job)}
-              />
-            ))
-          ) : (
-            <Text style={styles.note}>No jobs on file for this employee.</Text>
           )}
         </Card>
       </ScrollView>
@@ -163,7 +148,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   heading: {
     color: colors.text,
@@ -173,31 +158,58 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   card: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   actionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   actionInline: {
     flex: 1,
   },
   infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     paddingVertical: spacing.xs,
+  },
+  infoLabelCell: {
+    width: 140,
+    flexShrink: 0,
+  },
+  infoValueCell: {
+    flex: 1,
   },
   infoLabel: {
     color: colors.textMuted,
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
-    marginBottom: 2,
   },
   infoValue: {
     color: colors.text,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
+  },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 999,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  chipText: {
+    color: colors.text,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
   },
   note: {
     color: colors.textMuted,

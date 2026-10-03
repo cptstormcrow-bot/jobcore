@@ -21,7 +21,7 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Text } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
 import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
@@ -33,6 +33,7 @@ import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
+import { bucketHours } from '../domain/hoursBuckets';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
@@ -167,7 +168,7 @@ export function AdminFinanceRoot() {
   const [closeOutPhotos, setCloseOutPhotos] = useState<CloseOutPhoto[]>([]);
   const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
-  const [employeeHoursWorked, setEmployeeHoursWorked] = useState<number | null>(null);
+  const [employeeHoursWorked, setEmployeeHoursWorked] = useState<{ week: number; month: number; year: number } | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
@@ -602,12 +603,7 @@ export function AdminFinanceRoot() {
       .timeEntries.listForEmployee(selectedEmployee.id)
       .then((entries) => {
         if (cancelled) return;
-        const totalHours = entries.reduce((sum, entry) => {
-          if (!entry.clockOutAt) return sum;
-          const durationMs = new Date(entry.clockOutAt).getTime() - new Date(entry.clockInAt).getTime();
-          return sum + (durationMs > 0 ? durationMs / 3600000 : 0);
-        }, 0);
-        setEmployeeHoursWorked(totalHours);
+        setEmployeeHoursWorked(bucketHours(entries, new Date()));
       })
       .catch(() => {
         if (!cancelled) setEmployeeHoursWorked(null);
@@ -616,6 +612,23 @@ export function AdminFinanceRoot() {
       cancelled = true;
     };
   }, [subView, selectedEmployee]);
+
+  // Android hardware back steps out of employee detail screens instead of leaving the module.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return undefined;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (subView === 'employee-detail') {
+        handleBackToRoster();
+        return true;
+      }
+      if (subView === 'employee-job-detail') {
+        handleBackToEmployeeDetail();
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [subView]);
 
   function handleSelectLead(lead: Lead) {
     setSelectedLead(lead);
@@ -1267,11 +1280,6 @@ export function AdminFinanceRoot() {
         selectedEmployee ? (
           <EmployeeDetailScreen
             employee={selectedEmployee}
-            jobs={
-              loadState.kind === 'loaded'
-                ? loadState.jobs.filter((job) => job.assignedTechId === selectedEmployee.id)
-                : []
-            }
             skills={
               loadState.kind === 'loaded'
                 ? loadState.techSkills.filter((s) => s.techId === selectedEmployee.id).map((s) => s.skill)
@@ -1289,7 +1297,6 @@ export function AdminFinanceRoot() {
             hoursWorked={employeeHoursWorked ?? undefined}
             onEdit={handleEditEmployee}
             onBack={handleBackToRoster}
-            onSelectJob={handleSelectEmployeeJob}
             onDeactivate={handleDeactivateEmployee}
             onReactivate={handleReactivateEmployee}
           />
