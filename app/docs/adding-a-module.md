@@ -53,8 +53,12 @@ interface JobcoreModule {
 
 Registration and lookup go through two functions:
 
-- `registerModule(module: JobcoreModule)` — called once, at module-package
-  load time, to add the module to the in-process registry.
+- `registerModule(module: JobcoreModule)` — adds the module to the
+  in-process registry. It is called only from `apps/mobile/src/modules.ts`
+  (one line per module), never from a module package. It is idempotent for
+  the identical module object (Fast Refresh/HMR re-evaluates `modules.ts`)
+  and throws `Duplicate module registration` only when a different object
+  reuses an id.
 - `getEnabledModules(org)` — returns the modules that are both registered
   and turned on for the given organization (per
   `organizations.enabled_modules`), with `navEntries` sorted by `order`.
@@ -80,12 +84,12 @@ on an empty array to mean "no restriction."
 4. **Add any `jobActions`** the module contributes to a job's action menu,
    any `hooks` it needs into the app lifecycle, and any `migrations` (SQL
    file names under `supabase/`) it depends on.
-5. **Call `registerModule(...)`** from the package's `src/index.ts` so the
-   module is present in the compile-time registry once the package is
-   imported.
-6. **Reference the module from `apps/mobile/src/modules.ts`** — this is the
-   one place allowed to import the concrete module package and pass it to
-   the app's module registration list. See the existing entries there (for
+5. **Export the module object** (e.g. `export const fooModule`) from the
+   package's `src/index.ts`. The package does not call `registerModule`.
+6. **Register the module in `apps/mobile/src/modules.ts`** — this is the
+   one place allowed to import the concrete module package and call
+   `registerModule(...)` (one line per module). That file is imported for
+   side effects once, from `app/_layout.tsx`. See the existing entries there (for
    example, how `adminFinanceModule` from `@jobcore/admin-finance` is
    imported and registered) for the pattern to follow.
 7. **Add the org-level toggle.** For the module to actually appear for any
@@ -99,7 +103,7 @@ on an empty array to mean "no restriction."
 
 ## Worked example: `admin-finance`
 
-`modules/admin-finance/src/index.ts` builds and registers
+`modules/admin-finance/src/index.ts` builds and exports
 `adminFinanceModule`. It defines roles restricted to admin/finance-capable
 users, routes into its intake and payroll screens, nav entries, and (in its
 `money/` subpackage) the compensation domain logic described in
