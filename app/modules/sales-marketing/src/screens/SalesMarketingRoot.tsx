@@ -16,7 +16,7 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { EmptyState, AppChrome } from '@jobcore/ui';
+import { EmptyState, AppChrome, type MenuActionItem } from '@jobcore/ui';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 
 import { Overview } from './Overview';
@@ -92,6 +92,12 @@ export function SalesMarketingRoot(): React.ReactElement {
         isActive: subView === 'callbackTasks',
         onPress: () => setSubView('callbackTasks'),
       },
+    ],
+    [subView],
+  );
+
+  const logoMenuItems = React.useMemo<MenuActionItem[]>(
+    () => [
       {
         id: 'logo-/m/sales-marketing',
         label: 'Sales & Marketing',
@@ -99,13 +105,13 @@ export function SalesMarketingRoot(): React.ReactElement {
         onPress: () => router.push('/m/sales-marketing' as never),
       },
       ...moduleSwitcherItems('sales-marketing', getModuleSession()?.role).map((row) => ({
-        id: `switch:${row.route}`,
+        id: `logo-${row.route}`,
         label: row.label,
         isActive: false,
         onPress: () => router.push(row.route as never),
       })),
     ],
-    [subView, router],
+    [router],
   );
 
   const gearItems = React.useMemo(
@@ -160,6 +166,7 @@ export function SalesMarketingRoot(): React.ReactElement {
     React.createElement(AppChrome, {
       breadcrumbSegments: [{ label: 'Sales & Marketing' }],
       menuItems,
+      logoMenuItems,
       showBack: false,
       compactMenu: true,
       gearItems,
