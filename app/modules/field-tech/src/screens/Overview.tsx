@@ -24,7 +24,7 @@ import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors, Text } from '@jobcore/ui';
+import { colors, spacing, Text } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -224,18 +224,54 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
     );
   }
 
-  const cards: Array<{ key: TileKey; label: string; value: number }> = [
-    { key: 'assigned', label: 'Assigned jobs', value: counts.assignedJobs },
-    { key: 'open', label: 'Open jobs', value: counts.openJobs },
-    { key: 'timeOffPending', label: 'Time off pending', value: counts.timeOffPending },
-    { key: 'timeOffApproved', label: 'Time off approved', value: counts.timeOffApproved },
-    { key: 'reimbPending', label: 'Reimbursements pending', value: counts.reimbursementsPending },
-    { key: 'reimbApproved', label: 'Reimbursements approved', value: counts.reimbursementsApproved },
-    { key: 'reimbRejected', label: 'Reimbursements rejected', value: counts.reimbursementsRejected },
-    { key: 'notes', label: 'Job notes', value: counts.jobNotes },
-    { key: 'photos', label: 'Job photos', value: counts.jobPhotos },
-    { key: 'checklistOpen', label: 'Checklist open', value: counts.checklistOpen },
-    { key: 'checklistSubmitted', label: 'Checklist submitted', value: counts.checklistSubmitted },
+  const groups: Array<{
+    key: string;
+    title: string;
+    stats: Array<{ key: TileKey; label: string; drillLabel: string; value: number }>;
+  }> = [
+    {
+      key: 'jobs',
+      title: 'Jobs',
+      stats: [
+        { key: 'assigned', label: 'Assigned', drillLabel: 'Assigned jobs', value: counts.assignedJobs },
+        { key: 'open', label: 'Open', drillLabel: 'Open jobs', value: counts.openJobs },
+      ],
+    },
+    {
+      key: 'timeOff',
+      title: 'Time Off',
+      stats: [
+        { key: 'timeOffPending', label: 'Pending', drillLabel: 'Time off pending', value: counts.timeOffPending },
+        { key: 'timeOffApproved', label: 'Approved', drillLabel: 'Time off approved', value: counts.timeOffApproved },
+      ],
+    },
+    {
+      key: 'reimbursements',
+      title: 'Reimbursements',
+      stats: [
+        { key: 'reimbPending', label: 'Pending', drillLabel: 'Reimbursements pending', value: counts.reimbursementsPending },
+        { key: 'reimbApproved', label: 'Approved', drillLabel: 'Reimbursements approved', value: counts.reimbursementsApproved },
+        { key: 'reimbRejected', label: 'Rejected', drillLabel: 'Reimbursements rejected', value: counts.reimbursementsRejected },
+      ],
+    },
+    {
+      key: 'notes',
+      title: 'Notes',
+      stats: [{ key: 'notes', label: 'Job notes', drillLabel: 'Job notes', value: counts.jobNotes }],
+    },
+    {
+      key: 'photos',
+      title: 'Photos',
+      stats: [{ key: 'photos', label: 'Job photos', drillLabel: 'Job photos', value: counts.jobPhotos }],
+    },
+    {
+      key: 'checklist',
+      title: 'Checklist',
+      stats: [
+        { key: 'checklistOpen', label: 'Open', drillLabel: 'Checklist open', value: counts.checklistOpen },
+        { key: 'checklistSubmitted', label: 'Submitted', drillLabel: 'Checklist submitted', value: counts.checklistSubmitted },
+      ],
+    },
   ];
 
   if (activeTile !== null) {
@@ -261,25 +297,29 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Overview</Text>
-      <View style={styles.grid}>
-        {cards.map((card) => (
-          <Pressable
-            key={card.label}
-            style={styles.card}
-            onPress={() => {
-              if (card.key === 'timeOffPending' || card.key === 'timeOffApproved') {
-                onOpenTimeOff?.();
-              } else {
-                setActiveTile({ key: card.key, label: card.label });
-              }
-            }}
-          >
-            <Text style={styles.cardValue}>{card.value}</Text>
-            <Text style={styles.cardLabel}>{card.label}</Text>
-          </Pressable>
-        ))}
-      </View>
+      {groups.map((group) => (
+        <View key={group.key} style={styles.groupCard}>
+          <Text style={styles.groupTitle}>{group.title}</Text>
+          <View style={styles.statsRow}>
+            {group.stats.map((s) => (
+              <Pressable
+                key={s.key}
+                style={styles.stat}
+                onPress={() => {
+                  if (s.key === 'timeOffPending' || s.key === 'timeOffApproved') {
+                    onOpenTimeOff?.();
+                  } else {
+                    setActiveTile({ key: s.key, label: s.drillLabel });
+                  }
+                }}
+              >
+                <Text style={styles.statValue}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
@@ -287,7 +327,8 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   centered: {
     flex: 1,
@@ -300,18 +341,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -4,
-  },
-  card: {
-    width: '48%',
+  groupCard: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     borderRadius: 8,
-    padding: 12,
-    margin: 4,
+    paddingHorizontal: 12,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  groupTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  statsRow: {
+    flexDirection: 'row',
+  },
+  stat: {
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textMutedDark,
+    marginTop: 2,
   },
   cardValue: {
     fontSize: 22,
