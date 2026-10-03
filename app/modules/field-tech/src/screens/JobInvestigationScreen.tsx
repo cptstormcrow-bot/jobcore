@@ -3,7 +3,7 @@
  * form (P1 §2a).
  *
  * A minimal guided form over `job_investigations`' four note fields plus the
- * state assessment, with a "Submit Investigation" action that stamps
+ * state assessment, with a "Submit" action that stamps
  * `submitted_at`. Reached from the tech's job-detail view once the tech
  * holds an `investigator` assignment on the job. Mirrors
  * `FieldJobDetail.tsx`'s component/styling conventions exactly (same
@@ -38,7 +38,7 @@ function formatDateTime(value: string | null): string {
 
 /**
  * Tech-facing on-site investigation form. Shows job header, the four guided
- * note fields plus a state assessment, and a single "Submit Investigation"
+ * note fields plus a state assessment, and a single "Submit"
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
@@ -165,7 +165,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
       <View style={styles.section}>
         <Button label="Save Draft" onPress={handleSaveDraft} variant="primary" size="sm" disabled={saving} />
         <Button
-          label="Submit Investigation"
+          label="Submit"
           onPress={handleSubmit}
           variant="primary"
           size="sm"

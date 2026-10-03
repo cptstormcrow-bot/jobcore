@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, RefreshControl, Platform, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { format } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { ScreenTitle, colors, typography, spacing, radius, Text } from '@jobcore/ui';
 import type { PremQueueItem } from '../data/ports';
+import { premCardAction, premReportRoute, formatNeedsPremSince } from './prem-jobs-helpers';
 
 export function PremJobs(): React.ReactElement {
   const session = getModuleSession();
@@ -77,7 +77,7 @@ export function PremJobs(): React.ReactElement {
       premQueueRepository
         .claim(session.org.id, item.job.id, session.userId)
         .then(() => {
-          router.push('/job/' + item.job.id + '?panel=jobInvestigation');
+          load({ isRefresh: true });
         })
         .catch((err: unknown) => {
           const code = (err as { code?: string } | null)?.code;
@@ -149,7 +149,7 @@ export function PremJobs(): React.ReactElement {
         </View>
       }
       renderItem={({ item }) => {
-        const since = item.job.needsPremAt ? format(new Date(item.job.needsPremAt), 'MMM d, yyyy') : null;
+        const since = formatNeedsPremSince(item.job.needsPremAt);
         return (
           <View style={styles.row}>
             <View style={styles.rowInfo}>
@@ -161,13 +161,9 @@ export function PremJobs(): React.ReactElement {
             <Pressable
               style={styles.claimButton}
               disabled={claimingId === item.job.id}
-              onPress={() =>
-                item.claimedByMe
-                  ? router.push('/job/' + item.job.id + '?panel=jobInvestigation')
-                  : handleClaim(item)
-              }
+              onPress={() => item.claimedByMe ? router.push(premReportRoute(item.job.id)) : handleClaim(item)}
             >
-              <Text style={styles.claimButtonText}>{item.claimedByMe ? 'Claimed by you - open form' : 'Claim'}</Text>
+              <Text style={styles.claimButtonText}>{premCardAction(item.claimedByMe)}</Text>
             </Pressable>
           </View>
         );
@@ -200,7 +196,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
@@ -209,22 +205,26 @@ const styles = StyleSheet.create({
   },
   customerName: {
     fontFamily: typography.fontFamily.bodyMedium,
-    fontSize: typography.size.body,
+    fontSize: typography.size.label,
+    lineHeight: 18,
     fontWeight: '600',
   },
   address: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontSize: typography.size.small,
+    lineHeight: 17,
     color: colors.textMutedDark,
   },
   service: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontSize: typography.size.small,
+    lineHeight: 17,
     color: colors.textMutedDark,
   },
   since: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.small,
+    fontSize: 12,
+    lineHeight: 16,
     color: colors.textMuted,
   },
   claimButton: {
@@ -235,6 +235,7 @@ const styles = StyleSheet.create({
   },
   claimButtonText: {
     color: '#fff',
+    fontSize: typography.size.label,
     fontWeight: '600',
   },
 });
