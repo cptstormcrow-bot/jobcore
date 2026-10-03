@@ -278,9 +278,9 @@ export function createJobRepository(): JobRepository {
       await enqueueMutation('job.patch_lifecycle', occurredAt, { jobId, patch });
 
       const update: Record<string, string | null> = {};
-      if ('enRouteAt' in patch) update.en_route_at = patch.enRouteAt ?? null;
-      if ('inProgressAt' in patch) update.in_progress_at = patch.inProgressAt ?? null;
-      if ('completedAt' in patch) update.completed_at = patch.completedAt ?? null;
+      if (patch.enRouteAt !== undefined) update.en_route_at = patch.enRouteAt;
+      if (patch.inProgressAt !== undefined) update.in_progress_at = patch.inProgressAt;
+      if (patch.completedAt !== undefined) update.completed_at = patch.completedAt;
 
       const { data, error } = await supabase
         .from('jobs')
