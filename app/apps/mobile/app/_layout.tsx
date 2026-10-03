@@ -13,7 +13,6 @@ import { landingRouteFor } from '../src/lib/landing';
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
-import { SyncIndicator } from '../src/components/SyncIndicator';
 import { countPending } from '../src/lib/offline-db';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
 
@@ -170,13 +169,6 @@ function AuthGate() {
         </View>
       ) : null}
       {isRedirect ? overlay : null}
-      {/* headerShown: false means this app has no navigation header to hang a badge
-          on, so the sync indicator is an absolutely-positioned overlay instead.
-          pointerEvents="box-none" keeps the overlay from swallowing touches meant
-          for the screen beneath it. */}
-      <View pointerEvents="box-none" style={styles.syncOverlay}>
-        <SyncIndicator />
-      </View>
     </View>
   );
 }
@@ -207,7 +199,7 @@ export default function RootLayout() {
     <WalkthroughProvider>
       <SafeAreaProvider>
         <SessionProvider>
-          {/* Mounted at the root so the sync indicator is app-wide ("persistent")
+          {/* Mounted at the root so sync status is app-wide
               across every screen. `replay` is deliberately left unwired here until
               a Supabase transport exists. */}
           <SyncStatusProvider countPending={countPending}>
@@ -234,12 +226,5 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
-  },
-  syncOverlay: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: spacing.lg,
-    alignItems: 'center',
   },
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from './tokens';
 import type { BreadcrumbSegment } from './Breadcrumb';
 import type { JobStatus } from '@jobcore/core';
@@ -148,6 +149,7 @@ export function AppChrome({
   onTitlePress,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [hMenuOpen, setHMenuOpen] = useState(false);
   const [oMenuOpen, setOMenuOpen] = useState(false);
   const [gMenuOpen, setGMenuOpen] = useState(false);
@@ -212,7 +214,7 @@ export function AppChrome({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.controlsRow}>
         <Pressable
           onPress={() => setHMenuOpen(true)}
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.md + spacing.sm,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.xs,
   },
   iconButton: {
@@ -398,7 +400,7 @@ const styles = StyleSheet.create({
   titleBarSubtitle: {
     fontFamily: typography.fontFamily.body,
     fontSize: 12,
-    lineHeight: 14,
+    lineHeight: 16,
     fontWeight: '400',
     color: colors.white,
   },

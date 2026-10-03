@@ -377,7 +377,7 @@ export function AssignmentBoardScreen({
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator {...(Platform.OS === 'android' ? { persistentScrollbar: true } : {})}>
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Jobs</Text>
           <View style={styles.categorySegmentRow}>
@@ -391,6 +391,7 @@ export function AssignmentBoardScreen({
               />
             ))}
           </View>
+          <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
@@ -420,29 +421,28 @@ export function AssignmentBoardScreen({
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
-                    <View style={styles.rowLeft}>
+                    {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as Button/Select in rowActions). */}
+                    <Pressable
+                      style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
+                      onPress={() => router.push('/job/' + job.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open job${job.jobNumber != null ? ' #' + job.jobNumber : ''}`}
+                      accessibilityHint="Opens the job page"
+                    >
                       {job.customerName ? <Text style={styles.rowCustomer}>{job.customerName}</Text> : null}
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
-                      <Text style={styles.assignedLine}>{techLine}</Text>
-                      {job.jobNumber != null ? <Text style={styles.assignedLine}>{`Job #${job.jobNumber}`}</Text> : null}
-                      {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
-                    </View>
+                      <View style={styles.rowMeta}>
+                        <Text style={[styles.assignedLine, styles.rowMetaTech]}>{techLine}</Text>
+                        {job.jobNumber != null ? <Text style={styles.assignedLine}>{`Job #${job.jobNumber}`}</Text> : null}
+                      </View>
+                    </Pressable>
+                    {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <Button
-                          label="Service"
-                          variant={kind === 'service' ? 'primary' : 'outline'}
-                          size="sm"
-                          onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))}
-                        />
+                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <Button
-                          label="Prem"
-                          variant={kind === 'prem' ? 'primary' : 'outline'}
-                          size="sm"
-                          onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))}
-                        />
+                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))} />
                       </View>
                       {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
@@ -457,22 +457,7 @@ export function AssignmentBoardScreen({
                         style={styles.assignSelect}
                       />
                       <View style={styles.confirmSlot}>
-                        {showConfirm ? (
-                          <Button
-                            label="Confirm"
-                            variant="primary"
-                            size="sm"
-                            onPress={() => handleRowConfirm(job)}
-                          />
-                        ) : null}
-                      </View>
-                      <View style={styles.viewSlot}>
-                        <Button
-                          label="View"
-                          variant="outline"
-                          size="sm"
-                          onPress={() => router.push('/job/' + job.id)}
-                        />
+                        {showConfirm ? <Button label="Confirm" variant="primary" size="sm" style={styles.actionButton} onPress={() => handleRowConfirm(job)} /> : null}
                       </View>
                     </View>
                   </View>
@@ -585,16 +570,18 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
+  jobsDivider: {
+    height: 2,
+    backgroundColor: colors.primary,
+    marginBottom: spacing.sm,
+  },
   visitKindSegmentRow: {
     flexDirection: 'row',
     gap: spacing.xs,
     marginRight: spacing.sm,
   },
   poolRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.sm,
     marginBottom: spacing.xs,
@@ -604,13 +591,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.info,
   },
   confirmSlot: {
-    width: 90,
-    marginRight: spacing.sm,
-  },
-  poolRowInfo: {
     flex: 1,
-    flexShrink: 1,
-    marginRight: spacing.sm,
+    minWidth: 72,
   },
   poolRowText: {
     color: colors.text,
@@ -618,23 +600,25 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   assignSelect: {
-    width: 140,
-    marginRight: spacing.sm,
-  },
-  poolRowStatus: {
-    color: colors.textMuted,
-    fontSize: typography.size.small,
-    fontFamily: typography.fontFamily.body,
-    textTransform: 'capitalize',
+    flex: 2,
+    minWidth: 0,
+    width: 'auto',
+    marginRight: spacing.xs,
   },
   assignedLine: {
     fontSize: typography.size.small,
     color: colors.textMuted,
   },
-  rowLeft: {
+  rowDetail: {},
+  rowMeta: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  rowMetaTech: {
     flex: 1,
     minWidth: 0,
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
   },
   rowCustomer: {
     color: colors.text,
@@ -649,16 +633,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   rowActions: {
-    flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: spacing.xs,
   },
   kindSlot: {
-    width: 84,
+    flex: 1,
+    minWidth: 72,
     marginRight: spacing.xs,
   },
-  viewSlot: {
-    width: 70,
+  actionButton: {
+    paddingHorizontal: spacing.sm,
   },
   hint: {
     color: colors.textMuted,

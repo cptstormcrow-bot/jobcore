@@ -12,7 +12,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="calendar" options={{ title: 'Calendar' }} />
-      <Tabs.Screen name="jobs" options={{ title: 'Jobs' }} />
+      <Tabs.Screen name="jobs" options={{ title: 'Jobs', headerShown: false }} />
     </Tabs>
   );
 }
