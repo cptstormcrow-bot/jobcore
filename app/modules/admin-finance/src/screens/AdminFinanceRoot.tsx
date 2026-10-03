@@ -21,19 +21,20 @@
  */
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
 import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
-import { isBetaVisible } from '@jobcore/core';
+import { isBetaVisible, isTestVisible } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
 import { bucketHours } from '../domain/hoursBuckets';
+import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
@@ -171,6 +172,7 @@ export function AdminFinanceRoot() {
   const [employeeHoursWorked, setEmployeeHoursWorked] = useState<{ week: number; month: number; year: number } | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
+  const [needsAttentionCount, setNeedsAttentionCount] = useState<number | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
@@ -252,6 +254,13 @@ export function AdminFinanceRoot() {
       cancelled = true;
     };
   }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills, ports.timeOffAdmin]);
+
+  useEffect(() => {
+    if (subView !== 'overview' || !orgId) return undefined;
+    let cancelled = false;
+    ports.payments.listNeedingAttention(orgId).then((rows) => { if (!cancelled) setNeedsAttentionCount(rows.length); }).catch(() => { if (!cancelled) setNeedsAttentionCount(null); });
+    return () => { cancelled = true; };
+  }, [subView, orgId]);
 
   useEffect(() => {
     const jobs = loadState.kind === 'loaded' ? loadState.jobs : [];
@@ -987,45 +996,27 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : subView === 'overview' ? (
-          <ScrollView contentContainerStyle={styles.content}>
-            <Card style={styles.card}>
-              <ListItem
-                title="Leads"
-                subtitle="View leads"
-                onPress={() => setSubView('leadInbox')}
-              />
-            </Card>
-            <Card style={styles.card}>
-              <ListItem
-                title="Jobs"
-                subtitle={`${loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length} on file for this organization`}
-                onPress={() => setSubView('jobs')}
-              />
-            </Card>
-            <Card style={styles.card}>
-              <ListItem
-                title="Assignments"
-                subtitle={`${loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length} qualified or scheduled`}
-                onPress={() => setSubView('assignmentBoard')}
-              />
-            </Card>
-            <Card style={styles.card}>
-              <ListItem
-                title="Close-Outs"
-                subtitle={`${loadState.jobs.filter(awaitingCloseOut).length} awaiting close-out`}
-                onPress={() => setSubView('closeOutQueue')}
-              />
-            </Card>
-            <Card style={styles.card}>
-              <ListItem
-                title="Payouts"
-                subtitle="View payout batches"
-                onPress={() => {
-                  setSubView('payments');
-                  setPaymentsScrollTarget('payoutBatches');
-                }}
-              />
-            </Card>
+          <ScrollView contentContainerStyle={[styles.content, styles.overviewContent]}>
+            {buildOverviewCards({
+              jobsOnFile: loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length,
+              qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
+              awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
+              pendingTimeOff: loadState.timeOffRequests.filter((request) => request.status === 'pending').length,
+              employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner').length,
+              needsAttentionPayments: needsAttentionCount,
+            }).map((card) => (
+              <Pressable
+                key={card.id}
+                testID={`overview-card-${card.id}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${card.title}, ${card.subtitle}`}
+                onPress={() => goTop(card.id)}
+                style={styles.overviewCard}
+              >
+                <Text style={styles.overviewCardTitle}>{card.title}</Text>
+                <Text style={styles.overviewCardSubtitle}>{card.subtitle}</Text>
+              </Pressable>
+            ))}
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
@@ -1470,6 +1461,20 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md },
   card: { marginBottom: spacing.md },
+  overviewContent: { paddingTop: spacing.xs },
+  overviewCard: {
+    minHeight: 48,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    marginBottom: 6,
+    justifyContent: 'center',
+  },
+  overviewCardTitle: { fontSize: 15, lineHeight: 18, fontWeight: '600', color: colors.text },
+  overviewCardSubtitle: { fontSize: 12, lineHeight: 14, color: colors.textMuted },
   calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   calendarTechSelect: { width: 180 },
 });
