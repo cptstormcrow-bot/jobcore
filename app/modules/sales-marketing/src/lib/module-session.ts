@@ -94,8 +94,8 @@ export function clearModuleSession(): void {
 /**
  * Reactive companion to `getModuleSession()`. Plain module-level state isn't
  * part of React's reactivity system, so a component that calls
- * `getModuleSession()` during render can render once before the host's
- * `useEffect` (see `app/m/[moduleId].tsx`) calls `setModuleSession()`, and
+ * `getModuleSession()` during render can render before the host (see
+ * `app/m/[moduleId].tsx`, which injects during its own render) calls `setModuleSession()`, and
  * then never re-render even after the session becomes available. This hook
  * subscribes the calling component to the store so it re-renders whenever
  * `setModuleSession`/`clearModuleSession` fire.
