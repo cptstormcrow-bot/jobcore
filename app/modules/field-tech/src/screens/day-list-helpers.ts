@@ -24,6 +24,55 @@ export function isScheduledOnLocalDate(job: Job, today: Date): boolean {
   return isSameDay(scheduled, today);
 }
 
+/** Job statuses that count as "closed out" — everything else counts as open. */
+export const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
+  'completed',
+  'paid',
+  'closed',
+  'declined',
+  'cancelled',
+]);
+
+/**
+ * The open job with the earliest `scheduledStart` at or after 00:00 LOCAL of
+ * `now`. Ties keep input order. `undefined` when nothing qualifies.
+ */
+export function pickNextJob(jobs: Job[], now: Date): Job | undefined {
+  const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  let best: Job | undefined;
+  let bestTime = Infinity;
+  for (const job of jobs) {
+    if (CLOSED_JOB_STATUSES.has(job.status)) continue;
+    if (job.scheduledStart === null || job.scheduledStart === undefined) continue;
+    const t = new Date(job.scheduledStart).getTime();
+    if (Number.isNaN(t) || t < dayStart) continue;
+    if (t < bestTime) {
+      best = job;
+      bestTime = t;
+    }
+  }
+  return best;
+}
+
+/**
+ * Finished jobs (`completed` | `paid` | `closed`), newest first by
+ * `completedAt ?? scheduledStart`; jobs with neither go last. Input not mutated.
+ */
+export function listPreviousJobs(jobs: Job[], limit = 10): Job[] {
+  const stamp = (job: Job): number => {
+    const raw = job.completedAt ?? job.scheduledStart;
+    if (raw === null || raw === undefined) return -Infinity;
+    const t = new Date(raw).getTime();
+    return Number.isNaN(t) ? -Infinity : t;
+  };
+  return jobs
+    .filter((job) => job.status === 'completed' || job.status === 'paid' || job.status === 'closed')
+    .map((job, index) => ({ job, index, t: stamp(job) }))
+    .sort((a, b) => (a.t === b.t ? a.index - b.index : a.t > b.t ? -1 : 1))
+    .slice(0, limit)
+    .map((entry) => entry.job);
+}
+
 /**
  * Expands each active (`pending` | `approved`) `TimeOffRequest` — spanning a
  * `startDate`/`endDate` range — into one `TimeOffEvent` per calendar day in

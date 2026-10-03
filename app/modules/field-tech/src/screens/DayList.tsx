@@ -12,11 +12,12 @@
  * Mirrors `modules/admin-finance/src` layering: screen reads session +
  * ports via the module seams, never constructs a repository itself.
  *
- * Also renders a "This Week" strip below the today list — a `WeekView`
- * (from `@jobcore/ui`) fed the same assigned-jobs list plus this tech's
- * own active time-off requests, expanded day-by-day into `TimeOffEvent`s
- * the same way `AdminFinanceRoot.toCalendarTimeOffEvents` does for the
- * admin calendar.
+ * The screen shows a "Next Job" card, a Week/Month calendar with
+ * Prev/Today/Next controls on the toggle row (fed the assigned-jobs list
+ * plus this tech's own active time-off requests, expanded day-by-day into
+ * `TimeOffEvent`s the same way `AdminFinanceRoot.toCalendarTimeOffEvents`
+ * does for the admin calendar), and a "Previous Jobs" list of the last 10
+ * completed jobs.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -29,7 +30,7 @@ import { getModulePorts } from '../lib/module-ports';
 import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
-import { isScheduledOnLocalDate, expandTimeOffToEvents } from './day-list-helpers';
+import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
 
 /** Props for `DayList`. */
 export interface DayListProps {
@@ -67,13 +68,9 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     if (defaultViewMode) setViewMode(defaultViewMode);
   }, [defaultViewMode]);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const visibleJobs = jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false));
-  const todayJobs = useMemo(() => {
-    const today = new Date();
-    return visibleJobs
-      .filter((job) => isScheduledOnLocalDate(job, today))
-      .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime());
-  }, [visibleJobs]);
+  const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false)), [jobs, showTestJobs]);
+  const nextJob = useMemo(() => pickNextJob(visibleJobs, new Date()), [visibleJobs]);
+  const previousJobs = useMemo(() => listPreviousJobs(visibleJobs, 10), [visibleJobs]);
   const timeOffEvents = useMemo(() => expandTimeOffToEvents(timeOffRequests), [timeOffRequests]);
 
   useEffect(() => {
@@ -142,48 +139,56 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
 
   const handleSelectDay = (day: Date) => setSelectedDay(day);
 
+  const renderJobRow = (job: Job) => (
+    <Pressable key={job.id} onPress={() => handleOpenJob(job)}>
+      <View style={styles.row}>
+        <Text style={styles.bullet}>{'•'}</Text>
+        <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
+        <View style={styles.rowBody}>
+          <Pressable onPress={() => job.address && copyToClipboard(job.address)}>
+            <Text style={styles.address}>{job.address ?? 'No address'}</Text>
+          </Pressable>
+          {job.customerName ? <Text style={styles.meta}>{job.customerName}</Text> : null}
+          {job.customerPhone ? (
+            <Pressable onPress={() => copyToClipboard(job.customerPhone ?? '')}>
+              <Text style={styles.meta}>{job.customerPhone}</Text>
+            </Pressable>
+          ) : null}
+          <Text style={styles.window}>
+            {job.requestedWindow ?? (job.scheduledStart ? new Date(job.scheduledStart).toLocaleString() : 'Unscheduled')}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+
   const weekLabel =
     viewMode === 'week' ? format(anchorDay, 'MMM d, yyyy') : format(anchorDay, 'MMMM yyyy');
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
-      <ScreenTitle title="Today's Jobs" />
-      {todayJobs.length === 0 ? (
+      <ScreenTitle title="Next Job" />
+      {nextJob === undefined ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyText}>No jobs scheduled today.</Text>
+          <Text style={styles.emptyText}>No upcoming jobs.</Text>
         </View>
       ) : (
-        <FlatList
-          data={todayJobs}
-          keyExtractor={(job) => job.id}
-          scrollEnabled={false}
-          renderItem={({ item }) => {
-            const rowContent = (
-              <View style={styles.row}>
-                <Text style={styles.bullet}>{'\u2022'}</Text>
-                <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[item.status] }]} />
-                <View style={styles.rowBody}>
-                  <Pressable onPress={() => item.address && copyToClipboard(item.address)}>
-                    <Text style={styles.address}>{item.address ?? 'No address'}</Text>
-                  </Pressable>
-                  {item.customerName ? <Text style={styles.meta}>{item.customerName}</Text> : null}
-                  {item.customerPhone ? (
-                    <Pressable onPress={() => copyToClipboard(item.customerPhone ?? '')}>
-                      <Text style={styles.meta}>{item.customerPhone}</Text>
-                    </Pressable>
-                  ) : null}
-                  <Text style={styles.window}>{item.requestedWindow ?? item.scheduledStart ?? 'Unscheduled'}</Text>
-                </View>
-              </View>
-            );
-
-            return <Pressable onPress={() => handleOpenJob(item)}>{rowContent}</Pressable>;
-          }}
-        />
+        renderJobRow(nextJob)
       )}
 
       <View style={styles.weekHeader}>
-        <ScreenTitle title={viewMode === 'week' ? 'This Week' : 'This Month'} />
+        <Text style={styles.weekLabel}>{weekLabel}</Text>
+      </View>
+      <View style={styles.controlsRow}>
+        <TabBar
+          items={[
+            { key: 'week', label: 'Week' },
+            { key: 'month', label: 'Month' },
+          ]}
+          activeKey={viewMode}
+          onSelect={(k) => setViewMode(k as 'week' | 'month')}
+          style={styles.modeToggle}
+        />
         <View style={styles.weekNav}>
           <Pressable
             style={styles.navButton}
@@ -205,17 +210,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
             <Text style={styles.navButtonText}>Next</Text>
           </Pressable>
         </View>
-        <Text style={styles.weekLabel}>{weekLabel}</Text>
       </View>
-      <TabBar
-        items={[
-          { key: 'week', label: 'Week' },
-          { key: 'month', label: 'Month' },
-        ]}
-        activeKey={viewMode}
-        onSelect={(k) => setViewMode(k as 'week' | 'month')}
-        style={styles.modeToggle}
-      />
       {viewMode === 'week' ? (
         <View style={styles.weekStrip}>
           <WeekView
@@ -284,6 +279,18 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
           </Pressable>
         </Pressable>
       </Modal>
+      <ScreenTitle title="Previous Jobs" />
+      {previousJobs.length === 0 ? (
+        <Text style={styles.emptyText}>No completed jobs yet.</Text>
+      ) : (
+        previousJobs.map((job) => (
+          <Pressable key={job.id} style={styles.previousRow} onPress={() => handleOpenJob(job)}>
+            <Text style={styles.previousText} numberOfLines={1}>
+              {(job.address ?? 'No address') + ' - ' + new Date((job.completedAt ?? job.scheduledStart) as string).toLocaleDateString()}
+            </Text>
+          </Pressable>
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -374,6 +381,20 @@ const styles = StyleSheet.create({
   },
   monthStrip: {
     marginTop: spacing.sm,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  previousRow: {
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  previousText: {
+    fontSize: typography.size.label,
+    color: colors.textMutedDark,
   },
   overlay: {
     flex: 1,

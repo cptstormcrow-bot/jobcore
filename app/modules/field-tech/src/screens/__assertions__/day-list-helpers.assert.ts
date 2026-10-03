@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isScheduledOnLocalDate, expandTimeOffToEvents } from '../day-list-helpers';
+import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from '../day-list-helpers';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest, TimeOffStatus } from '../../data/ports';
 
@@ -121,4 +121,71 @@ test('expandTimeOffToEvents: a single-day request expands to exactly one event',
 test('expandTimeOffToEvents: skips requests with unparseable dates', () => {
   const requests = [makeRequest({ startDate: 'bad-date', endDate: 'bad-date' })];
   assert.deepEqual(expandTimeOffToEvents(requests), []);
+});
+
+const NOW = new Date(2026, 8, 10, 12, 0, 0);
+const at = (d: number, h = 9) => new Date(2026, 8, d, h, 0, 0).toISOString();
+
+test('pickNextJob: empty -> undefined', () => {
+  assert.equal(pickNextJob([], NOW), undefined);
+});
+
+test('pickNextJob: earliest future wins', () => {
+  const a = makeJob({ id: 'a', scheduledStart: at(15) });
+  const b = makeJob({ id: 'b', scheduledStart: at(12) });
+  assert.equal(pickNextJob([a, b], NOW)?.id, 'b');
+});
+
+test('pickNextJob: ignores closed statuses', () => {
+  const jobs = (['completed', 'paid', 'closed', 'cancelled'] as const).map((s, i) =>
+    makeJob({ id: `c${i}`, status: s as Job['status'], scheduledStart: at(11) }),
+  );
+  assert.equal(pickNextJob(jobs, NOW), undefined);
+});
+
+test('pickNextJob: ignores null scheduledStart', () => {
+  assert.equal(pickNextJob([makeJob({ scheduledStart: null })], NOW), undefined);
+});
+
+test('pickNextJob: includes open job earlier today', () => {
+  const j = makeJob({ id: 'today', scheduledStart: at(10, 6) });
+  assert.equal(pickNextJob([j], NOW)?.id, 'today');
+});
+
+test('pickNextJob: ignores yesterday open job', () => {
+  assert.equal(pickNextJob([makeJob({ scheduledStart: at(9, 18) })], NOW), undefined);
+});
+
+test('pickNextJob: stable ties', () => {
+  const a = makeJob({ id: 'first', scheduledStart: at(12) });
+  const b = makeJob({ id: 'second', scheduledStart: at(12) });
+  assert.equal(pickNextJob([a, b], NOW)?.id, 'first');
+});
+
+test('listPreviousJobs: only completed/paid/closed', () => {
+  const jobs = [
+    makeJob({ id: 'x', status: 'scheduled' as Job['status'], scheduledStart: at(1) }),
+    makeJob({ id: 'c', status: 'completed' as Job['status'], scheduledStart: at(2) }),
+    makeJob({ id: 'p', status: 'paid' as Job['status'], scheduledStart: at(3) }),
+    makeJob({ id: 'z', status: 'closed' as Job['status'], scheduledStart: at(4) }),
+  ];
+  assert.deepEqual(listPreviousJobs(jobs).map((j) => j.id).sort(), ['c', 'p', 'z']);
+});
+
+test('listPreviousJobs: newest first, undated last', () => {
+  const jobs = [
+    makeJob({ id: 'none', status: 'completed' as Job['status'] }),
+    makeJob({ id: 'old', status: 'completed' as Job['status'], completedAt: at(1) }),
+    makeJob({ id: 'new', status: 'completed' as Job['status'], completedAt: at(5) }),
+    makeJob({ id: 'sched', status: 'paid' as Job['status'], scheduledStart: at(3) }),
+  ];
+  assert.deepEqual(listPreviousJobs(jobs).map((j) => j.id), ['new', 'sched', 'old', 'none']);
+});
+
+test('listPreviousJobs: capped at 10 of 12, custom limit', () => {
+  const jobs = Array.from({ length: 12 }, (_, i) =>
+    makeJob({ id: `j${i}`, status: 'completed' as Job['status'], completedAt: at(i + 1) }),
+  );
+  assert.equal(listPreviousJobs(jobs).length, 10);
+  assert.equal(listPreviousJobs(jobs, 3).length, 3);
 });

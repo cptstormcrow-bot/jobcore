@@ -401,9 +401,6 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontWeight: '400',
     color: colors.white,
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 2,
   },
   titleBarGold: {
     backgroundColor: colors.gold,

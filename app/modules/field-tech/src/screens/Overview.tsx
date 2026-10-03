@@ -24,19 +24,11 @@ import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { CLOSED_JOB_STATUSES } from './day-list-helpers';
 import { colors, spacing, Text } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
-
-/** Job statuses that count as "closed out" — everything else counts as open. */
-const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
-  'completed',
-  'paid',
-  'closed',
-  'declined',
-  'cancelled',
-]);
 
 export interface OverviewProps {
   onOpenJob?: (jobId: string) => void;

@@ -66,10 +66,10 @@ function FieldTechRoot(): React.ReactElement {
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const [showTestJobs, setShowTestJobs] = React.useState(false);
-  const [defaultMonthView, setDefaultMonthView] = React.useState(false);
+  const [defaultMonthView, setDefaultMonthView] = React.useState(true);
   React.useEffect(() => {
     void getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false).then(setShowTestJobs);
-    void getModulePorts().localPrefs.getBool(DEFAULT_MONTH_KEY, false).then(setDefaultMonthView);
+    void getModulePorts().localPrefs.getBool(DEFAULT_MONTH_KEY, true).then(setDefaultMonthView);
   }, []);
   const session = getModuleSession();
 
