@@ -55,8 +55,7 @@ import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
 import { BlackoutEditorScreen } from './BlackoutEditorScreen';
 import { EmployeeInvitationsScreen } from './EmployeeInvitationsScreen';
-import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill, ServiceTask } from '../data/ports';
-import type { CalculationResult } from '../money/types';
+import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { unassignJob } from '../flows/unassign-job';
@@ -1140,43 +1139,7 @@ export function AdminFinanceRoot() {
           publishRepo={ports.priceSheetPublish}
           areaAdjustmentsRepo={ports.priceSheetAreaAdjustments}
           ratesRepo={ports.priceSheetRates}
-          serviceTasksRepo={
-            // FX-13 gate repair: module-ports.ts's serviceTasks type is out of
-            // this wave's scope and has not been extended with listServices,
-            // even though the runtime repo (admin-finance-repos.ts) implements
-            // it. Widen the type locally rather than edit the out-of-scope file.
-            ports.serviceTasks as typeof ports.serviceTasks & {
-              listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
-              save(
-                organizationId: string,
-                serviceId: string,
-                name: string,
-                extra?: {
-                  estimatedMinutes?: number | null;
-                  rate?: number | null;
-                  category?: string | null;
-                  active?: boolean;
-                  priceCents?: number | null;
-                  details?: string | null;
-                  materials?: string | null;
-                }
-              ): Promise<CalculationResult<ServiceTask>>;
-              updateServiceTask(
-                taskId: string,
-                patch: {
-                  name?: string;
-                  estimatedMinutes?: number | null;
-                  rate?: number | null;
-                  category?: string | null;
-                  active?: boolean;
-                  priceCents?: number | null;
-                  details?: string | null;
-                  materials?: string | null;
-                }
-              ): Promise<CalculationResult<ServiceTask>>;
-              remove(taskId: string): Promise<CalculationResult<void>>;
-            }
-          }
+          serviceTasksRepo={ports.serviceTasks}
           serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
           onPublished={handlePublished}
         />

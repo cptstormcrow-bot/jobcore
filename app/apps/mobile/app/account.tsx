@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     textTransform: 'capitalize',
   },
-  buttonRow: { flexDirection: 'row', gap: spacing.sm },
   actions: { flexDirection: 'row', gap: spacing.sm },
   actionBtn: { flex: 1, minWidth: 0 },
   note: {

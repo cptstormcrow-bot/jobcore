@@ -261,6 +261,7 @@ export async function saveAreaAdjustment(
         adjustment_type: adjustmentType,
         adjustment_value: adjustmentValue,
         organization_id: sheet.organization_id,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: 'price_sheet_id,service_area_id' }
     )

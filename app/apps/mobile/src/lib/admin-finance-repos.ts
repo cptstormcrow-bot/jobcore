@@ -2751,7 +2751,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
     async listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]> {
       const { data, error } = await supabase
         .from('service_tasks')
-        .select('id, name, category, estimated_minutes, rate')
+        .select('id, name, category, estimated_minutes, rate, task_number')
         .eq('organization_id', organizationId)
         .eq('active', true);
       if (error) {
@@ -2763,13 +2763,14 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         category: string | null;
         estimated_minutes: number | null;
         rate: number | null;
+        task_number: number | null;
       }>).map((row) => ({
         id: row.id,
         name: row.name,
         category: row.category,
         estimatedMinutes: row.estimated_minutes,
         rate: row.rate,
-        taskNumber: null,
+        taskNumber: row.task_number ?? null,
       }));
     },
 
