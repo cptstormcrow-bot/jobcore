@@ -119,7 +119,7 @@ registers with Apple. Beyond roughly 5 testers, switch to TestFlight via `eas su
 1. **`eas-cli` is not installed** and no Expo account is wired.
 2. **`expo-dev-client` is not a dependency**, so the `development` profile in `eas.json`
    cannot produce a dev-client build as currently written. `preview` is unaffected.
-3. **No icon / adaptive-icon / splash assets** and no `android.versionCode` in `app.json`.
+3. **No icon / adaptive-icon / splash assets.** `app.json` now carries `android.versionCode` (5 as of v0.3.0, bumped by `npm run release`).
    Fine for `preview`; required before store submission. `production.autoIncrement` in
    `eas.json` handles versionCode for production builds.
 4. **`.env` is local-only.** The Supabase URL and anon key must move to EAS secrets or the
@@ -139,7 +139,7 @@ exist yet.
 |---|---|
 | **P3-d** (admin module shell renders) | First smoke-test `preview` build. Early enough to catch native / New-Architecture surprises while they are cheap. |
 | **P3-n** (phase close) | Internally useful build - admin can run leads to qualify to assign to close-out. |
-| **After P5** | Store-ready build. Payment capture and review flows are the customer-facing half; also needs icons, versionCode, privacy policy. |
+| **After P5** | Store-ready build. Payment capture and review flows are the customer-facing half; also needs icons and a privacy policy (versionCode is already set in `app.json`). |
 
 ### Apple account timing
 
