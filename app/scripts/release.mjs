@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.resolve(SCRIPT_DIR, '..');
-const CO_AUTHOR = 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>';
+const CO_AUTHOR = 'Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>';
 
 export const NO_TAG_MESSAGE =
   'No v* tag found: release needs a baseline. Tag v0.2.0 on the 0.2.0 release commit ' +
