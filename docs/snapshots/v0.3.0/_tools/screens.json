@@ -1,0 +1,7002 @@
+{
+  "version": 1,
+  "app": "JobCore",
+  "appVersion": "0.3.0",
+  "apk": "app/apps/mobile/jobcore-0.3.0-vc5.apk (untracked, .gitignore:28)",
+  "generatedBy": "docs/snapshots/_tools/extract.mjs",
+  "generatedFrom": "extract.mjs",
+  "screens": [
+    {
+      "key": "account",
+      "kind": "route",
+      "module": null,
+      "route": "/account",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/account.tsx",
+      "title": "Account",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Sign out",
+        "Sign in as someone else"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 3,
+        "Card": 1,
+        "AppChrome": 1,
+        "LoadingState": 1
+      },
+      "pickers": [],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-in"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Card",
+            "Button",
+            "LoadingState",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "../src/lib/session",
+          "names": [
+            "useSession",
+            "signOut"
+          ]
+        },
+        {
+          "src": "../src/lib/landing",
+          "names": [
+            "landingRouteFor"
+          ]
+        }
+      ],
+      "lineCount": 123,
+      "titleInSource": null
+    },
+    {
+      "key": "admin-finance",
+      "kind": "module-root",
+      "module": "admin-finance",
+      "route": "/m/admin-finance",
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+      "title": "Admin & Finance",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Plan",
+        "Add Blackout"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 3,
+        "Card": 1,
+        "ListItem": 1,
+        "Select": 1,
+        "AppChrome": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1,
+        "EmptyState": 9,
+        "LoadingState": 5,
+        "ErrorState": 6,
+        "ScrollView": 2,
+        "Pressable": 1
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/job/new"
+        },
+        {
+          "kind": "subView",
+          "target": "leadEdit"
+        },
+        {
+          "kind": "subView",
+          "target": "leadInbox"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutReview"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutQueue"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetEditor"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetList"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-roster"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-job-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "blackout-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "assignmentBoard"
+        },
+        {
+          "kind": "subView",
+          "target": "leadCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "qualify"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-invitations"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "Select",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "WeekView",
+            "MonthView",
+            "CalendarHeader",
+            "AppChrome",
+            "colors",
+            "spacing",
+            "radius"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible",
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "awaitingCloseOut"
+          ]
+        },
+        {
+          "src": "../domain/hoursBuckets",
+          "names": [
+            "bucketHours"
+          ]
+        },
+        {
+          "src": "../domain/overview-cards",
+          "names": [
+            "buildOverviewCards"
+          ]
+        },
+        {
+          "src": "./LeadInboxScreen",
+          "names": [
+            "LeadInboxScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetListScreen",
+          "names": [
+            "PriceSheetListScreen"
+          ]
+        },
+        {
+          "src": "./TimeOffQueueScreen",
+          "names": [
+            "TimeOffQueueScreen"
+          ]
+        },
+        {
+          "src": "./PaymentsHubScreen",
+          "names": [
+            "PaymentsHubScreen"
+          ]
+        },
+        {
+          "src": "./AssignmentBoardScreen",
+          "names": [
+            "AssignmentBoardScreen"
+          ]
+        },
+        {
+          "src": "./ReportsScreen",
+          "names": [
+            "ReportsScreen"
+          ]
+        },
+        {
+          "src": "./QualifyScreen",
+          "names": [
+            "QualifyScreen",
+            "type QualifyAxisSelection"
+          ]
+        },
+        {
+          "src": "./LeadCreateScreen",
+          "names": [
+            "LeadCreateScreen"
+          ]
+        },
+        {
+          "src": "./LeadEditScreen",
+          "names": [
+            "LeadEditScreen"
+          ]
+        },
+        {
+          "src": "./PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "./JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutQueueScreen",
+          "names": [
+            "CloseOutQueueScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutReviewScreen",
+          "names": [
+            "CloseOutReviewScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetEditorScreen",
+          "names": [
+            "PriceSheetEditorScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetCreateScreen",
+          "names": [
+            "PriceSheetCreateScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeRosterScreen",
+          "names": [
+            "EmployeeRosterScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeEditorScreen",
+          "names": [
+            "EmployeeEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeDetailScreen",
+          "names": [
+            "EmployeeDetailScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeJobDetailScreen",
+          "names": [
+            "EmployeeJobDetailScreen"
+          ]
+        },
+        {
+          "src": "./BlackoutEditorScreen",
+          "names": [
+            "BlackoutEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeInvitationsScreen",
+          "names": [
+            "EmployeeInvitationsScreen"
+          ]
+        },
+        {
+          "src": "../flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../flows/assign-investigator",
+          "names": [
+            "assignInvestigator"
+          ]
+        },
+        {
+          "src": "../flows/qualify-lead",
+          "names": [
+            "qualifyLead"
+          ]
+        },
+        {
+          "src": "../flows/close-out-job",
+          "names": [
+            "closeOutJob"
+          ]
+        }
+      ],
+      "lineCount": 1481,
+      "titleInSource": "Admin & Finance"
+    },
+    {
+      "key": "af-JobCreateScreen",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/admin-finance/src/screens/JobCreateScreen.tsx",
+      "title": "Job Create Screen",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": false,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 5,
+        "Card": 1,
+        "EmptyState": 1,
+        "ScrollView": 1,
+        "TextInput": 3
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "EmptyState",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 203,
+      "titleInSource": "New job"
+    },
+    {
+      "key": "af-ReportsJobDetailScreen",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/admin-finance/src/screens/ReportsJobDetailScreen.tsx",
+      "title": "Reports Job Detail Screen",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": false,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back"
+      ],
+      "components": {
+        "Button": 1,
+        "Text": 3,
+        "Card": 2,
+        "ListItem": 10,
+        "ScreenTitle": 2,
+        "EmptyState": 1,
+        "LoadingState": 1,
+        "ErrorState": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "EmptyState",
+            "ErrorState",
+            "ListItem",
+            "LoadingState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "Text"
+          ]
+        },
+        {
+          "src": "../reporting/revenue",
+          "names": [
+            "commissionTotals"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 153,
+      "titleInSource": "Job Details"
+    },
+    {
+      "key": "af-addTaskDialog",
+      "kind": "dialog",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": "af-priceSheetEditor",
+      "file": "modules/admin-finance/src/screens/AddTaskDialog.tsx",
+      "title": "Add Task",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 2,
+        "TextField": 6,
+        "Toggle": 1,
+        "Modal": 1,
+        "ScrollView": 1,
+        "Pressable": 1
+      },
+      "pickers": [
+        "Modal"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Text",
+            "TextField",
+            "Toggle",
+            "colors",
+            "spacing",
+            "typography",
+            "radius"
+          ]
+        }
+      ],
+      "lineCount": 234,
+      "titleInSource": null
+    },
+    {
+      "key": "af-assignmentBoard",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "assignmentBoard",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+      "title": "Assignments",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Service",
+        "Prem",
+        "Confirm"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 10,
+        "Card": 2,
+        "ListItem": 1,
+        "Select": 1,
+        "Checkbox": 1,
+        "EmptyState": 2,
+        "ScrollView": 1,
+        "Pressable": 2,
+        "WarningSheet": 2
+      },
+      "pickers": [
+        "Select",
+        "WarningSheet"
+      ],
+      "menus": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible",
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "EmptyState",
+            "Button",
+            "Select",
+            "ListItem",
+            "Checkbox",
+            "colors",
+            "spacing",
+            "radius",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../components/WarningSheet",
+          "names": [
+            "WarningSheet"
+          ]
+        },
+        {
+          "src": "../domain/assignment-warnings",
+          "names": [
+            "warningsFor",
+            "type AssignmentTimeOffRequest"
+          ]
+        },
+        {
+          "src": "../domain/segway-candidates",
+          "names": [
+            "candidatesFor",
+            "type TechServiceAreaCoverage"
+          ]
+        },
+        {
+          "src": "../domain/time-window",
+          "names": [
+            "overlaps",
+            "type TimeWindow"
+          ]
+        }
+      ],
+      "lineCount": 669,
+      "titleInSource": "Assignment board"
+    },
+    {
+      "key": "af-blackout-editor",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "blackout-editor",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/BlackoutEditorScreen.tsx",
+      "title": "Add Blackout",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 2,
+        "Card": 1,
+        "TextField": 1,
+        "Select": 1,
+        "DatePicker": 2,
+        "ScreenTitle": 1,
+        "EmptyState": 2,
+        "ErrorState": 1,
+        "ScrollView": 1
+      },
+      "pickers": [
+        "Select",
+        "DatePicker"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [
+        "TimeOffAdminRepo.createBlackout"
+      ],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ErrorState",
+            "ScreenTitle",
+            "Select",
+            "DatePicker",
+            "TextField",
+            "EmptyState",
+            "colors",
+            "spacing"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 193,
+      "titleInSource": "Add Blackout"
+    },
+    {
+      "key": "af-calendar",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "calendar",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+      "title": "Calendar",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "inline",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Plan",
+        "Add Blackout"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 3,
+        "Card": 1,
+        "ListItem": 1,
+        "Select": 1,
+        "AppChrome": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1,
+        "EmptyState": 9,
+        "LoadingState": 5,
+        "ErrorState": 6,
+        "ScrollView": 2,
+        "Pressable": 1
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/job/new"
+        },
+        {
+          "kind": "subView",
+          "target": "leadEdit"
+        },
+        {
+          "kind": "subView",
+          "target": "leadInbox"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutReview"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutQueue"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetEditor"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetList"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-roster"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-job-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "blackout-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "assignmentBoard"
+        },
+        {
+          "kind": "subView",
+          "target": "leadCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "qualify"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-invitations"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "Select",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "WeekView",
+            "MonthView",
+            "CalendarHeader",
+            "AppChrome",
+            "colors",
+            "spacing",
+            "radius"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible",
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "awaitingCloseOut"
+          ]
+        },
+        {
+          "src": "../domain/hoursBuckets",
+          "names": [
+            "bucketHours"
+          ]
+        },
+        {
+          "src": "../domain/overview-cards",
+          "names": [
+            "buildOverviewCards"
+          ]
+        },
+        {
+          "src": "./LeadInboxScreen",
+          "names": [
+            "LeadInboxScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetListScreen",
+          "names": [
+            "PriceSheetListScreen"
+          ]
+        },
+        {
+          "src": "./TimeOffQueueScreen",
+          "names": [
+            "TimeOffQueueScreen"
+          ]
+        },
+        {
+          "src": "./PaymentsHubScreen",
+          "names": [
+            "PaymentsHubScreen"
+          ]
+        },
+        {
+          "src": "./AssignmentBoardScreen",
+          "names": [
+            "AssignmentBoardScreen"
+          ]
+        },
+        {
+          "src": "./ReportsScreen",
+          "names": [
+            "ReportsScreen"
+          ]
+        },
+        {
+          "src": "./QualifyScreen",
+          "names": [
+            "QualifyScreen",
+            "type QualifyAxisSelection"
+          ]
+        },
+        {
+          "src": "./LeadCreateScreen",
+          "names": [
+            "LeadCreateScreen"
+          ]
+        },
+        {
+          "src": "./LeadEditScreen",
+          "names": [
+            "LeadEditScreen"
+          ]
+        },
+        {
+          "src": "./PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "./JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutQueueScreen",
+          "names": [
+            "CloseOutQueueScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutReviewScreen",
+          "names": [
+            "CloseOutReviewScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetEditorScreen",
+          "names": [
+            "PriceSheetEditorScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetCreateScreen",
+          "names": [
+            "PriceSheetCreateScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeRosterScreen",
+          "names": [
+            "EmployeeRosterScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeEditorScreen",
+          "names": [
+            "EmployeeEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeDetailScreen",
+          "names": [
+            "EmployeeDetailScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeJobDetailScreen",
+          "names": [
+            "EmployeeJobDetailScreen"
+          ]
+        },
+        {
+          "src": "./BlackoutEditorScreen",
+          "names": [
+            "BlackoutEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeInvitationsScreen",
+          "names": [
+            "EmployeeInvitationsScreen"
+          ]
+        },
+        {
+          "src": "../flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../flows/assign-investigator",
+          "names": [
+            "assignInvestigator"
+          ]
+        },
+        {
+          "src": "../flows/qualify-lead",
+          "names": [
+            "qualifyLead"
+          ]
+        },
+        {
+          "src": "../flows/close-out-job",
+          "names": [
+            "closeOutJob"
+          ]
+        }
+      ],
+      "lineCount": 1481,
+      "titleInSource": "Admin & Finance"
+    },
+    {
+      "key": "af-closeOutQueue",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "closeOutQueue",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/CloseOutQueueScreen.tsx",
+      "title": "Close-Outs",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 7,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 2,
+        "ScrollView": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "EmptyState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "awaitingCloseOut",
+            "closeOutBlockers",
+            "closeOutStatus"
+          ]
+        }
+      ],
+      "lineCount": 208,
+      "titleInSource": "Close-out queue"
+    },
+    {
+      "key": "af-closeOutReview",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "closeOutReview",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
+      "title": "Close-Out Review",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Contact",
+        "Add photo",
+        "Close out job",
+        "Remove"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 22,
+        "Card": 7,
+        "ScreenTitle": 1,
+        "EmptyState": 2,
+        "ScrollView": 1,
+        "TextInput": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "EmptyState",
+            "Button",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "radius",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "closeOutBlockers"
+          ]
+        }
+      ],
+      "lineCount": 318,
+      "titleInSource": "Close-out review"
+    },
+    {
+      "key": "af-employee-detail",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "employee-detail",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+      "title": "Employee Detail",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Edit",
+        "Deactivate",
+        "Reactivate"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 11,
+        "Card": 3,
+        "ScreenTitle": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 220,
+      "titleInSource": null
+    },
+    {
+      "key": "af-employee-editor",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "employee-editor",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/EmployeeEditorScreen.tsx",
+      "title": "Add/Edit Employee",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel",
+        "Revoke pending invitation & resend"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 9,
+        "Card": 4,
+        "Select": 2,
+        "Checkbox": 1,
+        "Toggle": 2,
+        "ScreenTitle": 1,
+        "EmptyState": 2,
+        "ErrorState": 5,
+        "ScrollView": 1,
+        "TextInput": 10
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "Checkbox",
+            "EmptyState",
+            "ErrorState",
+            "ScreenTitle",
+            "Toggle",
+            "Select",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "DEFAULT_PAID_TRAVEL_POLICY_MESSAGE",
+            "DEFAULT_HOURLY_RATE_CENTS"
+          ]
+        },
+        {
+          "src": "../data/ports",
+          "names": [
+            "isVehicleStatus",
+            "isToolStatus",
+            "DuplicateInvitationError"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 649,
+      "titleInSource": "Employee"
+    },
+    {
+      "key": "af-employee-invitations",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "employee-invitations",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/EmployeeInvitationsScreen.tsx",
+      "title": "Pending Invitations",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Revoke"
+      ],
+      "components": {
+        "Button": 1,
+        "Card": 1,
+        "ListItem": 1,
+        "ScreenTitle": 2,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 2,
+        "ScrollView": 2
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 176,
+      "titleInSource": "Employee Invitations"
+    },
+    {
+      "key": "af-employee-job-detail",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "employee-job-detail",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/EmployeeJobDetailScreen.tsx",
+      "title": "Employee Job Detail",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back"
+      ],
+      "components": {
+        "Button": 1,
+        "Card": 1,
+        "ListItem": 4,
+        "ScreenTitle": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 73,
+      "titleInSource": "Job Details"
+    },
+    {
+      "key": "af-employee-roster",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "employee-roster",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+      "title": "Employees",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Employee",
+        "Pending Invitations"
+      ],
+      "components": {
+        "Button": 2,
+        "Card": 1,
+        "ListItem": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 161,
+      "titleInSource": "Employee Roster"
+    },
+    {
+      "key": "af-jobEstimate",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "jobEstimate",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/JobEstimateScreen.tsx",
+      "title": "Job Estimate",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel",
+        "Remove",
+        "Manual",
+        "From Price Sheet",
+        "Print / Save as PDF"
+      ],
+      "components": {
+        "Button": 13,
+        "Text": 10,
+        "Card": 3,
+        "ListItem": 8,
+        "TextField": 7,
+        "Select": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 1,
+        "LoadingState": 1,
+        "ErrorState": 4
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "Select",
+            "TextField",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../flows/approve-estimate",
+          "names": [
+            "approveEstimate"
+          ]
+        }
+      ],
+      "lineCount": 744,
+      "titleInSource": "Estimate"
+    },
+    {
+      "key": "af-jobs",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "jobs",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+      "title": "Jobs",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "inline",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Plan",
+        "Add Blackout"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 3,
+        "Card": 1,
+        "ListItem": 1,
+        "Select": 1,
+        "AppChrome": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1,
+        "EmptyState": 9,
+        "LoadingState": 5,
+        "ErrorState": 6,
+        "ScrollView": 2,
+        "Pressable": 1
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/job/new"
+        },
+        {
+          "kind": "subView",
+          "target": "leadEdit"
+        },
+        {
+          "kind": "subView",
+          "target": "leadInbox"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutReview"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutQueue"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetEditor"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetList"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-roster"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-job-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "blackout-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "assignmentBoard"
+        },
+        {
+          "kind": "subView",
+          "target": "leadCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "qualify"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-invitations"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "Select",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "WeekView",
+            "MonthView",
+            "CalendarHeader",
+            "AppChrome",
+            "colors",
+            "spacing",
+            "radius"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible",
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "awaitingCloseOut"
+          ]
+        },
+        {
+          "src": "../domain/hoursBuckets",
+          "names": [
+            "bucketHours"
+          ]
+        },
+        {
+          "src": "../domain/overview-cards",
+          "names": [
+            "buildOverviewCards"
+          ]
+        },
+        {
+          "src": "./LeadInboxScreen",
+          "names": [
+            "LeadInboxScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetListScreen",
+          "names": [
+            "PriceSheetListScreen"
+          ]
+        },
+        {
+          "src": "./TimeOffQueueScreen",
+          "names": [
+            "TimeOffQueueScreen"
+          ]
+        },
+        {
+          "src": "./PaymentsHubScreen",
+          "names": [
+            "PaymentsHubScreen"
+          ]
+        },
+        {
+          "src": "./AssignmentBoardScreen",
+          "names": [
+            "AssignmentBoardScreen"
+          ]
+        },
+        {
+          "src": "./ReportsScreen",
+          "names": [
+            "ReportsScreen"
+          ]
+        },
+        {
+          "src": "./QualifyScreen",
+          "names": [
+            "QualifyScreen",
+            "type QualifyAxisSelection"
+          ]
+        },
+        {
+          "src": "./LeadCreateScreen",
+          "names": [
+            "LeadCreateScreen"
+          ]
+        },
+        {
+          "src": "./LeadEditScreen",
+          "names": [
+            "LeadEditScreen"
+          ]
+        },
+        {
+          "src": "./PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "./JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutQueueScreen",
+          "names": [
+            "CloseOutQueueScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutReviewScreen",
+          "names": [
+            "CloseOutReviewScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetEditorScreen",
+          "names": [
+            "PriceSheetEditorScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetCreateScreen",
+          "names": [
+            "PriceSheetCreateScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeRosterScreen",
+          "names": [
+            "EmployeeRosterScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeEditorScreen",
+          "names": [
+            "EmployeeEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeDetailScreen",
+          "names": [
+            "EmployeeDetailScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeJobDetailScreen",
+          "names": [
+            "EmployeeJobDetailScreen"
+          ]
+        },
+        {
+          "src": "./BlackoutEditorScreen",
+          "names": [
+            "BlackoutEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeInvitationsScreen",
+          "names": [
+            "EmployeeInvitationsScreen"
+          ]
+        },
+        {
+          "src": "../flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../flows/assign-investigator",
+          "names": [
+            "assignInvestigator"
+          ]
+        },
+        {
+          "src": "../flows/qualify-lead",
+          "names": [
+            "qualifyLead"
+          ]
+        },
+        {
+          "src": "../flows/close-out-job",
+          "names": [
+            "closeOutJob"
+          ]
+        }
+      ],
+      "lineCount": 1481,
+      "titleInSource": "Admin & Finance"
+    },
+    {
+      "key": "af-leadCreate",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "leadCreate",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/LeadCreateScreen.tsx",
+      "title": "New Lead",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 12,
+        "Card": 1,
+        "EmptyState": 1,
+        "ScrollView": 1,
+        "TextInput": 8
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "EmptyState",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../domain/intake-normalize",
+          "names": [
+            "DEFAULT_AXIS_VALUES"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 268,
+      "titleInSource": "New lead"
+    },
+    {
+      "key": "af-leadEdit",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "leadEdit",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+      "title": "Edit Lead",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Save",
+        "Create job"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 14,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 1,
+        "ScrollView": 1,
+        "TextInput": 8,
+        "AxisPicker": 3
+      },
+      "pickers": [
+        "AxisPicker"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "EmptyState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "radius",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../domain/lead-readiness",
+          "names": [
+            "classifyLead",
+            "missingFields"
+          ]
+        },
+        {
+          "src": "../components/AxisPicker",
+          "names": [
+            "AxisPicker",
+            "SOURCE_VALUES",
+            "PAYER_VALUES",
+            "ATTACH_TIMING_VALUES",
+            "asAxisValue"
+          ]
+        }
+      ],
+      "lineCount": 246,
+      "titleInSource": "No active session"
+    },
+    {
+      "key": "af-leadInbox",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "leadInbox",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+      "title": "Leads",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "New Lead"
+      ],
+      "components": {
+        "Button": 1,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing"
+          ]
+        },
+        {
+          "src": "../domain/lead-inbox",
+          "names": [
+            "selectInboxLeads"
+          ]
+        },
+        {
+          "src": "../components/LeadRow",
+          "names": [
+            "LeadRow"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 133,
+      "titleInSource": "Leads"
+    },
+    {
+      "key": "af-overview",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "overview",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+      "title": "Overview",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "inline",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Plan",
+        "Add Blackout"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 3,
+        "Card": 1,
+        "ListItem": 1,
+        "Select": 1,
+        "AppChrome": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1,
+        "EmptyState": 9,
+        "LoadingState": 5,
+        "ErrorState": 6,
+        "ScrollView": 2,
+        "Pressable": 1
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/job/new"
+        },
+        {
+          "kind": "subView",
+          "target": "leadEdit"
+        },
+        {
+          "kind": "subView",
+          "target": "leadInbox"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutReview"
+        },
+        {
+          "kind": "subView",
+          "target": "closeOutQueue"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetEditor"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "priceSheetList"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-roster"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-job-detail"
+        },
+        {
+          "kind": "subView",
+          "target": "blackout-editor"
+        },
+        {
+          "kind": "subView",
+          "target": "assignmentBoard"
+        },
+        {
+          "kind": "subView",
+          "target": "leadCreate"
+        },
+        {
+          "kind": "subView",
+          "target": "qualify"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
+        },
+        {
+          "kind": "subView",
+          "target": "employee-invitations"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "Select",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "WeekView",
+            "MonthView",
+            "CalendarHeader",
+            "AppChrome",
+            "colors",
+            "spacing",
+            "radius"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible",
+            "isTestVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/closeout",
+          "names": [
+            "awaitingCloseOut"
+          ]
+        },
+        {
+          "src": "../domain/hoursBuckets",
+          "names": [
+            "bucketHours"
+          ]
+        },
+        {
+          "src": "../domain/overview-cards",
+          "names": [
+            "buildOverviewCards"
+          ]
+        },
+        {
+          "src": "./LeadInboxScreen",
+          "names": [
+            "LeadInboxScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetListScreen",
+          "names": [
+            "PriceSheetListScreen"
+          ]
+        },
+        {
+          "src": "./TimeOffQueueScreen",
+          "names": [
+            "TimeOffQueueScreen"
+          ]
+        },
+        {
+          "src": "./PaymentsHubScreen",
+          "names": [
+            "PaymentsHubScreen"
+          ]
+        },
+        {
+          "src": "./AssignmentBoardScreen",
+          "names": [
+            "AssignmentBoardScreen"
+          ]
+        },
+        {
+          "src": "./ReportsScreen",
+          "names": [
+            "ReportsScreen"
+          ]
+        },
+        {
+          "src": "./QualifyScreen",
+          "names": [
+            "QualifyScreen",
+            "type QualifyAxisSelection"
+          ]
+        },
+        {
+          "src": "./LeadCreateScreen",
+          "names": [
+            "LeadCreateScreen"
+          ]
+        },
+        {
+          "src": "./LeadEditScreen",
+          "names": [
+            "LeadEditScreen"
+          ]
+        },
+        {
+          "src": "./PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "./JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutQueueScreen",
+          "names": [
+            "CloseOutQueueScreen"
+          ]
+        },
+        {
+          "src": "./CloseOutReviewScreen",
+          "names": [
+            "CloseOutReviewScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetEditorScreen",
+          "names": [
+            "PriceSheetEditorScreen"
+          ]
+        },
+        {
+          "src": "./PriceSheetCreateScreen",
+          "names": [
+            "PriceSheetCreateScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeRosterScreen",
+          "names": [
+            "EmployeeRosterScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeEditorScreen",
+          "names": [
+            "EmployeeEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeDetailScreen",
+          "names": [
+            "EmployeeDetailScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeJobDetailScreen",
+          "names": [
+            "EmployeeJobDetailScreen"
+          ]
+        },
+        {
+          "src": "./BlackoutEditorScreen",
+          "names": [
+            "BlackoutEditorScreen"
+          ]
+        },
+        {
+          "src": "./EmployeeInvitationsScreen",
+          "names": [
+            "EmployeeInvitationsScreen"
+          ]
+        },
+        {
+          "src": "../flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../flows/assign-investigator",
+          "names": [
+            "assignInvestigator"
+          ]
+        },
+        {
+          "src": "../flows/qualify-lead",
+          "names": [
+            "qualifyLead"
+          ]
+        },
+        {
+          "src": "../flows/close-out-job",
+          "names": [
+            "closeOutJob"
+          ]
+        }
+      ],
+      "lineCount": 1481,
+      "titleInSource": "Admin & Finance"
+    },
+    {
+      "key": "af-paymentReview",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "paymentReview",
+      "parentKey": "admin-finance",
+      "file": "modules/payment-review/src/screens/ReconciliationView.tsx",
+      "title": "Review",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 3,
+        "Card": 2,
+        "ListItem": 2,
+        "ScreenTitle": 1,
+        "EmptyState": 2,
+        "LoadingState": 1,
+        "ErrorState": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [
+        "payments"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 180,
+      "titleInSource": "Couldn't load payments"
+    },
+    {
+      "key": "af-payments",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "payments",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/PaymentsHubScreen.tsx",
+      "title": "Payments",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 3,
+        "ScrollView": 2
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "./PaymentsScreen",
+          "names": [
+            "PaymentsScreen"
+          ]
+        },
+        {
+          "src": "./ReimbursementQueueScreen",
+          "names": [
+            "ReimbursementQueueScreen"
+          ]
+        },
+        {
+          "src": "./PayoutBatchScreen",
+          "names": [
+            "PayoutBatchScreen"
+          ]
+        },
+        {
+          "src": "./PayoutBatchDetailScreen",
+          "names": [
+            "PayoutBatchDetailScreen"
+          ]
+        }
+      ],
+      "lineCount": 112,
+      "titleInSource": null
+    },
+    {
+      "key": "af-payments-PaymentsScreen",
+      "kind": "drill-in",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": "af-payments",
+      "file": "modules/admin-finance/src/screens/PaymentsScreen.tsx",
+      "title": "Payments",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 7,
+        "Card": 2,
+        "ScreenTitle": 1,
+        "EmptyState": 4,
+        "LoadingState": 1,
+        "ErrorState": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 197,
+      "titleInSource": "Payments"
+    },
+    {
+      "key": "af-payments-PayoutBatchDetailScreen",
+      "kind": "drill-in",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": "af-payments",
+      "file": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
+      "title": "Payout Batch Detail",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back"
+      ],
+      "components": {
+        "Button": 1,
+        "Text": 5,
+        "Card": 2,
+        "ListItem": 3,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 112,
+      "titleInSource": "Payout Batch Detail"
+    },
+    {
+      "key": "af-payments-PayoutBatchScreen",
+      "kind": "drill-in",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": "af-payments",
+      "file": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+      "title": "Payout Batches",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Approve",
+        "Mark Paid"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 5,
+        "Card": 1,
+        "ListItem": 1,
+        "ScreenTitle": 2,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 308,
+      "titleInSource": "Payout Batches"
+    },
+    {
+      "key": "af-payments-ReimbursementQueueScreen",
+      "kind": "drill-in",
+      "module": "admin-finance",
+      "route": null,
+      "subView": null,
+      "parentKey": "af-payments",
+      "file": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+      "title": "Reimbursements",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Approve",
+        "Confirm Reject",
+        "Reject"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 2,
+        "Card": 1,
+        "ListItem": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 1,
+        "TextInput": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 302,
+      "titleInSource": "Reimbursements"
+    },
+    {
+      "key": "af-planning",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "planning",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/PlanningScreen.tsx",
+      "title": "Planning",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Remove"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 10,
+        "Card": 4,
+        "ListItem": 2,
+        "TextField": 8,
+        "Select": 1,
+        "EmptyState": 2,
+        "LoadingState": 2,
+        "ErrorState": 2,
+        "ScrollView": 1,
+        "TextInput": 1
+      },
+      "pickers": [
+        "Select"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "Select",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "TextField",
+            "colors",
+            "spacing",
+            "radius",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/job-detail-helpers",
+          "names": [
+            "seedPlanningFromInvestigation"
+          ]
+        }
+      ],
+      "lineCount": 594,
+      "titleInSource": "No tasks added yet."
+    },
+    {
+      "key": "af-priceSheetCreate",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "priceSheetCreate",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/PriceSheetCreateScreen.tsx",
+      "title": "New Price Sheet",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 3,
+        "Card": 1,
+        "EmptyState": 1,
+        "ScrollView": 1,
+        "TextInput": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "EmptyState",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 158,
+      "titleInSource": "New price sheet"
+    },
+    {
+      "key": "af-priceSheetEditor",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "priceSheetEditor",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/PriceSheetEditorScreen.tsx",
+      "title": "Price Sheet Editor",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "+ Add Task"
+      ],
+      "components": {
+        "Button": 6,
+        "Text": 29,
+        "Card": 7,
+        "Select": 9,
+        "Toggle": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 4,
+        "LoadingState": 3,
+        "ErrorState": 8,
+        "ScrollView": 1,
+        "TextInput": 13,
+        "Pressable": 5,
+        "AddTaskDialog": 2,
+        "AccordionEditRow": 3
+      },
+      "pickers": [
+        "Select",
+        "AddTaskDialog"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [
+        "serviceTasksRepo.list",
+        "serviceTasksRepo.listServices",
+        "serviceTasksRepo.updateServiceTask",
+        "serviceTasksRepo.remove",
+        "serviceTasksRepo.save",
+        "ratesRepo.list",
+        "ratesRepo.save",
+        "ratesRepo.remove",
+        "publishRepo.getPublished",
+        "publishRepo.applyPublishPlan",
+        "areaAdjustmentsRepo.save",
+        "areaAdjustmentsRepo.remove",
+        "standardDurationRepo.upsert"
+      ],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "Checkbox",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "Select",
+            "Toggle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../money/publish-plan",
+          "names": [
+            "planPublish"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession",
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../domain/parse-adjustment-percent",
+          "names": [
+            "parseAdjustmentPercent"
+          ]
+        },
+        {
+          "src": "./AccordionEditRow",
+          "names": [
+            "AccordionEditRow"
+          ]
+        },
+        {
+          "src": "./AddTaskDialog",
+          "names": [
+            "AddTaskDialog"
+          ]
+        },
+        {
+          "src": "../domain/format-service-task-number",
+          "names": [
+            "formatServiceTaskNumber"
+          ]
+        }
+      ],
+      "lineCount": 1434,
+      "titleInSource": "Price Sheet"
+    },
+    {
+      "key": "af-priceSheetList",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "priceSheetList",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/PriceSheetListScreen.tsx",
+      "title": "Price Sheets",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Create price sheet"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 1,
+        "Card": 2,
+        "ListItem": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 207,
+      "titleInSource": "Price Sheets"
+    },
+    {
+      "key": "af-qualify",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "qualify",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/QualifyScreen.tsx",
+      "title": "Qualify Lead",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel",
+        "Qualify"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 9,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "EmptyState": 1,
+        "ScrollView": 1,
+        "AxisPicker": 3
+      },
+      "pickers": [
+        "AxisPicker"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "EmptyState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "telUrl",
+            "Text"
+          ]
+        },
+        {
+          "src": "../domain/qualify",
+          "names": [
+            "validateQualify"
+          ]
+        },
+        {
+          "src": "../components/AxisPicker",
+          "names": [
+            "AxisPicker",
+            "asAxisValue",
+            "SOURCE_VALUES",
+            "PAYER_VALUES",
+            "ATTACH_TIMING_VALUES",
+            "type SourceValue",
+            "type PayerValue",
+            "type AttachTimingValue"
+          ]
+        }
+      ],
+      "lineCount": 265,
+      "titleInSource": "Qualify Lead"
+    },
+    {
+      "key": "af-reports",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "reports",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/ReportsScreen.tsx",
+      "title": "Reports",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "< Back"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 4,
+        "Card": 4,
+        "ListItem": 11,
+        "ScreenTitle": 1,
+        "EmptyState": 3,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "ListItem",
+            "Button",
+            "EmptyState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "../reporting/group-by",
+          "names": [
+            "byStatus"
+          ]
+        },
+        {
+          "src": "../reporting/slot-hit-rate",
+          "names": [
+            "slotHitRate",
+            "classifyWindow"
+          ]
+        },
+        {
+          "src": "../reporting/revenue",
+          "names": [
+            "commissionTotals",
+            "type CommissionAmountSource"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 251,
+      "titleInSource": "No jobs"
+    },
+    {
+      "key": "af-timeOffQueue",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "timeOffQueue",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
+      "title": "Time Off",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Add Blackout",
+        "Cancel"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 3,
+        "Card": 3,
+        "ListItem": 3,
+        "ScreenTitle": 2,
+        "EmptyState": 3,
+        "LoadingState": 1,
+        "ErrorState": 3,
+        "ScrollView": 2
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ListItem",
+            "EmptyState",
+            "LoadingState",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 274,
+      "titleInSource": "Time Off"
+    },
+    {
+      "key": "calendar",
+      "kind": "route",
+      "module": null,
+      "route": "/calendar",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/(tabs)/calendar.tsx",
+      "title": "Calendar",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Toggle": 3,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1
+      },
+      "pickers": [],
+      "menus": [
+        "tabs"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/:param"
+        }
+      ],
+      "tables": [
+        "calendar_events"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "spacing",
+            "Toggle",
+            "CalendarHeader",
+            "type CalendarMode"
+          ]
+        },
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "WeekView",
+            "MonthView",
+            "type TimeOffEvent"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        }
+      ],
+      "lineCount": 220,
+      "titleInSource": null
+    },
+    {
+      "key": "config-settings",
+      "kind": "route",
+      "module": null,
+      "route": "/config/settings",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/config/settings.tsx",
+      "title": "Settings",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 1,
+        "AppChrome": 1,
+        "EmptyState": 1
+      },
+      "pickers": [],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "EmptyState",
+            "Text",
+            "spacing",
+            "colors",
+            "useAppVersion",
+            "formatVersionLabel"
+          ]
+        }
+      ],
+      "lineCount": 36,
+      "titleInSource": "Settings"
+    },
+    {
+      "key": "config-test-jobs",
+      "kind": "route",
+      "module": null,
+      "route": "/config/test-jobs",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/config/test-jobs.tsx",
+      "title": "Test Jobs",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Dismiss"
+      ],
+      "components": {
+        "Button": 6,
+        "Text": 9,
+        "AppChrome": 1,
+        "EmptyState": 1,
+        "LoadingState": 1
+      },
+      "pickers": [],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Button",
+            "EmptyState",
+            "LoadingState",
+            "JOB_STATUS_COLORS",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../../src/lib/sales-marketing-repos",
+          "names": [
+            "createTestJobsRepository"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-simulator",
+          "names": [
+            "runJobSimulator",
+            "type DryRunReport"
+          ]
+        }
+      ],
+      "lineCount": 354,
+      "titleInSource": "No Test Jobs"
+    },
+    {
+      "key": "field-tech",
+      "kind": "module-root",
+      "module": "field-tech",
+      "route": "/m/field-tech",
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/field-tech/src/index.ts",
+      "title": "Field Tech",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/field-tech"
+        },
+        {
+          "kind": "route",
+          "target": "/job/"
+        },
+        {
+          "kind": "subView",
+          "target": "overview"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
+        },
+        {
+          "kind": "subView",
+          "target": "timeOff"
+        },
+        {
+          "kind": "subView",
+          "target": "prems"
+        },
+        {
+          "kind": "subView",
+          "target": "reviews"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Breadcrumb"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems",
+            "type JobcoreModule"
+          ]
+        },
+        {
+          "src": "./screens/DayList",
+          "names": [
+            "DayList",
+            "type DayListProps"
+          ]
+        },
+        {
+          "src": "./screens/StartChecklist",
+          "names": [
+            "StartChecklist"
+          ]
+        },
+        {
+          "src": "./screens/Completion",
+          "names": [
+            "Completion"
+          ]
+        },
+        {
+          "src": "./screens/Greeting",
+          "names": [
+            "Greeting"
+          ]
+        },
+        {
+          "src": "./screens/TimeOff",
+          "names": [
+            "TimeOff"
+          ]
+        },
+        {
+          "src": "./screens/Earnings",
+          "names": [
+            "Earnings"
+          ]
+        },
+        {
+          "src": "./screens/FieldJobDetail",
+          "names": [
+            "FieldJobDetail"
+          ]
+        },
+        {
+          "src": "./screens/Overview",
+          "names": [
+            "Overview",
+            "type OverviewProps"
+          ]
+        },
+        {
+          "src": "./screens/Reviews",
+          "names": [
+            "Reviews"
+          ]
+        },
+        {
+          "src": "./screens/PremJobs",
+          "names": [
+            "PremJobs"
+          ]
+        },
+        {
+          "src": "./lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "./lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "./domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        }
+      ],
+      "lineCount": 403,
+      "titleInSource": null
+    },
+    {
+      "key": "ft-Completion",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Completion.tsx",
+      "title": "Completion",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": "exported-unmounted",
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Capture after-photo"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 4,
+        "TextField": 1,
+        "Checkbox": 1,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "makeIdempotencyKey"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "Checkbox",
+            "TextField",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        },
+        {
+          "src": "../lib/active-job-workflow-state",
+          "names": [
+            "recordAfterPhoto",
+            "recordQualityNotes",
+            "hasAfterPhotos as readHasAfterPhotos",
+            "hasQualityNotes as readHasQualityNotes"
+          ]
+        }
+      ],
+      "lineCount": 274,
+      "titleInSource": "Complete Job"
+    },
+    {
+      "key": "ft-DayList",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": "jobs",
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/DayList.tsx",
+      "title": "Jobs",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Today",
+        "Close"
+      ],
+      "components": {
+        "Text": 21,
+        "TabBar": 1,
+        "ScreenTitle": 2,
+        "WeekView": 1,
+        "MonthView": 1,
+        "Modal": 1,
+        "ScrollView": 2,
+        "Pressable": 12
+      },
+      "pickers": [
+        "Modal"
+      ],
+      "menus": [
+        "tabs"
+      ],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "JOB_STATUS_COLORS",
+            "ScreenTitle",
+            "WeekView",
+            "MonthView",
+            "TabBar",
+            "colors",
+            "typography",
+            "spacing",
+            "radius",
+            "type TimeOffEvent",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/clipboard",
+          "names": [
+            "copyToClipboard"
+          ]
+        },
+        {
+          "src": "./day-list-helpers",
+          "names": [
+            "isScheduledOnLocalDate",
+            "expandTimeOffToEvents",
+            "pickNextJob",
+            "listPreviousJobs"
+          ]
+        }
+      ],
+      "lineCount": 446,
+      "titleInSource": "Next Job"
+    },
+    {
+      "key": "ft-Earnings",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Earnings.tsx",
+      "title": "Earnings",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": "exported-unmounted",
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Button": 1,
+        "Text": 22,
+        "TextField": 1,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "TextField",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 264,
+      "titleInSource": "Earnings"
+    },
+    {
+      "key": "ft-FieldJobDetail",
+      "kind": "drill-in",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/FieldJobDetail.tsx",
+      "title": "Job Detail",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Button": 2,
+        "Text": 18
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "telUrl",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 230,
+      "titleInSource": null
+    },
+    {
+      "key": "ft-Greeting",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Greeting.tsx",
+      "title": "Greeting",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": "exported-unmounted",
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Accept",
+        "Decline"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 3,
+        "TextField": 1,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "TextField",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        }
+      ],
+      "lineCount": 172,
+      "titleInSource": "New Job Assigned"
+    },
+    {
+      "key": "ft-Overview",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": "overview",
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Overview.tsx",
+      "title": "Overview",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "‹ Back to overview"
+      ],
+      "components": {
+        "Text": 11,
+        "Pressable": 3
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "./day-list-helpers",
+          "names": [
+            "CLOSED_JOB_STATUSES"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "spacing",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 386,
+      "titleInSource": null
+    },
+    {
+      "key": "ft-PremJobs",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": "prems",
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/PremJobs.tsx",
+      "title": "Prems",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 8,
+        "ScreenTitle": 1,
+        "FlatList": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "colors",
+            "typography",
+            "spacing",
+            "radius",
+            "Text"
+          ]
+        },
+        {
+          "src": "./prem-jobs-helpers",
+          "names": [
+            "premCardAction",
+            "premReportRoute",
+            "formatNeedsPremSince"
+          ]
+        }
+      ],
+      "lineCount": 242,
+      "titleInSource": "Prems"
+    },
+    {
+      "key": "ft-Reimbursements",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Reimbursements.tsx",
+      "title": "Reimbursements",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": false,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 15,
+        "FlatList": 1,
+        "TextInput": 3,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 287,
+      "titleInSource": null
+    },
+    {
+      "key": "ft-Reviews",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": "reviews",
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/Reviews.tsx",
+      "title": "Reviews",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "EmptyState"
+          ]
+        }
+      ],
+      "lineCount": 22,
+      "titleInSource": null
+    },
+    {
+      "key": "ft-StartChecklist",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": null,
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/StartChecklist.tsx",
+      "title": "Start Checklist",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": "exported-unmounted",
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "On my way",
+        "Start",
+        "Capture before-photo"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 5,
+        "Checkbox": 1,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "makeIdempotencyKey"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "Checkbox",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        },
+        {
+          "src": "../lib/active-job-workflow-state",
+          "names": [
+            "recordStartChecklistSubmitted",
+            "hasSubmittedStartChecklist as readHasSubmittedStartChecklist"
+          ]
+        }
+      ],
+      "lineCount": 320,
+      "titleInSource": "Start Checklist"
+    },
+    {
+      "key": "ft-TimeOff",
+      "kind": "sub-view",
+      "module": "field-tech",
+      "route": null,
+      "subView": "timeOff",
+      "parentKey": "field-tech",
+      "file": "modules/field-tech/src/screens/TimeOff.tsx",
+      "title": "Time Off",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Button": 5,
+        "Text": 22,
+        "Select": 1,
+        "ScreenTitle": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1,
+        "Modal": 1,
+        "ScrollView": 2,
+        "TextInput": 1,
+        "Pressable": 3,
+        "DateRangeCalendar": 1
+      },
+      "pickers": [
+        "Select",
+        "DateRangeCalendar",
+        "Modal"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../data/ports",
+          "names": [
+            "isActiveTimeOffStatus"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "colors",
+            "CalendarHeader",
+            "WeekView",
+            "MonthView",
+            "Select",
+            "type CalendarMode",
+            "type TimeOffEvent",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "./DateRangeCalendar",
+          "names": [
+            "DateRangeCalendar"
+          ]
+        },
+        {
+          "src": "./DayList",
+          "names": [
+            "expandTimeOffToEvents"
+          ]
+        }
+      ],
+      "lineCount": 544,
+      "titleInSource": "Time Off"
+    },
+    {
+      "key": "index",
+      "kind": "route",
+      "module": null,
+      "route": "/",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/index.tsx",
+      "title": null,
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "redirect",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../src/components/RoleLandingRedirect",
+          "names": [
+            "RoleLandingRedirect"
+          ]
+        }
+      ],
+      "lineCount": 7,
+      "titleInSource": null
+    },
+    {
+      "key": "job-detail",
+      "kind": "route",
+      "module": null,
+      "route": "/job/[jobId]",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "New Job",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "not declared in root Stack; picked up from file",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 7,
+        "AppChrome": 1,
+        "EmptyState": 1,
+        "LoadingState": 1,
+        "ScrollView": 2,
+        "JobHeader": 1,
+        "JobSummaryRest": 1,
+        "WarningSheet": 1
+      },
+      "pickers": [
+        "WarningSheet"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-in"
+        },
+        {
+          "kind": "route",
+          "target": "/job/:param"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/m/field-tech"
+        }
+      ],
+      "tables": [
+        "jobs"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Breadcrumb",
+            "Button",
+            "colors",
+            "EmptyState",
+            "LoadingState",
+            "spacing",
+            "telUrl",
+            "Text"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetail",
+          "names": [
+            "JobDetail"
+          ]
+        },
+        {
+          "src": "../../src/components/JobHeader",
+          "names": [
+            "JobHeader",
+            "JobSummaryRest",
+            "type JobRegion"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetailsForm",
+          "names": [
+            "JobDetailsForm",
+            "type JobFormValues"
+          ]
+        },
+        {
+          "src": "../../src/components/AssignTechRegion",
+          "names": [
+            "AssignTechRegion"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/components/WarningSheet",
+          "names": [
+            "WarningSheet"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession",
+            "signOut"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "../../src/lib/landing",
+          "names": [
+            "landingRouteFor"
+          ]
+        },
+        {
+          "src": "../../src/lib/admin-finance-repos",
+          "names": [
+            "createJobRepository",
+            "createCustomerRepository",
+            "createEmployeeRepository",
+            "createJobAssignmentRepository",
+            "createCalendarEventRepository",
+            "createJobPlanningRepository",
+            "createJobPlanningPhotoRepository",
+            "createPriceSheetRepository",
+            "createPriceSheetPublishRepository",
+            "createPriceSheetAreaAdjustmentsRepository",
+            "createServiceAreaRepository",
+            "createTechServiceAreaRepository",
+            "createEstimateRepository",
+            "createJobInvestigationRepository",
+            "createPaymentsRepository",
+            "createJobPlanTasksRepository",
+            "createPriceSheetStandardDurationRepository"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/data/ports",
+          "names": [
+            "SETTLED_PAYMENT_STATUSES"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/segway-candidates",
+          "names": [
+            "candidatesFor"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/approve-estimate",
+          "names": [
+            "approveEstimate"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/job-detail-helpers",
+          "names": [
+            "extractZip",
+            "matchServiceAreaByZip",
+            "seedPlanningFromInvestigation"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobScheduleScreen",
+          "names": [
+            "JobScheduleScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobEstimateEditor",
+          "names": [
+            "JobEstimateEditor"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobInvestigationScreen",
+          "names": [
+            "JobInvestigationScreen"
+          ]
+        },
+        {
+          "src": "@jobcore/admin-finance",
+          "names": [
+            "setModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-session",
+          "names": [
+            "setModuleSession as setFieldTechModuleSession",
+            "clearModuleSession as clearFieldTechModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-ports",
+          "names": [
+            "setModulePorts as setFieldTechModulePorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/field-tech-repos",
+          "names": [
+            "buildFieldTechPorts"
+          ]
+        }
+      ],
+      "lineCount": 1401,
+      "titleInSource": "Job unavailable"
+    },
+    {
+      "key": "job-region-assign",
+      "kind": "region",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": "job-detail",
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "Assign",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "inline",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 7,
+        "AppChrome": 1,
+        "EmptyState": 1,
+        "LoadingState": 1,
+        "ScrollView": 2,
+        "JobHeader": 1,
+        "JobSummaryRest": 1,
+        "WarningSheet": 1
+      },
+      "pickers": [
+        "WarningSheet"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-in"
+        },
+        {
+          "kind": "route",
+          "target": "/job/:param"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/m/field-tech"
+        }
+      ],
+      "tables": [
+        "jobs"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Breadcrumb",
+            "Button",
+            "colors",
+            "EmptyState",
+            "LoadingState",
+            "spacing",
+            "telUrl",
+            "Text"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetail",
+          "names": [
+            "JobDetail"
+          ]
+        },
+        {
+          "src": "../../src/components/JobHeader",
+          "names": [
+            "JobHeader",
+            "JobSummaryRest",
+            "type JobRegion"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetailsForm",
+          "names": [
+            "JobDetailsForm",
+            "type JobFormValues"
+          ]
+        },
+        {
+          "src": "../../src/components/AssignTechRegion",
+          "names": [
+            "AssignTechRegion"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/components/WarningSheet",
+          "names": [
+            "WarningSheet"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession",
+            "signOut"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "../../src/lib/landing",
+          "names": [
+            "landingRouteFor"
+          ]
+        },
+        {
+          "src": "../../src/lib/admin-finance-repos",
+          "names": [
+            "createJobRepository",
+            "createCustomerRepository",
+            "createEmployeeRepository",
+            "createJobAssignmentRepository",
+            "createCalendarEventRepository",
+            "createJobPlanningRepository",
+            "createJobPlanningPhotoRepository",
+            "createPriceSheetRepository",
+            "createPriceSheetPublishRepository",
+            "createPriceSheetAreaAdjustmentsRepository",
+            "createServiceAreaRepository",
+            "createTechServiceAreaRepository",
+            "createEstimateRepository",
+            "createJobInvestigationRepository",
+            "createPaymentsRepository",
+            "createJobPlanTasksRepository",
+            "createPriceSheetStandardDurationRepository"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/data/ports",
+          "names": [
+            "SETTLED_PAYMENT_STATUSES"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/segway-candidates",
+          "names": [
+            "candidatesFor"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/approve-estimate",
+          "names": [
+            "approveEstimate"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/job-detail-helpers",
+          "names": [
+            "extractZip",
+            "matchServiceAreaByZip",
+            "seedPlanningFromInvestigation"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobScheduleScreen",
+          "names": [
+            "JobScheduleScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobEstimateEditor",
+          "names": [
+            "JobEstimateEditor"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobInvestigationScreen",
+          "names": [
+            "JobInvestigationScreen"
+          ]
+        },
+        {
+          "src": "@jobcore/admin-finance",
+          "names": [
+            "setModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-session",
+          "names": [
+            "setModuleSession as setFieldTechModuleSession",
+            "clearModuleSession as clearFieldTechModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-ports",
+          "names": [
+            "setModulePorts as setFieldTechModulePorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/field-tech-repos",
+          "names": [
+            "buildFieldTechPorts"
+          ]
+        }
+      ],
+      "lineCount": 1401,
+      "titleInSource": "Job unavailable"
+    },
+    {
+      "key": "job-region-estimate",
+      "kind": "region",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": "job-detail",
+      "file": "modules/field-tech/src/screens/JobEstimateEditor.tsx",
+      "title": "Estimate",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back to Job",
+        "Add Line Item",
+        "Submit",
+        "Share Link"
+      ],
+      "components": {
+        "Button": 4,
+        "Text": 21,
+        "TextField": 4,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "TextField",
+            "colors",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 275,
+      "titleInSource": "Job Estimate"
+    },
+    {
+      "key": "job-region-evisit",
+      "kind": "region",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": "job-detail",
+      "file": "modules/field-tech/src/screens/JobInvestigationScreen.tsx",
+      "title": "Prelim (Prem)",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back to Job",
+        "Save Draft",
+        "Submit"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 7,
+        "TextField": 4,
+        "ScreenTitle": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Button",
+            "TextField",
+            "colors",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "getModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 219,
+      "titleInSource": "Job Investigation"
+    },
+    {
+      "key": "job-region-plan",
+      "kind": "region",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": "job-detail",
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "Plan",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "inline",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 7,
+        "AppChrome": 1,
+        "EmptyState": 1,
+        "LoadingState": 1,
+        "ScrollView": 2,
+        "JobHeader": 1,
+        "JobSummaryRest": 1,
+        "WarningSheet": 1
+      },
+      "pickers": [
+        "WarningSheet"
+      ],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-in"
+        },
+        {
+          "kind": "route",
+          "target": "/job/:param"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/m/admin-finance"
+        },
+        {
+          "kind": "route",
+          "target": "/m/field-tech"
+        }
+      ],
+      "tables": [
+        "jobs"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Breadcrumb",
+            "Button",
+            "colors",
+            "EmptyState",
+            "LoadingState",
+            "spacing",
+            "telUrl",
+            "Text"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetail",
+          "names": [
+            "JobDetail"
+          ]
+        },
+        {
+          "src": "../../src/components/JobHeader",
+          "names": [
+            "JobHeader",
+            "JobSummaryRest",
+            "type JobRegion"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetailsForm",
+          "names": [
+            "JobDetailsForm",
+            "type JobFormValues"
+          ]
+        },
+        {
+          "src": "../../src/components/AssignTechRegion",
+          "names": [
+            "AssignTechRegion"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/components/WarningSheet",
+          "names": [
+            "WarningSheet"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession",
+            "signOut"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "../../src/lib/landing",
+          "names": [
+            "landingRouteFor"
+          ]
+        },
+        {
+          "src": "../../src/lib/admin-finance-repos",
+          "names": [
+            "createJobRepository",
+            "createCustomerRepository",
+            "createEmployeeRepository",
+            "createJobAssignmentRepository",
+            "createCalendarEventRepository",
+            "createJobPlanningRepository",
+            "createJobPlanningPhotoRepository",
+            "createPriceSheetRepository",
+            "createPriceSheetPublishRepository",
+            "createPriceSheetAreaAdjustmentsRepository",
+            "createServiceAreaRepository",
+            "createTechServiceAreaRepository",
+            "createEstimateRepository",
+            "createJobInvestigationRepository",
+            "createPaymentsRepository",
+            "createJobPlanTasksRepository",
+            "createPriceSheetStandardDurationRepository"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/data/ports",
+          "names": [
+            "SETTLED_PAYMENT_STATUSES"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/segway-candidates",
+          "names": [
+            "candidatesFor"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/assign-job",
+          "names": [
+            "assignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/unassign-job",
+          "names": [
+            "unassignJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/flows/approve-estimate",
+          "names": [
+            "approveEstimate"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/transition",
+          "names": [
+            "transitionJob"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/domain/job-detail-helpers",
+          "names": [
+            "extractZip",
+            "matchServiceAreaByZip",
+            "seedPlanningFromInvestigation"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/PlanningScreen",
+          "names": [
+            "PlanningScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobScheduleScreen",
+          "names": [
+            "JobScheduleScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/screens/JobEstimateScreen",
+          "names": [
+            "JobEstimateScreen"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobEstimateEditor",
+          "names": [
+            "JobEstimateEditor"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/screens/JobInvestigationScreen",
+          "names": [
+            "JobInvestigationScreen"
+          ]
+        },
+        {
+          "src": "@jobcore/admin-finance",
+          "names": [
+            "setModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-session",
+          "names": [
+            "setModuleSession as setFieldTechModuleSession",
+            "clearModuleSession as clearFieldTechModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-ports",
+          "names": [
+            "setModulePorts as setFieldTechModulePorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/field-tech-repos",
+          "names": [
+            "buildFieldTechPorts"
+          ]
+        }
+      ],
+      "lineCount": 1401,
+      "titleInSource": "Job unavailable"
+    },
+    {
+      "key": "job-region-schedule",
+      "kind": "region",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": "job-detail",
+      "file": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+      "title": "Schedule",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Pick date",
+        "Back to Job",
+        "Clear schedule",
+        "Cancel"
+      ],
+      "components": {
+        "Button": 5,
+        "Text": 11,
+        "Card": 1,
+        "Select": 1,
+        "CalendarHeader": 1,
+        "MonthView": 1,
+        "DateTimePicker": 3
+      },
+      "pickers": [
+        "Select",
+        "DateTimePicker"
+      ],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "Button",
+            "DatePicker",
+            "MonthView",
+            "CalendarHeader",
+            "Select",
+            "colors",
+            "spacing",
+            "radius",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        }
+      ],
+      "lineCount": 554,
+      "titleInSource": null
+    },
+    {
+      "key": "jobs",
+      "kind": "route",
+      "module": null,
+      "route": "/jobs",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/(tabs)/jobs.tsx",
+      "title": "Jobs",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "New job"
+      ],
+      "components": {
+        "Button": 2,
+        "Toggle": 2,
+        "AppChrome": 2,
+        "EmptyState": 1
+      },
+      "pickers": [],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher",
+        "tabs"
+      ],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/job/new"
+        }
+      ],
+      "tables": [
+        "jobs"
+      ],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Button",
+            "colors",
+            "EmptyState",
+            "spacing",
+            "Toggle"
+          ]
+        },
+        {
+          "src": "../../src/components/JobDetail",
+          "names": [
+            "JobDetail"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        }
+      ],
+      "lineCount": 146,
+      "titleInSource": "Jobs"
+    },
+    {
+      "key": "module-host",
+      "kind": "route",
+      "module": null,
+      "route": "/m/[moduleId]",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/m/[moduleId].tsx",
+      "title": "Module Host",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "EmptyState": 2,
+        "LoadingState": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "EmptyState",
+            "LoadingState",
+            "colors"
+          ]
+        },
+        {
+          "src": "@jobcore/admin-finance",
+          "names": [
+            "setModuleSession",
+            "clearModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/lib/module-ports",
+          "names": [
+            "setModulePorts as setAdminFinanceModulePorts"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-session",
+          "names": [
+            "setModuleSession as setFieldTechModuleSession",
+            "clearModuleSession as clearFieldTechModuleSession"
+          ]
+        },
+        {
+          "src": "../../../../modules/field-tech/src/lib/module-ports",
+          "names": [
+            "setModulePorts as setFieldTechModulePorts"
+          ]
+        },
+        {
+          "src": "../../../../modules/sales-marketing/src/index",
+          "names": [
+            "setModuleSession as setSalesMarketingModuleSession",
+            "clearModuleSession as clearSalesMarketingModuleSession",
+            "setModulePorts as setSalesMarketingModulePorts"
+          ]
+        },
+        {
+          "src": "@jobcore/payment-review",
+          "names": [
+            "setSupabaseClient as setPaymentReviewSupabaseClient"
+          ]
+        },
+        {
+          "src": "../../src/lib/session",
+          "names": [
+            "useSession"
+          ]
+        },
+        {
+          "src": "../../src/lib/admin-finance-repos",
+          "names": [
+            "buildAdminFinancePorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/field-tech-repos",
+          "names": [
+            "buildFieldTechPorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/sales-marketing-repos",
+          "names": [
+            "buildSalesMarketingPorts"
+          ]
+        },
+        {
+          "src": "../../src/lib/supabase",
+          "names": [
+            "supabase"
+          ]
+        },
+        {
+          "src": "../../src/components/ErrorBoundary",
+          "names": [
+            "ErrorBoundary"
+          ]
+        }
+      ],
+      "lineCount": 175,
+      "titleInSource": "Module unavailable"
+    },
+    {
+      "key": "not-found",
+      "kind": "route",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/+not-found.tsx",
+      "title": "Not Found",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../src/components/RoleLandingRedirect",
+          "names": [
+            "RoleLandingRedirect"
+          ]
+        }
+      ],
+      "lineCount": 7,
+      "titleInSource": null
+    },
+    {
+      "key": "payment-review",
+      "kind": "module-root",
+      "module": "payment-review",
+      "route": "/m/payment-review",
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/payment-review/src/index.ts",
+      "title": "Payment Review",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "no logo-switcher entry; reached via admin-finance Review",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "LoadingState"
+          ]
+        },
+        {
+          "src": "./screens/ReconciliationView",
+          "names": [
+            "ReconciliationView"
+          ]
+        }
+      ],
+      "lineCount": 75,
+      "titleInSource": null
+    },
+    {
+      "key": "profile",
+      "kind": "route",
+      "module": null,
+      "route": "/profile",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/profile.tsx",
+      "title": "Profile",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [
+        "Name",
+        "Email"
+      ],
+      "buttonLabels": [],
+      "components": {
+        "Button": 2,
+        "Text": 12,
+        "Card": 2,
+        "AppChrome": 1,
+        "LoadingState": 1,
+        "ErrorState": 2,
+        "ScrollView": 1,
+        "TextInput": 4,
+        "Pressable": 2
+      },
+      "pickers": [],
+      "menus": [
+        "drawer",
+        "options",
+        "settings",
+        "switcher"
+      ],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "AppChrome",
+            "Card",
+            "Button",
+            "ErrorState",
+            "LoadingState",
+            "colors",
+            "spacing",
+            "typography",
+            "radius",
+            "Text"
+          ]
+        },
+        {
+          "src": "../src/lib/session",
+          "names": [
+            "useSession",
+            "updatePassword",
+            "updateFullName",
+            "updateEmail"
+          ]
+        }
+      ],
+      "lineCount": 300,
+      "titleInSource": "Details not saved"
+    },
+    {
+      "key": "root-layout",
+      "kind": "route",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/_layout.tsx",
+      "title": "Root Layout",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "root Stack + AuthGate",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Sign out",
+        "Sign in as someone else"
+      ],
+      "components": {
+        "Button": 3,
+        "EmptyState": 2,
+        "LoadingState": 3,
+        "ErrorState": 1,
+        "WalkthroughOverlay": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-in"
+        },
+        {
+          "kind": "route",
+          "target": "/m/sales-marketing"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "LoadingState",
+            "ErrorState",
+            "EmptyState",
+            "Button",
+            "colors",
+            "spacing",
+            "WalkthroughProvider",
+            "WalkthroughOverlay",
+            "AppVersionProvider"
+          ]
+        },
+        {
+          "src": "../src/lib/appVersion",
+          "names": [
+            "getAppVersion"
+          ]
+        },
+        {
+          "src": "../src/lib/landing",
+          "names": [
+            "landingRouteFor"
+          ]
+        },
+        {
+          "src": "../src/lib/session",
+          "names": [
+            "SessionProvider",
+            "useSession",
+            "signOut"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "getEnabledModules"
+          ]
+        },
+        {
+          "src": "../src/lib/sync-status",
+          "names": [
+            "SyncStatusProvider"
+          ]
+        },
+        {
+          "src": "../src/lib/offline-db",
+          "names": [
+            "countPending",
+            "replayOfflineQueue"
+          ]
+        },
+        {
+          "src": "../src/lib/global-error-handler",
+          "names": [
+            "installGlobalErrorHandler"
+          ]
+        }
+      ],
+      "lineCount": 230,
+      "titleInSource": "Account deactivated"
+    },
+    {
+      "key": "sales-marketing",
+      "kind": "module-root",
+      "module": "sales-marketing",
+      "route": "/m/sales-marketing",
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/sales-marketing/src/screens/SalesMarketingRoot.tsx",
+      "title": "Sales & Marketing",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/m/sales-marketing"
+        },
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "subView",
+          "target": "composer"
+        },
+        {
+          "kind": "subView",
+          "target": "overview"
+        },
+        {
+          "kind": "subView",
+          "target": "reviewLibrary"
+        },
+        {
+          "kind": "subView",
+          "target": "pitchPicker"
+        },
+        {
+          "kind": "subView",
+          "target": "reporting"
+        },
+        {
+          "kind": "subView",
+          "target": "callbackTasks"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "EmptyState",
+            "AppChrome",
+            "type MenuActionItem"
+          ]
+        },
+        {
+          "src": "@jobcore/module-sdk",
+          "names": [
+            "moduleSwitcherItems"
+          ]
+        },
+        {
+          "src": "./Overview",
+          "names": [
+            "Overview"
+          ]
+        },
+        {
+          "src": "./ReviewLibrary",
+          "names": [
+            "ReviewLibrary"
+          ]
+        },
+        {
+          "src": "./PitchPicker",
+          "names": [
+            "PitchPicker",
+            "type PitchAngle"
+          ]
+        },
+        {
+          "src": "./Composer",
+          "names": [
+            "Composer"
+          ]
+        },
+        {
+          "src": "./Reporting",
+          "names": [
+            "Reporting"
+          ]
+        },
+        {
+          "src": "./CallbackTasks",
+          "names": [
+            "CallbackTasks"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 188,
+      "titleInSource": null
+    },
+    {
+      "key": "sign-in",
+      "kind": "route",
+      "module": null,
+      "route": "/sign-in",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/sign-in.tsx",
+      "title": "Sign In",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Create an account"
+      ],
+      "components": {
+        "Button": 2,
+        "Text": 3,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "ErrorState": 1,
+        "TextInput": 2,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/sign-up"
+        }
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "radius",
+            "Text"
+          ]
+        },
+        {
+          "src": "../src/lib/session",
+          "names": [
+            "signIn"
+          ]
+        }
+      ],
+      "lineCount": 166,
+      "titleInSource": "Sign In"
+    },
+    {
+      "key": "sign-up",
+      "kind": "route",
+      "module": null,
+      "route": "/sign-up",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/sign-up.tsx",
+      "title": "Sign Up",
+      "roles": [
+        "owner",
+        "admin",
+        "tech",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Button": 1,
+        "Text": 4,
+        "Card": 1,
+        "ScreenTitle": 1,
+        "ErrorState": 1,
+        "TextInput": 2,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Card",
+            "ErrorState",
+            "ScreenTitle",
+            "colors",
+            "spacing",
+            "typography",
+            "radius",
+            "Text"
+          ]
+        },
+        {
+          "src": "../src/lib/session",
+          "names": [
+            "signUp"
+          ]
+        }
+      ],
+      "lineCount": 136,
+      "titleInSource": "Sign Up"
+    },
+    {
+      "key": "sm-CallbackTasks",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "CallbackTasks",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/CallbackTasks.tsx",
+      "title": "Callback tasks",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 8,
+        "Toggle": 1,
+        "ScreenTitle": 1,
+        "FlatList": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/core",
+          "names": [
+            "isBetaVisible"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "Toggle",
+            "colors",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 206,
+      "titleInSource": "Callback Tasks"
+    },
+    {
+      "key": "sm-Composer",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "Composer",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/Composer.tsx",
+      "title": "Compose Post",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Done"
+      ],
+      "components": {
+        "Text": 20,
+        "ScreenTitle": 1,
+        "ScrollView": 1,
+        "TextInput": 1,
+        "Pressable": 6
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../domain/providers",
+          "names": [
+            "getProvider"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "colors",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 641,
+      "titleInSource": "Compose Post"
+    },
+    {
+      "key": "sm-Overview",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "Overview",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/Overview.tsx",
+      "title": "Overview",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Recent reviews"
+      ],
+      "components": {
+        "Text": 19,
+        "ScrollView": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [
+        "reviewsPort.list"
+      ],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "./Reporting",
+          "names": [
+            "buildPostsByPlatformAndPeriod",
+            "buildReviewsByPlatform"
+          ]
+        }
+      ],
+      "lineCount": 146,
+      "titleInSource": null
+    },
+    {
+      "key": "sm-PitchPicker",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "PitchPicker",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/PitchPicker.tsx",
+      "title": "Pitch Picker",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 3,
+        "ScreenTitle": 1,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "colors",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 142,
+      "titleInSource": "Pick a Pitch Angle"
+    },
+    {
+      "key": "sm-Reporting",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "Reporting",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/Reporting.tsx",
+      "title": "Reporting",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 26,
+        "ScreenTitle": 1,
+        "ScrollView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "colors",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 307,
+      "titleInSource": "Marketing Reporting"
+    },
+    {
+      "key": "sm-ReviewLibrary",
+      "kind": "sub-view",
+      "module": "sales-marketing",
+      "route": null,
+      "subView": "ReviewLibrary",
+      "parentKey": "sales-marketing",
+      "file": "modules/sales-marketing/src/screens/ReviewLibrary.tsx",
+      "title": "Review Library",
+      "roles": [
+        "owner",
+        "admin",
+        "sales"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 14,
+        "ScreenTitle": 1,
+        "FlatList": 1,
+        "TextInput": 2,
+        "Pressable": 4
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "colors",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "../lib/module-session",
+          "names": [
+            "useModuleSession"
+          ]
+        }
+      ],
+      "lineCount": 381,
+      "titleInSource": "Review Library"
+    },
+    {
+      "key": "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx",
+      "kind": "sub-view",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/admin-finance/src/screens/AccordionEditRow.tsx",
+      "title": null,
+      "roles": [],
+      "mounted": "unknown",
+      "notes": "found by sweep, not in recon",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Cancel"
+      ],
+      "components": {
+        "Button": 3,
+        "Text": 4,
+        "Pressable": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Button",
+            "Text",
+            "colors",
+            "spacing",
+            "typography",
+            "radius"
+          ]
+        }
+      ],
+      "lineCount": 221,
+      "titleInSource": null
+    },
+    {
+      "key": "sweep-modules-field-tech-src-screens-daterangecalendar-tsx",
+      "kind": "sub-view",
+      "module": null,
+      "route": null,
+      "subView": null,
+      "parentKey": null,
+      "file": "modules/field-tech/src/screens/DateRangeCalendar.tsx",
+      "title": null,
+      "roles": [],
+      "mounted": "unknown",
+      "notes": "found by sweep, not in recon",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Text": 1,
+        "CalendarHeader": 1,
+        "WeekView": 1,
+        "MonthView": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "CalendarHeader",
+            "WeekView",
+            "MonthView",
+            "colors",
+            "type CalendarMode",
+            "type TimeOffEvent",
+            "Text"
+          ]
+        }
+      ],
+      "lineCount": 197,
+      "titleInSource": null
+    },
+    {
+      "key": "tabs-layout",
+      "kind": "route",
+      "module": null,
+      "route": "/(tabs)",
+      "subView": null,
+      "parentKey": null,
+      "file": "apps/mobile/app/(tabs)/_layout.tsx",
+      "title": "Tabs",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [
+        "tabs"
+      ],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors"
+          ]
+        }
+      ],
+      "lineCount": 19,
+      "titleInSource": null
+    }
+  ],
+  "uncoveredFiles": []
+}

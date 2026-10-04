@@ -1,0 +1,748 @@
+{
+  "version": 1,
+  "source": "wf_03bb8a9f-45a",
+  "descriptions": {
+    "account": {
+      "summary": "Account page inside app chrome showing the signed-in organization and profile, with \"Sign out\" and \"Sign in as someone else\" buttons. Each asks for confirmation, then signs out and returns to /sign-in.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets any signed-in user see their account and sign out or switch to another user.",
+      "missing": "No profile editing, password change, or settings links; the two buttons do the same thing (sign out, go to /sign-in).",
+      "navTargets": [
+        "/sign-in"
+      ]
+    },
+    "admin-finance": {
+      "summary": "Owner/admin hub with an overview of cards and a sub-view switcher: lead inbox/qualify, assignment board, close-out queue, payments, price sheets, time-off/blackouts, planning, reports, employees. Buttons: Add Job, Plan, Add Blackout.",
+      "flowStage": "none",
+      "specStage": "Admin close-out",
+      "purpose": "Central admin and finance module root for owners and admins to triage leads, assign jobs, close out work, and manage payments, pricing and time off.",
+      "missing": "Source has a TODO(forward contract) near line 708: no per-actor CompensationPolicy repository/field, so close-out compensation is not fully wired. Screen is read-only for job stage.",
+      "navTargets": [
+        "/job/",
+        "/account",
+        "/config/settings",
+        "/profile",
+        "/m/admin-finance",
+        "/job/new",
+        "leadEdit",
+        "leadInbox",
+        "closeOutQueue",
+        "closeOutReview",
+        "assignmentBoard",
+        "priceSheetList"
+      ]
+    },
+    "af-JobCreateScreen": {
+      "summary": "Admin form to create a new job: text fields for address, description and scheduled start, with \"Cancel\" and \"Create job\" buttons. Shows a sign-in empty state if there is no session.",
+      "flowStage": "new",
+      "specStage": "Admin close-out",
+      "purpose": "Lets an owner or admin manually enter a new job (address required) and save it through the job repository.",
+      "missing": "Unmounted: no route or inbound nav found. No customer, service or area pickers (left null). Navigation is only via onCreated/onCancel callbacks, so the parent must wire them.",
+      "navTargets": []
+    },
+    "af-ReportsJobDetailScreen": {
+      "summary": "Read-only report view of one job: status, address, schedule, technician, source, window, commission total, timestamps, plus an Activity audit-log list (newest first). Only button is Back.",
+      "flowStage": "none",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners and admins inspect a single job's details, commission total and audit history from the reports module without any edit actions.",
+      "missing": "Not mounted (no route or sub-view); receives job via props with no inbound navigation found. No job actions or links to the tech or customer.",
+      "navTargets": []
+    },
+    "af-addTaskDialog": {
+      "summary": "Modal \"Add Task\" form: fields Name, Price ($), Est. minutes, Category, Details, Materials, an Active toggle, with Cancel and Add Task buttons. Validates price/minutes and shows inline errors.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owner/admin create a new ServiceTask (price-sheet item) under a service from the admin-finance module.",
+      "missing": "Nothing notable; it is a caller-driven dialog with injected onCreate/onCreated and no routes of its own.",
+      "navTargets": []
+    },
+    "af-assignmentBoard": {
+      "summary": "Admin board of qualified/scheduled jobs: unassigned pool plus tech columns. Pick a visit kind (Service/Prem), choose a tech via Select, tap Confirm; a WarningSheet shows warn-only warnings. Category filter chips; tap job opens it.",
+      "flowStage": "scheduled",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins assign qualified or scheduled jobs to active techs, with warn-only conflict warnings before confirming.",
+      "missing": "",
+      "navTargets": [
+        "/job/"
+      ]
+    },
+    "af-blackout-editor": {
+      "summary": "Admin sees an \"Add Blackout\" form: Technician select, Start Date and End Date pickers, multiline Reason field, then Save and Cancel buttons. Shows errors (e.g. job conflict) while keeping the form filled.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins block out a technician's dates so they cannot be scheduled, creating a time-off blackout.",
+      "missing": "Nothing notable; create-only (no edit/delete of existing blackouts). Navigation is by onSaved/onCancel callbacks, no routes. Tech preselect only via initialTechId from Calendar.",
+      "navTargets": []
+    },
+    "af-calendar": {
+      "summary": "Admin calendar of jobs and time-off in Week or Month list view, with prev/next/Today header, a \"Technicians\" Select (All Techs) filter and an \"Add Blackout\" button. Tapping a job opens it, assigns it, or goes to Assignments.",
+      "flowStage": "scheduled",
+      "specStage": "Ancillary",
+      "purpose": "Lets admins see scheduled jobs and tech time-off together by week or month, filter by tech, and add blackout dates or assign unassigned jobs.",
+      "missing": "No notable gaps; unassigned job taps with no tech selected fall back to the Assignments board rather than assigning directly.",
+      "navTargets": [
+        "/job/<id>",
+        "assignmentBoard",
+        "blackout-editor"
+      ]
+    },
+    "af-closeOutQueue": {
+      "summary": "Admin sees a read-only \"Close-Out Queue\" of jobs grouped into Unassigned, In Progress, Completed, each card showing customer, last-worked tech and blocker reasons. Tapping a card fires onSelectJob. Empty states shown.",
+      "flowStage": "completed",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins see which jobs await close-out and what blocks each one.",
+      "missing": "Read-only: no close action (deferred to P3h.3b per source comment). Navigation depends on caller-supplied onSelectJob; the screen itself has no routes.",
+      "navTargets": []
+    },
+    "af-closeOutReview": {
+      "summary": "Admin sees one job's close-out review: status, a blockers list, Contact button, photo grid with Add photo and Remove, a quality-notes field, and a primary Close out job button disabled while blockers remain.",
+      "flowStage": "completed",
+      "specStage": "Admin close-out",
+      "purpose": "Lets an owner/admin capture photos and quality notes and close out a finished job once no blockers remain.",
+      "missing": "No internal navigation; all actions are callbacks (onContact, onAddPhoto, onRemovePhoto, onChangeNotes, onCloseOut) that the caller must wire. No persistence of its own.",
+      "navTargets": []
+    },
+    "af-employee-detail": {
+      "summary": "Admin sees one employee's name header, Back/Edit/Deactivate (or Reactivate) buttons, a detail card of identity fields (masked SSN and license), a Skills chip card, and a Service Areas card.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Read-heavy drilldown of a single roster employee so owners/admins can review details and trigger edit or deactivate/reactivate.",
+      "missing": "Prop-driven only; no own navigation or fetching. Deactivate/Reactivate have no local confirm or loading/error state; the caller must handle them.",
+      "navTargets": [
+        "onBack",
+        "onEdit",
+        "onDeactivate",
+        "onReactivate"
+      ]
+    },
+    "af-employee-editor": {
+      "summary": "Form to add or edit an employee: personal fields, Vehicle Status and Tool Status selects, role, area and skill chips. Buttons: Save, Cancel, and Revoke pending invitation & resend for pending invites.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins create or edit employee records, set roles, areas and skills, and manage pending invitations.",
+      "missing": "Nothing notable; it is a sub-view that returns via onSaved/onCancel callbacks and has no direct route navigation.",
+      "navTargets": []
+    },
+    "af-employee-invitations": {
+      "summary": "Admins see a list of pending employee invitations for their organization. Each row has a Revoke button that removes it on success or shows an inline error. Has loading, empty and error states.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners and admins review and revoke outstanding employee invitations.",
+      "missing": "No resend or copy-link action, and no link to create an invitation. Only an optional onBack prop; no navigation is wired in the source.",
+      "navTargets": []
+    },
+    "af-employee-job-detail": {
+      "summary": "Read-only \"Job Details\" screen titled with the job address. Shows a card listing Status, Address, Scheduled date, and Assigned Technician, with a single \"Back\" outline button.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owner/admin view a single job's status, address, schedule and technician from the Employee Roster, without any editing.",
+      "missing": "No job actions by design (no status change, reassignment, or edit). Only navigation is the onBack callback; no link to the technician profile or full job record.",
+      "navTargets": []
+    },
+    "af-employee-roster": {
+      "summary": "Owner/admin sees the organization's employee list titled \"Employees\" with loading/empty/error states. Buttons: \"Add Employee\" and \"Pending Invitations\"; tapping a row selects that employee.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins browse org employees and reach add-employee, invitations and employee detail.",
+      "missing": "Navigation is via callback props (onAddEmployee, onViewInvitations, onSelectEmployee); the screen routes nowhere itself. \"Show Test Employees\" is a controlled prop with no visible control.",
+      "navTargets": []
+    },
+    "af-jobEstimate": {
+      "summary": "Admin edits a job's estimate: line items list with inline edit (Cancel/Remove), add via Manual or From Price Sheet (rate/area pick, Select), totals, copy share link, and Print / Save as PDF. Back to Job button.",
+      "flowStage": "qualified",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins build, price, share and print a job's estimate from line items, manually or from the price sheet.",
+      "missing": "Stage is inferred (estimate precedes scheduling); no direct nav except onBack; approveEstimate is imported, but its button was not checked.",
+      "navTargets": [
+        "onBack (Back to Job)"
+      ]
+    },
+    "af-jobs": {
+      "summary": "Admin Finance Jobs list: summary counts (on file, qualified/scheduled, awaiting close-out), \"Add Job\" button, unassigned-first job rows opening job detail, each with a \"Plan\" button; top tabs and gear menu.",
+      "flowStage": "none",
+      "specStage": "Admin close-out",
+      "purpose": "Gives owners/admins an overview of the organization's jobs so they can open, plan, create, or close out jobs.",
+      "missing": "Nothing notable found; shows \"No jobs\" empty state when list is empty. Add Blackout lives on the calendar sub-view, not this list.",
+      "navTargets": [
+        "/job/<id>",
+        "/job/<id>?panel=plan",
+        "/job/new",
+        "/account",
+        "/config/settings",
+        "/profile",
+        "/m/admin-finance",
+        "leadEdit",
+        "leadInbox"
+      ]
+    },
+    "af-leadCreate": {
+      "summary": "Owner/admin form titled New Lead: text fields for name, phone, email, service, preferred date (YYYY-MM-DD), time, address, project details; buttons Cancel and Create lead. Shows sign-in prompt if no session.",
+      "flowStage": "new",
+      "specStage": "Admin close-out",
+      "purpose": "Lets an admin manually enter a new lead into the intake pipeline via the lead repository.",
+      "missing": "No navigation of its own; relies on onCreated/onCancel callbacks. Source, payer and attach-timing hold defaults in state but have no visible pickers. Name is the only required field.",
+      "navTargets": []
+    },
+    "af-leadEdit": {
+      "summary": "Edit Lead form: text fields (name, phone, email, service, preferred date/time, address, project details) plus Source, Payer and Attach-timing pickers. Buttons: Back, Save, Create job. Shows a readiness hint and errors.",
+      "flowStage": "new",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins correct a lead's details and check readiness before saving or converting it into a job.",
+      "missing": "No direct router navigation; Back, saved and Create-job transitions are delegated to parent callbacks (onBack, onSaved, onCreateJob). Not a dead end if the parent wires them.",
+      "navTargets": []
+    },
+    "af-leadInbox": {
+      "summary": "Admin sees a \"Leads\" list of unconverted leads, newest first, including needs_info ones with badges. Taps a lead row to open it, or \"New Lead\" to create one. Has loading, error and empty states.",
+      "flowStage": "new",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins triage incoming leads before they are converted into jobs.",
+      "missing": "Navigation is purely callback-driven (onSelectLead, onCreateLead); New Lead is disabled if the host does not pass onCreateLead. No filters or search. Nothing hardcoded in the screen.",
+      "navTargets": [
+        "onSelectLead (lead detail)",
+        "onCreateLead (new lead)"
+      ]
+    },
+    "af-overview": {
+      "summary": "Admin & Finance landing: scrollable cards (Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Review, Time off, Calendar, Reports, Employees) with live counts; tap opens that sub-view. Gear menu: Logins, Settings, Profile.",
+      "flowStage": "none",
+      "specStage": "Admin close-out",
+      "purpose": "Gives owners/admins a one-tap dashboard hub with counts to jump into each admin/finance area of the org.",
+      "missing": "",
+      "navTargets": [
+        "leadInbox",
+        "jobs",
+        "assignmentBoard",
+        "closeOutQueue",
+        "priceSheetList",
+        "payments",
+        "paymentReview",
+        "timeOffQueue",
+        "calendar",
+        "reports",
+        "employee-roster",
+        "/account"
+      ]
+    },
+    "af-paymentReview": {
+      "summary": "Read-only reconciliation list for owner/admin. A \"Needs attention\" section shows pending or failed payments. A \"Manually confirmed\" section groups manual_confirmed payments by the tech who confirmed them. It has no buttons or pickers.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Lets admins spot payments that are stuck or failed and audit payments that techs confirmed manually, before closing out jobs.",
+      "missing": "Display-only. No tap-through to the job or payment, no retry or resolve action, and no filters. Source has no navigation calls. It only reads the payments table.",
+      "navTargets": []
+    },
+    "af-payments": {
+      "summary": "Admin Payments tab: one scrollable page stacking the Payments list, Reimbursement Queue and Payout Batches sections; selecting a payout batch shows its detail with a back handler. Can auto-scroll to Payout Batches.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Merges payments, reimbursements and payout batches into one admin-finance tab so finance staff avoid separate tab navigation.",
+      "missing": "Nothing notable; it has no router navigation of its own and delegates to child screens and host callbacks (onSelectPayoutBatch, onBackFromPayoutBatch). Child-screen controls not inspected.",
+      "navTargets": [
+        "PayoutBatchDetailScreen",
+        "PayoutBatchScreen",
+        "ReimbursementQueueScreen",
+        "PaymentsScreen"
+      ]
+    },
+    "af-payments-PaymentsScreen": {
+      "summary": "Read-only Payments screen for owner/admin: a \"Needs attention\" list of pending or failed payments and a \"Manually confirmed\" list grouped by the tech who confirmed. No buttons or pickers; has loading, error and empty states.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Lets admins reconcile payments by surfacing pending/failed ones and reviewing manual confirmations by tech.",
+      "missing": "Dead-end: no navigation, no actions. Source says marking paid is a job action elsewhere; no link to the related job or to retry a failed payment.",
+      "navTargets": []
+    },
+    "af-payments-PayoutBatchDetailScreen": {
+      "summary": "Read-only payout batch drilldown: shows the period, status, each employee's frozen line (hours, commission, bonus, reimbursement, total, frozen date), the batch total, and a \"Records only\" note. Only button: Back.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners and admins inspect a frozen payout batch's per-employee lines and total after a row tap in the batch list.",
+      "missing": "No actions beyond Back: no export, no mark-paid, no per-line drilldown. Lines show raw userId rather than employee names. Not routed; reached only via parent AdminFinanceRoot.",
+      "navTargets": [
+        "PayoutBatchScreen (via onBack)"
+      ]
+    },
+    "af-payments-PayoutBatchScreen": {
+      "summary": "Admin lists payout batch records with their frozen lines and amounts; tap a batch to select it, and use Approve or Mark Paid buttons per batch. Shows loading/error/empty states and a banner that no payout is executed here.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owners/admins review frozen payout batches and record approval and paid status, without the app executing any payout.",
+      "missing": "No router navigation; onSelectBatch is an optional prop callback with no detail screen wired in the source. Batches are only displayed, never created here (persist happens elsewhere).",
+      "navTargets": []
+    },
+    "af-payments-ReimbursementQueueScreen": {
+      "summary": "Admin sees \"Reimbursements\" with a \"Pending Review\" list showing amount and description per row. Each row has Approve, Reject (opens inline reason input), and Confirm Reject buttons; per-row errors show inline.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins review pending expense reimbursements and approve or reject them, with a required reason for rejection.",
+      "missing": "No navigation out; no filters for non-pending statuses or history; no detail or receipt view. Reject uses an inline reason input rather than a modal.",
+      "navTargets": []
+    },
+    "af-planning": {
+      "summary": "Admin picks a job from a list, then fills a planning form (model numbers, parts, measurements, instructions, notes), manages a task list (Select, Remove), adds photos, and taps Save or Back to job list.",
+      "flowStage": "qualified",
+      "specStage": "Admin close-out",
+      "purpose": "Capture pre-visit requirements and reference photos on a job so the assigned tech has everything needed before the visit.",
+      "missing": "Add Photo is a stub using a placeholder storagePath; no real camera or photo picker or upload. No job-creation action when there are no jobs.",
+      "navTargets": []
+    },
+    "af-priceSheetCreate": {
+      "summary": "Admin form titled New Price Sheet: enter a numeric version number, then tap \"Create price sheet\" (shows \"Creating...\"), or \"Cancel\". Shows an error message on failure and a sign-in prompt if no session.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins create a new draft price sheet version for their organization via the price sheet repository.",
+      "missing": "Only a version field; no rates or task prices entered here. Navigation is delegated to onCreated/onCancel callbacks, so the screen itself has no direct nav targets.",
+      "navTargets": []
+    },
+    "af-priceSheetEditor": {
+      "summary": "Admin edits one price sheet: help panel, Publish button for drafts, standard duration (Save Standard Duration), area price adjustments with +/- sign and Save, service tasks with Active toggle and + Add Task, and rates with Save Rate.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins configure and publish the organization's price sheet (duration, area adjustments, tasks, rates) that drives job estimates.",
+      "missing": "No router navigation; it only shows an Add Task dialog. Publish exposes an onPublished callback for the host to navigate. No standalone route (sub-view only).",
+      "navTargets": []
+    },
+    "af-priceSheetList": {
+      "summary": "Admins see the org's price sheets grouped Published, Draft, Archived, each row with its status and publish date. A \"Create price sheet\" button shows at the top and in the empty state. Tapping a row selects it.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners and admins browse every price sheet for the organization by status and start a new one or open an existing one.",
+      "missing": "No navigation wired in this file: onSelectSheet and onCreateNew are optional callbacks, so row taps and Create do nothing unless the parent passes them. No inbound route; it is a sub-view.",
+      "navTargets": []
+    },
+    "af-qualify": {
+      "summary": "Staff see a lead's details (tap-to-call phone) and pick Source, Payer, Attach timing and optional Service Area via AxisPicker. Missing fields are listed. Qualify is disabled until ready; Cancel exits.",
+      "flowStage": "qualified",
+      "specStage": "Admin close-out",
+      "purpose": "Lets owner/admin confirm a lead's source, payer and attach-timing axes so the lead can be qualified into a job.",
+      "missing": "No direct navigation; it is props-in/callbacks-out (onSubmit/onCancel), so routing and the qualify flow live in the caller. Only a phone link opens externally.",
+      "navTargets": []
+    },
+    "af-reports": {
+      "summary": "Read-only Reports screen for owner/admin: jobs grouped by status, slot hit-rate (Hit/Miss/Unknown, Hit Rate %), and commission totals (Known/Unknown). Rows drill into job lists; \"< Back\" button returns.",
+      "flowStage": "none",
+      "specStage": "Admin close-out",
+      "purpose": "Gives admins read-only reporting summaries over jobs and commissions with honest unknown counts, drillable to job lists.",
+      "missing": "Takes plain jobs/commissions props, no data repo. Job-row selection (onSelectJob) relies on a parent wiring ReportsJobDetailScreen. Drill rows have no navigation of their own.",
+      "navTargets": [
+        "onBack (parent)",
+        "onSelectJob -> ReportsJobDetailScreen (via AdminFinanceRoot)",
+        "drill: status",
+        "drill: slotHitRate",
+        "drill: commissionTotals"
+      ]
+    },
+    "af-timeOffQueue": {
+      "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list. An \"Add Blackout\" button opens the blackout editor; each row has a \"Cancel\" button. Pending requests are decided automatically.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets owners/admins review technician time-off requests and manage approved blackouts, which feed scheduling.",
+      "missing": "No approve/deny actions: pending requests are decided by a database trigger. Add Blackout navigates via the onAddBlackout callback, which the host must wire to BlackoutEditorScreen.",
+      "navTargets": [
+        "BlackoutEditorScreen (via onAddBlackout)"
+      ]
+    },
+    "calendar": {
+      "summary": "Week/month calendar of jobs and time-off. Header has week/month mode, prev/next/Today. Toggles: Show Test Jobs, Jobs, Time Off. Tap a job in week view to open it; tap a month day to jump to that week.",
+      "flowStage": "scheduled",
+      "specStage": "DayList",
+      "purpose": "Lets owners, admins and techs see scheduled jobs and time off by week or month and open a job from the schedule.",
+      "missing": "Month view jobs cannot be opened directly (only day drill-down). Techs cannot see time-off events (RLS limit noted in source). No create/reschedule actions.",
+      "navTargets": [
+        "/job/:id"
+      ]
+    },
+    "config-settings": {
+      "summary": "Settings screen under Configuration showing an empty state reading \"Settings are coming soon.\" plus the app version label at the bottom. No buttons or pickers.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Placeholder for future app settings that currently only displays the app version.",
+      "missing": "Placeholder only: no actual settings, empty menuItems and optionsItems, no navigation or controls; \"coming soon\" text.",
+      "navTargets": []
+    },
+    "config-test-jobs": {
+      "summary": "Test Jobs list showing each test job's address and status with a Delete button. Footer buttons: Spawn Test Jobs, Delete All, Run Job Simulator. Simulator report has Dismiss and Run Again.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Config tool to create, list, and delete test jobs and run the job simulator dry run for QA.",
+      "missing": "No router navigation out of the screen; no link to job detail from rows. Empty state only says to spawn jobs.",
+      "navTargets": []
+    },
+    "field-tech": {
+      "summary": "Field Tech module root with a state-driven switcher: Overview, Jobs (DayList), Time Off, Prems, Reviews; selecting a job opens FieldJobDetail. Menu has Logins, Settings, Profile. Alerts on invalid Start/Stop actions.",
+      "flowStage": "none",
+      "specStage": "DayList",
+      "purpose": "Hosts the technician's home area and wires per-job actions (on-my-way, start, complete) through status transitions.",
+      "missing": "Nothing notable; reviews and prems sub-views exist in source though the row's navTargets omit them.",
+      "navTargets": [
+        "/account",
+        "/config/settings",
+        "/profile",
+        "/m/field-tech",
+        "/job/",
+        "overview",
+        "jobs",
+        "timeOff",
+        "reviews",
+        "prems"
+      ]
+    },
+    "ft-Completion": {
+      "summary": "Tech sees a completion checklist checkbox, \"Capture after-photo\" button with photo count, Quality notes field, time worked, and \"Complete job\" button (enabled once checklist, photo and notes are done).",
+      "flowStage": "in_progress",
+      "specStage": "Completion",
+      "purpose": "Lets the field tech finish a job by confirming the checklist, adding after-photos and quality notes, then transitioning it to completed.",
+      "missing": "Exported but not mounted in any route. No navigation of its own; it only calls onDone after the job moves to completed. No visible link onward to QR payment/review.",
+      "navTargets": []
+    },
+    "ft-DayList": {
+      "summary": "Tech sees a Next Job card, a Week/Month calendar with Prev/Today/Next controls (jobs plus own time-off), and a Previous Jobs list. Tapping a day opens a Modal with that day's jobs and a Close button; address/phone tap copies.",
+      "flowStage": "assigned",
+      "specStage": "DayList",
+      "purpose": "Shows the signed-in tech's assigned jobs by day and recent completed jobs so they can pick a job to open.",
+      "missing": "No direct routing; navigation is only via optional callbacks (onSelectJob, onOpenJob, onOpenTimeOff) supplied by the parent. Rows are inert if the parent omits them.",
+      "navTargets": [
+        "onOpenJob",
+        "onSelectJob",
+        "onOpenTimeOff"
+      ]
+    },
+    "ft-Earnings": {
+      "summary": "Per-job earnings breakdown: pay period, derived hours, bonus, commissions, reimbursements, close-out state. A text field plus a dispute button files a note-only dispute without changing job status.",
+      "flowStage": "completed",
+      "specStage": "Ancillary",
+      "purpose": "Lets a tech see what a job earned them (hours, bonus, commissions, reimbursements) and raise a note-only dispute.",
+      "missing": "Exported but unmounted: no route or inbound navigation. Takes job, period, bonusRule, etc. as props with no loader. No outbound navigation; dispute is the only action.",
+      "navTargets": []
+    },
+    "ft-FieldJobDetail": {
+      "summary": "Read-only job detail for a tech: header (job id, status, address), description, requested vs scheduled timing, a Call phone button, a tap-to-map address button, and admin notes list. No financial fields.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Gives field techs a self-contained, finance-free view of one job's timing, contact, location and admin notes.",
+      "missing": "No status-change actions (accept, en route, start, complete), no checklist or payment links, no navigation out; no route of its own (jobId passed as prop). Display only.",
+      "navTargets": []
+    },
+    "ft-Greeting": {
+      "summary": "Tech sees a newly assigned job with Accept and Decline buttons. Accept just dismisses. Decline opens a reason text field with Back and submit buttons; the reason is saved as a job note, then the job moves to declined.",
+      "flowStage": "assigned",
+      "specStage": "Greeting",
+      "purpose": "Lets a tech acknowledge a newly assigned job or decline it with a required reason.",
+      "missing": "Exported but unmounted: no route or caller. Accept does not transition the job (passive by design, status stays assigned). Navigation is only via the onDone callback.",
+      "navTargets": []
+    },
+    "ft-Overview": {
+      "summary": "Read-only tech dashboard of count cards (Jobs, Time off, Reimbursements, Notes, Photos, Checklist). Tapping a count drills into a job list ('‹ Back to overview'); job rows open the job; time-off counts open Time Off.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Give a field tech a quick at-a-glance summary of their assigned jobs, time off, reimbursements, notes, photos and checklists.",
+      "missing": "Reimbursement and time-off cards have no direct link to their own screens beyond callbacks; navigation relies on optional onOpenJob/onOpenTimeOff props, which do nothing if the parent omits them.",
+      "navTargets": [
+        "onOpenJob",
+        "onOpenTimeOff",
+        "drill-down tile list"
+      ]
+    },
+    "ft-PremJobs": {
+      "summary": "Prems list of jobs needing a Prem. Each card shows customer, address, service, \"Needs Prem since\" date. Button reads \"Claim\" (confirm Cancel/Yes) or \"Record\" if claimed by me, opening the job's Prem report panel. Pull to refresh.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets techs see the queue of jobs flagged as needing a Prem, claim one, and jump to record its Prem report.",
+      "missing": "No notable gaps; shows \"Prem queue not available yet\" when the port reports unavailable. No back/detail nav beyond the Record button.",
+      "navTargets": [
+        "/job/{id}?panel=jobInvestigation"
+      ]
+    },
+    "ft-Reimbursements": {
+      "summary": "Tech fills a form (Amount in cents, optional Description, optional Job ID) and taps \"Submit request\"; below, a read-only \"My requests\" list shows amount, description, status and date.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets field techs request expense reimbursement and track the status of their own prior requests.",
+      "missing": "Not mounted (no route or sub-view). Receipt photo capture deferred. Amount entered in raw cents. Job ID is free text, not a job picker. No approve/deny here (admin-side elsewhere).",
+      "navTargets": []
+    },
+    "ft-Reviews": {
+      "summary": "Placeholder empty-state screen titled \"Reviews\" showing the message \"Reviews are coming soon.\" No buttons or pickers; reached from the field-tech H menu.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Stub destination so the field-tech AppChrome H menu Reviews item resolves to a real screen instead of a dead onPress.",
+      "missing": "Whole feature is unbuilt: a \"coming soon\" stub with no review data, no controls, and no navigation out (source comment: no Reviews feature exists yet in field-tech).",
+      "navTargets": []
+    },
+    "ft-StartChecklist": {
+      "summary": "Tech taps \"On my way\" (en_route), then \"Start\" to load the start checklist, checks items, captures before-photos (\"Capture before-photo\"), and submits to move the job to in_progress.",
+      "flowStage": "in_progress",
+      "specStage": "StartChecklist",
+      "purpose": "Lets a field tech go en route, run the start checklist with before-photos, and submit it to start the job.",
+      "missing": "Exported but unmounted: no route or inbound navigation. It has no outbound navigation after submit; it only transitions job status.",
+      "navTargets": []
+    },
+    "ft-TimeOff": {
+      "summary": "Tech sees upcoming assigned jobs, a week/month calendar of time-off, and their requests list. A modal holds a date-range calendar and reason; buttons Submit, Save, Delete, Cancel, Close.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets a field tech request, edit, and cancel time off, viewing it beside their upcoming assignments, outside the job state machine.",
+      "missing": "",
+      "navTargets": []
+    },
+    "index": {
+      "summary": "Root route \"/\" renders only RoleLandingRedirect; the user sees no UI of their own, and is sent to a role-specific landing screen. No buttons or pickers.",
+      "flowStage": "none",
+      "specStage": "Greeting",
+      "purpose": "Entry point that redirects each signed-in role (owner, admin, tech, sales) to its landing screen.",
+      "missing": "Redirect destinations live in RoleLandingRedirect, which was not read, so they are not listed. The screen itself has no UI.",
+      "navTargets": []
+    },
+    "job-detail": {
+      "summary": "Unified job screen with header and region tabs Plan, Prelim (Prem), Estimate, Assign, Schedule; actions Contact, Arrive, Complete, Paid, Sign out, gear menu. New-job mode: \"New Job\" form with Cancel/Save. WarningSheet for reassign.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Single drilldown screen to create, plan, estimate, assign, schedule, arrive at, complete and mark paid one job.",
+      "missing": "No StartChecklist or QR payment/review step visible here; Arrive and Complete are header actions only. Not declared in root Stack (picked up from file). Source not fully read.",
+      "navTargets": [
+        "/sign-in",
+        "/job/:param",
+        "/config/settings",
+        "/account",
+        "/profile",
+        "/m/admin-finance",
+        "/m/field-tech"
+      ]
+    },
+    "job-region-assign": {
+      "summary": "Admin-only Assign tab on the Job page: shows \"Assign Technician\" with eligible techs to pick, plus unassign; busy/error shown; \"Reassign job?\" WarningSheet (Cancel/confirm) when moving a Prem tech.",
+      "flowStage": "assigned",
+      "specStage": "Job Detail",
+      "purpose": "Lets an admin assign, reassign or unassign the technician (and Prem investigator) for a job, advancing it toward assigned status.",
+      "missing": "Nothing notable; region renders only when isAdmin, so owner/tech roles listed in the row never see it. Row buttonLabels only lists Cancel.",
+      "navTargets": [
+        "/sign-in",
+        "/job/:param",
+        "/config/settings",
+        "/account",
+        "/profile",
+        "/m/admin-finance",
+        "/m/field-tech"
+      ]
+    },
+    "job-region-estimate": {
+      "summary": "Tech-facing estimate editor: read-only materials line items, add-only form (Add Line Item), derived completion schedule/payment outlay, Submit for review, Share Link (copies to clipboard). Back to Job when not embedded.",
+      "flowStage": "qualified",
+      "specStage": "Job Detail",
+      "purpose": "Lets a tech build and submit a job estimate within RLS limits (insert-only lines, header submit) and share it, inline in Job Detail or standalone.",
+      "missing": "No edit/delete of line items (RLS-limited by design); no approve/reject (admin-only). Navigation only via onBack callback; no routes of its own.",
+      "navTargets": []
+    },
+    "job-region-evisit": {
+      "summary": "Tech fills a guided on-site investigation form: ingress, logistics, parking notes and a state assessment. Buttons: Back to Job, Save Draft, Submit (stamps submitted_at). Shows job header and submit time.",
+      "flowStage": "scheduled",
+      "specStage": "Job Detail",
+      "purpose": "Lets an assigned investigator record preliminary site findings on a job before work, as one evolving record per job until submitted.",
+      "missing": "No router navigation; only an onBack callback. Reached from the tech's job detail once an investigator assignment exists, and can be embedded there. No link onward after Submit.",
+      "navTargets": [
+        "Back to Job (onBack callback)"
+      ]
+    },
+    "job-region-plan": {
+      "summary": "Plan tab inside Job Detail: embeds the PlanningScreen for the current job, seeded from the investigation, where planning details, photos and plan tasks are edited. A Cancel button and WarningSheet appear.",
+      "flowStage": "qualified",
+      "specStage": "Job Detail",
+      "purpose": "Lets owner, admin and tech plan the work for a job (tasks, photos, planned minutes) before scheduling.",
+      "missing": "Flow stage inferred (planning precedes scheduling); PlanningScreen internals not read. No explicit link to the Schedule tab from here.",
+      "navTargets": [
+        "/sign-in",
+        "/job/:param",
+        "/config/settings",
+        "/account",
+        "/profile",
+        "/m/admin-finance",
+        "/m/field-tech"
+      ]
+    },
+    "job-region-schedule": {
+      "summary": "Admin panel on Job Detail to set a job's scheduled start and end date/time via native pickers (\"Pick date\" on Android), then Save, \"Clear schedule\" or \"Cancel\"; \"Back to Job\" when not embedded. Time dropdowns use Select.",
+      "flowStage": "scheduled",
+      "specStage": "Job Detail",
+      "purpose": "Lets an admin set or clear a job's scheduled start/end time from Job Detail, saving through JobRepository.updateDetails.",
+      "missing": "",
+      "navTargets": []
+    },
+    "jobs": {
+      "summary": "Jobs tab: shows a \"Show Test Jobs\" toggle and a \"New job\" button. A tech sees their one assigned job rendered by JobDetail; everyone else sees an empty \"No job selected\" placeholder.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Host screen that loads the tech's assigned job and passes it to JobDetail, with an entry point to create a new job.",
+      "missing": "No job list: the empty state says it \"lands in a later slice\". Owners and admins never get a job. Techs get only the first assigned job (limit 1), with no day list or switching.",
+      "navTargets": [
+        "/job/new"
+      ]
+    },
+    "module-host": {
+      "summary": "Invisible host: resolves /m/[moduleId] via enabled-modules registry and renders that module's screen (admin-finance, field-tech, sales-marketing). Shows loading or empty state if disabled/not permitted. No own buttons.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Single static route that hosts any module's component, injecting session and ports and gating by org and role.",
+      "missing": "",
+      "navTargets": []
+    },
+    "not-found": {
+      "summary": "The user never sees a Not Found page. Any unmatched route immediately renders RoleLandingRedirect, which sends them to their role's landing screen. There are no buttons or pickers.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Catch-all for unknown routes that redirects the user to their role-specific landing screen instead of showing an error.",
+      "missing": "No visible 404 message or manual navigation. Redirect target depends on RoleLandingRedirect, which was not read.",
+      "navTargets": []
+    },
+    "payment-review": {
+      "summary": "Read-only \"Reconciliation\" screen for owner/admin: a \"Needs attention\" list of pending/failed payments and a \"Manually confirmed\" list grouped by tech, each row showing Job id, amount and status/date. No buttons or pickers.",
+      "flowStage": "paid",
+      "specStage": "Admin close-out",
+      "purpose": "Lets admins reconcile payments that are pending, failed, or manually confirmed so close-out of paid jobs can be checked.",
+      "missing": "Rows are not tappable; nothing links to the job or to Mark Paid (owned by admin-finance). No logo-switcher entry; reached only via admin-finance Review.",
+      "navTargets": []
+    },
+    "profile": {
+      "summary": "Account screen: edit Name and Email and tap \"Save details\"; Role is read-only (\"Only an admin can change roles\"). Change password with New/Confirm fields, Show/Hide toggles, and \"Update password\"; success/error messages shown.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets any signed-in user view and update their own name, email and password.",
+      "missing": "No navigation calls in source (no explicit back or sign-out button); no inbound nav verified from this file alone.",
+      "navTargets": []
+    },
+    "root-layout": {
+      "summary": "Invisible root Stack plus AuthGate. Shows loading, error or no-profile overlays with \"Sign out\" and \"Sign in as someone else\" buttons. Redirects signed-out users to sign-in and sends signed-in users to their role landing.",
+      "flowStage": "none",
+      "specStage": "Greeting",
+      "purpose": "Wraps every screen in the app, enforces authentication and role-based landing, and handles the no-profile dead-end state.",
+      "missing": "",
+      "navTargets": [
+        "/sign-in",
+        "/m/sales-marketing",
+        "landingTarget (role landing)",
+        "index",
+        "(tabs)",
+        "sign-up",
+        "m/[moduleId]"
+      ]
+    },
+    "sales-marketing": {
+      "summary": "Sales & Marketing module shell with an app menu switching between Overview, Review Library, Pitch Picker, Composer, Reporting and Callback tasks; gear menu offers Sign Out, Settings, Profile; module switcher included.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Hosts the sales/marketing module's six sub-screens as state-driven tabs under a single route for owner, admin and sales roles.",
+      "missing": "No service or service-area picker exists; serviceId and serviceAreaId stay null so Composer gets no service context. No job-status tie-in.",
+      "navTargets": [
+        "/m/sales-marketing",
+        "/account",
+        "/config/settings",
+        "/profile",
+        "overview",
+        "reviewLibrary",
+        "pitchPicker",
+        "composer",
+        "reporting",
+        "callbackTasks"
+      ]
+    },
+    "sign-in": {
+      "summary": "Sign In form: Email and Password fields (with show/hide toggle), a \"Sign in\" button (\"Signing in…\" while busy), an inline \"Sign-in failed\" error, and a \"Create an account\" button.",
+      "flowStage": "none",
+      "specStage": "Greeting",
+      "purpose": "Authenticates users by email and password so they can enter the app; on success the session listener swaps the route.",
+      "missing": "No forgot-password or reset link; the only navigation is to sign-up.",
+      "navTargets": [
+        "/sign-up"
+      ]
+    },
+    "sign-up": {
+      "summary": "Sign Up screen: notice that an admin invitation is required, Email and Password fields with Show/Hide toggle, a \"Sign up\" button (shows \"Signing up…\"), and a \"Sign-up failed\" error card on failure.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets an invited user create their account with the exact email their admin invited, before entering the app.",
+      "missing": "No link back to sign-in and no forgot-password or email-confirmation handling. Navigation relies on the session listener swapping routes after success.",
+      "navTargets": []
+    },
+    "sm-CallbackTasks": {
+      "summary": "Sales sees a list of completed jobs awaiting a follow-up call, a \"Show Test Jobs\" toggle, and a \"Mark Called Back\" button per task that removes it from the list. Shows loading and error states.",
+      "flowStage": "completed",
+      "specStage": "Ancillary",
+      "purpose": "Gives sales a post-completion callback queue so customers of finished jobs get a follow-up call, tracked by a called-back timestamp.",
+      "missing": "No navigation out: no link to the job detail or customer contact/call action. Only write is Mark Called Back; no notes or outcome capture.",
+      "navTargets": []
+    },
+    "sm-Composer": {
+      "summary": "User sees a suggested caption from the chosen pitch angle, picks a platform, edits the caption, toggles approved assets, taps \"Approve draft\", then manual export or direct post (if Meta enabled), then \"Done\".",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets sales/marketing staff assemble, approve, and export or post a social media draft from a pitch angle without auto-posting or fabricating claims.",
+      "missing": "No route of its own (sub-view only); Done just calls the onDone prop. Direct post is unavailable unless meta-publish is enabled, in which case the UI says so.",
+      "navTargets": [
+        "onDone (back to parent sales-marketing view)"
+      ]
+    },
+    "sm-Overview": {
+      "summary": "Sales & Marketing landing view showing top open callback tasks, recent reviews with a \"Recent reviews\" link to the review library, and totals of posts by platform/period and reviews by platform.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Gives owner/admin/sales users an at-a-glance dashboard of callbacks, reviews and marketing reporting totals.",
+      "missing": "No link to callback tasks or reporting; only the reviews link, and it depends on the optional onOpenReviewLibrary prop being supplied by the parent.",
+      "navTargets": [
+        "onOpenReviewLibrary (review library)"
+      ]
+    },
+    "sm-PitchPicker": {
+      "summary": "Sales reps see a \"Pitch Picker\" title and four tappable cards (Service line, Community, Seasonal, Before / after), each with a description. Tapping one hands the angle to the Composer.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets a sales rep choose the pitch angle for a marketing post before composing it.",
+      "missing": "No inbound route; navigation is via the onNavigateToComposer prop. The source says SalesMarketingRoot threads it \"once it threads this prop through\", so the wiring may be incomplete.",
+      "navTargets": [
+        "composer"
+      ]
+    },
+    "sm-Reporting": {
+      "summary": "Read-only \"Marketing Reporting\" page: paid-ads out-of-scope notice, then counts of posts by platform and month, assets used, reviews by platform, jobs by source and by attach timing. No buttons or pickers.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Gives owner, admin and sales users a non-financial overview of marketing activity and lead sources for the sales-marketing module.",
+      "missing": "Display only: no period picker, filters, drill-down or export. Reviews are not broken out by service or community because the ports lack those fields. No navigation out of the screen.",
+      "navTargets": []
+    },
+    "sm-ReviewLibrary": {
+      "summary": "Sales sees published reviews with star rating, author, body, job id. Filters: Minimum rating chips (0-5), Service and Community id text boxes. Up/down arrows reorder rows; a curate button toggles curation.",
+      "flowStage": "completed",
+      "specStage": "Ancillary",
+      "purpose": "Lets sales browse, filter, reorder and curate already-published customer reviews for marketing use.",
+      "missing": "No outbound navigation. Filters are raw id text inputs, not pickers. Shows raw jobId since Review lacks service/community display fields; no link to the job.",
+      "navTargets": []
+    },
+    "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": {
+      "summary": "Reusable collapsible row in admin-finance: tap header (title/subtitle/tag) to expand edit fields, then Delete (two-tap \"Confirm delete\", optional), Cancel, or Save. Shows inline error text.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Shared inline-edit accordion component so admin finance lists can edit or delete rows in place with save/cancel/delete handling.",
+      "missing": "Not a routed screen; a component with no navigation. Parents supply fields and handlers; mount points not verified from this file.",
+      "navTargets": []
+    },
+    "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": {
+      "summary": "Embedded calendar in Time Off: week/month toggle and prev/next header; tap a day to set start, tap again to set end (swaps if earlier); range highlighted, marked time-off days selectable, range summary text below.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets a field tech pick a start/end date range for a time-off request using the same calendar look as the Jobs calendar.",
+      "missing": "Not a standalone screen; only used by TimeOff.tsx as a controlled component. No navigation of its own.",
+      "navTargets": []
+    },
+    "tabs-layout": {
+      "summary": "Bottom tab bar shell with two tabs, Calendar (with header) and Jobs (header hidden). Active tint is primary color; off-white scene background. No buttons or pickers of its own.",
+      "flowStage": "none",
+      "specStage": "DayList",
+      "purpose": "Provides the tab navigation container that hosts the Calendar and Jobs screens for owner, admin and tech roles.",
+      "missing": "No role-based tab filtering or other tabs (settings, profile) declared; all three roles see the same two tabs.",
+      "navTargets": [
+        "calendar",
+        "jobs"
+      ]
+    }
+  }
+}
