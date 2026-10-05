@@ -1,0 +1,105 @@
+{
+  "pass": true,
+  "checks": [
+    {
+      "name": "1 screen count matches",
+      "pass": true,
+      "detail": "screens.json=74 ui-data=74"
+    },
+    {
+      "name": "2 embedded data equals ui-data.json (inventory)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "2 embedded data equals ui-data.json (storyboard)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "3 screen markers (inventory)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "3 screen markers (storyboard)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "4 AI-INDEX lists all keys (inventory)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "4 AI-INDEX lists all keys (storyboard)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "5 sort toggle (inventory)",
+      "pass": true,
+      "detail": "data-sort count=2"
+    },
+    {
+      "name": "5 sort toggle (storyboard)",
+      "pass": true,
+      "detail": "data-sort count=4"
+    },
+    {
+      "name": "6 files appear in inventory",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "7 ui-data fields",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "8 inventory source order ascending",
+      "pass": true,
+      "detail": "74 wrappers"
+    },
+    {
+      "name": "9 no placeholder content (inventory)",
+      "pass": true,
+      "detail": "lorem=0 itemTitle=0 9:41=0"
+    },
+    {
+      "name": "9 no placeholder content (storyboard)",
+      "pass": true,
+      "detail": "lorem=0 itemTitle=0 9:41=0"
+    },
+    {
+      "name": "10 device frame present (inventory)",
+      "pass": true,
+      "detail": "jc-device=101 jobcore-ui-device=1 data-device=15"
+    },
+    {
+      "name": "10 device frame present (storyboard)",
+      "pass": true,
+      "detail": "jc-device=25 jobcore-ui-device=1 data-device=13"
+    },
+    {
+      "name": "11 Phone|Pad toggle (inventory)",
+      "pass": true,
+      "detail": "data-device-btn count=2"
+    },
+    {
+      "name": "11 Phone|Pad toggle (storyboard)",
+      "pass": true,
+      "detail": "data-device-btn count=2"
+    },
+    {
+      "name": "12 no Dev Owner in mockups (inventory)",
+      "pass": true,
+      "detail": "count=0"
+    },
+    {
+      "name": "12 no Dev Owner in mockups (storyboard)",
+      "pass": true,
+      "detail": "count=0"
+    }
+  ]
+}

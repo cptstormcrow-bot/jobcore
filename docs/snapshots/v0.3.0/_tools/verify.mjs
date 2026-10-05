@@ -99,6 +99,33 @@ if (data) {
     add('8 inventory source order ascending', found.length > 0 && found.every((k, i) => k === sorted[i]),
       `${found.length} wrappers`);
   }
+
+  const stripData = (h) => h.replace(/<script type="application\/json" id="jobcore-ui-data">[\s\S]*?<\/script>/, '');
+
+  // 9
+  for (const [n, h] of Object.entries(htmls)) {
+    const t = stripData(h);
+    const c = [count(t.toLowerCase(), 'lorem ipsum'), count(t, 'Item title'), count(t, '9:41')];
+    add(`9 no placeholder content (${n})`, c.every((x) => x === 0), `lorem=${c[0]} itemTitle=${c[1]} 9:41=${c[2]}`);
+  }
+
+  // 10
+  for (const [n, h] of Object.entries(htmls)) {
+    const c = [count(h, 'jc-device'), count(h, 'jobcore-ui-device'), count(h, 'data-device=')];
+    add(`10 device frame present (${n})`, c.every((x) => x >= 1), `jc-device=${c[0]} jobcore-ui-device=${c[1]} data-device=${c[2]}`);
+  }
+
+  // 11
+  for (const [n, h] of Object.entries(htmls)) {
+    const c = count(h, 'data-device-btn=');
+    add(`11 Phone|Pad toggle (${n})`, c >= 1 && h.includes('>Phone<') && h.includes('>Pad<'), `data-device-btn count=${c}`);
+  }
+
+  // 12
+  for (const [n, h] of Object.entries(htmls)) {
+    const c = count(stripData(h), 'Dev Owner');
+    add(`12 no Dev Owner in mockups (${n})`, c === 0, `count=${c}`);
+  }
 }
 
 const passed = checks.filter((c) => c.pass).length;

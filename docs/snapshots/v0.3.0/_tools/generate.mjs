@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { JOB_FLOW_ORDER, JOB_BRANCH_ORDER, JOB_STATUS_COLORS, TOKENS, statusColor, cssVars, renderMockup, renderMiniNode } from './render-mockup.mjs';
+import { JOB_FLOW_ORDER, JOB_BRANCH_ORDER, JOB_STATUS_COLORS, TOKENS, statusColor, cssVars, renderMockup, renderMiniNode, FRAME_CSS } from './render-mockup.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
@@ -186,7 +186,11 @@ main{padding:var(--sp-3) var(--sp-4)}table{border-collapse:collapse;background:v
 .chip{display:inline-block;border-radius:var(--r-pill);padding:1px 10px;font-size:12px;margin:0 4px 4px 0;background:var(--c-surfaceAlt);color:var(--c-textLight);border:1px solid var(--c-border)}
 .chip.bad{background:var(--c-danger);color:#fff;border-color:var(--c-danger)}.chip.role{background:var(--c-primaryLight);color:#fff;border-color:var(--c-primaryLight)}
 `;
-const toolbarHtml = (extra) => `<div class="toolbar"><span>Sort:</span><button type="button" class="on" data-sort="flow">Job flow</button><button type="button" data-sort="alpha">Alphabetical</button><input type="search" id="filter" placeholder="Filter screens (key, title, route, file)">${extra || ''}</div>`;
+const toolbarHtml = (extra) => `<div class="toolbar"><span>Sort:</span><button type="button" class="on" data-sort="flow">Job flow</button><button type="button" data-sort="alpha">Alphabetical</button><input type="search" id="filter" placeholder="Filter screens (key, title, route, file)"><span>Device:</span><span class="devtoggle" role="group" aria-label="Device"><button type="button" class="on" data-device-btn="phone">Phone</button><button type="button" data-device-btn="pad">Pad</button></span>${extra || ''}</div>`;
+const DEV_JS = `(function(){var K='jobcore-ui-device',m=document.querySelector('main'),bs=document.querySelectorAll('.toolbar button[data-device-btn]');
+function set(d){if(m)m.setAttribute('data-device',d);bs.forEach(function(b){b.classList.toggle('on',b.dataset.deviceBtn===d)})}
+var d='phone';try{var v=localStorage.getItem(K);if(v==='phone'||v==='pad')d=v}catch(e){}
+set(d);bs.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.deviceBtn);try{localStorage.setItem(K,b.dataset.deviceBtn)}catch(e){}})})})();`;
 const countBy = (fn) => { const m = new Map(); for (const s of screensOut) { const k = String(fn(s)); m.set(k, (m.get(k) || 0) + 1); } return [...m.entries()].sort((a, b) => cmp(a[0], b[0])); };
 const countTable = (title, rows) => `<table><thead><tr><th>${esc(title)}</th><th>Count</th></tr></thead><tbody>${rows.map(([k, n]) => `<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join('')}</tbody></table>`;
 const dataAttrs = (s) => `data-screen-key="${esc(s.key)}" data-flow-rank="${s.flowRank}" data-module="${esc(s.module ?? 'none')}" data-kind="${esc(s.kind)}"`;
@@ -235,7 +239,20 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .screen-card.hide{display:none}.screen-card:target{border-color:var(--c-secondary);box-shadow:0 0 0 2px var(--c-secondary)}
 .mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
-.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}`;
+.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
+@media print{@page{size:A4 landscape;margin:10mm}
+body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.toolbar,header.top{display:none!important}.toolbar{position:static}
+main{padding:0}.sums{display:none}.grid{display:block;margin:0}
+.screen-card{display:flex;break-inside:avoid;page-break-inside:avoid;box-shadow:none;box-sizing:border-box;height:188mm;overflow:hidden;padding:8px;gap:12px;border-radius:0}
+.screen-card:target{box-shadow:none;border-color:var(--c-border)}
+.screen-card.hide{display:none}
+.screen-card:not(.hide) ~ .screen-card:not(.hide){break-before:page;page-break-before:always}
+.mock{flex:0 0 auto;width:auto;height:auto}
+.mock .jc-device{zoom:1.05;margin:0}
+main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}
+.info{zoom:.6;height:calc(100% / .6);overflow:hidden;column-count:2;column-gap:16px;column-fill:auto}.info>*{break-inside:avoid-column}
+main[data-device="pad"] .info{zoom:.5;height:calc(100% / .5);column-count:1}}`;
 const INV_JS = `(function(){var g=document.getElementById('grid'),bs=document.querySelectorAll('.toolbar button[data-sort]'),f=document.getElementById('filter');
 function sortBy(m){var c=[].slice.call(g.querySelectorAll('.screen-card'));c.sort(function(a,b){return m==='flow'?(+a.dataset.flowRank-+b.dataset.flowRank):(a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0)});c.forEach(function(n){g.appendChild(n)});bs.forEach(function(b){b.classList.toggle('on',b.dataset.sort===m)})}
 bs.forEach(function(b){b.addEventListener('click',function(){sortBy(b.dataset.sort)})});
@@ -244,10 +261,10 @@ const inventoryHtml = `<!doctype html>
 ${aiIndex('ui-inventory.html')}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobCore UI Inventory v${esc(data.appVersion)}</title>
 ${FONT_LINK}
-<style>${cssVars()}${BASE_CSS}${INV_CSS}</style></head><body>
+<style>${cssVars()}${BASE_CSS}${INV_CSS}${FRAME_CSS}</style></head><body>
 ${headerHtml('UI Inventory')}
 ${toolbarHtml()}
-<main>
+<main data-device="phone">
 <div class="sums">${countTable('By kind', countBy((s) => s.kind))}${countTable('By module', countBy((s) => s.module ?? 'none'))}${countTable('By mounted', countBy((s) => s.mounted))}</div>
 <div class="grid" id="grid">
 ${screensOut.map(card).join('\n')}
@@ -255,6 +272,7 @@ ${screensOut.map(card).join('\n')}
 </main>
 ${dataScript}
 <script>${INV_JS}</script>
+<script>${DEV_JS}</script>
 </body></html>
 `;
 fs.writeFileSync(path.join(outDir, 'ui-inventory.html'), inventoryHtml);
@@ -344,10 +362,10 @@ const storyboardHtml = `<!doctype html>
 ${aiIndex('ui-storyboard.html')}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobCore UI Storyboard v${esc(data.appVersion)}</title>
 ${FONT_LINK}
-<style>${cssVars()}${BASE_CSS}${SB_CSS}</style></head><body>
+<style>${cssVars()}${BASE_CSS}${SB_CSS}${FRAME_CSS}</style></head><body>
 ${headerHtml('UI Storyboard')}
 ${toolbarHtml()}
-<main>
+<main data-device="phone">
 <div class="boards">
 ${flowBoard}
 ${alphaBoard}
@@ -363,6 +381,7 @@ ${tbl([['id', 'ID'], ['specStage', 'Spec stage'], ['claim', 'Claim'], ['evidence
 </main>
 ${dataScript}
 <script>${SB_JS}</script>
+<script>${DEV_JS}</script>
 </body></html>
 `;
 fs.writeFileSync(path.join(outDir, 'ui-storyboard.html'), storyboardHtml);
