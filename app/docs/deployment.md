@@ -140,6 +140,12 @@ Notes and pitfalls:
 - A stale system `JAVA_HOME` (e.g. Java 1.4) is skipped with a WARN; the script
   falls back to Android Studio's bundled `jbr` (JDK 21). Override with `-JavaHome`.
 
+**App icon.** The default launcher icon is the hard hat (master
+`assets/branding/jobcore-icon-hardhat.svg`; PNGs in `app/apps/mobile/assets/`).
+The native mipmaps live under the gitignored `android/` in the main checkout only,
+so a fresh prebuild or another checkout will not carry them unless `app.json` icon
+keys are used. See `app/apps/mobile/README.md` "App icon".
+
 ### Versioning
 
 - Conventional Commits drive SemVer. Below 1.0: `feat` bumps minor; `fix`/`perf` bump

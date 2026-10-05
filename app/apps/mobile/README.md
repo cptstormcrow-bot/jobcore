@@ -109,6 +109,12 @@ Notes:
   (`npm run release:dry` / `npm run release`).
 - The app version shows in the ⚙ menu footer and on Settings.
 
+### App icon
+
+- Master art: repo-root `assets/branding/jobcore-icon-hardhat.svg`. `app.json` points at `app/apps/mobile/assets/icon-1024.png` and `adaptive-foreground-1024.png` (adaptive background `#1B2A41`).
+- The Android launcher mipmaps under the gitignored `android/app/src/main/res` exist only in the MAIN checkout and were edited directly. The `app.json` icon keys only apply at `expo prebuild`, so never run it with `--clean`.
+- To change the icon: re-render the SVG to PNGs, replace the assets and the `mipmap-*/ic_launcher*.png` files (no same-named `.webp` may remain beside a `.png`), then run `npm run build:apk`.
+
 ## Status — dependencies are installed
 
 **`npm install` has been run from `Jobcore/app/`.** `node_modules` and `package-lock.json`
