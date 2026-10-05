@@ -194,7 +194,9 @@ const JOB_SEED_KEYS = ['id', 'createdAt', 'completedAt', 'source', 'attachTiming
 
 // Per-screen name rotation state (reset at the top of renderMockup).
 let nameCount = 0;
-let nameIdx = 0;
+let nameIdx = 1;
+// Rotation cycles indices 1..len-1 (skips profs[0]); 0 only for a single profile.
+const rotIdx = (n, len) => (len > 1 ? 1 + (n % (len - 1)) : 0);
 
 // Prefix-aware seed lookups (profiles / techSkills / job seed fields); returns string or null.
 function lookupSeed(id, job) {
@@ -207,8 +209,8 @@ function lookupSeed(id, job) {
   if (pre === 'tech' && seg === 'fullName') return tech ? tech.fullName : null;
   if (pre === 'profile' || pre === 'employee') {
     const profs = SAMPLE.profiles || [];
-    if (seg === 'fullName' && profs.length) { nameIdx = nameCount % profs.length; nameCount++; }
-    const p0 = profs[nameIdx];
+    if (seg === 'fullName' && profs.length) { nameIdx = rotIdx(nameCount, profs.length); nameCount++; }
+    const p0 = profs[profs.length > 1 ? nameIdx : 0];
     if (p0 && (seg === 'fullName' || seg === 'role') && p0[seg] != null) return String(p0[seg]);
   }
   if (!pre && seg === 'skill') {
@@ -330,7 +332,7 @@ function renderElements(els) {
 
 export function renderMockup(screen) {
   nameCount = 0;
-  nameIdx = 0;
+  nameIdx = 1;
   const s = screen || {};
   const comps = s.components || {};
   const menus = Array.isArray(s.menus) ? s.menus : [];
