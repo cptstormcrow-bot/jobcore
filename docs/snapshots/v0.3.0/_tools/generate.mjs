@@ -197,6 +197,9 @@ const dataAttrs = (s) => `data-screen-key="${esc(s.key)}" data-flow-rank="${s.fl
 const searchText = (s) => [s.key, s.title, s.route, s.subView, s.file, s.module, s.summary].filter(Boolean).join(' ').toLowerCase();
 
 // ---------- inventory ----------
+// _tools/pagination.json { screenKey: [unit indexes where continuation pages start] }; absent file = no breaks
+let pagination = {};
+try { pagination = JSON.parse(fs.readFileSync(path.join(here, 'pagination.json'), 'utf8')) || {}; } catch { pagination = {}; }
 const list = (a) => (Array.isArray(a) && a.length ? a.map(esc).join(', ') : '<span class="muted">none</span>');
 const val = (v) => (v == null || v === '' ? '<span class="muted">none</span>' : esc(v));
 function card(s) {
@@ -205,9 +208,42 @@ function card(s) {
   const unm = s.mounted === false || s.mounted === 'exported-unmounted';
   const outs = edges.filter((e) => e.from === s.key);
   const navLis = outs.length
-    ? outs.map((e) => (e.resolved ? `<li><a href="#screen-${esc(e.to)}">${esc(e.to)}</a> <span class="muted">(${esc(e.kind)})</span></li>` : `<li>${esc(e.to)} <span class="muted">(${esc(e.kind)}, unresolved)</span></li>`)).join('')
-    : '<li class="muted">none</li>';
+    ? outs.map((e) => (e.resolved ? `<li><a href="#screen-${esc(e.to)}">${esc(e.to)}</a> <span class="muted">(${esc(e.kind)})</span></li>` : `<li>${esc(e.to)} <span class="muted">(${esc(e.kind)}, unresolved)</span></li>`))
+    : ['<li class="muted">none</li>'];
   const fs_ = s.flowStage;
+  const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
+  // atomic units after the header block; g groups consecutive rows/items for wrapper rebuilds on continuation pages
+  const units = [
+    { g: 'h', h: '<h3>Titles / tags / endpoints</h3>' },
+    ...[kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
+      kv('testIDs', list(s.testIDs)), kv('accessibilityLabels', list(s.accessibilityLabels)), kv('buttonLabels', list(s.buttonLabels)), kv('pickers', list(s.pickers)),
+      kv('menus', list(s.menus)), kv('components (top 8)', list(comps)), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
+    { g: 'h', h: '<h3>How to identify when editing</h3>' },
+    ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
+      `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
+    { g: 'h', h: '<h3>Navigation targets</h3>' },
+    ...navLis.map((h) => ({ g: 'li', h })),
+  ];
+  const WRAP = { tr: ['<table><tbody>', '</tbody></table>'], id: ['<div class="ident">', '</div>'], li: ['<ul>', '</ul>'] };
+  // render units [from,to) as wrapped runs; mark(i) adds the data-u attribute (and pbrk class when hidden in print)
+  const runs = (from, to, brk) => {
+    let out = '', cur = null;
+    for (let i = from; i < to; i++) {
+      const u = units[i];
+      if (cur && cur !== u.g) { out += WRAP[cur][1]; cur = null; }
+      if (!cur && WRAP[u.g]) { out += WRAP[u.g][0]; cur = u.g; }
+      const cls = brk != null && i >= brk ? ' class="pbrk"' : '';
+      out += u.h.replace(/^<(\w+)/, `<$1 data-u="${i}"${cls}`);
+    }
+    return cur ? out + WRAP[cur][1] : out;
+  };
+  const brks = (pagination[s.key] || []).filter((n) => n > 0 && n < units.length);
+  const body = runs(0, units.length, brks.length ? brks[0] : null);
+  const chips = `${roles}<span class="chip">${esc(s.kind)}</span>`;
+  const conts = brks.map((from, i) => `<section class="cont" data-cont-of="${esc(s.key)}">
+<div class="cont-head"><strong>${esc(s.title || s.key)}</strong> ${chips} <span class="muted">continued - page ${i + 2} of ${brks.length + 1}</span></div>
+${runs(from, i + 1 < brks.length ? brks[i + 1] : units.length)}
+</section>`).join('\n');
   return `<!-- screen:${s.key} -->
 <article class="screen-card" id="screen-${esc(s.key)}" ${dataAttrs(s)} data-search="${esc(searchText(s))}">
 <div class="mock">${renderMockup(s)}</div>
@@ -217,21 +253,9 @@ function card(s) {
 <div><span class="chip">${esc(s.kind)}</span><span class="chip">${esc(s.module ?? 'no module')}</span><span class="chip">mounted: ${esc(s.mounted)}</span>${unm ? '<span class="chip bad">NOT MOUNTED</span>' : ''}<span class="chip" style="background:${statusColor(fs_)};color:#fff;border-color:${statusColor(fs_)}">${esc(String(fs_).replace(/_/g, ' '))}</span><span class="chip">${esc(s.specStage)}</span></div>
 <p>${esc(s.summary)}</p>
 ${s.purpose ? `<p class="muted">${esc(s.purpose)}</p>` : ''}
-<h3>Titles / tags / endpoints</h3>
-<table><tbody>
-<tr><th>title</th><td>${val(s.title)}</td></tr><tr><th>titleInSource</th><td>${val(s.titleInSource)}</td></tr>
-<tr><th>route</th><td>${val(s.route)}</td></tr><tr><th>subView</th><td>${val(s.subView)}</td></tr>
-<tr><th>testIDs</th><td>${list(s.testIDs)}</td></tr><tr><th>accessibilityLabels</th><td>${list(s.accessibilityLabels)}</td></tr>
-<tr><th>buttonLabels</th><td>${list(s.buttonLabels)}</td></tr><tr><th>pickers</th><td>${list(s.pickers)}</td></tr>
-<tr><th>menus</th><td>${list(s.menus)}</td></tr><tr><th>components (top 8)</th><td>${list(comps)}</td></tr>
-<tr><th>tables</th><td>${list(s.tables)}</td></tr><tr><th>rpcs</th><td>${list(s.rpcs)}</td></tr><tr><th>repoMethods</th><td>${list(s.repoMethods)}</td></tr>
-</tbody></table>
-<h3>How to identify when editing</h3>
-<div class="ident"><div>file: <code>${esc(s.file)}</code></div><div>route: <code>${esc(s.route ?? 'none')}</code></div><div>key: <code>${esc(s.key)}</code></div><div>anchor: <code>#${esc(s.anchor)}</code></div>
-<div>identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}</div></div>
-<h3>Navigation targets</h3><ul>${navLis}</ul>
+${body}
 </div>
-</article>
+</article>${conts ? '\n' + conts : ''}
 <!-- /screen:${s.key} -->`;
 }
 const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(720px,1fr));gap:var(--sp-3);margin-top:var(--sp-3)}
@@ -240,23 +264,26 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
 .sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
+.cont{display:none}.cont-head{border-bottom:1px solid var(--c-border);padding-bottom:4px;margin-bottom:6px;font-size:13px}
 @media print{@page{size:A4 landscape;margin:10mm}
 body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .toolbar,header.top{display:none!important}.toolbar{position:static}
 main{padding:0}.sums{display:none}.grid{display:block;margin:0}
-.screen-card{display:flex;break-inside:avoid;page-break-inside:avoid;box-shadow:none;box-sizing:border-box;height:188mm;overflow:hidden;padding:8px;gap:12px;border-radius:0}
+.screen-card{display:flex;box-shadow:none;box-sizing:border-box;min-height:188mm;padding:8px;gap:12px;border-radius:0}
 .screen-card:target{box-shadow:none;border-color:var(--c-border)}
 .screen-card.hide{display:none}
 .screen-card:not(.hide) ~ .screen-card:not(.hide){break-before:page;page-break-before:always}
 .mock{flex:0 0 auto;width:auto;height:auto}
 .mock .jc-device{zoom:1.05;margin:0}
 main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}
-.info{zoom:.6;height:calc(100% / .6);overflow:hidden;column-count:2;column-gap:16px;column-fill:auto}.info>*{break-inside:avoid-column}
-main[data-device="pad"] .info{zoom:.5;height:calc(100% / .5);column-count:1}}`;
+.info .pbrk{display:none}
+.info tr,.info li,.info .ident>div,.info h2,.info>div{break-inside:avoid;page-break-inside:avoid}.info h3{break-after:avoid;page-break-after:avoid}
+section.cont{display:block;break-before:page;page-break-before:always;padding:8px;box-sizing:border-box}section.cont.hide{display:none}
+section.cont tr,section.cont li,section.cont .ident>div{break-inside:avoid;page-break-inside:avoid}}`;
 const INV_JS = `(function(){var g=document.getElementById('grid'),bs=document.querySelectorAll('.toolbar button[data-sort]'),f=document.getElementById('filter');
-function sortBy(m){var c=[].slice.call(g.querySelectorAll('.screen-card'));c.sort(function(a,b){return m==='flow'?(+a.dataset.flowRank-+b.dataset.flowRank):(a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0)});c.forEach(function(n){g.appendChild(n)});bs.forEach(function(b){b.classList.toggle('on',b.dataset.sort===m)})}
+function sortBy(m){var c=[].slice.call(g.querySelectorAll('.screen-card'));c.sort(function(a,b){return m==='flow'?(+a.dataset.flowRank-+b.dataset.flowRank):(a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0)});c.forEach(function(n){g.appendChild(n);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)g.appendChild(x)})});bs.forEach(function(b){b.classList.toggle('on',b.dataset.sort===m)})}
 bs.forEach(function(b){b.addEventListener('click',function(){sortBy(b.dataset.sort)})});
-f.addEventListener('input',function(){var q=f.value.toLowerCase();g.querySelectorAll('.screen-card').forEach(function(n){n.classList.toggle('hide',q&&n.dataset.search.indexOf(q)<0)})});sortBy('flow')})();`;
+f.addEventListener('input',function(){var q=f.value.toLowerCase();g.querySelectorAll('.screen-card').forEach(function(n){var h=q&&n.dataset.search.indexOf(q)<0;n.classList.toggle('hide',h);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)x.classList.toggle('hide',h)})})});sortBy('flow')})();`;
 const inventoryHtml = `<!doctype html>
 ${aiIndex('ui-inventory.html')}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobCore UI Inventory v${esc(data.appVersion)}</title>

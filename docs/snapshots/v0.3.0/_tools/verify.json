@@ -74,7 +74,7 @@
     {
       "name": "10 device frame present (inventory)",
       "pass": true,
-      "detail": "jc-device=101 jobcore-ui-device=1 data-device=15"
+      "detail": "jc-device=101 jobcore-ui-device=1 data-device=14"
     },
     {
       "name": "10 device frame present (storyboard)",
@@ -100,6 +100,26 @@
       "name": "12 no Dev Owner in mockups (storyboard)",
       "pass": true,
       "detail": "count=0"
+    },
+    {
+      "name": "13 data-cont-of targets real screens",
+      "pass": true,
+      "detail": "78 cont blocks"
+    },
+    {
+      "name": "14 continuation blocks have no id or screen marker",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "15 pagination.json consistent",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "16 continuation heads carry screen title",
+      "pass": true,
+      "detail": ""
     }
   ]
 }

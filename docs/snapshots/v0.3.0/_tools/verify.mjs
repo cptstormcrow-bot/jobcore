@@ -126,6 +126,74 @@ if (data) {
     const c = count(stripData(h), 'Dev Owner');
     add(`12 no Dev Owner in mockups (${n})`, c === 0, `count=${c}`);
   }
+
+  // continuation blocks (inventory only)
+  const contBlocks = [];
+  {
+    const re = /<section class="cont"[^>]*>/g;
+    let m;
+    while ((m = re.exec(inv))) {
+      const tag = m[0];
+      const start = m.index;
+      // body: up to the matching </section> (depth-aware)
+      let depth = 1, pos = start + tag.length;
+      const tr = /<section\b|<\/section>/g;
+      tr.lastIndex = pos;
+      let t;
+      while ((t = tr.exec(inv))) {
+        depth += t[0] === '</section>' ? -1 : 1;
+        if (depth === 0) { pos = t.index + t[0].length; break; }
+      }
+      const of = (tag.match(/data-cont-of="([^"]*)"/) || [])[1];
+      contBlocks.push({ tag, of, html: inv.slice(start, pos) });
+    }
+  }
+
+  // 13
+  {
+    const bad = contBlocks.filter((b) => !b.of || !keys.includes(b.of) || count(inv, `id="screen-${b.of}"`) < 1).map((b) => b.of || '(none)');
+    add('13 data-cont-of targets real screens', bad.length === 0, bad.slice(0, 10).join(', ') || `${contBlocks.length} cont blocks`);
+  }
+
+  // 14
+  {
+    const bad = contBlocks.filter((b) => /\bid=/.test(b.tag) || b.html.includes('<!-- screen:') || b.html.includes('<!-- /screen:')).map((b) => b.of);
+    add('14 continuation blocks have no id or screen marker', bad.length === 0, bad.slice(0, 10).join(', '));
+  }
+
+  // 15
+  {
+    const pj = path.join(scriptDir, 'pagination.json');
+    if (!fs.existsSync(pj)) add('15 pagination.json consistent', true, 'no pagination.json (all screens single-page)');
+    else {
+      const bad = [];
+      let pag = null;
+      try { pag = JSON.parse(fs.readFileSync(pj, 'utf8')); } catch (e) { bad.push(`invalid JSON: ${e.message}`); }
+      if (pag && typeof pag === 'object' && !Array.isArray(pag)) {
+        for (const [k, arr] of Object.entries(pag)) {
+          if (!keys.includes(k)) { bad.push(`${k}:unknown key`); continue; }
+          const okArr = Array.isArray(arr) && arr.every((x, i) => Number.isInteger(x) && x >= 1 && (i === 0 || x > arr[i - 1]));
+          if (!okArr) { bad.push(`${k}:not strictly ascending ints >=1`); continue; }
+          const n = contBlocks.filter((b) => b.of === k).length;
+          if (n !== arr.length) bad.push(`${k}:cont=${n} vs ${arr.length}`);
+        }
+      } else if (pag) bad.push('not an object');
+      add('15 pagination.json consistent', bad.length === 0, bad.slice(0, 10).join(', '));
+    }
+  }
+
+  // 16
+  {
+    const bad = [];
+    for (const b of contBlocks) {
+      const h = (b.html.match(/<[^>]*class="[^"]*\bcont-head\b[^"]*"[^>]*>([\s\S]*?)<\/(\w+)>/) || [])[0];
+      const card = inv.match(new RegExp(`<!-- screen:${b.of} -->[\\s\\S]*?<h2[^>]*>([\\s\\S]*?)</h2>`));
+      const title = card ? card[1].replace(/<[^>]+>/g, '').trim() : '';
+      const headText = h ? h.replace(/<[^>]+>/g, '') : '';
+      if (!h || !title || !headText.includes(title)) bad.push(b.of);
+    }
+    add('16 continuation heads carry screen title', bad.length === 0, bad.slice(0, 10).join(', '));
+  }
 }
 
 const passed = checks.filter((c) => c.pass).length;
