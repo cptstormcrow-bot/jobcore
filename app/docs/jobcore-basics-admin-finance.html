@@ -105,7 +105,13 @@
             <code>flows/assign-job.ts</code> and <code>domain/assignment-warnings.ts</code>, would drive
             <a href="#state-scheduled">state-scheduled</a> → <a href="#state-assigned">state-assigned</a>, cross-
             checking the <code>AxisPicker</code>/<code>TechColumn</code> components and surfacing conflicts via
-            <code>WarningSheet</code>. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
+            <code>WarningSheet</code>. On the board, the Real category button is hidden at the top by default
+            (shown only when the test-jobs flag is on). Each job's Service and Prem buttons reflect the
+            currently assigned techs; tapping one opens the field-tech picker preselected to the assigned tech
+            for that kind, so the admin can toggle to another tech to reassign (Service and Prem techs may
+            differ) and then Confirm. Buttons use tighter text margins and are shorter so more jobs fit on a
+            phone screen, and a short summarized job description appears in black normal text in the upper
+            right of each job card. <span class="jc-badge jc-badge-built-not-wired">🟡 Built, Not Wired</span>
           </li>
           <li>
             <strong>Resolve a reschedule.</strong> When a tech or the state machine reports
