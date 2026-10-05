@@ -15,6 +15,10 @@ const PAGE_H_MM = 188;
 const PAGE_W_MM = 277;
 // Approximate height (mm) of the compact repeated header on continuation pages.
 const CONT_HEADER_MM = 14;
+// Print card/cont padding (8px top + 8px bottom).
+const PAD_PX = 16;
+// Slack for rounding and borders.
+const SAFETY_PX = 24;
 const EDGE_TIMEOUT_MS = 60000;
 
 const EDGES = [
@@ -52,8 +56,8 @@ const measure = `(${function (cfg) {
     if (units.length) {
       header = Math.max(0, units[0].getBoundingClientRect().top - info.getBoundingClientRect().top);
     }
-    const first = Math.max(1, cfg.pageH - header);
-    const cont = Math.max(1, cfg.pageH - cfg.contHeader);
+    const first = Math.max(1, cfg.pageH - cfg.padSafety - header);
+    const cont = Math.max(1, cfg.pageH - cfg.padSafety - cfg.contHeader);
     const breaks = [];
     let budget = first, used = 0, start = 0;
     for (let i = 0; i < units.length; i++) {
@@ -77,6 +81,7 @@ const measure = `(${function (cfg) {
   pageW: Math.round(PAGE_W_MM * MM),
   pageH: Math.round(PAGE_H_MM * MM),
   contHeader: Math.round(CONT_HEADER_MM * MM),
+  padSafety: PAD_PX + SAFETY_PX,
 })});`;
 
 // Check mode: measure actual overflow of the baked cards and .cont sections.
@@ -87,7 +92,8 @@ const measureCheck = `(function(){
   st.textContent = '.info .pbrk{display:none !important}.cont{display:block !important;padding:8px;box-sizing:border-box}' +
     '.screen-card{display:flex;box-sizing:border-box;padding:8px;gap:12px}' +
     'body{width:${Math.round(PAGE_W_MM * MM)}px !important;margin:0 !important}' +
-    '.screen-card,.cont{width:${Math.round(PAGE_W_MM * MM)}px !important;height:auto !important;overflow:visible !important}';
+    '.screen-card,.cont{width:${Math.round(PAGE_W_MM * MM)}px !important;height:auto !important;overflow:visible !important}' +
+    '.mock .jc-device{zoom:1.05;margin:0}main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}';
   document.head.appendChild(st);
   const pages = {};
   document.querySelectorAll('article.screen-card').forEach((c) => {
