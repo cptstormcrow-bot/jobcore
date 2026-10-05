@@ -34,6 +34,8 @@ export interface OverviewProps {
   onOpenJob?: (jobId: string) => void;
   onOpenTimeOff?: () => void;
   onDrillChange?: (drillLabel: string | null) => void;
+  onOpenJobs?: () => void;
+  showTestJobs?: boolean;
 }
 
 type TileKey =
@@ -47,7 +49,8 @@ type TileKey =
   | 'notes'
   | 'photos'
   | 'checklistOpen'
-  | 'checklistSubmitted';
+  | 'checklistSubmitted'
+  | 'premsClaimed';
 
 interface OverviewCounts {
   assignedJobs: number;
@@ -82,12 +85,19 @@ const EMPTY_COUNTS: OverviewCounts = {
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
  * and checklist instances. No forms, no writes, no navigation.
  */
-export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewProps = {}): React.ReactElement {
+export function Overview({
+  onOpenJob,
+  onOpenTimeOff,
+  onDrillChange,
+  onOpenJobs,
+  showTestJobs: showTestJobsProp,
+}: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
   const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
   const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
+  const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
@@ -114,7 +124,15 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
 
     async function load(): Promise<void> {
       const allAssignedJobs = await jobs.listAssignedToTech(techId);
-      const showTestJobs = await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false);
+      const showTestJobs =
+        showTestJobsProp ?? (await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false));
+      let claimed: number | null = null;
+      try {
+        const premResult = await getModulePorts().premQueue.listOpen(techId);
+        claimed = premResult.unavailable ? null : premResult.items.filter((item) => item.claimedByMe === true).length;
+      } catch {
+        claimed = null;
+      }
       const assignedJobs = allAssignedJobs
         .filter((job) => isBetaVisible(job, showTestJobs));
       const openJobs = assignedJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status));
@@ -165,6 +183,7 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
 
       if (!cancelled) {
         setJobLists(lists);
+        setPremsClaimed(claimed);
         setCounts({
           assignedJobs: assignedJobs.length,
           openJobs: openJobs.length,
@@ -199,7 +218,7 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, showTestJobsProp]);
 
   if (session === null) {
     return (
@@ -228,7 +247,7 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
   const groups: Array<{
     key: string;
     title: string;
-    stats: Array<{ key: TileKey; label: string; drillLabel: string; value: number }>;
+    stats: Array<{ key: TileKey; label: string; drillLabel: string; value: number | string }>;
   }> = [
     {
       key: 'jobs',
@@ -236,6 +255,18 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
       stats: [
         { key: 'assigned', label: 'Assigned', drillLabel: 'Assigned jobs', value: counts.assignedJobs },
         { key: 'open', label: 'Open', drillLabel: 'Open jobs', value: counts.openJobs },
+      ],
+    },
+    {
+      key: 'premsClaimed',
+      title: 'Prems Claimed',
+      stats: [
+        {
+          key: 'premsClaimed',
+          label: 'Claimed',
+          drillLabel: 'Prems claimed',
+          value: premsClaimed === null ? '—' : premsClaimed,
+        },
       ],
     },
     {
@@ -300,7 +331,13 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
     <View style={styles.container}>
       {groups.map((group) => (
         <View key={group.key} style={styles.groupCard}>
-          <Text style={styles.groupTitle}>{group.title}</Text>
+          {group.key === 'jobs' ? (
+            <Pressable onPress={() => onOpenJobs?.()} accessibilityRole="button" accessibilityLabel="Open assigned jobs">
+              <Text style={styles.groupTitle}>{group.title}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.groupTitle}>{group.title}</Text>
+          )}
           <View style={styles.statsRow}>
             {group.stats.map((s) => (
               <Pressable
@@ -309,6 +346,8 @@ export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewPr
                 onPress={() => {
                   if (s.key === 'timeOffPending' || s.key === 'timeOffApproved') {
                     onOpenTimeOff?.();
+                  } else if (s.key === 'premsClaimed') {
+                    // No Prems route from Overview; intentionally non-navigating.
                   } else {
                     setActiveTile({ key: s.key, label: s.drillLabel });
                   }

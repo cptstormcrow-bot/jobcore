@@ -157,6 +157,52 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
       </View>
 
       <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Job details</Text>
+        {job.customerName ? (
+          <>
+            <Text style={styles.label}>Customer name</Text>
+            <Text style={styles.value}>{job.customerName}</Text>
+          </>
+        ) : null}
+        {job.ingressInstructions ? (
+          <>
+            <Text style={styles.label}>Ingress instructions</Text>
+            <Text style={styles.value}>{job.ingressInstructions}</Text>
+          </>
+        ) : null}
+        {job.permitStatus ? (
+          <>
+            <Text style={styles.label}>Permit status</Text>
+            <Text style={styles.value}>{job.permitStatus}</Text>
+          </>
+        ) : null}
+        {job.parkingAvailable ? (
+          <>
+            <Text style={styles.label}>Parking availability</Text>
+            <Text style={styles.value}>{job.parkingAvailable}</Text>
+          </>
+        ) : null}
+        {job.rooms && job.rooms.length > 0 ? (
+          <>
+            <Text style={styles.label}>Rooms needing work</Text>
+            <Text style={styles.value}>{job.rooms.join(', ')}</Text>
+          </>
+        ) : null}
+        {job.panelInfo ? (
+          <>
+            <Text style={styles.label}>Main panel size/style</Text>
+            <Text style={styles.value}>{job.panelInfo}</Text>
+          </>
+        ) : null}
+        {job.considerations ? (
+          <>
+            <Text style={styles.label}>Considerations</Text>
+            <Text style={styles.value}>{job.considerations}</Text>
+          </>
+        ) : null}
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Contact & location</Text>
         <Button
           label={customerPhone ? `Call ${customerPhone}` : 'No phone on file'}

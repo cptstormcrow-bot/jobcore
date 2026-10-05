@@ -181,7 +181,7 @@ function FieldTechRoot(): React.ReactElement {
 
   const SUBVIEW_LABELS: Record<SubView, string> = {
     overview: 'Overview',
-    jobs: 'Jobs',
+    jobs: 'Assigned Jobs',
     timeOff: 'Time Off',
     reviews: 'Reviews',
     prems: 'Prems',
@@ -215,6 +215,8 @@ function FieldTechRoot(): React.ReactElement {
         onOpenJob: (jobId: string) => setSelectedJobId(jobId),
         onOpenTimeOff: () => setSubView('timeOff'),
         onDrillChange: setDrillLabel,
+        onOpenJobs: () => setSubView('jobs'),
+        showTestJobs,
       });
       break;
   }
