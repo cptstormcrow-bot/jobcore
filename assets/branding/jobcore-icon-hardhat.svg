@@ -1,0 +1,45 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <desc>jobcore icon hardhat</desc>
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description>
+        <dc:source>Codespace/SDAssemblyPros/Jobcore/assets/branding/jobcore-icon-hardhat.svg</dc:source>
+        <dc:subject>sdassemblypros, jobcore</dc:subject>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+<title>JobCore hard hat</title>
+<defs>
+<linearGradient id="shell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB02E"/><stop offset="0.35" stop-color="#FF8A00"/><stop offset="0.75" stop-color="#F26A00"/><stop offset="1" stop-color="#C74700"/></linearGradient>
+<linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A2E00" stop-opacity="0.5"/><stop offset="0.3" stop-color="#8A2E00" stop-opacity="0"/><stop offset="0.8" stop-color="#8A2E00" stop-opacity="0"/><stop offset="1" stop-color="#8A2E00" stop-opacity="0.3"/></linearGradient>
+<linearGradient id="peak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF9A1F"/><stop offset="1" stop-color="#E05A00"/></linearGradient>
+<linearGradient id="jface" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D6D6D6"/></linearGradient>
+<radialGradient id="gloss" cx="0.3" cy="0.25" r="0.55"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.7"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<filter id="blur" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="8"/></filter>
+<clipPath id="shellclip"><path d="M66 334 C58 226 118 124 238 104 C334 88 410 140 430 246 C436 280 438 304 440 322 C340 346 190 352 66 334 Z"/></clipPath>
+</defs>
+<ellipse cx="262" cy="374" rx="210" ry="14" fill="#000" opacity="0.25" filter="url(#blur)"/>
+<path d="M92 334 C98 354 132 366 166 354 L176 338 Z" fill="#5A5A5A" stroke="#333" stroke-width="3" stroke-linejoin="round"/>
+<path d="M280 336 C320 356 420 362 474 334 C470 350 420 368 360 364 C320 362 296 352 280 336 Z" fill="#8F3A00"/>
+<path d="M290 322 C360 328 420 328 452 316 C470 312 484 322 477 336 C468 352 420 360 360 358 C322 356 298 346 282 338 Z" fill="url(#peak)" stroke="#A63D00" stroke-width="4" stroke-linejoin="round"/>
+<path d="M300 332 C360 340 420 338 462 324" fill="none" stroke="#FFC070" stroke-width="3" opacity="0.7" stroke-linecap="round"/>
+<path d="M66 334 C58 226 118 124 238 104 C334 88 410 140 430 246 C436 280 438 304 440 322 C340 346 190 352 66 334 Z" fill="url(#shell)"/>
+<g clip-path="url(#shellclip)">
+<rect x="40" y="80" width="430" height="290" fill="url(#shade)"/>
+<path d="M96 262 C104 178 170 126 252 116 C338 106 396 150 416 232" fill="none" stroke="#B94A00" stroke-width="5" stroke-linecap="round"/>
+<path d="M96 268 C104 184 170 132 252 122 C338 112 396 156 416 238" fill="none" stroke="#FFC46B" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
+<path d="M82 288 C88 196 150 140 244 128 C342 116 412 164 428 262" fill="none" stroke="#B94A00" stroke-width="5" stroke-linecap="round"/>
+<path d="M82 294 C88 202 150 146 244 134 C342 122 412 170 428 268" fill="none" stroke="#FFC46B" stroke-width="3" opacity="0.8" stroke-linecap="round"/>
+<ellipse cx="170" cy="150" rx="110" ry="60" fill="url(#gloss)" transform="rotate(-28 170 150)"/>
+</g>
+<g fill="#6B2400">
+<ellipse cx="120" cy="300" rx="5" ry="6"/><ellipse cx="140" cy="304" rx="5" ry="6"/><ellipse cx="164" cy="306" rx="5" ry="6"/><ellipse cx="186" cy="307" rx="5" ry="6"/>
+</g>
+<path d="M66 334 C190 352 340 346 440 322" fill="none" stroke="#FFB35A" stroke-width="5" opacity="0.85" stroke-linecap="round"/>
+<path d="M66 339 C190 357 340 351 440 327" fill="none" stroke="#A63D00" stroke-width="4" opacity="0.6" stroke-linecap="round"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M232 156 H306 M270 156 V250 C270 290 250 302 228 302 C206 302 192 290 188 270" stroke="#9A3500" stroke-width="46"/>
+<path d="M232 156 H306 M270 156 V250 C270 290 250 302 228 302 C206 302 192 290 188 270" stroke="url(#jface)" stroke-width="34"/>
+</g>
+<path d="M66 334 C58 226 118 124 238 104 C334 88 410 140 430 246 C436 280 438 304 440 322 C340 346 190 352 66 334 Z" fill="none" stroke="#B83F00" stroke-width="4" stroke-linejoin="round"/>
+</svg>
