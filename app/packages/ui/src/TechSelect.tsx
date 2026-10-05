@@ -6,5 +6,5 @@ import { Select, SelectProps } from './Select';
 export type TechSelectProps = SelectProps;
 
 export function TechSelect({ title = 'Choose a Field Tech', ...rest }: TechSelectProps) {
-  return <Select title={title} {...rest} />;
+  return <Select title={title} narrow {...rest} />;
 }

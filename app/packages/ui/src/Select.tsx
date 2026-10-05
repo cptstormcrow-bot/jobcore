@@ -20,6 +20,8 @@ export interface SelectProps {
   title?: string;
   /** Shorter trigger for dense lists. */
   compact?: boolean;
+  /** Narrower popup sheet (field-tech pickers). */
+  narrow?: boolean;
 }
 
 export function Select({
@@ -32,6 +34,7 @@ export function Select({
   style,
   title,
   compact = false,
+  narrow = false,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
@@ -59,7 +62,7 @@ export function Select({
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, narrow && styles.sheetNarrow]}>
             {title ? <Text style={styles.title}>{title}</Text> : null}
             <ScrollView style={{ maxHeight: '100%' }} showsVerticalScrollIndicator>
               {options.map((item, index) => (
@@ -137,6 +140,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingVertical: spacing.xs,
   },
+  sheetNarrow: { width: '65%', maxWidth: 240 },
   title: {
     textAlign: 'center',
     fontFamily: typography.fontFamily.body,
