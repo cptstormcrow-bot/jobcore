@@ -33,6 +33,7 @@ const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 export interface OverviewProps {
   onOpenJob?: (jobId: string) => void;
   onOpenTimeOff?: () => void;
+  onDrillChange?: (drillLabel: string | null) => void;
 }
 
 type TileKey =
@@ -81,7 +82,7 @@ const EMPTY_COUNTS: OverviewCounts = {
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
  * and checklist instances. No forms, no writes, no navigation.
  */
-export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): React.ReactElement {
+export function Overview({ onOpenJob, onOpenTimeOff, onDrillChange }: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
@@ -89,6 +90,14 @@ export function Overview({ onOpenJob, onOpenTimeOff }: OverviewProps = {}): Reac
   const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+
+  const activeDrillLabel = activeTile ? activeTile.label : null;
+  React.useEffect(() => {
+    onDrillChange?.(activeDrillLabel);
+    return () => {
+      onDrillChange?.(null);
+    };
+  }, [activeDrillLabel, onDrillChange]);
 
   React.useEffect(() => {
     if (session === null) {

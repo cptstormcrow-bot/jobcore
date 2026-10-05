@@ -67,6 +67,7 @@ function FieldTechRoot(): React.ReactElement {
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const [showTestJobs, setShowTestJobs] = React.useState(false);
   const [defaultMonthView, setDefaultMonthView] = React.useState(true);
+  const [drillLabel, setDrillLabel] = React.useState<string | null>(null);
   React.useEffect(() => {
     void getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false).then(setShowTestJobs);
     void getModulePorts().localPrefs.getBool(DEFAULT_MONTH_KEY, true).then(setDefaultMonthView);
@@ -100,7 +101,10 @@ function FieldTechRoot(): React.ReactElement {
       id: 'overview',
       label: 'Overview',
       isActive: subView === 'overview',
-      onPress: () => setSubView('overview'),
+      onPress: () => {
+        setDrillLabel(null);
+        setSubView('overview');
+      },
     },
     {
       id: 'jobs',
@@ -210,6 +214,7 @@ function FieldTechRoot(): React.ReactElement {
       content = React.createElement<OverviewProps>(Overview, {
         onOpenJob: (jobId: string) => setSelectedJobId(jobId),
         onOpenTimeOff: () => setSubView('timeOff'),
+        onDrillChange: setDrillLabel,
       });
       break;
   }
@@ -226,8 +231,13 @@ function FieldTechRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       logoMenuItems,
       optionsItems: subView === 'jobs' ? jobsOptions : [],
-      titleBar: { title: 'Field Tech', subtitle: SUBVIEW_LABELS[subView] },
+      titleBar: { title: 'Field Tech', subtitle:
+          subView === 'overview' && drillLabel
+            ? drillLabel.replace(/^Assigned jobs$/i, 'Assigned Jobs')
+            : SUBVIEW_LABELS[subView],
+      },
       onTitlePress: () => {
+        setDrillLabel(null);
         setSelectedJobId(null);
         setSubView('overview');
       },

@@ -366,12 +366,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
   },
   iconButton: {
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: 2,
     paddingVertical: spacing.xs,
   },
   iconText: {
@@ -380,16 +380,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.weight.semibold,
   },
-  // Title pill sat tight at the top; fill the row, more blue above the text.
+  // Title pill fills the row between the side buttons; equal top/bottom padding keeps the text vertically centered (JobCore header SOP).
   titleBar: {
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    paddingTop: 10,
-    paddingBottom: 8,
-    marginHorizontal: 2,
+    paddingTop: 14,
+    paddingBottom: 14,
+    marginHorizontal: 0,
     alignItems: 'center',
   },
   titleBarTitle: {
