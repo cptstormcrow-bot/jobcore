@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 
 const UNASSIGNED_VALUE = '__unassigned__';
 
@@ -40,7 +40,7 @@ export function AssignTechRegion({
       {techs.length === 0 && (
         <Text style={styles.hint}>No active technicians in this organization</Text>
       )}
-      <Select
+      <TechSelect
         value={selectedId}
         options={options}
         onChange={setSelectedId}

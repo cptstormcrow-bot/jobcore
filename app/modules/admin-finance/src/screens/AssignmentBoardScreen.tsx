@@ -39,7 +39,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Button, Select, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, Button, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -447,7 +447,7 @@ export function AssignmentBoardScreen({
                       {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
                           select-for-assignment Pressable above. */}
-                      <Select
+                      <TechSelect
                         options={[
                           { label: 'Unassigned', value: '' },
                           ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),

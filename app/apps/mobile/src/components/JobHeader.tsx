@@ -2,7 +2,7 @@ import React from 'react';
 import type { ComponentProps } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { AppChrome, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { AppChrome, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
@@ -141,7 +141,7 @@ export function JobSummaryRest({
           <View style={styles.techRow}>
             <Text style={styles.summaryLine}>Tech:</Text>
             <View style={styles.techSelect}>
-              <Select
+              <TechSelect
                 value={job.assignedTechId ?? ''}
                 options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
                 placeholder="Choose technician"

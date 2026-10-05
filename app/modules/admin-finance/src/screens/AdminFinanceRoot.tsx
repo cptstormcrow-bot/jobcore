@@ -24,7 +24,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
@@ -1385,7 +1385,7 @@ export function AdminFinanceRoot() {
                       onNext={handleCalendarNext}
                       onToday={handleCalendarToday}
                     />
-                    <Select
+                    <TechSelect
                       label="Technicians"
                       value={selectedCalendarTechId}
                       onChange={(v) => setSelectedCalendarTechId(v === '' ? null : v)}

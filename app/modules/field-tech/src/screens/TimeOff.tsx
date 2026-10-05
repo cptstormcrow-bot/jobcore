@@ -31,7 +31,7 @@ import { View, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoi
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
-import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, Select, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, TechSelect, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -324,7 +324,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Request time off</Text>
-        <Select
+        <TechSelect
           value={techFilter}
           options={[{ label: 'All Techs', value: 'all' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
           onChange={setTechFilter}

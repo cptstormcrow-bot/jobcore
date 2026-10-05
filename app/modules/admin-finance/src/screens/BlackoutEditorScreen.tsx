@@ -22,7 +22,7 @@
 
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Button, Card, ErrorState, ScreenTitle, Select, DatePicker, TextField, EmptyState, colors, spacing } from '@jobcore/ui';
+import { Button, Card, ErrorState, ScreenTitle, TechSelect, DatePicker, TextField, EmptyState, colors, spacing } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -114,7 +114,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
       <ScreenTitle title="Add Blackout" />
       <ScrollView contentContainerStyle={styles.content}>
         <Card style={styles.card}>
-          <Select
+          <TechSelect
             label="Technician"
             value={techIdInput}
             options={techOptions}
