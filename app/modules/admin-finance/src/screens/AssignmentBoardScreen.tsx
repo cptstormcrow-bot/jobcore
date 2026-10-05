@@ -45,6 +45,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
+import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind } from './assignment-board-helpers';
 
 export interface AssignmentBoardScreenProps {
   /** Jobs in `qualified` or `scheduled` status — the board's whole scope. */
@@ -332,7 +333,10 @@ export function AssignmentBoardScreen({
     if (!tech) {
       return;
     }
-    if (visitKind[job.id] === 'prem') {
+    const rowServiceId = job.assignedTechId ?? null;
+    const rowPremId = investigatorTechIdByJob?.[job.id] ?? null;
+    const rowKind: VisitKind = visitKind[job.id] ?? defaultKind(rowServiceId, rowPremId);
+    if (rowKind === 'prem') {
       confirmDialog(
         'Assign Prem?',
         `Assign ${tech.fullName} to the Prem for this job?`,
@@ -380,6 +384,7 @@ export function AssignmentBoardScreen({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator {...(Platform.OS === 'android' ? { persistentScrollbar: true } : {})}>
         <Card style={styles.poolCard}>
           <Text style={styles.poolTitle}>Jobs</Text>
+          {showTestJobs ? (
           <View style={styles.categorySegmentRow}>
             {(showTestJobs ? (['real', 'beta', 'test', 'all'] as const) : (['real'] as const)).map((cat) => (
               <Button
@@ -391,15 +396,16 @@ export function AssignmentBoardScreen({
               />
             ))}
           </View>
+          ) : null}
           <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
           ) : (
             poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
-              const kind = visitKind[job.id] ?? 'service';
               const serviceId = job.assignedTechId ?? null;
               const premId = investigatorTechIdByJob?.[job.id] ?? null;
+              const kind: VisitKind = visitKind[job.id] ?? defaultKind(serviceId, premId);
               const serviceName = serviceId ? techById.get(serviceId)?.fullName ?? 'unknown tech' : null;
               const premName = premId ? techById.get(premId)?.fullName ?? 'unknown tech' : null;
               const techLine =
@@ -411,13 +417,7 @@ export function AssignmentBoardScreen({
                       ? `Tech: ${premName} (Prem)`
                       : 'Unassigned';
               const picked = choice[job.id];
-              const showConfirm =
-                picked !== undefined &&
-                (picked === ''
-                  ? Boolean(serviceId || premId)
-                  : kind === 'prem'
-                    ? picked !== premId
-                    : picked !== serviceId);
+              const showConfirm = needsConfirm(kind, picked, serviceId, premId);
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
@@ -429,7 +429,12 @@ export function AssignmentBoardScreen({
                       accessibilityLabel={`Open job${job.jobNumber != null ? ' #' + job.jobNumber : ''}`}
                       accessibilityHint="Opens the job page"
                     >
-                      {job.customerName ? <Text style={styles.rowCustomer}>{job.customerName}</Text> : null}
+                      <View style={styles.rowTop}>
+                        {job.customerName ? <Text style={styles.rowCustomer}>{job.customerName}</Text> : null}
+                        {job.description != null && job.description.trim() !== '' ? (
+                          <Text style={styles.rowDescription} numberOfLines={2}>{job.description}</Text>
+                        ) : null}
+                      </View>
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <View style={styles.rowMeta}>
                         <Text style={[styles.assignedLine, styles.rowMetaTech]}>{techLine}</Text>
@@ -439,20 +444,18 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'service' }))} />
+                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' }))} />
+                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} />
                       </View>
                       {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
                           select-for-assignment Pressable above. */}
                       <TechSelect
-                        options={[
-                          { label: 'Unassigned', value: '' },
-                          ...eligibleTechs(job).map((t) => ({ label: t.fullName, value: t.id })),
-                        ]}
-                        value={picked ?? serviceId ?? premId ?? ''}
+                        compact
+                        options={techOptionsFor(kind, eligibleTechs(job), kind === 'prem' ? premId : serviceId)}
+                        value={pickerValue(kind, picked, serviceId, premId)}
                         onChange={(v) => setChoice((prev) => ({ ...prev, [job.id]: v }))}
                         style={styles.assignSelect}
                       />
@@ -592,7 +595,7 @@ const styles = StyleSheet.create({
   },
   confirmSlot: {
     flex: 1,
-    minWidth: 72,
+    minWidth: 64,
   },
   poolRowText: {
     color: colors.text,
@@ -601,8 +604,8 @@ const styles = StyleSheet.create({
   },
   assignSelect: {
     flexGrow: 1,
-    flexBasis: 160,
-    minWidth: 160,
+    flexBasis: 120,
+    minWidth: 120,
     width: 'auto',
     marginRight: spacing.xs,
   },
@@ -626,6 +629,22 @@ const styles = StyleSheet.create({
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  rowDescription: {
+    color: colors.text,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.regular,
+    textAlign: 'right',
+    maxWidth: '55%',
+    marginLeft: spacing.sm,
   },
   rowError: {
     color: colors.danger,
@@ -641,11 +660,14 @@ const styles = StyleSheet.create({
   },
   kindSlot: {
     flex: 1,
-    minWidth: 72,
+    minWidth: 56,
     marginRight: spacing.xs,
   },
+  // Board-only override of the 2026-08-30 44px standard in packages/ui Button.tsx.
   actionButton: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 0,
+    minHeight: 32,
   },
   hint: {
     color: colors.textMuted,
