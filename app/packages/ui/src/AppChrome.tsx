@@ -164,9 +164,10 @@ export function AppChrome({
     }
   };
   const appVersion = useAppVersion();
-  const wrapTitle = (node: React.ReactElement): React.ReactElement =>
+  const wrapTitle = (node: React.ReactElement, fill = false): React.ReactElement =>
     onTitlePress ? (
       <Pressable
+        style={fill ? { flex: 1 } : undefined}
         accessibilityRole="button"
         accessibilityLabel="Go to overview"
         onPress={() => {
@@ -241,7 +242,8 @@ export function AppChrome({
                 {titleBar.subtitle}
               </Text>
             ) : null}
-          </View>
+          </View>,
+          true
         )}
         <Pressable
           onPress={() => setOMenuOpen(true)}
@@ -365,8 +367,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.xs,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   iconButton: {
     paddingHorizontal: spacing.xs,
@@ -378,14 +380,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.weight.semibold,
   },
+  // Title pill sat tight at the top; fill the row, more blue above the text.
   titleBar: {
     flex: 1,
     flexGrow: 1,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    marginHorizontal: spacing.xs,
+    paddingTop: 10,
+    paddingBottom: 8,
+    marginHorizontal: 2,
     alignItems: 'center',
   },
   titleBarTitle: {
