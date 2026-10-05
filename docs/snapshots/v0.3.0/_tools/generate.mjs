@@ -1,3 +1,6 @@
+// STANDING RULE: every screen page in the inventory must show ID/Key and Kind in the top table,
+// a light-gray claim side-box (redundant/missing claim + evidence) right of Titles/tags/endpoints
+// when claims exist, and a wrapped components field.
 // JobCore UI snapshot generator. Node ESM, no npm deps.
 // Usage: node generate.mjs [--out <dir>] [--descriptions <path>]
 import fs from 'node:fs';
@@ -202,8 +205,19 @@ let pagination = {};
 try { pagination = JSON.parse(fs.readFileSync(path.join(here, 'pagination.json'), 'utf8')) || {}; } catch { pagination = {}; }
 const list = (a) => (Array.isArray(a) && a.length ? a.map(esc).join(', ') : '<span class="muted">none</span>');
 const val = (v) => (v == null || v === '' ? '<span class="muted">none</span>' : esc(v));
+// claim lookups (built once; missing is final by inventory time)
+const redByKey = new Map();
+for (const r of redundant) { if (!redByKey.has(r.key)) redByKey.set(r.key, []); redByKey.get(r.key).push(r); }
+const missByKey = new Map();
+for (const m of missing) { const i = String(m.evidence || '').indexOf(' · '); if (i > 0) { const k = m.evidence.slice(0, i); if (!missByKey.has(k)) missByKey.set(k, []); missByKey.get(k).push(m); } }
 function card(s) {
   const comps = Object.entries(s.components || {}).sort((a, b) => b[1] - a[1] || cmp(a[0], b[0])).slice(0, 8).map(([k, n]) => `${k}×${n}`);
+  const compsHtml = comps.length ? `<div class="comp-wrap">${comps.map((c) => `<span>${esc(c)}</span>`).join('')}</div>` : '<span class="muted">none</span>';
+  const rClaims = redByKey.get(s.key) || [];
+  const mClaims = missByKey.get(s.key) || [];
+  const claimBox = rClaims.length || mClaims.length
+    ? `<aside class="claim-box"><strong>Claims</strong>${rClaims.map((r) => `<div>${esc(r.id)} · ${esc(r.kind)}: ${esc(r.claim)}<br><span class="muted">${esc(r.evidence)}</span></div>`).join('')}${mClaims.map((m) => `<div>${esc(m.id)}: ${esc(m.claim)}<br><span class="muted">${esc(m.evidence)}</span></div>`).join('')}</aside>`
+    : '';
   const roles = (s.roles && s.roles.length ? s.roles : ['all']).map((r) => `<span class="chip role">${esc(r)}</span>`).join('');
   const unm = s.mounted === false || s.mounted === 'exported-unmounted';
   const outs = edges.filter((e) => e.from === s.key);
@@ -214,10 +228,10 @@ function card(s) {
   const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
   // atomic units after the header block; g groups consecutive rows/items for wrapper rebuilds on continuation pages
   const units = [
-    { g: 'h', h: '<h3>Titles / tags / endpoints</h3>' },
-    ...[kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
+    { g: 'h', h: claimBox ? `<div class="head-row"><h3>Titles / tags / endpoints</h3>${claimBox}</div>` : '<h3>Titles / tags / endpoints</h3>' },
+    ...[kv('id / key', `<code>${esc(s.key)}</code>`), kv('kind', val(s.kind)), kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
       kv('testIDs', list(s.testIDs)), kv('accessibilityLabels', list(s.accessibilityLabels)), kv('buttonLabels', list(s.buttonLabels)), kv('pickers', list(s.pickers)),
-      kv('menus', list(s.menus)), kv('components (top 8)', list(comps)), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
+      kv('menus', list(s.menus)), kv('components (top 8)', compsHtml), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
     { g: 'h', h: '<h3>How to identify when editing</h3>' },
     ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
       `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
@@ -264,6 +278,9 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
 .sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
+.head-row{display:flex;gap:12px;align-items:flex-start}.head-row>:first-child{flex:1;min-width:0}
+.claim-box{flex:0 0 32%;border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:9px;background:#fafafa}
+.comp-wrap{display:flex;flex-wrap:wrap;gap:3px;overflow-wrap:anywhere}.comp-wrap span{border:1px solid #ddd;border-radius:3px;padding:0 4px}
 .cont{display:none}.cont-head{border-bottom:1px solid var(--c-border);padding-bottom:4px;margin-bottom:6px;font-size:13px}
 @media print{@page{size:A4 landscape;margin:10mm}
 body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
