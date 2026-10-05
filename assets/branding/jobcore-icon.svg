@@ -1,0 +1,87 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>jobcore icon</title>
+  <desc>jobcore icon</desc>
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description>
+        <dc:source>Codespace/SDAssemblyPros/Jobcore/assets/branding/jobcore-icon.svg</dc:source>
+        <dc:subject>sdassemblypros, jobcore</dc:subject>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+  <defs>
+    <linearGradient id="dome" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E85C00"/>
+      <stop offset="0.22" stop-color="#FF7A00"/>
+      <stop offset="0.45" stop-color="#FF9A1F"/>
+      <stop offset="0.7" stop-color="#FF7A00"/>
+      <stop offset="1" stop-color="#D94F00"/>
+    </linearGradient>
+    <linearGradient id="vshade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.28"/>
+      <stop offset="0.45" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#8A2A00" stop-opacity="0.45"/>
+    </linearGradient>
+    <linearGradient id="brim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF8A1A"/>
+      <stop offset="0.5" stop-color="#F26A00"/>
+      <stop offset="1" stop-color="#B83F00"/>
+    </linearGradient>
+    <linearGradient id="under" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8F3000"/>
+      <stop offset="1" stop-color="#C04600"/>
+    </linearGradient>
+    <linearGradient id="crest" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E05A00"/>
+      <stop offset="0.5" stop-color="#FFB347"/>
+      <stop offset="1" stop-color="#E05A00"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="jface" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E6E6E6"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="drop" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+
+  <!-- brim underside (visible front lip) -->
+  <path d="M34 352 C34 336 120 322 256 322 C392 322 478 336 478 352 C478 392 392 414 256 414 C120 414 34 392 34 352 Z" fill="url(#under)" stroke="#7A2800" stroke-width="3"/>
+  <!-- brim top -->
+  <path d="M34 346 C34 330 120 316 256 316 C392 316 478 330 478 346 C478 380 392 398 256 398 C120 398 34 380 34 346 Z" fill="url(#brim)" stroke="#9A3500" stroke-width="3"/>
+  <path d="M60 340 C110 326 190 322 256 322 C322 322 402 326 452 340" fill="none" stroke="#FFC070" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- brim contact shadow on dome base -->
+  <ellipse cx="256" cy="324" rx="190" ry="10" fill="#6E2000" opacity="0.35" filter="url(#drop)"/>
+
+  <!-- dome -->
+  <path d="M72 332 C64 196 126 84 256 78 C386 84 448 196 440 332 C390 318 122 318 72 332 Z" fill="url(#dome)" stroke="#A33900" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M72 332 C64 196 126 84 256 78 C386 84 448 196 440 332 C390 318 122 318 72 332 Z" fill="url(#vshade)"/>
+
+  <!-- side ribs -->
+  <path d="M150 326 C128 220 150 120 214 86 L236 84 C180 120 168 220 184 324 Z" fill="#E05A00" opacity="0.55"/>
+  <path d="M150 326 C128 220 150 120 214 86" fill="none" stroke="#FFB347" stroke-width="2.5" opacity="0.8"/>
+  <path d="M362 326 C384 220 362 120 298 86 L276 84 C332 120 344 220 328 324 Z" fill="#B84000" opacity="0.5"/>
+  <path d="M362 326 C384 220 362 120 298 86" fill="none" stroke="#FF9A3A" stroke-width="2.5" opacity="0.6"/>
+
+  <!-- top crest -->
+  <path d="M232 80 C246 76 266 76 280 80 L286 146 C270 140 242 140 226 146 Z" fill="url(#crest)" stroke="#A33900" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- specular highlights -->
+  <ellipse cx="170" cy="168" rx="26" ry="72" transform="rotate(24 170 168)" fill="url(#shine)" filter="url(#soft)"/>
+  <path d="M132 232 C128 190 144 148 176 122" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.55"/>
+  <!-- rim light on right edge -->
+  <path d="M434 300 C436 240 424 190 398 148" fill="none" stroke="#FFC070" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- front band at base of dome -->
+  <path d="M74 318 C130 306 382 306 438 318 L440 332 C390 318 122 318 72 332 Z" fill="#C24600" opacity="0.8"/>
+
+  <!-- J: shadow, outline, face -->
+  <g transform="translate(258 222) scale(1.1) translate(-254 -228)">
+    <path d="M236 150 L322 150 L322 232 C322 278 294 306 252 306 C216 306 192 286 186 256 L232 246 C236 260 244 266 252 266 C260 266 266 258 266 238 L266 178 L236 178 Z" transform="translate(5 7)" fill="#5A1A00" opacity="0.5" filter="url(#drop)"/>
+    <path d="M236 150 L322 150 L322 232 C322 278 294 306 252 306 C216 306 192 286 186 256 L232 246 C236 260 244 266 252 266 C260 266 266 258 266 238 L266 178 L236 178 Z" fill="url(#jface)" stroke="#9A3500" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M240 156 L316 156" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+  </g>
+</svg>
