@@ -93,11 +93,178 @@ function process_(src) {
   };
 }
 
+// ---- elements / chrome (regex-only, additive) ----
+const BUSY = /submitting|loading|saving|busy|pending/i;
+const lineStarts = (s) => { const a = [0]; for (let i = 0; i < s.length; i++) if (s[i] === '\n') a.push(i + 1); return a; };
+const lineOf = (starts, idx) => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (starts[mid] <= idx) lo = mid; else hi = mid - 1; } return lo + 1; };
+
+function parseTag(src, i) {
+  const nm = /^<([A-Za-z_][\w.]*)/.exec(src.slice(i, i + 80));
+  if (!nm) return null;
+  let j = i + nm[0].length, depth = 0, q = null;
+  const startAttrs = j;
+  for (; j < src.length; j++) {
+    const c = src[j];
+    if (q) { if (c === '\\') j++; else if (c === q) q = null; continue; }
+    if (c === '"' || c === "'" || c === '`') { q = c; continue; }
+    if (c === '{') depth++;
+    else if (c === '}') depth--;
+    else if (c === '>' && depth === 0) break;
+  }
+  if (j >= src.length) return null;
+  return { name: nm[1], attrs: src.slice(startAttrs, j), end: j + 1, selfClosing: src[j - 1] === '/' };
+}
+
+function balanced(s, p) {
+  let d = 0, q = null;
+  for (; p < s.length; p++) {
+    const c = s[p];
+    if (q) { if (c === '\\') p++; else if (c === q) q = null; continue; }
+    if (c === '"' || c === "'" || c === '`') { q = c; continue; }
+    if (c === '{') d++;
+    else if (c === '}') { d--; if (d === 0) return p + 1; }
+  }
+  return s.length;
+}
+function parseAttrs(s) {
+  const out = {};
+  let p = 0;
+  while (p < s.length) {
+    while (p < s.length && /[\s/]/.test(s[p])) p++;
+    if (p >= s.length) break;
+    if (s[p] === '{') { p = balanced(s, p); continue; }
+    const m = /^[A-Za-z_][\w-]*/.exec(s.slice(p));
+    if (!m) { p++; continue; }
+    const name = m[0]; p += name.length;
+    if (s[p] !== '=') { out[name] = { bool: true }; continue; }
+    p++;
+    if (s[p] === '"' || s[p] === "'") { const e = s.indexOf(s[p], p + 1); const v = s.slice(p + 1, e < 0 ? s.length : e); out[name] = { str: v }; p = e < 0 ? s.length : e + 1; }
+    else if (s[p] === '{') { const e = balanced(s, p); out[name] = { expr: s.slice(p + 1, e - 1).trim() }; p = e; }
+  }
+  return out;
+}
+const tok = (e) => '{' + (e.replace(/\s+/g, ' ').trim().slice(0, 40)) + '}';
+const litQ = (e) => { const m = /^(['"`])((?:(?!\1)[^\\]|\\.)*)\1$/.exec(e); return m && !(m[1] === '`' && m[2].includes('${')) ? m[2] : null; };
+function resolveExpr(e) {
+  e = e.trim();
+  const l = litQ(e);
+  if (l != null) return { label: l, dynamic: false };
+  const t = /^([\s\S]+?)\s*\?\s*(['"`])((?:(?!\2)[^\\]|\\.)*)\2\s*:\s*(['"`])((?:(?!\4)[^\\]|\\.)*)\4$/.exec(e);
+  if (t && BUSY.test(t[1])) return { label: t[1].trim().startsWith('!') ? t[3] : t[5], dynamic: false };
+  return { label: tok(e), dynamic: true };
+}
+function resolveAttr(a) {
+  if (!a) return null;
+  if (a.str != null) return { label: a.str, dynamic: false };
+  if (a.expr != null) return resolveExpr(a.expr);
+  return null;
+}
+function resolveChildren(raw) {
+  const stripped = raw.replace(/<[^>]*>/g, ' ');
+  const bm = stripped.match(/\{([^{}]*)\}/);
+  if (bm) { const r = resolveExpr(bm[1]); const rest = stripped.replace(/\{[^{}]*\}/g, '').replace(/\s+/g, ' ').trim(); if (rest && !r.dynamic) return { label: (rest + ' ' + r.label).trim(), dynamic: false }; return r; }
+  const t = stripped.replace(/\s+/g, ' ').trim();
+  return t ? { label: t, dynamic: false } : null;
+}
+function childrenOf(src, tag) {
+  if (tag.selfClosing) return null;
+  const c = src.indexOf('</' + tag.name, tag.end);
+  return c < 0 ? null : src.slice(tag.end, c);
+}
+function localImports(src, file) {
+  const map = {};
+  const dirOf = path.posix.dirname(file);
+  const resolveFile = (spec) => {
+    const base = path.posix.normalize(path.posix.join(dirOf, spec));
+    for (const c of [base + '.tsx', base + '/index.tsx']) { const a = path.join(RA, c); if (fs.existsSync(a) && fs.statSync(a).isFile()) return c; }
+    return null;
+  };
+  for (const m of src.matchAll(/import\s+([^'";]*?)\s+from\s*['"](\.\.?\/[^'"]*)['"]/g)) {
+    const f = resolveFile(m[2]); if (!f) continue;
+    const nm = m[1].match(/\{([^}]*)\}/);
+    const def = m[1].replace(/\{[^}]*\}/, '').replace(/,/g, '').trim();
+    if (def && /^[A-Z]\w*$/.test(def)) map[def] = f;
+    if (nm) for (const n of nm[1].split(',')) { const x = n.trim().split(/\s+as\s+/).pop(); if (/^[A-Z]\w*$/.test(x)) map[x] = f; }
+  }
+  return map;
+}
+const mk = (type, r, ph, variant, line, via) => ({ type, label: r ? r.label : null, placeholder: ph ? ph.label : null, variant: variant ? variant.label : null, line, via, dynamic: !!((r && r.dynamic) || (ph && ph.dynamic)) });
+
+function scanElements(src, via, imports, chromeOut) {
+  const starts = lineStarts(src), els = [];
+  for (const m of src.matchAll(/<([A-Z][\w.]*)/g)) {
+    const tag = parseTag(src, m.index);
+    if (!tag) continue;
+    const a = parseAttrs(tag.attrs), line = lineOf(starts, m.index), n = tag.name;
+    const A = (k) => resolveAttr(a[k]);
+    if (imports && imports[n]) { els.push({ __import: imports[n], line }); continue; }
+    if (n === 'TextField') els.push(mk('field', A('label'), A('placeholder'), null, line, via));
+    else if (n === 'TextInput') els.push(mk('field', A('label') || A('accessibilityLabel'), A('placeholder'), null, line, via));
+    else if (n === 'Button') {
+      let r = A('label') || A('title');
+      if (!r) { const ch = childrenOf(src, tag); if (ch != null) r = resolveChildren(ch); }
+      if (r) els.push(mk('button', r, null, A('variant') || A('tone'), line, via));
+    }
+    else if (n === 'Toggle' || n === 'Switch' || n === 'Checkbox') els.push(mk('toggle', A('label') || A('accessibilityLabel'), null, null, line, via));
+    else if (n === 'Select' || n === 'DatePicker' || n === 'AxisPicker' || n === 'DateTimePicker') els.push(mk('select', A('label'), A('placeholder'), null, line, via));
+    else if (n === 'EmptyState') {
+      const t = A('title'), mg = A('message') || A('description') || A('subtitle');
+      if (t) els.push(mk('empty', t, null, null, line, via));
+      if (mg) els.push(mk('empty', mg, null, null, line, via));
+    }
+    else if (n === 'ListItem') {
+      const t = A('title') || A('label'), s2 = A('subtitle') || A('description');
+      if (t) els.push(mk('listitem', t, null, null, line, via));
+      if (s2) els.push(mk('listitem', s2, null, null, line, via));
+    }
+    else if (n === 'AppChrome' || n === 'JobHeader') {
+      const t = A('title'), s2 = A('subtitle');
+      if (t) els.push(mk('header', t, null, null, line, via));
+      if (s2) els.push(mk('header', s2, null, null, line, via));
+      if (chromeOut && !chromeOut.set) { chromeOut.set = true; chromeOut.title = t ? t.label : null; chromeOut.titleDynamic = !!(t && t.dynamic); chromeOut.subtitle = s2 ? s2.label : null; chromeOut.subtitleDynamic = !!(s2 && s2.dynamic); const tn = A('titleBarTone') || A('tone'); chromeOut.titleBarTone = tn ? tn.label : null; }
+    }
+    else if (n === 'ScreenTitle' || n === 'SectionHeader' || n === 'SectionTitle' || n === 'Heading') {
+      const ch = childrenOf(src, tag); const r = A('title') || A('label') || (ch != null ? resolveChildren(ch) : null);
+      if (r) els.push(mk(n === 'ScreenTitle' ? 'header' : 'section', r, null, null, line, via));
+    }
+    else if (n === 'Text') {
+      const hint = ['variant', 'type', 'accessibilityRole', 'style'].map(k => a[k] ? (a[k].str ?? a[k].expr ?? '') : '').join(' ');
+      if (/heading|header|section|title/i.test(hint)) { const ch = childrenOf(src, tag); const r = ch != null ? resolveChildren(ch) : null; if (r) els.push(mk('section', r, null, null, line, via)); }
+    }
+    else if (n === 'Pressable' || n === 'TouchableOpacity') {
+      const ch = childrenOf(src, tag); const t = ch && ch.match(/<Text\b[^>]*>([\s\S]*?)<\/Text>/);
+      const r = t ? resolveChildren(t[1]) : null;
+      if (r) els.push(mk('button', r, null, null, line, via));
+    }
+  }
+  if (chromeOut && !chromeOut.set) {
+    const o = src.match(/\b(?:headerTitle|title)\s*:\s*(['"`])((?:(?!\1)[^\\$])*)\1/);
+    if (o && /options|headerTitle|Stack\.Screen/.test(src)) { chromeOut.set = true; chromeOut.title = o[2]; }
+  }
+  return els;
+}
+
+function buildElements(src, file) {
+  const imports = localImports(src, file);
+  const chrome = { title: null, titleDynamic: false, subtitle: null, subtitleDynamic: false, titleBarTone: null };
+  const top = scanElements(src, file, imports, chrome);
+  const elements = [];
+  const cache = {};
+  for (const e of top) {
+    if (e.__import) {
+      const f = e.__import;
+      if (!(f in cache)) { const s2 = fs.readFileSync(path.join(RA, f), 'utf8'); cache[f] = scanElements(s2, f, null, chrome).filter(x => !x.__import); }
+      elements.push(...cache[f]);
+    } else elements.push(e);
+  }
+  return { elements, chrome: { title: chrome.title, subtitle: chrome.subtitle, titleBarTone: chrome.titleBarTone, titleDynamic: chrome.titleDynamic, subtitleDynamic: chrome.subtitleDynamic } };
+}
+
 function fill(entry) {
   const abs = path.join(RA, entry.file || '');
   const base = { ...entry };
   if (!entry.file || !fs.existsSync(abs) || !fs.statSync(abs).isFile()) {
-    return { ...base, fileMissing: true, testIDs: [], accessibilityLabels: [], buttonLabels: [], components: {}, pickers: [], menus: [], navTargets: [], tables: [], rpcs: [], repoMethods: [], imports: [], lineCount: 0, titleInSource: null };
+    return { ...base, fileMissing: true, testIDs: [], accessibilityLabels: [], buttonLabels: [], components: {}, pickers: [], menus: [], navTargets: [], tables: [], rpcs: [], repoMethods: [], imports: [], lineCount: 0, titleInSource: null, elements: [], chrome: null };
   }
   const src = fs.readFileSync(abs, 'utf8');
   const r = process_(src);
@@ -106,7 +273,8 @@ function fill(entry) {
   if (r._appChrome) ['drawer', 'options', 'settings', 'switcher'].forEach(x => menus.add(x));
   delete r._appChrome;
   r.menus = ['drawer', 'options', 'settings', 'switcher', 'tabs'].filter(x => menus.has(x));
-  return { ...base, ...r };
+  const ec = buildElements(src, entry.file);
+  return { ...base, ...r, elements: ec.elements, chrome: ec.chrome };
 }
 
 // completeness
@@ -139,4 +307,4 @@ const out = {
 };
 fs.writeFileSync(path.join(dir, 'screens.json'), JSON.stringify(out, null, 2));
 const srcFiles = new Set(screens.filter(s => s.file && !s.fileMissing).map(s => s.file));
-console.log(`screens.json: ${screens.length} screens, ${srcFiles.size} source files, ${uncoveredFiles.length} uncovered files`);
+console.log(`screens.json: ${screens.length} screens, ${srcFiles.size} source files, ${uncoveredFiles.length} uncovered files; ${screens.filter(x => x.elements && x.elements.length).length} screens with elements`);
