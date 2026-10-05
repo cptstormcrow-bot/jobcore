@@ -38,8 +38,10 @@
 <path d="M66 334 C190 352 340 346 440 322" fill="none" stroke="#FFB35A" stroke-width="5" opacity="0.85" stroke-linecap="round"/>
 <path d="M66 339 C190 357 340 351 440 327" fill="none" stroke="#A63D00" stroke-width="4" opacity="0.6" stroke-linecap="round"/>
 <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<g transform="translate(253 224) scale(0.82) translate(-247 -229)">
 <path d="M232 156 H306 M270 156 V250 C270 290 250 302 228 302 C206 302 192 290 188 270" stroke="#9A3500" stroke-width="46"/>
 <path d="M232 156 H306 M270 156 V250 C270 290 250 302 228 302 C206 302 192 290 188 270" stroke="url(#jface)" stroke-width="34"/>
+</g>
 </g>
 <path d="M66 334 C58 226 118 124 238 104 C334 88 410 140 430 246 C436 280 438 304 440 322 C340 346 190 352 66 334 Z" fill="none" stroke="#B83F00" stroke-width="4" stroke-linejoin="round"/>
 </svg>
