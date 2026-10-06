@@ -258,3 +258,6 @@ export interface Ctx {
   hasQualityNotes?: (job: Job) => boolean | Promise<boolean>;
   hasPaymentRecord?: (job: Job) => boolean | Promise<boolean>;
 }
+// Job Details 15-stage progress bar derivation.
+export type { StageKey, StageState, StageInput, StageInputs, StageResult } from './jobStages.js';
+export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep } from './jobStages.js';
