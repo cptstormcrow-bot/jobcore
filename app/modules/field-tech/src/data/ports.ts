@@ -870,6 +870,10 @@ export interface JobInvestigation {
   logisticsNotes: string | null;
   parkingNotes: string | null;
   stateAssessment: string | null;
+  roomWork: Array<{ room: string; work: string; measurements?: string }>;
+  measurements: string | null;
+  techInstructions: string | null;
+  materialsArrived: boolean | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -881,10 +885,35 @@ export interface JobInvestigationInput {
   logisticsNotes?: string | null;
   parkingNotes?: string | null;
   stateAssessment?: string | null;
+  roomWork?: Array<{ room: string; work: string; measurements?: string }>;
+  measurements?: string | null;
+  techInstructions?: string | null;
+  materialsArrived?: boolean | null;
   submittedAt?: string | null;
 }
 
 export interface JobInvestigationRepository {
   getForJob(jobId: string): Promise<JobInvestigation | null>;
   upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation>;
+}
+
+/** A planning photo attached to a job; `url` is a signed URL, null if signing failed. */
+export interface JobPlanningPhoto {
+  id: string;
+  jobId: string;
+  storagePath: string;
+  caption: string | null;
+  createdAt: string;
+  url: string | null;
+}
+
+/**
+ * Planning-photo port. `add()` opens the image picker, resizes/compresses the
+ * chosen image, uploads it, inserts the row, and returns the new photo —
+ * or null if the user cancels the picker.
+ */
+export interface JobPlanningPhotoRepo {
+  list(jobId: string): Promise<JobPlanningPhoto[]>;
+  add(jobId: string): Promise<JobPlanningPhoto | null>;
+  remove(photoId: string): Promise<void>;
 }

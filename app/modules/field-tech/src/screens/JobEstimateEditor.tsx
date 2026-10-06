@@ -11,12 +11,12 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
 import { ScreenTitle, Button, TextField, colors, typography, Text } from '@jobcore/ui';
-import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation } from '../data/ports';
+import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -41,6 +41,31 @@ function formatDateTime(value: string | null): string {
   return parsed.toLocaleString();
 }
 
+const DAY_CHIPS = [
+  { label: 'Today', days: 0 },
+  { label: 'Tomorrow', days: 1 },
+  { label: '+2 days', days: 2 },
+  { label: '+7 days', days: 7 },
+];
+const TIME_CHIPS = [8, 10, 12, 14, 16];
+
+/** Sum line-item totals by kind; `totalCost` is the grand total. */
+function sumLineItems(items: JobEstimateLineItem[]): {
+  materialsCost: number;
+  laborCost: number;
+  otherCost: number;
+  totalCost: number;
+} {
+  const sums = { materialsCost: 0, laborCost: 0, otherCost: 0, totalCost: 0 };
+  for (const item of items) {
+    if (item.kind === 'material') sums.materialsCost += item.lineTotal;
+    else if (item.kind === 'labor') sums.laborCost += item.lineTotal;
+    else sums.otherCost += item.lineTotal;
+    sums.totalCost += item.lineTotal;
+  }
+  return sums;
+}
+
 /**
  * Tech-facing estimate editor. Shows job header, materials planning
  * (read-only list + add-only form), completion schedule / payment outlay
@@ -63,6 +88,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
   const [saving, setSaving] = React.useState(false);
   const [shareError, setShareError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [photos, setPhotos] = React.useState<JobPlanningPhoto[]>([]);
 
   const load = React.useCallback(async () => {
     if (!session) return;
@@ -89,6 +115,24 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
     void load();
   }, [load]);
 
+  // Planning photos for the Prem reference section (text + small thumbnails only).
+  React.useEffect(() => {
+    let cancelled = false;
+    getModulePorts()
+      .planningPhotos.list(jobId)
+      .then((rows) => {
+        if (!cancelled) setPhotos(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setPhotos([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
+
+  const totals = React.useMemo(() => sumLineItems(lineItems), [lineItems]);
+
   const handleAddLineItem = React.useCallback(async () => {
     const qty = Number.parseFloat(quantity);
     const cost = Number.parseFloat(unitCost);
@@ -104,7 +148,10 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
         unitCost: cost,
         lineTotal,
       });
-      setLineItems((prev) => [...prev, item]);
+      const nextItems = [...lineItems, item];
+      setLineItems(nextItems);
+      // Persist the client-side sums so the saved header matches the displayed outlay.
+      setEstimate(await ports.estimates.upsertForJob(jobId, sumLineItems(nextItems)));
       setDescription('');
       setQuantity('');
       setUnitCost('');
@@ -113,14 +160,46 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
     } finally {
       setSaving(false);
     }
-  }, [jobId, kind, description, quantity, unitCost]);
+  }, [jobId, kind, description, quantity, unitCost, lineItems]);
+
+  /** Chip picker: a day chip keeps the chosen time (default 8:00); a time chip keeps the chosen day (default today). */
+  const pickSchedule = React.useCallback(
+    async (which: 'start' | 'end', part: 'day' | 'time', value: number) => {
+      const current = which === 'start' ? estimate?.scheduledStart : estimate?.scheduledEnd;
+      const base = current ? new Date(current) : new Date();
+      const next = Number.isNaN(base.getTime()) ? new Date() : base;
+      if (part === 'day') {
+        const target = new Date();
+        target.setDate(target.getDate() + value);
+        next.setFullYear(target.getFullYear(), target.getMonth(), target.getDate());
+        if (!current) next.setHours(8, 0, 0, 0);
+      } else {
+        next.setHours(value, 0, 0, 0);
+      }
+      setSaving(true);
+      try {
+        const ports = getModulePorts();
+        const iso = next.toISOString();
+        const updated = await ports.estimates.upsertForJob(
+          jobId,
+          which === 'start' ? { scheduledStart: iso } : { scheduledEnd: iso },
+        );
+        setEstimate(updated);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to save schedule.');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [jobId, estimate],
+  );
 
   const handleSubmit = React.useCallback(async () => {
     const complete =
       lineItems.length > 0 &&
       Boolean(estimate?.scheduledStart) &&
       Boolean(estimate?.scheduledEnd) &&
-      (estimate?.totalCost ?? 0) > 0;
+      totals.totalCost > 0;
     if (!complete) {
       setSubmitError('Please complete all fields marked *.');
       return;
@@ -136,7 +215,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
     } finally {
       setSaving(false);
     }
-  }, [jobId, lineItems, estimate]);
+  }, [jobId, lineItems, estimate, totals]);
 
   const handleShare = React.useCallback(async () => {
     setShareError(null);
@@ -205,6 +284,44 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
           <Text style={styles.value}>{investigation.parkingNotes ?? ''}</Text>
           <Text style={styles.label}>State assessment</Text>
           <Text style={styles.value}>{investigation.stateAssessment ?? ''}</Text>
+          <Text style={styles.label}>Rooms and work</Text>
+          {(investigation.roomWork ?? []).length === 0 ? (
+            <Text style={styles.value}>None</Text>
+          ) : (
+            (investigation.roomWork ?? []).map((card, idx) => (
+              <Text key={`${card.room}-${idx}`} style={styles.value}>
+                {card.room}: {card.work}
+              </Text>
+            ))
+          )}
+          <Text style={styles.label}>Measurements</Text>
+          <Text style={styles.value}>{investigation.measurements ?? ''}</Text>
+          <Text style={styles.label}>Tech instructions</Text>
+          <Text style={styles.value}>{investigation.techInstructions ?? ''}</Text>
+          <Text style={styles.label}>Materials arrived</Text>
+          <Text style={styles.value}>
+            {investigation.materialsArrived === null || investigation.materialsArrived === undefined
+              ? 'Not answered'
+              : investigation.materialsArrived
+                ? 'Yes'
+                : 'No'}
+          </Text>
+          <Text style={styles.label}>Planning photos</Text>
+          {photos.length === 0 ? (
+            <Text style={styles.value}>None</Text>
+          ) : (
+            <View style={styles.chipRow}>
+              {photos.map((photo) =>
+                photo.url ? (
+                  <Image key={photo.id} source={{ uri: photo.url }} style={styles.thumb} />
+                ) : (
+                  <Text key={photo.id} style={styles.value}>
+                    {photo.caption ?? 'Photo'}
+                  </Text>
+                ),
+              )}
+            </View>
+          )}
           {investigation.submittedAt ? (
             <Text style={styles.label}>Submitted {formatDateTime(investigation.submittedAt)}</Text>
           ) : null}
@@ -238,16 +355,36 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
         <Text style={styles.sectionTitle}>Completion schedule *</Text>
         <Text style={styles.label}>Scheduled start</Text>
         <Text style={styles.value}>{formatDateTime(estimate?.scheduledStart ?? null)}</Text>
+        <View style={styles.chipRow}>
+          {DAY_CHIPS.map((chip) => (
+            <Button key={`s-d-${chip.label}`} label={chip.label} onPress={() => pickSchedule('start', 'day', chip.days)} variant="primary" size="sm" disabled={saving} />
+          ))}
+        </View>
+        <View style={styles.chipRow}>
+          {TIME_CHIPS.map((hour) => (
+            <Button key={`s-t-${hour}`} label={`${hour}:00`} onPress={() => pickSchedule('start', 'time', hour)} variant="primary" size="sm" disabled={saving} />
+          ))}
+        </View>
         <Text style={styles.label}>Scheduled end</Text>
         <Text style={styles.value}>{formatDateTime(estimate?.scheduledEnd ?? null)}</Text>
+        <View style={styles.chipRow}>
+          {DAY_CHIPS.map((chip) => (
+            <Button key={`e-d-${chip.label}`} label={chip.label} onPress={() => pickSchedule('end', 'day', chip.days)} variant="primary" size="sm" disabled={saving} />
+          ))}
+        </View>
+        <View style={styles.chipRow}>
+          {TIME_CHIPS.map((hour) => (
+            <Button key={`e-t-${hour}`} label={`${hour}:00`} onPress={() => pickSchedule('end', 'time', hour)} variant="primary" size="sm" disabled={saving} />
+          ))}
+        </View>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Payment outlay *</Text>
-        <Text style={styles.value}>Materials: ${(estimate?.materialsCost ?? 0).toFixed(2)}</Text>
-        <Text style={styles.value}>Labor: ${(estimate?.laborCost ?? 0).toFixed(2)}</Text>
-        <Text style={styles.value}>Other: ${(estimate?.otherCost ?? 0).toFixed(2)}</Text>
-        <Text style={styles.value}>Total: ${(estimate?.totalCost ?? 0).toFixed(2)}</Text>
+        <Text style={styles.value}>Materials: ${totals.materialsCost.toFixed(2)}</Text>
+        <Text style={styles.value}>Labor: ${totals.laborCost.toFixed(2)}</Text>
+        <Text style={styles.value}>Other: ${totals.otherCost.toFixed(2)}</Text>
+        <Text style={styles.value}>Total: ${totals.totalCost.toFixed(2)}</Text>
       </View>
 
       <View style={styles.section}>
@@ -294,6 +431,17 @@ const styles = StyleSheet.create({
   value: {
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  thumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 4,
   },
   lineRow: {
     marginBottom: 8,

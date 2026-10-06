@@ -527,6 +527,11 @@ export default function JobDrilldownScreen() {
           logisticsNotes: investigation.logisticsNotes,
           parkingNotes: form.evisitParking.trim() || null,
           stateAssessment: form.evisitPanel.trim() || null,
+          roomWork: investigation.roomWork,
+          measurements: investigation.measurements,
+          techInstructions: investigation.techInstructions,
+          materialsArrived: investigation.materialsArrived,
+          submittedAt: investigation.submittedAt,
         };
         const updatedInvestigation = await createJobInvestigationRepository().upsertForJob(job.id, investigationPatch);
         setInvestigation(updatedInvestigation);
@@ -959,7 +964,7 @@ export default function JobDrilldownScreen() {
       job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
       premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
       completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
-      estimate: done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt),
+      estimate: { ...done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt), inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
       approval: done(estimate?.status === 'approved', 'approval', estimate?.updatedAt),
       schedule: done(!!job.scheduledStart, 'schedule'),
       assign: done(!!(job.assignedTechId ?? investigatorTechId), 'assign'),
@@ -1406,14 +1411,8 @@ export default function JobDrilldownScreen() {
           <Text>{`Claimed by ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
         ) : null}
         {region === 'evisit' && (
-          <JobInvestigationScreen jobId={currentJob.id} embedded />
+          <JobInvestigationScreen jobId={currentJob.id} job={currentJob} embedded />
         )}
-        {isAdmin && region === 'evisit' ? (
-          <Button
-            label={currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem'}
-            onPress={() => void handleToggleNeedsPrem()}
-          />
-        ) : null}
         {region === 'estimate' && role === 'tech' && (
           <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} />
         )}

@@ -3,8 +3,9 @@
  * form (P1 §2a).
  *
  * A minimal guided form over `job_investigations`' four note fields plus the
- * state assessment, with a "Submit" action that stamps
- * `submitted_at`. Reached from the tech's job-detail view once the tech
+ * state assessment, per-room work cards, measurements, tech instructions, a
+ * materials-arrived answer and assessment photos, with a "Submit" action that
+ * stamps `submitted_at`. Reached from the tech's job-detail view once the tech
  * holds an `investigator` assignment on the job. Mirrors
  * `FieldJobDetail.tsx`'s component/styling conventions exactly (same
  * header/layout pattern, same loading/error state idiom, same navigation
@@ -13,11 +14,11 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Image, Pressable, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
 import { ScreenTitle, Button, TextField, colors, typography, Text } from '@jobcore/ui';
-import type { JobInvestigation, JobInvestigationInput } from '../data/ports';
+import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -27,7 +28,11 @@ export interface JobInvestigationScreenProps {
   onBack?: () => void;
   /** Inlined inside a host screen (e.g. Job Detail) that already owns navigation/scroll: suppresses the Back row and the duplicate screen title. */
   embedded?: boolean;
+  /** Parent-supplied job (e.g. admin view); skips the tech-scoped lookup. */
+  job?: Job;
 }
+
+type RoomWork = { room: string; work: string; measurements?: string };
 
 function formatDateTime(value: string | null): string {
   if (!value) return 'Not set';
@@ -38,11 +43,12 @@ function formatDateTime(value: string | null): string {
 
 /**
  * Tech-facing on-site investigation form. Shows job header, the four guided
- * note fields plus a state assessment, and a single "Submit"
+ * note fields plus a state assessment, room work cards, measurements,
+ * instructions, materials answer, assessment photos, and a single "Submit"
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -54,6 +60,13 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
   const [logisticsNotes, setLogisticsNotes] = React.useState('');
   const [parkingNotes, setParkingNotes] = React.useState('');
   const [stateAssessment, setStateAssessment] = React.useState('');
+  const [roomWork, setRoomWork] = React.useState<RoomWork[]>([]);
+  const [roomDraft, setRoomDraft] = React.useState('');
+  const [workDraft, setWorkDraft] = React.useState('');
+  const [measurementsDraft, setMeasurementsDraft] = React.useState('');
+  const [techInstructions, setTechInstructions] = React.useState('');
+  const [materialsArrived, setMaterialsArrived] = React.useState(false);
+  const [photos, setPhotos] = React.useState<JobPlanningPhoto[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 
@@ -63,9 +76,10 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
     setError(null);
     try {
       const ports = getModulePorts();
-      const [loadedJob, loadedInvestigation] = await Promise.all([
-        ports.jobs.getById(jobId, session.userId),
+      const [loadedJob, loadedInvestigation, loadedPhotos] = await Promise.all([
+        jobProp ? Promise.resolve(jobProp) : ports.jobs.getById(jobId, session.userId),
         ports.investigations.getForJob(jobId),
+        ports.planningPhotos.list(jobId),
       ]);
       setJob(loadedJob);
       setInvestigation(loadedInvestigation);
@@ -73,12 +87,16 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
       setLogisticsNotes(loadedInvestigation?.logisticsNotes ?? '');
       setParkingNotes(loadedInvestigation?.parkingNotes ?? '');
       setStateAssessment(loadedInvestigation?.stateAssessment ?? '');
+      setRoomWork(loadedInvestigation?.roomWork ?? []);
+      setTechInstructions(loadedInvestigation?.techInstructions ?? '');
+      setMaterialsArrived(loadedInvestigation?.materialsArrived === true);
+      setPhotos(loadedPhotos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load investigation.');
     } finally {
       setLoading(false);
     }
-  }, [jobId, session]);
+  }, [jobId, session, jobProp?.id]);
 
   React.useEffect(() => {
     void load();
@@ -94,6 +112,11 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
           logisticsNotes,
           parkingNotes,
           stateAssessment,
+          roomWork,
+          // Top-level string kept for compatibility: derived from the per-room measurements.
+          measurements: roomWork.map((r) => `${r.room}: ${r.measurements ?? ''}`).join('; '),
+          techInstructions,
+          materialsArrived,
           ...patch,
         });
         setInvestigation(updated);
@@ -103,7 +126,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
         setSaving(false);
       }
     },
-    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment],
+    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, roomWork, techInstructions, materialsArrived],
   );
 
   const handleSaveDraft = React.useCallback(() => {
@@ -111,13 +134,75 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
   }, [handleSave]);
 
   const handleSubmit = React.useCallback(() => {
-    if (![ingressNotes, logisticsNotes, parkingNotes, stateAssessment].every((v) => v.trim().length > 0)) {
-      setSubmitError('Please complete all fields marked *.');
+    const missing: string[] = [];
+    if (!ingressNotes.trim()) missing.push('Ingress notes');
+    if (!logisticsNotes.trim()) missing.push('Logistics notes');
+    if (!parkingNotes.trim()) missing.push('Parking notes');
+    if (!stateAssessment.trim()) missing.push('State assessment');
+    if (!techInstructions.trim()) missing.push('Instructions for tech');
+    if (roomWork.length === 0) missing.push('at least one room');
+    else if (
+      roomWork.some(
+        (r) => !r.room.trim() || !r.work.trim() || !(r.measurements ?? '').trim(),
+      )
+    ) {
+      missing.push('room name, work and measurements for every room');
+    }
+    if (photos.length === 0) missing.push('at least one photo');
+    if (missing.length > 0) {
+      setSubmitError(`Please complete: ${missing.join(', ')}.`);
       return;
     }
     setSubmitError(null);
     void handleSave({ submittedAt: new Date().toISOString() });
-  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment]);
+  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, roomWork, photos]);
+
+  // Add a room card; a different room name makes a separate card (same name is a separate card too — no merging).
+  const handleAddRoom = React.useCallback(() => {
+    const room = roomDraft.trim();
+    const work = workDraft.trim();
+    const roomMeasurements = measurementsDraft.trim();
+    if (!room || !work || !roomMeasurements) return;
+    setRoomWork((prev) => [...prev, { room, work, measurements: roomMeasurements }]);
+    setRoomDraft('');
+    setWorkDraft('');
+    setMeasurementsDraft('');
+  }, [roomDraft, workDraft, measurementsDraft]);
+
+  // Edit moves the card back into the entry fields and removes it from the list.
+  const handleEditRoom = React.useCallback(
+    (index: number) => {
+      const card = roomWork[index];
+      if (!card) return;
+      setRoomDraft(card.room);
+      setWorkDraft(card.work);
+      setMeasurementsDraft(card.measurements ?? '');
+      setRoomWork((prev) => prev.filter((_, i) => i !== index));
+    },
+    [roomWork],
+  );
+
+  const handleRemoveRoom = React.useCallback((index: number) => {
+    setRoomWork((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleAddPhoto = React.useCallback(async () => {
+    try {
+      const added = await getModulePorts().planningPhotos.add(jobId);
+      if (added) setPhotos((prev) => [...prev, added]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add photo.');
+    }
+  }, [jobId]);
+
+  const handleRemovePhoto = React.useCallback(async (photoId: string) => {
+    try {
+      await getModulePorts().planningPhotos.remove(photoId);
+      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete photo.');
+    }
+  }, []);
 
   if (!session) {
     return (
@@ -160,24 +245,79 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
         {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
       </Text>
 
+      <View style={styles.cardActions}>
+        <View style={styles.actionCell}>
+          <Button label="Add photo" onPress={() => void handleAddPhoto()} variant="primary" size="sm" />
+        </View>
+        <View style={styles.actionCell}>
+          <Button label="Save Draft" onPress={handleSaveDraft} variant="primary" size="sm" disabled={saving} />
+        </View>
+        <View style={styles.actionCell}>
+          <Button
+            label="Submit"
+            onPress={handleSubmit}
+            variant="primary"
+            size="sm"
+            disabled={saving || Boolean(investigation?.submittedAt)}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setMaterialsArrived((prev) => !prev)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: materialsArrived }}
+        >
+          <Text style={styles.checkboxBox}>{materialsArrived ? '☑' : '☐'}</Text>
+          <Text style={styles.value}>Materials arrived *</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Room work *</Text>
+        {roomWork.map((card, index) => (
+          <View key={`${card.room}-${index}`} style={styles.card}>
+            <View style={styles.cardActions}>
+              <Button label="Edit" onPress={() => handleEditRoom(index)} variant="primary" size="sm" />
+              <Pressable style={styles.removeButton} onPress={() => handleRemoveRoom(index)} accessibilityRole="button">
+                <Text style={styles.removeButtonText}>Remove</Text>
+              </Pressable>
+            </View>
+            <Text style={styles.sectionTitle}>{card.room}</Text>
+            <Text style={styles.value}>{card.work}</Text>
+            <Text style={styles.value}>Measurements: {card.measurements ?? ''}</Text>
+          </View>
+        ))}
+        <TextField label="Room name *" value={roomDraft} onChangeText={setRoomDraft} />
+        <TextField label="Work *" value={workDraft} onChangeText={setWorkDraft} />
+        <TextField label="Measurements *" value={measurementsDraft} onChangeText={setMeasurementsDraft} />
+        <Button label="Add room" onPress={handleAddRoom} variant="primary" size="sm" />
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Investigation notes</Text>
         <TextField label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
         <TextField label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
         <TextField label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
         <TextField label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
-        {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
       </View>
 
       <View style={styles.section}>
-        <Button label="Save Draft" onPress={handleSaveDraft} variant="primary" size="sm" disabled={saving} />
-        <Button
-          label="Submit"
-          onPress={handleSubmit}
-          variant="primary"
-          size="sm"
-          disabled={saving || Boolean(investigation?.submittedAt)}
-        />
+        <TextField label="Instructions for tech *" value={techInstructions} onChangeText={setTechInstructions} />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Assessment photos *</Text>
+        <Text style={styles.label}>Before photos are recommended.</Text>
+        {photos.map((photo) => (
+          <View key={photo.id} style={styles.card}>
+            <Button label="Delete" onPress={() => void handleRemovePhoto(photo.id)} variant="primary" size="sm" />
+            {photo.url ? <Image source={{ uri: photo.url }} style={styles.thumb} /> : <Text style={styles.value}>Photo unavailable</Text>}
+          </View>
+        ))}
+        {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
       </View>
     </View>
   );
@@ -207,6 +347,47 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
     marginBottom: 8,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  actionCell: {
+    flex: 1,
+  },
+  removeButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    justifyContent: 'center',
+  },
+  removeButtonText: {
+    color: '#ffffff',
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  checkboxBox: {
+    fontSize: typography.size.h4,
+  },
+  card: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+    borderRadius: 6,
+  },
+  thumb: {
+    width: 96,
+    height: 96,
+    marginBottom: 6,
+    borderRadius: 4,
   },
   label: {
     fontSize: typography.size.small,

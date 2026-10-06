@@ -2646,6 +2646,10 @@ export interface JobInvestigation {
   logisticsNotes: string | null;
   parkingNotes: string | null;
   stateAssessment: string | null;
+  roomWork: { room: string; work: string }[];
+  measurements: string | null;
+  techInstructions: string | null;
+  materialsArrived: boolean | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2657,6 +2661,10 @@ export interface JobInvestigationInput {
   logisticsNotes?: string | null;
   parkingNotes?: string | null;
   stateAssessment?: string | null;
+  roomWork?: { room: string; work: string }[];
+  measurements?: string | null;
+  techInstructions?: string | null;
+  materialsArrived?: boolean | null;
   submittedAt?: string | null;
 }
 
@@ -2674,6 +2682,10 @@ function toJobInvestigation(row: {
   logistics_notes: string | null;
   parking_notes: string | null;
   state_assessment: string | null;
+  room_work: { room: string; work: string }[] | null;
+  measurements: string | null;
+  tech_instructions: string | null;
+  materials_arrived: boolean | null;
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -2687,6 +2699,10 @@ function toJobInvestigation(row: {
     logisticsNotes: row.logistics_notes,
     parkingNotes: row.parking_notes,
     stateAssessment: row.state_assessment,
+    roomWork: row.room_work ?? [],
+    measurements: row.measurements ?? null,
+    techInstructions: row.tech_instructions ?? null,
+    materialsArrived: row.materials_arrived ?? null,
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -2723,6 +2739,10 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
             logistics_notes: patch.logisticsNotes ?? null,
             parking_notes: patch.parkingNotes ?? null,
             state_assessment: patch.stateAssessment ?? null,
+            room_work: patch.roomWork ?? [],
+            measurements: patch.measurements ?? null,
+            tech_instructions: patch.techInstructions ?? null,
+            materials_arrived: patch.materialsArrived ?? null,
             submitted_at: patch.submittedAt ?? null,
             updated_at: occurredAt,
           },

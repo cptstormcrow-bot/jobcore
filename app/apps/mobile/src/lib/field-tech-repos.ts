@@ -60,6 +60,8 @@ import type {
   TimeEntryRow,
   JobInvestigationRepository,
   JobInvestigationInput,
+  JobPlanningPhoto,
+  JobPlanningPhotoRepo,
   PremQueueRepository,
   PremQueueItem,
 } from '../../../../modules/field-tech/src/data/ports';
@@ -930,6 +932,10 @@ export interface JobInvestigation {
   logisticsNotes: string | null;
   parkingNotes: string | null;
   stateAssessment: string | null;
+  roomWork: Array<{ room: string; work: string }>;
+  measurements: string | null;
+  techInstructions: string | null;
+  materialsArrived: boolean | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -944,6 +950,10 @@ function toJobInvestigation(row: {
   logistics_notes: string | null;
   parking_notes: string | null;
   state_assessment: string | null;
+  room_work: Array<{ room: string; work: string }> | null;
+  measurements: string | null;
+  tech_instructions: string | null;
+  materials_arrived: boolean | null;
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -957,6 +967,10 @@ function toJobInvestigation(row: {
     logisticsNotes: row.logistics_notes,
     parkingNotes: row.parking_notes,
     stateAssessment: row.state_assessment,
+    roomWork: row.room_work ?? [],
+    measurements: row.measurements,
+    techInstructions: row.tech_instructions,
+    materialsArrived: row.materials_arrived,
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -999,6 +1013,10 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
             logistics_notes: patch.logisticsNotes ?? null,
             parking_notes: patch.parkingNotes ?? null,
             state_assessment: patch.stateAssessment ?? null,
+            room_work: patch.roomWork ?? [],
+            measurements: patch.measurements ?? null,
+            tech_instructions: patch.techInstructions ?? null,
+            materials_arrived: patch.materialsArrived ?? null,
             submitted_at: patch.submittedAt ?? null,
             updated_at: occurredAt,
           },
@@ -1011,6 +1029,119 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
         throw new Error(`upsertForJob failed: ${error.message}`);
       }
       return toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]);
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * JobPlanningPhotoRepo
+ *
+ * Prem-checklist planning photos. No image-manipulator dependency is
+ * available, so size/quality are bounded via ImagePicker options.
+ * ------------------------------------------------------------------ */
+
+const PLANNING_PHOTO_SIGNED_URL_TTL_SECONDS = 3600;
+
+function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
+  type PhotoRow = {
+    id: string;
+    job_id: string;
+    storage_path: string;
+    caption: string | null;
+    created_at: string;
+  };
+
+  async function toPhoto(row: PhotoRow): Promise<JobPlanningPhoto> {
+    const { data } = await supabase.storage
+      .from(JOB_PHOTOS_BUCKET)
+      .createSignedUrl(row.storage_path, PLANNING_PHOTO_SIGNED_URL_TTL_SECONDS);
+    return {
+      id: row.id,
+      jobId: row.job_id,
+      storagePath: row.storage_path,
+      caption: row.caption,
+      createdAt: row.created_at,
+      url: data?.signedUrl ?? null,
+    };
+  }
+
+  return {
+    async list(jobId: string): Promise<JobPlanningPhoto[]> {
+      const { data, error } = await supabase
+        .from('job_planning_photos')
+        .select('id, job_id, storage_path, caption, created_at')
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
+      if (error) {
+        throw new Error(`planningPhotos.list failed: ${error.message}`);
+      }
+      return Promise.all(((data ?? []) as PhotoRow[]).map(toPhoto));
+    },
+
+    async add(jobId: string): Promise<JobPlanningPhoto | null> {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        return null;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.5,
+        exif: false,
+      });
+      if (result.canceled) {
+        return null;
+      }
+      const asset = result.assets[0];
+      if (!asset) {
+        return null;
+      }
+
+      const { organizationId, userId } = requireModuleSession();
+      const path = `planning/${jobId}/${Date.now()}.jpg`;
+      const blob = await (await fetch(asset.uri)).blob();
+      const { error: uploadError } = await supabase.storage
+        .from(JOB_PHOTOS_BUCKET)
+        .upload(path, blob, { contentType: 'image/jpeg' });
+      if (uploadError) {
+        logSyncFailure('field-tech-repos.addPlanningPhoto', uploadError.message, { jobId, path });
+        throw new Error(`planningPhotos.add upload failed: ${uploadError.message}`);
+      }
+
+      const { data, error } = await supabase
+        .from('job_planning_photos')
+        .insert({
+          organization_id: organizationId,
+          job_id: jobId,
+          storage_path: path,
+          created_by: userId,
+        })
+        .select('id, job_id, storage_path, caption, created_at')
+        .single();
+      if (error) {
+        await supabase.storage.from(JOB_PHOTOS_BUCKET).remove([path]);
+        logSyncFailure('field-tech-repos.addPlanningPhoto', error.message, { jobId, path });
+        throw new Error(`planningPhotos.add insert failed: ${error.message}`);
+      }
+      return toPhoto(data as PhotoRow);
+    },
+
+    async remove(photoId: string): Promise<void> {
+      const { data, error: readError } = await supabase
+        .from('job_planning_photos')
+        .select('storage_path')
+        .eq('id', photoId)
+        .maybeSingle();
+      if (readError) {
+        throw new Error(`planningPhotos.remove failed: ${readError.message}`);
+      }
+      const { error } = await supabase.from('job_planning_photos').delete().eq('id', photoId);
+      if (error) {
+        throw new Error(`planningPhotos.remove failed: ${error.message}`);
+      }
+      const storagePath = (data as { storage_path: string } | null)?.storage_path;
+      if (storagePath) {
+        await supabase.storage.from(JOB_PHOTOS_BUCKET).remove([storagePath]);
+      }
     },
   };
 }
@@ -1175,6 +1306,7 @@ export function buildFieldTechPorts(): ModulePorts {
     camera: createCameraRepository(),
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
+    planningPhotos: createJobPlanningPhotoRepository(),
     timeEntries: createTimeEntryRepository(),
     premQueue: createPremQueueRepository(),
     localPrefs: { getBool: getBoolPref, setBool: setBoolPref },

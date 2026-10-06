@@ -1319,6 +1319,10 @@ export interface JobInvestigation {
   logisticsNotes: string | null;
   parkingNotes: string | null;
   stateAssessment: string | null;
+  roomWork: { room: string; work: string }[];
+  measurements: string | null;
+  techInstructions: string | null;
+  materialsArrived: boolean | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
