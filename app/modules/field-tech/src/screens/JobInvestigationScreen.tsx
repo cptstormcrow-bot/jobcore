@@ -55,6 +55,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
   const [parkingNotes, setParkingNotes] = React.useState('');
   const [stateAssessment, setStateAssessment] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     if (!session) return;
@@ -110,8 +111,13 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
   }, [handleSave]);
 
   const handleSubmit = React.useCallback(() => {
+    if (![ingressNotes, logisticsNotes, parkingNotes, stateAssessment].every((v) => v.trim().length > 0)) {
+      setSubmitError('Please complete all fields marked *.');
+      return;
+    }
+    setSubmitError(null);
     void handleSave({ submittedAt: new Date().toISOString() });
-  }, [handleSave]);
+  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment]);
 
   if (!session) {
     return (
@@ -156,10 +162,11 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false }: JobI
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Investigation notes</Text>
-        <TextField label="Ingress notes" value={ingressNotes} onChangeText={setIngressNotes} />
-        <TextField label="Logistics notes" value={logisticsNotes} onChangeText={setLogisticsNotes} />
-        <TextField label="Parking notes" value={parkingNotes} onChangeText={setParkingNotes} />
-        <TextField label="State assessment" value={stateAssessment} onChangeText={setStateAssessment} />
+        <TextField label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
+        <TextField label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
+        <TextField label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
+        <TextField label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
+        {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
       </View>
 
       <View style={styles.section}>

@@ -11,7 +11,7 @@ export type JobProgressBarProps = {
   stages: ReadonlyArray<{ key: string; label: string }>;
   states: ReadonlyArray<StageResult>;
   nextStep: string;
-  onStagePress: (key: string) => void;
+  onStagePress?: (key: string) => void;
   disabledKeys?: string[];
   testID?: string;
 };
@@ -42,22 +42,35 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
         const i = from + k;
         const state = stateAt(i);
         const disabled = !!disabledKeys?.includes(stage.key);
-        return (
-          <Pressable
-            key={stage.key}
-            onPress={() => onStagePress(stage.key)}
-            disabled={disabled}
-            accessibilityRole="button"
-            accessibilityLabel={`${stage.label}, ${STATE_WORD[state]}`}
-            accessibilityState={{ disabled }}
-            style={[styles.cell, disabled && styles.disabled]}
-          >
+        const tappable = !!onStagePress && (state === 'green' || state === 'yellow');
+        const content = (
+          <>
             <View style={styles.dotLine}>
               <View style={[styles.half, i > 0 && { backgroundColor: lineColor(i) }]} />
               <View style={[styles.dot, { backgroundColor: STATE_COLOR[state] }]} />
               <View style={[styles.half, i < stages.length - 1 && { backgroundColor: lineColor(i + 1) }]} />
             </View>
             <Text style={styles.label}>{stage.label}</Text>
+          </>
+        );
+        if (!tappable) {
+          return (
+            <View key={stage.key} style={[styles.cell, disabled && styles.disabled]}>
+              {content}
+            </View>
+          );
+        }
+        return (
+          <Pressable
+            key={stage.key}
+            onPress={() => onStagePress?.(stage.key)}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={`${stage.label}, ${STATE_WORD[state]}`}
+            accessibilityState={{ disabled }}
+            style={[styles.cell, disabled && styles.disabled]}
+          >
+            {content}
           </Pressable>
         );
       })}

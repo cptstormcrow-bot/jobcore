@@ -16,7 +16,7 @@ import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
 import { ScreenTitle, Button, TextField, colors, typography, Text } from '@jobcore/ui';
-import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind } from '../data/ports';
+import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -30,6 +30,8 @@ export interface JobEstimateEditorProps {
    * host already provides that navigation/context.
    */
   embedded?: boolean;
+  /** Submitted prem form answers, shown read-only for reference while estimating. */
+  investigation?: JobInvestigation | null;
 }
 
 function formatDateTime(value: string | null): string {
@@ -45,7 +47,7 @@ function formatDateTime(value: string | null): string {
  * (read-only derived display), a single "Submit" status action, and a
  * Share Link action.
  */
-export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstimateEditorProps): React.ReactElement {
+export function JobEstimateEditor({ jobId, onBack, embedded = false, investigation }: JobEstimateEditorProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -60,6 +62,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
   const [unitCost, setUnitCost] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const [shareError, setShareError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     if (!session) return;
@@ -113,6 +116,16 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
   }, [jobId, kind, description, quantity, unitCost]);
 
   const handleSubmit = React.useCallback(async () => {
+    const complete =
+      lineItems.length > 0 &&
+      Boolean(estimate?.scheduledStart) &&
+      Boolean(estimate?.scheduledEnd) &&
+      (estimate?.totalCost ?? 0) > 0;
+    if (!complete) {
+      setSubmitError('Please complete all fields marked *.');
+      return;
+    }
+    setSubmitError(null);
     setSaving(true);
     try {
       const ports = getModulePorts();
@@ -123,7 +136,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
     } finally {
       setSaving(false);
     }
-  }, [jobId]);
+  }, [jobId, lineItems, estimate]);
 
   const handleShare = React.useCallback(async () => {
     setShareError(null);
@@ -181,8 +194,25 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
       {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
       <Text style={styles.status}>Estimate status: {estimate?.status ?? 'draft'}</Text>
 
+      {investigation ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Prem form (for reference when estimating)</Text>
+          <Text style={styles.label}>Ingress notes</Text>
+          <Text style={styles.value}>{investigation.ingressNotes ?? ''}</Text>
+          <Text style={styles.label}>Logistics notes</Text>
+          <Text style={styles.value}>{investigation.logisticsNotes ?? ''}</Text>
+          <Text style={styles.label}>Parking notes</Text>
+          <Text style={styles.value}>{investigation.parkingNotes ?? ''}</Text>
+          <Text style={styles.label}>State assessment</Text>
+          <Text style={styles.value}>{investigation.stateAssessment ?? ''}</Text>
+          {investigation.submittedAt ? (
+            <Text style={styles.label}>Submitted {formatDateTime(investigation.submittedAt)}</Text>
+          ) : null}
+        </View>
+      ) : null}
+
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Materials planning</Text>
+        <Text style={styles.sectionTitle}>Materials planning *</Text>
         {lineItems.length === 0 ? (
           <Text style={styles.value}>No line items yet.</Text>
         ) : (
@@ -205,7 +235,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Completion schedule</Text>
+        <Text style={styles.sectionTitle}>Completion schedule *</Text>
         <Text style={styles.label}>Scheduled start</Text>
         <Text style={styles.value}>{formatDateTime(estimate?.scheduledStart ?? null)}</Text>
         <Text style={styles.label}>Scheduled end</Text>
@@ -213,7 +243,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Payment outlay</Text>
+        <Text style={styles.sectionTitle}>Payment outlay *</Text>
         <Text style={styles.value}>Materials: ${(estimate?.materialsCost ?? 0).toFixed(2)}</Text>
         <Text style={styles.value}>Labor: ${(estimate?.laborCost ?? 0).toFixed(2)}</Text>
         <Text style={styles.value}>Other: ${(estimate?.otherCost ?? 0).toFixed(2)}</Text>
@@ -223,6 +253,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false }: JobEstima
       <View style={styles.section}>
         <Button label="Submit" onPress={handleSubmit} variant="primary" size="sm" disabled={saving} />
         <Button label="Share Link" onPress={handleShare} variant="primary" size="sm" />
+        {submitError ? <Text style={styles.error}>{submitError}</Text> : null}
         {shareError ? <Text style={styles.value}>{shareError}</Text> : null}
       </View>
     </View>

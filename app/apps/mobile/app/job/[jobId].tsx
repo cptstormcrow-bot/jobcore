@@ -996,7 +996,9 @@ export default function JobDrilldownScreen() {
         }
         selectRegion('evisit');
         break;
-      case 'completePrem': selectRegion('evisit'); break;
+      case 'completePrem':
+        if (investigation?.submittedAt) selectRegion('estimate');
+        break;
       case 'estimate':
       case 'approval': selectRegion('estimate'); break;
       case 'schedule': selectRegion('schedule'); break;
@@ -1400,6 +1402,9 @@ export default function JobDrilldownScreen() {
             standardMinutes={standardMinutes}
           />
         )}
+        {isAdmin && region === 'evisit' && investigatorTechId ? (
+          <Text>{`Claimed by ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+        ) : null}
         {region === 'evisit' && (
           <JobInvestigationScreen jobId={currentJob.id} embedded />
         )}
@@ -1410,7 +1415,7 @@ export default function JobDrilldownScreen() {
           />
         ) : null}
         {region === 'estimate' && role === 'tech' && (
-          <JobEstimateEditor jobId={currentJob.id} embedded />
+          <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} />
         )}
         {region === 'estimate' && role !== 'tech' && estimate?.status === 'submitted' && (
           <Button
