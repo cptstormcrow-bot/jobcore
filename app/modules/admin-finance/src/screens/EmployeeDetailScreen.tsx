@@ -5,7 +5,8 @@
  * `PriceSheetEditorScreen.tsx`'s prop-driven data pattern but WITHOUT a load
  * state machine, since there is nothing to load here.
  *
- * Contents, top to bottom: the employee name header, the Back/Edit/Deactivate
+ * Contents, top to bottom: the employee name header, a tap-to-copy phone line
+ * under the name (copies the number to the clipboard), the Back/Edit/Deactivate
  * action buttons, a detail card (one label/value row per field), the Skills
  * card (wrapped chips), and the Service Areas card.
  *
@@ -19,8 +20,9 @@
  * per the plan.
  */
 
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
@@ -72,10 +74,38 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
     return () => { cancelled = true; };
   }, [employee.id]);
 
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+  const copyPhone = async () => {
+    if (!employee.phone) return;
+    try {
+      await Clipboard.setStringAsync(employee.phone);
+      setCopied(true);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore clipboard failure
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle title={employee.fullName} />
+        {employee.phone ? (
+          <Pressable
+            onPress={copyPhone}
+            accessibilityRole="button"
+            accessibilityLabel={`Copy phone number ${employee.phone}`}
+            style={styles.phoneRow}
+          >
+            <Text style={styles.phoneValue}>{employee.phone}</Text>
+            <Text style={styles.note}>{copied ? 'Copied' : 'Tap to copy'}</Text>
+          </Pressable>
+        ) : (
+          <Text style={styles.note}>No phone on file</Text>
+        )}
 
         <View style={styles.actionsRow}>
           <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.actionInline} />
@@ -189,6 +219,19 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     color: colors.text,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  phoneValue: {
+    color: colors.primary,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
