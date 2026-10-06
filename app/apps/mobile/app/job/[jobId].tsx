@@ -997,7 +997,7 @@ export default function JobDrilldownScreen() {
         selectRegion('evisit');
         break;
       case 'completePrem':
-        if (investigation?.submittedAt) selectRegion('estimate');
+        selectRegion(investigation?.submittedAt ? 'estimate' : 'evisit');
         break;
       case 'estimate':
       case 'approval': selectRegion('estimate'); break;
