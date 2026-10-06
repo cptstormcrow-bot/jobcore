@@ -39,6 +39,13 @@ export interface JobDetailsFormProps {
   serviceAreas: { id: string; name: string }[];
   hasInvestigation?: boolean;
   error?: string | null;
+  /** jobs.created_at (ISO). Read-only; the row is hidden when absent. */
+  createdAt?: string | null;
+}
+
+function formatCreated(iso: string): string {
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleString();
 }
 
 const inputStyleFor = (value: string | null | undefined) =>
@@ -51,6 +58,7 @@ export function JobDetailsForm({
   serviceAreas,
   hasInvestigation,
   error,
+  createdAt,
 }: JobDetailsFormProps) {
   return (
     <View>
@@ -112,6 +120,12 @@ export function JobDetailsForm({
           onChange={(selected) => onChange({ serviceAreaId: selected || null })}
         />
       </View>
+      {createdAt && formatCreated(createdAt) ? (
+        <View style={[styles.field, styles.fieldTight]}>
+          <Text style={styles.sectionLabel}>Date created</Text>
+          <Text style={styles.readOnlyText}>{formatCreated(createdAt)}</Text>
+        </View>
+      ) : null}
       <TextField
         label="Ingress code"
         value={value.ingressInstructions}
@@ -246,15 +260,15 @@ export function JobDetailsForm({
 }
 
 const styles = StyleSheet.create({
-  field: { marginHorizontal: spacing.md, marginTop: spacing.md },
+  field: { marginHorizontal: spacing.md, marginTop: spacing.sm },
   fieldTight: { marginTop: spacing.xs },
   fieldLabel: { color: colors.textMutedDark, fontSize: typography.size.detail },
   fieldInput: { fontSize: typography.size.h4, color: colors.text },
   fieldInputFilled: { fontWeight: '600' },
-  sectionLabel: { fontWeight: '600', marginBottom: spacing.sm, color: colors.textMutedDark, fontSize: typography.size.detail },
+  sectionLabel: { fontWeight: '600', marginBottom: spacing.xs, color: colors.textMutedDark, fontSize: typography.size.detail },
   roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
   roomCheckbox: { width: '50%', minHeight: 28, marginBottom: 0 },
   roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   readOnlyText: { color: colors.textMuted },
-  errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.sm },
+  errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.xs },
 });

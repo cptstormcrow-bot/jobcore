@@ -6,7 +6,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { AppChrome, Breadcrumb, Button, colors, EmptyState, LoadingState, spacing, telUrl, Text } from '@jobcore/ui';
+import { deriveStageStates, deriveNextStep, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
+import type { StageInputs, StageKey } from '@jobcore/core';
+import { AppChrome, Breadcrumb, Button, colors, EmptyState, JobProgressBar, LoadingState, spacing, telUrl, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
@@ -854,6 +856,8 @@ export default function JobDrilldownScreen() {
   // form before moving; a `saving` ref guards `beforeRemove` against a
   // double-fire. `handleSaveEdit` dedupes concurrent calls onto one in-flight
   // promise and is awaitable, resolving `true` on success.
+  const scrollRef = useRef<ScrollView>(null);
+  const stageList = STAGE_KEYS.map((key) => ({ key, label: STAGE_LABELS[key] }));
   const savingRef = useRef(false);
   const saveInFlightRef = useRef<Promise<boolean> | null>(null);
   const skipAutosaveRef = useRef(false);
@@ -909,9 +913,104 @@ export default function JobDrilldownScreen() {
     setSaved(false);
   };
 
+  const [stageExtras, setStageExtras] = useState<{
+    contactedAt: string | null;
+    stageMarks: Record<string, string>;
+    upstreamChangedAt: string | null;
+    createdAt: string | null;
+    photoCount: number;
+    lead: { id: string } | null;
+  } | null>(null);
+
+  // Re-derive inputs on load and on every refresh (job object changes on each setJob).
+  useEffect(() => {
+    if (!job?.id) return;
+    let cancelled = false;
+    void (async () => {
+      const [jobRes, photoRes, leadRes] = await Promise.all([
+        supabase.from('jobs').select('contacted_at, stage_marks, upstream_changed_at, created_at').eq('id', job.id).maybeSingle(),
+        supabase.from('job_photos').select('id', { count: 'exact', head: true }).eq('job_id', job.id),
+        supabase.from('leads').select('id').eq('converted_job_id', job.id).limit(1).maybeSingle(),
+      ]);
+      if (cancelled) return;
+      const row = (jobRes.data ?? null) as { contacted_at?: string | null; stage_marks?: Record<string, string> | null; upstream_changed_at?: string | null; created_at?: string | null } | null;
+      setStageExtras({
+        contactedAt: row?.contacted_at ?? null,
+        stageMarks: row?.stage_marks ?? {},
+        upstreamChangedAt: row?.upstream_changed_at ?? null,
+        createdAt: row?.created_at ?? job.createdAt ?? null,
+        photoCount: photoRes.count ?? 0,
+        lead: leadRes.data ? { id: (leadRes.data as { id: string }).id } : null,
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [job, estimate, investigation]);
+
+  const stageResults = useMemo(() => {
+    if (!job) return null;
+    const marks = stageExtras?.stageMarks ?? {};
+    const done = (complete: boolean, key: StageKey, fallback?: string | null) => ({
+      complete,
+      completedAt: complete ? marks[key] ?? fallback ?? null : null,
+    });
+    const closed = job.status === 'closed';
+    const inputs: StageInputs = {
+      lead: done(true, 'lead'),
+      job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
+      premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
+      completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
+      estimate: done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt),
+      approval: done(estimate?.status === 'approved', 'approval', estimate?.updatedAt),
+      schedule: done(!!job.scheduledStart, 'schedule'),
+      assign: done(!!(job.assignedTechId ?? investigatorTechId), 'assign'),
+      contact: done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt),
+      startWork: done(!!job.inProgressAt, 'startWork', job.inProgressAt),
+      photos: done((stageExtras?.photoCount ?? 0) >= 1, 'photos'),
+      completeWork: done(!!job.completedAt, 'completeWork', job.completedAt),
+      paid: done(job.status === 'paid' || closed, 'paid'),
+      closeout: done(closed, 'closeout'),
+      history: done(closed, 'history'),
+    };
+    const states = deriveStageStates(inputs);
+    return { states, nextStep: deriveNextStep(states) };
+  }, [job, estimate, investigation, investigatorTechId, stageExtras]);
+
   const handleContact = () => {
     if (!customer?.phone) return;
     void Linking.openURL(telUrl(customer.phone));
+    if (job) {
+      const stamp = new Date().toISOString();
+      void supabase.from('jobs').update({ contacted_at: stamp }).eq('id', job.id).then(() => {
+        setStageExtras((prev) => (prev ? { ...prev, contactedAt: stamp } : prev));
+      });
+    }
+  };
+
+  const handleStagePress = (key: string) => {
+    switch (key as StageKey) {
+      case 'job': selectRegion('details'); break;
+      case 'premAvailable':
+        if (isAdmin) {
+          const st = stageResults?.states.find((s) => s.key === 'premAvailable')?.state;
+          if (st !== 'green' && st !== 'yellow') { selectRegion('assign'); break; }
+        }
+        selectRegion('evisit');
+        break;
+      case 'completePrem': selectRegion('evisit'); break;
+      case 'estimate':
+      case 'approval': selectRegion('estimate'); break;
+      case 'schedule': selectRegion('schedule'); break;
+      case 'assign': selectRegion('assign'); break;
+      case 'contact': handleContact(); break;
+      case 'startWork':
+      case 'photos':
+      case 'completeWork': selectRegion('plan'); break;
+      case 'lead':
+        if (stageExtras?.lead) router.push(`/m/admin-finance?leadId=${stageExtras.lead.id}` as never);
+        break;
+      default: break;
+    }
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const handleArrive = async (): Promise<void> => {
@@ -1250,7 +1349,19 @@ export default function JobDrilldownScreen() {
         onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
         onPressSchedule={() => selectRegion('schedule')}
       />
-      <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+      <View>
+        {stageResults ? (
+          <JobProgressBar
+            stages={stageList}
+            states={stageResults.states}
+            nextStep={stageResults.nextStep ?? ''}
+            onStagePress={handleStagePress}
+            disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
+            testID="job-progress-bar"
+          />
+        ) : null}
+      </View>
+      <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
           job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
           statusError={actionError}
@@ -1259,6 +1370,10 @@ export default function JobDrilldownScreen() {
           techs={eligibleTechOptions}
           onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
           assigningTech={assigning !== null}
+          stageStates={stageResults?.states}
+          nextStep={stageResults?.nextStep}
+          onStagePress={handleStagePress}
+          disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
         />
         <WarningSheet
           visible={pendingReassignTechId !== null}
@@ -1344,6 +1459,7 @@ export default function JobDrilldownScreen() {
               serviceAreas={serviceAreas}
               hasInvestigation={investigation !== null}
               error={saveError}
+              createdAt={stageExtras?.createdAt ?? currentJob.createdAt}
             />
             <View style={styles.jobDetailPane}>
               <JobDetail job={currentJob} />
@@ -1378,13 +1494,13 @@ export default function JobDrilldownScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
   scrollBody: { flex: 1 },
-  scrollContent: { paddingBottom: spacing.xl },
-  jobDetailPane: { marginTop: spacing.md },
+  scrollContent: { paddingBottom: spacing.lg },
+  jobDetailPane: { marginTop: spacing.sm },
   footer: {
     flexDirection: 'row',
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.white,

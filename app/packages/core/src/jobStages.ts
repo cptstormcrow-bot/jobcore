@@ -33,6 +33,8 @@ export interface StageInput {
   completedAt?: string | null;
   changedAt?: string | null;
   missingRequired?: boolean;
+  /** True when the stage is under way but not complete (e.g. a prem is assigned, report not yet submitted); renders yellow. */
+  inProgress?: boolean;
 }
 
 export type StageInputs = Record<StageKey, StageInput>;
@@ -62,7 +64,8 @@ export function deriveStageStates(inputs: StageInputs): StageResult[] {
       }
     } else {
       // Red when a later stage is already complete (this one needs redoing).
-      state = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete) ? 'red' : 'gray';
+      if (cur.inProgress) state = 'yellow';
+      else state = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete) ? 'red' : 'gray';
     }
     return { key, state, doneAt: cur.complete ? cur.completedAt ?? null : null };
   });

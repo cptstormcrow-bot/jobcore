@@ -16,6 +16,7 @@ export * from './WeekView';
 export * from './MonthView';
 export * from './CalendarHeader';
 export * from './Checkbox';
+export * from './JobProgressBar';
 export * from './ScreenTitle';
 export * from './Breadcrumb';
 export * from './AppChrome';

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import type { Job } from '@jobcore/core';
+import type { Job, StageResult } from '@jobcore/core';
 import { AppChrome, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
@@ -143,6 +143,10 @@ export type JobSummaryRestProps = {
   onAssignTech?: (techId: string | null) => void;
   assigningTech?: boolean;
   statusError?: string | null;
+  stageStates?: ReadonlyArray<StageResult>;
+  nextStep?: string;
+  onStagePress?: (key: string) => void;
+  disabledKeys?: string[];
 };
 
 export function JobSummaryRest({
@@ -166,16 +170,6 @@ export function JobSummaryRest({
     <View style={styles.root}>
       <View style={styles.summary}>
         <Text style={styles.summaryLine}>Date Created: {new Date(job.createdAt).toLocaleDateString()}</Text>
-        <Text style={styles.summaryLine}>
-          Progress: {[
-            job.enRouteAt ? 'En route' : null,
-            job.inProgressAt ? 'Arrived' : null,
-            job.completedAt ? 'Completed' : null,
-            job.status === 'paid' ? 'Paid' : null,
-          ]
-            .filter(Boolean)
-            .join(' · ') || 'Not started'}
-        </Text>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
         {techs && onAssignTech ? (
           <View style={styles.techRow}>
@@ -247,12 +241,12 @@ const styles = StyleSheet.create({
     height: 3,
     backgroundColor: colors.text,
     width: '100%',
-    marginVertical: spacing.sm,
+    marginVertical: Math.round(spacing.sm * 0.67),
   },
   techRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   techSelect: { flex: 1 },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
-  paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
-  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 4 },
+  paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 3 },
+  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 3 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
 });

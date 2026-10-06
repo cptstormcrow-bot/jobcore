@@ -44,6 +44,14 @@ test('incomplete with a later stage complete is red', () => {
   assert.equal(stateOf(i, 'approval'), 'gray');
 });
 
+test('premAvailable inProgress: yellow, red without it, green when complete', () => {
+  const later = { estimate: { complete: true } };
+  assert.equal(stateOf(inputs({ ...later, premAvailable: { complete: false, inProgress: true } }), 'premAvailable'), 'yellow');
+  assert.equal(stateOf(inputs({ ...later, premAvailable: { complete: false, inProgress: false } }), 'premAvailable'), 'red');
+  assert.equal(stateOf(inputs({ ...later }), 'premAvailable'), 'red');
+  assert.equal(stateOf(inputs({ ...later, premAvailable: { complete: true, inProgress: true } }), 'premAvailable'), 'green');
+});
+
 test('leadingIndex', () => {
   assert.equal(leadingIndex(deriveStageStates(inputs())), -1);
   const i = inputs({ lead: { complete: true }, job: { complete: true } });
