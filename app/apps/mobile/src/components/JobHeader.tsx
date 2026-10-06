@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import type { Job } from '@jobcore/core';
 import { AppChrome, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
@@ -51,6 +52,23 @@ export function JobHeader({
     ? 'Unscheduled ▸'
     : 'Unscheduled';
 
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
+  const copyText = async (key: string, value: string) => {
+    try {
+      await Clipboard.setStringAsync(value);
+      setCopiedKey(key);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopiedKey(null), 1500);
+    } catch {
+      // ignore clipboard failure
+    }
+  };
+  const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
+  const addressText = job.address ?? '—';
+  const phoneText = customer?.phone ?? '—';
+
   return (
     <View style={styles.root}>
       <AppChrome
@@ -73,20 +91,42 @@ export function JobHeader({
       />
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
       <View style={styles.summary}>
-        <Text style={styles.customerName}>{customer?.name ?? 'Unknown Customer'}</Text>
-        <Text style={styles.summaryLine}>{job.address ?? '—'}</Text>
-        <Text style={styles.summaryLine}>{customer?.phone ? `Phone: ${customer.phone}` : 'Phone: —'}</Text>
-        <Text style={styles.summaryLine}>Job #{job.jobNumber ?? '—'}</Text>
-        {onPressSchedule ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Adjust schedule"
-            onPress={onPressSchedule}>
-            <Text style={[styles.summaryLineRight, styles.scheduleLink]}>{scheduledLabel}</Text>
-          </Pressable>
-        ) : (
-          <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
-        )}
+        <View style={styles.row}>
+          <Text style={[styles.customerName, styles.rowLeft]}>{customer?.name ?? 'Unknown Customer'}</Text>
+          {ingressCode ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Copy ingress code ${ingressCode}`}
+              onPress={() => { void copyText('ingress', ingressCode); }}>
+              <Text style={styles.summaryLineRight}>{copiedKey === 'ingress' ? 'Copied' : ingressCode}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <View style={styles.row}>
+          <Text style={[styles.summaryLine, styles.rowLeft]}>Job #{job.jobNumber ?? '—'}</Text>
+          {onPressSchedule ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Adjust schedule"
+              onPress={onPressSchedule}>
+              <Text style={[styles.summaryLineRight, styles.scheduleLink]}>{scheduledLabel}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
+          )}
+        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Copy address ${addressText}`}
+          onPress={() => { if (job.address) void copyText('address', job.address); }}>
+          <Text style={styles.summaryLine}>{copiedKey === 'address' ? 'Copied' : addressText}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Copy phone number ${phoneText}`}
+          onPress={() => { if (customer?.phone) void copyText('phone', customer.phone); }}>
+          <Text style={styles.summaryLine}>{copiedKey === 'phone' ? 'Copied' : `Phone: ${phoneText}`}</Text>
+        </Pressable>
       </View>
       <View style={styles.rule} />
     </View>
@@ -181,6 +221,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginTop: spacing.xs,
   },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
+  rowLeft: { flexShrink: 1 },
   customerName: {
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,

@@ -166,7 +166,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
         ) : null}
         {job.ingressInstructions ? (
           <>
-            <Text style={styles.label}>Ingress instructions</Text>
+            <Text style={styles.label}>Ingress code</Text>
             <Text style={styles.value}>{job.ingressInstructions}</Text>
           </>
         ) : null}

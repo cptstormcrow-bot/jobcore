@@ -5,8 +5,7 @@
 // business logic -- this component only renders `value` and reports
 // changes via `onChange`.
 import { StyleSheet, View } from 'react-native';
-import { copyToClipboard } from '../../../../modules/field-tech/src/lib/clipboard';
-import { Button, Checkbox, colors, Select, spacing, TextField, typography, Text } from '@jobcore/ui';
+import { Checkbox, colors, Select, spacing, TextField, typography, Text } from '@jobcore/ui';
 
 const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 const UNASSIGNED_SERVICE_AREA = '';
@@ -55,66 +54,33 @@ export function JobDetailsForm({
 }: JobDetailsFormProps) {
   return (
     <View>
-      <View style={styles.copyRow}>
-        <View style={styles.copyField}>
-          <TextField
-            label="Customer name"
-            value={value.customerName}
-            onChangeText={(text) => onChange({ customerName: text })}
-            placeholder="Customer name"
-            style={[styles.field, styles.fieldTight]}
-            labelStyle={styles.fieldLabel}
-            inputStyle={inputStyleFor(value.customerName)}
-          />
-        </View>
-        <Button
-          label="Copy"
-          size="sm"
-          variant="outline"
-          disabled={!value.customerName}
-          onPress={() => copyToClipboard(value.customerName)}
-        />
-      </View>
-      <View style={styles.copyRow}>
-        <View style={styles.copyField}>
-          <TextField
-            label="Address"
-            value={value.address}
-            onChangeText={(text) => onChange({ address: text })}
-            placeholder="Street, city, zip"
-            style={[styles.field, styles.fieldTight]}
-            labelStyle={styles.fieldLabel}
-            inputStyle={inputStyleFor(value.address)}
-          />
-        </View>
-        <Button
-          label="Copy"
-          size="sm"
-          variant="outline"
-          disabled={!value.address}
-          onPress={() => copyToClipboard(value.address)}
-        />
-      </View>
-      <View style={styles.copyRow}>
-        <View style={styles.copyField}>
-          <TextField
-            label="Customer phone"
-            value={value.customerPhone}
-            onChangeText={(text) => onChange({ customerPhone: text })}
-            placeholder="Customer phone"
-            style={[styles.field, styles.fieldTight]}
-            labelStyle={styles.fieldLabel}
-            inputStyle={inputStyleFor(value.customerPhone)}
-          />
-        </View>
-        <Button
-          label="Copy"
-          size="sm"
-          variant="outline"
-          disabled={!value.customerPhone}
-          onPress={() => copyToClipboard(value.customerPhone)}
-        />
-      </View>
+      <TextField
+        label="Customer name"
+        value={value.customerName}
+        onChangeText={(text) => onChange({ customerName: text })}
+        placeholder="Customer name"
+        style={[styles.field, styles.fieldTight]}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.customerName)}
+      />
+      <TextField
+        label="Address"
+        value={value.address}
+        onChangeText={(text) => onChange({ address: text })}
+        placeholder="Street, city, zip"
+        style={[styles.field, styles.fieldTight]}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.address)}
+      />
+      <TextField
+        label="Customer phone"
+        value={value.customerPhone}
+        onChangeText={(text) => onChange({ customerPhone: text })}
+        placeholder="Customer phone"
+        style={[styles.field, styles.fieldTight]}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.customerPhone)}
+      />
       <TextField
         label="Customer email"
         value={value.customerEmail}
@@ -146,27 +112,15 @@ export function JobDetailsForm({
           onChange={(selected) => onChange({ serviceAreaId: selected || null })}
         />
       </View>
-      <View style={styles.copyRow}>
-        <View style={styles.copyField}>
-          <TextField
-            label="Ingress instructions"
-            value={value.ingressInstructions}
-            onChangeText={(text) => onChange({ ingressInstructions: text })}
-            placeholder="Gate codes, meetup spot, lockbox…"
-            multiline
-            style={styles.field}
-            labelStyle={styles.fieldLabel}
-            inputStyle={inputStyleFor(value.ingressInstructions)}
-          />
-        </View>
-        <Button
-          label="Copy"
-          size="sm"
-          variant="outline"
-          disabled={!value.ingressInstructions}
-          onPress={() => copyToClipboard(value.ingressInstructions)}
-        />
-      </View>
+      <TextField
+        label="Ingress code"
+        value={value.ingressInstructions}
+        onChangeText={(text) => onChange({ ingressInstructions: text })}
+        placeholder="Gate/lockbox code"
+        style={styles.field}
+        labelStyle={styles.fieldLabel}
+        inputStyle={inputStyleFor(value.ingressInstructions)}
+      />
       <TextField
         label="Permit status"
         value={value.permitStatus}
@@ -303,6 +257,4 @@ const styles = StyleSheet.create({
   roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   readOnlyText: { color: colors.textMuted },
   errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.sm },
-  copyRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 4 },
-  copyField: { flex: 1 },
 });
