@@ -5,8 +5,8 @@
  * `PriceSheetEditorScreen.tsx`'s prop-driven data pattern but WITHOUT a load
  * state machine, since there is nothing to load here.
  *
- * Contents, top to bottom: the employee name header, a tap-to-copy phone line
- * under the name (copies the number to the clipboard), the Back/Edit/Deactivate
+ * Contents, top to bottom: the employee name header with a tap-to-copy phone
+ * (copies the number to the clipboard) sharing its line, right-aligned, the Back/Edit/Deactivate
  * action buttons, a detail card (one label/value row per field), the Skills
  * card (wrapped chips), and the Service Areas card.
  *
@@ -92,20 +92,24 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title={employee.fullName} />
-        {employee.phone ? (
-          <Pressable
-            onPress={copyPhone}
-            accessibilityRole="button"
-            accessibilityLabel={`Copy phone number ${employee.phone}`}
-            style={styles.phoneRow}
-          >
-            <Text style={styles.phoneValue}>{employee.phone}</Text>
-            <Text style={styles.note}>{copied ? 'Copied' : 'Tap to copy'}</Text>
-          </Pressable>
-        ) : (
-          <Text style={styles.note}>No phone on file</Text>
-        )}
+        <View style={styles.nameRow}>
+          <View style={styles.nameCol}>
+            <ScreenTitle title={employee.fullName} />
+          </View>
+          {employee.phone ? (
+            <Pressable
+              onPress={copyPhone}
+              accessibilityRole="button"
+              accessibilityLabel={`Copy phone number ${employee.phone}`}
+              style={styles.phoneRow}
+            >
+              <Text style={styles.phoneValue}>{employee.phone}</Text>
+              <Text style={styles.note}>{copied ? 'Copied' : 'Tap to copy'}</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.note}>No phone on file</Text>
+          )}
+        </View>
 
         <View style={styles.actionsRow}>
           <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.actionInline} />
@@ -223,6 +227,8 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
   },
+  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  nameCol: { flexShrink: 1 },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
