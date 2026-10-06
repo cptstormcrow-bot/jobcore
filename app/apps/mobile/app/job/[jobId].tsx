@@ -1361,6 +1361,7 @@ export default function JobDrilldownScreen() {
           />
         ) : null}
       </View>
+      <View style={styles.rule} />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
           job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
@@ -1493,6 +1494,7 @@ export default function JobDrilldownScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
+  rule: { height: 3, backgroundColor: colors.text, width: '100%', marginTop: Math.round(spacing.sm * 0.67) },
   scrollBody: { flex: 1 },
   scrollContent: { paddingBottom: spacing.lg },
   jobDetailPane: { marginTop: spacing.sm },

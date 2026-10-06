@@ -128,7 +128,6 @@ export function JobHeader({
           <Text style={styles.summaryLine}>{copiedKey === 'phone' ? 'Copied' : `Phone: ${phoneText}`}</Text>
         </Pressable>
       </View>
-      <View style={styles.rule} />
     </View>
   );
 }
@@ -236,12 +235,6 @@ const styles = StyleSheet.create({
   },
   scheduleLink: {
     color: colors.primary,
-  },
-  rule: {
-    height: 3,
-    backgroundColor: colors.text,
-    width: '100%',
-    marginVertical: Math.round(spacing.sm * 0.67),
   },
   techRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   techSelect: { flex: 1 },
