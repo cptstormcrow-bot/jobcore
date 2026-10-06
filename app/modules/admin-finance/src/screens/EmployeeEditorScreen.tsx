@@ -5,8 +5,8 @@
  * `useState` forms with no external form library).
  *
  * CREATE mode (`profile` prop absent): collects full name, phone, email
- * (required only to send the invitation — `profiles` has no email column;
- * email lives on the invitation), a role picker among the four `Role`
+ * (used for the invitation; an existing employee's
+ * login email is shown and changed in the Email card in EDIT mode), a role picker among the four `Role`
  * values, and an `is_test` toggle. Submits via
  * `InvitationRepository.createInvitation(organizationId, email, role, fullName?)`.
  *
@@ -116,7 +116,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
-  const [duplicateConflict, setDuplicateConflict] = useState<{ invitationId: string; email: string } | null>(null);
+  const [changeEmailInput, setChangeEmailInput] = useState(profile?.email ?? '');
+  const [emailActionState, setEmailActionState] = useState<ActionState>({ kind: 'idle' });
+  const [duplicateConflict,setDuplicateConflict] = useState<{ invitationId: string; email: string } | null>(null);
 
   const [serviceAreaList, setServiceAreaList] = useState<ServiceArea[]>([]);
   const [assignedServiceAreaIds, setAssignedServiceAreaIds] = useState<Set<string>>(new Set());
@@ -301,6 +303,29 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     }
   }
 
+  async function handleEmailChange(): Promise<void> {
+    if (!employeeRepository || !profile) return;
+    const next = changeEmailInput.trim().toLowerCase();
+    if (!next.includes('@') || !next.includes('.')) {
+      setEmailActionState({ kind: 'failed', message: 'Enter a valid email address.' });
+      return;
+    }
+    if (next === (profile.email ?? '').trim().toLowerCase()) {
+      setEmailActionState({ kind: 'failed', message: 'That is already the current email.' });
+      return;
+    }
+    setEmailActionState({ kind: 'working' });
+    try {
+      await employeeRepository.changeEmployeeEmail(profile.id, next);
+      setChangeEmailInput(next);
+      setEmailActionState({ kind: 'done', message: 'Email changed.' });
+      onSaved?.();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not change the email.';
+      setEmailActionState({ kind: 'failed', message });
+    }
+  }
+
   async function handleServiceAreaToggle(serviceAreaId: string, nextChecked: boolean): Promise<void> {
     if (!techServiceAreaRepository || !profile) return;
     setServiceAreaActionState((prev) => ({ ...prev, [serviceAreaId]: { kind: 'working' } }));
@@ -355,6 +380,32 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     <View style={styles.screen}>
       <ScreenTitle title={isEditMode ? 'Edit Employee' : 'Add Employee'} />
       <ScrollView contentContainerStyle={styles.content}>
+        {isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Email</Text>
+            <Text style={styles.note}>{`Current email: ${profile?.email ?? 'Not on file'}`}</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={changeEmailInput}
+              onChangeText={setChangeEmailInput}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Button
+              label={emailActionState.kind === 'working' ? 'Changing...' : 'Change email'}
+              onPress={() => {
+                void handleEmailChange();
+              }}
+              disabled={emailActionState.kind === 'working' || !employeeRepository}
+              style={styles.action}
+            />
+            {emailActionState.kind === 'failed' ? <ErrorState message={emailActionState.message} /> : null}
+            {emailActionState.kind === 'done' ? <Text style={styles.note}>{emailActionState.message}</Text> : null}
+          </Card>
+        ) : null}
+
         <Card style={styles.card}>
           <TextInput
             style={styles.input}

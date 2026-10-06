@@ -91,6 +91,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Role" value={employee.role} />
           <InfoRow label="Status" value={employee.active ? 'Active' : 'Inactive'} />
           {employee.isTest ? <InfoRow label="Test Employee" value="Yes" /> : null}
+          <InfoRow label="Email" value={employee.email ?? 'Not on file'} />
           <InfoRow label="Address" value={employee.address ?? 'Not on file'} />
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
           <InfoRow label="SSN" value={privFailed ? 'Unavailable' : maskSsn(priv?.ssnLast4 ?? null)} />

@@ -1,10 +1,61 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as SecureStore from 'expo-secure-store';
 import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { signIn } from '../src/lib/session';
+
+const RECENT_EMAILS_KEY = 'jobcore.recentEmails';
+const LEGACY_LAST_EMAIL_KEY = 'jobcore.lastEmail';
+const MAX_RECENT = 3;
+
+async function getRaw(key: string): Promise<string | null> {
+  try {
+    if (Platform.OS === 'web') return window.localStorage.getItem(key);
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    return null;
+  }
+}
+
+// Remembers the last 3 emails only (never the password). Failures are silent.
+async function readRecentEmails(): Promise<string[]> {
+  const raw = await getRaw(RECENT_EMAILS_KEY);
+  if (raw === null) {
+    // One-time migration from the legacy single-email key.
+    const legacy = await getRaw(LEGACY_LAST_EMAIL_KEY);
+    const seed = legacy ? legacy.trim() : '';
+    return seed ? [seed] : [];
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+      .slice(0, MAX_RECENT);
+  } catch {
+    return [];
+  }
+}
+
+async function writeRecentEmail(value: string): Promise<void> {
+  const email = value.trim();
+  if (!email) return;
+  try {
+    const existing = await readRecentEmails();
+    const next = [
+      email,
+      ...existing.filter((e) => e.toLowerCase() !== email.toLowerCase()),
+    ].slice(0, MAX_RECENT);
+    const json = JSON.stringify(next);
+    if (Platform.OS === 'web') window.localStorage.setItem(RECENT_EMAILS_KEY, json);
+    else await SecureStore.setItemAsync(RECENT_EMAILS_KEY, json);
+  } catch {
+    // best-effort convenience only
+  }
+}
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -14,6 +65,21 @@ export default function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [recentEmails, setRecentEmails] = useState<string[]>([]);
+
+  // Load recent emails once; pre-fill the most recent without clobbering anything already typed.
+  useEffect(() => {
+    let active = true;
+    void readRecentEmails().then((saved) => {
+      if (!active) return;
+      setRecentEmails(saved);
+      const first = saved[0];
+      if (first) setEmail((current) => (current.length === 0 ? first : current));
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const canSubmit = email.length > 0 && password.length > 0 && !busy;
   const formRef = useRef<HTMLFormElement>(null);
@@ -34,6 +100,8 @@ export default function SignInScreen() {
     if (message !== null) {
       setError(message);
       setBusy(false);
+    } else {
+      void writeRecentEmail(email);
     }
   }
 
@@ -44,15 +112,30 @@ export default function SignInScreen() {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
-        autoComplete="email"
+        autoComplete="username"
         keyboardType="email-address"
-        textContentType="emailAddress"
+        textContentType="username"
+        importantForAutofill="yes"
         placeholder="you@example.com"
         placeholderTextColor={colors.textMuted}
         style={styles.input}
         editable={!busy}
         nativeID="email"
       />
+      {recentEmails
+        .filter((e) => e !== email)
+        .slice(0, MAX_RECENT)
+        .map((e) => (
+          <Pressable
+            key={e}
+            style={styles.recentEmail}
+            accessibilityRole="button"
+            accessibilityLabel={`Use ${e}`}
+            onPress={() => setEmail(e)}
+          >
+            <Text style={styles.passwordToggleText}>{e}</Text>
+          </Pressable>
+        ))}
 
       <Text style={styles.label}>Password</Text>
       <View style={styles.passwordWrap}>
@@ -62,6 +145,7 @@ export default function SignInScreen() {
           autoCapitalize="none"
           autoComplete="current-password"
           textContentType="password"
+          importantForAutofill="yes"
           secureTextEntry={!showPassword}
           placeholder="••••••••"
           placeholderTextColor={colors.textMuted}
@@ -77,6 +161,14 @@ export default function SignInScreen() {
           <Text style={styles.passwordToggleText}>{showPassword ? 'Hide' : 'Show'}</Text>
         </Pressable>
       </View>
+      <Pressable
+        style={styles.forgotLink}
+        accessibilityRole="link"
+        accessibilityLabel="Forgot password? Reset your password"
+        onPress={() => router.push({ pathname: '/forgot-password', params: { email } })}
+      >
+        <Text style={styles.passwordToggleText}>Forgot password?</Text>
+      </Pressable>
 
       <Button
         label={busy ? 'Signing in…' : 'Sign in'}
@@ -154,6 +246,16 @@ const styles = StyleSheet.create({
   passwordToggle: {
     position: 'absolute',
     right: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.xs,
+  },
+  recentEmail: {
+    alignSelf: 'flex-start',
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
   },

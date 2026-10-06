@@ -52,6 +52,7 @@ export interface Profile {
   organizationId: string;
   fullName: string;
   phone: string | null;
+  email: string | null;
   role: Role;
   active: boolean;
   isTest: boolean;

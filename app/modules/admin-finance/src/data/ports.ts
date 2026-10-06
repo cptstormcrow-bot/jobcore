@@ -415,6 +415,8 @@ export interface EmployeeRepository {
       testJobsOnly?: boolean;
     }
   ): Promise<void>;
+  /** Admin-only, online-only: calls edge fn admin-update-email. Throws when offline or rejected. */
+  changeEmployeeEmail(id: string, email: string): Promise<void>;
   deactivateEmployee(profileId: string): Promise<void>;
   reactivateEmployee(profileId: string): Promise<void>;
   setEmployeeRole(profileId: string, role: Role): Promise<void>;

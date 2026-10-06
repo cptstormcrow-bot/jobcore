@@ -612,6 +612,7 @@ function toProfile(row: {
   organization_id: string;
   full_name: string;
   phone: string | null;
+  email?: string | null;
   role: Role;
   active: boolean;
   is_test: boolean;
@@ -630,6 +631,7 @@ function toProfile(row: {
     organizationId: row.organization_id,
     fullName: row.full_name,
     phone: row.phone,
+    email: row.email ?? null,
     role: row.role,
     active: row.active,
     isTest: row.is_test,
@@ -669,6 +671,30 @@ export function createEmployeeRepository(): EmployeeRepository {
         throw new Error(`getEmployee failed: ${error.message}`);
       }
       return data ? toProfile(data as Parameters<typeof toProfile>[0]) : null;
+    },
+
+    async changeEmployeeEmail(id: string, email: string): Promise<void> {
+      // Minimal-client injection shape (see sales-marketing meta.ts).
+      const client: {
+        functions: {
+          invoke(
+            fn: string,
+            opts: { body: Record<string, unknown> },
+          ): Promise<{ data: unknown; error: { message: string; context?: { status?: number } } | null }>;
+        };
+      } = supabase;
+      let result: Awaited<ReturnType<typeof client.functions.invoke>>;
+      try {
+        result = await client.functions.invoke('admin-update-email', { body: { userId: id, email } });
+      } catch (e) {
+        throw new Error(`Could not change email (are you offline?): ${e instanceof Error ? e.message : String(e)}`);
+      }
+      if (result.error) {
+        if (result.error.context?.status === 409) {
+          throw new Error('That email is already in use');
+        }
+        throw new Error(`Could not change email: ${result.error.message}`);
+      }
     },
 
     async updateEmployee(

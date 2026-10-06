@@ -51,6 +51,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     organizationId: 'org-1',
     fullName: 'Test Tech',
     phone: null,
+    email: null,
     role: 'tech',
     active: true,
     createdAt: '2026-01-01T00:00:00.000Z',

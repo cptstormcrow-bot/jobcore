@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
@@ -24,6 +25,7 @@ export interface ProfileRow {
   tool_status: string | null;
   paid_travel: boolean;
   paid_travel_policy_message: string | null;
+  email?: string | null;
 }
 
 export interface OrganizationRow {
@@ -64,6 +66,7 @@ export function toProfile(row: ProfileRow): Profile {
     toolStatus: row.tool_status && isToolStatus(row.tool_status) ? row.tool_status : null,
     paidTravel: row.paid_travel,
     paidTravelPolicyMessage: row.paid_travel_policy_message,
+    email: row.email ?? null,
   };
 }
 
@@ -125,7 +128,7 @@ async function resolveSession(session: Session | null): Promise<ResolveOutcome> 
 
   const profileResult = await supabase
     .from('profiles')
-    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status, paid_travel, paid_travel_policy_message')
+    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status, paid_travel, paid_travel_policy_message, email')
     .eq('id', session.user.id)
     .maybeSingle<ProfileRow>();
 
@@ -304,6 +307,26 @@ export async function signIn(email: string, password: string): Promise<string | 
     return error ? error.message : null;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.';
+    return message;
+  }
+}
+
+/**
+ * Send a password-reset email. Returns an error message on failure and `null`
+ * on success. Same withTimeout() guard as signIn() above.
+ */
+export async function resetPassword(email: string): Promise<string | null> {
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: Linking.createURL('/reset-password'),
+      }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not send the reset email. Please try again.';
     return message;
   }
 }

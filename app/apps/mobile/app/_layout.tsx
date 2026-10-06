@@ -46,12 +46,13 @@ function AuthGate() {
   const segments = useSegments();
   const pathname = usePathname();
   const onSignIn = segments[0] === 'sign-in' || segments[0] === 'sign-up';
+  const onRecovery = segments[0] === 'forgot-password' || segments[0] === 'reset-password';
   const rootNavigationState = useRootNavigationState();
   const navigationReady = !!rootNavigationState?.key;
   const router = useRouter();
   const [checkingAgain, setCheckingAgain] = useState(false);
   const salesBlocked =
-    state.status === 'authenticated' && state.profile.role === 'sales' && !isSalesAllowed(pathname);
+    state.status === 'authenticated' && state.profile.role === 'sales' && !onRecovery && !isSalesAllowed(pathname);
   // Role landing: one path for fresh login and relaunch. Same role/module source as before
   // (state.profile.role + getEnabledModules(state.organization, role)).
   const landingTarget =
@@ -137,7 +138,7 @@ function AuthGate() {
         />
       </View>
     );
-  } else if (state.status === 'unauthenticated' && !onSignIn) {
+  } else if (state.status === 'unauthenticated' && !onSignIn && !onRecovery) {
     overlay = <Redirect href="/sign-in" />;
   } else if (salesBlocked) {
     overlay = <Redirect href="/m/sales-marketing" />;
@@ -152,7 +153,7 @@ function AuthGate() {
   const isRedirect =
     overlay !== null &&
     navigationReady &&
-    ((state.status === 'unauthenticated' && !onSignIn) || salesBlocked);
+    ((state.status === 'unauthenticated' && !onSignIn && !onRecovery) || salesBlocked);
 
   return (
     <View style={styles.flex}>
@@ -161,6 +162,8 @@ function AuthGate() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="sign-up" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="reset-password" />
         <Stack.Screen name="m/[moduleId]" />
       </Stack>
       {overlay && !isRedirect ? (
