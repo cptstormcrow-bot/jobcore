@@ -228,13 +228,13 @@ function card(s) {
   const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
   // atomic units after the header block; g groups consecutive rows/items for wrapper rebuilds on continuation pages
   const units = [
-    { g: 'h', h: claimBox ? `<div class="head-row"><h3>Titles / tags / endpoints</h3>${claimBox}</div>` : '<h3>Titles / tags / endpoints</h3>' },
+    { g: 'h', h: claimBox ? `<div class="head-row"><h3>How to identify when editing</h3>${claimBox}</div>` : '<h3>How to identify when editing</h3>' },
+    ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
+      `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
+    { g: 'h', h: '<h3>Titles / tags / endpoints</h3>' },
     ...[kv('id / key', `<code>${esc(s.key)}</code>`), kv('kind', val(s.kind)), kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
       kv('testIDs', list(s.testIDs)), kv('accessibilityLabels', list(s.accessibilityLabels)), kv('buttonLabels', list(s.buttonLabels)), kv('pickers', list(s.pickers)),
       kv('menus', list(s.menus)), kv('components (top 8)', compsHtml), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
-    { g: 'h', h: '<h3>How to identify when editing</h3>' },
-    ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
-      `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
     { g: 'h', h: '<h3>Navigation targets</h3>' },
     ...navLis.map((h) => ({ g: 'li', h })),
   ];
@@ -278,7 +278,7 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
 .sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
-.head-row{display:block}.head-row>h3{margin-top:var(--sp-2)}.head-row+table{width:auto;min-width:0}
+.head-row{display:block}.head-row>h3{margin-top:var(--sp-2)}.info h3+table{width:auto;min-width:0}
 .claim-box{float:right;width:32%;margin:0 0 6px 12px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:9px;background:#fafafa}
 .comp-wrap{display:flex;flex-wrap:wrap;gap:3px;overflow-wrap:anywhere}.comp-wrap span{border:1px solid #ddd;border-radius:3px;padding:0 4px}
 .cont{display:none}.cont-head{border-bottom:1px solid var(--c-border);padding-bottom:4px;margin-bottom:6px;font-size:13px}
@@ -286,7 +286,7 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .toolbar,header.top{display:none!important}.toolbar{position:static}
 main{padding:0}.sums{display:none}.grid{display:block;margin:0}
-.screen-card{display:flex;box-shadow:none;box-sizing:border-box;min-height:188mm;padding:8px;gap:12px;border-radius:0}
+.screen-card{display:flex;box-shadow:none;box-sizing:border-box;min-height:189mm;padding:8px;gap:12px;border-radius:0}
 .screen-card:target{box-shadow:none;border-color:var(--c-border)}
 .screen-card.hide{display:none}
 .screen-card:not(.hide) ~ .screen-card:not(.hide){break-before:page;page-break-before:always}

@@ -9,16 +9,16 @@ const htmlPath = path.resolve(scriptDir, '..', 'ui-inventory.html');
 const outPath = path.join(scriptDir, 'pagination.json');
 const check = process.argv.slice(2).includes('--check');
 
-// Page geometry (A4 landscape, 96dpi): 188mm content height, 277mm content width.
+// Page geometry (A4 landscape, 96dpi): 189mm content height, 277mm content width.
 const MM = 96 / 25.4;
-const PAGE_H_MM = 188;
+const PAGE_H_MM = 189;
 const PAGE_W_MM = 277;
 // Approximate height (mm) of the compact repeated header on continuation pages.
 const CONT_HEADER_MM = 14;
 // Print card/cont padding (8px top + 8px bottom).
 const PAD_PX = 16;
 // Slack for rounding and borders.
-const SAFETY_PX = 24;
+const SAFETY_PX = 14;
 const EDGE_TIMEOUT_MS = 60000;
 
 const EDGES = [
