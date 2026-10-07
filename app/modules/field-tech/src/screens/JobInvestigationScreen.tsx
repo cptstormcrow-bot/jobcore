@@ -30,6 +30,8 @@ export interface JobInvestigationScreenProps {
   embedded?: boolean;
   /** Parent-supplied job (e.g. admin view); skips the tech-scoped lookup. */
   job?: Job;
+  /** Called after a successful save that stamped submittedAt (not on Save Draft or failure). */
+  onSubmitted?: (investigation: JobInvestigation) => void;
 }
 
 type RoomWork = { room: string; work: string; measurements?: string };
@@ -63,7 +65,7 @@ function formatDateTime(value: string | null): string {
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp, onSubmitted }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -135,13 +137,14 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
           ...patch,
         });
         setInvestigation(updated);
+        if (patch.submittedAt) onSubmitted?.(updated);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save investigation.');
       } finally {
         setSaving(false);
       }
     },
-    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, roomWork, techInstructions, materialsArrived],
+    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, roomWork, techInstructions, materialsArrived, onSubmitted],
   );
 
   const handleSaveDraft = React.useCallback(() => {
@@ -256,6 +259,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
       {!embedded && <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />}
       {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
+      {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       <View style={styles.headerRow}>
         <Text style={[styles.headerSide, { textAlign: 'left' }]}>Date created: {new Date(job.createdAt).toLocaleDateString()}</Text>
         <Text style={[styles.status, styles.headerCenter]}>

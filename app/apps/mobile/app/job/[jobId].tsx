@@ -962,7 +962,7 @@ export default function JobDrilldownScreen() {
     const inputs: StageInputs = {
       lead: done(true, 'lead'),
       job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
-      premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
+      premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId || !!investigation?.submittedAt, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
       completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
       estimate: { ...done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt), inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
       approval: done(estimate?.status === 'approved', 'approval', estimate?.updatedAt),
@@ -1411,7 +1411,15 @@ export default function JobDrilldownScreen() {
           <Text style={{ paddingLeft: 16 }}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
         ) : null}
         {region === 'evisit' && (
-          <JobInvestigationScreen jobId={currentJob.id} job={currentJob} embedded />
+          <JobInvestigationScreen
+            jobId={currentJob.id}
+            job={currentJob}
+            embedded
+            onSubmitted={(inv) => {
+              setInvestigation(inv);
+              void createEstimateRepository().getForJob(currentJob.id).then((value) => setEstimate(value));
+            }}
+          />
         )}
         {region === 'estimate' && role === 'tech' && (
           <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} />
