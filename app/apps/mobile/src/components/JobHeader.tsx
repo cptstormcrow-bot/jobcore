@@ -157,11 +157,6 @@ export function JobSummaryRest({
   assigningTech,
   statusError = null,
 }: JobSummaryRestProps) {
-  const paidEligible = job.status === 'completed';
-  const paidHint =
-    !paidEligible && job.status !== 'paid' && job.status !== 'closed'
-      ? 'Complete the job before marking it paid.'
-      : null;
   const arriveEligible = Boolean(assignedTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
 
@@ -194,7 +189,6 @@ export function JobSummaryRest({
           )}
         </View>
       </View>
-      {paidHint ? <Text style={styles.paidHint}>{paidHint}</Text> : null}
       {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}
     </View>
   );

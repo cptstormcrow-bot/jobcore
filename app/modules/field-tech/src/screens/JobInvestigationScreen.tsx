@@ -14,10 +14,10 @@
  */
 
 import * as React from 'react';
-import { View, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, typography, Text } from '@jobcore/ui';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -33,6 +33,21 @@ export interface JobInvestigationScreenProps {
 }
 
 type RoomWork = { room: string; work: string; measurements?: string };
+
+/** Horizontal labelled input: label on the left, input on the right. */
+function FieldRow({ label, value, onChangeText }: { label: string; value: string; onChangeText: (text: string) => void }) {
+  return (
+    <View style={styles.fieldRow}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        style={styles.fieldInput}
+        value={value}
+        onChangeText={onChangeText}
+        accessibilityLabel={label}
+      />
+    </View>
+  );
+}
 
 function formatDateTime(value: string | null): string {
   if (!value) return 'Not set';
@@ -241,9 +256,13 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
       {!embedded && <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />}
       {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
-      <Text style={styles.status}>
-        {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
-      </Text>
+      <View style={styles.headerRow}>
+        <Text style={[styles.headerSide, { textAlign: 'left' }]}>Date created: {new Date(job.createdAt).toLocaleDateString()}</Text>
+        <Text style={[styles.status, styles.headerCenter]}>
+          {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
+        </Text>
+        <Text style={[styles.headerSide, { textAlign: 'right' }]}>Job #{job.jobNumber ?? '—'}</Text>
+      </View>
 
       <View style={styles.cardActions}>
         <View style={styles.actionCell}>
@@ -290,22 +309,22 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
             <Text style={styles.value}>Measurements: {card.measurements ?? ''}</Text>
           </View>
         ))}
-        <TextField label="Room name *" value={roomDraft} onChangeText={setRoomDraft} />
-        <TextField label="Work *" value={workDraft} onChangeText={setWorkDraft} />
-        <TextField label="Measurements *" value={measurementsDraft} onChangeText={setMeasurementsDraft} />
+        <FieldRow label="Room name *" value={roomDraft} onChangeText={setRoomDraft} />
+        <FieldRow label="Work *" value={workDraft} onChangeText={setWorkDraft} />
+        <FieldRow label="Measurements *" value={measurementsDraft} onChangeText={setMeasurementsDraft} />
         <Button label="Add room" onPress={handleAddRoom} variant="primary" size="sm" />
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Investigation notes</Text>
-        <TextField label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
-        <TextField label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
-        <TextField label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
-        <TextField label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
+        <FieldRow label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
+        <FieldRow label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
+        <FieldRow label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
+        <FieldRow label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
       </View>
 
       <View style={styles.section}>
-        <TextField label="Instructions for tech *" value={techInstructions} onChangeText={setTechInstructions} />
+        <FieldRow label="Instructions for tech *" value={techInstructions} onChangeText={setTechInstructions} />
       </View>
 
       <View style={styles.section}>
@@ -337,10 +356,47 @@ const styles = StyleSheet.create({
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     color: colors.textLight,
-    marginBottom: 12,
+    marginBottom: 0,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  headerSide: {
+    flex: 1,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
+    color: colors.textMuted,
+  },
+  headerCenter: {
+    flex: 2,
+    textAlign: 'center',
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  fieldLabel: {
+    width: '38%',
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+  },
+  fieldInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    fontSize: typography.size.body,
+    fontFamily: typography.fontFamily.body,
+    backgroundColor: colors.surface,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   sectionTitle: {
     fontSize: typography.size.h6,
@@ -351,7 +407,7 @@ const styles = StyleSheet.create({
   cardActions: {
     flexDirection: 'row',
     gap: 8,
-    marginTop: 6,
+    marginTop: 0,
   },
   actionCell: {
     flex: 1,
