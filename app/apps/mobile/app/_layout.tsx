@@ -1,3 +1,4 @@
+// JobCore screen #0001 - root-layout - Root Layout
 import React, { useEffect, useState, type ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Redirect, Stack, useRootNavigationState, useRouter, useSegments, usePathname } from 'expo-router';

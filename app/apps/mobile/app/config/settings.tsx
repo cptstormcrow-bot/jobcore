@@ -1,3 +1,4 @@
+// JobCore screen #0065 - config-settings - Settings
 import React from 'react';
 import { View, Switch, StyleSheet } from 'react-native';
 import { AppChrome, EmptyState, Text, spacing, colors, typography, useAppVersion, formatVersionLabel, useScreenNumber } from '@jobcore/ui';
