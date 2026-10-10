@@ -219,6 +219,8 @@ export interface JobRepository {
   markBeta(jobId: string, isBeta: boolean): Promise<void>;
   setNeedsPrem?(jobId: string, at: string | null): Promise<void>;
   clearInvestigator(jobId: string): Promise<void>;
+  /** Clears needs_prem_at, stage_marks, contacted_at, the investigation row and investigator assignment for one job; throws on error. */
+  resetTimeline?(jobId: string): Promise<void>;
   /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and

@@ -318,6 +318,22 @@ export function createJobRepository(): JobRepository {
       await supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', 'investigator');
     },
 
+    async resetTimeline(jobId: string): Promise<void> {
+      const { error: jobErr } = await supabase
+        .from('jobs')
+        .update({ needs_prem_at: null, stage_marks: {}, contacted_at: null })
+        .eq('id', jobId);
+      if (jobErr) throw new Error(`resetTimeline failed: ${jobErr.message}`);
+      const { error: invErr } = await supabase.from('job_investigations').delete().eq('job_id', jobId);
+      if (invErr) throw new Error(`resetTimeline failed: ${invErr.message}`);
+      const { error: asgErr } = await supabase
+        .from('job_assignments')
+        .delete()
+        .eq('job_id', jobId)
+        .eq('kind', 'investigator');
+      if (asgErr) throw new Error(`resetTimeline failed: ${asgErr.message}`);
+    },
+
     async resetTimeSegments(jobId: string): Promise<void> {
       const { error } = await supabase.rpc('reset_job_time_segments', { p_job_id: jobId });
       if (error) {

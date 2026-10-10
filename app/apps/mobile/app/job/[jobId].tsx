@@ -172,7 +172,8 @@ function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
   return (DEEP_LINK_PANELS as readonly string[]).includes(v ?? '');
 }
 function regionFromPanel(panel: string | undefined): JobRegion {
-  if (!isDeepLinkPanel(panel)) return 'details';
+  if (panel === 'details') return 'details';
+  if (!isDeepLinkPanel(panel)) return 'plan';
   switch (panel) {
     case 'plan':
       return 'plan';
@@ -185,7 +186,7 @@ function regionFromPanel(panel: string | undefined): JobRegion {
     case 'start-checklist':
     case 'completion':
     default:
-      return 'details';
+      return 'plan';
   }
 }
 
@@ -993,7 +994,7 @@ export default function JobDrilldownScreen() {
 
   const handleStagePress = (key: string) => {
     switch (key as StageKey) {
-      case 'job': selectRegion('details'); break;
+      case 'job': selectRegion('plan'); break;
       case 'premAvailable':
         if (isAdmin) {
           const st = stageResults?.states.find((s) => s.key === 'premAvailable')?.state;
@@ -1167,10 +1168,14 @@ export default function JobDrilldownScreen() {
         scheduledEnd: null,
         requestedWindow: null,
       });
-      await createJobRepository().clearInvestigator(job.id);
-      const updated = await createJobRepository().updateStatus(job.id, 'new');
-      setJob({ ...updated, totalLaborSeconds: 0 });
+      const jobRepo = createJobRepository();
+      if (jobRepo.resetTimeline) await jobRepo.resetTimeline(job.id);
+      else await jobRepo.clearInvestigator(job.id);
+      const updated = await jobRepo.updateStatus(job.id, 'new');
+      setJob({ ...updated, totalLaborSeconds: 0, needsPremAt: null });
       setInvestigatorTechId(null);
+      setInvestigation(null);
+      setStageExtras((prev) => (prev ? { ...prev, stageMarks: {}, contactedAt: null } : prev));
     } catch (error) {
       setActionError(error instanceof Error ? error.message : String(error));
       if (org?.id && jobId) {
@@ -1190,7 +1195,7 @@ export default function JobDrilldownScreen() {
   const confirmResetTime = (): void => {
     const title = 'Reset job?';
     const body =
-      'This returns the job to New: clears schedule, assigned tech, Prem claim, en route / arrived / completed times and logged hours. Customer, details, estimates, payments and contact log are kept.';
+      "This resets this job's timeline back to New: clears schedule, assigned tech, Prem claim and Prem checklist, stage marks, contacted time, en route / arrived / completed times and logged hours. Customer, details, estimates, payments and contact log are kept.";
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
         void handleResetTime();
@@ -1480,7 +1485,7 @@ export default function JobDrilldownScreen() {
           </>
         )}
       </ScrollView>
-      {region === 'details' && (
+      {region === 'plan' && (
         <View style={styles.footer}>
           <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={handleCancel} />
           {role === 'admin' && (
