@@ -1,3 +1,6 @@
+// JobCore screen #0039 - job-detail - New Job
+// JobCore screen #0040 - job-region-assign - Assign
+// JobCore screen #0041 - job-region-plan - Plan
 // Calendar-entry drilldown: renders a single job's unified Job Details
 // screen (pinned JobHeader + single-scroll region body) from its id route
 // param. Region switching replaces the old full-screen panel early-returns;

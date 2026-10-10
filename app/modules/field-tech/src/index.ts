@@ -21,7 +21,7 @@
 import * as React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { router, useRouter } from 'expo-router';
-import { AppChrome, Breadcrumb } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, useScreenNumber } from '@jobcore/ui';
 import { moduleSwitcherItems, type JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -63,6 +63,7 @@ const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
 function FieldTechRoot(): React.ReactElement {
   const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('overview');
+  useScreenNumber({ subView });
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const [showTestJobs, setShowTestJobs] = React.useState(false);

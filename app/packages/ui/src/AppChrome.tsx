@@ -11,6 +11,9 @@ import { useWalkthrough } from './walkthrough/WalkthroughProvider';
 import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
 import { useAppVersion } from './AppVersionContext';
 import { formatVersionLabel } from './formatVersionLabel';
+import { NavDrawer } from './NavDrawer';
+import { MenuGlyph } from './MenuGlyph';
+import { DRAWER_ROW_HEIGHT, dividerBefore } from './drawer-geometry';
 
 export type MenuActionItem = {
   id: string;
@@ -55,12 +58,15 @@ function MenuRow({
   depth = 0,
   onLeafPress,
   compact,
+  variant = 'sheet',
 }: {
   item: MenuItem;
   depth?: number;
   onLeafPress: (item: MenuItem) => void;
   compact?: boolean;
+  variant?: 'sheet' | 'drawer';
 }) {
+  const drawer = variant === 'drawer';
   const [expanded, setExpanded] = useState(false);
   const hasSubmenu = !!item.submenu && item.submenu.length > 0;
   const pressAnim = useRef(new Animated.Value(0)).current;
@@ -107,11 +113,14 @@ function MenuRow({
             item.disabled && styles.rowDisabled,
             { backgroundColor: animatedBg },
             compact && styles.rowCompact,
+            drawer && styles.rowDrawer,
+            drawer && { paddingLeft: spacing.md + depth * spacing.md },
           ]}
         >
           <Text
             style={[
               styles.rowText,
+              drawer && styles.rowTextDrawer,
               item.isActive && styles.rowTextActive,
               item.disabled && styles.rowTextDisabled,
             ]}
@@ -124,7 +133,7 @@ function MenuRow({
       {hasSubmenu && expanded && (
         <View>
           {item.submenu!.map((child) => (
-            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} compact={compact} />
+            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} compact={compact} variant={variant} />
           ))}
         </View>
       )}
@@ -143,7 +152,6 @@ export function AppChrome({
   gearItems,
   gearTitle,
   compactMenu,
-  fitMenu,
   logoMenuItems,
   onLogoPress,
   onTitlePress,
@@ -151,6 +159,7 @@ export function AppChrome({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [hMenuOpen, setHMenuOpen] = useState(false);
+  const menuProgress = useRef(new Animated.Value(0)).current;
   const [oMenuOpen, setOMenuOpen] = useState(false);
   const [gMenuOpen, setGMenuOpen] = useState(false);
   const [logoMenuOpen, setLogoMenuOpen] = useState(false);
@@ -224,7 +233,7 @@ export function AppChrome({
           hitSlop={8}
           style={styles.iconButton}
         >
-          <Text style={styles.iconText}>☰</Text>
+          <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
         {titleBar && wrapTitle(
           <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold]}>
@@ -256,11 +265,12 @@ export function AppChrome({
         </Pressable>
       </View>
 
-      <Modal visible={hMenuOpen} transparent animationType="fade" onRequestClose={() => setHMenuOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setHMenuOpen(false)}>
-          <View style={[styles.sheet, fitMenu && styles.sheetFit]}>
-            <ScrollView style={{ maxHeight: '100%' }}>
-              <View style={styles.wordmarkRow}>
+      <NavDrawer
+        visible={hMenuOpen}
+        onClose={() => setHMenuOpen(false)}
+        progress={menuProgress}
+        header={
+          <View style={styles.wordmarkRow}>
                 <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined}>
                 <View style={styles.wordmarkChip}>
                   <Text style={styles.wordmarkText}>JobCore©</Text>
@@ -277,30 +287,33 @@ export function AppChrome({
                     <Text style={styles.iconText}>{'\u2699\uFE0E'}</Text>
                   </Pressable>
                 ) : null}
-              </View>
-              <View style={styles.divider} />
-              {showBack && (
-                <>
-                  <Pressable
-                    onPress={handleBackPress}
-                    disabled={!canGoBack}
-                    accessibilityRole="button"
-                    accessibilityLabel="Back"
-                    accessibilityState={{ disabled: !canGoBack }}
-                    style={[styles.row, !canGoBack && styles.rowDisabled, compactMenu && styles.rowCompact]}
-                  >
-                    <Text style={[styles.rowText, !canGoBack && styles.rowTextDisabled]}>‹ Back</Text>
-                  </Pressable>
-                  <View style={styles.divider} />
-                </>
-              )}
-              {drawerItems.map((item) => (
-                <MenuRow key={item.id} item={item} onLeafPress={handleLeafPress} compact={compactMenu} />
-              ))}
-            </ScrollView>
           </View>
-        </Pressable>
-      </Modal>
+        }
+      >
+        {showBack && (
+          <>
+            <Pressable
+              onPress={handleBackPress}
+              disabled={!canGoBack}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              accessibilityState={{ disabled: !canGoBack }}
+              style={[styles.row, styles.rowDrawer, !canGoBack && styles.rowDisabled]}
+            >
+              <Text style={[styles.rowText, styles.rowTextDrawer, !canGoBack && styles.rowTextDisabled]}>‹ Back</Text>
+            </Pressable>
+            <View style={styles.divider} />
+          </>
+        )}
+        {drawerItems.map((item, i) => (
+          <React.Fragment key={item.id}>
+            {i > 0 && dividerBefore(drawerItems[i - 1]?.kind === 'toggle' ? 'toggle' : 'action', item.kind === 'toggle' ? 'toggle' : 'action') ? (
+              <View style={styles.divider} />
+            ) : null}
+            <MenuRow item={item} onLeafPress={handleLeafPress} variant="drawer" />
+          </React.Fragment>
+        ))}
+      </NavDrawer>
 
       <Modal visible={oMenuOpen} transparent animationType="fade" onRequestClose={() => setOMenuOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOMenuOpen(false)}>
@@ -308,7 +321,7 @@ export function AppChrome({
             <ScrollView style={{ maxHeight: '100%' }}>
               {resolvedOptionsItems && resolvedOptionsItems.length > 0 ? (
                 resolvedOptionsItems.map((item) => (
-                  <MenuRow key={item.id} item={item} onLeafPress={handleOptionPress} />
+                  <MenuRow key={item.id} item={item} onLeafPress={handleOptionPress} variant="drawer" />
                 ))
               ) : (
                 <View style={styles.row}>
@@ -340,7 +353,7 @@ export function AppChrome({
                 {(gearItems ?? []).map((item, i) => (
                   <View key={item.id}>
                     {i > 0 ? <View style={styles.gearSeparator} /> : null}
-                    <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} />
+                    <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} variant="drawer" />
                   </View>
                 ))}
                 <View style={styles.gearSeparator} />
@@ -490,7 +503,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: spacing.xs,
   },
-  sheetFit: { maxHeight: '90%' },
   rowActive: {
     backgroundColor: colors.accent,
   },
@@ -512,5 +524,16 @@ const styles = StyleSheet.create({
   },
   rowTextDisabled: {
     color: colors.textMuted,
+  },
+  rowDrawer: {
+    minHeight: DRAWER_ROW_HEIGHT,
+    alignItems: 'flex-start',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 0,
+  },
+  rowTextDrawer: {
+    fontSize: typography.size.label,
+    fontWeight: typography.weight.medium,
+    textAlign: 'left',
   },
 });

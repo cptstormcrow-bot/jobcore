@@ -1,3 +1,4 @@
+// JobCore screen #0026 - ft-Earnings - Earnings
 /**
  * Earnings screen for the field-tech module (P4 Wave 3 slice S3.7).
  *

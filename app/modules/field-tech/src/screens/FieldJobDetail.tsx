@@ -1,3 +1,4 @@
+// JobCore screen #0027 - ft-FieldJobDetail - Job Detail
 /**
  * FieldJobDetail — module-local job detail screen (P4.S3.3).
  *

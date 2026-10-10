@@ -1,3 +1,4 @@
+// JobCore screen #0050 - af-payments-PayoutBatchDetailScreen - Payout Batch Detail
 /**
  * Payout batch detail / drilldown screen.
  *

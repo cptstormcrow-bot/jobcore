@@ -1,3 +1,4 @@
+// JobCore screen #0036 - sm-Reporting - Reporting
 /**
  * Reporting — non-financial marketing reporting screen (P6 §7).
  *

@@ -1,3 +1,4 @@
+// JobCore screen #0034 - sm-Composer - Compose Post
 /**
  * Composer screen for the sales-marketing module (P6, spec §4-6).
  *

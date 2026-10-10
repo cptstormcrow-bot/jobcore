@@ -13,6 +13,7 @@
   "include": [
     "app/**/*",
     "src/**/*",
+    "src/screens/*.json",
     "*.ts",
     "*.tsx",
     ".expo/types/**/*.ts",

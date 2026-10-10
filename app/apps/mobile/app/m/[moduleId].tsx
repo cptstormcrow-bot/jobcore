@@ -1,3 +1,4 @@
+// JobCore screen #0005 - module-host - Module Host
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';

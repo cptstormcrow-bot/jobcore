@@ -1,3 +1,4 @@
+// JobCore screen #0060 - af-employee-invitations - Pending Invitations
 /**
  * Employee invitations screen — list query, mirrors `EmployeeRosterScreen.tsx`'s
  * structure exactly (optional-props + honest-empty-view pattern, idle/

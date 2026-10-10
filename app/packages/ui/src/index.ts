@@ -27,3 +27,7 @@ export * from './walkthrough/WalkthroughProvider';
 export * from './walkthrough/WalkthroughOverlay';
 export * from './walkthrough/WalkthroughHelpCallout';
 export * from './AppVersionContext';
+export * from './screen-numbers/ScreenNumberBadge';
+export { ScreenNumberProvider, useScreenNumber, SHOW_SCREEN_NUMBERS_KEY } from './screen-numbers/ScreenNumberContext';
+export type { ScreenNumberContextValue } from './screen-numbers/ScreenNumberContext';
+export type { RegistryEntry } from './screen-numbers/screen-resolve';

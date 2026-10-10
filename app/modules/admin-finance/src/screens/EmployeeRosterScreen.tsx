@@ -1,3 +1,4 @@
+// JobCore screen #0045 - af-employee-roster - Employees
 /**
  * Employee roster screen — list query, mirrors `PriceSheetListScreen.tsx`'s
  * structure exactly (optional-props + honest-empty-view pattern, idle/

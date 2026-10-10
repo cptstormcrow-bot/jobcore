@@ -1,0 +1,234 @@
+{
+  "account": [
+    15
+  ],
+  "admin-finance": [
+    12,
+    34
+  ],
+  "af-JobCreateScreen": [
+    13
+  ],
+  "af-ReportsJobDetailScreen": [
+    11
+  ],
+  "af-addTaskDialog": [
+    14
+  ],
+  "af-assignmentBoard": [
+    13
+  ],
+  "af-blackout-editor": [
+    12
+  ],
+  "af-calendar": [
+    13,
+    36
+  ],
+  "af-closeOutQueue": [
+    12
+  ],
+  "af-closeOutReview": [
+    12
+  ],
+  "af-employee-detail": [
+    14
+  ],
+  "af-employee-editor": [
+    12
+  ],
+  "af-employee-invitations": [
+    11
+  ],
+  "af-employee-job-detail": [
+    12
+  ],
+  "af-employee-roster": [
+    12
+  ],
+  "af-jobEstimate": [
+    12
+  ],
+  "af-jobs": [
+    14,
+    37
+  ],
+  "af-leadCreate": [
+    14
+  ],
+  "af-leadEdit": [
+    13
+  ],
+  "af-leadInbox": [
+    14
+  ],
+  "af-overview": [
+    14,
+    37
+  ],
+  "af-paymentReview": [
+    12
+  ],
+  "af-payments": [
+    14
+  ],
+  "af-payments-PaymentsScreen": [
+    12
+  ],
+  "af-payments-PayoutBatchDetailScreen": [
+    13
+  ],
+  "af-payments-PayoutBatchScreen": [
+    13
+  ],
+  "af-payments-ReimbursementQueueScreen": [
+    11
+  ],
+  "af-planning": [
+    12
+  ],
+  "af-priceSheetCreate": [
+    13
+  ],
+  "af-priceSheetEditor": [
+    10,
+    21
+  ],
+  "af-priceSheetList": [
+    13
+  ],
+  "af-qualify": [
+    12
+  ],
+  "af-reports": [
+    14
+  ],
+  "af-timeOffQueue": [
+    12
+  ],
+  "calendar": [
+    14
+  ],
+  "config-settings": [
+    15
+  ],
+  "config-test-jobs": [
+    13
+  ],
+  "field-tech": [
+    15,
+    40
+  ],
+  "ft-Completion": [
+    11
+  ],
+  "ft-DayList": [
+    12
+  ],
+  "ft-Earnings": [
+    13
+  ],
+  "ft-FieldJobDetail": [
+    15
+  ],
+  "ft-Greeting": [
+    14
+  ],
+  "ft-Overview": [
+    15
+  ],
+  "ft-PremJobs": [
+    15
+  ],
+  "ft-Reimbursements": [
+    14
+  ],
+  "ft-Reviews": [
+    16
+  ],
+  "ft-StartChecklist": [
+    11
+  ],
+  "ft-TimeOff": [
+    12
+  ],
+  "index": [
+    16
+  ],
+  "job-detail": [
+    12,
+    32
+  ],
+  "job-region-assign": [
+    13,
+    35
+  ],
+  "job-region-estimate": [
+    14
+  ],
+  "job-region-evisit": [
+    14
+  ],
+  "job-region-plan": [
+    12,
+    33
+  ],
+  "job-region-schedule": [
+    14
+  ],
+  "jobs": [
+    15
+  ],
+  "module-host": [
+    15
+  ],
+  "not-found": [
+    15
+  ],
+  "payment-review": [
+    15
+  ],
+  "profile": [
+    15
+  ],
+  "root-layout": [
+    14
+  ],
+  "sales-marketing": [
+    14,
+    38
+  ],
+  "sign-in": [
+    14
+  ],
+  "sign-up": [
+    12
+  ],
+  "sm-CallbackTasks": [
+    12
+  ],
+  "sm-Composer": [
+    13
+  ],
+  "sm-Overview": [
+    15
+  ],
+  "sm-PitchPicker": [
+    16
+  ],
+  "sm-Reporting": [
+    14
+  ],
+  "sm-ReviewLibrary": [
+    12
+  ],
+  "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
+    12
+  ],
+  "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
+    10
+  ],
+  "tabs-layout": [
+    16
+  ]
+}

@@ -1,3 +1,4 @@
+// JobCore screen #0022 - af-payments-PayoutBatchScreen - Payout Batches
 /**
  * Payout batch records screen — batch/line viewer with approve/mark-paid
  * actions (P3k.4).

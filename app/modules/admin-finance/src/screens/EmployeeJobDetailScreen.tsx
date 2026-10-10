@@ -1,3 +1,4 @@
+// JobCore screen #0044 - af-employee-job-detail - Employee Job Detail
 /**
  * Employee job-detail screen (Employee Roster feature) — READ-ONLY.
  *

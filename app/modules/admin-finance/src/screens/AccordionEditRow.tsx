@@ -1,3 +1,4 @@
+// JobCore screen #0070 - sweep-modules-admin-finance-src-screens-accordioneditrow-tsx - sweep-modules-admin-finance-src-screens-accordioneditrow-tsx
 /**
  * AccordionEditRow — collapsible row with header (title/subtitle/tag),
  * expand-to-edit children, and a Save/Cancel/Delete action row.

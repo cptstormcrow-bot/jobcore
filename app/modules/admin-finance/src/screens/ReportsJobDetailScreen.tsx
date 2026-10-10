@@ -1,3 +1,4 @@
+// JobCore screen #0064 - af-ReportsJobDetailScreen - Reports Job Detail Screen
 /**
  * Reports job-detail screen — READ-ONLY.
  *

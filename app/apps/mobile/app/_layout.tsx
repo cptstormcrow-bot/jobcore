@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, type ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Redirect, Stack, useRootNavigationState, useRouter, useSegments, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -6,7 +6,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, AppVersionProvider } from '@jobcore/ui';
+import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, AppVersionProvider, ScreenNumberProvider, ScreenNumberBadge } from '@jobcore/ui';
+import screenRegistry from '../src/screens/screen-registry.json';
 import { getAppVersion } from '../src/lib/appVersion';
 import { landingRouteFor } from '../src/lib/landing';
 
@@ -172,6 +173,7 @@ function AuthGate() {
         </View>
       ) : null}
       {isRedirect ? overlay : null}
+      <ScreenNumberBadge pathname={pathname} />
     </View>
   );
 }
@@ -200,17 +202,19 @@ export default function RootLayout() {
   return (
     <AppVersionProvider value={APP_VERSION}>
     <WalkthroughProvider>
-      <SafeAreaProvider>
-        <SessionProvider>
-          {/* Mounted at the root so sync status is app-wide
-              across every screen. Replay runs on mount/refresh; handlers are idempotent. */}
-          <SyncStatusProvider countPending={countPending} replay={replayOfflineQueue}>
-            <StatusBar style="auto" />
-            <AuthGate />
-          </SyncStatusProvider>
-        </SessionProvider>
-      </SafeAreaProvider>
-      <WalkthroughOverlay />
+      <ScreenNumberProvider registry={screenRegistry as ComponentProps<typeof ScreenNumberProvider>['registry']}>
+        <SafeAreaProvider>
+          <SessionProvider>
+            {/* Mounted at the root so sync status is app-wide
+                across every screen. Replay runs on mount/refresh; handlers are idempotent. */}
+            <SyncStatusProvider countPending={countPending} replay={replayOfflineQueue}>
+              <StatusBar style="auto" />
+              <AuthGate />
+            </SyncStatusProvider>
+          </SessionProvider>
+        </SafeAreaProvider>
+        <WalkthroughOverlay />
+      </ScreenNumberProvider>
     </WalkthroughProvider>
     </AppVersionProvider>
   );

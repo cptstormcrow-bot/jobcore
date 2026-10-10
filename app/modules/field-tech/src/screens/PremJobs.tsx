@@ -1,3 +1,4 @@
+// JobCore screen #0069 - ft-PremJobs - Prems
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, RefreshControl, Platform, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';

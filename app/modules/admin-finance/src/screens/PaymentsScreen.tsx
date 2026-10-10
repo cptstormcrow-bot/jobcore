@@ -1,3 +1,4 @@
+// JobCore screen #0046 - af-payments-PaymentsScreen - Payments
 /**
  * Payments screen (Workstream D — folded in from the retired `payment-review`
  * module's `ReconciliationView.tsx`).

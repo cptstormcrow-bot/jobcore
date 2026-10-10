@@ -1,3 +1,4 @@
+// JobCore screen #0068 - account - Account
 import React from 'react';
 import { View, StyleSheet, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';

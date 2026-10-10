@@ -1,3 +1,4 @@
+// JobCore screen #0056 - af-blackout-editor - Add Blackout
 /**
  * Admin blackout editor screen — full-screen editor (not a modal), following
  * the `-editor` naming convention used by `EmployeeEditorScreen.tsx` /

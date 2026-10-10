@@ -1,3 +1,4 @@
+// JobCore screen #0047 - af-timeOffQueue - Time Off
 /**
  * Time-off queue screen — read-only status history (Workstream F, 4b), plus
  * admin-created blackouts (Workstream F, 4c).

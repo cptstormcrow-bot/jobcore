@@ -24,7 +24,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
@@ -154,6 +154,7 @@ function formatDate(iso: string | null): string {
 export function AdminFinanceRoot() {
   const router = useRouter();
   const [subView, setSubView] = useState<SubView>('overview');
+  useScreenNumber({ subView: subView === 'paymentReview' ? undefined : subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [showTestJobs, setShowTestJobs] = useState(false);
   const [showTestEmployees, setShowTestEmployees] = useState(true);

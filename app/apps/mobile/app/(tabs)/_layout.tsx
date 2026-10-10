@@ -1,3 +1,4 @@
+// JobCore screen #0007 - tabs-layout - Tabs
 import { Tabs } from 'expo-router';
 import { colors } from '@jobcore/ui';
 

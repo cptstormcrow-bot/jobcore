@@ -1,3 +1,4 @@
+// JobCore screen #0008 - calendar - Calendar
 // P2e.2a/2b/2c - Calendar day + week view, status colours, role gate.
 import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';

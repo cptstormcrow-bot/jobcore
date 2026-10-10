@@ -1,3 +1,4 @@
+// JobCore screen #0003 - sign-in - Sign In
 import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

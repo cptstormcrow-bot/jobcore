@@ -1,0 +1,1227 @@
+[
+ {
+  "key": "root-layout",
+  "kind": "route",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/_layout.tsx",
+  "title": "Root Layout",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": "root Stack + AuthGate"
+ },
+ {
+  "key": "index",
+  "kind": "route",
+  "module": null,
+  "route": "/",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/index.tsx",
+  "title": null,
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": "redirect"
+ },
+ {
+  "key": "sign-in",
+  "kind": "route",
+  "module": null,
+  "route": "/sign-in",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/sign-in.tsx",
+  "title": "Sign In",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sign-up",
+  "kind": "route",
+  "module": null,
+  "route": "/sign-up",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/sign-up.tsx",
+  "title": "Sign Up",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "tabs-layout",
+  "kind": "route",
+  "module": null,
+  "route": "/(tabs)",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/(tabs)/_layout.tsx",
+  "title": "Tabs",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "calendar",
+  "kind": "route",
+  "module": null,
+  "route": "/calendar",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/(tabs)/calendar.tsx",
+  "title": "Calendar",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "jobs",
+  "kind": "route",
+  "module": null,
+  "route": "/jobs",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/(tabs)/jobs.tsx",
+  "title": "Jobs",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "module-host",
+  "kind": "route",
+  "module": null,
+  "route": "/m/[moduleId]",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/m/[moduleId].tsx",
+  "title": "Module Host",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "job-detail",
+  "kind": "route",
+  "module": null,
+  "route": "/job/[jobId]",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/job/[jobId].tsx",
+  "title": "New Job",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": "not declared in root Stack; picked up from file"
+ },
+ {
+  "key": "account",
+  "kind": "route",
+  "module": null,
+  "route": "/account",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/account.tsx",
+  "title": "Account",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "profile",
+  "kind": "route",
+  "module": null,
+  "route": "/profile",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/profile.tsx",
+  "title": "Profile",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "config-settings",
+  "kind": "route",
+  "module": null,
+  "route": "/config/settings",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/config/settings.tsx",
+  "title": "Settings",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "config-test-jobs",
+  "kind": "route",
+  "module": null,
+  "route": "/config/test-jobs",
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/config/test-jobs.tsx",
+  "title": "Test Jobs",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "not-found",
+  "kind": "route",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "apps/mobile/app/+not-found.tsx",
+  "title": "Not Found",
+  "roles": [
+   "owner",
+   "admin",
+   "tech",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "job-region-plan",
+  "kind": "region",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": "job-detail",
+  "file": "apps/mobile/app/job/[jobId].tsx",
+  "title": "Plan",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": "inline"
+ },
+ {
+  "key": "job-region-evisit",
+  "kind": "region",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": "job-detail",
+  "file": "modules/field-tech/src/screens/JobInvestigationScreen.tsx",
+  "title": "Prelim (Prem)",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "job-region-estimate",
+  "kind": "region",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": "job-detail",
+  "file": "modules/field-tech/src/screens/JobEstimateEditor.tsx",
+  "title": "Estimate",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "job-region-assign",
+  "kind": "region",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": "job-detail",
+  "file": "apps/mobile/app/job/[jobId].tsx",
+  "title": "Assign",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": "inline"
+ },
+ {
+  "key": "job-region-schedule",
+  "kind": "region",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": "job-detail",
+  "file": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+  "title": "Schedule",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "admin-finance",
+  "kind": "module-root",
+  "module": "admin-finance",
+  "route": "/m/admin-finance",
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+  "title": "Admin & Finance",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-overview",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "overview",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+  "title": "Overview",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": "inline"
+ },
+ {
+  "key": "af-jobs",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "jobs",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+  "title": "Jobs",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": "inline"
+ },
+ {
+  "key": "af-leadInbox",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "leadInbox",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+  "title": "Leads",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-leadCreate",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "leadCreate",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/LeadCreateScreen.tsx",
+  "title": "New Lead",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-qualify",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "qualify",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/QualifyScreen.tsx",
+  "title": "Qualify Lead",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-leadEdit",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "leadEdit",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+  "title": "Edit Lead",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-planning",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "planning",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PlanningScreen.tsx",
+  "title": "Planning",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-jobEstimate",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "jobEstimate",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/JobEstimateScreen.tsx",
+  "title": "Job Estimate",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-assignmentBoard",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "assignmentBoard",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+  "title": "Assignments",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-closeOutQueue",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "closeOutQueue",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/CloseOutQueueScreen.tsx",
+  "title": "Close-Outs",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-closeOutReview",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "closeOutReview",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
+  "title": "Close-Out Review",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-priceSheetList",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "priceSheetList",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PriceSheetListScreen.tsx",
+  "title": "Price Sheets",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-priceSheetEditor",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "priceSheetEditor",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PriceSheetEditorScreen.tsx",
+  "title": "Price Sheet Editor",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-priceSheetCreate",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "priceSheetCreate",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PriceSheetCreateScreen.tsx",
+  "title": "New Price Sheet",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-timeOffQueue",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "timeOffQueue",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
+  "title": "Time Off",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-blackout-editor",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "blackout-editor",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/BlackoutEditorScreen.tsx",
+  "title": "Add Blackout",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-payments",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "payments",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PaymentsHubScreen.tsx",
+  "title": "Payments",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-paymentReview",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "paymentReview",
+  "parentKey": "admin-finance",
+  "file": "modules/payment-review/src/screens/ReconciliationView.tsx",
+  "title": "Review",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-reports",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "reports",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/ReportsScreen.tsx",
+  "title": "Reports",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-employee-roster",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "employee-roster",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+  "title": "Employees",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-employee-detail",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "employee-detail",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+  "title": "Employee Detail",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-employee-editor",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "employee-editor",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/EmployeeEditorScreen.tsx",
+  "title": "Add/Edit Employee",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-employee-job-detail",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "employee-job-detail",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/EmployeeJobDetailScreen.tsx",
+  "title": "Employee Job Detail",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-employee-invitations",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "employee-invitations",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/EmployeeInvitationsScreen.tsx",
+  "title": "Pending Invitations",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-calendar",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "calendar",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+  "title": "Calendar",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": "inline"
+ },
+ {
+  "key": "af-payments-PaymentsScreen",
+  "kind": "drill-in",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": "af-payments",
+  "file": "modules/admin-finance/src/screens/PaymentsScreen.tsx",
+  "title": "Payments",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-payments-ReimbursementQueueScreen",
+  "kind": "drill-in",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": "af-payments",
+  "file": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+  "title": "Reimbursements",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-payments-PayoutBatchScreen",
+  "kind": "drill-in",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": "af-payments",
+  "file": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+  "title": "Payout Batches",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-payments-PayoutBatchDetailScreen",
+  "kind": "drill-in",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": "af-payments",
+  "file": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
+  "title": "Payout Batch Detail",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-addTaskDialog",
+  "kind": "dialog",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": "af-priceSheetEditor",
+  "file": "modules/admin-finance/src/screens/AddTaskDialog.tsx",
+  "title": "Add Task",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-ReportsJobDetailScreen",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/admin-finance/src/screens/ReportsJobDetailScreen.tsx",
+  "title": "Reports Job Detail Screen",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": false,
+  "notes": ""
+ },
+ {
+  "key": "af-JobCreateScreen",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/admin-finance/src/screens/JobCreateScreen.tsx",
+  "title": "Job Create Screen",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": false,
+  "notes": ""
+ },
+ {
+  "key": "field-tech",
+  "kind": "module-root",
+  "module": "field-tech",
+  "route": "/m/field-tech",
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/field-tech/src/index.ts",
+  "title": "Field Tech",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-Overview",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "overview",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Overview.tsx",
+  "title": "Overview",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-DayList",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "jobs",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/DayList.tsx",
+  "title": "Jobs",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-TimeOff",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "timeOff",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/TimeOff.tsx",
+  "title": "Time Off",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-PremJobs",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "prems",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/PremJobs.tsx",
+  "title": "Prems",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-Reviews",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "reviews",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Reviews.tsx",
+  "title": "Reviews",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-FieldJobDetail",
+  "kind": "drill-in",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/FieldJobDetail.tsx",
+  "title": "Job Detail",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-StartChecklist",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/StartChecklist.tsx",
+  "title": "Start Checklist",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": "exported-unmounted",
+  "notes": ""
+ },
+ {
+  "key": "ft-Completion",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Completion.tsx",
+  "title": "Completion",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": "exported-unmounted",
+  "notes": ""
+ },
+ {
+  "key": "ft-Greeting",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Greeting.tsx",
+  "title": "Greeting",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": "exported-unmounted",
+  "notes": ""
+ },
+ {
+  "key": "ft-Earnings",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Earnings.tsx",
+  "title": "Earnings",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": "exported-unmounted",
+  "notes": ""
+ },
+ {
+  "key": "ft-Reimbursements",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": null,
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Reimbursements.tsx",
+  "title": "Reimbursements",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": false,
+  "notes": ""
+ },
+ {
+  "key": "sales-marketing",
+  "kind": "module-root",
+  "module": "sales-marketing",
+  "route": "/m/sales-marketing",
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/sales-marketing/src/screens/SalesMarketingRoot.tsx",
+  "title": "Sales & Marketing",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-Overview",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "Overview",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/Overview.tsx",
+  "title": "Overview",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-ReviewLibrary",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "ReviewLibrary",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/ReviewLibrary.tsx",
+  "title": "Review Library",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-PitchPicker",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "PitchPicker",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/PitchPicker.tsx",
+  "title": "Pitch Picker",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-Composer",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "Composer",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/Composer.tsx",
+  "title": "Compose Post",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-Reporting",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "Reporting",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/Reporting.tsx",
+  "title": "Reporting",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-CallbackTasks",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "CallbackTasks",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/CallbackTasks.tsx",
+  "title": "Callback tasks",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "payment-review",
+  "kind": "module-root",
+  "module": "payment-review",
+  "route": "/m/payment-review",
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/payment-review/src/index.ts",
+  "title": "Payment Review",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": "no logo-switcher entry; reached via admin-finance Review"
+ },
+ {
+  "key": "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx",
+  "kind": "sub-view",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/admin-finance/src/screens/AccordionEditRow.tsx",
+  "title": null,
+  "roles": [],
+  "mounted": "unknown",
+  "notes": "found by sweep, not in recon"
+ },
+ {
+  "key": "sweep-modules-field-tech-src-screens-daterangecalendar-tsx",
+  "kind": "sub-view",
+  "module": null,
+  "route": null,
+  "subView": null,
+  "parentKey": null,
+  "file": "modules/field-tech/src/screens/DateRangeCalendar.tsx",
+  "title": null,
+  "roles": [],
+  "mounted": "unknown",
+  "notes": "found by sweep, not in recon"
+ }
+]

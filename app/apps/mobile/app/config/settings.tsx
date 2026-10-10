@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { AppChrome, EmptyState, Text, spacing, colors, useAppVersion, formatVersionLabel } from '@jobcore/ui';
+import { View, Switch, StyleSheet } from 'react-native';
+import { AppChrome, EmptyState, Text, spacing, colors, typography, useAppVersion, formatVersionLabel, useScreenNumber } from '@jobcore/ui';
 
 export default function SettingsScreen() {
   const appVersion = useAppVersion();
+  const { enabled, setEnabled } = useScreenNumber();
   return (
     <View style={styles.container}>
       <AppChrome
@@ -12,6 +13,17 @@ export default function SettingsScreen() {
         optionsItems={[]}
         titleBar={{ title: 'Settings', subtitle: 'Configuration' }}
       />
+      <View style={styles.row}>
+        <Text style={styles.rowLabel}>Show screen numbers</Text>
+        <Switch
+          testID="show-screen-numbers-switch"
+          accessibilityLabel="Show screen numbers"
+          value={enabled}
+          onValueChange={setEnabled}
+          trackColor={{ false: colors.border, true: colors.primary }}
+          thumbColor={colors.white}
+        />
+      </View>
       <EmptyState
         title="Settings"
         message="Settings are coming soon."
@@ -26,6 +38,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.offWhite,
     padding: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 48,
+    paddingVertical: spacing.sm,
+  },
+  rowLabel: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: typography.size.body,
+    color: colors.text,
   },
   version: {
     textAlign: 'center',

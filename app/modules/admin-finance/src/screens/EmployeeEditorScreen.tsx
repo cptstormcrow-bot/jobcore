@@ -1,3 +1,4 @@
+// JobCore screen #0043 - af-employee-editor - Add/Edit Employee
 /**
  * Employee editor screen, mirrors `PriceSheetEditorScreen.tsx`'s structure
  * exactly (optional-props + honest-empty-view pattern, `ActionState`

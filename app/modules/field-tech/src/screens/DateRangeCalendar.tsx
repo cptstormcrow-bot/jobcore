@@ -1,3 +1,4 @@
+// JobCore screen #0048 - sweep-modules-field-tech-src-screens-daterangecalendar-tsx - sweep-modules-field-tech-src-screens-daterangecalendar-tsx
 /**
  * DateRangeCalendar — date-range picker for `TimeOff.tsx` (Workstream F, 4a),
  * now sharing the same `CalendarHeader` / `WeekView` / `MonthView` primitives
