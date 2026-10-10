@@ -20,9 +20,10 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl } from '@jobcore/ui';
+import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
 import type { Job } from '@jobcore/core';
 import type {
   EstimateRepository,
@@ -38,11 +39,13 @@ import type { PriceSheetRate, CalculationResult } from '../money/types';
 import { getModulePorts } from '../lib/module-ports';
 import { getModuleSession } from '../lib/module-session';
 import { approveEstimate } from '../flows/approve-estimate';
+import { submitEstimate } from '../flows/submit-estimate';
 
 export interface JobEstimateScreenProps {
   job: Job;
   estimates?: EstimateRepository;
   onBack?: () => void;
+  onEstimateChange?: (estimate: JobEstimate) => void;
   priceSheets?: PriceSheetRepository;
   priceSheetRates?: {
     list: (priceSheetId: string) => Promise<CalculationResult<PriceSheetRate[]>>;
@@ -102,6 +105,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [lineItems, setLineItems] = useState<JobEstimateLineItem[]>([]);
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
+  const [moving, setMoving] = useState(false);
 
   const [kindInput, setKindInput] = useState<EstimateLineItemKind>('material');
   const [descriptionInput, setDescriptionInput] = useState('');
@@ -384,6 +388,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       });
       if (result.ok) {
         setEstimate(result.estimate);
+        props.onEstimateChange?.(result.estimate);
         setActionState({ kind: 'done', message: 'Estimate approved.' });
       } else {
         setActionState({ kind: 'failed', message: result.reason });
@@ -391,6 +396,70 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not approve the estimate.';
       setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function confirmMove(message: string): Promise<boolean> {
+    if (Platform.OS === 'web') {
+      return typeof window !== 'undefined' ? window.confirm(message) : false;
+    }
+    return new Promise<boolean>((resolve) => {
+      Alert.alert('Move estimate', message, [
+        { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Move', onPress: () => resolve(true) },
+      ]);
+    });
+  }
+
+  async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
+    if (!estimate) {
+      return;
+    }
+    if (needsDownstreamWarning(estimate.status, next)) {
+      const ok = await confirmMove(
+        'Moving this estimate out of Approved will turn the Approval and Estimate stages red on the job timeline until it is approved again. Continue?'
+      );
+      if (!ok) {
+        return;
+      }
+    }
+    setMoving(true);
+    setActionState({ kind: 'working' });
+    try {
+      const session = getModuleSession();
+      const nowFn = () => new Date().toISOString();
+      const ctx = { role: session ? session.role : 'admin', now: nowFn };
+      let current: JobEstimate = estimate;
+      if (next === 'draft') {
+        current = await estimates.upsertForJob(estimate.jobId, { status: 'draft' });
+      } else {
+        if (current.status === 'draft') {
+          const submitted = await submitEstimate(current, { estimates, ctx, now: nowFn });
+          if (!submitted.ok) {
+            setActionState({ kind: 'failed', message: submitted.reason });
+            return;
+          }
+          current = submitted.estimate;
+        } else if (current.status !== 'submitted') {
+          current = await estimates.upsertForJob(current.jobId, { status: 'submitted' });
+        }
+        if (next === 'approved') {
+          const result = await approveEstimate(current, 'approved', { estimates, ctx, now: nowFn });
+          if (!result.ok) {
+            setActionState({ kind: 'failed', message: result.reason });
+            return;
+          }
+          current = result.estimate;
+        }
+      }
+      setEstimate(current);
+      props.onEstimateChange?.(current);
+      setActionState({ kind: 'done', message: 'Estimate status updated.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not change the estimate status.';
+      setActionState({ kind: 'failed', message });
+    } finally {
+      setMoving(false);
     }
   }
 
@@ -438,6 +507,17 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
         <Card style={styles.card}>
           <ListItem title="Status" subtitle={estimate?.status ?? 'draft'} />
+          {estimate ? (
+            <EstimateStatusControl
+              status={estimate.status}
+              allowed={allowedEstimateMoves('admin', estimate.status)}
+              busy={moving}
+              onSelect={(next) => {
+                void handleMove(next);
+              }}
+              testID="estimate-status-control"
+            />
+          ) : null}
           <ListItem title="Address" subtitle={job.address ?? 'No address on file'} />
           {job.description ? <ListItem title="Description" subtitle={job.description} /> : null}
           {estimate?.status === 'submitted' ? (

@@ -16,7 +16,8 @@ import { View, StyleSheet, Image } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, typography, Text } from '@jobcore/ui';
+import { allowedEstimateMoves } from '@jobcore/core';
+import { ScreenTitle, Button, TextField, colors, typography, Text, EstimateStatusControl } from '@jobcore/ui';
 import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -33,6 +34,8 @@ export interface JobEstimateEditorProps {
   embedded?: boolean;
   /** Submitted prem form answers, shown read-only for reference while estimating. */
   investigation?: JobInvestigation | null;
+  /** Called with the saved estimate after every successful estimate change. */
+  onEstimateChange?: (estimate: JobEstimate) => void;
 }
 
 function formatDateTime(value: string | null): string {
@@ -73,7 +76,7 @@ function sumLineItems(items: JobEstimateLineItem[]): {
  * (read-only derived display), a single "Submit" status action, and a
  * Share Link action.
  */
-export function JobEstimateEditor({ jobId, onBack, embedded = false, investigation }: JobEstimateEditorProps): React.ReactElement {
+export function JobEstimateEditor({ jobId, onBack, embedded = false, investigation, onEstimateChange }: JobEstimateEditorProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -152,7 +155,9 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
       const nextItems = [...lineItems, item];
       setLineItems(nextItems);
       // Persist the client-side sums so the saved header matches the displayed outlay.
-      setEstimate(await ports.estimates.upsertForJob(jobId, sumLineItems(nextItems)));
+      const saved = await ports.estimates.upsertForJob(jobId, sumLineItems(nextItems));
+      setEstimate(saved);
+      onEstimateChange?.(saved);
       setDescription('');
       setQuantity('');
       setUnitCost('');
@@ -161,7 +166,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
     } finally {
       setSaving(false);
     }
-  }, [jobId, kind, description, quantity, unitCost, lineItems]);
+  }, [jobId, kind, description, quantity, unitCost, lineItems, onEstimateChange]);
 
   /** Chip picker: a day chip keeps the chosen time (default 8:00); a time chip keeps the chosen day (default today). */
   const pickSchedule = React.useCallback(
@@ -186,13 +191,14 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
           which === 'start' ? { scheduledStart: iso } : { scheduledEnd: iso },
         );
         setEstimate(updated);
+        onEstimateChange?.(updated);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to save schedule.');
       } finally {
         setSaving(false);
       }
     },
-    [jobId, estimate],
+    [jobId, estimate, onEstimateChange],
   );
 
   const handleSubmit = React.useCallback(async () => {
@@ -211,12 +217,36 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
       const ports = getModulePorts();
       const updated = await ports.estimates.upsertForJob(jobId, { status: 'submitted' });
       setEstimate(updated);
+      onEstimateChange?.(updated);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit estimate.');
     } finally {
       setSaving(false);
     }
-  }, [jobId, lineItems, estimate, totals]);
+  }, [jobId, lineItems, estimate, totals, onEstimateChange]);
+
+  const handleStatusSelect = React.useCallback(
+    async (next: 'draft' | 'submitted' | 'approved') => {
+      if (next === 'submitted') {
+        await handleSubmit();
+        return;
+      }
+      if (next !== 'draft') return;
+      setSubmitError(null);
+      setSaving(true);
+      try {
+        const ports = getModulePorts();
+        const updated = await ports.estimates.upsertForJob(jobId, { status: 'draft' });
+        setEstimate(updated);
+        onEstimateChange?.(updated);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to move estimate to draft.');
+      } finally {
+        setSaving(false);
+      }
+    },
+    [jobId, handleSubmit, onEstimateChange],
+  );
 
   const handleShare = React.useCallback(async () => {
     setShareError(null);
@@ -272,7 +302,14 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
       {!embedded && <ScreenTitle title="Job Estimate" subtitle={job.address ?? undefined} />}
       {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
-      <Text style={styles.status}>Estimate status: {estimate?.status ?? 'draft'}</Text>
+      <Text style={styles.status}>Estimate status:</Text>
+      <EstimateStatusControl
+        status={estimate?.status ?? 'draft'}
+        allowed={allowedEstimateMoves('tech', estimate?.status ?? 'draft')}
+        busy={saving}
+        onSelect={handleStatusSelect}
+        testID="estimate-status-control"
+      />
 
       {investigation ? (
         <View style={styles.section}>

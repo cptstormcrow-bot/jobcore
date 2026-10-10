@@ -261,3 +261,5 @@ export interface Ctx {
 // Job Details 15-stage progress bar derivation.
 export type { StageKey, StageState, StageInput, StageInputs, StageResult } from './jobStages.js';
 export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep } from './jobStages.js';
+export type { EstimateStatusValue, EstimateEditorRole } from './estimateStatus.js';
+export { allowedEstimateMoves, needsDownstreamWarning } from './estimateStatus.js';

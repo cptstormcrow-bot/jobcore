@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   header: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     padding: spacing.md,
     justifyContent: 'flex-end',
   },

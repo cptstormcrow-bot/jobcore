@@ -4,9 +4,11 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { getBoolPref, setBoolPref } from '../lib/local-prefs';
+import { currentSubView, removeOwner, upsertOwner, type SubViewOwner } from './subview-stack';
 import type { RegistryEntry } from './screen-resolve';
 
 export const SHOW_SCREEN_NUMBERS_KEY = 'app.settings.show-screen-numbers';
@@ -16,7 +18,8 @@ export type ScreenNumberContextValue = {
   enabled: boolean;
   setEnabled: (next: boolean) => void;
   subView: string | null;
-  setSubView: React.Dispatch<React.SetStateAction<string | null>>;
+  registerSubView: (id: string, subView: string | null) => void;
+  unregisterSubView: (id: string) => void;
 };
 
 const ScreenNumberContext = createContext<ScreenNumberContextValue | null>(null);
@@ -29,7 +32,14 @@ export function ScreenNumberProvider({
   children?: React.ReactNode;
 }) {
   const [enabled, setEnabledState] = useState(false);
-  const [subView, setSubView] = useState<string | null>(null);
+  const [stack, setStack] = useState<SubViewOwner[]>([]);
+  const subView = useMemo(() => currentSubView(stack), [stack]);
+  const registerSubView = useCallback((id: string, sv: string | null) => {
+    setStack((s) => upsertOwner(s, id, sv));
+  }, []);
+  const unregisterSubView = useCallback((id: string) => {
+    setStack((s) => removeOwner(s, id));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +59,8 @@ export function ScreenNumberProvider({
   }, []);
 
   const value = useMemo<ScreenNumberContextValue>(
-    () => ({ registry, enabled, setEnabled, subView, setSubView }),
-    [registry, enabled, setEnabled, subView],
+    () => ({ registry, enabled, setEnabled, subView, registerSubView, unregisterSubView }),
+    [registry, enabled, setEnabled, subView, registerSubView, unregisterSubView],
   );
 
   return <ScreenNumberContext.Provider value={value}>{children}</ScreenNumberContext.Provider>;
@@ -65,16 +75,27 @@ const NOOP_VALUE = {
 
 export function useScreenNumber(opts?: { subView?: string }) {
   const ctx = useContext(ScreenNumberContext);
-  const setSubView = ctx?.setSubView;
+  const registerSubView = ctx?.registerSubView;
+  const unregisterSubView = ctx?.unregisterSubView;
   const mine = opts?.subView;
+  const id = React.useId();
+  const latestSubViewRef = useRef<string | undefined>(mine);
+  latestSubViewRef.current = mine;
 
+  // Mount: join the owner stack (even with no subView, to mask lower owners).
   useEffect(() => {
-    if (!setSubView || mine === undefined) return;
-    setSubView(mine);
+    if (!registerSubView || !unregisterSubView) return;
+    registerSubView(id, latestSubViewRef.current ?? null);
     return () => {
-      setSubView((cur) => (cur === mine ? null : cur));
+      unregisterSubView(id);
     };
-  }, [setSubView, mine]);
+  }, [registerSubView, unregisterSubView, id]);
+
+  // Update in place; keeps the stack position.
+  useEffect(() => {
+    if (!registerSubView) return;
+    registerSubView(id, mine ?? null);
+  }, [mine, registerSubView, id]);
 
   if (!ctx) return NOOP_VALUE;
   return {
