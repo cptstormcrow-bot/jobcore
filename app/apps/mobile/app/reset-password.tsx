@@ -1,3 +1,4 @@
+// JobCore screen #0080 - reset-password - New Password
 import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
