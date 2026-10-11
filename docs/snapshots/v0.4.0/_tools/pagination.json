@@ -19,11 +19,11 @@
     13
   ],
   "af-blackout-editor": [
-    12
+    13
   ],
   "af-calendar": [
     13,
-    36
+    35
   ],
   "af-closeOutQueue": [
     12
@@ -38,10 +38,10 @@
     12
   ],
   "af-employee-invitations": [
-    11
+    13
   ],
   "af-employee-job-detail": [
-    12
+    14
   ],
   "af-employee-roster": [
     12
@@ -57,10 +57,10 @@
     14
   ],
   "af-leadEdit": [
-    13
+    11
   ],
   "af-leadInbox": [
-    14
+    13
   ],
   "af-overview": [
     14,
@@ -73,26 +73,25 @@
     14
   ],
   "af-payments-PaymentsScreen": [
-    12
+    14
   ],
   "af-payments-PayoutBatchDetailScreen": [
     13
   ],
   "af-payments-PayoutBatchScreen": [
-    13
+    12
   ],
   "af-payments-ReimbursementQueueScreen": [
-    11
+    13
   ],
   "af-planning": [
-    12
+    11
   ],
   "af-priceSheetCreate": [
     13
   ],
   "af-priceSheetEditor": [
-    10,
-    21
+    10
   ],
   "af-priceSheetList": [
     13
@@ -101,7 +100,7 @@
     12
   ],
   "af-reports": [
-    14
+    11
   ],
   "af-timeOffQueue": [
     12
@@ -110,14 +109,17 @@
     14
   ],
   "config-settings": [
-    15
+    16
   ],
   "config-test-jobs": [
     13
   ],
   "field-tech": [
     15,
-    40
+    39
+  ],
+  "forgot-password": [
+    17
   ],
   "ft-Completion": [
     11
@@ -135,7 +137,7 @@
     14
   ],
   "ft-Overview": [
-    15
+    14
   ],
   "ft-PremJobs": [
     15
@@ -147,7 +149,7 @@
     16
   ],
   "ft-StartChecklist": [
-    11
+    14
   ],
   "ft-TimeOff": [
     12
@@ -157,17 +159,29 @@
   ],
   "job-detail": [
     12,
-    32
+    30
+  ],
+  "job-region-arrive": [
+    16
   ],
   "job-region-assign": [
     13,
-    35
+    34
+  ],
+  "job-region-complete": [
+    16
+  ],
+  "job-region-contact": [
+    16
   ],
   "job-region-estimate": [
     14
   ],
   "job-region-evisit": [
-    14
+    13
+  ],
+  "job-region-paid": [
+    15
   ],
   "job-region-plan": [
     12,
@@ -191,6 +205,9 @@
   "profile": [
     15
   ],
+  "reset-password": [
+    17
+  ],
   "root-layout": [
     14
   ],
@@ -205,25 +222,25 @@
     12
   ],
   "sm-CallbackTasks": [
-    12
+    14
   ],
   "sm-Composer": [
     13
   ],
   "sm-Overview": [
-    15
+    14
   ],
   "sm-PitchPicker": [
-    16
+    15
   ],
   "sm-Reporting": [
-    14
+    15
   ],
   "sm-ReviewLibrary": [
     12
   ],
   "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
-    12
+    10
   ],
   "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
     10

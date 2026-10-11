@@ -21,6 +21,14 @@ const PAD_PX = 16;
 const SAFETY_PX = 14;
 const EDGE_TIMEOUT_MS = 60000;
 
+// Card layout shared by the measure and check passes, so .info is measured at the width it prints at.
+const PAGE_W_PX = Math.round(PAGE_W_MM * MM);
+const LAYOUT_CSS =
+  'body{width:' + PAGE_W_PX + 'px !important;margin:0 !important}' +
+  '.screen-card{display:flex;box-sizing:border-box;padding:8px;gap:12px}' +
+  '.screen-card,.cont{width:' + PAGE_W_PX + 'px !important;height:auto !important;overflow:visible !important}' +
+  '.mock .jc-device{zoom:1.05;margin:0}main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}';
+
 const EDGES = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -36,8 +44,8 @@ const measure = `(${function (cfg) {
   const st = document.createElement('style');
   st.textContent =
     '.pbrk{display:block !important}.cont{display:none !important}' +
-    'body{width:' + cfg.pageW + 'px !important;margin:0 !important}' +
-    '.screen-card{width:' + cfg.pageW + 'px !important;height:auto !important;overflow:visible !important;break-before:auto !important}';
+    cfg.layoutCss +
+    '.screen-card{break-before:auto !important}';
   document.head.appendChild(st);
   const h = (el) => {
     const cs = getComputedStyle(el);
@@ -78,7 +86,7 @@ const measure = `(${function (cfg) {
   pre.textContent = JSON.stringify(out);
   document.body.appendChild(pre);
 }.toString()})(${JSON.stringify({
-  pageW: Math.round(PAGE_W_MM * MM),
+  layoutCss: LAYOUT_CSS,
   pageH: Math.round(PAGE_H_MM * MM),
   contHeader: Math.round(CONT_HEADER_MM * MM),
   padSafety: PAD_PX + SAFETY_PX,
@@ -90,10 +98,7 @@ const measureCheck = `(function(){
   const res = { over: [], cards: 0, maxPages: 1 };
   const st = document.createElement('style');
   st.textContent = '.info .pbrk{display:none !important}.cont{display:block !important;padding:8px;box-sizing:border-box}' +
-    '.screen-card{display:flex;box-sizing:border-box;padding:8px;gap:12px}' +
-    'body{width:${Math.round(PAGE_W_MM * MM)}px !important;margin:0 !important}' +
-    '.screen-card,.cont{width:${Math.round(PAGE_W_MM * MM)}px !important;height:auto !important;overflow:visible !important}' +
-    '.mock .jc-device{zoom:1.05;margin:0}main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}';
+    ${JSON.stringify(LAYOUT_CSS)};
   document.head.appendChild(st);
   const pages = {};
   document.querySelectorAll('article.screen-card').forEach((c) => {
