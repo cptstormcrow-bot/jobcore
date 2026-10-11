@@ -11,8 +11,8 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { deriveStageStates, deriveNextStep, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageInputs, StageKey } from '@jobcore/core';
-import { AppChrome, Breadcrumb, Button, colors, EmptyState, JobProgressBar, LoadingState, spacing, telUrl, Text } from '@jobcore/ui';
-import type { MenuItem } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Button, colors, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
@@ -302,6 +302,9 @@ export default function JobDrilldownScreen() {
   useEffect(() => { setActionError(null); }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
+  const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
+  const isTechEstimate = role === 'tech';
+  useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
   const [standardMinutes, setStandardMinutes] = useState<number | undefined>(undefined);
 
@@ -902,6 +905,7 @@ export default function JobDrilldownScreen() {
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation, isCreate, dirty, job, customerId, org?.id, form]);
+      setActiveStage(undefined);
 
   const handleFormChange = (patch: Partial<JobFormValues>) => {
     setForm((prev) => {
@@ -1012,7 +1016,7 @@ export default function JobDrilldownScreen() {
       case 'approval': selectRegion('estimate'); break;
       case 'schedule': selectRegion('schedule'); break;
       case 'assign': selectRegion('assign'); break;
-      case 'contact': handleContact(); break;
+      case 'contact': setActiveStage('contact'); handleContact(); break;
       case 'startWork':
       case 'photos':
       case 'completeWork': selectRegion('plan'); break;
@@ -1322,11 +1326,11 @@ export default function JobDrilldownScreen() {
         }]
       : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
-    { id: 'contact', label: 'Contact', onPress: handleContact },
-    { id: 'arrive', label: 'Arrive', onPress: () => void handleArrive(), disabled: !effectiveTechId },
-    { id: 'complete', label: 'Complete', onPress: () => void handleComplete() },
+    { id: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); } },
+    { id: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !effectiveTechId },
+    { id: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'paid', label: 'Paid', onPress: () => void confirmMarkPaid() }]
+      ? [{ id: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); void confirmMarkPaid(); } }]
       : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
@@ -1429,17 +1433,10 @@ export default function JobDrilldownScreen() {
             }}
           />
         )}
-        {region === 'estimate' && role === 'tech' && (
-          <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} />
+        {region === 'estimate' && isTechEstimate && (
+          <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} onEstimateChange={setEstimate} />
         )}
-        {region === 'estimate' && role !== 'tech' && estimate?.status === 'submitted' && (
-          <Button
-            label={busyAction === 'approve' ? 'Approving…' : 'Approve Estimate'}
-            onPress={confirmApproveEstimate}
-            disabled={busyAction === 'approve'}
-          />
-        )}
-        {region === 'estimate' && role !== 'tech' && (
+        {region === 'estimate' && !isTechEstimate && (
           <JobEstimateScreen
             job={currentJob}
             embedded
@@ -1490,6 +1487,7 @@ export default function JobDrilldownScreen() {
       </ScrollView>
       {region === 'plan' && (
         <View style={styles.footer}>
+            onEstimateChange={setEstimate}
           <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={handleCancel} />
           {role === 'admin' && (
             <Button

@@ -335,7 +335,8 @@
     "title": "Assign",
     "route": null,
     "file": "apps/mobile/app/job/[jobId].tsx",
-    "createdAt": "2026-08-22T00:08:56-07:00"
+    "createdAt": "2026-08-22T00:08:56-07:00",
+    "subView": "job:assign"
   },
   {
     "number": 41,
@@ -343,7 +344,8 @@
     "title": "Plan",
     "route": null,
     "file": "apps/mobile/app/job/[jobId].tsx",
-    "createdAt": "2026-08-22T00:08:56-07:00"
+    "createdAt": "2026-08-22T00:08:56-07:00",
+    "subView": "job:plan"
   },
   {
     "number": 42,
@@ -480,7 +482,7 @@
     "number": 57,
     "key": "af-jobEstimate",
     "title": "Job Estimate",
-    "route": null,
+    "route": "/job/[jobId]",
     "file": "modules/admin-finance/src/screens/JobEstimateScreen.tsx",
     "createdAt": "2026-08-30T21:20:35-07:00",
     "subView": "jobEstimate"
@@ -489,17 +491,19 @@
     "number": 58,
     "key": "job-region-schedule",
     "title": "Schedule",
-    "route": null,
+    "route": "/job/[jobId]",
     "file": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-    "createdAt": "2026-08-30T21:20:35-07:00"
+    "createdAt": "2026-08-30T21:20:35-07:00",
+    "subView": "job:schedule"
   },
   {
     "number": 59,
     "key": "job-region-estimate",
     "title": "Estimate",
-    "route": null,
+    "route": "/job/[jobId]",
     "file": "modules/field-tech/src/screens/JobEstimateEditor.tsx",
-    "createdAt": "2026-08-30T21:20:35-07:00"
+    "createdAt": "2026-08-30T21:20:35-07:00",
+    "subView": "job:estimate-tech"
   },
   {
     "number": 60,
@@ -514,9 +518,10 @@
     "number": 61,
     "key": "job-region-evisit",
     "title": "Prelim (Prem)",
-    "route": null,
+    "route": "/job/[jobId]",
     "file": "modules/field-tech/src/screens/JobInvestigationScreen.tsx",
-    "createdAt": "2026-09-02T21:06:36-07:00"
+    "createdAt": "2026-09-02T21:06:36-07:00",
+    "subView": "job:prelim"
   },
   {
     "number": 62,
@@ -626,5 +631,57 @@
     "file": "modules/sales-marketing/src/screens/Overview.tsx",
     "createdAt": "2026-10-02T11:35:15-07:00",
     "subView": "Overview"
+  },
+  {
+    "number": 75,
+    "key": "job-region-contact",
+    "title": "Contact",
+    "route": null,
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-10-10T10:15:09-07:00",
+    "subView": "job:contact"
+  },
+  {
+    "number": 76,
+    "key": "job-region-arrive",
+    "title": "Arrive",
+    "route": null,
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-10-10T10:15:09-07:00",
+    "subView": "job:arrive"
+  },
+  {
+    "number": 77,
+    "key": "job-region-complete",
+    "title": "Complete",
+    "route": null,
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-10-10T10:15:09-07:00",
+    "subView": "job:complete"
+  },
+  {
+    "number": 78,
+    "key": "job-region-paid",
+    "title": "Paid",
+    "route": null,
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-10-10T10:15:09-07:00",
+    "subView": "job:paid"
+  },
+  {
+    "number": 79,
+    "key": "forgot-password",
+    "title": "Reset Password",
+    "route": "/forgot-password",
+    "file": "apps/mobile/app/forgot-password.tsx",
+    "createdAt": "2026-07-23T00:01:56-07:00"
+  },
+  {
+    "number": 80,
+    "key": "reset-password",
+    "title": "New Password",
+    "route": "/reset-password",
+    "file": "apps/mobile/app/reset-password.tsx",
+    "createdAt": "2026-10-06T09:21:51-07:00"
   }
 ]
