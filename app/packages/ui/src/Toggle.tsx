@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 2,
   },
-  trackOn: { backgroundColor: colors.secondary, borderColor: colors.secondary },
+  trackOn: { backgroundColor: colors.primary, borderColor: colors.primary },
   thumb: {
     width: 18,
     height: 18,

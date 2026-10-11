@@ -1,6 +1,6 @@
 export const DRAWER_SCREEN_GUTTER = 56;
 export const DRAWER_MAX_WIDTH = 320;
-export const DRAWER_HEADER_HEIGHT = 176;
+export const DRAWER_HEADER_HEIGHT = 96;
 export const DRAWER_ROW_HEIGHT = 48;
 
 export function drawerWidth(screenW: number): number {

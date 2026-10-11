@@ -77,7 +77,7 @@ function MenuRow({
 
   const animatedBg = pressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [item.isActive ? colors.accent : 'transparent', colors.accent],
+    outputRange: [item.isActive ? colors.gold : 'transparent', colors.gold],
   });
 
   return (
@@ -270,23 +270,32 @@ export function AppChrome({
         onClose={() => setHMenuOpen(false)}
         progress={menuProgress}
         header={
-          <View style={styles.wordmarkRow}>
-                <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined}>
-                <View style={styles.wordmarkChip}>
-                  <Text style={styles.wordmarkText}>JobCore©</Text>
-                </View>
-                </Pressable>
-                {true ? (
-                  <Pressable
-                    onPress={() => { setHMenuOpen(false); setTimeout(() => setGMenuOpen(true), 300); }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Settings menu"
-                    hitSlop={8}
-                    style={styles.gearButton}
-                  >
-                    <Text style={styles.iconText}>{'\u2699\uFE0E'}</Text>
-                  </Pressable>
-                ) : null}
+          <View style={styles.drawerHeaderRow}>
+            <Pressable
+              onPress={helpStep ? () => { setHMenuOpen(false); setTimeout(() => showHelp(helpStep.id), 300); } : () => {}}
+              accessibilityRole="button"
+              accessibilityLabel="Help"
+              accessibilityState={helpStep ? undefined : { disabled: true }}
+              hitSlop={8}
+              style={[styles.drawerSideButton, !helpStep && styles.rowDisabled]}
+            >
+              <View style={styles.helpCircle}>
+                <Text style={styles.helpCircleText}>?</Text>
+              </View>
+            </Pressable>
+            <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined} style={styles.drawerWordmarkPress}>
+              <Text style={styles.drawerWordmarkText}>JobCore©</Text>
+              <Text style={styles.drawerTagline} numberOfLines={1}>now get some work done</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => { setHMenuOpen(false); setTimeout(() => setGMenuOpen(true), 300); }}
+              accessibilityRole="button"
+              accessibilityLabel="Settings menu"
+              hitSlop={8}
+              style={styles.drawerSideButton}
+            >
+              <Text style={styles.gearGlyph}>{'\u2699\uFE0E'}</Text>
+            </Pressable>
           </View>
         }
       >
@@ -445,9 +454,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  drawerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+  },
+  drawerSideButton: {
+    width: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerWordmarkPress: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerWordmarkText: {
+    lineHeight: 32,
+    textAlign: 'center',
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: '700',
+    fontSize: 26,
+    color: colors.primary,
+  },
+  drawerTagline: {
+    position: 'absolute',
+    top: 32,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '400',
+    fontFamily: typography.fontFamily.body,
+    color: colors.primary,
+  },
+  helpCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpCircleText: {
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: '700',
+    fontSize: 16,
+    color: colors.primary,
+  },
+  gearGlyph: {
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    color: colors.primary,
+    fontSize: 28,
+    lineHeight: 28,
+    width: 28,
+    height: 28,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
   wordmarkChip: {
     alignSelf: 'center',
-    backgroundColor: colors.accent,
+    backgroundColor: colors.gold,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -504,7 +575,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   rowActive: {
-    backgroundColor: colors.accent,
+    backgroundColor: colors.gold,
   },
   rowDisabled: {
     opacity: 0.5,
@@ -517,10 +588,8 @@ const styles = StyleSheet.create({
   },
   rowTextActive: {
     fontFamily: typography.fontFamily.headingBold,
-    color: colors.white,
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 2,
+    fontWeight: '700',
+    color: '#000000',
   },
   rowTextDisabled: {
     color: colors.textMuted,

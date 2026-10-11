@@ -8,10 +8,10 @@ export const colors = {
   primary: '#1B2A4A',
   primaryLight: '#2C4066',
   primaryDark: '#0F1A2E',
-  secondary: '#E8740C',
-  secondaryLight: '#F5921A',
-  secondaryDark: '#C46000',
-  accent: '#F5A623',
+  secondary: '#1B2A4A',
+  secondaryLight: '#2C4066',
+  secondaryDark: '#0F1A2E',
+  accent: '#E1AF80',
   white: '#FFFFFF',
   offWhite: '#F8F9FA',
   surface: '#FFFFFF',
@@ -24,11 +24,11 @@ export const colors = {
   border: '#E9ECEF',
   overlay: 'rgba(27, 42, 74, 0.85)',
   // Semantic status colors — NOT defined in the brand CSS (source has no status
-  // UI). Each is a distinct hue harmonized with the navy/orange brand, chosen so
+  // UI). Each is a distinct hue harmonized with the navy/sand brand, chosen so
   // no status color collides with an existing brand/accent token.
   success: '#2E7D32', // harmonized green
   danger: '#C62828',  // harmonized red
-  warning: '#D97706', // amber — distinct from secondary (brand orange)
+  warning: '#FACC15', // yellow — lighter/yellower; distinct from danger red and brand orange
   info: '#1976D2',    // blue — distinct from primary/primaryLight (navy)
 } as const;
 

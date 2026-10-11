@@ -7,7 +7,7 @@ import { Text } from './Text';
 import { colors, typography, spacing, radius } from './tokens';
 import type { Job } from '@jobcore/core';
 import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
-import { JOB_STATUS_COLORS } from './job-status-colors';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS } from './job-status-colors';
 
 /** Non-job calendar_events row (e.g. kind: 'time_off') - job_id is null so there's no Job to render. */
 export interface TimeOffEvent {
@@ -81,7 +81,7 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                   onPress={() => onSelectJob?.(job)}
                   style={[styles.card, { borderLeftWidth: 4, borderLeftColor: JOB_STATUS_COLORS[job.status] }]}
                 >
-                  <Text style={styles.cardTime} numberOfLines={1}>{format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
+                  <Text style={styles.cardTime} numberOfLines={1}>{JOB_STATUS_GLYPHS[job.status]} {format(new Date(job.scheduledStart!), 'h:mm a')}</Text>
                   <Text style={styles.cardAddress} numberOfLines={2} ellipsizeMode="tail">{job.address ?? 'No address'}</Text>
                 </Pressable>
               ))}

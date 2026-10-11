@@ -105,7 +105,7 @@ export function NavDrawer({ visible, onClose, progress, header, children }: NavD
         ]}
       >
         <Animated.View
-          style={[styles.header, { height: DRAWER_HEADER_HEIGHT + insets.top }]}
+          style={[styles.header, { height: DRAWER_HEADER_HEIGHT + insets.top, paddingTop: insets.top }]}
         >
           {header}
         </Animated.View>
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: colors.gold,
     padding: spacing.md,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
   },
   scroll: { flex: 1 },
 });

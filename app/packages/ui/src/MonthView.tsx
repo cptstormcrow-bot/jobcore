@@ -17,7 +17,7 @@ import {
 import type { Job } from '@jobcore/core';
 import type { TimeOffEvent } from './WeekView';
 import { colors, spacing } from './tokens';
-import { JOB_STATUS_COLORS } from './job-status-colors';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS } from './job-status-colors';
 
 export interface MonthViewProps {
   jobs: Job[];
@@ -124,7 +124,7 @@ export function MonthView({
                           ]}
                         />
                         <Text numberOfLines={1} ellipsizeMode="tail" style={styles.listItemText}>
-                          {'• ' + (item.address ?? 'No address')}
+                          {(JOB_STATUS_GLYPHS[item.status] ?? '•') + ' ' + (item.address ?? 'No address')}
                         </Text>
                       </Pressable>
                     ) : (

@@ -21,14 +21,15 @@
  * completed jobs.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, FlatList, ActivityIndicator, Pressable, StyleSheet, ScrollView, Modal } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
@@ -59,6 +60,8 @@ export { isScheduledOnLocalDate, expandTimeOffToEvents } from './day-list-helper
 
 export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,7 +84,8 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     }
 
     let cancelled = false;
-    setLoading(true);
+    if (!hasLoadedRef.current) setLoading(true);
+    hasLoadedRef.current = true;
     setError(null);
 
     const { jobs: jobsRepository, timeOff: timeOffRepository } = getModulePorts();
@@ -107,7 +111,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     return () => {
       cancelled = true;
     };
-  }, [session, techId]);
+  }, [session, techId, rev]);
 
   if (session === null) {
     return (
@@ -145,6 +149,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
       <View style={styles.row}>
         <Text style={styles.bullet}>{'•'}</Text>
         <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
+        <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
         <View style={styles.rowBody}>
           <Pressable onPress={() => job.address && copyToClipboard(job.address)}>
             <Text style={styles.address}>{job.address ?? 'No address'}</Text>
@@ -330,7 +335,13 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginRight: 12,
+    marginRight: 4,
+  },
+  statusGlyph: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.text,
+    marginRight: 8,
   },
   rowBody: {
     flex: 1,

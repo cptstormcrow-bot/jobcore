@@ -27,18 +27,13 @@ const paddingHorizontalBySize = { sm: spacing.lg, md: spacing.lg, lg: spacing.lg
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, fullWidth = false, style }: ButtonProps) {
   const isOutline = variant === 'outline';
-  // White label text on colors.secondary (#E8740C) is ~3.0:1 contrast — under
-  // WCAG AA's 4.5:1 for normal text. secondaryDark (#C46000, already a defined
-  // brand token) raises that to ~4.2:1 without inventing a new color or
-  // touching the sdassemblypro.com site palette itself.
+  // No orange anywhere (Jeff rule): accent is navy (colors.primary) with white label text.
   // primary uses a lighter tan (#E1AF80) background per user decision; white
   // label text on that tan only reaches ~2.0:1 contrast (fails WCAG AA), so
   // primary's label uses colors.primary (dark navy) instead of white below.
-  const bg = variant === 'accent' ? colors.accent : variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
-  // Same contrast reasoning applies to outline-variant text on white: use
-  // secondaryDark, not secondary, so label text also clears ~4.2:1. secondary's
-  // navy background still contrasts fine with white label text.
-  const labelColor = isOutline ? colors.secondaryDark : variant === 'accent' ? colors.primary : variant === 'primary' ? colors.text : colors.white;
+  const bg = variant === 'accent' ? colors.primary : variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
+  // Outline text is navy on white; accent and secondary are navy backgrounds with white text.
+  const labelColor = isOutline ? colors.primary : variant === 'accent' ? colors.white : variant === 'primary' ? colors.text : colors.white;
   return (
     <Pressable
       onPress={onPress}
@@ -84,7 +79,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  outline: { borderColor: colors.secondary },
+  outline: { borderColor: colors.primary },
   disabled: { opacity: 0.5 },
   label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, textAlign: 'center' },
   labelPrimary: { fontFamily: typography.fontFamily.headingBold, fontWeight: typography.weight.bold },

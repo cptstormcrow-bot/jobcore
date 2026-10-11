@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     backgroundColor: colors.surface,
   },
-  boxChecked: { backgroundColor: colors.secondary, borderColor: colors.secondary },
+  boxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
   checkMark: { width: 10, height: 10, borderRadius: radius.sm / 2, backgroundColor: colors.white },
   label: { fontFamily: typography.fontFamily.body, fontSize: typography.size.body, color: colors.text },
 });

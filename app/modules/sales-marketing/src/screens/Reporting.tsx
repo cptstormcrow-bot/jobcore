@@ -246,9 +246,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   notice: {
-    backgroundColor: '#fff4e5',
+    backgroundColor: colors.gold,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.accent,
+    borderColor: colors.primary,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,

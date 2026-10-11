@@ -11,7 +11,7 @@ export interface LoadingStateProps {
 export function LoadingState({ label, style }: LoadingStateProps) {
   return (
     <View style={[styles.container, style]}>
-      <ActivityIndicator color={colors.secondary} size="large" />
+      <ActivityIndicator color={colors.primary} size="large" />
       {label ? <Text style={styles.label}>{label}</Text> : null}
     </View>
   );

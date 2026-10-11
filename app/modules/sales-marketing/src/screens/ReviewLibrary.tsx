@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   },
   rating: {
     fontSize: 15,
-    color: colors.accent,
+    color: colors.primary,
   },
   author: {
     fontSize: 15,

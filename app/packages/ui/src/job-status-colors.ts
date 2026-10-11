@@ -6,22 +6,41 @@ import type { JobStatus } from '@jobcore/core';
 import { colors } from './tokens';
 
 /**
- * Every JobStatus gets a distinct colour. The Record<JobStatus, string> annotation
- * is load-bearing: adding a member to the union breaks this file at compile time.
+ * Every JobStatus gets a colour plus a glyph (JOB_STATUS_GLYPHS below). Several
+ * navy shades repeat, so the glyph is the non-colour cue. The Record<JobStatus, string>
+ * annotation on both maps is load-bearing: adding a member to the union breaks this
+ * file at compile time.
  */
 export const JOB_STATUS_COLORS: Record<JobStatus, string> = {
   new: colors.textMuted,
   qualified: colors.info,
   scheduled: colors.primaryLight,
   assigned: colors.primary,
-  accepted: colors.accent,
-  en_route: colors.secondaryLight,
-  in_progress: colors.secondary,
+  accepted: colors.primaryLight,
+  en_route: colors.primary,
+  in_progress: colors.primaryDark,
   completed: colors.success,
-  paid: colors.secondaryDark,
+  paid: colors.primaryDark,
   closed: colors.primaryDark,
   declined: colors.danger,
   needs_reschedule: colors.warning,
   cancelled: colors.textLight,
   archived: colors.textMutedDark,
+};
+
+export const JOB_STATUS_GLYPHS: Record<JobStatus, string> = {
+  new: 'N',
+  qualified: 'Q',
+  scheduled: 'S',
+  assigned: 'A',
+  accepted: 'Ac',
+  en_route: 'ER',
+  in_progress: 'IP',
+  completed: '✓',
+  paid: '$',
+  closed: 'C',
+  declined: '✕',
+  needs_reschedule: '!',
+  cancelled: '–',
+  archived: 'Ar',
 };
