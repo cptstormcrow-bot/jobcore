@@ -26,7 +26,9 @@ const registry = new Map(registryEntries.filter((e) => !e.retiredAt).map((e) => 
 {
   const screenKeys = new Set(src.screens.map((s) => s.key));
   const offenders = [];
-  for (const k of screenKeys) if (!registry.has(k)) offenders.push(`screen key with no active registry entry: ${k}`);
+  const unnumbered = [];
+  for (const k of screenKeys) if (!registry.has(k)) unnumbered.push(k);
+  if (unnumbered.length) console.warn(`WARNING: ${unnumbered.length} screen key(s) with no active registry entry; they render last as unnumbered: ${unnumbered.join(', ')}`);
   for (const k of registry.keys()) if (!screenKeys.has(k)) offenders.push(`active registry entry with no screen key: ${k}`);
   if (offenders.length) { console.error(`REGISTRY MISMATCH (${offenders.length}) vs ${registryPath}`); for (const o of offenders) console.error('  ' + o); process.exit(1); }
 }
@@ -42,8 +44,10 @@ const HOW_TO = 'Edit _tools/descriptions.json or re-run _tools/extract.mjs, then
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const cmp = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const numOf = (s) => registry.get(s.key)?.number ?? null;
+const numLabel = (s) => { const n = numOf(s); return n == null ? '#----' : '#' + String(n).padStart(4, '0'); };
+const numCmp = (a, b) => ((numOf(a) == null) - (numOf(b) == null)) || ((numOf(a) ?? 0) - (numOf(b) ?? 0)) || cmp(a.key, b.key);
 
-const numIndexHtml = `<section class="num-index"><h2>Screen number index</h2><table><thead><tr><th>#</th><th>key</th><th>title</th><th>route</th><th>file</th><th>created</th></tr></thead><tbody>${[...registry.values()].sort((a, b) => a.number - b.number).map((e) => `<tr><td>#${String(e.number).padStart(4, '0')}</td><td><code>${esc(e.key)}</code></td><td>${esc(e.title)}</td><td>${esc(e.route ?? '')}</td><td>${esc(e.file)}</td><td>${esc(String(e.createdAt ?? '').slice(0, 10))}</td></tr>`).join('')}</tbody></table></section>`;
 // ---------- merge ----------
 const base = [...src.screens].sort((a, b) => cmp(a.key, b.key));
 const merged = base.map((s) => {
@@ -204,7 +208,7 @@ main{padding:var(--sp-3) var(--sp-4)}table{border-collapse:collapse;background:v
 .chip{display:inline-block;border-radius:var(--r-pill);padding:1px 10px;font-size:12px;margin:0 4px 4px 0;background:var(--c-surfaceAlt);color:var(--c-textLight);border:1px solid var(--c-border)}
 .chip.bad{background:var(--c-danger);color:#fff;border-color:var(--c-danger)}.chip.role{background:var(--c-primaryLight);color:#fff;border-color:var(--c-primaryLight)}
 `;
-const toolbarHtml = (extra) => `<div class="toolbar"><span>Sort:</span><button type="button" class="on" data-sort="flow">Job flow</button><button type="button" data-sort="alpha">Alphabetical</button><input type="search" id="filter" placeholder="Filter screens (key, title, route, file)"><span>Device:</span><span class="devtoggle" role="group" aria-label="Device"><button type="button" class="on" data-device-btn="phone">Phone</button><button type="button" data-device-btn="pad">Pad</button></span>${extra || ''}</div>`;
+const toolbarHtml = (extra, numSort) => `<div class="toolbar"><span>Sort:</span>${numSort ? '<button type="button" class="on" data-sort="num">Screen #</button><button type="button" data-sort="flow">Job flow</button><button type="button" data-sort="alpha">Alphabetical</button>' : '<button type="button" class="on" data-sort="flow">Job flow</button><button type="button" data-sort="alpha">Alphabetical</button>'}<input type="search" id="filter" placeholder="Filter screens (key, title, route, file)"><span>Device:</span><span class="devtoggle" role="group" aria-label="Device"><button type="button" class="on" data-device-btn="phone">Phone</button><button type="button" data-device-btn="pad">Pad</button></span>${extra || ''}</div>`;
 const DEV_JS = `(function(){var K='jobcore-ui-device',m=document.querySelector('main'),bs=document.querySelectorAll('.toolbar button[data-device-btn]');
 function set(d){if(m)m.setAttribute('data-device',d);bs.forEach(function(b){b.classList.toggle('on',b.dataset.deviceBtn===d)})}
 var d='phone';try{var v=localStorage.getItem(K);if(v==='phone'||v==='pad')d=v}catch(e){}
@@ -247,7 +251,7 @@ function card(s) {
     ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
       `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
     { g: 'h', h: '<h3>Titles / tags / endpoints</h3>' },
-    ...[kv('Screen #', `#${String(registry.get(s.key).number).padStart(4, '0')}`), kv('id / key', `<code>${esc(s.key)}</code>`), kv('kind', val(s.kind)), kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
+    ...[kv('id / key', `<code>${esc(s.key)}</code>`), kv('kind', val(s.kind)), kv('title', val(s.title)), kv('titleInSource', val(s.titleInSource)), kv('route', val(s.route)), kv('subView', val(s.subView)),
       kv('testIDs', list(s.testIDs)), kv('accessibilityLabels', list(s.accessibilityLabels)), kv('buttonLabels', list(s.buttonLabels)), kv('pickers', list(s.pickers)),
       kv('menus', list(s.menus)), kv('components (top 8)', compsHtml), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
     { g: 'h', h: '<h3>Navigation targets</h3>' },
@@ -270,13 +274,14 @@ function card(s) {
   const body = runs(0, units.length, brks.length ? brks[0] : null);
   const chips = `${roles}<span class="chip">${esc(s.kind)}</span>`;
   const conts = brks.map((from, i) => `<section class="cont" data-cont-of="${esc(s.key)}">
-<div class="cont-head"><strong>${esc(s.title || s.key)}</strong> ${chips} <span class="muted">continued - page ${i + 2} of ${brks.length + 1}</span></div>
+<div class="cont-head"><strong>${numLabel(s)} ${esc(s.title || s.key)}</strong> ${chips} <span class="muted">continued - page ${i + 2} of ${brks.length + 1}</span></div>
 ${runs(from, i + 1 < brks.length ? brks[i + 1] : units.length)}
 </section>`).join('\n');
   return `<!-- screen:${s.key} -->
-<article class="screen-card" id="screen-${esc(s.key)}" ${dataAttrs(s)} data-search="${esc(searchText(s))}">
+<article class="screen-card" id="screen-${esc(s.key)}" ${dataAttrs(s)} data-screen-num="${numOf(s) ?? ''}" data-search="${esc(searchText(s))}">
 <div class="mock">${renderMockup(s)}</div>
 <div class="info">
+<div class="num-strip"><span class="num-big">${numLabel(s)}</span><span class="num-key">${esc(s.key)}</span></div>
 <h2>${esc(s.title || s.key)}</h2>
 <div>${roles}</div>
 <div><span class="chip">${esc(s.kind)}</span><span class="chip">${esc(s.module ?? 'no module')}</span><span class="chip">mounted: ${esc(s.mounted)}</span>${unm ? '<span class="chip bad">NOT MOUNTED</span>' : ''}<span class="chip" style="background:${statusColor(fs_)};color:#fff;border-color:${statusColor(fs_)}">${esc(String(fs_).replace(/_/g, ' '))}</span><span class="chip">${esc(s.specStage)}</span></div>
@@ -292,7 +297,7 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .screen-card.hide{display:none}.screen-card:target{border-color:var(--c-secondary);box-shadow:0 0 0 2px var(--c-secondary)}
 .mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
-.num-index table{border-collapse:collapse;width:100%;font-size:12px}.num-index th,.num-index td{border:1px solid var(--c-border);padding:2px 6px;text-align:left}.num-index{margin-bottom:var(--sp-3)}.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
+.num-strip{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:4px}.num-big{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}.num-key{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--c-textMuted)}.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
 .head-row{display:block}.head-row>h3{margin-top:var(--sp-2)}.info h3+table{width:auto;min-width:0}
 .claim-box{float:right;width:32%;margin:0 0 6px 12px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:9px;background:#fafafa}
 .comp-wrap{display:flex;flex-wrap:wrap;gap:3px;overflow-wrap:anywhere}.comp-wrap span{border:1px solid #ddd;border-radius:3px;padding:0 4px}
@@ -300,7 +305,7 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 @media print{@page{size:A4 landscape;margin:10mm}
 body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .toolbar,header.top{display:none!important}.toolbar{position:static}
-main{padding:0}.num-index{break-after:page;page-break-after:always;font-size:10px}.sums{display:none}.grid{display:block;margin:0}
+main{padding:0}.sums{display:none}.grid{display:block;margin:0}
 .screen-card{display:flex;box-shadow:none;box-sizing:border-box;min-height:189mm;padding:8px;gap:12px;border-radius:0}
 .screen-card:target{box-shadow:none;border-color:var(--c-border)}
 .screen-card.hide{display:none}
@@ -313,21 +318,20 @@ main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}
 section.cont{display:block;break-before:page;page-break-before:always;padding:8px;box-sizing:border-box}section.cont.hide{display:none}
 section.cont tr,section.cont li,section.cont .ident>div{break-inside:avoid;page-break-inside:avoid}}`;
 const INV_JS = `(function(){var g=document.getElementById('grid'),bs=document.querySelectorAll('.toolbar button[data-sort]'),f=document.getElementById('filter');
-function sortBy(m){var c=[].slice.call(g.querySelectorAll('.screen-card'));c.sort(function(a,b){return m==='flow'?(+a.dataset.flowRank-+b.dataset.flowRank):(a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0)});c.forEach(function(n){g.appendChild(n);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)g.appendChild(x)})});bs.forEach(function(b){b.classList.toggle('on',b.dataset.sort===m)})}
+function sortBy(m){var c=[].slice.call(g.querySelectorAll('.screen-card'));c.sort(function(a,b){if(m==='num'){var an=a.dataset.screenNum===''?1:0,bn=b.dataset.screenNum===''?1:0;if(an!==bn)return an-bn;if(an===0&&a.dataset.screenNum!==b.dataset.screenNum)return +a.dataset.screenNum-+b.dataset.screenNum;return a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0}return m==='flow'?(+a.dataset.flowRank-+b.dataset.flowRank):(a.dataset.screenKey<b.dataset.screenKey?-1:a.dataset.screenKey>b.dataset.screenKey?1:0)});c.forEach(function(n){g.appendChild(n);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)g.appendChild(x)})});bs.forEach(function(b){b.classList.toggle('on',b.dataset.sort===m)})}
 bs.forEach(function(b){b.addEventListener('click',function(){sortBy(b.dataset.sort)})});
-f.addEventListener('input',function(){var q=f.value.toLowerCase();g.querySelectorAll('.screen-card').forEach(function(n){var h=q&&n.dataset.search.indexOf(q)<0;n.classList.toggle('hide',h);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)x.classList.toggle('hide',h)})})});sortBy('flow')})();`;
+f.addEventListener('input',function(){var q=f.value.toLowerCase();g.querySelectorAll('.screen-card').forEach(function(n){var h=q&&n.dataset.search.indexOf(q)<0;n.classList.toggle('hide',h);g.querySelectorAll('.cont').forEach(function(x){if(x.dataset.contOf===n.dataset.screenKey)x.classList.toggle('hide',h)})})});sortBy('num')})();`;
 const inventoryHtml = `<!doctype html>
 ${aiIndex('ui-inventory.html')}
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobCore UI Inventory v${esc(data.appVersion)}</title>
 ${FONT_LINK}
 <style>${cssVars()}${BASE_CSS}${INV_CSS}${FRAME_CSS}</style></head><body>
 ${headerHtml('UI Inventory')}
-${toolbarHtml()}
+${toolbarHtml(undefined, true)}
 <main data-device="phone">
 <div class="sums">${countTable('By kind', countBy((s) => s.kind))}${countTable('By module', countBy((s) => s.module ?? 'none'))}${countTable('By mounted', countBy((s) => s.mounted))}</div>
-${numIndexHtml}
 <div class="grid" id="grid">
-${screensOut.map(card).join('\n')}
+${[...screensOut].sort(numCmp).map(card).join('\n')}
 </div>
 </main>
 ${dataScript}

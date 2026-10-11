@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render ui-inventory.html to PDF with Edge headless, then add one bookmark per screen.
 
-Bookmark title: "<UI Inventory ID> - <screen title>" (the ID is the screen key, shown in the
+Bookmarks are in screen-number order (unnumbered screens last, then by key). Bookmark title: "<UI Inventory ID> - <screen title>" (the ID is the screen key, shown in the
 "id / key" table row and the "key:" identifier line of each card).
 Usage: python render-pdf.py [--html PATH] [--out PDF] [--bookmarks-only]
 """
@@ -29,7 +29,7 @@ def load_numbers():
     return {e["key"]: int(e["number"]) for e in entries if not e.get("retired") and not e.get("retiredAt")}
 
 
-def parse_screens(html_path):
+def parse_screens(html_path, numbers):
     with open(html_path, "r", encoding="utf-8") as f:
         src = f.read()
     pat = re.compile(
@@ -40,8 +40,9 @@ def parse_screens(html_path):
         key = html.unescape(m.group(1))
         title = html.unescape(re.sub(r"<[^>]+>", "", m.group(3))).strip()
         screens.append({"key": key, "rank": float(m.group(2)), "title": title, "src": i})
-    # in-browser sortBy('flow') is a stable sort on flow rank (generate.mjs sortBy)
-    screens.sort(key=lambda s: (s["rank"], s["src"]))
+    # the in-browser default sort is by screen number (unnumbered last, then key),
+    # so the Python order must match it
+    screens.sort(key=lambda s: (numbers.get(s["key"]) is None, numbers.get(s["key"], 0), s["key"]))
     return screens
 
 
@@ -75,7 +76,11 @@ def map_pages(screens, page_texts, numbers):
             sys.exit(3)
         used.add(found)
         prev = found
-        result.append(("#%04d %s - %s" % (numbers[key], key, s["title"]), found))
+        num = numbers.get(key)
+        if num is None:
+            result.append(("#---- %s - %s" % (key, s["title"]), found))
+        else:
+            result.append(("#%04d %s - %s" % (num, key, s["title"]), found))
     return result
 
 
@@ -104,12 +109,12 @@ def main():
     html_path = os.path.abspath(a.html)
     out = os.path.abspath(a.out)
     outdir = os.path.dirname(out)
-    screens = parse_screens(html_path)
     numbers = load_numbers()
+    screens = parse_screens(html_path, numbers)
     missing = [s["key"] for s in screens if s["key"] not in numbers]
     if missing:
-        print("ERROR: screen key(s) with no registry number in %s: %s" % (REGISTRY, ", ".join(missing)))
-        sys.exit(5)
+        print("WARNING: screen key(s) with no registry number in %s (unnumbered; placed last): %s"
+              % (REGISTRY, ", ".join(missing)), file=sys.stderr)
     tmp_files = []
     profile = None
     try:
