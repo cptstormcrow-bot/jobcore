@@ -1326,6 +1326,7 @@ export function AdminFinanceRoot() {
           timeOffAdmin={ports.timeOffAdmin}
           initialTechId={blackoutInitialTechId}
           onSaved={handleBlackoutEditorSaved}
+          onChanged={refreshJobs}
           onCancel={handleBlackoutEditorCancel}
         />
       ) : subView === 'employee-job-detail' ? (

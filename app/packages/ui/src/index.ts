@@ -17,6 +17,7 @@ export * from './Toggle';
 export * from './WeekView';
 export * from './MonthView';
 export * from './CalendarHeader';
+export * from './DateRangeCalendar';
 export * from './Checkbox';
 export * from './JobProgressBar';
 export * from './ScreenTitle';

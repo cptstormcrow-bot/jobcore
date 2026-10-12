@@ -13,11 +13,10 @@
  * only via an org admin, enforced by the `time_off_requests_admin_all` RLS
  * policy (L280-284 of the same migration) rather than by this file.
  *
- * Unlike reimbursements, there is no approve/deny RPC declared for
- * time-off in any migration — the admin RLS policy already grants direct
- * update access, so `approve`/`deny` here are plain table writes (mirrors
- * `CalendarEventRepository.create`'s direct-insert discipline in
- * `ports.ts`), not RPC-backed like `approveReimbursementViaRpc`.
+ * Unlike reimbursements, time-off has no admin approve/deny step: a database
+ * trigger auto-decides each request (admin-created blackouts are
+ * auto-approved; migration 0035), so approve/deny are no longer exposed on
+ * this repo. `cancel` is the only admin mutation besides create.
  */
 
 /* ------------------------------------------------------------------ *
@@ -89,15 +88,15 @@ export function toTimeOffRequestAdmin(row: TimeOffRequestAdminRow): TimeOffReque
  * ------------------------------------------------------------------ */
 
 /**
- * Admin-wide read + approve/deny access to time-off requests. Distinct from
+ * Admin-wide read + create/cancel access to time-off requests. Distinct from
  * field-tech's `TimeOffRepository`, which only exposes `listForTech` /
  * `create` for the requesting tech's own view.
  *
- * `approve` also creates a `calendar_events` row (non-job event, `job_id`
- * null, `kind: 'time_off'`) so the approved range shows on the shared
- * calendar — that second write happens in the host implementation
- * (`apps/mobile/src/lib/admin-finance-repos.ts`), reusing the existing
- * `CalendarEventRepository.create`, not duplicated here.
+ * A database trigger auto-decides each request (migration 0035), so there is
+ * no approve/deny here. `createBlackout(organizationId, techId, draft)` is
+ * used by the #0056 Add Blackout calendar screen (`BlackoutEditorScreen`);
+ * admin-created blackouts are auto-approved. `cancel` is the only admin
+ * mutation besides create.
  */
 export interface TimeOffAdminRepo {
   /** All time-off requests for the organization, in any status. */
