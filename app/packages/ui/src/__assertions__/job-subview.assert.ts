@@ -24,10 +24,11 @@ test('jobSubViewFor table', () => {
   assert.equal(jobSubViewFor(inp({ region: 'schedule' })), 'job:schedule');
   assert.equal(jobSubViewFor(inp({ region: 'estimate', isTechEstimate: false })), 'jobEstimate');
   assert.equal(jobSubViewFor(inp({ region: 'estimate', isTechEstimate: true })), 'job:estimate-tech');
+  assert.equal(jobSubViewFor(inp({ region: 'closeout' })), 'closeOutReview');
   assert.equal(jobSubViewFor(inp({ region: 'bogus' })), undefined);
   for (const s of JOB_ACTION_STAGES) {
     assert.equal(jobSubViewFor(inp({ activeStage: s })), `job:${s}`);
-    for (const region of ['details', 'plan', 'evisit', 'assign', 'schedule', 'estimate']) {
+    for (const region of ['details', 'plan', 'evisit', 'assign', 'schedule', 'estimate', 'closeout']) {
       assert.equal(jobSubViewFor(inp({ region, activeStage: s })), `job:${s}`);
     }
   }
@@ -51,6 +52,7 @@ const REG: RegistryEntry[] = [
   e(76, 'job-region-arrive', 'job:arrive'),
   e(77, 'job-region-complete', 'job:complete'),
   e(78, 'job-region-paid', 'job:paid'),
+  e(18, 'af-closeOutReview', 'closeOutReview', { file: 'modules/admin-finance/src/screens/CloseOutReviewScreen.tsx' }),
   e(70, 'af-shell', undefined, { route: '/m/admin-finance', file: AF }),
 ];
 
@@ -62,6 +64,7 @@ test('end-to-end resolve', () => {
   assert.equal(n({ region: 'schedule' }), 58);
   assert.equal(n({ region: 'estimate', isTechEstimate: true }), 59);
   assert.equal(n({ region: 'evisit' }), 61);
+  assert.equal(n({ region: 'closeout' }), 18);
   assert.equal(n({ activeStage: 'contact' }), 75);
   assert.equal(n({ activeStage: 'arrive' }), 76);
   assert.equal(n({ activeStage: 'complete' }), 77);

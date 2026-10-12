@@ -69,6 +69,8 @@ export interface CloseOutReviewScreenProps {
   contractorPayouts?: { contractorName: string; amount: number }[];
   /** Itemized customer contacts (e.g. phone/email/alt-phone). */
   customerContacts?: { label: string; value: string }[];
+  /** Hosted inside the job page: no title, no flex root, no nested scroller. */
+  embedded?: boolean;
 }
 
 export function CloseOutReviewScreen({
@@ -85,6 +87,7 @@ export function CloseOutReviewScreen({
   techPayouts,
   contractorPayouts,
   customerContacts,
+  embedded,
 }: CloseOutReviewScreenProps) {
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
 
@@ -96,10 +99,14 @@ export function CloseOutReviewScreen({
     );
   }
 
+  // Embedded: host page owns scrolling and header, so no flex root, title or nested ScrollView.
+  const Body: React.ComponentType<any> = embedded ? View : ScrollView;
+  const bodyProps = embedded ? {} : { contentContainerStyle: styles.content };
+
   return (
-    <View style={styles.screen}>
-      <ScreenTitle title="Close-Out Review" />
-      <ScrollView contentContainerStyle={styles.content}>
+    <View style={embedded ? undefined : styles.screen}>
+      {!embedded && <ScreenTitle title="Close-Out Review" />}
+      <Body {...bodyProps}>
         <Card style={styles.headerCard}>
           <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
           <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
@@ -201,7 +208,7 @@ export function CloseOutReviewScreen({
             disabled={blockers.length > 0}
           />
         </Card>
-      </ScrollView>
+      </Body>
     </View>
   );
 }

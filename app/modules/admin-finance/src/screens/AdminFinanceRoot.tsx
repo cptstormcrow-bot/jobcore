@@ -51,8 +51,6 @@ import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
 import { PlanningScreen } from './PlanningScreen';
 import { JobEstimateScreen } from './JobEstimateScreen';
-import { CloseOutQueueScreen } from './CloseOutQueueScreen';
-import { CloseOutReviewScreen } from './CloseOutReviewScreen';
 import { PriceSheetEditorScreen } from './PriceSheetEditorScreen';
 import { PriceSheetCreateScreen } from './PriceSheetCreateScreen';
 import { EmployeeRosterScreen } from './EmployeeRosterScreen';
@@ -61,13 +59,12 @@ import { EmployeeDetailScreen } from './EmployeeDetailScreen';
 import { EmployeeJobDetailScreen } from './EmployeeJobDetailScreen';
 import { BlackoutEditorScreen } from './BlackoutEditorScreen';
 import { EmployeeInvitationsScreen } from './EmployeeInvitationsScreen';
-import type { CloseOutPhoto, TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
+import type { TechServiceArea, ServiceArea, TechSkill } from '../data/ports';
 import type { Lead } from '../domain/lead';
 import { assignJob } from '../flows/assign-job';
 import { unassignJob } from '../flows/unassign-job';
 import { assignInvestigator } from '../flows/assign-investigator';
 import { qualifyLead } from '../flows/qualify-lead';
-import { closeOutJob } from '../flows/close-out-job';
 import type { TechColumnTech } from '../components/TechColumn';
 
 type SubView =
@@ -75,7 +72,6 @@ type SubView =
   | 'leadInbox' | 'leadCreate' | 'qualify' | 'leadEdit'
   | 'planning' | 'jobEstimate'
   | 'assignmentBoard'
-  | 'closeOutQueue' | 'closeOutReview'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'timeOffQueue'
   | 'reports'
@@ -88,7 +84,6 @@ type SubView =
 const TOP: Partial<Record<SubView, SubView>> = {
   leadCreate: 'leadInbox', qualify: 'leadInbox', leadEdit: 'leadInbox',
   planning: 'jobs', jobEstimate: 'jobs',
-  closeOutReview: 'closeOutQueue',
   priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
@@ -169,10 +164,7 @@ export function AdminFinanceRoot() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [qualifying, setQualifying] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [selectedCloseOutJob, setSelectedCloseOutJob] = useState<Job | null>(null);
   const [selectedPriceSheetId, setSelectedPriceSheetId] = useState<string | null>(null);
-  const [closeOutPhotos, setCloseOutPhotos] = useState<CloseOutPhoto[]>([]);
-  const [closeOutNotes, setCloseOutNotes] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState<Profile | null>(null);
   const [employeeHoursWorked, setEmployeeHoursWorked] = useState<{ week: number; month: number; year: number } | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
@@ -588,27 +580,6 @@ export function AdminFinanceRoot() {
   }
 
   useEffect(() => {
-    if (!selectedCloseOutJob) {
-      setCloseOutPhotos([]);
-      setCloseOutNotes('');
-      return undefined;
-    }
-    let cancelled = false;
-    Promise.all([
-      ports.closeOutPhotos.listForJob(selectedCloseOutJob.id),
-      ports.closeOutNotes.getForJob(selectedCloseOutJob.id),
-    ]).then(([photos, notes]) => {
-      if (!cancelled) {
-        setCloseOutPhotos(photos);
-        setCloseOutNotes(notes);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCloseOutJob, ports.closeOutPhotos, ports.closeOutNotes]);
-
-  useEffect(() => {
     if (subView !== 'employee-detail' || !selectedEmployee) {
       return undefined;
     }
@@ -681,48 +652,6 @@ export function AdminFinanceRoot() {
   function handleQualifyCancel() {
     setQualifyError(null);
     setSubView('leadEdit');
-  }
-
-  function handleSelectCloseOutJob(job: Job) {
-    setSelectedCloseOutJob(job);
-    setSubView('closeOutReview');
-  }
-
-  function handleRemovePhoto(photoId: string) {
-    void ports.closeOutPhotos.remove(photoId).then(() => {
-      setCloseOutPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
-    });
-  }
-
-  function handleChangeNotes(notes: string) {
-    setCloseOutNotes(notes);
-    if (selectedCloseOutJob) {
-      void ports.closeOutNotes.upsert(selectedCloseOutJob.id, notes);
-    }
-  }
-
-  function handleCloseOut(job: Job) {
-    if (!session) {
-      return;
-    }
-    void closeOutJob(job, {
-      ctx: { role: session.role, now: () => new Date().toISOString() },
-      jobs: jobRepository,
-      calendarEvents: ports.calendarEvents,
-      priceSheetRepository: ports.priceSheets,
-      // TODO(forward contract): no per-actor CompensationPolicy repository/field
-      // exists yet on ModuleSession or ModulePorts — placeholder zero-policy
-      // used until one is wired up.
-      compensationPolicy: { id: '', organizationId: session.org.id, commissionBasisPercent: 0, hourlyRate: 0 },
-      rates: [],
-      commissionRepository: commissionRepository,
-      closedByUserId: session.userId,
-    }).then((result) => {
-      if (result.ok) {
-        setSelectedCloseOutJob(null);
-        setSubView('closeOutQueue');
-      }
-    });
   }
 
   function handleSelectPriceSheet(sheetId: string) {
@@ -984,7 +913,6 @@ export function AdminFinanceRoot() {
           { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox'), isActive: (TOP[subView] ?? subView) === 'leadInbox' },
           { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs'), isActive: (TOP[subView] ?? subView) === 'jobs' },
           { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard'), isActive: (TOP[subView] ?? subView) === 'assignmentBoard' },
-          { id: 'closeOutQueue', label: 'Close-Outs', onPress: () => goTop('closeOutQueue'), isActive: (TOP[subView] ?? subView) === 'closeOutQueue' },
           { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
           { id: 'payments', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
           { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
@@ -1152,46 +1080,6 @@ export function AdminFinanceRoot() {
           serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
           onPublished={handlePublished}
         />
-      ) : subView === 'closeOutQueue' ? (
-        loadState.kind === 'loading' || loadState.kind === 'idle' ? (
-          <LoadingState label="Loading jobs..." />
-        ) : loadState.kind === 'failed' ? (
-          <ErrorState message={loadState.message} />
-        ) : (
-          <CloseOutQueueScreen
-            jobs={loadState.jobs}
-            ctx={{ role: session.role, now: () => new Date().toISOString() }}
-            onSelectJob={handleSelectCloseOutJob}
-            customerNames={customerNames}
-            techNames={techNames}
-          />
-        )
-      ) : subView === 'closeOutReview' ? (
-        selectedCloseOutJob ? (
-          <CloseOutReviewScreen
-            job={selectedCloseOutJob}
-            ctx={{ role: session.role, now: () => new Date().toISOString() }}
-            photos={closeOutPhotos}
-            notes={closeOutNotes}
-            onRemovePhoto={handleRemovePhoto}
-            onChangeNotes={handleChangeNotes}
-            onCloseOut={handleCloseOut}
-            // TODO(forward-contract): wire real timeEntries once available
-            hoursLogged={undefined}
-            // TODO(forward-contract): resolve tech payouts from commissions/payments once wired
-            techPayouts={undefined}
-            // TODO(forward-contract): resolve contractor payouts from price sheet once wired
-            contractorPayouts={undefined}
-            // TODO(forward-contract): no locally-resolved customer object (with phone/email) is
-            // available for the selected close-out job — only customerNames (id -> name) exists;
-            // wire once a customer lookup is available here without adding a new repository call.
-            customerContacts={undefined}
-          />
-        ) : (
-          <View style={styles.screen}>
-            <EmptyState title="Close out" message="No job selected." />
-          </View>
-        )
       ) : subView === 'timeOffQueue' ? (
         <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} />
       ) : subView === 'payments' ? (
@@ -1445,8 +1333,6 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   planning: 'Planning',
   jobEstimate: 'Job Estimate',
   assignmentBoard: 'Assignments',
-  closeOutQueue: 'Close-Outs',
-  closeOutReview: 'Close-Out Review',
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',
   priceSheetCreate: 'New Price Sheet',

@@ -10,9 +10,9 @@ import assert from 'node:assert/strict';
 import { buildOverviewCards } from '../overview-cards';
 
 // Manual mirror of the hamburger menu in AdminFinanceRoot.tsx (that file is
-// .tsx and cannot load under npm test): 'overview' plus the 11 card ids.
+// .tsx and cannot load under npm test): 'overview' plus the 10 card ids.
 const HAMBURGER_IDS = [
-  'overview', 'leadInbox', 'jobs', 'assignmentBoard', 'closeOutQueue', 'priceSheetList',
+  'overview', 'leadInbox', 'jobs', 'assignmentBoard', 'priceSheetList',
   'payments', 'paymentReview', 'timeOffQueue', 'calendar', 'reports', 'employee-roster',
 ];
 
@@ -34,18 +34,18 @@ const ZERO = {
   needsAttentionPayments: 0 as number | null,
 };
 
-test('returns 11 rows in menu order', () => {
+test('returns 10 rows in menu order', () => {
   const cards = buildOverviewCards(COUNTS);
-  assert.equal(cards.length, 11);
+  assert.equal(cards.length, 10);
   assert.deepEqual(cards.map((c) => c.id), [
-    'leadInbox', 'jobs', 'assignmentBoard', 'closeOutQueue', 'priceSheetList',
+    'leadInbox', 'jobs', 'assignmentBoard', 'priceSheetList',
     'payments', 'paymentReview', 'timeOffQueue', 'calendar', 'reports', 'employee-roster',
   ]);
 });
 
 test('titles are in exact order', () => {
   assert.deepEqual(buildOverviewCards(COUNTS).map((c) => c.title), [
-    'Leads', 'Jobs', 'Assignments', 'Close-Outs', 'Price Sheets', 'Payments & Payouts',
+    'Leads', 'Jobs', 'Assignments','Price Sheets', 'Payments & Payouts',
     'Review', 'Time off', 'Calendar', 'Reports', 'Employees',
   ]);
 });
@@ -67,7 +67,6 @@ test('count interpolation with distinct values', () => {
   const sub = (id: string) => buildOverviewCards(COUNTS).find((c) => c.id === id)?.subtitle;
   assert.equal(sub('jobs'), '7 on file for this organization');
   assert.equal(sub('assignmentBoard'), '3 qualified or scheduled');
-  assert.equal(sub('closeOutQueue'), '2 awaiting close-out');
   assert.equal(sub('paymentReview'), '25 pending');
   assert.equal(sub('timeOffQueue'), '4 pending');
   assert.equal(sub('employee-roster'), '9 on file');

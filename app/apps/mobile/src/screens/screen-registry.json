@@ -146,7 +146,7 @@
     "number": 18,
     "key": "af-closeOutReview",
     "title": "Close-Out Review",
-    "route": null,
+    "route": "/job/[jobId]",
     "file": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
     "createdAt": "2026-08-08T13:07:53-07:00",
     "subView": "closeOutReview"

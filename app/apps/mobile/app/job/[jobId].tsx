@@ -5,6 +5,7 @@
 // JobCore screen #0076 - job-region-arrive - Arrive
 // JobCore screen #0077 - job-region-complete - Complete
 // JobCore screen #0078 - job-region-paid - Paid
+// JobCore screen #0018 - job-region-closeout - Close-out
 // Calendar-entry drilldown: renders a single job's unified Job Details
 // screen (pinned JobHeader + single-scroll region body) from its id route
 // param. Region switching replaces the old full-screen panel early-returns;
@@ -21,6 +22,7 @@ import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import { AssignTechRegion } from '../../src/components/AssignTechRegion';
+import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -1383,6 +1385,9 @@ export default function JobDrilldownScreen() {
             testID="job-progress-bar"
           />
         ) : null}
+    ...(role === 'owner' || role === 'admin'
+      ? [{ id: 'closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }]
+      : []),
       </View>
       <View style={styles.rule} />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
@@ -1510,6 +1515,9 @@ export default function JobDrilldownScreen() {
           />
         </View>
       )}
+        {region === 'closeout' && role && (
+          <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
+        )}
     </View>
   );
 }

@@ -5,7 +5,7 @@
  */
 
 export type OverviewCardId =
-  | 'leadInbox' | 'jobs' | 'assignmentBoard' | 'closeOutQueue' | 'priceSheetList'
+  | 'leadInbox' | 'jobs' | 'assignmentBoard' |'priceSheetList'
   | 'payments' | 'paymentReview' | 'timeOffQueue' | 'calendar' | 'reports' | 'employee-roster';
 
 export interface OverviewCounts {
@@ -33,7 +33,6 @@ export function buildOverviewCards(counts: OverviewCounts): OverviewCard[] {
     { id: 'leadInbox', title: 'Leads', subtitle: 'View leads' },
     { id: 'jobs', title: 'Jobs', subtitle: `${counts.jobsOnFile} on file for this organization` },
     { id: 'assignmentBoard', title: 'Assignments', subtitle: `${counts.qualifiedOrScheduled} qualified or scheduled` },
-    { id: 'closeOutQueue', title: 'Close-Outs', subtitle: `${counts.awaitingCloseOut} awaiting close-out` },
     { id: 'priceSheetList', title: 'Price Sheets', subtitle: 'Rates and area adjustments' },
     { id: 'payments', title: 'Payments & Payouts', subtitle: 'Payments and payout batches' },
     { id: 'paymentReview', title: 'Review', subtitle: review },

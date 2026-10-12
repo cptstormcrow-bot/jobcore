@@ -22,6 +22,8 @@ export function jobSubViewFor(input: JobSubViewInput): string | undefined {
       return 'job:assign';
     case 'schedule':
       return 'job:schedule';
+    case 'closeout':
+      return 'closeOutReview';
     case 'estimate':
       return input.isTechEstimate ? 'job:estimate-tech' : 'jobEstimate';
     default:
