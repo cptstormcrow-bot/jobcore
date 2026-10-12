@@ -334,7 +334,7 @@
       ]
     },
     "af-timeOffQueue": {
-      "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list. An \"Add Blackout\" button opens the blackout editor; each row has a \"Cancel\" button. Pending requests are decided automatically.",
+      "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list, with a read-only Blackout calendar below them. An \"Add Blackout\" button opens the blackout editor; each Upcoming row has a \"Cancel\" button. The calendar shows pending and approved blackouts on a Month view by default (Week is remembered on this device), with a picker to show All Techs or one tech. Pending requests are decided automatically.",
       "flowStage": "none",
       "specStage": "Ancillary",
       "purpose": "Lets owners/admins review technician time-off requests and manage approved blackouts, which feed scheduling.",

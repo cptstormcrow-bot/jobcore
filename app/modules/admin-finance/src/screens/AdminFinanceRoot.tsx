@@ -746,6 +746,11 @@ export function AdminFinanceRoot() {
   const [blackoutInitialTechId, setBlackoutInitialTechId] = useState<string | undefined>(undefined);
   const [blackoutReturnView, setBlackoutReturnView] = useState<SubView>('timeOffQueue');
 
+  const activeTechs =
+    loadState.kind === 'loaded'
+      ? loadState.employees.filter((e) => e.role === 'tech' && e.active)
+      : [];
+
   function handleAddBlackout(initialTechId?: string) {
     setBlackoutInitialTechId(initialTechId);
     setBlackoutReturnView(subView === 'calendar' ? 'calendar' : 'timeOffQueue');
@@ -1081,7 +1086,7 @@ export function AdminFinanceRoot() {
           onPublished={handlePublished}
         />
       ) : subView === 'timeOffQueue' ? (
-        <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} />
+        <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} techs={activeTechs} />
       ) : subView === 'payments' ? (
         <PaymentsHubScreen
           payments={ports.payments}
@@ -1206,11 +1211,7 @@ export function AdminFinanceRoot() {
         />
       ) : subView === 'blackout-editor' ? (
         <BlackoutEditorScreen
-          techs={
-            loadState.kind === 'loaded'
-              ? loadState.employees.filter((e) => e.role === 'tech' && e.active)
-              : []
-          }
+          techs={activeTechs}
           timeOffAdmin={ports.timeOffAdmin}
           initialTechId={blackoutInitialTechId}
           onSaved={handleBlackoutEditorSaved}

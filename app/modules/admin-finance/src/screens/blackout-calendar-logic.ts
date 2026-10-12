@@ -1,4 +1,4 @@
-// JobCore #0056 - pure helpers for the Add Blackout calendar (RN-free so the node test runner can load it)
+// JobCore #0056 / #0047 - pure helpers for the blackout calendars (RN-free so the node test runner can load it)
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 
 export const BLACKOUT_WEEK_VIEW_KEY = 'admin-finance.blackout.week-view';
@@ -56,12 +56,16 @@ export type BlackoutCalendarEvent = {
 };
 
 // One event per active request; startDate/endDate carried so MonthView paints the whole span.
-export function expandBlackoutsToEvents(rows: TimeOffRequestAdmin[]): BlackoutCalendarEvent[] {
+// Optional techNameById (#0047) titles each event with its tech's name; absent ids and no map fall back to 'Day Off'.
+export function expandBlackoutsToEvents(
+  rows: TimeOffRequestAdmin[],
+  techNameById?: Record<string, string>,
+): BlackoutCalendarEvent[] {
   return rows
     .filter((r) => r.status === 'pending' || r.status === 'approved')
     .map((r) => ({
       id: r.id,
-      title: 'Day Off',
+      title: techNameById?.[r.techId] ?? 'Day Off',
       description: r.reason,
       eventTime: `${r.startDate}T12:00:00.000Z`,
       techId: r.techId,

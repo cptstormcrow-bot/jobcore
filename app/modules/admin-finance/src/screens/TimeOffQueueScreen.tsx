@@ -31,11 +31,15 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
+import type { Profile } from '@jobcore/core';
+import { TimeOffTechCalendar } from './TimeOffTechCalendar';
 
 export interface TimeOffQueueScreenProps {
   timeOffAdmin?: TimeOffAdminRepo;
   /** Fired when the "Add Blackout" button is pressed. */
   onAddBlackout?: () => void;
+  /** Active techs for the blackout calendar's tech picker. */
+  techs?: Profile[];
 }
 
 type LoadState =
@@ -56,7 +60,7 @@ function formatDate(value: string): string {
 }
 
 export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
-  const { timeOffAdmin, onAddBlackout } = props;
+  const { timeOffAdmin, onAddBlackout, techs = [] } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [cancelActions, setCancelActions] = useState<Record<string, ActionState>>({});
 
@@ -191,6 +195,7 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
               </Card>
             </>
           ) : null}
+          <TimeOffTechCalendar rows={loadState.items} techs={techs} />
         </ScrollView>
       </View>
     );
@@ -240,6 +245,7 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
             </Card>
           </>
         ) : null}
+        <TimeOffTechCalendar rows={loadState.items} techs={techs} />
       </ScrollView>
     </View>
   );

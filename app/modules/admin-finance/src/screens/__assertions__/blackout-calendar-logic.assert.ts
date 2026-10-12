@@ -70,6 +70,36 @@ test('expandBlackoutsToEvents: multi-day carries span, single day yields one eve
   assert.equal(single[0]?.startDate, single[0]?.endDate);
 });
 
+test('expandBlackoutsToEvents: with a tech-name map each event is titled with its tech', () => {
+  const out = expandBlackoutsToEvents(
+    [
+      row('1', 't1', '2026-03-01', '2026-03-01', 'pending'),
+      row('2', 't2', '2026-03-02', '2026-03-02', 'approved'),
+    ],
+    { t1: 'Ana', t2: 'Ben' },
+  );
+  assert.deepEqual(out.map((e) => e.title), ['Ana', 'Ben']);
+});
+
+test('expandBlackoutsToEvents: with no map every title stays Day Off', () => {
+  const out = expandBlackoutsToEvents([
+    row('1', 't1', '2026-03-01', '2026-03-01', 'pending'),
+    row('2', 't2', '2026-03-02', '2026-03-02', 'approved'),
+  ]);
+  assert.deepEqual(out.map((e) => e.title), ['Day Off', 'Day Off']);
+});
+
+test('expandBlackoutsToEvents: a techId missing from the map falls back to Day Off', () => {
+  const out = expandBlackoutsToEvents(
+    [
+      row('1', 't1', '2026-03-01', '2026-03-01', 'pending'),
+      row('2', 't9', '2026-03-02', '2026-03-02', 'approved'),
+    ],
+    { t1: 'Ana' },
+  );
+  assert.deepEqual(out.map((e) => e.title), ['Ana', 'Day Off']);
+});
+
 test('modeFromPref and key', () => {
   assert.equal(modeFromPref(undefined), 'month');
   assert.equal(modeFromPref(null), 'month');
