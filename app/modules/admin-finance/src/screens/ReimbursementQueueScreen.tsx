@@ -25,7 +25,8 @@
  * one row's in-flight action never blocks or hides the rest of the list.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, TextInput, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
@@ -59,17 +60,20 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
   const [rejectOpenFor, setRejectOpenFor] = useState<string | null>(null);
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !reimbursementRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     reimbursementRepository
       .listForOrganization(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', items: result });
         }
       })
@@ -82,7 +86,7 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
     return () => {
       cancelled = true;
     };
-  }, [session, reimbursementRepository]);
+  }, [session, reimbursementRepository, rev]);
 
   function replaceItem(id: string, updated: Reimbursement) {
     setLoadState((prev) => {

@@ -11,6 +11,7 @@
 import type { PriceSheet, PriceSheetRate, PriceSheetStatus, CalculationResult } from '../money/types';
 import type { PublishPlan } from '../money/publish-plan';
 import type { ServiceTask } from './ports';
+import { requireOnline } from '../lib/online';
 
 /* ------------------------------------------------------------------ *
  * price_sheets row (snake_case) → domain type (camelCase)
@@ -206,6 +207,7 @@ export async function applyPublishPlanViaRpc(
   client: SupabaseRpcClient,
   plan: PublishPlan,
 ): Promise<CalculationResult<void>> {
+  requireOnline('Publishing a price sheet');
   const { error } = await client.rpc('publish_price_sheet', {
     p_price_sheet_id: plan.toPublish.priceSheetId,
   });
@@ -336,6 +338,34 @@ interface SupabaseRatesClient {
   from: (table: string) => any;
 }
 
+/** Create path: `clientId` (optional) is the client-minted row id so a queued replay inserts the same id. */
+export async function createRate(
+  client: SupabaseRatesClient,
+  priceSheetId: string,
+  serviceId: string,
+  taskId: string | null,
+  attachTiming: string,
+  amount: number,
+  timeEstimateMinutes: number | null,
+  clientId?: string
+): Promise<CalculationResult<PriceSheetRate>> {
+  return saveRate(client, priceSheetId, serviceId, taskId, attachTiming, amount, timeEstimateMinutes, undefined, clientId);
+}
+
+/** Update path: `id` is the existing row. */
+export async function updateRate(
+  client: SupabaseRatesClient,
+  id: string,
+  priceSheetId: string,
+  serviceId: string,
+  taskId: string | null,
+  attachTiming: string,
+  amount: number,
+  timeEstimateMinutes: number | null
+): Promise<CalculationResult<PriceSheetRate>> {
+  return saveRate(client, priceSheetId, serviceId, taskId, attachTiming, amount, timeEstimateMinutes, id);
+}
+
 export async function saveRate(
   client: SupabaseRatesClient,
   priceSheetId: string,
@@ -344,9 +374,11 @@ export async function saveRate(
   attachTiming: string,
   amount: number,
   timeEstimateMinutes: number | null,
-  id?: string
+  id?: string,
+  clientId?: string
 ): Promise<CalculationResult<PriceSheetRate>> {
   const payload = {
+    ...(!id && clientId ? { id: clientId } : {}),
     price_sheet_id: priceSheetId,
     service_id: serviceId,
     task_id: taskId,
@@ -455,9 +487,11 @@ export async function saveServiceTask(
     priceCents?: number | null;
     details?: string | null;
     materials?: string | null;
-  }
+  },
+  clientId?: string
 ): Promise<CalculationResult<ServiceTask>> {
   const insertObj: Record<string, unknown> = {
+    ...(clientId ? { id: clientId } : {}),
     organization_id: organizationId,
     service_id: serviceId,
     name,

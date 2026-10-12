@@ -15,7 +15,8 @@ import { landingRouteFor } from '../src/lib/landing';
 import { SessionProvider, useSession, signOut } from '../src/lib/session';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
-import { countPending, replayOfflineQueue } from '../src/lib/offline-db';
+import { ReadCacheProvider } from '../src/lib/read-cache';
+import { SyncIndicator } from '../src/components/SyncIndicator';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
 
 // Side-effect import: registers every compiled-in module exactly once, before any
@@ -175,6 +176,7 @@ function AuthGate() {
       ) : null}
       {isRedirect ? overlay : null}
       <ScreenNumberBadge pathname={pathname} />
+      {state.status === 'authenticated' ? <SyncIndicator /> : null}
     </View>
   );
 }
@@ -206,11 +208,12 @@ export default function RootLayout() {
       <ScreenNumberProvider registry={screenRegistry as ComponentProps<typeof ScreenNumberProvider>['registry']}>
         <SafeAreaProvider>
           <SessionProvider>
-            {/* Mounted at the root so sync status is app-wide
-                across every screen. Replay runs on mount/refresh; handlers are idempotent. */}
-            <SyncStatusProvider countPending={countPending} replay={replayOfflineQueue}>
-              <StatusBar style="auto" />
-              <AuthGate />
+            {/* Mount order: Session -> SyncStatus -> ReadCache -> AuthGate. */}
+            <SyncStatusProvider>
+              <ReadCacheProvider>
+                <StatusBar style="auto" />
+                <AuthGate />
+              </ReadCacheProvider>
             </SyncStatusProvider>
           </SessionProvider>
         </SafeAreaProvider>

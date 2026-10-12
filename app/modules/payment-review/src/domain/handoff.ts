@@ -1,3 +1,4 @@
+import { requireOnline } from '../lib/online';
 /**
  * Handoff token issuance (P5.S5).
  *
@@ -48,6 +49,7 @@ export async function issueHandoffToken(
   client: SupabaseRpcClient,
   jobId: string,
 ): Promise<{ token: string; url: string }> {
+  requireOnline('Issuing a handoff link');
   const { data, error } = await client.rpc('issue_handoff_token', {
     p_job_id: jobId,
   });

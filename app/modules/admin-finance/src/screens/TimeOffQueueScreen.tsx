@@ -26,7 +26,8 @@
  * pattern for its approve/mark-paid actions.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
@@ -65,17 +66,20 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
   const [cancelActions, setCancelActions] = useState<Record<string, ActionState>>({});
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !timeOffAdmin) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     timeOffAdmin
       .listForOrganization(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', items: result });
         }
       })
@@ -88,7 +92,7 @@ export function TimeOffQueueScreen(props: TimeOffQueueScreenProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [session, timeOffAdmin]);
+  }, [session, timeOffAdmin, rev]);
 
   function handleCancel(requestId: string) {
     if (!timeOffAdmin) {

@@ -25,7 +25,8 @@
  * `jobs` load exactly, so the two screens stay consistent.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
@@ -59,17 +60,20 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !priceSheetRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     priceSheetRepository
       .listForOrganization(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', sheets: result });
         }
       })
@@ -82,7 +86,7 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [session, priceSheetRepository]);
+  }, [session, priceSheetRepository, rev]);
 
   if (!session) {
     return (

@@ -14,6 +14,7 @@
  */
 
 import type { CalculationResult } from '../money/types';
+import { requireOnline } from '../lib/online';
 
 /* ------------------------------------------------------------------ *
  * reimbursements row (snake_case) → domain type (camelCase)
@@ -192,6 +193,7 @@ export async function approveReimbursementViaRpc(
   client: SupabaseRpcClient,
   input: ApproveReimbursementInput,
 ): Promise<CalculationResult<Reimbursement>> {
+  requireOnline('Approving a reimbursement');
   const { data, error } = await client.rpc('approve_reimbursement', {
     p_reimbursement_id: input.reimbursementId,
     p_approved_by: input.approvedBy,
@@ -216,6 +218,7 @@ export async function rejectReimbursementViaRpc(
   if (!reasonCheck.ok) {
     return reasonCheck;
   }
+  requireOnline('Rejecting a reimbursement');
   const { data, error } = await client.rpc('reject_reimbursement', {
     p_reimbursement_id: input.reimbursementId,
     p_approved_by: input.approvedBy,

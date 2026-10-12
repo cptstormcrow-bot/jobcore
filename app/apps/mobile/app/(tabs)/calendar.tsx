@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { WeekView, MonthView, type TimeOffEvent } from '@jobcore/ui';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
+import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 
 /** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
 interface JobRow {
@@ -96,6 +97,7 @@ export default function CalendarScreen() {
   const [showJobsLayer, setShowJobsLayer] = useState(true);
   const [showTimeOffLayer, setShowTimeOffLayer] = useState(true);
   const router = useRouter();
+  const rev = useReadCacheRevision();
 
   // Role gate (spec 02-P2 L83-84): an admin/owner/sales sees every tech's jobs,
   // a tech sees only their own. The `s.status ===` discriminant below is on the auth
@@ -119,18 +121,30 @@ export default function CalendarScreen() {
       return;
     }
     let cancelled = false;
-    void supabase
-      .from('calendar_events')
-      .select(CALENDAR_EVENT_COLUMNS)
-      .eq('organization_id', orgId)
-      .then(({ data, error }) => {
+    const fetchLive = async (): Promise<CalendarEventRow[]> => {
+      const { data, error } = await supabase
+        .from('calendar_events')
+        .select(CALENDAR_EVENT_COLUMNS)
+        .eq('organization_id', orgId);
+      if (error || !data) throw error ?? new Error('calendar_events read failed');
+      return data as unknown as CalendarEventRow[];
+    };
+    const identity = getReadCacheIdentity();
+    const load = identity
+      ? cachedRead<CalendarEventRow[]>(
+          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.calendar', { orgId }),
+          fetchLive,
+        ).then((r) => r.data)
+      : fetchLive();
+    void load
+      .catch(() => null)
+      .then((rows) => {
         if (cancelled) return;
-        if (error || !data) {
+        if (!rows) {
           setJobs([]);
           setTimeOffEvents([]);
           return;
         }
-        const rows = data as unknown as CalendarEventRow[];
         // calendar_events is an append-only log, so a job can carry multiple
         // status_change rows over its lifetime; dedupe job-linked rows down to
         // one card per job_id (the embedded `jobs` row is always the job's
@@ -155,7 +169,7 @@ export default function CalendarScreen() {
     return () => {
       cancelled = true;
     };
-  }, [orgId]);
+  }, [orgId, rev]);
 
   const visibleJobs = showJobsLayer ? jobs.filter((job) => isBetaVisible(job, showBeta)) : [];
   const visibleTimeOff = showTimeOffLayer ? timeOffEvents : [];

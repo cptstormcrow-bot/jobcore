@@ -1,91 +1,131 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
+
+import { useSession } from './session';
+import { countPending, drainOfflineQueue, listFailed } from './offline-db';
+import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
+import type { SyncStatus } from './offline-db.types';
 
 /* ------------------------------------------------------------------ *
- * Sync status
+ * Sync status: UI read model + the triggers that drive the drain.
+ * Triggers: NetInfo change, AppState 'active', session authenticated,
+ * refresh(), and requestDrain() from other modules. All funnel into one
+ * debounced (500 ms) trigger that runs only when online && authenticated.
  * ------------------------------------------------------------------ */
-
-/**
- * Read model over the offline queue built in `packages/core`. This is not
- * the queue itself — it's a small, UI-facing summary that a screen can
- * subscribe to without reaching into the queue's storage directly.
- */
-export interface SyncStatus {
-  pendingCount: number;
-  syncing: boolean;
-  lastSyncAt: string | null;
-  lastError: string | null;
-  refresh: () => void;
-}
 
 const SyncStatusContext = createContext<SyncStatus | null>(null);
 
-/**
- * `countPending` and `replay` are INJECTED because this file must not import
- * expo-sqlite or Supabase — it mirrors the optional-sink injection idiom
- * used by `ctx.writeAudit?` in @jobcore/core and by `enqueue?`/`markFailed?`
- * in the core offline module. `replay` is optional; when absent, `sync()`
- * (driven from `refresh()`) only recounts rather than attempting to drain
- * the queue.
- */
-export interface SyncStatusProviderProps {
-  children: React.ReactNode;
-  countPending: () => Promise<number>;
-  replay?: () => Promise<{ sent: number; failed: number }>;
-}
+export function SyncStatusProvider({ children }: { children: React.ReactNode }) {
+  const session = useSession();
+  const authenticated = session.status === 'authenticated';
 
-export function SyncStatusProvider({ children, countPending, replay }: SyncStatusProviderProps) {
+  const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
-  const [syncing, setSyncing] = useState(false);
-  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastDrainAt, setLastDrainAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const cancelledRef = useRef(false);
 
-  useEffect(() => {
-    cancelledRef.current = false;
-    runRefresh();
+  const onlineRef = useRef(true);
+  const authRef = useRef(false);
+  const runningRef = useRef(false);
+  const aliveRef = useRef(true);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    return () => {
-      cancelledRef.current = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  authRef.current = authenticated;
+
+  const recount = useCallback(async () => {
+    try {
+      const n = await countPending();
+      if (aliveRef.current) setPendingCount(n);
+    } catch {
+      // keep last-known count
+    }
   }, []);
 
-  // Warm failure (we already have a last-known pending count) retains that
-  // count rather than resetting to zero — same rationale as session.tsx's
-  // applyOutcome: a transient read error shouldn't make the queue look
-  // empty when it isn't.
-  function runRefresh() {
-    setSyncing(true);
-    const replayThenCount = replay
-      ? replay().then(() => countPending())
-      : countPending();
+  const runDrain = useCallback(async () => {
+    if (Platform.OS === 'web') return; // web is always online; drain is a no-op
+    if (!onlineRef.current || !authRef.current || runningRef.current) return;
+    runningRef.current = true;
+    setIsSyncing(true);
+    try {
+      const result = await drainOfflineQueue();
+      if (!aliveRef.current) return;
+      let err: string | null = result.aborted ? `Sync paused (${result.aborted})` : null;
+      if (!err && result.failed > 0) {
+        const rows = await listFailed(1);
+        err = rows[0]?.last_error ?? null;
+      }
+      setLastError(err);
+      setLastDrainAt(new Date().toISOString());
+    } catch (e) {
+      if (aliveRef.current) setLastError(e instanceof Error ? e.message : 'Sync failed.');
+    } finally {
+      runningRef.current = false;
+      if (aliveRef.current) setIsSyncing(false);
+      await recount();
+    }
+  }, [recount]);
 
-    void replayThenCount
-      .then((count) => {
-        if (cancelledRef.current) return;
-        setPendingCount(count);
-        setLastError(null);
-        // `new Date()` is fine here — this is the app, not zero-dependency core.
-        setLastSyncAt(new Date().toISOString());
-      })
-      .catch((err: unknown) => {
-        if (cancelledRef.current) return;
-        setLastError(err instanceof Error ? err.message : 'Unable to read the offline queue.');
-      })
-      .finally(() => {
-        if (cancelledRef.current) return;
-        setSyncing(false);
-      });
-  }
+  const trigger = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      void runDrain();
+    }, 500);
+  }, [runDrain]);
 
-  const value: SyncStatus = {
-    pendingCount,
-    syncing,
-    lastSyncAt,
-    lastError,
-    refresh: runRefresh,
-  };
+  // Register so other modules can call requestDrain().
+  useEffect(() => {
+    aliveRef.current = true;
+    registerDrainRequester(trigger);
+    void recount();
+    const unsub = subscribeDrainComplete((e) => {
+      if (aliveRef.current) setPendingCount(e.pendingAfter);
+    });
+    return () => {
+      aliveRef.current = false;
+      registerDrainRequester(null);
+      unsub();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [trigger, recount]);
 
+  // Connectivity: online = isConnected && isInternetReachable !== false (null = online).
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      setOnlineNow(true);
+      return;
+    }
+    const unsub = NetInfo.addEventListener((s) => {
+      const online = !!s.isConnected && s.isInternetReachable !== false;
+      onlineRef.current = online;
+      setOnlineNow(online);
+      setIsOnline(online);
+      if (online) trigger();
+    });
+    return unsub;
+  }, [trigger]);
+
+  // Foreground.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') trigger();
+    });
+    return () => sub.remove();
+  }, [trigger]);
+
+  // Session: drain when authenticated; otherwise no drain, queue kept.
+  useEffect(() => {
+    if (authenticated) trigger();
+  }, [authenticated, trigger]);
+
+  const refresh = useCallback(() => {
+    void recount();
+    trigger();
+  }, [recount, trigger]);
+
+  const value: SyncStatus = { isOnline, pendingCount, isSyncing, lastDrainAt, lastError, refresh };
   return <SyncStatusContext.Provider value={value}>{children}</SyncStatusContext.Provider>;
 }
 

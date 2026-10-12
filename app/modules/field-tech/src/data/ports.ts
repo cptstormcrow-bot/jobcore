@@ -265,6 +265,9 @@ export interface JobPhotoDraft {
   lat: number | null;
   lng: number | null;
   idempotencyKey: string;
+  id?: string;
+  localUri?: string;
+  ext?: string;
 }
 
 /** Read + insert access to job photos. Insert-only write — no update/delete needed by this module. */
@@ -287,7 +290,14 @@ export interface PhotoCapture {
  */
 export interface CameraRepository {
   /** Returns `null` if the user cancels the picker rather than completing a capture. */
-  capturePhoto(kind: 'before' | 'after'): Promise<PhotoCapture | null>;
+  /**
+   * Capture + copy to the local photo dir only; no upload here. The upload happens
+   * inside the `job_photo.create` / `job_planning_photo.add` op handler.
+   */
+  capturePhoto(
+    kind: 'before' | 'after',
+    target: { jobId: string; photoId: string }
+  ): Promise<{ storagePath: string; localUri: string; ext: string } | null>;
 }
 
 /* ------------------------------------------------------------------ *

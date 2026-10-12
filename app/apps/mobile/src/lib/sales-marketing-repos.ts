@@ -16,6 +16,7 @@
  */
 
 import { supabase } from './supabase';
+import { requireOnline } from './offline-mutations';
 import type {
   ReviewLibraryRepository,
   ReviewLibraryFilter,
@@ -84,6 +85,7 @@ export function createReviewLibraryRepository(): ReviewLibraryRepository {
     },
 
     async reorder(reviewId: string, sortOrder: number): Promise<Review> {
+      requireOnline('reorder the reviews');
       const { data, error } = await supabase
         .from('reviews')
         .update({ sort_order: sortOrder })
@@ -116,6 +118,7 @@ export function createMarketingAssetRepository(): MarketingAssetRepository {
     },
 
     async create(organizationId: string, draft: MarketingAssetDraft): Promise<MarketingAsset> {
+      requireOnline('save this marketing asset');
       const { data, error } = await supabase
         .from('marketing_assets')
         .insert({
@@ -132,6 +135,7 @@ export function createMarketingAssetRepository(): MarketingAssetRepository {
     },
 
     async approve(assetId: string, approvedForPublic: boolean): Promise<MarketingAsset> {
+      requireOnline('approve this marketing asset');
       const { data, error } = await supabase
         .from('marketing_assets')
         .update({ approved_for_public: approvedForPublic })
@@ -176,6 +180,7 @@ export function createPostDraftRepository(): PostDraftRepository {
     },
 
     async create(organizationId: string, draft: PostDraftDraft): Promise<PostDraft> {
+      requireOnline('save this post draft');
       const { data, error } = await supabase
         .from('post_drafts')
         .insert({
@@ -196,6 +201,7 @@ export function createPostDraftRepository(): PostDraftRepository {
     },
 
     async updateCaption(draftId: string, caption: string): Promise<PostDraft> {
+      requireOnline('save this caption');
       const { data, error } = await supabase
         .from('post_drafts')
         .update({ caption })
@@ -209,6 +215,7 @@ export function createPostDraftRepository(): PostDraftRepository {
     },
 
     async approve(draftId: string, approvedBy: string, approvedAt: string): Promise<PostDraft> {
+      requireOnline('approve this post draft');
       const { data, error } = await supabase
         .from('post_drafts')
         .update({ status: 'approved', approved_by: approvedBy, approved_at: approvedAt })
@@ -241,6 +248,7 @@ export function createPostDraftAssetRepository(): PostDraftAssetRepository {
     },
 
     async attach(organizationId: string, draftId: string, assetId: string): Promise<PostDraftAsset> {
+      requireOnline('attach this asset to the post');
       const { data, error } = await supabase
         .from('post_draft_assets')
         .insert({
@@ -257,6 +265,7 @@ export function createPostDraftAssetRepository(): PostDraftAssetRepository {
     },
 
     async detach(postDraftAssetId: string): Promise<void> {
+      requireOnline('remove this asset from the post');
       const { error } = await supabase
         .from('post_draft_assets')
         .delete()
@@ -286,6 +295,7 @@ export function createPostTargetRepository(): PostTargetRepository {
     },
 
     async create(organizationId: string, draft: PostTargetDraft): Promise<PostTarget> {
+      requireOnline('save this post target');
       const { data, error } = await supabase
         .from('post_targets')
         .insert({
@@ -322,6 +332,7 @@ export function createCampaignLogRepository(): CampaignLogRepository {
     },
 
     async create(organizationId: string, draft: CampaignLogEntryDraft): Promise<CampaignLogEntry> {
+      requireOnline('save this campaign log entry');
       const { data, error } = await supabase
         .from('campaign_log')
         .insert({
@@ -402,6 +413,7 @@ const TEST_JOB_ADDRESSES = [
 export function createTestJobsRepository(): TestJobsRepository {
   return {
     async spawnTestJobs(organizationId: string): Promise<void> {
+      requireOnline('create test jobs');
       const { error: deleteError } = await supabase
         .from('jobs')
         .delete()
@@ -486,6 +498,7 @@ export function createTestJobsRepository(): TestJobsRepository {
     },
 
     async deleteTestJob(jobId: string): Promise<void> {
+      requireOnline('delete this test job');
       const { error } = await supabase
         .from('jobs')
         .delete()
@@ -497,6 +510,7 @@ export function createTestJobsRepository(): TestJobsRepository {
     },
 
     async deleteAllTestJobs(organizationId: string): Promise<void> {
+      requireOnline('delete the test jobs');
       const { error } = await supabase
         .from('jobs')
         .delete()
@@ -575,6 +589,7 @@ export function createCallbackTaskRepository(): CallbackTaskRepository {
       calledBackBy: string,
       calledBackAt: string,
     ): Promise<CallbackTask> {
+      requireOnline('mark this callback done');
       const { error: upsertError } = await supabase.from('sales_callback_status').upsert(
         {
           job_id: jobId,

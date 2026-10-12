@@ -19,6 +19,7 @@
  */
 
 import * as React from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable } from 'react-native';
 
 import type { Job } from '@jobcore/core';
@@ -94,6 +95,8 @@ export function Overview({
   showTestJobs: showTestJobsProp,
 }: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = React.useRef(false);
 
   const [counts, setCounts] = React.useState<OverviewCounts>(EMPTY_COUNTS);
   const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
@@ -117,7 +120,8 @@ export function Overview({
     }
 
     let cancelled = false;
-    setLoading(true);
+    if (!hasLoadedRef.current) setLoading(true);
+    hasLoadedRef.current = true;
     setLoadError(null);
 
     const { jobs, timeOff, reimbursements, notes, photos, checklist } = getModulePorts();
@@ -219,7 +223,7 @@ export function Overview({
     return () => {
       cancelled = true;
     };
-  }, [session, showTestJobsProp]);
+  }, [session, showTestJobsProp, rev]);
 
   if (session === null) {
     return (

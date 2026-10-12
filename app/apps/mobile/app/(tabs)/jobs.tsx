@@ -11,6 +11,7 @@ import { AppChrome, Button, colors, EmptyState, spacing, Toggle } from '@jobcore
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
+import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 
 /** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
 interface JobRow {
@@ -71,6 +72,7 @@ export default function JobsScreen() {
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const userId = session.status === 'authenticated' ? session.session.user.id : undefined;
 
+  const rev = useReadCacheRevision();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showBeta, setShowBeta] = useState(false);
 
@@ -84,24 +86,35 @@ export default function JobsScreen() {
       return;
     }
     let cancelled = false;
-    void supabase
-      .from('jobs')
-      .select(JOB_ROW_COLUMNS)
-      .eq('assigned_tech_id', userId)
-      .limit(1)
-      .maybeSingle<JobRow>()
-      .then(({ data, error }) => {
+    const fetchLive = async (): Promise<JobRow | null> => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(JOB_ROW_COLUMNS)
+        .eq('assigned_tech_id', userId)
+        .limit(1)
+        .maybeSingle<JobRow>();
+      if (error) throw error;
+      return data ?? null;
+    };
+    const identity = getReadCacheIdentity();
+    const load = identity
+      ? cachedRead<JobRow | null>(
+          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.list', { techId: userId }),
+          fetchLive,
+        ).then((r) => r.data)
+      : fetchLive();
+    void load
+      .then((data) => {
         if (cancelled) return;
-        if (error || !data) {
-          setSelectedJob(null);
-          return;
-        }
-        setSelectedJob(toJob(data));
+        setSelectedJob(data ? toJob(data) : null);
+      })
+      .catch(() => {
+        if (!cancelled) setSelectedJob(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [role, userId]);
+  }, [role, userId, rev]);
 
   if (!selectedJob || !(isBetaVisible(selectedJob, showBeta) || selectedJob.source === 'job-simulator')) {
     return (

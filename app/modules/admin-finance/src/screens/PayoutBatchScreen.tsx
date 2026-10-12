@@ -16,7 +16,8 @@
  * explicitly and verbatim, per this slice's requirement.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet } from 'react-native';
 import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
@@ -50,17 +51,20 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
   const [approveActions, setApproveActions] = useState<Record<string, ApproveActionState>>({});
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !payoutBatchRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     payoutBatchRepository
       .listForOrganization(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', batches: result });
         }
       })
@@ -73,7 +77,7 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [session, payoutBatchRepository]);
+  }, [session, payoutBatchRepository, rev]);
 
   function handleMarkPaid(batch: PayoutBatch) {
     if (!payoutBatchRepository || !batch.id) {

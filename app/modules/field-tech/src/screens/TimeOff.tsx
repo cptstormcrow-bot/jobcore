@@ -28,6 +28,7 @@
  */
 
 import * as React from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 
 import type { TimeOffRequest } from '../data/ports';
@@ -67,6 +68,8 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 
   const [requests, setRequests] = React.useState<TimeOffRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = React.useRef(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -108,7 +111,8 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     }
 
     let cancelled = false;
-    setLoading(true);
+    if (!hasLoadedRef.current) setLoading(true);
+    hasLoadedRef.current = true;
     setLoadError(null);
 
     const { timeOff } = getModulePorts();
@@ -138,7 +142,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
     return () => {
       cancelled = true;
     };
-  }, [session, techFilter]);
+  }, [session, techFilter, rev]);
 
   React.useEffect(() => {
     const cleanup = loadRequests();

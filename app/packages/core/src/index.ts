@@ -3,7 +3,7 @@ import type { ClockConfig } from './clocks.js';
 export type { ClockPair, ClockConfig, SkewEvaluation } from './clocks.js';
 export { DEFAULT_CLOCK_CONFIG, evaluateSkew } from './clocks.js';
 // P2d.2a: re-export the offline queue schema constants and types.
-export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA } from './offline/schema.js';
+export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA, OFFLINE_QUEUE_SCHEMA_VERSION, OFFLINE_QUEUE_MIGRATIONS, CREATE_READ_CACHE_TABLE } from './offline/schema.js';
 export type { QueuedMutationStatus, QueuedMutation, NewQueuedMutation } from './offline/queue.js';
 export { makeIdempotencyKey } from './offline/queue.js';
 // P2d.2b: re-export the optimistic-apply helper.
@@ -11,7 +11,8 @@ export type { OptimisticApplyOptions, OptimisticApplyResult } from './offline/ap
 export { applyOptimistic } from './offline/apply.js';
 // P2d.2c: re-export the replay + conflict-resolution helpers.
 export type { ReplayOptions, ReplayResult } from './offline/replay.js';
-export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue } from './offline/replay.js';
+export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue, drainQueue, classifyReplayError, computeBackoffMs, UNKNOWN_MAX_ATTEMPTS } from './offline/replay.js';
+export type { ReplayErrorClass, DrainRow, DrainOptions, DrainResult } from './offline/replay.js';
 // P3f.1: re-export the state-machine surface. Previously `state-machine.ts`
 // was only reachable inside `packages/core` itself (e.g. `offline/apply.ts`'s
 // relative import) — nothing outside this package could import
@@ -263,3 +264,6 @@ export type { StageKey, StageState, StageInput, StageInputs, StageResult } from 
 export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep } from './jobStages.js';
 export type { EstimateStatusValue, EstimateEditorRole } from './estimateStatus.js';
 export { allowedEstimateMoves, needsDownstreamWarning } from './estimateStatus.js';
+
+export type { EvictionRow, OpPatchSpec } from './offline/read-cache.js';
+export { READ_CACHE_FLOOR_MS, READ_CACHE_MAX_AGE_MS, READ_CACHE_MAX_BYTES, stableStringify, buildReadCacheKey, readCacheRevision, selectEvictions, registerOpPatches, getOpPatches } from './offline/read-cache.js';

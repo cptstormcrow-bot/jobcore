@@ -1,15 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { useSyncStatus } from '../lib/sync-status';
 
 /*
- * This component is app-connected: it consumes `useSyncStatus()`, a React
- * context provided by the app (`SyncStatusProvider`, defined in
- * `apps/mobile/src/lib/sync-status.tsx`). That's why it lives here in
- * `apps/mobile/src/components/` rather than in `packages/ui` — `packages/ui`
- * holds only context-free presentational primitives.
+ * App-connected floating badge (bottom-left; ScreenNumberBadge is bottom-right
+ * with the same bottom offset). Renders nothing when idle, online, and clean.
  */
 
 export interface SyncIndicatorProps {
@@ -17,28 +15,36 @@ export interface SyncIndicatorProps {
 }
 
 export function SyncIndicator({ style }: SyncIndicatorProps) {
-  const { pendingCount, syncing, lastError, refresh } = useSyncStatus();
+  const { isOnline, pendingCount, isSyncing, lastError, refresh } = useSyncStatus();
+  const insets = useSafeAreaInsets();
 
-  if (pendingCount === 0 && !syncing && !lastError) {
-    return null;
-  }
+  const failed = !!lastError && isOnline && !isSyncing;
+  if (isOnline && !isSyncing && pendingCount === 0 && !failed) return null;
 
   let label: string;
-  let labelColor: string;
+  let labelColor: string = colors.textMuted;
+  let tappable = true;
 
-  if (lastError) {
-    label = 'Sync failed — tap to retry';
-    labelColor = colors.danger;
-  } else if (syncing) {
+  if (!isOnline) {
+    label = `Offline · ${pendingCount} saved`;
+    tappable = false;
+  } else if (isSyncing) {
     label = 'Syncing…';
-    labelColor = colors.textMuted;
+    tappable = false;
+  } else if (failed) {
+    label = `${Math.max(pendingCount, 1)} failed`;
+    labelColor = colors.danger;
   } else {
-    label = `${pendingCount} pending`;
+    label = `${pendingCount} to sync`;
     labelColor = colors.warning;
   }
 
   return (
-    <Pressable style={[styles.container, style]} onPress={refresh}>
+    <Pressable
+      disabled={!tappable}
+      onPress={refresh}
+      style={[styles.container, { bottom: spacing.sm + insets.bottom }, style]}
+    >
       <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
     </Pressable>
   );
@@ -46,6 +52,9 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    left: spacing.sm,
+    zIndex: 9999,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.xs,

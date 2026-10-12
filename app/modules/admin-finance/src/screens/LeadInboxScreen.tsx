@@ -14,7 +14,8 @@
  * lines 48-53).
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
@@ -38,17 +39,19 @@ type LoadState =
 export function LeadInboxScreen({ leads: leadRepository, onSelectLead, onCreateLead }: LeadInboxScreenProps = {}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !leadRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     leadRepository
       .listForOrganization(session.org.id)
       .then((result) => {
-        if (!cancelled) setLoadState({ kind: 'loaded', leads: result });
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', leads: result }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -59,7 +62,7 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead, onCreateL
     return () => {
       cancelled = true;
     };
-  }, [session, leadRepository]);
+  }, [session, leadRepository, rev]);
 
   if (!session) {
     return (

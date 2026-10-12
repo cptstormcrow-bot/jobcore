@@ -18,7 +18,8 @@
  * not a control on this screen.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet } from 'react-native';
 import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
@@ -58,19 +59,21 @@ function formatAmount(amount: number): string {
 export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenProps = {}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !paymentsRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     Promise.all([
       paymentsRepository.listNeedingAttention(session.org.id),
       paymentsRepository.listManuallyConfirmed(session.org.id),
     ])
       .then(([needsAttention, manuallyConfirmed]) => {
-        if (!cancelled) setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed });
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -81,7 +84,7 @@ export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenP
     return () => {
       cancelled = true;
     };
-  }, [session, paymentsRepository]);
+  }, [session, paymentsRepository, rev]);
 
   if (!session) {
     return (

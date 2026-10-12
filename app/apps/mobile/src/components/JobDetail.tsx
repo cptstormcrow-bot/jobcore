@@ -8,6 +8,8 @@ import type { Job } from '@jobcore/core';
 import { colors, spacing, typography, radius, Text } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { supabase } from '../lib/supabase';
+import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../lib/read-cache';
+import { getSignedUrlCached } from '../lib/signed-url-cache';
 
 export interface JobDetailProps {
   job: Job;
@@ -58,6 +60,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 export function JobDetail({ job }: JobDetailProps) {
+  const rev = useReadCacheRevision();
   const [materials, setMaterials] = useState<JobMaterial[]>([]);
   const [links, setLinks] = useState<JobReferenceLink[]>([]);
   const [photos, setPhotos] = useState<JobPhoto[]>([]);
@@ -67,7 +70,7 @@ export function JobDetail({ job }: JobDetailProps) {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadExtensions() {
+    async function fetchExtensions() {
       const [materialsResult, linksResult, photosResult, notesResult, paymentsResult] =
         await Promise.all([
           supabase
@@ -98,34 +101,53 @@ export function JobDetail({ job }: JobDetailProps) {
             .eq('job_id', job.id)
             .eq('organization_id', job.organizationId),
         ]);
+      if (materialsResult.error || linksResult.error || photosResult.error || notesResult.error || paymentsResult.error) {
+        throw materialsResult.error ?? linksResult.error ?? photosResult.error ?? notesResult.error ?? paymentsResult.error;
+      }
+      return {
+        materials: (materialsResult.data ?? []) as JobMaterial[],
+        links: (linksResult.data ?? []) as JobReferenceLink[],
+        photos: (photosResult.data ?? []) as JobPhoto[],
+        notes: (notesResult.data ?? []) as JobNote[],
+        payments: (paymentsResult.data ?? []) as JobPayment[],
+      };
+    }
 
+    async function loadExtensions() {
+      const identity = getReadCacheIdentity();
+      let ext: Awaited<ReturnType<typeof fetchExtensions>>;
+      try {
+        ext = identity
+          ? (
+              await cachedRead(
+                buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.extras', { jobId: job.id }),
+                fetchExtensions,
+              )
+            ).data
+          : await fetchExtensions();
+      } catch {
+        return;
+      }
       if (cancelled) return;
-      if (!materialsResult.error && materialsResult.data) {
-        setMaterials(materialsResult.data as JobMaterial[]);
-      }
-      if (!linksResult.error && linksResult.data) {
-        setLinks(linksResult.data as JobReferenceLink[]);
-      }
-      if (!photosResult.error && photosResult.data) {
-        const rows = photosResult.data as JobPhoto[];
-        const withUris = await Promise.all(
-          rows.map(async (photo) => {
-            const { data: signedData } = await supabase.storage
-              .from('job-photos')
-              .createSignedUrl(photo.storage_path, 3600);
-            return { ...photo, uri: signedData?.signedUrl };
-          }),
-        );
-        if (!cancelled) {
-          setPhotos(withUris);
-        }
-      }
-      if (!notesResult.error && notesResult.data) {
-        setNotes(notesResult.data as JobNote[]);
-      }
-      if (!paymentsResult.error && paymentsResult.data) {
-        setPayments(paymentsResult.data as JobPayment[]);
-      }
+      setMaterials(ext.materials);
+      setLinks(ext.links);
+      setNotes(ext.notes);
+      setPayments(ext.payments);
+      // Photo URIs are signed per render pass; the signed-URL cache reuses unexpired URLs.
+      const withUris = await Promise.all(
+        ext.photos.map(async (photo) => {
+          try {
+            const url = await getSignedUrlCached('job-photos', photo.storage_path, async (bucket, path) => {
+              const { data: signedData } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+              return signedData?.signedUrl ? { url: signedData.signedUrl, expiresInSec: 3600 } : null;
+            });
+            return { ...photo, uri: url ?? undefined };
+          } catch {
+            return { ...photo, uri: undefined };
+          }
+        }),
+      );
+      if (!cancelled) setPhotos(withUris);
     }
 
     loadExtensions();
@@ -133,7 +155,7 @@ export function JobDetail({ job }: JobDetailProps) {
     return () => {
       cancelled = true;
     };
-  }, [job.id, job.organizationId]);
+  }, [job.id, job.organizationId, rev]);
 
   return (
     <View style={[styles.root, styles.content]}>

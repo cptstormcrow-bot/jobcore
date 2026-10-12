@@ -17,6 +17,7 @@
  */
 
 import * as React from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
@@ -56,6 +57,8 @@ function mapsUrl(address: string): string {
  */
 export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): React.ReactElement {
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = React.useRef(false);
 
   const [job, setJob] = React.useState<Job | null>(null);
   const [adminNotes, setAdminNotes] = React.useState<JobNote[]>([]);
@@ -71,7 +74,8 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     let cancelled = false;
 
     async function load() {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
+      hasLoadedRef.current = true;
       setError(null);
       try {
         const ports = getModulePorts();
@@ -95,7 +99,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     return () => {
       cancelled = true;
     };
-  }, [jobId, session]);
+  }, [jobId, session, rev]);
 
   const handleCall = React.useCallback(() => {
     if (!customerPhone) return;

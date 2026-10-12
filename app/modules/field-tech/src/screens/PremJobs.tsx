@@ -6,10 +6,13 @@ import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { ScreenTitle, colors, typography, spacing, radius, Text } from '@jobcore/ui';
 import type { PremQueueItem } from '../data/ports';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { premCardAction, premReportRoute, formatNeedsPremSince } from './prem-jobs-helpers';
 
 export function PremJobs(): React.ReactElement {
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
   const [items, setItems] = useState<PremQueueItem[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -27,7 +30,8 @@ export function PremJobs(): React.ReactElement {
       if (opts?.isRefresh) {
         setRefreshing(true);
       } else {
-        setLoading(true);
+        if (!hasLoadedRef.current) setLoading(true);
+        hasLoadedRef.current = true;
       }
       const { premQueue: premQueueRepository } = getModulePorts();
       premQueueRepository
@@ -51,7 +55,7 @@ export function PremJobs(): React.ReactElement {
         cancelled = true;
       };
     },
-    [session],
+    [session, rev],
   );
 
   useEffect(() => {

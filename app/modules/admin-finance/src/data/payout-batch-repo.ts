@@ -21,6 +21,7 @@
 
 import type { CalculationResult } from '../money/types';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
+import { requireOnline } from '../lib/online';
 
 /* ------------------------------------------------------------------ *
  * payout_batches / payout_lines rows (snake_case) → domain type (camelCase)
@@ -174,6 +175,7 @@ export async function persistPayoutBatchViaRpc(
   client: SupabaseRpcClient,
   batch: PayoutBatch,
 ): Promise<CalculationResult<PayoutBatch>> {
+  requireOnline('Creating a payout batch');
   const { data, error } = await client.rpc('create_payout_batch', {
     p_organization_id: batch.organizationId,
     p_period_start: batch.periodStart,

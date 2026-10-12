@@ -15,10 +15,11 @@
 
 import * as ImagePicker from 'expo-image-picker';
 import { supabase, supabaseUrl } from './supabase';
-import { enqueue } from './offline-db';
-import { logSyncFailure } from './log';
-import { makeIdempotencyKey } from '@jobcore/core';
-import type { NewQueuedMutation } from '@jobcore/core';
+import { newClientId } from './ids';
+import { writeThrough, requireOnline } from './offline-mutations';
+import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
+import { copyToLocal, localPhotoPath, storagePathFor, planningStoragePathFor } from './photo-files';
+import { resolvePhotoUri, setSignedUrlResolver } from './signed-url-cache';
 import type {
   ChecklistRepository,
   ChecklistTemplate,
@@ -49,7 +50,6 @@ import type {
   CalendarEventRepository,
   CalendarEventDraft,
   CameraRepository,
-  PhotoCapture,
   EstimateRepository,
   JobEstimate,
   JobEstimateLineItem,
@@ -81,39 +81,40 @@ import {
 } from '../../../../modules/field-tech/src/data/ports';
 
 /**
- * Builds a nonce for `makeIdempotencyKey` without depending on a uuid
- * library. Mirrors `modules/field-tech/src/screens/StartChecklist.tsx`'s
- * identical helper for consistency across the two offline-queue call sites.
+ * Cache-first read through the offline read cache (S6). Key = buildReadCacheKey(org, user,
+ * queryName, params); falls back to the live fetch until the cache identity exists (pre-auth).
  */
-function makeNonce(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+async function readCached<T>(
+  queryName: string,
+  params: Record<string, unknown>,
+  fetchLive: () => Promise<T>,
+): Promise<T> {
+  const id = getReadCacheIdentity();
+  if (!id) return fetchLive();
+  const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
+  const { data } = await cachedRead(key, fetchLive);
+  return data;
 }
 
-/**
- * Durably captures a mutation to the local offline queue (`./offline-db`)
- * BEFORE the corresponding direct Supabase write is attempted — mirrors
- * `StartChecklist.tsx`'s `handleCaptureBeforePhoto` pattern (enqueue first,
- * then perform the direct write). `applyOptimistic` in `@jobcore/core`'s
- * `offline/apply.ts` is hard-typed to Job/JobStatus transitions and cannot
- * be used for these entity-creation writes (checklist/photo/time-off/note/
- * audit), so this queues via the offline module's generic primitives
- * (`makeIdempotencyKey`, `NewQueuedMutation`, `enqueue`) instead — the
- * "minimal correct wiring directly from the offline module's own API"
- * fallback. Exactly-once replay is guaranteed by `id`'s idempotency key
- * (see `packages/core/src/offline/replay.ts` lines 93-97), not by anything
- * here. This does not replace the direct write below: repository return
- * types carry server-assigned fields (id/organization_id/created_at) that
- * only the network round trip can produce, so the enqueue only guarantees
- * the mutation is never lost when that round trip fails offline.
- */
-async function enqueueMutation(op: string, occurredAt: string, payload: unknown): Promise<void> {
-  const mutation: NewQueuedMutation = {
-    id: makeIdempotencyKey(op, occurredAt, makeNonce()),
-    op,
-    payload: JSON.stringify(payload),
-    occurredAt,
-  };
-  await enqueue(mutation);
+/** Rows last seen this session; used only to build optimistic values for write-through ops. */
+const knownJobs = new Map<string, ReturnType<typeof toJob>>();
+const knownInstances = new Map<string, ChecklistInstance>();
+const knownEntries = new Map<string, TimeEntry>();
+/** planning photo id -> storage path (job_planning_photo.remove must carry storagePath; no pre-read). */
+const planningPathById = new Map<string, string>();
+
+function fileExt(path: string, fallback: string = 'jpg'): string {
+  const m = /\.([A-Za-z0-9]+)$/.exec(path);
+  return m?.[1] ? m[1].toLowerCase() : fallback;
+}
+
+/** storagePath (.../<org>/<job>/<photoId>.<ext>) -> deterministic local file path, or null. */
+function localPathForStorage(storagePath: string): string | null {
+  const parts = storagePath.split('/');
+  if (parts.length < 3) return null;
+  const m = /^(.+)\.([A-Za-z0-9]+)$/.exec(parts[parts.length - 1] ?? '');
+  if (!m) return null;
+  return localPhotoPath(parts[parts.length - 3]!, parts[parts.length - 2]!, m[1]!, m[2]!);
 }
 
 /* ------------------------------------------------------------------ *
@@ -136,20 +137,19 @@ export interface AuditLogDraft {
  * by this module.
  */
 export async function writeAudit(draft: AuditLogDraft): Promise<void> {
-  await enqueueMutation('audit_log.write', draft.occurredAt, draft);
-
-  const { error } = await supabase.from('audit_log').insert({
-    organization_id: draft.organizationId,
-    actor_id: draft.actorId,
-    action: draft.action,
-    entity: draft.entityType,
-    entity_id: draft.entityId,
-    metadata: { occurredAt: draft.occurredAt, details: draft.details ?? null },
-  });
-  if (error) {
-    logSyncFailure('field-tech-repos.writeAudit', error.message, { draft });
-    throw new Error(`writeAudit failed: ${error.message}`);
-  }
+  await writeThrough(
+    'audit_log.write',
+    {
+      actorId: draft.actorId,
+      action: draft.action,
+      entityType: draft.entityType,
+      entityId: draft.entityId,
+      occurredAt: draft.occurredAt,
+      details: draft.details ?? null,
+    },
+    draft.occurredAt,
+    undefined,
+  );
 }
 
 /* ------------------------------------------------------------------ *
@@ -162,56 +162,66 @@ export function createChecklistRepository(): ChecklistRepository {
       organizationId: string,
       serviceId: string,
     ): Promise<ChecklistTemplate | null> {
-      const { data, error } = await supabase
-        .from('checklist_templates')
-        .select('*')
-        .eq('organization_id', organizationId)
-        .eq('service_id', serviceId)
-        .order('version', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (error) {
-        throw new Error(`getTemplateForService failed: ${error.message}`);
-      }
-      return data ? toChecklistTemplate(data as ChecklistTemplateRow) : null;
+      return readCached('ft.checklist.getTemplateForService', { organizationId, serviceId }, async () => {
+        const { data, error } = await supabase
+          .from('checklist_templates')
+          .select('*')
+          .eq('organization_id', organizationId)
+          .eq('service_id', serviceId)
+          .order('version', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`getTemplateForService failed: ${error.message}`);
+        }
+        return data ? toChecklistTemplate(data as ChecklistTemplateRow) : null;
+      });
     },
 
     async listTemplateItems(templateId: string): Promise<ChecklistItem[]> {
-      const { data, error } = await supabase
-        .from('checklist_items')
-        .select('*')
-        .eq('template_id', templateId);
-      if (error) {
-        throw new Error(`listTemplateItems failed: ${error.message}`);
-      }
-      return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
+      return readCached('ft.checklist.listTemplateItems', { templateId }, async () => {
+        const { data, error } = await supabase
+          .from('checklist_items')
+          .select('*')
+          .eq('template_id', templateId);
+        if (error) {
+          throw new Error(`listTemplateItems failed: ${error.message}`);
+        }
+        return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
+      });
     },
 
     async getInstanceForJob(
       jobId: string,
       kind: ChecklistInstanceKind,
     ): Promise<ChecklistInstance | null> {
-      const { data, error } = await supabase
-        .from('checklist_instances')
-        .select('*')
-        .eq('job_id', jobId)
-        .eq('kind', kind)
-        .maybeSingle();
-      if (error) {
-        throw new Error(`getInstanceForJob failed: ${error.message}`);
-      }
-      return data ? toChecklistInstance(data as ChecklistInstanceRow) : null;
+      const instance = await readCached('ft.checklist.getInstanceForJob', { jobId, kind }, async () => {
+        const { data, error } = await supabase
+          .from('checklist_instances')
+          .select('*')
+          .eq('job_id', jobId)
+          .eq('kind', kind)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`getInstanceForJob failed: ${error.message}`);
+        }
+        return data ? toChecklistInstance(data as ChecklistInstanceRow) : null;
+      });
+      if (instance) knownInstances.set(instance.id, instance);
+      return instance;
     },
 
     async listInstanceItems(instanceId: string): Promise<ChecklistItem[]> {
-      const { data, error } = await supabase
-        .from('checklist_items')
-        .select('*')
-        .eq('instance_id', instanceId);
-      if (error) {
-        throw new Error(`listInstanceItems failed: ${error.message}`);
-      }
-      return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
+      return readCached('ft.checklist.listInstanceItems', { instanceId }, async () => {
+        const { data, error } = await supabase
+          .from('checklist_items')
+          .select('*')
+          .eq('instance_id', instanceId);
+        if (error) {
+          throw new Error(`listInstanceItems failed: ${error.message}`);
+        }
+        return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
+      });
     },
 
     async createInstance(
@@ -222,30 +232,25 @@ export function createChecklistRepository(): ChecklistRepository {
       kind: ChecklistInstanceKind,
     ): Promise<ChecklistInstance> {
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('checklist_instance.create', occurredAt, {
-        organizationId,
-        jobId,
-        templateId,
-        templateVersion,
+      const id = newClientId();
+      const optimistic = toChecklistInstance({
+        id,
+        organization_id: organizationId,
+        job_id: jobId,
+        template_id: templateId,
+        template_version: templateVersion,
         kind,
-      });
-
-      const { data, error } = await supabase
-        .from('checklist_instances')
-        .insert({
-          organization_id: organizationId,
-          job_id: jobId,
-          template_id: templateId,
-          template_version: templateVersion,
-          kind,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.createInstance', error.message, { organizationId, jobId, templateId });
-        throw new Error(`createInstance failed: ${error.message}`);
-      }
-      return toChecklistInstance(data as ChecklistInstanceRow);
+        submitted_at: null,
+        created_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough(
+        'checklist_instance.create',
+        { id, jobId, templateId, templateVersion, kind },
+        occurredAt,
+        optimistic,
+      );
+      knownInstances.set(data.id, data);
+      return data;
     },
 
     async submitInstance(
@@ -253,52 +258,34 @@ export function createChecklistRepository(): ChecklistRepository {
       answers: ChecklistItemAnswerDraft[],
       submittedAt: string,
     ): Promise<ChecklistInstance> {
-      const { data: instanceRow, error: instanceReadError } = await supabase
-        .from('checklist_instances')
-        .select('*')
-        .eq('id', instanceId)
-        .single();
-      if (instanceReadError) {
-        logSyncFailure('field-tech-repos.submitInstance', instanceReadError.message, { instanceId });
-        throw new Error(`submitInstance failed to read instance: ${instanceReadError.message}`);
-      }
-      const organizationId = (instanceRow as ChecklistInstanceRow).organization_id;
-
-      await enqueueMutation('checklist_instance.submit', submittedAt, {
-        instanceId,
-        answers,
-        submittedAt,
-      });
-
-      if (answers.length > 0) {
-        const { error: itemsError } = await supabase.from('checklist_items').insert(
-          answers.map((answer) => ({
-            organization_id: organizationId,
-            instance_id: instanceId,
+      const known = knownInstances.get(instanceId);
+      const optimistic: ChecklistInstance = known
+        ? { ...known, submittedAt }
+        : toChecklistInstance({
+            id: instanceId,
+            organization_id: requireModuleSession().organizationId,
+            job_id: null,
             template_id: null,
-            label: answer.label,
-            is_checked: answer.isChecked,
-            value: answer.value,
-            occurred_at: answer.occurredAt,
-          })),
-        );
-        if (itemsError) {
-          logSyncFailure('field-tech-repos.submitInstance', itemsError.message, { instanceId });
-          throw new Error(`submitInstance failed to insert items: ${itemsError.message}`);
-        }
-      }
-
-      const { data, error } = await supabase
-        .from('checklist_instances')
-        .update({ submitted_at: submittedAt })
-        .eq('id', instanceId)
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.submitInstance', error.message, { instanceId });
-        throw new Error(`submitInstance failed to update instance: ${error.message}`);
-      }
-      return toChecklistInstance(data as ChecklistInstanceRow);
+            template_version: 0,
+            kind: null,
+            submitted_at: submittedAt,
+            created_at: submittedAt,
+          } as never);
+      const items = answers.map((answer) => ({
+        id: newClientId(),
+        label: answer.label,
+        is_checked: answer.isChecked,
+        value: answer.value,
+        occurred_at: answer.occurredAt,
+      }));
+      const { data } = await writeThrough(
+        'checklist_instance.submit',
+        { instanceId, items, submittedAt },
+        submittedAt,
+        optimistic,
+      );
+      knownInstances.set(instanceId, data);
+      return data;
     },
   };
 }
@@ -310,38 +297,54 @@ export function createChecklistRepository(): ChecklistRepository {
 export function createJobPhotoRepository(): JobPhotoRepository {
   return {
     async listForJob(jobId: string): Promise<JobPhoto[]> {
-      const { data, error } = await supabase
-        .from('job_photos')
-        .select('*')
-        .eq('job_id', jobId);
-      if (error) {
-        throw new Error(`listForJob failed: ${error.message}`);
-      }
-      return ((data ?? []) as JobPhotoRow[]).map(toJobPhoto);
+      return readCached('ft.photos.listForJob', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_photos')
+          .select('*')
+          .eq('job_id', jobId);
+        if (error) {
+          throw new Error(`listForJob failed: ${error.message}`);
+        }
+        return ((data ?? []) as JobPhotoRow[]).map(toJobPhoto);
+      });
     },
 
     async create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto> {
-      await enqueueMutation('job_photo.create', draft.occurredAt, { organizationId, ...draft });
-
-      const { data, error } = await supabase
-        .from('job_photos')
-        .insert({
-          organization_id: organizationId,
-          job_id: draft.jobId,
-          tech_id: draft.techId,
+      // capturePhoto already copied the file locally; callers may pass id/localUri/ext alongside the draft.
+      const extra = draft as JobPhotoDraft & { id?: string; localUri?: string; ext?: string };
+      const id = extra.id ?? newClientId();
+      const ext = extra.ext ?? fileExt(draft.storagePath);
+      const localUri = extra.localUri ?? localPhotoPath(organizationId, draft.jobId, id, ext);
+      const optimistic = toJobPhoto({
+        id,
+        organization_id: organizationId,
+        job_id: draft.jobId,
+        tech_id: draft.techId,
+        kind: draft.kind,
+        storage_path: draft.storagePath,
+        occurred_at: draft.occurredAt,
+        lat: draft.lat,
+        lng: draft.lng,
+        created_at: draft.occurredAt,
+      } as never);
+      const { data } = await writeThrough(
+        'job_photo.create',
+        {
+          id,
+          jobId: draft.jobId,
+          techId: draft.techId,
           kind: draft.kind,
-          storage_path: draft.storagePath,
-          occurred_at: draft.occurredAt,
+          storagePath: draft.storagePath,
+          localUri,
+          ext,
+          occurredAt: draft.occurredAt,
           lat: draft.lat,
           lng: draft.lng,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.createJobPhoto', error.message, { organizationId, draft });
-        throw new Error(`create job photo failed: ${error.message}`);
-      }
-      return toJobPhoto(data as JobPhotoRow);
+        },
+        draft.occurredAt,
+        optimistic,
+      );
+      return data;
     },
   };
 }
@@ -353,25 +356,29 @@ export function createJobPhotoRepository(): JobPhotoRepository {
 export function createTimeOffRepository(): TimeOffRepository {
   return {
     async listForTech(techId: string): Promise<TimeOffRequest[]> {
-      const { data, error } = await supabase
-        .from('time_off_requests')
-        .select('*')
-        .eq('tech_id', techId);
-      if (error) {
-        throw new Error(`listForTech failed: ${error.message}`);
-      }
-      return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
+      return readCached('ft.timeOff.listForTech', { techId }, async () => {
+        const { data, error } = await supabase
+          .from('time_off_requests')
+          .select('*')
+          .eq('tech_id', techId);
+        if (error) {
+          throw new Error(`listForTech failed: ${error.message}`);
+        }
+        return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
+      });
     },
 
     async listForOrg(organizationId: string): Promise<TimeOffRequest[]> {
-      const { data, error } = await supabase
-        .from('time_off_requests')
-        .select('*')
-        .eq('organization_id', organizationId);
-      if (error) {
-        throw new Error(`listForOrg failed: ${error.message}`);
-      }
-      return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
+      return readCached('ft.timeOff.listForOrg', { organizationId }, async () => {
+        const { data, error } = await supabase
+          .from('time_off_requests')
+          .select('*')
+          .eq('organization_id', organizationId);
+        if (error) {
+          throw new Error(`listForOrg failed: ${error.message}`);
+        }
+        return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
+      });
     },
 
     async create(
@@ -380,53 +387,54 @@ export function createTimeOffRepository(): TimeOffRepository {
       draft: TimeOffRequestDraft,
     ): Promise<TimeOffRequest> {
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('time_off_request.create', occurredAt, { organizationId, techId, ...draft });
-
-      const { data, error } = await supabase
-        .from('time_off_requests')
-        .insert({
-          organization_id: organizationId,
-          tech_id: techId,
-          start_date: draft.startDate,
-          end_date: draft.endDate,
-          reason: draft.reason,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.createTimeOff', error.message, { organizationId, techId, draft });
-        throw new Error(`create time off request failed: ${error.message}`);
-      }
-      return toTimeOffRequest(data as TimeOffRequestRow);
+      const id = newClientId();
+      const optimistic = toTimeOffRequest({
+        id,
+        organization_id: organizationId,
+        tech_id: techId,
+        start_date: draft.startDate,
+        end_date: draft.endDate,
+        reason: draft.reason ?? null,
+        status: 'pending',
+        created_at: occurredAt,
+        updated_at: occurredAt,
+        created_by_admin_id: null,
+      } as never);
+      const { data } = await writeThrough(
+        'time_off_request.create',
+        { id, techId, startDate: draft.startDate, endDate: draft.endDate, reason: draft.reason ?? null },
+        occurredAt,
+        optimistic,
+      );
+      return data;
     },
 
     async cancel(requestId: string): Promise<void> {
-      const { error } = await supabase.rpc('cancel_time_off_request', { p_request_id: requestId });
-      if (error) {
-        throw new Error(`cancel time off request failed: ${error.message}`);
-      }
+      await writeThrough('time_off_request.cancel', { requestId }, new Date().toISOString(), undefined);
     },
 
     async update(requestId: string, draft: TimeOffRequestDraft): Promise<TimeOffRequest> {
-      const { error } = await supabase.rpc('update_time_off_request', {
-        p_request_id: requestId,
-        p_start_date: draft.startDate,
-        p_end_date: draft.endDate,
-        p_reason: draft.reason ?? null,
-      });
-      if (error) {
-        throw new Error(`update time off request failed: ${error.message}`);
-      }
-
-      const { data, error: selectError } = await supabase
-        .from('time_off_requests')
-        .select('*')
-        .eq('id', requestId)
-        .single();
-      if (selectError) {
-        throw new Error(`update time off request failed: ${selectError.message}`);
-      }
-      return toTimeOffRequest(data as TimeOffRequestRow);
+      const { organizationId, userId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      const optimistic = toTimeOffRequest({
+        id: requestId,
+        organization_id: organizationId,
+        tech_id: userId,
+        start_date: draft.startDate,
+        end_date: draft.endDate,
+        reason: draft.reason ?? null,
+        status: 'pending',
+        created_at: occurredAt,
+        updated_at: occurredAt,
+        created_by_admin_id: null,
+      } as never);
+      const { data } = await writeThrough(
+        'time_off_request.update',
+        { requestId, startDate: draft.startDate, endDate: draft.endDate, reason: draft.reason ?? null },
+        occurredAt,
+        optimistic,
+      );
+      return data;
     },
   };
 }
@@ -438,14 +446,16 @@ export function createTimeOffRepository(): TimeOffRepository {
 export function createReimbursementRequestRepository(): ReimbursementRequestRepository {
   return {
     async listForTech(techId: string): Promise<ReimbursementRequest[]> {
-      const { data, error } = await supabase
-        .from('reimbursements')
-        .select('*')
-        .eq('user_id', techId);
-      if (error) {
-        throw new Error(`listForTech failed: ${error.message}`);
-      }
-      return ((data ?? []) as ReimbursementRequestRow[]).map(toReimbursementRequest);
+      return readCached('ft.reimbursements.listForTech', { techId }, async () => {
+        const { data, error } = await supabase
+          .from('reimbursements')
+          .select('*')
+          .eq('user_id', techId);
+        if (error) {
+          throw new Error(`listForTech failed: ${error.message}`);
+        }
+        return ((data ?? []) as ReimbursementRequestRow[]).map(toReimbursementRequest);
+      });
     },
 
     async create(
@@ -454,25 +464,33 @@ export function createReimbursementRequestRepository(): ReimbursementRequestRepo
       draft: ReimbursementRequestDraft,
     ): Promise<ReimbursementRequest> {
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('reimbursement.create', occurredAt, { organizationId, techId, ...draft });
-
-      const { data, error } = await supabase
-        .from('reimbursements')
-        .insert({
-          organization_id: organizationId,
-          user_id: techId,
-          job_id: draft.jobId ?? null,
-          amount_cents: draft.amountCents,
+      const id = newClientId();
+      const optimistic = toReimbursementRequest({
+        id,
+        organization_id: organizationId,
+        user_id: techId,
+        job_id: draft.jobId ?? null,
+        amount_cents: draft.amountCents,
+        description: draft.description ?? null,
+        receipt_photo_path: draft.receiptPhotoPath ?? null,
+        status: 'pending',
+        created_at: occurredAt,
+        updated_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough(
+        'reimbursement.create',
+        {
+          id,
+          techId,
+          jobId: draft.jobId ?? null,
+          amountCents: draft.amountCents,
           description: draft.description ?? null,
-          receipt_photo_path: draft.receiptPhotoPath ?? null,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.createReimbursement', error.message, { organizationId, techId, draft });
-        throw new Error(`create reimbursement failed: ${error.message}`);
-      }
-      return toReimbursementRequest(data as ReimbursementRequestRow);
+          receiptPhotoPath: draft.receiptPhotoPath ?? null,
+        },
+        occurredAt,
+        optimistic,
+      );
+      return data;
     },
   };
 }
@@ -484,36 +502,37 @@ export function createReimbursementRequestRepository(): ReimbursementRequestRepo
 export function createJobNoteRepository(): JobNoteRepository {
   return {
     async listForJob(jobId: string): Promise<JobNote[]> {
-      const { data, error } = await supabase
-        .from('job_notes')
-        .select('*')
-        .eq('job_id', jobId);
-      if (error) {
-        throw new Error(`listForJob failed: ${error.message}`);
-      }
-      return ((data ?? []) as JobNoteRow[]).map(toJobNote);
+      return readCached('ft.notes.listForJob', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_notes')
+          .select('*')
+          .eq('job_id', jobId);
+        if (error) {
+          throw new Error(`listForJob failed: ${error.message}`);
+        }
+        return ((data ?? []) as JobNoteRow[]).map(toJobNote);
+      });
     },
 
     async create(organizationId: string, techId: string, draft: JobNoteDraft): Promise<JobNote> {
-      await enqueueMutation('job_note.create', draft.occurredAt, { organizationId, techId, ...draft });
-
-      const { data, error } = await supabase
-        .from('job_notes')
-        .insert({
-          organization_id: organizationId,
-          job_id: draft.jobId,
-          tech_id: techId,
-          kind: draft.kind,
-          body: draft.body,
-          occurred_at: draft.occurredAt,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.createJobNote', error.message, { organizationId, techId, draft });
-        throw new Error(`create job note failed: ${error.message}`);
-      }
-      return toJobNote(data as JobNoteRow);
+      const id = newClientId();
+      const optimistic = toJobNote({
+        id,
+        organization_id: organizationId,
+        job_id: draft.jobId,
+        tech_id: techId,
+        kind: draft.kind,
+        body: draft.body,
+        occurred_at: draft.occurredAt,
+        created_at: draft.occurredAt,
+      } as never);
+      const { data } = await writeThrough(
+        'job_note.create',
+        { id, jobId: draft.jobId, techId, kind: draft.kind, body: draft.body, occurredAt: draft.occurredAt },
+        draft.occurredAt,
+        optimistic,
+      );
+      return data;
     },
   };
 }
@@ -525,45 +544,52 @@ export function createJobNoteRepository(): JobNoteRepository {
 export function createTechJobRepository(): TechJobRepository {
   return {
     async listAssignedToTech(techId: string) {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*, customers(name, phone), job_assignments!inner(tech_id)')
-        .eq('job_assignments.tech_id', techId);
-      if (error) {
-        throw new Error(`listAssignedToTech failed: ${error.message}`);
-      }
-      return (data ?? []).map((row) => toJob(row as never));
+      const jobs = await readCached('ft.jobs.listAssignedToTech', { techId }, async () => {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*, customers(name, phone), job_assignments!inner(tech_id)')
+          .eq('job_assignments.tech_id', techId);
+        if (error) {
+          throw new Error(`listAssignedToTech failed: ${error.message}`);
+        }
+        return (data ?? []).map((row) => toJob(row as never));
+      });
+      for (const job of jobs) knownJobs.set(job.id, job);
+      return jobs;
     },
 
     async getById(jobId: string, techId: string) {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*, customers(name, phone), job_assignments!inner(tech_id)')
-        .eq('id', jobId)
-        .eq('job_assignments.tech_id', techId)
-        .maybeSingle();
-      if (error) {
-        throw new Error(`getById failed: ${error.message}`);
-      }
-      return data ? toJob(data as never) : null;
+      const job = await readCached('ft.jobs.getById', { jobId, techId }, async () => {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*, customers(name, phone), job_assignments!inner(tech_id)')
+          .eq('id', jobId)
+          .eq('job_assignments.tech_id', techId)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`getById failed: ${error.message}`);
+        }
+        return data ? toJob(data as never) : null;
+      });
+      if (job) knownJobs.set(job.id, job);
+      return job;
     },
 
     async updateStatusAsTech(jobId: string, techId: string, status) {
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('job.updateStatusAsTech', occurredAt, { jobId, techId, status });
-
-      const { data, error } = await supabase
-        .from('jobs')
-        .update({ status })
-        .eq('id', jobId)
-        .eq('job_assignments.tech_id', techId)
-        .select('*, job_assignments!inner(tech_id)')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.updateStatusAsTech', error.message, { jobId, techId, status });
-        throw new Error(`updateStatusAsTech failed: ${error.message}`);
-      }
-      return toJob(data as never);
+      const known = knownJobs.get(jobId);
+      const optimistic = known
+        ? { ...known, status }
+        : toJob({
+            id: jobId,
+            organization_id: requireModuleSession().organizationId,
+            status,
+            assigned_tech_id: techId,
+            created_at: occurredAt,
+          } as never);
+      const { data } = await writeThrough('job.updateStatusAsTech', { jobId, status }, occurredAt, optimistic);
+      knownJobs.set(jobId, data);
+      return data;
     },
   };
 }
@@ -575,26 +601,22 @@ export function createTechJobRepository(): TechJobRepository {
 export function createCalendarEventRepository(): CalendarEventRepository {
   return {
     async create(organizationId: string, draft: CalendarEventDraft): Promise<void> {
-      await enqueueMutation('calendar_event.create', draft.eventTime, { organizationId, ...draft });
-
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError || !userData?.user) {
-        throw new Error(`create calendar event failed to resolve current user: ${userError?.message ?? 'no session'}`);
-      }
-
-      const { error } = await supabase.from('calendar_events').insert({
-        organization_id: organizationId,
-        job_id: draft.jobId,
-        kind: draft.kind,
-        title: draft.title ?? null,
-        description: draft.description ?? null,
-        event_time: draft.eventTime,
-        created_by: userData.user.id,
-      });
-      if (error) {
-        logSyncFailure('field-tech-repos.createCalendarEvent', error.message, { organizationId, draft });
-        throw new Error(`create calendar event failed: ${error.message}`);
-      }
+      // org + created_by come from the replay ctx (module session user), not auth.getUser().
+      void organizationId;
+      void requireModuleSession().userId;
+      await writeThrough(
+        'calendar_event.create',
+        {
+          id: newClientId(),
+          jobId: draft.jobId,
+          kind: draft.kind,
+          title: draft.title ?? null,
+          description: draft.description ?? null,
+          eventTime: draft.eventTime,
+        },
+        draft.eventTime,
+        undefined,
+      );
     },
 
     async logOwnTransition(
@@ -622,7 +644,11 @@ const JOB_PHOTOS_BUCKET = 'job-photos';
 
 export function createCameraRepository(): CameraRepository {
   return {
-    async capturePhoto(kind: 'before' | 'after'): Promise<PhotoCapture | null> {
+    // Capture + copy into the local photo dir only. The upload runs inside the job_photo.create op handler.
+    async capturePhoto(
+      _kind: 'before' | 'after',
+      target: { jobId: string; photoId: string },
+    ): Promise<{ storagePath: string; localUri: string; ext: string } | null> {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         return null;
@@ -637,18 +663,11 @@ export function createCameraRepository(): CameraRepository {
       if (!asset) {
         return null;
       }
-      const path = `${kind}/${Date.now()}.jpg`;
-      const blob = await (await fetch(asset.uri)).blob();
-
-      const { error } = await supabase.storage
-        .from(JOB_PHOTOS_BUCKET)
-        .upload(path, blob, { contentType: 'image/jpeg' });
-      if (error) {
-        logSyncFailure('field-tech-repos.capturePhoto', error.message, { kind, path });
-        throw new Error(`capturePhoto upload failed: ${error.message}`);
-      }
-
-      return { storagePath: path, lat: null, lng: null };
+      const { organizationId } = requireModuleSession();
+      const ext = fileExt(asset.uri, 'jpg');
+      const localUri = await copyToLocal(asset.uri, organizationId, target.jobId, target.photoId, ext);
+      const storagePath = storagePathFor(organizationId, target.jobId, target.photoId, ext);
+      return { storagePath, localUri, ext };
     },
   };
 }
@@ -762,23 +781,24 @@ function toJobEstimateLineItem(row: {
 export function createEstimateRepository(): EstimateRepository {
   return {
     async getForJob(jobId: string): Promise<JobEstimate | null> {
-      const { organizationId } = requireModuleSession();
-      const { data, error } = await supabase
-        .from('job_estimates')
-        .select('*')
-        .eq('job_id', jobId)
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-      if (error) {
-        throw new Error(`getForJob failed: ${error.message}`);
-      }
-      return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
+      return readCached('ft.estimates.getForJob', { jobId }, async () => {
+        const { organizationId } = requireModuleSession();
+        const { data, error } = await supabase
+          .from('job_estimates')
+          .select('*')
+          .eq('job_id', jobId)
+          .eq('organization_id', organizationId)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`getForJob failed: ${error.message}`);
+        }
+        return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
+      });
     },
 
     async upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('job_estimate.upsert', occurredAt, { jobId, input });
 
       const patch: Record<string, unknown> = {
         job_id: jobId,
@@ -828,57 +848,58 @@ export function createEstimateRepository(): EstimateRepository {
         patch.internal_notes = input.internalNotes;
       }
 
-      const { data, error } = await supabase
-        .from('job_estimates')
-        .upsert(patch, { onConflict: 'job_id' })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.upsertJobEstimate', error.message, { jobId, input });
-        throw new Error(`upsertForJob failed: ${error.message}`);
-      }
-      return toJobEstimate(data as Parameters<typeof toJobEstimate>[0]);
+      const optimistic = toJobEstimate({
+        id: newClientId(),
+        status: 'draft',
+        materials_cost: 0,
+        labor_cost: 0,
+        other_cost: 0,
+        total_cost: 0,
+        deposit_amount: null,
+        created_at: occurredAt,
+        ...patch,
+        updated_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough('job_estimate.upsert', { jobId, input }, occurredAt, optimistic);
+      return data;
     },
 
     async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {
-      const { organizationId } = requireModuleSession();
-      const { data, error } = await supabase
-        .from('job_estimate_line_items')
-        .select('*')
-        .eq('job_id', jobId)
-        .eq('organization_id', organizationId)
-        .order('kind', { ascending: true })
-        .order('created_at', { ascending: true });
-      if (error) {
-        throw new Error(`listLineItems failed: ${error.message}`);
-      }
-      return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
+      return readCached('ft.estimates.listLineItems', { jobId }, async () => {
+        const { organizationId } = requireModuleSession();
+        const { data, error } = await supabase
+          .from('job_estimate_line_items')
+          .select('*')
+          .eq('job_id', jobId)
+          .eq('organization_id', organizationId)
+          .order('kind', { ascending: true })
+          .order('created_at', { ascending: true });
+        if (error) {
+          throw new Error(`listLineItems failed: ${error.message}`);
+        }
+        return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
+      });
     },
 
     async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('job_estimate_line_item.add', occurredAt, { jobId, draft });
 
-      const { data, error } = await supabase
-        .from('job_estimate_line_items')
-        .insert({
-          job_id: jobId,
-          organization_id: organizationId,
-          kind: draft.kind,
-          description: draft.description,
-          quantity: draft.quantity,
-          unit_cost: draft.unitCost,
-          line_total: draft.lineTotal,
-          created_by: userId,
-        })
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.addJobEstimateLineItem', error.message, { jobId, draft });
-        throw new Error(`addLineItem failed: ${error.message}`);
-      }
-      return toJobEstimateLineItem(data as Parameters<typeof toJobEstimateLineItem>[0]);
+      const id = newClientId();
+      const optimistic = toJobEstimateLineItem({
+        id,
+        job_id: jobId,
+        organization_id: organizationId,
+        kind: draft.kind,
+        description: draft.description,
+        quantity: draft.quantity,
+        unit_cost: draft.unitCost,
+        line_total: draft.lineTotal,
+        created_by: userId,
+        created_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough('job_estimate_line_item.add', { id, jobId, draft }, occurredAt, optimistic);
+      return data;
     },
 
     // No RLS policy backs a tech UPDATE on job_estimate_line_items — this
@@ -897,6 +918,7 @@ export function createEstimateRepository(): EstimateRepository {
     },
 
     async issueShareLink(jobId: string): Promise<{ token: string; url: string }> {
+      requireOnline('share the estimate link');
       const { data, error } = await supabase.rpc('issue_estimate_token', { p_job_id: jobId });
       if (error) {
         throw new Error(`issueShareLink failed: ${error.message}`);
@@ -978,17 +1000,19 @@ function toJobInvestigation(row: {
 }
 
 export async function getJobInvestigation(jobId: string): Promise<JobInvestigation | null> {
-  const { organizationId } = requireModuleSession();
-  const { data, error } = await supabase
-    .from('job_investigations')
-    .select('*')
-    .eq('job_id', jobId)
-    .eq('organization_id', organizationId)
-    .maybeSingle();
-  if (error) {
-    throw new Error(`getJobInvestigation failed: ${error.message}`);
-  }
-  return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
+  return readCached('ft.investigation.getForJob', { jobId }, async () => {
+    const { organizationId } = requireModuleSession();
+    const { data, error } = await supabase
+      .from('job_investigations')
+      .select('*')
+      .eq('job_id', jobId)
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`getJobInvestigation failed: ${error.message}`);
+    }
+    return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
+  });
 }
 
 export function createJobInvestigationRepository(): JobInvestigationRepository {
@@ -1000,35 +1024,26 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
     async upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('job_investigation.upsert', occurredAt, { jobId, patch });
 
-      const { data, error } = await supabase
-        .from('job_investigations')
-        .upsert(
-          {
-            job_id: jobId,
-            organization_id: organizationId,
-            tech_id: userId,
-            ingress_notes: patch.ingressNotes ?? null,
-            logistics_notes: patch.logisticsNotes ?? null,
-            parking_notes: patch.parkingNotes ?? null,
-            state_assessment: patch.stateAssessment ?? null,
-            room_work: patch.roomWork ?? [],
-            measurements: patch.measurements ?? null,
-            tech_instructions: patch.techInstructions ?? null,
-            materials_arrived: patch.materialsArrived ?? null,
-            submitted_at: patch.submittedAt ?? null,
-            updated_at: occurredAt,
-          },
-          { onConflict: 'job_id' }
-        )
-        .select('*')
-        .single();
-      if (error) {
-        logSyncFailure('field-tech-repos.upsertJobInvestigation', error.message, { jobId, patch });
-        throw new Error(`upsertForJob failed: ${error.message}`);
-      }
-      return toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]);
+      const optimistic = toJobInvestigation({
+        id: newClientId(),
+        job_id: jobId,
+        organization_id: organizationId,
+        tech_id: userId,
+        ingress_notes: patch.ingressNotes ?? null,
+        logistics_notes: patch.logisticsNotes ?? null,
+        parking_notes: patch.parkingNotes ?? null,
+        state_assessment: patch.stateAssessment ?? null,
+        room_work: patch.roomWork ?? [],
+        measurements: patch.measurements ?? null,
+        tech_instructions: patch.techInstructions ?? null,
+        materials_arrived: patch.materialsArrived ?? null,
+        submitted_at: patch.submittedAt ?? null,
+        created_at: occurredAt,
+        updated_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough('job_investigation.upsert', { jobId, occurredAt, patch }, occurredAt, optimistic);
+      return data;
     },
   };
 }
@@ -1052,30 +1067,33 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
   };
 
   async function toPhoto(row: PhotoRow): Promise<JobPlanningPhoto> {
-    const { data } = await supabase.storage
-      .from(JOB_PHOTOS_BUCKET)
-      .createSignedUrl(row.storage_path, PLANNING_PHOTO_SIGNED_URL_TTL_SECONDS);
+    planningPathById.set(row.id, row.storage_path);
+    // Local file first, signed URL online, null offline.
+    const url = await resolvePhotoUri(row.storage_path, localPathForStorage);
     return {
       id: row.id,
       jobId: row.job_id,
       storagePath: row.storage_path,
       caption: row.caption,
       createdAt: row.created_at,
-      url: data?.signedUrl ?? null,
+      url,
     };
   }
 
   return {
     async list(jobId: string): Promise<JobPlanningPhoto[]> {
-      const { data, error } = await supabase
-        .from('job_planning_photos')
-        .select('id, job_id, storage_path, caption, created_at')
-        .eq('job_id', jobId)
-        .order('created_at', { ascending: true });
-      if (error) {
-        throw new Error(`planningPhotos.list failed: ${error.message}`);
-      }
-      return Promise.all(((data ?? []) as PhotoRow[]).map(toPhoto));
+      const rows = await readCached('ft.planningPhotos.list', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_planning_photos')
+          .select('id, job_id, storage_path, caption, created_at')
+          .eq('job_id', jobId)
+          .order('created_at', { ascending: true });
+        if (error) {
+          throw new Error(`planningPhotos.list failed: ${error.message}`);
+        }
+        return (data ?? []) as PhotoRow[];
+      });
+      return Promise.all(rows.map(toPhoto));
     },
 
     async add(jobId: string): Promise<JobPlanningPhoto | null> {
@@ -1096,52 +1114,41 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
         return null;
       }
 
-      const { organizationId, userId } = requireModuleSession();
-      const path = `planning/${jobId}/${Date.now()}.jpg`;
-      const blob = await (await fetch(asset.uri)).blob();
-      const { error: uploadError } = await supabase.storage
-        .from(JOB_PHOTOS_BUCKET)
-        .upload(path, blob, { contentType: 'image/jpeg' });
-      if (uploadError) {
-        logSyncFailure('field-tech-repos.addPlanningPhoto', uploadError.message, { jobId, path });
-        throw new Error(`planningPhotos.add upload failed: ${uploadError.message}`);
-      }
-
-      const { data, error } = await supabase
-        .from('job_planning_photos')
-        .insert({
-          organization_id: organizationId,
-          job_id: jobId,
-          storage_path: path,
-          created_by: userId,
-        })
-        .select('id, job_id, storage_path, caption, created_at')
-        .single();
-      if (error) {
-        await supabase.storage.from(JOB_PHOTOS_BUCKET).remove([path]);
-        logSyncFailure('field-tech-repos.addPlanningPhoto', error.message, { jobId, path });
-        throw new Error(`planningPhotos.add insert failed: ${error.message}`);
-      }
-      return toPhoto(data as PhotoRow);
+      const { organizationId } = requireModuleSession();
+      const contentType = asset.mimeType || 'image/jpeg';
+      const subtype = contentType.split('/')[1]?.toLowerCase() ?? '';
+      const ext =
+        subtype === 'jpeg' || subtype === 'jpg'
+          ? 'jpg'
+          : subtype === 'png' || subtype === 'webp' || subtype === 'heic' || subtype === 'gif'
+            ? subtype
+            : 'jpg';
+      const id = newClientId();
+      const occurredAt = new Date().toISOString();
+      const localUri = await copyToLocal(asset.uri, organizationId, jobId, id, ext);
+      const storagePath = planningStoragePathFor(organizationId, jobId, id, ext);
+      planningPathById.set(id, storagePath);
+      const optimistic: JobPlanningPhoto = {
+        id,
+        jobId,
+        storagePath,
+        caption: null,
+        createdAt: occurredAt,
+        url: localUri,
+      };
+      const { data } = await writeThrough(
+        'job_planning_photo.add',
+        { id, jobId, storagePath, localUri, ext, contentType },
+        occurredAt,
+        optimistic,
+      );
+      return data;
     },
 
     async remove(photoId: string): Promise<void> {
-      const { data, error: readError } = await supabase
-        .from('job_planning_photos')
-        .select('storage_path')
-        .eq('id', photoId)
-        .maybeSingle();
-      if (readError) {
-        throw new Error(`planningPhotos.remove failed: ${readError.message}`);
-      }
-      const { error } = await supabase.from('job_planning_photos').delete().eq('id', photoId);
-      if (error) {
-        throw new Error(`planningPhotos.remove failed: ${error.message}`);
-      }
-      const storagePath = (data as { storage_path: string } | null)?.storage_path;
-      if (storagePath) {
-        await supabase.storage.from(JOB_PHOTOS_BUCKET).remove([storagePath]);
-      }
+      const storagePath = planningPathById.get(photoId);
+      await writeThrough('job_planning_photo.remove', { id: photoId, storagePath }, new Date().toISOString(), undefined);
+      planningPathById.delete(photoId);
     },
   };
 }
@@ -1156,62 +1163,59 @@ export function createTimeEntryRepository(): TimeEntryRepository {
       const { organizationId, userId } = requireModuleSession();
 
       const occurredAt = new Date().toISOString();
-      await enqueueMutation('job_time_entry.clock_in', occurredAt, { jobId });
-
-      const { data, error } = await supabase
-        .from('job_time_entries')
-        .insert({
-          organization_id: organizationId,
-          job_id: jobId,
-          tech_id: userId,
-          clock_in_at: occurredAt,
-        })
-        .select('*')
-        .single();
-
-      if (error) {
-        logSyncFailure('field-tech-repos.clockIn', error.message, { jobId });
-        throw new Error(`clockIn failed: ${error.message}`);
-      }
-
-      return toTimeEntry(data as TimeEntryRow);
+      const id = newClientId();
+      const optimistic = toTimeEntry({
+        id,
+        organization_id: organizationId,
+        job_id: jobId,
+        tech_id: userId,
+        clock_in_at: occurredAt,
+        clock_out_at: null,
+        created_at: occurredAt,
+      } as never);
+      const { data } = await writeThrough('job_time_entry.clock_in', { id, jobId, clockInAt: occurredAt }, occurredAt, optimistic);
+      knownEntries.set(data.id, data);
+      return data;
     },
 
     async clockOut(entryId: string): Promise<TimeEntry> {
       const occurredAt = new Date().toISOString();
-
-      await enqueueMutation('job_time_entry.clock_out', occurredAt, { entryId });
-
-      const { data, error } = await supabase
-        .from('job_time_entries')
-        .update({ clock_out_at: occurredAt })
-        .eq('id', entryId)
-        .select('*')
-        .single();
-
-      if (error) {
-        logSyncFailure('field-tech-repos.clockOut', error.message, { entryId });
-        throw new Error(`clockOut failed: ${error.message}`);
-      }
-
-      return toTimeEntry(data as TimeEntryRow);
+      const known = knownEntries.get(entryId);
+      const optimistic: TimeEntry = known
+        ? { ...known, clockOutAt: occurredAt }
+        : toTimeEntry({
+            id: entryId,
+            organization_id: requireModuleSession().organizationId,
+            job_id: '',
+            tech_id: requireModuleSession().userId,
+            clock_in_at: occurredAt,
+            clock_out_at: occurredAt,
+            created_at: occurredAt,
+          } as never);
+      const { data } = await writeThrough('job_time_entry.clock_out', { id: entryId, clockOutAt: occurredAt }, occurredAt, optimistic);
+      knownEntries.set(entryId, data);
+      return data;
     },
 
     async listForJob(jobId: string): Promise<TimeEntry[]> {
       const { organizationId } = requireModuleSession();
 
-      const { data, error } = await supabase
-        .from('job_time_entries')
-        .select('*')
-        .eq('job_id', jobId)
-        .eq('organization_id', organizationId)
-        .order('clock_in_at', { ascending: true });
+      const entries = await readCached('ft.timeEntries.listForJob', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_time_entries')
+          .select('*')
+          .eq('job_id', jobId)
+          .eq('organization_id', organizationId)
+          .order('clock_in_at', { ascending: true });
 
-      if (error) {
-        throw new Error(`listForJob failed: ${error.message}`);
-      }
+        if (error) {
+          throw new Error(`listForJob failed: ${error.message}`);
+        }
 
-      return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
+        return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
+      });
+      for (const entry of entries) knownEntries.set(entry.id, entry);
+      return entries;
     },
   };
 }
@@ -1223,69 +1227,66 @@ export function createTimeEntryRepository(): TimeEntryRepository {
 export function createPremQueueRepository(): PremQueueRepository {
   return {
     async listOpen(techId: string): Promise<{ items: PremQueueItem[]; unavailable: boolean }> {
-      const { data: jobRows, error: jobsError } = await supabase
-        .from('jobs')
-        .select('*, customers(name, phone)')
-        .not('needs_prem_at', 'is', null)
-        .order('needs_prem_at', { ascending: true });
-      if (jobsError) {
-        if ((jobsError as { code?: string }).code === '42703') {
-          return { items: [], unavailable: true };
+      return readCached('ft.premQueue.listOpen', { techId }, async () => {
+        const { data: jobRows, error: jobsError } = await supabase
+          .from('jobs')
+          .select('*, customers(name, phone)')
+          .not('needs_prem_at', 'is', null)
+          .order('needs_prem_at', { ascending: true });
+        if (jobsError) {
+          if ((jobsError as { code?: string }).code === '42703') {
+            return { items: [], unavailable: true };
+          }
+          throw jobsError;
         }
-        throw jobsError;
-      }
-      const jobs = (jobRows ?? []).map((row) => toJob(row as never));
-      const jobIds = jobs.map((job) => job.id);
-      if (jobIds.length === 0) {
-        return { items: [], unavailable: false };
-      }
+        const jobs = (jobRows ?? []).map((row) => toJob(row as never));
+        const jobIds = jobs.map((job) => job.id);
+        if (jobIds.length === 0) {
+          return { items: [], unavailable: false };
+        }
 
-      const { data: assignmentRows, error: assignmentsError } = await supabase
-        .from('job_assignments')
-        .select('job_id, tech_id')
-        .eq('kind', 'investigator')
-        .in('job_id', jobIds);
-      if (assignmentsError) throw assignmentsError;
-      const claimedByJobId = new Map<string, string>();
-      for (const row of assignmentRows ?? []) {
-        claimedByJobId.set(row.job_id as string, row.tech_id as string);
-      }
+        const { data: assignmentRows, error: assignmentsError } = await supabase
+          .from('job_assignments')
+          .select('job_id, tech_id')
+          .eq('kind', 'investigator')
+          .in('job_id', jobIds);
+        if (assignmentsError) throw assignmentsError;
+        const claimedByJobId = new Map<string, string>();
+        for (const row of assignmentRows ?? []) {
+          claimedByJobId.set(row.job_id as string, row.tech_id as string);
+        }
 
-      const { data: investigationRows, error: investigationsError } = await supabase
-        .from('job_investigations')
-        .select('job_id, submitted_at')
-        .eq('tech_id', techId)
-        .in('job_id', jobIds);
-      if (investigationsError) throw investigationsError;
-      const mySubmittedJobIds = new Set(
-        (investigationRows ?? [])
-          .filter((row) => row.submitted_at != null)
-          .map((row) => row.job_id as string)
-      );
+        const { data: investigationRows, error: investigationsError } = await supabase
+          .from('job_investigations')
+          .select('job_id, submitted_at')
+          .eq('tech_id', techId)
+          .in('job_id', jobIds);
+        if (investigationsError) throw investigationsError;
+        const mySubmittedJobIds = new Set(
+          (investigationRows ?? [])
+            .filter((row) => row.submitted_at != null)
+            .map((row) => row.job_id as string)
+        );
 
-      const items: PremQueueItem[] = [];
-      for (const job of jobs) {
-        const claimedBy = claimedByJobId.get(job.id);
-        if (claimedBy && claimedBy !== techId) continue;
-        if (mySubmittedJobIds.has(job.id)) continue;
-        items.push({
-          job,
-          customerName: job.customerName ?? null,
-          customerPhone: job.customerPhone ?? null,
-          claimedByMe: claimedBy === techId,
-        });
-      }
-      return { items, unavailable: false };
+        const items: PremQueueItem[] = [];
+        for (const job of jobs) {
+          const claimedBy = claimedByJobId.get(job.id);
+          if (claimedBy && claimedBy !== techId) continue;
+          if (mySubmittedJobIds.has(job.id)) continue;
+          items.push({
+            job,
+            customerName: job.customerName ?? null,
+            customerPhone: job.customerPhone ?? null,
+            claimedByMe: claimedBy === techId,
+          });
+        }
+        return { items, unavailable: false };
+      });
     },
 
     async claim(organizationId: string, jobId: string, techId: string): Promise<void> {
-      const { error } = await supabase.from('job_assignments').insert({
-        organization_id: organizationId,
-        job_id: jobId,
-        tech_id: techId,
-        kind: 'investigator',
-      });
-      if (error) throw error;
+      void organizationId; // org comes from the replay ctx
+      await writeThrough('job_assignment.claim', { id: newClientId(), jobId, techId }, new Date().toISOString(), undefined);
     },
   };
 }
@@ -1295,6 +1296,13 @@ export function createPremQueueRepository(): PremQueueRepository {
  * ------------------------------------------------------------------ */
 
 export function buildFieldTechPorts(): ModulePorts {
+  // Online signing for planning/job photo URLs; local file wins, offline yields null.
+  setSignedUrlResolver(async (storagePath: string) => {
+    const { data } = await supabase.storage
+      .from(JOB_PHOTOS_BUCKET)
+      .createSignedUrl(storagePath, PLANNING_PHOTO_SIGNED_URL_TTL_SECONDS);
+    return data?.signedUrl ?? null;
+  });
   return {
     checklist: createChecklistRepository(),
     photos: createJobPhotoRepository(),
@@ -1312,13 +1320,15 @@ export function buildFieldTechPorts(): ModulePorts {
     localPrefs: { getBool: getBoolPref, setBool: setBoolPref },
     techs: {
       list: async (orgId: string) => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .eq('organization_id', orgId)
-          .order('full_name');
-        if (error) throw error;
-        return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
+        return readCached('ft.techs.list', { orgId }, async () => {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .eq('organization_id', orgId)
+            .order('full_name');
+          if (error) throw error;
+          return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
+        });
       },
     },
   };

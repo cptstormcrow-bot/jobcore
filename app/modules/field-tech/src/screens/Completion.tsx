@@ -36,6 +36,7 @@ import { ScreenTitle, Button, Checkbox, TextField, colors, spacing, typography, 
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { newPhotoId } from '../lib/photo-id';
 import { transitionJob } from '../domain/transition';
 import {
   recordAfterPhoto,
@@ -111,7 +112,7 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
    * upload wiring lives in the host app's capture flow, out of this
    * screen's scope.
    */
-  async function handleCaptureAfterPhoto(storagePath: string): Promise<void> {
+  async function handleCaptureAfterPhoto(storagePath: string, extra: { id: string; localUri: string; ext: string }): Promise<void> {
     const session = getModuleSession();
     if (session === null) {
       setError('No active session — cannot record photo.');
@@ -132,7 +133,8 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
         lat: null,
         lng: null,
         idempotencyKey,
-      });
+        ...extra,
+      } as never);
 
       recordAfterPhoto(job.id);
       setAfterPhotoCount((count) => count + 1);
@@ -204,9 +206,10 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
           onPress={() => {
             void (async () => {
               const ports = getModulePorts();
-              const captured = await ports.camera.capturePhoto('after');
+              const photoId = newPhotoId();
+              const captured = await ports.camera.capturePhoto('after', { jobId: job.id, photoId });
               if (captured) {
-                await handleCaptureAfterPhoto(captured.storagePath);
+                await handleCaptureAfterPhoto(captured.storagePath, { id: photoId, localUri: captured.localUri, ext: captured.ext });
               }
             })();
           }}

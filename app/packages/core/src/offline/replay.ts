@@ -102,6 +102,8 @@ export interface ReplayResult {
  * `send` throws, the error is caught, `options.markFailed?.` is awaited
  * with the row id and error, `failed` is incremented, and the loop
  * CONTINUES to the next row — one bad mutation must never stall the queue.
+ *
+ * @deprecated Use `drainQueue`, which classifies errors and backs off.
  */
 export async function replayQueue(
   pending: readonly QueuedMutation[],
@@ -126,4 +128,129 @@ export async function replayQueue(
   }
 
   return { sent, failed };
+}
+
+export type ReplayErrorClass = 'network' | 'auth' | 'permission' | 'permanent' | 'duplicate' | 'unknown';
+
+/** Pure, duck-typed classifier for any thrown value. */
+export function classifyReplayError(e: unknown): ReplayErrorClass {
+  const o = (e !== null && typeof e === 'object' ? e : {}) as Record<string, unknown>;
+  const name = typeof o.name === 'string' ? o.name : '';
+  const message = typeof o.message === 'string' ? o.message : typeof e === 'string' ? e : '';
+  const code = o.code === undefined || o.code === null ? '' : String(o.code);
+  const rawStatus = o.status;
+  const status =
+    typeof rawStatus === 'number' ? rawStatus : typeof rawStatus === 'string' && rawStatus.trim() !== '' ? Number(rawStatus) : NaN;
+
+  if (
+    (name === 'TypeError' && /fetch|network|failed to fetch|load failed/i.test(message)) ||
+    name === 'AuthRetryableFetchError' ||
+    status === 0 ||
+    (status >= 500 && status <= 599) ||
+    status === 429
+  ) {
+    return 'network';
+  }
+  if (status === 401 || code === 'PGRST301' || /jwt expired|invalid jwt|not authenticated/i.test(message)) {
+    return 'auth';
+  }
+  if (code === '42501' || status === 403) return 'permission';
+  if (code === '23505') return /_pkey/.test(message) ? 'duplicate' : 'permanent';
+  if (
+    status === 400 ||
+    status === 404 ||
+    status === 422 ||
+    code.startsWith('22') ||
+    code.startsWith('23') ||
+    code.startsWith('42') ||
+    /^PGRST1\d\d$/.test(code)
+  ) {
+    return 'permanent';
+  }
+  return 'unknown';
+}
+
+export function computeBackoffMs(
+  attempts: number,
+  opts?: { baseMs?: number; factor?: number; maxMs?: number }
+): number {
+  const baseMs = opts?.baseMs ?? 2000;
+  const factor = opts?.factor ?? 2;
+  const maxMs = opts?.maxMs ?? 300000;
+  if (!(attempts > 1)) return baseMs;
+  return Math.min(maxMs, baseMs * Math.pow(factor, attempts - 1));
+}
+
+export const UNKNOWN_MAX_ATTEMPTS = 8;
+
+/** A queue row as handed to `drainQueue`; `next_attempt_at` is the v2 column. */
+export type DrainRow = QueuedMutation & { next_attempt_at?: string | null };
+
+export interface DrainOptions<M extends DrainRow = DrainRow> {
+  send(m: M): Promise<void>;
+  markInflight(id: string): Promise<void>;
+  markDone(id: string): Promise<void>;
+  markRetry(id: string, info: { errorClass: ReplayErrorClass; message: string; nextAttemptAt: string }): Promise<void>;
+  markFailed(id: string, info: { errorClass: ReplayErrorClass; message: string }): Promise<void>;
+  now(): Date;
+  classify?(e: unknown): ReplayErrorClass;
+  backoff?(attempts: number): number;
+}
+
+export interface DrainResult {
+  sent: number;
+  failed: number;
+  retried: number;
+  skipped: number;
+  aborted?: 'network' | 'auth' | 'backoff' | 'unknown' | 'offline';
+}
+
+/** Strict FIFO drain over `pending` as given (caller sorts). */
+export async function drainQueue<M extends DrainRow = DrainRow>(
+  pending: readonly M[],
+  o: DrainOptions<M>
+): Promise<DrainResult> {
+  const res: DrainResult = { sent: 0, failed: 0, retried: 0, skipped: 0 };
+  for (let i = 0; i < pending.length; i++) {
+    const row = pending[i]!;
+    const remaining = pending.length - i;
+    if (row.next_attempt_at && row.next_attempt_at > o.now().toISOString()) {
+      res.aborted = 'backoff';
+      res.skipped = remaining;
+      return res;
+    }
+    await o.markInflight(row.id);
+    try {
+      await o.send(row);
+    } catch (e) {
+      const cls = (o.classify ?? classifyReplayError)(e);
+      const msg = String((e as { message?: unknown } | null | undefined)?.message ?? e);
+      if (cls === 'permanent' || cls === 'permission') {
+        await o.markFailed(row.id, { errorClass: cls, message: msg });
+        res.failed++;
+        continue;
+      }
+      if (cls === 'duplicate') {
+        await o.markDone(row.id);
+        res.sent++;
+        continue;
+      }
+      if (cls === 'unknown' && (row.attempts ?? 0) + 1 >= UNKNOWN_MAX_ATTEMPTS) {
+        await o.markFailed(row.id, { errorClass: cls, message: msg });
+        res.failed++;
+        continue;
+      }
+      const nextAttemptAt = new Date(
+        o.now().getTime() + (o.backoff ?? computeBackoffMs)((row.attempts ?? 0) + 1)
+      ).toISOString();
+      await o.markRetry(row.id, { errorClass: cls, message: msg, nextAttemptAt });
+      res.retried++;
+      res.aborted = cls as 'network' | 'auth' | 'unknown';
+      res.skipped = remaining - 1;
+      return res;
+    }
+    await o.markDone(row.id);
+    res.sent++;
+  }
+  return res;
 }

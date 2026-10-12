@@ -26,6 +26,8 @@ import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
+import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
+import { QUEUED_COPY, toUserMessage, writeThrough } from '../../src/lib/offline-mutations';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { landingRouteFor } from '../../src/lib/landing';
 import {
@@ -277,6 +279,9 @@ export default function JobDrilldownScreen() {
     };
   }, []);
 
+  const rev = useReadCacheRevision();
+  // jobId for which the form has already been seeded; background refetches (rev bumps) must not re-seed/reset the form.
+  const formSeededForRef = useRef<string | null>(null);
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(!isCreate);
   const [form, setForm] = useState<JobFormState>(EMPTY_JOB_FORM);
@@ -303,14 +308,14 @@ export default function JobDrilldownScreen() {
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
+  const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
+  const isTechEstimate = role === 'tech';
+  useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   useEffect(() => { setActionError(null); }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
-  const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
-  const isTechEstimate = role === 'tech';
-  useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
   const [standardMinutes, setStandardMinutes] = useState<number | undefined>(undefined);
 
@@ -425,6 +430,7 @@ export default function JobDrilldownScreen() {
       setForm(EMPTY_JOB_FORM);
       setCustomerId(null);
       setCustomer(null);
+      formSeededForRef.current = null;
       setLoading(false);
       return;
     }
@@ -434,16 +440,31 @@ export default function JobDrilldownScreen() {
       return;
     }
     let cancelled = false;
-    setLoading(true);
-    void supabase
-      .from('jobs')
-      .select(JOB_ROW_COLUMNS)
-      .eq('organization_id', org.id)
-      .eq('id', jobId)
-      .maybeSingle<JobRow>()
-      .then(async ({ data, error }) => {
+    const firstLoad = formSeededForRef.current !== jobId;
+    if (firstLoad) setLoading(true); // Loading only when nothing to show yet
+    const orgId = org.id;
+    const fetchLive = async (): Promise<JobRow | null> => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(JOB_ROW_COLUMNS)
+        .eq('organization_id', orgId)
+        .eq('id', jobId)
+        .maybeSingle<JobRow>();
+      if (error) throw error;
+      return data ?? null;
+    };
+    const identity = getReadCacheIdentity();
+    const load = identity
+      ? cachedRead<JobRow | null>(
+          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.byId', { jobId }),
+          fetchLive,
+        ).then((res) => res.data)
+      : fetchLive();
+    void load
+      .catch(() => null)
+      .then(async (data) => {
         if (cancelled) return;
-        const loaded = error || !data ? null : toJob(data);
+        const loaded = data ? toJob(data) : null;
         setJob(loaded);
         setCustomerId(loaded?.customerId ?? null);
 
@@ -456,6 +477,13 @@ export default function JobDrilldownScreen() {
           : null;
         if (cancelled) return;
         setCustomer(fetchedCustomer);
+        // Background refetch (rev bump) after the form was seeded: refresh job/customer only,
+        // never reset the form or the dirty flag.
+        if (!firstLoad) {
+          setLoading(false);
+          return;
+        }
+        formSeededForRef.current = jobId;
 
         const extras = loaded as typeof loaded & Partial<{ permitStatus: string; parkingAvailable: string; rooms: string[]; panelInfo: string; considerations: string }>;
         setForm(
@@ -490,7 +518,7 @@ export default function JobDrilldownScreen() {
     return () => {
       cancelled = true;
     };
-  }, [isCreate, org?.id, jobId]);
+  }, [isCreate, org?.id, jobId, rev]);
 
   /**
    * Edit-mode-only combined save: saves the customer first (updates the
@@ -883,6 +911,7 @@ export default function JobDrilldownScreen() {
   const leavePendingRef = useRef(false);
   const selectRegion = useCallback(
     (next: JobRegion) => {
+      setActiveStage(undefined);
       if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
         void handleSaveEdit().finally(() => {
@@ -911,7 +940,6 @@ export default function JobDrilldownScreen() {
     return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigation, isCreate, dirty, job, customerId, org?.id, form]);
-      setActiveStage(undefined);
 
   const handleFormChange = (patch: Partial<JobFormValues>) => {
     setForm((prev) => {
@@ -945,13 +973,29 @@ export default function JobDrilldownScreen() {
   useEffect(() => {
     if (!job?.id) return;
     let cancelled = false;
-    void (async () => {
+    const fetchLive = async () => {
       const [jobRes, photoRes, leadRes] = await Promise.all([
         supabase.from('jobs').select('contacted_at, stage_marks, upstream_changed_at, created_at').eq('id', job.id).maybeSingle(),
         supabase.from('job_photos').select('id', { count: 'exact', head: true }).eq('job_id', job.id),
         supabase.from('leads').select('id').eq('converted_job_id', job.id).limit(1).maybeSingle(),
       ]);
+      if (jobRes.error || photoRes.error || leadRes.error) throw jobRes.error ?? photoRes.error ?? leadRes.error;
+      return { jobData: jobRes.data ?? null, photoCount: photoRes.count ?? 0, leadData: leadRes.data ?? null };
+    };
+    void (async () => {
+      const identity = getReadCacheIdentity();
+      let fetched: Awaited<ReturnType<typeof fetchLive>>;
+      try {
+        fetched = identity
+          ? (await cachedRead(buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.stageExtras', { jobId: job.id }), fetchLive)).data
+          : await fetchLive();
+      } catch {
+        return;
+      }
       if (cancelled) return;
+      const jobRes = { data: fetched.jobData };
+      const photoRes = { count: fetched.photoCount };
+      const leadRes = { data: fetched.leadData };
       const row = (jobRes.data ?? null) as { contacted_at?: string | null; stage_marks?: Record<string, string> | null; upstream_changed_at?: string | null; created_at?: string | null } | null;
       setStageExtras({
         contactedAt: row?.contacted_at ?? null,
@@ -963,7 +1007,7 @@ export default function JobDrilldownScreen() {
       });
     })();
     return () => { cancelled = true; };
-  }, [job, estimate, investigation]);
+  }, [job, estimate, investigation, rev]);
 
   const stageResults = useMemo(() => {
     if (!job) return null;
@@ -999,9 +1043,12 @@ export default function JobDrilldownScreen() {
     void Linking.openURL(telUrl(customer.phone));
     if (job) {
       const stamp = new Date().toISOString();
-      void supabase.from('jobs').update({ contacted_at: stamp }).eq('id', job.id).then(() => {
-        setStageExtras((prev) => (prev ? { ...prev, contactedAt: stamp } : prev));
-      });
+      void writeThrough('job.mark_contacted', { jobId: job.id, contactedAt: stamp }, stamp, { contactedAt: stamp })
+        .then((res) => {
+          setStageExtras((prev) => (prev ? { ...prev, contactedAt: stamp } : prev));
+          if (res.status === 'queued') setActionError(QUEUED_COPY);
+        })
+        .catch((err) => setActionError(toUserMessage(err)));
     }
   };
 
@@ -1132,7 +1179,7 @@ export default function JobDrilldownScreen() {
       }
       setEstimate(result.estimate);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Approve failed.');
+      setActionError(toUserMessage(err));
     } finally {
       setBusyAction(null);
     }
@@ -1190,7 +1237,7 @@ export default function JobDrilldownScreen() {
       setInvestigation(null);
       setStageExtras((prev) => (prev ? { ...prev, stageMarks: {}, contactedAt: null } : prev));
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : String(error));
+      setActionError(toUserMessage(error));
       if (org?.id && jobId) {
         const { data } = await supabase
           .from('jobs')
@@ -1338,6 +1385,9 @@ export default function JobDrilldownScreen() {
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); void confirmMarkPaid(); } }]
       : []),
+    ...(role === 'owner' || role === 'admin'
+      ? [{ id: 'closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }]
+      : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
       id: 'configuration',
@@ -1385,9 +1435,6 @@ export default function JobDrilldownScreen() {
             testID="job-progress-bar"
           />
         ) : null}
-    ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }]
-      : []),
       </View>
       <View style={styles.rule} />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
@@ -1449,6 +1496,7 @@ export default function JobDrilldownScreen() {
           <JobEstimateScreen
             job={currentJob}
             embedded
+            onEstimateChange={setEstimate}
             estimates={createEstimateRepository()}
             priceSheets={createPriceSheetRepository()}
             priceSheetRates={priceEstimatingRates}
@@ -1466,6 +1514,9 @@ export default function JobDrilldownScreen() {
             onUnassign={() => void handleUnassign()}
             label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           />
+        )}
+        {region === 'closeout' && role && (
+          <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
         {region === 'schedule' && (
           <JobScheduleScreen
@@ -1496,7 +1547,6 @@ export default function JobDrilldownScreen() {
       </ScrollView>
       {region === 'plan' && (
         <View style={styles.footer}>
-            onEstimateChange={setEstimate}
           <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={handleCancel} />
           {role === 'admin' && (
             <Button
@@ -1515,9 +1565,6 @@ export default function JobDrilldownScreen() {
           />
         </View>
       )}
-        {region === 'closeout' && role && (
-          <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
-        )}
     </View>
   );
 }

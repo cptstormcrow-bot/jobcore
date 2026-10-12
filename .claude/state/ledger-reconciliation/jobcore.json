@@ -1,0 +1,17 @@
+{
+  "task_id": "themis-ledger-jobcore-20261003-tier-a-closeout",
+  "project_slug": "jobcore",
+  "scanned_through": {
+    "report_path": ".claude/build-reports/jobcore/admin-finance-overview-cards/2026-10-03_admin-finance-overview-cards.md",
+    "report_mtime": "2026-10-03T00:00:00Z"
+  },
+  "baseline": {
+    "files": 53,
+    "bytes": 374724
+  },
+  "current": {
+    "files": 53,
+    "bytes": 374724
+  },
+  "last_scanned_timestamp": "2026-10-03T16:54:35.405448Z"
+}

@@ -12,7 +12,8 @@
  * visibility convention as `isBetaVisible` elsewhere in this module.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
@@ -44,17 +45,20 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
   const showTest = showTestProp ?? false;
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !employeeRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     employeeRepository
       .listEmployees(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', employees: result });
         }
       })
@@ -67,7 +71,7 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
     return () => {
       cancelled = true;
     };
-  }, [session, employeeRepository]);
+  }, [session, employeeRepository, rev]);
 
   if (!session) {
     return (

@@ -4,6 +4,9 @@ import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
 import { supabase } from './supabase';
+import { writeThrough } from './offline-mutations';
+import { cachedRead } from './read-cache';
+import { getCached } from './read-cache-store';
 import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
 /* ------------------------------------------------------------------ *
@@ -91,7 +94,7 @@ export type SessionState =
   | { status: 'disabled'; profile: Profile }
   | { status: 'unprovisioned'; session: Session }
   | { status: 'error'; message: string; retry: () => void }
-  | { status: 'authenticated'; session: Session; profile: Profile; organization: Organization };
+  | { status: 'authenticated'; session: Session; profile: Profile; organization: Organization; fromCache?: boolean };
 
 // The context/hook value is `SessionState` plus a `recheck()` callable — kept
 // as a separate type (rather than folded into `SessionState` itself) so the
@@ -111,7 +114,7 @@ type ResolveOutcome =
   | { kind: 'unprovisioned'; session: Session }
   | { kind: 'disabled'; profile: Profile }
   | { kind: 'failed'; message: string }
-  | { kind: 'authenticated'; session: Session; profile: Profile; organization: Organization };
+  | { kind: 'authenticated'; session: Session; profile: Profile; organization: Organization; fromCache?: boolean };
 
 /**
  * Resolve a raw auth session into a `ResolveOutcome`.
@@ -126,42 +129,83 @@ type ResolveOutcome =
 async function resolveSession(session: Session | null): Promise<ResolveOutcome> {
   if (!session) return { kind: 'unauthenticated' };
 
-  const profileResult = await supabase
-    .from('profiles')
-    .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status, paid_travel, paid_travel_policy_message, email')
-    .eq('id', session.user.id)
-    .maybeSingle<ProfileRow>();
-
-  if (profileResult.error) return { kind: 'failed', message: profileResult.error.message };
+  const userId = session.user.id;
+  const profileRead = await readRowCached<ProfileRow>(`session.profile:${userId}`, async () =>
+    supabase
+      .from('profiles')
+      .select('id, organization_id, full_name, phone, role, active, created_at, is_test, address, drivers_license_number, vehicle_status, tool_status, paid_travel, paid_travel_policy_message, email')
+      .eq('id', userId)
+      .maybeSingle<ProfileRow>(),
+  );
+  if ('error' in profileRead) return { kind: 'failed', message: profileRead.error };
   // An auth user with no matching `profiles` row is a provisioning gap, not a
   // signed-out user; collapsing it into `unauthenticated` created an invisible
   // sign-in -> redirect -> sign-in loop with no error message and no way out.
-  if (!profileResult.data) return { kind: 'unprovisioned', session };
+  if (!profileRead.data) return { kind: 'unprovisioned', session };
 
   let profile: Profile;
   try {
-    profile = toProfile(profileResult.data);
+    profile = toProfile(profileRead.data);
   } catch (err) {
     return { kind: 'failed', message: err instanceof Error ? err.message : 'Unrecognized account role.' };
   }
 
-  if (!profile.active) return { kind: 'disabled', profile };
+  // `disabled` only ever comes from a live answer; a cached "inactive" row is not trusted.
+  if (!profile.active) {
+    if (profileRead.fromCache) return { kind: 'failed', message: 'Could not confirm your account status. Check your connection and retry.' };
+    return { kind: 'disabled', profile };
+  }
 
-  const orgResult = await supabase
-    .from('organizations')
-    .select('id, name, slug, enabled_modules, created_at')
-    .eq('id', profile.organizationId)
-    .maybeSingle<OrganizationRow>();
+  const orgRead = await readRowCached<OrganizationRow>(`session.org:${profile.organizationId}`, async () =>
+    supabase
+      .from('organizations')
+      .select('id, name, slug, enabled_modules, created_at')
+      .eq('id', profile.organizationId)
+      .maybeSingle<OrganizationRow>(),
+  );
+  if ('error' in orgRead) return { kind: 'failed', message: orgRead.error };
+  if (!orgRead.data) return { kind: 'failed', message: 'Organization record not found.' };
 
-  if (orgResult.error) return { kind: 'failed', message: orgResult.error.message };
-  if (!orgResult.data) return { kind: 'failed', message: 'Organization record not found.' };
-
+  const fromCache = profileRead.fromCache || orgRead.fromCache;
   return {
     kind: 'authenticated',
     session,
     profile,
-    organization: toOrganization(orgResult.data),
+    organization: toOrganization(orgRead.data),
+    ...(fromCache ? { fromCache: true } : {}),
   };
+}
+
+/**
+ * Read one row through the read cache under an 8 s timeout. Query errors and
+ * timeouts fall back to a cached row when one exists (fromCache: true); a live
+ * "no row" answer (data null) is returned as-is and never cached. profile_private
+ * is never read here.
+ */
+async function readRowCached<T>(
+  key: string,
+  query: () => PromiseLike<{ data: T | null; error: { message: string } | null }>,
+): Promise<{ data: T | null; fromCache: boolean } | { error: string }> {
+  try {
+    const r = await withTimeout(
+      cachedRead<T | null>(key, async () => {
+        const res = await query();
+        if (res.error) throw new Error(res.error.message);
+        return res.data;
+      }),
+      8000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return { data: r.data, fromCache: r.fromCache };
+  } catch (err) {
+    try {
+      const c = await getCached(key);
+      if (c) return { data: JSON.parse(c.payload) as T, fromCache: true };
+    } catch {
+      // no usable cache; fall through to the original error
+    }
+    return { error: err instanceof Error ? err.message : 'Unable to reach the server.' };
+  }
 }
 
 /**
@@ -220,6 +264,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
           session: outcome.session,
           profile: outcome.profile,
           organization: outcome.organization,
+          ...(outcome.fromCache ? { fromCache: true } : {}),
         };
       });
     };
@@ -395,13 +440,17 @@ export async function updatePassword(newPassword: string): Promise<string | null
  */
 export async function updateFullName(userId: string, fullName: string): Promise<string | null> {
   try {
-    const { data, error } = await withTimeout(
-      Promise.resolve(supabase.from('profiles').update({ full_name: fullName }).eq('id', userId).select('id')),
+    const res = await withTimeout(
+      writeThrough(
+        'profile.update_name',
+        { userId, fullName },
+        new Date().toISOString(),
+        { id: userId, fullName },
+      ),
       15000,
       'Timed out reaching the server. Check your connection and retry.',
     );
-    if (error) return error.message;
-    if (!data || data.length === 0) return 'Could not save your name. Please try again.';
+    void res;
     return null;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not save your name. Please try again.';

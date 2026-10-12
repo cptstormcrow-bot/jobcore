@@ -42,4 +42,27 @@ create policy job_planning_photos_delete_tech
     )
   );
 
+-- job-photos storage bucket (private, 50 MiB cap) + authenticated policies.
+insert into storage.buckets (id, name, public, file_size_limit)
+values ('job-photos', 'job-photos', false, 52428800)
+on conflict (id) do nothing;
+
+drop policy if exists job_photos_objects_select on storage.objects;
+create policy job_photos_objects_select
+  on storage.objects for select
+  to authenticated
+  using (bucket_id = 'job-photos');
+
+drop policy if exists job_photos_objects_insert on storage.objects;
+create policy job_photos_objects_insert
+  on storage.objects for insert
+  to authenticated
+  with check (bucket_id = 'job-photos');
+
+drop policy if exists job_photos_objects_delete on storage.objects;
+create policy job_photos_objects_delete
+  on storage.objects for delete
+  to authenticated
+  using (bucket_id = 'job-photos');
+
 commit;

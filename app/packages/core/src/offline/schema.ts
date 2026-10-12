@@ -25,9 +25,42 @@ create table if not exists offline_queue (
   payload text not null,
   occurred_at text not null,
   status text not null default 'pending',
-  attempts integer not null default 0
+  attempts integer not null default 0,
+  last_error text,
+  error_class text,
+  next_attempt_at text,
+  inflight_at text
 );
 `;
+
+/** Current offline_queue schema version (v2 adds the four retry/diagnostic columns). */
+export const OFFLINE_QUEUE_SCHEMA_VERSION = 2;
+
+/** Upgrade statements keyed by the version they migrate TO. */
+export const OFFLINE_QUEUE_MIGRATIONS: Record<number, string[]> = {
+  2: [
+    'ALTER TABLE offline_queue ADD COLUMN last_error TEXT',
+    'ALTER TABLE offline_queue ADD COLUMN error_class TEXT',
+    'ALTER TABLE offline_queue ADD COLUMN next_attempt_at TEXT',
+    'ALTER TABLE offline_queue ADD COLUMN inflight_at TEXT',
+  ],
+};
+
+/** Read-through cache table DDL (one statement per entry). */
+export const CREATE_READ_CACHE_TABLE: string[] = [
+  `CREATE TABLE IF NOT EXISTS read_cache (
+  key TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  query TEXT NOT NULL,
+  params TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  fetched_at INTEGER NOT NULL,
+  bytes INTEGER NOT NULL
+)`,
+  'CREATE INDEX IF NOT EXISTS read_cache_user_query ON read_cache (user_id, query)',
+  'CREATE INDEX IF NOT EXISTS read_cache_fetched_at ON read_cache (fetched_at)',
+];
 
 /** Replay order is device-clock order, so the queue is read by `occurred_at`. */
 export const CREATE_OFFLINE_QUEUE_INDEX = `

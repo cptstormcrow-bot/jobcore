@@ -14,10 +14,9 @@
  *   offline mutation primitives in `@jobcore/core`'s `offline/queue`
  *   (`makeIdempotencyKey`, `NewQueuedMutation`) — mirroring the shape
  *   `offline/apply.ts`'s `applyOptimistic` uses for transitions — before the
- *   photo row is persisted via `JobPhotoRepository.create`. When the caller
- *   supplies no `enqueuePhotoMutation` sink the mutation is still computed
- *   (so the idempotency key exists) but nothing is queued, matching
- *   `applyOptimistic`'s "optional injected seam" precedent.
+ *   photo row is persisted via `JobPhotoRepository.create`. The mutation
+ *   is computed only to mint the idempotency key; persistence goes through
+ *   the repository's write-through path.
  * - Submit: submits the checklist instance's item answers via
  *   `ChecklistRepository.submitInstance`, THEN records the submission in the
  *   S1.4 sync-readable singleton (`recordStartChecklistSubmitted`) so
@@ -45,6 +44,7 @@ import { ScreenTitle, Button, Checkbox, colors, spacing, typography, Text } from
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { newPhotoId } from '../lib/photo-id';
 import { transitionJob } from '../domain/transition';
 import {
   recordStartChecklistSubmitted,
@@ -55,13 +55,6 @@ import type { ChecklistInstance, ChecklistItem, ChecklistItemAnswerDraft } from 
 export interface StartChecklistProps {
   /** The job the tech is starting work on. */
   job: Job;
-  /**
-   * Optional offline-queue sink for before-photo mutations, shaped like
-   * `OptimisticApplyOptions.enqueue` in `@jobcore/core`'s `offline/apply.ts`.
-   * When absent, the mutation is still computed but nothing is persisted to
-   * a queue and nothing throws.
-   */
-  enqueuePhotoMutation?: (mutation: NewQueuedMutation) => void | Promise<void>;
   /** Called after the `in_progress` transition succeeds. */
   onDone: () => void;
 }
@@ -76,7 +69,7 @@ function makeNonce(): string {
  * with before-photo capture via the offline queue, and submit (checklist
  * submit + S1.4 singleton + `in_progress` transition).
  */
-export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartChecklistProps): JSX.Element {
+export function StartChecklist({ job, onDone }: StartChecklistProps): JSX.Element {
   const [enRoute, setEnRoute] = useState(false);
   const [instance, setInstance] = useState<ChecklistInstance | null>(null);
   const [templateItems, setTemplateItems] = useState<ChecklistItem[]>([]);
@@ -145,7 +138,7 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
   }, []);
 
   const handleCaptureBeforePhoto = useCallback(
-    async (storagePath: string): Promise<void> => {
+    async (storagePath: string, extra: { id: string; localUri: string; ext: string }): Promise<void> => {
       if (session === null) {
         setError('No active session — cannot capture photo.');
         return;
@@ -161,9 +154,6 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
           payload,
           occurredAt,
         };
-        if (enqueuePhotoMutation) {
-          await enqueuePhotoMutation(mutation);
-        }
 
         const ports = getModulePorts();
         await ports.photos.create(job.organizationId, {
@@ -175,13 +165,14 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
           lat: null,
           lng: null,
           idempotencyKey: mutation.id,
-        });
+          ...extra,
+        } as never);
         setBeforePhotoCount((count) => count + 1);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to capture before-photo.');
       }
     },
-    [job, session, enqueuePhotoMutation],
+    [job, session],
   );
 
   const handleSubmit = useCallback(async (): Promise<void> => {
@@ -260,9 +251,10 @@ export function StartChecklist({ job, enqueuePhotoMutation, onDone }: StartCheck
               onPress={() => {
                 void (async () => {
                   const ports = getModulePorts();
-                  const captured = await ports.camera.capturePhoto('before');
+                  const photoId = newPhotoId();
+                  const captured = await ports.camera.capturePhoto('before', { jobId: job.id, photoId });
                   if (captured) {
-                    await handleCaptureBeforePhoto(captured.storagePath);
+                    await handleCaptureBeforePhoto(captured.storagePath, { id: photoId, localUri: captured.localUri, ext: captured.ext });
                   }
                 })();
               }}

@@ -12,7 +12,8 @@
  * on success and surfacing an inline `ErrorState` on rejection.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
 import type { Invitation, InvitationRepository } from '../data/ports';
@@ -36,17 +37,20 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
   const [revokeErrors, setRevokeErrors] = useState<Record<string, string>>({});
 
   const session = getModuleSession();
+  const rev = useReadCacheRevision();
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     if (!session || !invitationRepository) {
       return;
     }
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    if (!hasLoadedRef.current) setLoadState({ kind: 'loading' });
     invitationRepository
       .listPendingInvitations(session.org.id)
       .then((result) => {
         if (!cancelled) {
+          hasLoadedRef.current = true;
           setLoadState({ kind: 'loaded', invitations: result });
         }
       })
@@ -59,7 +63,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
     return () => {
       cancelled = true;
     };
-  }, [session, invitationRepository]);
+  }, [session, invitationRepository, rev]);
 
   if (!session) {
     return (
