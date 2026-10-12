@@ -237,7 +237,7 @@ export function JobDetail({ job }: JobDetailProps) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
-  content: { padding: spacing.md, gap: spacing.md },
+  content: { padding: spacing.md, gap: spacing.sm },
   statusBar: { height: 6, borderRadius: radius.pill },
   status: {
     fontSize: typography.size.h5,

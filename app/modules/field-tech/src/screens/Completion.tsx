@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   section: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   body: {
     fontSize: typography.size.body,
@@ -261,17 +261,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   field: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: typography.size.label,
     color: colors.danger,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   button: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   checkboxRow: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
 });
