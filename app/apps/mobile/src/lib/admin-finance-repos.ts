@@ -117,7 +117,7 @@ import type {
   ApproveReimbursementInput,
   RejectReimbursementInput,
 } from '../../../../modules/admin-finance/src/data/reimbursement-repo';
-import { toReimbursement, approveReimbursementViaRpc, rejectReimbursementViaRpc } from '../../../../modules/admin-finance/src/data/reimbursement-repo';
+import { toReimbursement, approveReimbursementViaRpc, rejectReimbursementViaRpc, markReimbursementPaidViaRpc } from '../../../../modules/admin-finance/src/data/reimbursement-repo';
 import type {
   PayoutBatchRepo,
   PayoutBatchRow,
@@ -1132,6 +1132,15 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       const result = await rejectReimbursementViaRpc(supabase as unknown as Parameters<typeof rejectReimbursementViaRpc>[0], input);
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.rejectReimbursement', result.reason, { input });
+      }
+      return result;
+    },
+
+    async markPaid(reimbursementId: string) {
+      requireOnline('mark a reimbursement paid');
+      const result = await markReimbursementPaidViaRpc(supabase as unknown as Parameters<typeof markReimbursementPaidViaRpc>[0], reimbursementId);
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.markReimbursementPaid', result.reason, { reimbursementId });
       }
       return result;
     },

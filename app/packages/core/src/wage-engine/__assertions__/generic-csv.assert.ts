@@ -48,7 +48,7 @@ test('comma, quote and newline in name are quoted and escaped', () => {
 test('formula guard prefixes single quote', () => {
   for (const c of ['=', '+', '-', '@']) {
     const csv = toGenericCsv(make([line('u1', `${c}CMD`, 60, 0, 100, 0)]));
-    assert.equal(csv.split('\r\n')[1].split(',')[0], `'${c}CMD`);
+    assert.equal(csv.split('\r\n')[1]!.split(',')[0], `'${c}CMD`);
   }
 });
 

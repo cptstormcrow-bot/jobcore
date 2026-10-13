@@ -466,7 +466,7 @@ const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx
   let receiptPath = p.receiptPhotoPath ?? null;
   if (receiptPath && /^(file|content):\/\//i.test(receiptPath)) {
     const extMatch = /\.([A-Za-z0-9]{2,5})(?:\?.*)?$/.exec(receiptPath);
-    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+    const ext = extMatch?.[1]?.toLowerCase() ?? 'jpg';
     const storagePath = `${ctx.orgId}/${p.techId}/${p.id}.${ext}`;
     const blob = await (await fetch(receiptPath)).blob();
     const { error: upErr } = await ctx.supabase.storage

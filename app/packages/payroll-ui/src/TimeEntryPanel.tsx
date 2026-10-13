@@ -48,7 +48,7 @@ function parseMinutes(text: string): number | null {
   const t = text.trim();
   if (t === '') return null;
   const hm = /^(\d+):([0-5]?\d)$/.exec(t);
-  if (hm) return parseInt(hm[1], 10) * 60 + parseInt(hm[2], 10);
+  if (hm) return parseInt(hm[1]!, 10) * 60 + parseInt(hm[2]!, 10);
   if (/^\d*\.?\d+$/.test(t)) return Math.round(parseFloat(t) * 60);
   return null;
 }
@@ -64,7 +64,7 @@ function editable(e: PayrollTimeEntry): boolean {
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const { port, userId, weekStartDow } = props;
   const days = useMemo(() => weekDays(weekStartDow), [weekStartDow]);
-  const range = useMemo(() => ({ from: days[0], to: days[6] }), [days]);
+  const range = useMemo(() => ({ from: days[0]!, to: days[6]! }), [days]);
   const [entries, setEntries] = useState<PayrollTimeEntry[]>([]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>('');
@@ -103,7 +103,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       port.upsertEntry({
         id: newId(),
         userId,
-        workDate: days.find((d) => d === toIso(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))) ?? days[0],
+        workDate: days.find((d) => d === toIso(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))) ?? days[0]!,
         minutes: 0,
         clockInAt: new Date().toISOString(),
         clockOutAt: null,

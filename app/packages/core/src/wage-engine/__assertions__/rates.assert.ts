@@ -13,7 +13,7 @@ test('rateOnDate: empty history -> null', () => {
 });
 
 test('rateOnDate: date before first effectiveFrom -> null', () => {
-  assert.equal(rateOnDate([H2[0]], '2025-12-31'), null);
+  assert.equal(rateOnDate([H2[0]!], '2025-12-31'), null);
 });
 
 test('rateOnDate: change is inclusive on its effectiveFrom', () => {
@@ -49,14 +49,14 @@ test('rateOnDate: three-step history', () => {
 });
 
 test('rateOnDate: unsorted input matches sorted input', () => {
-  const unsorted = [H3[2], H3[0], H3[1]];
+  const unsorted = [H3[2]!, H3[0]!, H3[1]!];
   for (const d of ['2025-12-31', '2026-01-01', '2026-03-31', '2026-04-01', '2026-08-31', '2026-09-01']) {
     assert.equal(rateOnDate(unsorted, d), rateOnDate(H3, d));
   }
 });
 
 test('rateOnDate: does not mutate input', () => {
-  const input = [H3[2], H3[0], H3[1]];
+  const input = [H3[2]!, H3[0]!, H3[1]!];
   const copy = input.map((c) => ({ ...c }));
   rateOnDate(input, '2026-10-01');
   assert.deepEqual(input, copy);
