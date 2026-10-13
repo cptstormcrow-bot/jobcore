@@ -1,17 +1,58 @@
 {
-  "task_id": "themis-ledger-jobcore-20261003-tier-a-closeout",
+  "task_id": "themis-ledger-jobcore-20261012-tier-a-closeout",
   "project_slug": "jobcore",
+  "caller": "main",
   "scanned_through": {
-    "report_path": ".claude/build-reports/jobcore/admin-finance-overview-cards/2026-10-03_admin-finance-overview-cards.md",
-    "report_mtime": "2026-10-03T00:00:00Z"
+    "report_path": ".claude/build-reports/jobcore/closeout-to-job-menu/2026-10-12_closeout-to-job-menu.md",
+    "report_mtime": "2026-10-12T00:00:00Z"
   },
-  "baseline": {
-    "files": 53,
-    "bytes": 374724
+  "items": [
+    {
+      "item_id": ".claude/build-reports/jobcore/closeout-to-job-menu/2026-10-12_closeout-to-job-menu.md#FC1",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "CloseOutQueueScreen (#0017) is parked, not deleted; if a cross-job queue returns it needs a host and a registry route",
+      "status": "OPEN",
+      "status_confidence": "high",
+      "status_evidence": null,
+      "verified_on_disk": true,
+      "source_line": 41
+    },
+    {
+      "item_id": ".claude/build-reports/jobcore/help-cards-context-relevant/2026-10-12_help-cards-context-relevant.md#FC1",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "Commit the help hunks in the 4 mixed files once their payroll/scrollTo WIP lands",
+      "status": "OPEN",
+      "status_confidence": "high",
+      "status_evidence": null,
+      "verified_on_disk": true,
+      "source_line": 36
+    },
+    {
+      "item_id": ".claude/build-reports/jobcore/job-overview-unified-tasks/2026-10-12_job-overview-unified-tasks.md#FC2",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "Payroll-session migrations 0080-0085 are still local and unpushed",
+      "status": "OPEN",
+      "status_confidence": "high",
+      "status_evidence": null,
+      "verified_on_disk": true,
+      "source_line": 28
+    }
+  ],
+  "footprint": {
+    "baseline": {"files": 53, "bytes": 374724},
+    "current": {"files": 81, "bytes": 502715},
+    "delta": {"files": 28, "bytes": 127991},
+    "grade": "C"
   },
-  "current": {
-    "files": 53,
-    "bytes": 374724
-  },
-  "last_scanned_timestamp": "2026-10-03T16:54:35.405448Z"
+  "summary": {"open": 3, "addressed": 0, "re_deferred": 0, "stale_unacknowledged": 0, "needs_human_confirm": 0},
+  "memory_index_action": "none",
+  "assumption_notes": [
+    "Project-repo-local scan only; admin-repo E:\Jeff\.claude\build-reports\jobcore not scanned per scope rule.",
+    "Rule 41 check declared in closeout report verified as complete; prior lineage contracts listed and honored.",
+    "Footprint C grade (larger growth) is expected over 9 active days (28 new report files, ~128 KB); not flagged as concern.",
+    "Three distinct open forward-contract items remain from recent reports; none contradicted by 2026-10-12 closeout change."
+  ]
 }
