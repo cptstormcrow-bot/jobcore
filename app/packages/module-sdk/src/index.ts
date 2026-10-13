@@ -96,17 +96,11 @@ const registry = new Map<string, JobcoreModule>();
 
 /**
  * Register a module at compile time.
- * Re-registering the identical module object is a no-op: Fast Refresh/HMR
- * re-evaluates modules.ts while this Map survives. A different module reusing
- * an id is still a build-time bug and throws.
+ * Fast Refresh/HMR re-evaluates the module file, producing a new object while
+ * this Map survives, so the latest registration for an id wins; ids are unique
+ * per module package by convention.
  */
 export function registerModule(m: JobcoreModule): void {
-  if (registry.get(m.id) === m) {
-    return;
-  }
-  if (registry.has(m.id)) {
-    throw new Error(`Duplicate module registration: a module with id "${m.id}" is already registered.`);
-  }
   registry.set(m.id, m);
 }
 

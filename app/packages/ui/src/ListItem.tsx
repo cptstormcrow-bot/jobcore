@@ -24,15 +24,17 @@ export function ListItem({ title, subtitle, overline, footer, onPress, right, st
       }
     : {};
   return (
-    <Pressable onPress={onPress} {...interactiveProps} style={[styles.row, style]}>
-      <View style={styles.content}>
-        {overline ? <Text style={styles.overline}>{overline}</Text> : null}
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-        {footer ? <Text style={styles.footer}>{footer}</Text> : null}
-      </View>
+    <View style={[styles.row, style]}>
+      <Pressable onPress={onPress} {...interactiveProps} style={styles.main}>
+        <View style={styles.content}>
+          {overline ? <Text style={styles.overline}>{overline}</Text> : null}
+          <Text style={styles.title}>{title}</Text>
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {footer ? <Text style={styles.footer}>{footer}</Text> : null}
+        </View>
+      </Pressable>
       {right ? <View style={styles.right}>{right}</View> : null}
-    </Pressable>
+    </View>
   );
 }
 
@@ -45,6 +47,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  main: { flexShrink: 1, flexGrow: 1 },
   content: { flexShrink: 1 },
   title: {
     color: colors.text,

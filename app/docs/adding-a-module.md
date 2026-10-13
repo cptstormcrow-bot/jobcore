@@ -55,10 +55,11 @@ Registration and lookup go through two functions:
 
 - `registerModule(module: JobcoreModule)` — adds the module to the
   in-process registry. It is called only from `apps/mobile/src/modules.ts`
-  (one line per module), never from a module package. It is idempotent for
-  the identical module object (Fast Refresh/HMR re-evaluates `modules.ts`)
-  and throws `Duplicate module registration` only when a different object
-  reuses an id.
+  (one line per module), never from a module package. Registering an id that is
+  already present replaces the earlier entry (the latest registration wins),
+  because Fast Refresh/HMR re-evaluates the module file and `modules.ts` with
+  a new object while the registry survives. It no longer throws on a repeated
+  id, so keep each module's `id` unique by convention.
 - `getEnabledModules(org)` — returns the modules that are both registered
   and turned on for the given organization (per
   `organizations.enabled_modules`), with `navEntries` sorted by `order`.
