@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollSettings, PayrollTimeEntry } from './port';
+import { errorText } from './errorText';
 
 export interface HoursTallyPanelProps {
   port: PayrollSelfPort;
@@ -45,7 +46,7 @@ export function HoursTallyPanel({ port, userId }: HoursTallyPanelProps) {
         setSettings(s);
         setEntries(list);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setError(errorText(e));
       }
     })();
     return () => {

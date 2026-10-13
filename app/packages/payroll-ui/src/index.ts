@@ -27,3 +27,4 @@ export { ReceiptCapture } from './ReceiptCapture';
 export type { ReceiptCaptureProps } from './ReceiptCapture';
 export { PayrollHome } from './PayrollHome';
 export type { PayrollHomeProps } from './PayrollHome';
+export { errorText } from './errorText';

@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { Button, EmptyState, Text, TextField } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
+import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 
@@ -68,7 +69,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
       setBatchId(res.batchId);
       setStatus(`Run closed (batch ${res.batchId}).`);
     } catch (e) {
-      setStatus(`Close failed: ${e instanceof Error ? e.message : String(e)}`);
+      setStatus(`Close failed: ${errorText(e)}`);
     } finally {
       setBusy(false);
     }
@@ -82,7 +83,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
       const doc = await exportRun.call(payroll, batchId, format);
       setStatus(`Exported ${doc.lines.length} line(s) for ${doc.periodStart} to ${doc.periodEnd}.`);
     } catch (e) {
-      setStatus(`Export failed: ${e instanceof Error ? e.message : String(e)}`);
+      setStatus(`Export failed: ${errorText(e)}`);
     } finally {
       setBusy(false);
     }

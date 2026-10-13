@@ -7,6 +7,7 @@ import type {
   PayrollSettings,
   PayrollTimeEntry,
 } from './port';
+import { errorText } from './errorText';
 
 export interface PayPeriodPanelProps {
   port: PayrollSelfPort;
@@ -75,7 +76,7 @@ export function PayPeriodPanel({ port, userId }: PayPeriodPanelProps) {
         if (cancelled) return;
         setData({ settings, entries, rates, weekStart, weekEnd });
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setError(errorText(e));
       }
     })();
     return () => {

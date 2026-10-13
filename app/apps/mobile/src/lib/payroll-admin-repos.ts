@@ -16,7 +16,7 @@ import type { PayrollRepoSession } from './payroll-repos';
 type Row = Record<string, any>;
 
 function check(error: { message?: string } | null): void {
-  if (error) throw error;
+  if (error) throw new Error(error.message ?? 'Request failed');
 }
 
 function rollupStatus(statuses: PayrollEntryStatus[]): PayrollEntryStatus {

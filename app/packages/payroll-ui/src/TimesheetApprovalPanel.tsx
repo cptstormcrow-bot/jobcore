@@ -7,6 +7,7 @@ import { View } from 'react-native';
 import { Button, Card, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollAdminPort, PayrollDateRange, TeamWeek } from './port';
+import { errorText } from './errorText';
 
 export interface TimesheetApprovalPanelProps {
   port: PayrollAdminPort;
@@ -44,7 +45,7 @@ function weekMinutes(w: TeamWeek): number {
 }
 
 function msg(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  return errorText(e);
 }
 
 export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApprovalPanelProps) {

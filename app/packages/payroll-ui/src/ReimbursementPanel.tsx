@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 import type { PayrollReimbursement, PayrollSelfPort } from './port';
 import { ReceiptCapture } from './ReceiptCapture';
+import { errorText } from './errorText';
 
 export interface ReimbursementPanelProps {
   port: PayrollSelfPort;
@@ -48,7 +49,7 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
         const list = await port.listMyReimbursements();
         if (!cancelled) setHistory(list.filter((r) => r.userId === userId));
       } catch (e) {
-        if (!cancelled) setLoadError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setLoadError(errorText(e));
       }
     })();
     return () => {
@@ -79,7 +80,7 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
       setReceiptUri(null);
       setReloadTick((n) => n + 1);
     } catch (e) {
-      setFormError(e instanceof Error ? e.message : String(e));
+      setFormError(errorText(e));
     } finally {
       setSubmitting(false);
     }

@@ -29,7 +29,7 @@ async function readCached<T>(queryName: string, params: Record<string, unknown>,
 }
 
 function check(error: { message?: string } | null): void {
-  if (error) throw error;
+  if (error) throw new Error(error.message ?? 'Request failed');
 }
 
 export function toPayrollTimeEntry(r: Row): PayrollTimeEntry {
