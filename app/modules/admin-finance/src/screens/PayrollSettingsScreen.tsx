@@ -1,3 +1,4 @@
+// JobCore screen #0086 - af-PayrollSettings - Payroll Settings
 /**
  * Payroll settings screen (admin) — week-start day, overtime rules and the
  * QuickBooks account map. Weekly pay only: there is no period selector.
