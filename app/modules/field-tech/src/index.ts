@@ -22,7 +22,7 @@
 import * as React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { router, useRouter } from 'expo-router';
-import { AppChrome, Breadcrumb, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, useScreenNumber, HelpCircle, getHelpStep, useWalkthrough } from '@jobcore/ui';
 import { moduleSwitcherItems, type JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -59,6 +59,16 @@ export type { DayListProps } from './screens/DayList';
  */
 type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems' | 'payroll';
 
+type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
+const HELP_SCREEN_KEYS: Record<SubView, HelpScreenKey> = {
+  overview: 'ft-overview',
+  jobs: 'ft-jobs',
+  timeOff: 'ft-time-off',
+  prems: 'ft-prems',
+  reviews: 'ft-reviews',
+  payroll: 'ft-overview',
+};
+
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
 const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
 
@@ -66,6 +76,7 @@ function FieldTechRoot(): React.ReactElement {
   const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('overview');
   useScreenNumber({ subView });
+  const { showHelp } = useWalkthrough();
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const [showTestJobs, setShowTestJobs] = React.useState(false);
@@ -89,12 +100,24 @@ function FieldTechRoot(): React.ReactElement {
     return React.createElement(
       View,
       { style: styles.screen },
-      React.createElement(Breadcrumb, {
-        segments: [
-          { label: 'Field Tech', onPress: () => setSelectedJobId(null) },
-          { label: 'Job Detail' },
-        ],
-      }),
+      React.createElement(
+        View,
+        { style: { flexDirection: 'row', alignItems: 'center' } },
+        React.createElement(
+          View,
+          { style: { flex: 1 } },
+          React.createElement(Breadcrumb, {
+            segments: [
+              { label: 'Field Tech', onPress: () => setSelectedJobId(null) },
+              { label: 'Job Detail' },
+            ],
+          }),
+        ),
+        React.createElement(HelpCircle, {
+          onPress: () => showHelp(getHelpStep('ft-job-detail')?.id ?? 'ft-job-detail'),
+          testID: 'ft-job-detail-help',
+        }),
+      ),
       React.createElement(FieldJobDetail, { jobId: selectedJobId }),
     );
   }
@@ -244,6 +267,7 @@ function FieldTechRoot(): React.ReactElement {
       compactMenu: true,
       gearItems,
       gearTitle: 'Configurations',
+      helpContext: { screenKey: HELP_SCREEN_KEYS[subView] ?? 'ft-overview' },
       logoMenuItems,
       optionsItems: subView === 'jobs' ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle:
