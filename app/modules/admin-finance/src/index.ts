@@ -1,11 +1,9 @@
 import type { JobcoreModule } from '@jobcore/module-sdk';
 import type { Ctx, Job } from '@jobcore/core';
 import { router } from 'expo-router';
-import { transitionJob } from './domain/transition';
 import { AdminFinanceRoot } from './screens/AdminFinanceRoot';
 import { getModuleSession } from './lib/module-session';
 import { getModulePorts } from './lib/module-ports';
-import { SETTLED_PAYMENT_STATUSES } from './data/ports';
 import { submitEstimate } from './flows/submit-estimate';
 import { approveEstimate } from './flows/approve-estimate';
 
@@ -51,31 +49,6 @@ export const adminFinanceModule: JobcoreModule = {
   jobActions: [
     { id: 'view-price-sheet', label: 'View Price Sheet' },
     { id: 'add-pay-period-note', label: 'Add Pay Period Note' },
-    // Folded in from the retired payment-review module (Workstream D).
-    // Renamed from payment-review's own `mark-paid` id to avoid a future
-    // collision now that both actions live in the same module's jobActions
-    // array. Same transition: `transitionJob(job, 'paid', ctx)`, but `ctx`
-    // comes from this module's own `buildTransitionCtx()` (real injected
-    // `session.role`), not payment-review's hardcoded `role: 'admin'`
-    // scaffold.
-    //
-    // `ctx.hasPaymentRecord` is a SYNCHRONOUS probe (state-machine.ts
-    // `readSyncProbe` fails closed on a Promise), so the payment list is
-    // resolved BEFORE `transitionJob` is called and the probe just returns
-    // the pre-computed boolean. `settled` = a payment with status
-    // `confirmed` | `manual_confirmed` (SETTLED_PAYMENT_STATUSES); jobs whose
-    // payer is not `customer` skip the payment check entirely.
-    {
-      id: 'admin-finance-mark-paid',
-      label: 'Mark Paid',
-      onInvoke: async (job: Job) => {
-        const ps = await getModulePorts().payments.listForJob(job.id);
-        const settled =
-          job.payer !== 'customer' || ps.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
-        await transitionJob(job, 'paid', { ...buildTransitionCtx(), hasPaymentRecord: () => settled });
-        await getModulePorts().jobs.updateStatus(job.id, 'paid');
-      },
-    },
     {
       id: 'schedule',
       label: 'Schedule',
