@@ -31,6 +31,18 @@ import { Payroll } from './Payroll';
 import { useModuleSession } from '../lib/module-session';
 
 
+type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
+
+const HELP_SCREEN_KEYS: Record<SubView, HelpScreenKey> = {
+  overview: 'sm-overview',
+  pitchPicker: 'sm-pitch',
+  composer: 'sm-composer',
+  reporting: 'sm-reporting',
+  callbackTasks: 'sm-callbacks',
+  payroll: 'sm-reporting',
+  reviewLibrary: 'sm-reviews',
+};
+
 const SUBVIEW_LABELS: Record<SubView, string> = {
   overview: 'Overview',
   reviewLibrary: 'Review Library',
@@ -184,6 +196,7 @@ export function SalesMarketingRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       optionsItems: [],
       titleBar: { title: 'Sales & Marketing', subtitle: SUBVIEW_LABELS[subView] },
+      helpContext: { screenKey: HELP_SCREEN_KEYS[subView] ?? 'sm-overview' },
     }),
     content,
   );
