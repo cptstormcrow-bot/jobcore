@@ -1254,6 +1254,17 @@ export function AdminFinanceRoot() {
         ) : (
           (() => {
             const techs = loadState.employees.filter((e) => e.role === 'tech' && e.active);
+          onSetRate={async ({ userId, hourlyRateCents, effectiveFrom }) => {
+            const payroll = ports.payroll;
+            if (!payroll?.setRate) {
+              throw new Error('Rate changes are unavailable: the payroll port is not wired.');
+            }
+            await payroll.setRate(
+              userId,
+              hourlyRateCents,
+              effectiveFrom as Parameters<NonNullable<typeof payroll.setRate>>[2],
+            );
+          }}
             const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
             const calendarJobs = loadState.jobs
               .filter(
