@@ -1,3 +1,4 @@
+// JobCore screen #0081 - blackout-range-modal - blackout-range-modal
 /**
  * BlackoutRangeModal — schedule admin time off ("blackout") from the #0056
  * calendar screen. Tapping a day opens this modal seeded with that day; the
