@@ -58,3 +58,13 @@ Forward contracts:
 17. The help hunks in the 4 mixed files (AdminFinanceRoot.tsx, SalesMarketingRoot.tsx, field-tech index.ts, [jobId].tsx) were left uncommitted because they carry foreign payroll / scrollTo WIP.
 
 No Desktop copy of this report.
+
+## Post-close cleanup (2026-10-13)
+
+- Mixed-WIP files left unstaged at close were committed help-only, one commit per file, with other sessions' WIP left unstaged:
+  - f5e0732 — `modules/admin-finance/src/screens/AdminFinanceRoot.tsx` (HELP_SCREEN_KEY map, helpContext, drawer helpIds)
+  - cf33729 — `modules/sales-marketing/src/screens/SalesMarketingRoot.tsx` (+13/-0, HELP_SCREEN_KEYS + helpContext)
+  - a9c9277 — `modules/field-tech/src/index.ts` (+31/-7, ft-* help keys + job-detail HelpCircle)
+- `apps/mobile/app/job/[jobId].tsx`: nothing to stage. This change's help hunks (helpContext `{ screenKey: 'job-create' }` and the 7 menu helpIds with `as MenuItem[]` casts) were already committed inside another session's commit 8a47fb7 "fix(closeout): resolve five close-out caveats". Recorded only; history not rewritten.
+- Pre-existing defect (not caused by this change): SalesMarketingRoot.tsx at cf33729's parent already referenced `SubView` without defining it; it compiles only with another session's unstaged `type SubView = ...` (~L33). That session's commit must include it.
+- Not pushed.
