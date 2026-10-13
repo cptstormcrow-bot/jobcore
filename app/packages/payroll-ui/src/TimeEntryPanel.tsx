@@ -8,6 +8,7 @@ import { Button, Card, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
+import { SandButton } from './SandButton';
 
 export interface TimeEntryPanelActions {
   saveAll: () => Promise<void>;
@@ -159,6 +160,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const dirtyDays = days.filter((d) => (inputs[d] ?? '').trim() !== '');
 
   const saveAll = useCallback(async () => {
+    if (saveState === 'saving') return;
     if (dirtyDays.length === 0) return;
     setError('');
     setSaveState('saving');
@@ -169,7 +171,16 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           throw new Error(dayLabel(day) + ': enter hours as 1.5 or 1:30.');
         }
         const note = (notes[day] ?? '').trim();
-        const existing = entries.find((e) => e.workDate === day && e.source === 'manual' && editable(e));
+        const anyManual = entries.find((e) => e.workDate === day && e.source === 'manual');
+        if (anyManual && !editable(anyManual)) {
+          if (anyManual.minutes === mins) {
+            setInputs((p) => ({ ...p, [day]: '' }));
+            setNotes((p) => ({ ...p, [day]: '' }));
+            continue;
+          }
+          throw new Error(dayLabel(day) + ' is already submitted or approved and cannot be changed.');
+        }
+        const existing = anyManual;
         const entry: PayrollTimeEntry = existing
           ? { ...existing, minutes: mins, status: 'draft', rejectionReason: null, notes: note !== '' ? note : existing.notes }
           : {
@@ -196,7 +207,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       setSaveState('idle');
       await reload();
     }
-  }, [dirtyDays, inputs, notes, entries, port, userId, reload, onChanged]);
+  }, [saveState, dirtyDays, inputs, notes, entries, port, userId, reload, onChanged]);
 
   const canSubmit = entries.some(editable);
   const busy = saveState === 'saving';
@@ -213,12 +224,14 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   return (
     <View>
-      <View style={{ marginTop: 4 }}>
-        <Button
-          label={busy ? 'Saving…' : 'Save All'}
+      <View style={{ marginTop: 4, alignSelf: 'flex-end' }}>
+        <SandButton
+          label={busy ? 'Saving…' : 'Save all'}
           onPress={saveAll}
           disabled={busy || dirtyDays.length === 0}
         />
+      </View>
+      <View>
         {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       </View>
       {error !== '' ? <Text>{error}</Text> : null}

@@ -222,14 +222,14 @@ const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async ({ id, 
       .eq('kind', 'investigator')
       .order('assigned_at', { ascending: false })
       .limit(1);
-    if (priorErr) throw priorErr;
+    if (priorErr) throw new Error(priorErr.message);
     priorTechId = (prior?.[0]?.tech_id as string | undefined) ?? null;
     const { error: delError } = await ctx.supabase
       .from('job_assignments')
       .delete()
       .eq('job_id', draft.jobId)
       .eq('kind', 'investigator');
-    if (delError) throw delError;
+    if (delError) throw new Error(delError.message);
   }
   const { error } = await ctx.supabase.from('job_assignments').insert({
     id,
@@ -252,7 +252,7 @@ const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async ({ id, 
       // best-effort restore of the prior investigator; the original error is thrown below
     }
   }
-  if (error) throw error;
+  if (error) throw new Error(error.message);
   return APPLIED;
 };
 

@@ -8,6 +8,7 @@ import type {
 } from './port';
 import { ReceiptCapture } from './ReceiptCapture';
 import { errorText } from './errorText';
+import { SandButton } from './SandButton';
 
 export type ReimbursementPanelActions = {
   submit: () => void | Promise<void>;
@@ -231,25 +232,23 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
               key={r.id}
               style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8, gap: 4 }}
             >
-              <Text style={{ fontWeight: '600' }}>{r.employeeName}</Text>
-              <Text>
-                {formatMoney(r.amountCents)} - {r.status}
-              </Text>
-              <Text>{r.description}</Text>
-              <Text>{formatDate(r.createdAt)}</Text>
-              {r.receiptPhotoPath && typeof adminPort.getReceiptUrl === 'function' ? (
-                <Pressable
-                  onPress={() => void onViewReceipt(r.receiptPhotoPath as string)}
-                  style={{
-                    padding: 8,
-                    borderRadius: 6,
-                    alignItems: 'center',
-                    backgroundColor: '#D9C7A0',
-                  }}
-                >
-                  <Text style={{ color: '#000', fontWeight: '600' }}>View receipt</Text>
-                </Pressable>
-              ) : null}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: '600' }}>{r.employeeName}</Text>
+                  <Text>
+                    {formatMoney(r.amountCents)} - {r.status}
+                  </Text>
+                  <Text>{r.description}</Text>
+                  <Text>{formatDate(r.createdAt)}</Text>
+                </View>
+                {r.receiptPhotoPath && typeof adminPort.getReceiptUrl === 'function' ? (
+                  <SandButton
+                    label="View receipt"
+                    onPress={() => void onViewReceipt(r.receiptPhotoPath as string)}
+                    style={{ alignSelf: 'center' }}
+                  />
+                ) : null}
+              </View>
             </View>
           ))}
         </>

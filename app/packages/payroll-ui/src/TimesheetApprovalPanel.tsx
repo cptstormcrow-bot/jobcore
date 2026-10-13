@@ -8,6 +8,7 @@ import { Button, Card, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollAdminPort, PayrollDateRange, TeamWeek } from './port';
 import { errorText } from './errorText';
+import { SandButton } from './SandButton';
 
 export interface TimesheetApprovalPanelProps {
   port: PayrollAdminPort;
@@ -125,29 +126,33 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
         const key = w.userId + w.weekStart;
         return (
           <Card key={key}>
-            <Text>{w.employeeName}</Text>
-            <Text>{w.weekStart + ' to ' + w.weekEnd}</Text>
-            <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + w.status}</Text>
-            {w.status === 'submitted' ? (
-              <View>
-                <Button label="Approve" size="sm" onPress={() => approve(w)} disabled={busy} />
-                <Button
-                  label="Reject"
-                  size="sm"
-                  variant="outline"
-                  onPress={() => {
-                    setRejecting(key);
-                    setReason('');
-                  }}
-                  disabled={busy}
-                />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text>{w.employeeName}</Text>
+                <Text>{w.weekStart + ' to ' + w.weekEnd}</Text>
+                <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + w.status}</Text>
               </View>
-            ) : null}
+              {w.status === 'submitted' ? (
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <SandButton label="Approve" onPress={() => approve(w)} disabled={busy} />
+                  <SandButton
+                    label="Reject"
+                    onPress={() => {
+                      setRejecting(key);
+                      setReason('');
+                    }}
+                    disabled={busy}
+                  />
+                </View>
+              ) : null}
+            </View>
             {rejecting === key ? (
               <View>
                 <TextField label="Reason (required)" value={reason} onChangeText={setReason} />
-                <Button label="Confirm reject" size="sm" onPress={() => confirmReject(w)} disabled={busy} />
-                <Button label="Cancel" size="sm" variant="outline" onPress={() => setRejecting(null)} />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <SandButton label="Confirm reject" onPress={() => confirmReject(w)} disabled={busy} />
+                  <SandButton label="Cancel" onPress={() => setRejecting(null)} />
+                </View>
               </View>
             ) : null}
           </Card>

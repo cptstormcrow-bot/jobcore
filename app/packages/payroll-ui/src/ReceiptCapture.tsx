@@ -6,7 +6,8 @@
 import React, { useCallback, useState } from 'react';
 import { Image, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, Card, Text } from '@jobcore/ui';
+import { Card, Text } from '@jobcore/ui';
+import { SandButton } from './SandButton';
 
 export interface ReceiptCaptureProps {
   uri: string | null;
@@ -64,18 +65,18 @@ export function ReceiptCapture({ uri, onChange, disabled }: ReceiptCaptureProps)
         </View>
       ) : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Button
+        <SandButton
           label="Take photo"
           onPress={() => void pick('camera')}
           disabled={disabled}
         />
-        <Button
+        <SandButton
           label="Choose from library"
           onPress={() => void pick('library')}
           disabled={disabled}
         />
         {uri ? (
-          <Button label="Remove" onPress={() => onChange(null)} disabled={disabled} />
+          <SandButton label="Remove" onPress={() => onChange(null)} disabled={disabled} />
         ) : null}
       </View>
       {message ? <Text>{message}</Text> : null}

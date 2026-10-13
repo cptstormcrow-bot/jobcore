@@ -21,6 +21,7 @@ import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
+import JobPaymentRegion from '../../src/components/JobPaymentRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -83,7 +84,12 @@ import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
  * Users never see raw database text.
  */
 function friendlyAssignError(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err ?? '');
+  const raw =
+    err instanceof Error
+      ? err.message
+      : typeof (err as any)?.message === 'string'
+        ? (err as any).message
+        : String(err ?? '');
   const message = raw.replace(/^create job assignment failed: /, '').trim();
   if (/duplicate key|unique constraint/i.test(message)) {
     return 'This job already has a Prem tech linked. Refresh the page and try again.';
@@ -1279,7 +1285,7 @@ export default function JobDrilldownScreen() {
     { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); selectRegion('closeout'); } }] as MenuItem[]
+      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); selectRegion('payment'); } }] as MenuItem[]
       : []),
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }] as MenuItem[]
@@ -1407,6 +1413,7 @@ export default function JobDrilldownScreen() {
         {region === 'closeout' && role && (
           <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
+        {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} />}
         {region === 'schedule' && (
           <JobScheduleScreen
             job={currentJob}
