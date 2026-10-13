@@ -105,6 +105,15 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
           {active === 'time' ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, justifyContent: 'flex-end' }}>
               <Pressable
+                onPress={() => void timeActions?.saveAll()}
+                disabled={!timeActions || timeActions.busy}
+                accessibilityRole="button"
+                accessibilityLabel="Save all"
+                style={[actionBtn, { opacity: !timeActions || timeActions.busy ? 0.5 : 1 }]}
+              >
+                <Text style={actionTxt}>{timeActions?.busy ? 'Saving…' : 'Save all'}</Text>
+              </Pressable>
+              <Pressable
                 onPress={() => void timeActions?.clockIn()}
                 disabled={!timeActions || timeActions.busy}
                 accessibilityRole="button"

@@ -224,13 +224,15 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   return (
     <View>
-      <View style={{ marginTop: 4, alignSelf: 'flex-end' }}>
-        <SandButton
-          label={busy ? 'Saving…' : 'Save all'}
-          onPress={saveAll}
-          disabled={busy || dirtyDays.length === 0}
-        />
-      </View>
+      {onRegisterActions ? null : (
+        <View style={{ marginTop: 4, alignSelf: 'flex-end' }}>
+          <SandButton
+            label={busy ? 'Saving…' : 'Save all'}
+            onPress={saveAll}
+            disabled={busy || dirtyDays.length === 0}
+          />
+        </View>
+      )}
       <View>
         {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       </View>
