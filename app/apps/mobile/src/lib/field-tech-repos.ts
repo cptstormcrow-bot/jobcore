@@ -106,6 +106,20 @@ const knownEntries = new Map<string, TimeEntry>();
 /** planning photo id -> storage path (job_planning_photo.remove must carry storagePath; no pre-read). */
 const planningPathById = new Map<string, string>();
 
+/** Supabase errors are plain objects; throw a real Error but keep code/details/hint/status. */
+function asError(e: unknown): Error {
+  if (e instanceof Error) return e;
+  if (e && typeof e === 'object' && typeof (e as Record<string, any>).message === 'string') {
+    const src = e as Record<string, any>;
+    const err = new Error(src.message) as Error & Record<string, any>;
+    for (const k of ['code', 'details', 'hint', 'status']) {
+      if (src[k] !== undefined) err[k] = src[k];
+    }
+    return err;
+  }
+  return new Error(String(e));
+}
+
 function fileExt(path: string, fallback: string = 'jpg'): string {
   const m = /\.([A-Za-z0-9]+)$/.exec(path);
   return m?.[1] ? m[1].toLowerCase() : fallback;
@@ -1263,7 +1277,7 @@ export function createPremQueueRepository(): PremQueueRepository {
           if ((jobsError as { code?: string }).code === '42703') {
             return { items: [], unavailable: true };
           }
-          throw jobsError;
+          throw asError(jobsError);
         }
         const jobs = (jobRows ?? []).map((row) => toJob(row as never));
         const jobIds = jobs.map((job) => job.id);
@@ -1276,7 +1290,7 @@ export function createPremQueueRepository(): PremQueueRepository {
           .select('job_id, tech_id')
           .eq('kind', 'investigator')
           .in('job_id', jobIds);
-        if (assignmentsError) throw assignmentsError;
+        if (assignmentsError) throw asError(assignmentsError);
         const claimedByJobId = new Map<string, string>();
         for (const row of assignmentRows ?? []) {
           claimedByJobId.set(row.job_id as string, row.tech_id as string);
@@ -1287,7 +1301,7 @@ export function createPremQueueRepository(): PremQueueRepository {
           .select('job_id, submitted_at')
           .eq('tech_id', techId)
           .in('job_id', jobIds);
-        if (investigationsError) throw investigationsError;
+        if (investigationsError) throw asError(investigationsError);
         const mySubmittedJobIds = new Set(
           (investigationRows ?? [])
             .filter((row) => row.submitted_at != null)
@@ -1364,7 +1378,7 @@ export function buildFieldTechPorts(session?: PayrollRepoSession): ModulePorts {
             .select('id, full_name')
             .eq('organization_id', orgId)
             .order('full_name');
-          if (error) throw error;
+          if (error) throw asError(error);
           return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
         });
       },
