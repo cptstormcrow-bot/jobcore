@@ -51,6 +51,8 @@ import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind 
 export interface AssignmentBoardScreenProps {
   /** Jobs in `qualified` or `scheduled` status — the board's whole scope. */
   jobs: Job[];
+  /** Task titles per job id (job_task_summary_v); shown instead of the job description. */
+  taskTitlesByJobId?: Record<string, string[]>;
   techs: TechColumnTech[];
   /** Resolves a job's seeded `service_areas` id, or `null` if unresolved. */
   resolveServiceAreaId: (job: Job) => string | null;
@@ -119,6 +121,7 @@ function friendlyAssignError(err: unknown): string {
 
 export function AssignmentBoardScreen({
   jobs,
+  taskTitlesByJobId,
   techs,
   resolveServiceAreaId,
   resolveTimeOffForTech,
@@ -432,8 +435,8 @@ export function AssignmentBoardScreen({
                     >
                       <View style={styles.rowTop}>
                         {job.customerName ? <Text style={styles.rowCustomer}>{job.customerName}</Text> : null}
-                        {job.description != null && job.description.trim() !== '' ? (
-                          <Text style={styles.rowDescription} numberOfLines={2}>{job.description}</Text>
+                        {(taskTitlesByJobId?.[job.id] ?? []).length > 0 ? (
+                          <Text style={styles.rowDescription} numberOfLines={2}>{(taskTitlesByJobId?.[job.id] ?? []).join(', ')}</Text>
                         ) : null}
                       </View>
                       <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>

@@ -42,7 +42,7 @@ export interface JobResetTimelinePayload { jobId: string }
 
 export interface JobAssignmentCreatePayload { id: string; organizationId: string; draft: JobAssignmentDraft }
 export interface JobAssignmentRemoveInvestigatorPayload { jobId: string }
-export interface JobAssignmentRemoveForJobPayload { jobId: string }
+export interface JobAssignmentRemoveForJobPayload { jobId: string; kind?: 'installer' | 'investigator' }
 
 export interface LeadCreatePayload { id: string; draft: NewLeadDraft }
 export interface LeadUpdatePayload { leadId: string; patch: LeadPatch }
@@ -54,8 +54,15 @@ export interface CustomerUpdatePayload { id: string; patch: CustomerPatch }
 export interface JobCustomerSavePayload { jobId: string; patch: CustomerPatch }
 
 export interface JobPlanTaskCreatePayload {
-  id: string; organizationId: string; jobId: string; serviceTaskId: string; quantity: number;
+  id: string; organizationId: string; jobId: string; serviceTaskId: string | null; quantity?: number;
+  kind?: 'misc'; title?: string; notes?: string; estimatedMinutes?: number; source?: string;
 }
+export interface JobPlanTaskUpdatePayload {
+  taskRowId: string;
+  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string };
+  updatedAt: string;
+}
+export interface JobPlanTaskDeferPayload { taskRowId: string; updatedAt: string }
 export interface JobPlanTaskUpdateQuantityPayload { taskRowId: string; quantity: number; updatedAt: string }
 export interface JobPlanTaskDeletePayload { taskRowId: string }
 
@@ -255,8 +262,8 @@ const jobAssignmentRemoveInvestigator: OpHandler<JobAssignmentRemoveInvestigator
   return APPLIED;
 };
 
-const jobAssignmentRemoveForJob: OpHandler<JobAssignmentRemoveForJobPayload> = async ({ jobId }, ctx) => {
-  const { error } = await ctx.supabase.from('job_assignments').delete().eq('job_id', jobId);
+const jobAssignmentRemoveForJob: OpHandler<JobAssignmentRemoveForJobPayload> = async ({ jobId, kind }, ctx) => {
+  const { error } = await ctx.supabase.from('job_assignments').delete().eq('job_id', jobId).eq('kind', kind ?? 'installer');
   if (error) throw error;
   return APPLIED;
 };
@@ -327,13 +334,45 @@ const jobCustomerSave: OpHandler<JobCustomerSavePayload> = async ({ jobId, patch
 };
 
 const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) => {
-  const { error } = await ctx.supabase.from('job_plan_tasks').insert({
+  const row: Record<string, unknown> = {
     id: p.id,
     organization_id: p.organizationId,
     job_id: p.jobId,
-    service_task_id: p.serviceTaskId,
-    quantity: p.quantity,
-  });
+    service_task_id: p.kind === 'misc' ? null : p.serviceTaskId,
+    quantity: p.kind === 'misc' ? 1 : p.quantity,
+  };
+  if (p.kind === 'misc') {
+    row.kind = 'misc';
+    row.billing = 'hourly';
+  }
+  if (p.title !== undefined) row.title = p.title;
+  if (p.notes !== undefined) row.notes = p.notes;
+  if (p.estimatedMinutes !== undefined) row.estimated_minutes = p.estimatedMinutes;
+  if (p.source !== undefined) row.source = p.source;
+  const { error } = await ctx.supabase.from('job_plan_tasks').insert(row);
+  if (error) throw error;
+  return APPLIED;
+};
+
+const jobPlanTaskUpdate: OpHandler<JobPlanTaskUpdatePayload> = async ({ taskRowId, patch, updatedAt }, ctx) => {
+  const row: Record<string, unknown> = { updated_at: updatedAt, updated_by: ctx.userId };
+  if (patch.quantity !== undefined) row.quantity = patch.quantity;
+  if (patch.notes !== undefined) row.notes = patch.notes;
+  if (patch.title !== undefined) row.title = patch.title;
+  if (patch.estimatedMinutes !== undefined) row.estimated_minutes = patch.estimatedMinutes;
+  if (patch.sortOrder !== undefined) row.sort_order = patch.sortOrder;
+  if (patch.status !== undefined) row.status = patch.status;
+  const { error } = await ctx.supabase.from('job_plan_tasks').update(row).eq('id', taskRowId).select('id');
+  if (error) throw error;
+  return APPLIED;
+};
+
+const jobPlanTaskDefer: OpHandler<JobPlanTaskDeferPayload> = async ({ taskRowId, updatedAt }, ctx) => {
+  const { error } = await ctx.supabase
+    .from('job_plan_tasks')
+    .update({ status: 'deferred', updated_at: updatedAt, updated_by: ctx.userId })
+    .eq('id', taskRowId)
+    .select('id');
   if (error) throw error;
   return APPLIED;
 };
@@ -459,6 +498,8 @@ export const ADMIN_JOBS_OP_HANDLERS = {
   'job_customer.save': jobCustomerSave,
   'job_plan_task.create': jobPlanTaskCreate,
   'job_plan_task.update_quantity': jobPlanTaskUpdateQuantity,
+  'job_plan_task.update': jobPlanTaskUpdate,
+  'job_plan_task.defer': jobPlanTaskDefer,
   'job_plan_task.delete': jobPlanTaskDelete,
   'job_contact_log.create': jobContactLogCreate,
   'job_planning.upsert': jobPlanningUpsert,

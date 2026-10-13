@@ -630,8 +630,8 @@ export interface JobAssignmentRepository {
   /** Removes the job's investigator assignment, if any; no-op when none. */
   removeInvestigator(jobId: string): Promise<void>;
   listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
-  /** Deletes every assignment row (installer and investigator) for the job; used by unassign. */
-  removeForJob(jobId: string): Promise<void>;
+  /** Deletes every assignment row (installer and investigator) for the job; used by unassign. Deletes only rows of the given kind, so unassigning Service never removes the Prem (investigator) row. */
+  removeForJob(jobId: string, kind: 'installer' | 'investigator'): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1221,6 +1221,7 @@ export interface JobEstimateLineItem {
   lineTotal: number;
   createdAt: string;
   createdBy: string | null;
+  jobPlanTaskId?: string | null;
 }
 
 export interface JobEstimateLineItemDraft {
@@ -1229,6 +1230,7 @@ export interface JobEstimateLineItemDraft {
   quantity: number;
   unitCost: number;
   lineTotal: number;
+  jobPlanTaskId?: string | null;
 }
 
 export interface EstimateRepository {
@@ -1265,14 +1267,35 @@ export interface ServiceTask {
 export interface JobPlanTaskRow {
   id: string;
   jobId: string;
-  serviceTaskId: string;
+  serviceTaskId: string | null;
+  kind: 'price_sheet' | 'misc';
+  title: string;
+  billing: 'flat' | 'hourly';
+  status: 'planned' | 'done' | 'deferred';
+  source: 'plan' | 'prem' | 'estimate' | 'description' | 'spawn';
+  sortOrder: number;
   quantity: number;
   notes: string | null;
+  /** Alias of `title` (kept so PlanningScreen keeps compiling). */
   name: string;
   estimatedMinutes: number | null;
   rate: number | null;
   category: string | null;
   active: boolean;
+}
+
+export interface CustomerJobPlanTaskRow extends JobPlanTaskRow {
+  jobNumber: string | number | null;
+  jobStatus: string | null;
+}
+
+export interface JobPlanTaskPatch {
+  quantity?: number;
+  notes?: string | null;
+  title?: string;
+  estimatedMinutes?: number | null;
+  sortOrder?: number;
+  status?: 'planned' | 'done' | 'deferred';
 }
 
 export interface ServiceTaskCatalogEntry {
@@ -1288,9 +1311,29 @@ export interface JobPlanTasksRepository {
   listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]>;
   listForJob(jobId: string): Promise<JobPlanTaskRow[]>;
   addTask(jobId: string, serviceTaskId: string, quantity: number): Promise<JobPlanTaskRow>;
+  addMiscTask(
+    jobId: string,
+    input: {
+      title: string;
+      notes?: string | null;
+      estimatedMinutes?: number | null;
+      source?: JobPlanTaskRow['source'];
+    },
+  ): Promise<JobPlanTaskRow>;
+  updateTask(taskRowId: string, patch: JobPlanTaskPatch): Promise<JobPlanTaskRow>;
+  deferTask(taskRowId: string): Promise<JobPlanTaskRow>;
+  listForCustomer(customerId: string): Promise<CustomerJobPlanTaskRow[]>;
+  /** Online-only (rpc spawn_customer_job). */
+  spawnJob(
+    sourceJobId: string,
+    taskIds: string[],
+    title: string,
+  ): Promise<{ id: string; jobNumber: string | number | null; name: string | null }>;
   updateQuantity(taskRowId: string, quantity: number): Promise<JobPlanTaskRow>;
   removeTask(taskRowId: string): Promise<void>;
   listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+  /** Task titles per job from job_task_summary_v (task_titles). */
+  listTitlesForJobs?(jobIds: string[]): Promise<Record<string, string[]>>;
 }
 
 /**

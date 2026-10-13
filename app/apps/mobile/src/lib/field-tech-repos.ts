@@ -60,6 +60,8 @@ import type {
   TimeEntryRow,
   JobInvestigationRepository,
   JobInvestigationInput,
+  JobPlanTaskRepository,
+  JobPlanTaskSummary,
   JobPlanningPhoto,
   JobPlanningPhotoRepo,
   PremQueueRepository,
@@ -1015,6 +1017,29 @@ export async function getJobInvestigation(jobId: string): Promise<JobInvestigati
   });
 }
 
+export function createJobPlanTaskRepository(): JobPlanTaskRepository {
+  return {
+    async listForJob(jobId: string): Promise<JobPlanTaskSummary[]> {
+      return readCached('ft.planTasks.listForJob', { jobId }, async () => {
+        const { organizationId } = requireModuleSession();
+        const { data, error } = await supabase
+          .from('job_plan_tasks')
+          .select('id,title,kind,status,sort_order')
+          .eq('job_id', jobId)
+          .eq('organization_id', organizationId)
+          .order('sort_order', { ascending: true });
+        if (error) throw new Error(`listJobPlanTasks failed: ${error.message}`);
+        return ((data ?? []) as Array<{ id: string; title: string; kind: string; status: string }>).map((r) => ({
+          id: r.id,
+          title: r.title,
+          kind: r.kind,
+          status: r.status,
+        }));
+      });
+    },
+  };
+}
+
 export function createJobInvestigationRepository(): JobInvestigationRepository {
   return {
     async getForJob(jobId: string): Promise<JobInvestigation | null> {
@@ -1268,6 +1293,15 @@ export function createPremQueueRepository(): PremQueueRepository {
             .map((row) => row.job_id as string)
         );
 
+        const { data: summaryRows } = await supabase
+          .from('job_task_summary_v')
+          .select('job_id, task_titles')
+          .in('job_id', jobIds);
+        const titlesByJobId = new Map<string, string[]>();
+        for (const row of (summaryRows ?? []) as Array<{ job_id: string; task_titles: string[] | null }>) {
+          titlesByJobId.set(row.job_id, row.task_titles ?? []);
+        }
+
         const items: PremQueueItem[] = [];
         for (const job of jobs) {
           const claimedBy = claimedByJobId.get(job.id);
@@ -1278,6 +1312,7 @@ export function createPremQueueRepository(): PremQueueRepository {
             customerName: job.customerName ?? null,
             customerPhone: job.customerPhone ?? null,
             claimedByMe: claimedBy === techId,
+            taskTitles: titlesByJobId.get(job.id) ?? [],
           });
         }
         return { items, unavailable: false };
@@ -1314,6 +1349,7 @@ export function buildFieldTechPorts(): ModulePorts {
     camera: createCameraRepository(),
     estimates: createEstimateRepository(),
     investigations: createJobInvestigationRepository(),
+    planTasks: createJobPlanTaskRepository(),
     planningPhotos: createJobPlanningPhotoRepository(),
     timeEntries: createTimeEntryRepository(),
     premQueue: createPremQueueRepository(),

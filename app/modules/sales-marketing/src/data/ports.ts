@@ -608,6 +608,24 @@ export interface CallbackTaskRow {
   is_beta: boolean;
   called_back_at: string | null;
   called_back_by: string | null;
+  customer_id?: string | null;
+}
+
+/** Domain shape of one customer_project_history_v row. */
+export interface CustomerProjectHistoryRow {
+  customerId: string;
+  organizationId: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  jobCount: number;
+  lastCompletedAt: string | null;
+  openJobId: string | null;
+  openJobNumber: number | null;
+  deferredTaskTitles: string[];
+  lastCallbackAt: string | null;
+  lastContactAt: string | null;
 }
 
 /** Domain shape of one sales callback task. */
@@ -621,6 +639,12 @@ export interface CallbackTask {
   isBeta: boolean;
   calledBackAt: string | null;
   calledBackBy: string | null;
+  customerId?: string | null;
+  jobCount?: number;
+  lastCompletedAt?: string | null;
+  deferredTaskTitles?: string[];
+  hasOpenJob?: boolean;
+  openJobNumber?: number | null;
 }
 
 export function toCallbackTask(row: CallbackTaskRow): CallbackTask {
@@ -634,6 +658,7 @@ export function toCallbackTask(row: CallbackTaskRow): CallbackTask {
     isBeta: row.is_beta,
     calledBackAt: row.called_back_at,
     calledBackBy: row.called_back_by,
+    customerId: row.customer_id ?? null,
   };
 }
 
@@ -648,4 +673,5 @@ export function toCallbackTask(row: CallbackTaskRow): CallbackTask {
 export interface CallbackTaskRepository {
   listOpen(organizationId: string): Promise<CallbackTask[]>;
   markCalledBack(jobId: string, organizationId: string, calledBackBy: string, calledBackAt: string): Promise<CallbackTask>;
+  listCustomerHistory(customerIds?: string[]): Promise<CustomerProjectHistoryRow[]>;
 }

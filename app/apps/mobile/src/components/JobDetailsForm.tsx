@@ -41,6 +41,8 @@ export interface JobDetailsFormProps {
   error?: string | null;
   /** jobs.created_at (ISO). Read-only; the row is hidden when absent. */
   createdAt?: string | null;
+  /** Dense layout: dense TextFields, xs row gaps, compact Select. Default false. */
+  compact?: boolean;
 }
 
 function formatCreated(iso: string): string {
@@ -59,7 +61,9 @@ export function JobDetailsForm({
   hasInvestigation,
   error,
   createdAt,
+  compact = false,
 }: JobDetailsFormProps) {
+  const fld = compact ? [styles.field, styles.fieldCompact] : styles.field;
   return (
     <View>
       <TextField
@@ -69,15 +73,17 @@ export function JobDetailsForm({
         placeholder="Customer name"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.customerName)}
       />
       <TextField
-        label="Address"
+        label="Job site address"
         value={value.address}
         onChangeText={(text) => onChange({ address: text })}
         placeholder="Street, city, zip"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.address)}
       />
       <TextField
@@ -87,6 +93,7 @@ export function JobDetailsForm({
         placeholder="Customer phone"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.customerPhone)}
       />
       <TextField
@@ -96,15 +103,17 @@ export function JobDetailsForm({
         placeholder="Customer email"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.customerEmail)}
       />
       <TextField
-        label="Address"
+        label="Customer address"
         value={value.customerAddress}
         onChangeText={(text) => onChange({ customerAddress: text })}
         placeholder="Address"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.customerAddress)}
       />
       <View style={[styles.field, styles.fieldTight]}>
@@ -117,6 +126,7 @@ export function JobDetailsForm({
           ]}
           placeholder={serviceAreas.length ? 'Select service area' : 'No service areas configured'}
           disabled={serviceAreas.length === 0}
+          compact={compact}
           onChange={(selected) => onChange({ serviceAreaId: selected || null })}
         />
       </View>
@@ -131,8 +141,9 @@ export function JobDetailsForm({
         value={value.ingressInstructions}
         onChangeText={(text) => onChange({ ingressInstructions: text })}
         placeholder="Gate/lockbox code"
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.ingressInstructions)}
       />
       <TextField
@@ -140,8 +151,9 @@ export function JobDetailsForm({
         value={value.permitStatus}
         onChangeText={(text) => onChange({ permitStatus: text })}
         placeholder="e.g. Filed, pending, not required"
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.permitStatus)}
       />
       <TextField
@@ -149,8 +161,9 @@ export function JobDetailsForm({
         value={value.parkingAvailable}
         onChangeText={(text) => onChange({ parkingAvailable: text })}
         placeholder="e.g. Driveway, street only"
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.parkingAvailable)}
       />
       {mode === 'edit' && hasInvestigation ? (
@@ -159,8 +172,9 @@ export function JobDetailsForm({
           value={value.evisitParking}
           onChangeText={(text) => onChange({ evisitParking: text })}
           placeholder="e.g. Driveway, street only"
-          style={styles.field}
+          style={fld}
           labelStyle={styles.fieldLabel}
+          dense={compact}
           inputStyle={inputStyleFor(value.evisitParking)}
         />
       ) : null}
@@ -188,8 +202,9 @@ export function JobDetailsForm({
         value={value.panelInfo}
         onChangeText={(text) => onChange({ panelInfo: text })}
         placeholder="e.g. 200A, Square D QO"
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.panelInfo)}
       />
       {mode === 'edit' && hasInvestigation ? (
@@ -198,8 +213,9 @@ export function JobDetailsForm({
           value={value.evisitPanel}
           onChangeText={(text) => onChange({ evisitPanel: text })}
           placeholder="e.g. 200A, Square D QO"
-          style={styles.field}
+          style={fld}
           labelStyle={styles.fieldLabel}
+          dense={compact}
           inputStyle={inputStyleFor(value.evisitPanel)}
         />
       ) : null}
@@ -210,8 +226,9 @@ export function JobDetailsForm({
             value={value.service}
             onChangeText={(text) => onChange({ service: text })}
             placeholder="Service"
-            style={styles.field}
+            style={fld}
             labelStyle={styles.fieldLabel}
+            dense={compact}
             inputStyle={inputStyleFor(value.service)}
           />
           <TextField
@@ -219,8 +236,9 @@ export function JobDetailsForm({
             value={value.preferredDate}
             onChangeText={(text) => onChange({ preferredDate: text })}
             placeholder="YYYY-MM-DD"
-            style={styles.field}
+            style={fld}
             labelStyle={styles.fieldLabel}
+            dense={compact}
             inputStyle={inputStyleFor(value.preferredDate)}
           />
           <TextField
@@ -228,20 +246,22 @@ export function JobDetailsForm({
             value={value.preferredTime}
             onChangeText={(text) => onChange({ preferredTime: text })}
             placeholder="Preferred time"
-            style={styles.field}
+            style={fld}
             labelStyle={styles.fieldLabel}
+            dense={compact}
             inputStyle={inputStyleFor(value.preferredTime)}
           />
         </>
       ) : null}
       <TextField
-        label={mode === 'create' ? 'Project details' : 'Description'}
+        label={mode === 'create' ? 'Project details' : 'Notes'}
         value={value.description}
         onChangeText={(text) => onChange({ description: text })}
         placeholder="What needs to be done"
         multiline
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.description)}
       />
       <TextField
@@ -250,8 +270,9 @@ export function JobDetailsForm({
         onChangeText={(text) => onChange({ considerations: text })}
         placeholder="Anything else worth noting"
         multiline
-        style={styles.field}
+        style={fld}
         labelStyle={styles.fieldLabel}
+        dense={compact}
         inputStyle={inputStyleFor(value.considerations)}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -262,6 +283,7 @@ export function JobDetailsForm({
 const styles = StyleSheet.create({
   field: { marginHorizontal: spacing.md, marginTop: spacing.sm },
   fieldTight: { marginTop: spacing.xs },
+  fieldCompact: { marginTop: spacing.xs },
   fieldLabel: { color: colors.textMutedDark, fontSize: typography.size.detail },
   fieldInput: { fontSize: typography.size.h4, color: colors.text },
   fieldInputFilled: { fontWeight: '600' },

@@ -15,6 +15,8 @@ export interface TextFieldProps {
   style?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
   inputStyle?: StyleProp<TextStyle>;
+  /** Compact: label margin 0, xs padding, multiline minHeight 56. */
+  dense?: boolean;
 }
 
 export function TextField({
@@ -29,11 +31,12 @@ export function TextField({
   style,
   labelStyle,
   inputStyle,
+  dense = false,
 }: TextFieldProps) {
   const hasError = !!error;
   return (
     <View style={[styles.base, style]}>
-      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+      {label && <Text style={[styles.label, dense && styles.labelDense, labelStyle]}>{label}</Text>}
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -48,7 +51,9 @@ export function TextField({
         accessibilityHint={hasError ? error : undefined}
         style={[
           styles.input,
+          dense && styles.inputDense,
           multiline && styles.inputMultiline,
+          multiline && dense && styles.inputMultilineDense,
           hasError && styles.inputError,
           disabled && styles.disabled,
           inputStyle,
@@ -81,6 +86,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
+  labelDense: { marginBottom: 0 },
+  inputDense: { paddingHorizontal: spacing.xs, paddingVertical: spacing.xs },
+  inputMultilineDense: { minHeight: 56 },
   inputError: { borderColor: colors.danger },
   disabled: { opacity: 0.5 },
   errorText: {

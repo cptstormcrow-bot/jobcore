@@ -300,8 +300,18 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
   return (
     <View style={styles.container}>
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
-      {!embedded && <ScreenTitle title="Job Estimate" subtitle={job.address ?? undefined} />}
-      {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
+      {!embedded && (
+        <JobHeaderBlock
+          customerName={job.customerName}
+          address={job.address}
+          phone={job.customerPhone}
+          jobNumber={job.jobNumber ?? job.id}
+          createdAt={job.createdAt}
+          scheduledStart={job.scheduledStart}
+          ingressCode={job.ingressInstructions?.trim() || null}
+          onCopy={copyToClipboard}
+        />
+      )}
       <Text style={styles.status}>Estimate status:</Text>
       <EstimateStatusControl
         status={estimate?.status ?? 'draft'}
@@ -439,11 +449,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-  },
-  title: {
-    fontSize: typography.size.h4,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
   },
   status: {
     fontSize: typography.size.label,

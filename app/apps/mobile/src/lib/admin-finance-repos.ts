@@ -787,12 +787,12 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
       });
     },
 
-    async removeForJob(jobId: string): Promise<void> {
+    async removeForJob(jobId: string, kind: 'installer' | 'investigator'): Promise<void> {
       await writeThrough(
         'job_assignment.remove_for_job',
-        { jobId },
+        { jobId, kind },
         new Date().toISOString(),
-        { jobId } as never,
+        { jobId, kind } as never,
       );
     },
   };
@@ -2044,6 +2044,7 @@ function toJobEstimateLineItem(row: {
   line_total: string | number;
   created_at: string;
   created_by: string | null;
+  job_plan_task_id?: string | null;
 }): JobEstimateLineItem {
   return {
     id: row.id,
@@ -2056,6 +2057,7 @@ function toJobEstimateLineItem(row: {
     lineTotal: Number(row.line_total),
     createdAt: row.created_at,
     createdBy: row.created_by,
+    jobPlanTaskId: row.job_plan_task_id ?? null,
   };
 }
 
@@ -2197,6 +2199,7 @@ export function createEstimateRepository(): EstimateRepository {
           lineTotal: draft.lineTotal,
           createdAt: occurredAt,
           createdBy: userId,
+          jobPlanTaskId: draft.jobPlanTaskId ?? null,
         } as never,
       );
       return result.data as JobEstimateLineItem;
@@ -2388,37 +2391,74 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
  * JobPlanTasksRepository
  * ------------------------------------------------------------------ */
 
-function toJobPlanTaskRow(row: {
+type JobPlanTaskDbRow = {
   id: string;
   job_id: string;
-  service_task_id: string;
+  service_task_id: string | null;
+  kind?: 'price_sheet' | 'misc' | null;
+  title?: string | null;
+  billing?: 'flat' | 'hourly' | null;
+  status?: 'planned' | 'done' | 'deferred' | null;
+  source?: 'plan' | 'prem' | 'estimate' | 'description' | 'spawn' | null;
+  estimated_minutes?: number | null;
+  sort_order?: number | null;
   quantity: number;
   notes: string | null;
-  service_tasks: {
+  // Null for techs: service_tasks is not readable under their RLS.
+  service_tasks?: {
     name: string;
     estimated_minutes: number | null;
     rate: number | null;
     category: string | null;
     active: boolean;
   } | null;
-}): JobPlanTaskRow {
-  const task = row.service_tasks;
+  jobs?: { job_number: string | number | null; status: string | null } | null;
+};
+
+const JOB_PLAN_TASK_SELECT =
+  '*, service_tasks(name, estimated_minutes, rate, category, active)';
+
+function toJobPlanTaskRow(row: JobPlanTaskDbRow): JobPlanTaskRow {
+  const task = row.service_tasks ?? null;
+  const title = row.title ?? task?.name ?? '';
   return {
     id: row.id,
     jobId: row.job_id,
-    serviceTaskId: row.service_task_id,
+    serviceTaskId: row.service_task_id ?? null,
+    kind: row.kind ?? (row.service_task_id ? 'price_sheet' : 'misc'),
+    title,
+    billing: row.billing ?? 'flat',
+    status: row.status ?? 'planned',
+    source: row.source ?? 'plan',
+    sortOrder: row.sort_order ?? 0,
     quantity: row.quantity,
     notes: row.notes,
-    name: task?.name ?? '',
-    estimatedMinutes: task?.estimated_minutes ?? null,
+    name: title,
+    estimatedMinutes: row.estimated_minutes ?? task?.estimated_minutes ?? null,
     rate: task?.rate ?? null,
     category: task?.category ?? null,
-    active: task?.active ?? false,
+    active: task?.active ?? true,
   };
 }
 
 export function createJobPlanTasksRepository(): JobPlanTasksRepository {
   return {
+    async listTitlesForJobs(jobIds: string[]): Promise<Record<string, string[]>> {
+      if (jobIds.length === 0) return {};
+      return readCached('af.planTasks.listTitlesForJobs', { jobIds }, async () => {
+        const { data, error } = await supabase
+          .from('job_task_summary_v')
+          .select('job_id, task_titles')
+          .in('job_id', jobIds);
+        if (error) throw new Error(`listTitlesForJobs failed: ${error.message}`);
+        const out: Record<string, string[]> = {};
+        for (const row of (data ?? []) as Array<{ job_id: string; task_titles: string[] | null }>) {
+          out[row.job_id] = row.task_titles ?? [];
+        }
+        return out;
+      });
+    },
+
     async listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]> {
       return readCached('af.planTasks.listCatalogTasks', { organizationId }, async () => {
         const { data, error } = await supabase
@@ -2465,13 +2505,14 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
       return readCached('af.planTasks.listForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_plan_tasks')
-          .select('*, service_tasks(name, estimated_minutes, rate, category, active)')
+          .select(JOB_PLAN_TASK_SELECT)
           .eq('job_id', jobId)
+          .order('sort_order', { ascending: true })
           .order('created_at', { ascending: true });
         if (error) {
           throw new Error(`listForJob failed: ${error.message}`);
         }
-        return ((data ?? []) as Array<Parameters<typeof toJobPlanTaskRow>[0]>).map(toJobPlanTaskRow);
+        return ((data ?? []) as unknown as JobPlanTaskDbRow[]).map(toJobPlanTaskRow);
       });
     },
 
@@ -2483,6 +2524,12 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         id,
         jobId,
         serviceTaskId,
+        kind: 'price_sheet',
+        title: '',
+        billing: 'flat',
+        status: 'planned',
+        source: 'plan',
+        sortOrder: 0,
         quantity,
         notes: null,
         name: '',
@@ -2498,6 +2545,107 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         optimistic,
       );
       return data;
+    },
+
+    async addMiscTask(jobId, input) {
+      const { organizationId } = requireModuleSession();
+      const occurredAt = new Date().toISOString();
+      const id = newClientId();
+      const source = input.source ?? 'plan';
+      const optimistic = {
+        id,
+        jobId,
+        serviceTaskId: null,
+        kind: 'misc',
+        title: input.title,
+        billing: 'hourly',
+        status: 'planned',
+        source,
+        sortOrder: 0,
+        quantity: 1,
+        notes: input.notes ?? null,
+        name: input.title,
+        estimatedMinutes: input.estimatedMinutes ?? null,
+        rate: null,
+        category: null,
+        active: true,
+      } as never as JobPlanTaskRow;
+      const { data } = await writeThrough(
+        'job_plan_task.create',
+        {
+          id,
+          organizationId,
+          jobId,
+          serviceTaskId: null,
+          kind: 'misc',
+          title: input.title,
+          notes: input.notes ?? null,
+          estimatedMinutes: input.estimatedMinutes ?? null,
+          source,
+        },
+        occurredAt,
+        optimistic,
+      );
+      return data;
+    },
+
+    async updateTask(taskRowId, patch) {
+      const occurredAt = new Date().toISOString();
+      const optimistic = { id: taskRowId, ...patch } as never as JobPlanTaskRow;
+      const { data } = await writeThrough(
+        'job_plan_task.update',
+        { taskRowId, patch, updatedAt: occurredAt },
+        occurredAt,
+        optimistic,
+      );
+      return data;
+    },
+
+    async deferTask(taskRowId) {
+      const occurredAt = new Date().toISOString();
+      const optimistic = { id: taskRowId, status: 'deferred' } as never as JobPlanTaskRow;
+      const { data } = await writeThrough(
+        'job_plan_task.defer',
+        { taskRowId, updatedAt: occurredAt },
+        occurredAt,
+        optimistic,
+      );
+      return data;
+    },
+
+    async listForCustomer(customerId) {
+      return readCached('af.planTasks.listForCustomer', { customerId }, async () => {
+        const { data, error } = await supabase
+          .from('job_plan_tasks')
+          .select(`${JOB_PLAN_TASK_SELECT}, jobs!inner(job_number, status, customer_id)`)
+          .eq('jobs.customer_id', customerId)
+          .order('created_at', { ascending: true });
+        if (error) {
+          throw new Error(`listForCustomer failed: ${error.message}`);
+        }
+        return ((data ?? []) as unknown as JobPlanTaskDbRow[]).map((row) => ({
+          ...toJobPlanTaskRow(row),
+          jobNumber: row.jobs?.job_number ?? null,
+          jobStatus: row.jobs?.status ?? null,
+        }));
+      });
+    },
+
+    async spawnJob(sourceJobId, taskIds, title) {
+      const { data, error } = await supabase.rpc('spawn_customer_job', {
+        p_source_job: sourceJobId,
+        p_task_ids: taskIds,
+        p_title: title,
+      });
+      if (error) {
+        throw new Error(`spawnJob failed: ${error.message}`);
+      }
+      const r = (Array.isArray(data) ? data[0] : data) as {
+        id: string;
+        job_number?: string | number | null;
+        name?: string | null;
+      };
+      return { id: r.id, jobNumber: r.job_number ?? null, name: r.name ?? null };
     },
 
     async updateQuantity(taskRowId: string, quantity: number): Promise<JobPlanTaskRow> {

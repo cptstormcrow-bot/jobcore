@@ -133,6 +133,14 @@ export function CallbackTasks(): React.ReactElement {
               {item.customerPhone !== null && <Text style={styles.meta}>{item.customerPhone}</Text>}
               {item.address !== null && <Text style={styles.meta}>{item.address}</Text>}
               <Text style={styles.meta}>Completed {item.completedAt ?? 'unknown date'}</Text>
+              {item.deferredTaskTitles !== undefined && item.deferredTaskTitles.length > 0 && (
+                <Text style={styles.meta}>Next project ideas: {item.deferredTaskTitles.join(', ')}</Text>
+              )}
+              {item.hasOpenJob === true ? (
+                <Text style={styles.meta}>
+                  Open job{item.openJobNumber != null ? ` #${item.openJobNumber}` : ''} in progress
+                </Text>
+              ) : (
               <Pressable
                 accessibilityRole="button"
                 disabled={markingIds.has(item.jobId)}
@@ -143,6 +151,7 @@ export function CallbackTasks(): React.ReactElement {
                   {markingIds.has(item.jobId) ? 'Marking…' : 'Mark Called Back'}
                 </Text>
               </Pressable>
+              )}
             </View>
           )}
         />

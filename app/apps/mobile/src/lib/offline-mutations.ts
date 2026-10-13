@@ -25,7 +25,13 @@ export function toUserMessage(x: unknown): string {
   if (x instanceof OfflineError) return x.message;
   if (typeof x === 'string') return x;
   if (x && typeof x === 'object' && typeof (x as { message?: unknown }).message === 'string') {
-    return (x as { message: string }).message;
+    const e = x as { message: string; code?: unknown; details?: unknown; detail?: unknown };
+    if (e.message.includes('customer_has_open_job') || e.code === 'customer_has_open_job') {
+      const d = [e.details, e.detail, e.message].filter((v): v is string => typeof v === 'string').join(' ');
+      const m = /job_number\D{0,5}(\d+)/i.exec(d) ?? /#(\d+)/.exec(d);
+      return m ? `Customer already has open Job #${m[1]}` : 'Customer already has an open job';
+    }
+    return e.message;
   }
   return 'Something went wrong.';
 }

@@ -1,6 +1,5 @@
 // JobCore screen #0039 - job-detail - New Job
 // JobCore screen #0040 - job-region-assign - Assign
-// JobCore screen #0041 - job-region-plan - Plan
 // JobCore screen #0075 - job-region-contact - Contact
 // JobCore screen #0076 - job-region-arrive - Arrive
 // JobCore screen #0077 - job-region-complete - Complete
@@ -36,8 +35,6 @@ import {
   createEmployeeRepository,
   createJobAssignmentRepository,
   createCalendarEventRepository,
-  createJobPlanningRepository,
-  createJobPlanningPhotoRepository,
   createPriceSheetRepository,
   createPriceSheetPublishRepository,
   createPriceSheetAreaAdjustmentsRepository,
@@ -59,7 +56,8 @@ import { unassignJob } from '../../../../modules/admin-finance/src/flows/unassig
 import { approveEstimate } from '../../../../modules/admin-finance/src/flows/approve-estimate';
 import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
 import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
-import { PlanningScreen } from '../../../../modules/admin-finance/src/screens/PlanningScreen';
+import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
+import { JobTaskList } from '../../src/components/JobTaskList';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobEstimateEditor } from '../../../../modules/field-tech/src/screens/JobEstimateEditor';
@@ -184,10 +182,10 @@ function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
 }
 function regionFromPanel(panel: string | undefined): JobRegion {
   if (panel === 'details') return 'details';
-  if (!isDeepLinkPanel(panel)) return 'plan';
+  if (!isDeepLinkPanel(panel)) return 'details';
   switch (panel) {
     case 'plan':
-      return 'plan';
+      return 'details';
     case 'jobEstimate':
       return 'estimate';
     case 'jobInvestigation':
@@ -197,7 +195,7 @@ function regionFromPanel(panel: string | undefined): JobRegion {
     case 'start-checklist':
     case 'completion':
     default:
-      return 'plan';
+      return 'details';
   }
 }
 
@@ -829,7 +827,10 @@ export default function JobDrilldownScreen() {
     let cancelled = false;
     void createJobPlanTasksRepository().listForJob(jobId).then((rows) => {
       if (cancelled) return;
-      const sum = rows.reduce((acc, row) => acc + (row.estimatedMinutes ?? 0) * row.quantity, 0);
+      const sum = rows.reduce(
+        (acc, row) => acc + (row.kind === 'misc' ? (row.estimatedMinutes ?? 0) : (row.estimatedMinutes ?? 0) * row.quantity),
+        0,
+      );
       setTotalTaskMinutes(sum);
     });
     if (org?.id) {
@@ -1054,7 +1055,7 @@ export default function JobDrilldownScreen() {
 
   const handleStagePress = (key: string) => {
     switch (key as StageKey) {
-      case 'job': selectRegion('plan'); break;
+      case 'job': selectRegion('details'); break;
       case 'premAvailable':
         if (isAdmin) {
           const st = stageResults?.states.find((s) => s.key === 'premAvailable')?.state;
@@ -1365,7 +1366,7 @@ export default function JobDrilldownScreen() {
     : null;
 
   const jobDetailMenuItems: MenuItem[] = [
-    { id: 'plan', label: 'Plan', onPress: () => selectRegion('plan'), isActive: region === 'plan' },
+    { id: 'plan', label: 'Job', onPress: () => selectRegion('details'), isActive: region === 'details' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
     ...(isAdmin
@@ -1463,18 +1464,6 @@ export default function JobDrilldownScreen() {
             if (next) void handleAssignInvestigator(next, true);
           }}
         />
-        {region === 'plan' && (
-          <PlanningScreen
-            embedded
-            jobs={[currentJob]}
-            initialSelectedJobId={currentJob.id}
-            jobPlanning={createJobPlanningRepository()}
-            jobPlanningPhotos={createJobPlanningPhotoRepository()}
-            jobPlanTasks={createJobPlanTasksRepository()}
-            investigationSeed={investigation}
-            standardMinutes={standardMinutes}
-          />
-        )}
         {isAdmin && region === 'evisit' && investigatorTechId ? (
           <Text style={{ paddingLeft: 16 }}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
         ) : null}
@@ -1483,6 +1472,7 @@ export default function JobDrilldownScreen() {
             jobId={currentJob.id}
             job={currentJob}
             embedded
+            renderTaskList={(p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} />}
             onSubmitted={(inv) => {
               setInvestigation(inv);
               void createEstimateRepository().getForJob(currentJob.id).then((value) => setEstimate(value));
@@ -1530,14 +1520,24 @@ export default function JobDrilldownScreen() {
         )}
         {region === 'details' && (
           <>
-            <JobDetailsForm
-              mode="edit"
+            <JobOverviewRegion
+              jobId={currentJob.id}
+              jobNumber={currentJob.jobNumber ?? null}
+              customerId={currentJob.customerId ?? null}
+              jobStatus={currentJob.status ?? null}
+              jobIsOpen={['new', 'qualified', 'scheduled', 'assigned', 'accepted', 'en_route', 'in_progress', 'needs_reschedule'].includes(String(currentJob.status))}
+              isAdmin={isAdmin}
               value={form}
               onChange={handleFormChange}
               serviceAreas={serviceAreas}
               hasInvestigation={investigation !== null}
               error={saveError}
               createdAt={stageExtras?.createdAt ?? currentJob.createdAt}
+              saving={saving}
+              onSave={() => void handleSaveEdit()}
+              onCancel={handleCancel}
+              onReset={isAdmin ? confirmResetTime : undefined}
+              onOpenJob={(id) => router.push(`/job/${id}` as never)}
             />
             <View style={styles.jobDetailPane}>
               <JobDetail job={currentJob} />
@@ -1545,26 +1545,7 @@ export default function JobDrilldownScreen() {
           </>
         )}
       </ScrollView>
-      {region === 'plan' && (
-        <View style={styles.footer}>
-          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={handleCancel} />
-          {role === 'admin' && (
-            <Button
-              label={busyAction === 'reset' ? 'Resetting…' : 'Reset'}
-              variant="outline"
-              disabled={busyAction === 'reset'}
-              style={styles.footerButton}
-              onPress={confirmResetTime}
-            />
-          )}
-          <Button
-            label={saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-            disabled={saving}
-            style={styles.footerButton}
-            onPress={() => void handleSaveEdit()}
-          />
-        </View>
-      )}
+      {/* 'details' region (JobOverviewRegion) owns its own Cancel/Save; no parent footer. */}
     </View>
   );
 }

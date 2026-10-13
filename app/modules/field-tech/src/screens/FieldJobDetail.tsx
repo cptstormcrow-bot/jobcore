@@ -150,6 +150,10 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
       <Text style={styles.sectionTitle}>{headerLine}</Text>
 
       {job.description ? <Text style={styles.description}>{job.description}</Text> : null}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Tasks</Text>
+        {getModulePorts().renderTaskList?.({ jobId, mode: 'read' })}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Timing</Text>

@@ -596,6 +596,8 @@ export interface PremQueueItem {
   customerName: string | null;
   customerPhone: string | null;
   claimedByMe: boolean;
+  /** Task titles from job_task_summary_v (task_titles). */
+  taskTitles?: string[];
 }
 
 export interface PremQueueRepository {
@@ -905,6 +907,19 @@ export interface JobInvestigationInput {
 export interface JobInvestigationRepository {
   getForJob(jobId: string): Promise<JobInvestigation | null>;
   upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation>;
+}
+
+/** A job plan task as shown to a tech (read-only; mirrors `job_plan_tasks`). */
+export interface JobPlanTaskSummary {
+  id: string;
+  title: string;
+  kind: string;
+  status: string;
+}
+
+/** Job plan task read port. Ordered by `sort_order`. */
+export interface JobPlanTaskRepository {
+  listForJob(jobId: string): Promise<JobPlanTaskSummary[]>;
 }
 
 /** A planning photo attached to a job; `url` is a signed URL, null if signing failed. */

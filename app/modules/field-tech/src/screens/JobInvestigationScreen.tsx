@@ -33,9 +33,9 @@ export interface JobInvestigationScreenProps {
   job?: Job;
   /** Called after a successful save that stamped submittedAt (not on Save Draft or failure). */
   onSubmitted?: (investigation: JobInvestigation) => void;
+  /** Host-supplied shared task list (module cannot import app components). Absent renders nothing. */
+  renderTaskList?: (p: { jobId: string; mode: 'edit' | 'read'; source?: string }) => React.ReactNode;
 }
-
-type RoomWork = { room: string; work: string; measurements?: string };
 
 /** Horizontal labelled input: label on the left, input on the right. */
 function FieldRow({ label, value, onChangeText }: { label: string; value: string; onChangeText: (text: string) => void }) {
@@ -66,7 +66,7 @@ function formatDateTime(value: string | null): string {
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp, onSubmitted }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp, onSubmitted, renderTaskList }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -78,10 +78,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
   const [logisticsNotes, setLogisticsNotes] = React.useState('');
   const [parkingNotes, setParkingNotes] = React.useState('');
   const [stateAssessment, setStateAssessment] = React.useState('');
-  const [roomWork, setRoomWork] = React.useState<RoomWork[]>([]);
-  const [roomDraft, setRoomDraft] = React.useState('');
-  const [workDraft, setWorkDraft] = React.useState('');
-  const [measurementsDraft, setMeasurementsDraft] = React.useState('');
   const [techInstructions, setTechInstructions] = React.useState('');
   const [materialsArrived, setMaterialsArrived] = React.useState(false);
   const [photos, setPhotos] = React.useState<JobPlanningPhoto[]>([]);
@@ -105,7 +101,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
       setLogisticsNotes(loadedInvestigation?.logisticsNotes ?? '');
       setParkingNotes(loadedInvestigation?.parkingNotes ?? '');
       setStateAssessment(loadedInvestigation?.stateAssessment ?? '');
-      setRoomWork(loadedInvestigation?.roomWork ?? []);
       setTechInstructions(loadedInvestigation?.techInstructions ?? '');
       setMaterialsArrived(loadedInvestigation?.materialsArrived === true);
       setPhotos(loadedPhotos);
@@ -130,9 +125,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
           logisticsNotes,
           parkingNotes,
           stateAssessment,
-          roomWork,
-          // Top-level string kept for compatibility: derived from the per-room measurements.
-          measurements: roomWork.map((r) => `${r.room}: ${r.measurements ?? ''}`).join('; '),
           techInstructions,
           materialsArrived,
           ...patch,
@@ -145,7 +137,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
         setSaving(false);
       }
     },
-    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, roomWork, techInstructions, materialsArrived, onSubmitted],
+    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, materialsArrived, onSubmitted],
   );
 
   const handleSaveDraft = React.useCallback(() => {
@@ -159,14 +151,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
     if (!parkingNotes.trim()) missing.push('Parking notes');
     if (!stateAssessment.trim()) missing.push('State assessment');
     if (!techInstructions.trim()) missing.push('Instructions for tech');
-    if (roomWork.length === 0) missing.push('at least one room');
-    else if (
-      roomWork.some(
-        (r) => !r.room.trim() || !r.work.trim() || !(r.measurements ?? '').trim(),
-      )
-    ) {
-      missing.push('room name, work and measurements for every room');
-    }
     if (photos.length === 0) missing.push('at least one photo');
     if (missing.length > 0) {
       setSubmitError(`Please complete: ${missing.join(', ')}.`);
@@ -174,36 +158,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
     }
     setSubmitError(null);
     void handleSave({ submittedAt: new Date().toISOString() });
-  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, roomWork, photos]);
-
-  // Add a room card; a different room name makes a separate card (same name is a separate card too — no merging).
-  const handleAddRoom = React.useCallback(() => {
-    const room = roomDraft.trim();
-    const work = workDraft.trim();
-    const roomMeasurements = measurementsDraft.trim();
-    if (!room || !work || !roomMeasurements) return;
-    setRoomWork((prev) => [...prev, { room, work, measurements: roomMeasurements }]);
-    setRoomDraft('');
-    setWorkDraft('');
-    setMeasurementsDraft('');
-  }, [roomDraft, workDraft, measurementsDraft]);
-
-  // Edit moves the card back into the entry fields and removes it from the list.
-  const handleEditRoom = React.useCallback(
-    (index: number) => {
-      const card = roomWork[index];
-      if (!card) return;
-      setRoomDraft(card.room);
-      setWorkDraft(card.work);
-      setMeasurementsDraft(card.measurements ?? '');
-      setRoomWork((prev) => prev.filter((_, i) => i !== index));
-    },
-    [roomWork],
-  );
-
-  const handleRemoveRoom = React.useCallback((index: number) => {
-    setRoomWork((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, photos]);
 
   const handleAddPhoto = React.useCallback(async () => {
     try {
@@ -300,24 +255,8 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Room work *</Text>
-        {roomWork.map((card, index) => (
-          <View key={`${card.room}-${index}`} style={styles.card}>
-            <View style={styles.cardActions}>
-              <Button label="Edit" onPress={() => handleEditRoom(index)} variant="primary" size="sm" />
-              <Pressable style={styles.removeButton} onPress={() => handleRemoveRoom(index)} accessibilityRole="button">
-                <Text style={styles.removeButtonText}>Remove</Text>
-              </Pressable>
-            </View>
-            <Text style={styles.sectionTitle}>{card.room}</Text>
-            <Text style={styles.value}>{card.work}</Text>
-            <Text style={styles.value}>Measurements: {card.measurements ?? ''}</Text>
-          </View>
-        ))}
-        <FieldRow label="Room name *" value={roomDraft} onChangeText={setRoomDraft} />
-        <FieldRow label="Work *" value={workDraft} onChangeText={setWorkDraft} />
-        <FieldRow label="Measurements *" value={measurementsDraft} onChangeText={setMeasurementsDraft} />
-        <Button label="Add room" onPress={handleAddRoom} variant="primary" size="sm" />
+        <Text style={styles.sectionTitle}>Tasks</Text>
+        {renderTaskList?.({ jobId, mode: 'edit', source: 'prem' })}
       </View>
 
       <View style={styles.section}>

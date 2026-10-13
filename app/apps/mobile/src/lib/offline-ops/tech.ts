@@ -169,6 +169,7 @@ export interface JobEstimateLineItemAddPayload {
     quantity: number;
     unitCost: number;
     lineTotal: number;
+    jobPlanTaskId?: string | null;
   };
 }
 export interface CalendarEventCreatePayload {
@@ -439,6 +440,7 @@ const jobEstimateLineItemAdd: OpHandler<JobEstimateLineItemAddPayload> = async (
     quantity: p.draft.quantity,
     unit_cost: p.draft.unitCost,
     line_total: p.draft.lineTotal,
+    job_plan_task_id: p.draft.jobPlanTaskId ?? null,
     created_by: ctx.userId,
   });
   check(error);

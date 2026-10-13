@@ -31,6 +31,7 @@ import type {
   JobEstimateLineItem,
   JobEstimateLineItemDraft,
   EstimateLineItemKind,
+  JobPlanTaskRow,
   PriceSheetRepository,
   ServiceArea,
 } from '../data/ports';
@@ -119,6 +120,33 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareError, setShareError] = useState<string | null>(null);
+
+  const [planTasks, setPlanTasks] = useState<JobPlanTaskRow[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    let repo: ReturnType<typeof getModulePorts>['jobPlanTasks'] | undefined;
+    try {
+      repo = getModulePorts().jobPlanTasks;
+    } catch {
+      repo = undefined;
+    }
+    if (!repo) {
+      setPlanTasks([]);
+      return undefined;
+    }
+    repo
+      .listForJob(job.id)
+      .then((rows) => {
+        if (!cancelled) setPlanTasks(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setPlanTasks([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.id]);
+  const visibleTasks = planTasks.filter((t) => t.status !== 'deferred');
 
   const priceSheetQuickAddAvailable = !!(props.priceSheets && props.priceSheetRates);
   const [addMode, setAddMode] = useState<'manual' | 'priceSheet'>('manual');
@@ -305,6 +333,51 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       setActionState({ kind: 'done', message: 'Line item added.' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not add the line item.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function handleBuildFromTasks(): Promise<void> {
+    const linked = new Set(lineItems.map((i) => i.jobPlanTaskId).filter((v): v is string => !!v));
+    const priceSheetTasks = visibleTasks.filter((t) => t.kind !== 'misc' && !linked.has(t.id));
+    const allMisc = visibleTasks.filter((t) => t.kind === 'misc');
+    const miscAlreadyLinked = allMisc.some((t) => linked.has(t.id));
+    const drafts: JobEstimateLineItemDraft[] = priceSheetTasks.map((t) => {
+      const unitCost = t.rate ?? 0;
+      const quantity = t.quantity > 0 ? t.quantity : 1;
+      return {
+        kind: 'labor' as const,
+        description: t.title,
+        quantity,
+        unitCost,
+        lineTotal: quantity * unitCost,
+        jobPlanTaskId: t.id,
+      };
+    });
+    if (allMisc.length > 0 && !miscAlreadyLinked) {
+      drafts.push({
+        kind: 'labor',
+        description: `Hourly — billed by clock: ${allMisc.map((t) => t.title).join(', ')}`,
+        quantity: 1,
+        unitCost: 0,
+        lineTotal: 0,
+        jobPlanTaskId: allMisc[0]?.id ?? null,
+      });
+    }
+    if (drafts.length === 0) {
+      setActionState({ kind: 'done', message: 'Every task already has a line.' });
+      return;
+    }
+    setActionState({ kind: 'working' });
+    try {
+      const added: JobEstimateLineItem[] = [];
+      for (const draft of drafts) {
+        added.push(await estimates.addLineItem(job.id, draft));
+      }
+      setLineItems((prev) => [...prev, ...added]);
+      setActionState({ kind: 'done', message: `${added.length} line(s) built from tasks.` });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not build lines from tasks.';
       setActionState({ kind: 'failed', message });
     }
   }
@@ -520,6 +593,26 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           ) : null}
           <ListItem title="Address" subtitle={job.address ?? 'No address on file'} />
           {job.description ? <ListItem title="Description" subtitle={job.description} /> : null}
+          {visibleTasks.length > 0 ? (
+            <View testID="estimate-task-list">
+              <Text style={styles.heading}>Tasks</Text>
+              {visibleTasks.map((t) => (
+                <ListItem
+                  key={t.id}
+                  title={t.title}
+                  subtitle={t.kind === 'misc' ? 'Hourly · clock' : `Qty ${t.quantity}`}
+                />
+              ))}
+              <Button
+                label={busy ? 'Building...' : 'Build lines from tasks'}
+                onPress={() => {
+                  void handleBuildFromTasks();
+                }}
+                disabled={busy}
+                style={styles.action}
+              />
+            </View>
+          ) : null}
           {estimate?.status === 'submitted' ? (
             <Button
               label={busy ? 'Approving...' : 'Approve'}

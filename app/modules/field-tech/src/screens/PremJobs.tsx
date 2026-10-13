@@ -160,7 +160,7 @@ export function PremJobs(): React.ReactElement {
             <View style={styles.rowInfo}>
               <Text style={styles.customerName}>{item.customerName ?? 'Unknown customer'}</Text>
               <Text style={styles.address}>{item.job.address ?? ''}</Text>
-              <Text style={styles.service}>{item.job.description ?? ''}</Text>
+              <Text style={styles.service}>{(item.taskTitles ?? []).join(', ')}</Text>
               {since ? <Text style={styles.since}>Needs Prem since {since}</Text> : null}
             </View>
             <Pressable

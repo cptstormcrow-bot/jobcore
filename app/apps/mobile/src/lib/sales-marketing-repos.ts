@@ -48,6 +48,7 @@ import type {
   CallbackTaskRepository,
   CallbackTask,
   CallbackTaskRow,
+  CustomerProjectHistoryRow,
   JobReportingRepository,
   JobReportingRow,
 } from '../../../../modules/sales-marketing/src/data/ports';
@@ -547,6 +548,7 @@ interface CallbackTaskFetchRow {
   address: string | null;
   completed_at: string | null;
   is_beta: boolean;
+  customer_id: string | null;
   customers: { name: string | null; phone: string | null } | null;
   sales_callback_status: { called_back_at: string | null; called_back_by: string | null } | null;
 }
@@ -562,25 +564,82 @@ function toCallbackTaskRow(row: CallbackTaskFetchRow): CallbackTaskRow {
     is_beta: row.is_beta,
     called_back_at: row.sales_callback_status?.called_back_at ?? null,
     called_back_by: row.sales_callback_status?.called_back_by ?? null,
+    customer_id: row.customer_id ?? null,
   };
+}
+
+interface CustomerHistoryFetchRow {
+  customer_id: string;
+  organization_id: string;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  job_count: number | string | null;
+  last_completed_at: string | null;
+  open_job_id: string | null;
+  open_job_number: number | null;
+  deferred_task_titles: string[] | null;
+  last_callback_at: string | null;
+  last_contact_at: string | null;
+}
+
+async function fetchCustomerHistory(customerIds?: string[]): Promise<CustomerProjectHistoryRow[]> {
+  if (customerIds && customerIds.length === 0) return [];
+  let q = supabase.from('customer_project_history_v').select('*');
+  if (customerIds) q = q.in('customer_id', customerIds);
+  const { data, error } = await q;
+  if (error) {
+    throw new Error(`listCustomerHistory failed: ${error.message}`);
+  }
+  return ((data ?? []) as unknown as CustomerHistoryFetchRow[]).map((r) => ({
+    customerId: r.customer_id,
+    organizationId: r.organization_id,
+    name: r.name,
+    phone: r.phone,
+    email: r.email,
+    address: r.address,
+    jobCount: Number(r.job_count ?? 0),
+    lastCompletedAt: r.last_completed_at,
+    openJobId: r.open_job_id,
+    openJobNumber: r.open_job_number,
+    deferredTaskTitles: r.deferred_task_titles ?? [],
+    lastCallbackAt: r.last_callback_at,
+    lastContactAt: r.last_contact_at,
+  }));
 }
 
 export function createCallbackTaskRepository(): CallbackTaskRepository {
   return {
+    async listCustomerHistory(customerIds?: string[]): Promise<CustomerProjectHistoryRow[]> {
+      return fetchCustomerHistory(customerIds);
+    },
+
     async listOpen(organizationId: string): Promise<CallbackTask[]> {
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, organization_id, address, completed_at, is_beta, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
+        .select('id, organization_id, address, completed_at, is_beta, customer_id, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
         .eq('organization_id', organizationId)
         .eq('status', 'completed');
       if (error) {
         throw new Error(`listOpen callback tasks failed: ${error.message}`);
       }
       const rows = (data ?? []) as unknown as CallbackTaskFetchRow[];
-      return rows
-        .map(toCallbackTaskRow)
-        .filter((row) => row.called_back_at === null)
-        .map(toCallbackTask);
+      const open = rows.map(toCallbackTaskRow).filter((row) => row.called_back_at === null);
+      const ids = Array.from(new Set(open.map((r) => r.customer_id).filter((x): x is string => !!x)));
+      const history = await fetchCustomerHistory(ids);
+      const byCustomer = new Map(history.map((h) => [h.customerId, h]));
+      return open.map((row) => {
+        const h = row.customer_id ? byCustomer.get(row.customer_id) : undefined;
+        return {
+          ...toCallbackTask(row),
+          jobCount: h?.jobCount ?? 0,
+          lastCompletedAt: h?.lastCompletedAt ?? null,
+          deferredTaskTitles: h?.deferredTaskTitles ?? [],
+          hasOpenJob: !!h?.openJobId,
+          openJobNumber: h?.openJobNumber ?? null,
+        };
+      });
     },
 
     async markCalledBack(
@@ -605,7 +664,7 @@ export function createCallbackTaskRepository(): CallbackTaskRepository {
 
       const { data, error } = await supabase
         .from('jobs')
-        .select('id, organization_id, address, completed_at, is_beta, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
+        .select('id, organization_id, address, completed_at, is_beta, customer_id, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
         .eq('id', jobId)
         .single();
       if (error) {
