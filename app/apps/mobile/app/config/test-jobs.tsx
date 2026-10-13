@@ -199,6 +199,7 @@ export default function TestJobsScreen(): React.ReactElement {
         menuItems={[]}
         optionsItems={[]}
         titleBar={{ title: 'Test Jobs', subtitle: 'Configuration' }}
+        helpContext={{ screenKey: 'test-jobs' }}
       />
       <View style={styles.actions}>
         <Button

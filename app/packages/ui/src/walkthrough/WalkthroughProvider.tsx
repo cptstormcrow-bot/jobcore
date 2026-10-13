@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 
 import { WALKTHROUGH_STEPS, WalkthroughStep, WalkthroughStepId } from './walkthrough-content';
+import { HELP_CARDS } from './help-content';
 import { getBoolPref, setBoolPref } from '../lib/local-prefs';
 
 const WALKTHROUGH_COMPLETED_KEY = 'walkthrough_v1_completed';
@@ -83,7 +84,7 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
   }, []);
 
   const showHelp = useCallback((stepId: string) => {
-    const step = WALKTHROUGH_STEPS.find((step) => step.id === stepId);
+    const step = [...WALKTHROUGH_STEPS, ...HELP_CARDS].find((step) => step.id === stepId);
     if (!step) return;
     setStandaloneStep(step);
   }, []);

@@ -6,13 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from './tokens';
 import type { BreadcrumbSegment } from './Breadcrumb';
 import type { JobStatus } from '@jobcore/core';
-import { getHelpStep, type ScreenKey } from './walkthrough/walkthrough-content';
+import { getHelpStep, type ScreenKey, type WalkthroughStepId } from './walkthrough/walkthrough-content';
 import { useWalkthrough } from './walkthrough/WalkthroughProvider';
-import { WalkthroughHelpCallout } from './walkthrough/WalkthroughHelpCallout';
 import { useAppVersion } from './AppVersionContext';
 import { formatVersionLabel } from './formatVersionLabel';
 import { NavDrawer } from './NavDrawer';
 import { MenuGlyph } from './MenuGlyph';
+import { HelpCircle } from './HelpCircle';
 import { DRAWER_ROW_HEIGHT, dividerBefore } from './drawer-geometry';
 
 export type MenuActionItem = {
@@ -23,6 +23,7 @@ export type MenuActionItem = {
   isActive?: boolean;
   disabled?: boolean;
   submenu?: MenuItem[];
+  helpId?: WalkthroughStepId;
 };
 export type MenuToggleItem = {
   id: string;
@@ -33,6 +34,7 @@ export type MenuToggleItem = {
   disabled?: boolean;
   isActive?: boolean;
   submenu?: undefined;
+  helpId?: WalkthroughStepId;
 };
 export type MenuItem = MenuActionItem | MenuToggleItem;
 
@@ -59,12 +61,14 @@ function MenuRow({
   onLeafPress,
   compact,
   variant = 'sheet',
+  onHelp,
 }: {
   item: MenuItem;
   depth?: number;
   onLeafPress: (item: MenuItem) => void;
   compact?: boolean;
   variant?: 'sheet' | 'drawer';
+  onHelp?: (id: WalkthroughStepId) => void;
 }) {
   const drawer = variant === 'drawer';
   const [expanded, setExpanded] = useState(false);
@@ -128,12 +132,17 @@ function MenuRow({
             {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
           </Text>
+          {item.helpId ? (
+            <View style={{ position: 'absolute', right: spacing.md, top: 0, bottom: 0, justifyContent: 'center' }}>
+              <HelpCircle size="sm" testID={`help-${item.id}`} onPress={() => onHelp?.(item.helpId!)} />
+            </View>
+          ) : null}
         </Animated.View>
       </Pressable>
       {hasSubmenu && expanded && (
         <View>
           {item.submenu!.map((child) => (
-            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} compact={compact} variant={variant} />
+            <MenuRow key={child.id} item={child} depth={depth + 1} onLeafPress={onLeafPress} compact={compact} variant={variant} onHelp={onHelp} />
           ))}
         </View>
       )}
@@ -197,9 +206,16 @@ export function AppChrome({
   const canGoBack = router.canGoBack();
   const { standaloneStep, showHelp, dismissHelp } = useWalkthrough();
   const helpStep = helpContext ? getHelpStep(helpContext.screenKey, helpContext.jobStatus) : undefined;
-  const resolvedOptionsItems = helpStep
-    ? [{ id: 'help', label: 'Help', onPress: () => showHelp(helpStep.id) }, ...(optionsItems ?? [])]
-    : optionsItems;
+  const helpId: WalkthroughStepId = helpStep?.id ?? 'help_general';
+  const handleHelpPress = (id: WalkthroughStepId) => {
+    setHMenuOpen(false);
+    setOMenuOpen(false);
+    setTimeout(() => showHelp(id), 300);
+  };
+  const resolvedOptionsItems = [
+    { id: 'help', label: 'Help', onPress: () => { setOMenuOpen(false); setTimeout(() => showHelp(helpId), 300); } },
+    ...(optionsItems ?? []),
+  ];
 
   const handleLeafPress = (item: MenuItem) => {
     setHMenuOpen(false);
@@ -271,18 +287,9 @@ export function AppChrome({
         progress={menuProgress}
         header={
           <View style={styles.drawerHeaderRow}>
-            <Pressable
-              onPress={helpStep ? () => { setHMenuOpen(false); setTimeout(() => showHelp(helpStep.id), 300); } : () => {}}
-              accessibilityRole="button"
-              accessibilityLabel="Help"
-              accessibilityState={helpStep ? undefined : { disabled: true }}
-              hitSlop={8}
-              style={[styles.drawerSideButton, !helpStep && styles.rowDisabled]}
-            >
-              <View style={styles.helpCircle}>
-                <Text style={styles.helpCircleText}>?</Text>
-              </View>
-            </Pressable>
+            <View style={styles.drawerSideButton}>
+              <HelpCircle onPress={() => handleHelpPress(helpId)} />
+            </View>
             <Pressable disabled={!logoTappable} onPress={handleLogoPress} accessibilityRole={logoTappable ? 'button' : undefined} style={styles.drawerWordmarkPress}>
               <Text style={styles.drawerWordmarkText}>JobCore©</Text>
               <Text style={styles.drawerTagline} numberOfLines={1}>now get some work done</Text>
@@ -319,7 +326,7 @@ export function AppChrome({
             {i > 0 && dividerBefore(drawerItems[i - 1]?.kind === 'toggle' ? 'toggle' : 'action', item.kind === 'toggle' ? 'toggle' : 'action') ? (
               <View style={styles.divider} />
             ) : null}
-            <MenuRow item={item} onLeafPress={handleLeafPress} variant="drawer" />
+            <MenuRow item={item} onLeafPress={handleLeafPress} variant="drawer" onHelp={handleHelpPress} />
           </React.Fragment>
         ))}
       </NavDrawer>
@@ -330,7 +337,7 @@ export function AppChrome({
             <ScrollView style={{ maxHeight: '100%' }}>
               {resolvedOptionsItems && resolvedOptionsItems.length > 0 ? (
                 resolvedOptionsItems.map((item) => (
-                  <MenuRow key={item.id} item={item} onLeafPress={handleOptionPress} variant="drawer" />
+                  <MenuRow key={item.id} item={item} onLeafPress={handleOptionPress} variant="drawer" onHelp={handleHelpPress} />
                 ))
               ) : (
                 <View style={styles.row}>
@@ -362,7 +369,7 @@ export function AppChrome({
                 {(gearItems ?? []).map((item, i) => (
                   <View key={item.id}>
                     {i > 0 ? <View style={styles.gearSeparator} /> : null}
-                    <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} variant="drawer" />
+                    <MenuRow item={item} onLeafPress={(g) => handleGearPress(g as MenuActionItem)} compact={compactMenu} variant="drawer" onHelp={handleHelpPress} />
                   </View>
                 ))}
                 <View style={styles.gearSeparator} />
@@ -375,7 +382,6 @@ export function AppChrome({
         </Modal>
       ) : null}
 
-      <WalkthroughHelpCallout />
     </View>
   );
 }
@@ -488,21 +494,6 @@ const styles = StyleSheet.create({
     lineHeight: 14,
     fontWeight: '400',
     fontFamily: typography.fontFamily.body,
-    color: colors.primary,
-  },
-  helpCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  helpCircleText: {
-    fontFamily: typography.fontFamily.headingBold,
-    fontWeight: '700',
-    fontSize: 16,
     color: colors.primary,
   },
   gearGlyph: {

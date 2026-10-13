@@ -13,6 +13,7 @@ export default function SettingsScreen() {
         menuItems={[]}
         optionsItems={[]}
         titleBar={{ title: 'Settings', subtitle: 'Configuration' }}
+        helpContext={{ screenKey: 'settings' }}
       />
       <View style={styles.row}>
         <Text style={styles.rowLabel}>Show screen numbers</Text>

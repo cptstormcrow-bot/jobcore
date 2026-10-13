@@ -63,6 +63,7 @@ export default function AccountScreen() {
   return (
     <View style={styles.screen}>
       <AppChrome
+        helpContext={{ screenKey: 'account' }}
         breadcrumbSegments={[{ label: 'Account' }]}
         menuItems={[]}
         optionsItems={[]}

@@ -120,6 +120,7 @@ export default function JobsScreen() {
     return (
       <View style={styles.center}>
         <AppChrome
+          helpContext={{ screenKey: 'jobs-list' }}
           breadcrumbSegments={[{ label: 'Jobs' }]}
           menuItems={[]}
           optionsItems={[]}
@@ -135,6 +136,7 @@ export default function JobsScreen() {
   return (
     <View style={styles.root}>
       <AppChrome
+        helpContext={{ screenKey: 'jobs-list' }}
         breadcrumbSegments={[{ label: 'Jobs' }]}
         menuItems={[]}
         optionsItems={[]}

@@ -123,6 +123,7 @@ export default function ProfileScreen() {
         menuItems={[]}
         optionsItems={[]}
         titleBar={{ title: 'Profile' }}
+        helpContext={{ screenKey: 'profile' }}
       />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">

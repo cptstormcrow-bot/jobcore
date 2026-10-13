@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, AppVersionProvider, ScreenNumberProvider, ScreenNumberBadge } from '@jobcore/ui';
+import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, WalkthroughHelpCallout, AppVersionProvider, ScreenNumberProvider, ScreenNumberBadge } from '@jobcore/ui';
 import screenRegistry from '../src/screens/screen-registry.json';
 import { getAppVersion } from '../src/lib/appVersion';
 import { landingRouteFor } from '../src/lib/landing';
@@ -218,6 +218,7 @@ export default function RootLayout() {
           </SessionProvider>
         </SafeAreaProvider>
         <WalkthroughOverlay />
+        <WalkthroughHelpCallout />
       </ScreenNumberProvider>
     </WalkthroughProvider>
     </AppVersionProvider>
