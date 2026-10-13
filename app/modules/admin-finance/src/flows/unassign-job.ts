@@ -41,10 +41,10 @@ export async function unassignJob(
     if (fresh.status === 'assigned') {
       transitioned = await transitionJob(fresh, 'scheduled', deps.ctx);
     }
-    // Any other status: no status change — only the assignment links and tech are cleared.
+    // Any other status: no status change — only the installer (Service Tech) assignment row and tech are cleared; the Prem investigator row is left.
 
     // Writes.
-    await deps.assignments.removeForJob(fresh.id);
+    await deps.assignments.removeForJob(fresh.id, 'installer');
     let updated = await deps.jobs.patchScheduling(fresh.id, { assignedTechId: null });
 
     if (transitioned !== null) {

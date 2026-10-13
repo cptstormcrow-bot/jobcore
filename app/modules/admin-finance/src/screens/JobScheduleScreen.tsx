@@ -43,7 +43,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import * as Clipboard from 'expo-clipboard';
 import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
@@ -385,7 +386,18 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
 
         <Card style={styles.card}>
           {!embedded && <Text style={styles.title}>Schedule</Text>}
-          <Text style={styles.subtitle}>{job.address ?? job.description ?? job.id}</Text>
+          {!embedded && (
+            <JobHeaderBlock
+              customerName={job.customerName}
+              address={job.address}
+              phone={job.customerPhone}
+              jobNumber={job.jobNumber}
+              createdAt={job.createdAt}
+              scheduledStart={job.scheduledStart}
+              ingressCode={job.ingressInstructions}
+              onCopy={async (text) => { await Clipboard.setStringAsync(text); }}
+            />
+          )}
 
           <CalendarHeader
             mode="month"
@@ -483,7 +495,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   backRow: {
     flexDirection: 'row',
@@ -495,12 +507,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.headingBold,
     marginBottom: spacing.xs,
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: typography.size.body,
-    fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
   },
   sectionLabel: {
     color: colors.text,
@@ -545,7 +551,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     gap: spacing.sm,
   },
   action: {

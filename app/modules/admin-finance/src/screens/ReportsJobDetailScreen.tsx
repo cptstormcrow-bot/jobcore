@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   action: {
     marginBottom: spacing.sm,

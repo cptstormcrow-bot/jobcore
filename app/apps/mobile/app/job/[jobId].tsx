@@ -20,7 +20,6 @@ import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
-import { AssignTechRegion } from '../../src/components/AssignTechRegion';
 import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
@@ -299,9 +298,8 @@ export default function JobDrilldownScreen() {
   // failure doesn't clobber (or get clobbered by) a Save-button failure.
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
-  const [assignError, setAssignError] = useState<string | null>(null);
-  const [pendingReassignTechId, setPendingReassignTechId] = useState<string | null>(null);
-  useEffect(() => { setAssignError(null); }, [jobId]);
+  const [pendingAssign, setPendingAssign] = useState<{ kind: 'prem' | 'service'; techId: string | null } | null>(null);
+  useEffect(() => { setPendingAssign(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
@@ -666,12 +664,9 @@ export default function JobDrilldownScreen() {
    */
   const handleAssignInstaller = async (techId: string): Promise<void> => {
     if (!job || session.status !== 'authenticated' || !org?.id) return;
-    const orgId = org.id;
     setAssigning(techId);
-    setAssignError(null);
     setActionError(null);
     const fail = (message: string) => {
-      setAssignError(message);
       setActionError(message);
     };
     const deps = {
@@ -682,9 +677,7 @@ export default function JobDrilldownScreen() {
     };
     try {
       if (job.assignedTechId && job.assignedTechId !== techId) {
-        // Reassign Service: remember the Prem tech (unassign clears every
-        // link), unassign, assign the new tech, then re-link the Prem tech.
-        const premTechId = await deps.assignments.getInvestigatorTechId(job.id);
+        // Reassign Service: unassign (installer-scoped), then assign the new tech.
         const unassigned = await unassignJob(job, deps);
         if (!unassigned.ok) {
           fail(friendlyAssignError(unassigned.reason));
@@ -702,29 +695,8 @@ export default function JobDrilldownScreen() {
         } catch (err) {
           assignFailure = friendlyAssignError(err);
         }
-        let relinkFailure: string | null = null;
-        if (premTechId) {
-          try {
-            await deps.assignments.create(orgId, {
-              jobId: job.id,
-              techId: premTechId,
-              assignedAt: new Date().toISOString(),
-              kind: 'investigator',
-            });
-            setInvestigatorTechId(premTechId);
-          } catch (err) {
-            relinkFailure = friendlyAssignError(err);
-            setInvestigatorTechId(null);
-          }
-        } else {
-          setInvestigatorTechId(null);
-        }
         if (assignFailure) {
           fail(assignFailure);
-          return;
-        }
-        if (relinkFailure) {
-          fail("The new Service tech is assigned, but the Prem tech couldn't be re-added: " + relinkFailure);
         }
         return;
       }
@@ -751,20 +723,14 @@ export default function JobDrilldownScreen() {
    * Reassignment is delete-then-insert inside the repo's `create()`; unassigning
    * an investigator calls `removeInvestigator`.
    */
-  const handleAssignInvestigator = async (techId: string, confirmed = false): Promise<void> => {
+  const handleAssignInvestigator = async (techId: string): Promise<void> => {
     if (!isAdmin) return;
     if (!job || !org?.id) return;
-    if (!confirmed && investigatorTechId && investigatorTechId !== techId) {
-      setPendingReassignTechId(techId);
-      return;
-    }
     const orgId = org.id;
     const targetJobId = job.id;
     setAssigning(techId);
-    setAssignError(null);
     setActionError(null);
     const fail = (message: string) => {
-      setAssignError(message);
       setActionError(message);
     };
     const assignments = createJobAssignmentRepository();
@@ -808,7 +774,6 @@ export default function JobDrilldownScreen() {
         return;
       }
       setInvestigatorTechId(techId);
-      setAssignError(null);
       setActionError(null);
       const refreshed = await createJobRepository().getById(targetJobId);
       if (refreshed) setJob(refreshed);
@@ -846,37 +811,30 @@ export default function JobDrilldownScreen() {
     };
   }, [jobId, org?.id]);
 
-  const handleAssign = async (techId: string): Promise<void> => {
-    if (!isAdmin) return;
-    return (estimate?.status === 'approved' ? handleAssignInstaller : handleAssignInvestigator)(techId);
-  };
-
   // Clears the assignment back to the shared "Unassigned" convention
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
   // the clear via patchScheduling; unassigning an investigator calls
   // removeInvestigator (reassignment is delete-then-insert in the repo's create()).
-  const handleUnassign = async (): Promise<void> => {
+  const handleUnassign = async (kind: 'prem' | 'service'): Promise<void> => {
     if (!isAdmin) return;
     if (!job) return;
     if (session.status !== 'authenticated' || !org?.id) return;
     setAssigning('unassign');
-    setAssignError(null);
     setActionError(null);
     const fail = (message: string) => {
-      setAssignError(message);
       setActionError(message);
     };
     try {
       const assignments = createJobAssignmentRepository();
-      const premTechId = await assignments.getInvestigatorTechId(job.id);
-      if (premTechId) {
-        await assignments.removeInvestigator(job.id);
+      if (kind === 'prem') {
+        await assignments.removeForJob(job.id, 'investigator');
         const stillLinked = await assignments.getInvestigatorTechId(job.id);
         if (stillLinked) {
           fail("The Prem tech couldn't be removed. Refresh the page and try again.");
           return;
         }
         setInvestigatorTechId(null);
+        return;
       }
       const result = await unassignJob(job, {
         jobs: createJobRepository(),
@@ -888,9 +846,7 @@ export default function JobDrilldownScreen() {
         fail(friendlyAssignError(result.reason));
         return;
       }
-      setInvestigatorTechId(null);
       setJob(result.job);
-      setAssignError(null);
       setActionError(null);
     } catch (err) {
       fail(friendlyAssignError(err));
@@ -1026,7 +982,7 @@ export default function JobDrilldownScreen() {
       estimate: { ...done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt), inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
       approval: done(estimate?.status === 'approved', 'approval', estimate?.updatedAt),
       schedule: done(!!job.scheduledStart, 'schedule'),
-      assign: done(!!(job.assignedTechId ?? investigatorTechId), 'assign'),
+      assign: done(!!(job.assignedTechId), 'assign'),
       contact: done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt),
       startWork: done(!!job.inProgressAt, 'startWork', job.inProgressAt),
       photos: done((stageExtras?.photoCount ?? 0) >= 1, 'photos'),
@@ -1084,7 +1040,7 @@ export default function JobDrilldownScreen() {
 
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
-    if (!(job.assignedTechId ?? investigatorTechId)) {
+    if (!(job.assignedTechId)) {
       Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Arrive can be marked.');
       return;
     }
@@ -1357,10 +1313,8 @@ export default function JobDrilldownScreen() {
   // Edit-mode: pinned JobHeader (region tabs + action buttons) above a
   // single ScrollView whose body switches on `region`.
   const currentJob = job as Job;
-  const effectiveTechId = currentJob.assignedTechId ?? investigatorTechId;
-  const assignedTechName = effectiveTechId
-    ? techs.find((t) => t.id === effectiveTechId)?.fullName ?? effectiveTechId
-    : null;
+  const premTechName = investigatorTechId ? techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId : null;
+  const serviceTechName = currentJob.assignedTechId ? techs.find((t) => t.id === currentJob.assignedTechId)?.fullName ?? currentJob.assignedTechId : null;
   const currentServiceAreaName = currentJob.service_area_id
     ? serviceAreas.find((a) => a.id === currentJob.service_area_id)?.name ?? null
     : null;
@@ -1381,7 +1335,7 @@ export default function JobDrilldownScreen() {
       : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); } },
-    { id: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !effectiveTechId },
+    { id: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
     { id: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); void confirmMarkPaid(); } }]
@@ -1409,7 +1363,7 @@ export default function JobDrilldownScreen() {
   return (
     <View style={styles.root}>
       <JobHeader
-        job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
+        job={currentJob}
         customer={customer}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={isAdmin ? adminJobMenuItems : isTech ? techJobMenuItems : jobDetailMenuItems}
@@ -1424,8 +1378,7 @@ export default function JobDrilldownScreen() {
         gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
         onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
         onPressSchedule={() => selectRegion('schedule')}
-      />
-      <View>
+      >
         {stageResults ? (
           <JobProgressBar
             stages={stageList}
@@ -1436,32 +1389,49 @@ export default function JobDrilldownScreen() {
             testID="job-progress-bar"
           />
         ) : null}
-      </View>
+      </JobHeader>
       <View style={styles.rule} />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
-          job={{ ...currentJob, assignedTechId: currentJob.assignedTechId ?? investigatorTechId }}
+          job={currentJob}
           statusError={actionError}
-          assignedTechName={assignedTechName}
           serviceAreaName={currentServiceAreaName}
-          techs={eligibleTechOptions}
-          onAssignTech={(techId) => void (techId ? handleAssign(techId) : handleUnassign())}
-          assigningTech={assigning !== null}
-          stageStates={stageResults?.states}
-          nextStep={stageResults?.nextStep}
-          onStagePress={handleStagePress}
-          disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
+          premTechId={investigatorTechId}
+          serviceTechId={currentJob.assignedTechId ?? null}
+          premTechName={premTechName}
+          serviceTechName={serviceTechName}
+          premBusy={assigning !== null}
+          serviceBusy={assigning !== null}
+          premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+          {...(isAdmin
+            ? {
+                techs: eligibleTechOptions,
+                onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                onRequestAssignService: (techId: string | null) => setPendingAssign({ kind: 'service', techId }),
+              }
+            : {})}
         />
         <WarningSheet
-          visible={pendingReassignTechId !== null}
+          visible={pendingAssign !== null}
           warnings={[]}
           title="Reassign job?"
-          message={`Move job #${job?.jobNumber ?? ''} from ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId ?? ''} to ${techs.find((t) => t.id === pendingReassignTechId)?.fullName ?? pendingReassignTechId ?? ''}?`}
-          onCancel={() => setPendingReassignTechId(null)}
+          message={(() => {
+            if (!pendingAssign) return '';
+            const role = pendingAssign.kind === 'prem' ? 'Prem Tech' : 'Service Tech';
+            const curId = pendingAssign.kind === 'prem' ? investigatorTechId : currentJob.assignedTechId ?? null;
+            const nameOf = (id: string | null | undefined) => (id ? techs.find((t) => t.id === id)?.fullName ?? id : '');
+            if (pendingAssign.techId === null) return `Remove ${nameOf(curId)} as ${role}?`;
+            if (curId && curId !== pendingAssign.techId) return `Replace ${nameOf(curId)} with ${nameOf(pendingAssign.techId)} as ${role}?`;
+            return `Assign ${nameOf(pendingAssign.techId)} as ${role}?`;
+          })()}
+          onCancel={() => setPendingAssign(null)}
           onConfirm={() => {
-            const next = pendingReassignTechId;
-            setPendingReassignTechId(null);
-            if (next) void handleAssignInvestigator(next, true);
+            const p = pendingAssign;
+            setPendingAssign(null);
+            if (!p) return;
+            void (p.kind === 'prem'
+              ? (p.techId ? handleAssignInvestigator(p.techId) : handleUnassign('prem'))
+              : (p.techId ? handleAssignInstaller(p.techId) : handleUnassign('service')));
           }}
         />
         {isAdmin && region === 'evisit' && investigatorTechId ? (
@@ -1492,17 +1462,6 @@ export default function JobDrilldownScreen() {
             priceSheetRates={priceEstimatingRates}
             priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
             serviceAreas={serviceAreas}
-          />
-        )}
-        {region === 'assign' && isAdmin && (
-          <AssignTechRegion
-            techs={eligibleTechOptions}
-            currentTechId={currentJob.assignedTechId ?? investigatorTechId}
-            busy={assigning !== null}
-            error={assignError}
-            onAssign={(techId) => void handleAssign(techId)}
-            onUnassign={() => void handleUnassign()}
-            label="Assign Technician" indicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           />
         )}
         {region === 'closeout' && role && (
@@ -1554,7 +1513,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
   rule: { height: 3, backgroundColor: colors.text, width: '100%', marginTop: Math.round(spacing.sm * 0.67) },
   scrollBody: { flex: 1 },
-  scrollContent: { paddingBottom: spacing.lg },
+  scrollContent: { paddingBottom: spacing.sm },
   jobDetailPane: { marginTop: spacing.sm },
   footer: {
     flexDirection: 'row',
@@ -1570,7 +1529,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.offWhite,
   },
 });

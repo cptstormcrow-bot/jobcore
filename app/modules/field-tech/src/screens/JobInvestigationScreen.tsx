@@ -18,7 +18,8 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, colors, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock } from '@jobcore/ui';
+import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -216,13 +217,20 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
       {!embedded && <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />}
       {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
-      <View style={styles.headerRow}>
-        <Text style={[styles.headerSide, { textAlign: 'left' }]}>Date created: {new Date(job.createdAt).toLocaleDateString()}</Text>
-        <Text style={[styles.status, styles.headerCenter]}>
-          {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
-        </Text>
-        <Text style={[styles.headerSide, { textAlign: 'right' }]}>Job #{job.jobNumber ?? '—'}</Text>
-      </View>
+      {!embedded && (
+        <JobHeaderBlock
+          customerName={job.customerName}
+          address={job.address}
+          phone={job.customerPhone}
+          jobNumber={job.jobNumber}
+          createdAt={job.createdAt}
+          scheduledStart={job.scheduledStart}
+          onCopy={copyToClipboard}
+        />
+      )}
+      <Text style={styles.status}>
+        {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
+      </Text>
 
       <View style={styles.cardActions}>
         <View style={styles.actionCell}>
@@ -301,21 +309,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     color: colors.textLight,
     marginBottom: 0,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  headerSide: {
-    flex: 1,
-    fontSize: typography.size.small,
-    fontFamily: typography.fontFamily.body,
-    color: colors.textMuted,
-  },
-  headerCenter: {
-    flex: 2,
-    textAlign: 'center',
   },
   fieldRow: {
     flexDirection: 'row',

@@ -480,8 +480,8 @@ export function AdminFinanceRoot() {
       return;
     }
     setBoardError(null);
-    // unassignJob calls removeForJob, which deletes every assignment row for
-    // the job (Prem included), so Prem-only jobs unassign through the same path.
+    // unassignJob calls removeForJob with kind 'installer', which deletes only
+    // the installer-kind assignment rows; the investigator (Prem) row is untouched.
     try {
       const result = await unassignJob(job, {
         jobs: jobRepository,

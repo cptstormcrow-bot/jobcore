@@ -293,18 +293,18 @@ const styles = StyleSheet.create({
   body: {
     fontSize: typography.size.body,
     color: colors.text,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   errorText: {
     fontSize: typography.size.label,
     color: colors.danger,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   section: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   button: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   checkboxRow: {
     marginBottom: spacing.sm,

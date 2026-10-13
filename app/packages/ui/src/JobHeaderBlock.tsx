@@ -61,8 +61,9 @@ export function JobHeaderBlock({
   const code = ingressCode?.trim() ?? '';
   const addressText = address ?? '—';
   const phoneText = `Phone: ${phone ?? '—'}`;
+  const phoneValue = phone?.trim() ?? '';
   const hasAddress = Boolean(address && address.trim());
-  const hasPhone = Boolean(phone && phone.trim());
+  const hasPhone = Boolean(phoneValue);
 
   return (
     <View style={styles.root}>
@@ -95,7 +96,7 @@ export function JobHeaderBlock({
         accessibilityRole="button"
         accessibilityLabel={`Copy phone number ${phoneText}`}
         onPress={() => {
-          if (hasPhone) copy('phone', phoneText);
+          if (hasPhone) copy('phone', phoneValue);
         }}
       >
         <Text style={styles.detail}>{copiedKey === 'phone' ? 'Copied' : phoneText}</Text>
@@ -104,7 +105,12 @@ export function JobHeaderBlock({
       <View style={[styles.row, styles.center, styles.line]}>
         <Text style={styles.body}>{formatJobNumberLine(jobNumber, createdAt)}</Text>
         {onPressSchedule ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Adjust schedule" onPress={onPressSchedule}>
+          <Pressable
+            style={styles.scheduleBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Adjust schedule"
+            onPress={onPressSchedule}
+          >
             <Text style={[styles.body, styles.right, { color: colors.primary }]}>
               {formatScheduledLabel(scheduledStart, true)}
             </Text>
@@ -135,4 +141,5 @@ const styles = StyleSheet.create({
   detail: { fontSize: typography.size.h5, color: colors.text },
   body: { flexShrink: 1, fontSize: typography.size.body, color: colors.text },
   right: { textAlign: 'right' },
+  scheduleBtn: { flexShrink: 1 },
 });

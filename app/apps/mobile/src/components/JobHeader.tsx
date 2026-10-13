@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import type { ComponentProps } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import type { Job, StageResult } from '@jobcore/core';
-import { AppChrome, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
+import type { Job } from '@jobcore/core';
+import { AppChrome, JobHeaderBlock, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
@@ -16,6 +16,7 @@ export type JobHeaderProps = {
   jobDetailMenuItems: MenuItem[];
   totalLaborSeconds: number;
   onPressSchedule?: () => void;
+  children?: React.ReactNode;
   gearItems?: ComponentProps<typeof AppChrome>['gearItems'];
   showBack?: ComponentProps<typeof AppChrome>['showBack'];
   compactMenu?: ComponentProps<typeof AppChrome>['compactMenu'];
@@ -23,6 +24,8 @@ export type JobHeaderProps = {
   onLogoPress?: ComponentProps<typeof AppChrome>['onLogoPress'];
   gearTitle?: ComponentProps<typeof AppChrome>['gearTitle'];
 };
+
+const copyToClipboard = async (text: string): Promise<void> => { await Clipboard.setStringAsync(text); };
 
 export function JobHeader({
   job,
@@ -36,38 +39,13 @@ export function JobHeader({
   fitMenu,
   onLogoPress,
   gearTitle,
+  children,
 }: JobHeaderProps) {
   const totalHoursLabel =
     totalLaborSeconds > 0
       ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
       : null;
-  const scheduledDate = job.scheduledStart ? new Date(job.scheduledStart) : null;
-  const dOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' } as const;
-  const tOpts = { hour: 'numeric', minute: '2-digit' } as const;
-  const datePart = scheduledDate ? scheduledDate.toLocaleDateString(undefined, dOpts) : '';
-  const timePart = scheduledDate ? scheduledDate.toLocaleTimeString(undefined, tOpts).toLowerCase() : '';
-  const scheduledLabel = scheduledDate
-    ? `Scheduled - ${datePart} at ${timePart}`
-    : onPressSchedule
-    ? 'Unscheduled ▸'
-    : 'Unscheduled';
-
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
-  const copyText = async (key: string, value: string) => {
-    try {
-      await Clipboard.setStringAsync(value);
-      setCopiedKey(key);
-      if (copyTimer.current) clearTimeout(copyTimer.current);
-      copyTimer.current = setTimeout(() => setCopiedKey(null), 1500);
-    } catch {
-      // ignore clipboard failure
-    }
-  };
   const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
-  const addressText = job.address ?? '—';
-  const phoneText = customer?.phone ?? '—';
 
   return (
     <View style={styles.root}>
@@ -90,44 +68,19 @@ export function JobHeader({
         gearTitle={gearTitle}
       />
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
-      <View style={styles.summary}>
-        <View style={styles.row}>
-          <Text style={[styles.customerName, styles.rowLeft]}>{customer?.name ?? 'Unknown Customer'}</Text>
-          {ingressCode ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Copy ingress code ${ingressCode}`}
-              onPress={() => { void copyText('ingress', ingressCode); }}>
-              <Text style={styles.summaryLineRight}>{copiedKey === 'ingress' ? 'Copied' : ingressCode}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-        <View style={styles.row}>
-          <Text style={[styles.summaryLine, styles.rowLeft]}>Job #{job.jobNumber ?? '—'}</Text>
-          {onPressSchedule ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Adjust schedule"
-              onPress={onPressSchedule}>
-              <Text style={[styles.summaryLineRight, styles.scheduleLink]}>{scheduledLabel}</Text>
-            </Pressable>
-          ) : (
-            <Text style={styles.summaryLineRight}>{scheduledLabel}</Text>
-          )}
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Copy address ${addressText}`}
-          onPress={() => { if (job.address) void copyText('address', job.address); }}>
-          <Text style={styles.summaryLine}>{copiedKey === 'address' ? 'Copied' : addressText}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Copy phone number ${phoneText}`}
-          onPress={() => { if (customer?.phone) void copyText('phone', customer.phone); }}>
-          <Text style={styles.summaryLine}>{copiedKey === 'phone' ? 'Copied' : `Phone: ${phoneText}`}</Text>
-        </Pressable>
-      </View>
+      <JobHeaderBlock
+        customerName={customer?.name}
+        address={job.address}
+        phone={customer?.phone}
+        jobNumber={job.jobNumber}
+        createdAt={job.createdAt}
+        scheduledStart={job.scheduledStart}
+        ingressCode={ingressCode}
+        onPressSchedule={onPressSchedule}
+        onCopy={copyToClipboard}
+      >
+        {children}
+      </JobHeaderBlock>
     </View>
   );
 }
@@ -136,51 +89,90 @@ export default JobHeader;
 
 export type JobSummaryRestProps = {
   job: Job;
-  assignedTechName?: string | null;
   serviceAreaName?: string | null;
   techs?: { id: string; name: string }[];
-  onAssignTech?: (techId: string | null) => void;
-  assigningTech?: boolean;
+  premTechId?: string | null;
+  serviceTechId?: string | null;
+  premTechName?: string | null;
+  serviceTechName?: string | null;
+  onRequestAssignPrem?: (techId: string | null) => void;
+  onRequestAssignService?: (techId: string | null) => void;
+  premBusy?: boolean;
+  serviceBusy?: boolean;
+  premIndicator?: string | null;
   statusError?: string | null;
-  stageStates?: ReadonlyArray<StageResult>;
-  nextStep?: string;
-  onStagePress?: (key: string) => void;
-  disabledKeys?: string[];
 };
 
+type TechRowProps = {
+  label: string;
+  techId?: string | null;
+  techName?: string | null;
+  techs?: { id: string; name: string }[];
+  onRequest?: (techId: string | null) => void;
+  busy?: boolean;
+  indicator?: string | null;
+};
+
+function TechRow({ label, techId, techName, techs, onRequest, busy, indicator }: TechRowProps) {
+  return (
+    <View style={styles.techRow}>
+      <Text style={styles.summaryLine}>{label}:</Text>
+      {indicator ? <Text style={styles.indicator}>{indicator}</Text> : null}
+      {techs && onRequest ? (
+        <View style={styles.techSelect}>
+          <TechSelect
+            value={techId ?? ''}
+            options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
+            placeholder="Choose technician"
+            disabled={busy}
+            onChange={(id) => { if ((id || null) === (techId ?? null)) return; onRequest(id || null); }}
+          />
+        </View>
+      ) : (
+        <Text style={styles.summaryLine}>{techName ?? 'Unassigned'}</Text>
+      )}
+    </View>
+  );
+}
+
 export function JobSummaryRest({
-  job,
-  assignedTechName = null,
   serviceAreaName = null,
   techs,
-  onAssignTech,
-  assigningTech,
+  premTechId = null,
+  serviceTechId = null,
+  premTechName = null,
+  serviceTechName = null,
+  onRequestAssignPrem,
+  onRequestAssignService,
+  premBusy,
+  serviceBusy,
+  premIndicator = null,
   statusError = null,
 }: JobSummaryRestProps) {
-  const arriveEligible = Boolean(assignedTechName);
+  const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
 
   return (
     <View style={styles.root}>
       <View style={styles.summary}>
-        <Text style={styles.summaryLine}>Date Created: {new Date(job.createdAt).toLocaleDateString()}</Text>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
-        {techs && onAssignTech ? (
-          <View style={styles.techRow}>
-            <Text style={styles.summaryLine}>Tech:</Text>
-            <View style={styles.techSelect}>
-              <TechSelect
-                value={job.assignedTechId ?? ''}
-                options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
-                placeholder="Choose technician"
-                disabled={assigningTech}
-                onChange={(techId) => { onAssignTech(techId || null); }}
-              />
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.summaryLine}>Tech: {assignedTechName ?? 'Unassigned'}</Text>
-        )}
+        <TechRow
+          label="Prem Tech"
+          techId={premTechId}
+          techName={premTechName}
+          techs={techs}
+          onRequest={onRequestAssignPrem}
+          busy={premBusy}
+          indicator={premIndicator}
+        />
+        <TechRow
+          label="Service Tech"
+          techId={serviceTechId}
+          techName={serviceTechName}
+          techs={techs}
+          onRequest={onRequestAssignService}
+          busy={serviceBusy}
+        />
         <View style={styles.techRow}>
           {serviceAreaName ? (
             <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
@@ -208,32 +200,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     marginTop: spacing.xs,
   },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs },
-  rowLeft: { flexShrink: 1 },
-  customerName: {
-    fontFamily: typography.fontFamily.headingBold,
-    fontWeight: typography.weight.bold,
-    fontSize: typography.size.h4,
-    color: colors.text,
-  },
   summaryLine: {
     fontFamily: typography.fontFamily.body,
     fontSize: typography.size.body,
     color: colors.text,
   },
-  summaryLineRight: {
-    fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
-    color: colors.text,
-    textAlign: 'right',
-  },
-  scheduleLink: {
-    color: colors.primary,
-  },
   techRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   techSelect: { flex: 1 },
-  statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 4 },
-  paidHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 3 },
-  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 3 },
+  indicator: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.primary,
+    color: colors.white,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+    fontSize: typography.size.small,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 2 },
+  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 2 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
 });

@@ -21,7 +21,8 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { Button, telUrl, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock } from '@jobcore/ui';
+import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -101,10 +102,12 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     };
   }, [jobId, session, rev]);
 
+  const resolvedPhone = customerPhone ?? job?.customerPhone ?? null;
+
   const handleCall = React.useCallback(() => {
-    if (!customerPhone) return;
-    void Linking.openURL(telUrl(customerPhone));
-  }, [customerPhone]);
+    if (!resolvedPhone) return;
+    void Linking.openURL(telUrl(resolvedPhone));
+  }, [resolvedPhone]);
 
   const handleMap = React.useCallback(() => {
     if (!job?.address) return;
@@ -143,13 +146,19 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     );
   }
 
-  const headerLine = [`Job ${job.id}`, job.status, job.address].filter(Boolean).join(' · ');
-
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>{headerLine}</Text>
+      <JobHeaderBlock
+        customerName={job.customerName}
+        address={job.address}
+        phone={resolvedPhone}
+        jobNumber={job.jobNumber ?? job.id}
+        createdAt={job.createdAt}
+        scheduledStart={job.scheduledStart}
+        ingressCode={job.ingressInstructions}
+        onCopy={copyToClipboard}
+      />
 
-      {job.description ? <Text style={styles.description}>{job.description}</Text> : null}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Tasks</Text>
         {getModulePorts().renderTaskList?.({ jobId, mode: 'read' })}
@@ -167,18 +176,6 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Job details</Text>
-        {job.customerName ? (
-          <>
-            <Text style={styles.label}>Customer name</Text>
-            <Text style={styles.value}>{job.customerName}</Text>
-          </>
-        ) : null}
-        {job.ingressInstructions ? (
-          <>
-            <Text style={styles.label}>Ingress code</Text>
-            <Text style={styles.value}>{job.ingressInstructions}</Text>
-          </>
-        ) : null}
         {job.permitStatus ? (
           <>
             <Text style={styles.label}>Permit status</Text>
@@ -214,11 +211,11 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Contact & location</Text>
         <Button
-          label={customerPhone ? `Call ${customerPhone}` : 'No phone on file'}
+          label={resolvedPhone ? `Call ${resolvedPhone}` : 'No phone on file'}
           onPress={handleCall}
           variant="primary"
           size="sm"
-          disabled={!customerPhone}
+          disabled={!resolvedPhone}
         />
         <Button
           label={job.address ?? 'No address on file'}
@@ -256,7 +253,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   section: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
     fontSize: typography.size.h6,

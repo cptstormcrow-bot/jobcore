@@ -35,7 +35,8 @@
 import React, { useMemo } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Card, EmptyState, Button, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import * as Clipboard from 'expo-clipboard';
+import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
@@ -107,10 +108,26 @@ export function CloseOutReviewScreen({
     <View style={embedded ? undefined : styles.screen}>
       {!embedded && <ScreenTitle title="Close-Out Review" />}
       <Body {...bodyProps}>
-        <Card style={styles.headerCard}>
-          <Text style={styles.jobTitle}>{job.address ?? 'No address on file'}</Text>
+        {embedded ? (
           <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
-        </Card>
+        ) : (
+          <View style={styles.headerCard}>
+            <JobHeaderBlock
+              customerName={job.customerName}
+              address={job.address}
+              phone={job.customerPhone}
+              jobNumber={job.jobNumber}
+              createdAt={job.createdAt}
+              scheduledStart={job.scheduledStart}
+              ingressCode={job.ingressInstructions}
+              onCopy={async (text) => {
+                await Clipboard.setStringAsync(text);
+              }}
+            >
+              <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
+            </JobHeaderBlock>
+          </View>
+        )}
 
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Hours logged</Text>
@@ -233,14 +250,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   headerCard: {
-    marginBottom: spacing.md,
-  },
-  jobTitle: {
-    color: colors.text,
-    fontSize: typography.size.h5,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   jobStatus: {
     color: colors.textMuted,
@@ -249,7 +259,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   section: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
     color: colors.text,

@@ -17,10 +17,11 @@ import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
 import { allowedEstimateMoves } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, typography, Text, EstimateStatusControl } from '@jobcore/ui';
+import { Button, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock } from '@jobcore/ui';
 import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
+import { copyToClipboard } from '../lib/clipboard';
 
 /** Props for `JobEstimateEditor`. `jobId` selects the job; the rest is resolved via ports. */
 export interface JobEstimateEditorProps {
@@ -93,6 +94,23 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
   const [shareError, setShareError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [photos, setPhotos] = React.useState<JobPlanningPhoto[]>([]);
+  const [taskTitles, setTaskTitles] = React.useState<string[]>([]);
+
+  // Job tasks (replaces job_investigations.room_work in the Prem reference section).
+  React.useEffect(() => {
+    let cancelled = false;
+    getModulePorts()
+      .planTasks.listForJob(jobId)
+      .then((rows) => {
+        if (!cancelled) setTaskTitles(rows.filter((t) => t.status !== 'deferred').map((t) => t.title));
+      })
+      .catch(() => {
+        if (!cancelled) setTaskTitles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
 
   const load = React.useCallback(async () => {
     if (!session) return;
@@ -332,13 +350,13 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
           <Text style={styles.value}>{investigation.parkingNotes ?? ''}</Text>
           <Text style={styles.label}>State assessment</Text>
           <Text style={styles.value}>{investigation.stateAssessment ?? ''}</Text>
-          <Text style={styles.label}>Rooms and work</Text>
-          {(investigation.roomWork ?? []).length === 0 ? (
+          <Text style={styles.label}>Tasks</Text>
+          {taskTitles.length === 0 ? (
             <Text style={styles.value}>None</Text>
           ) : (
-            (investigation.roomWork ?? []).map((card, idx) => (
-              <Text key={`${card.room}-${idx}`} style={styles.value}>
-                {card.room}: {card.work}
+            taskTitles.map((title, idx) => (
+              <Text key={`${title}-${idx}`} style={styles.value}>
+                {title}
               </Text>
             ))
           )}
@@ -457,7 +475,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   section: {
-    marginBottom: 20,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
     fontSize: typography.size.h6,

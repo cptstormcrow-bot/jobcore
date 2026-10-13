@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   title: {
     color: colors.text,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     gap: spacing.sm,
   },
   action: {
