@@ -1,12 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
-import type { PayrollReimbursement, PayrollSelfPort } from './port';
+import { ActivityIndicator, Linking, Pressable, Text, TextInput, View } from 'react-native';
+import type {
+  AdminReimbursement,
+  PayrollAdminPort,
+  PayrollReimbursement,
+  PayrollSelfPort,
+} from './port';
 import { ReceiptCapture } from './ReceiptCapture';
 import { errorText } from './errorText';
+
+export type ReimbursementPanelActions = {
+  submit: () => void | Promise<void>;
+  canSubmit: boolean;
+  busy: boolean;
+};
 
 export interface ReimbursementPanelProps {
   port: PayrollSelfPort;
   userId: string;
+  onRegisterActions?: (a: ReimbursementPanelActions) => void;
 }
 
 /** Client-generated uuid (v4 shape). */
@@ -30,7 +42,14 @@ function formatMoney(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString();
+}
+
+export function ReimbursementPanel({ port, userId, onRegisterActions }: ReimbursementPanelProps) {
+  const adminPort = port as PayrollSelfPort & Partial<PayrollAdminPort>;
+  const isAdmin = typeof adminPort.listAllReimbursements === 'function';
   const [amountText, setAmountText] = useState('');
   const [description, setDescription] = useState('');
   const [jobId, setJobId] = useState('');
@@ -39,6 +58,9 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [history, setHistory] = useState<PayrollReimbursement[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [allList, setAllList] = useState<AdminReimbursement[] | null>(null);
+  const [allError, setAllError] = useState<string | null>(null);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
 
   useEffect(() => {
@@ -56,6 +78,28 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
       cancelled = true;
     };
   }, [port, userId, reloadTick]);
+
+  useEffect(() => {
+    if (typeof adminPort.listAllReimbursements !== 'function') return;
+    let cancelled = false;
+    setAllError(null);
+    (async () => {
+      try {
+        const list = await adminPort.listAllReimbursements!();
+        if (!cancelled) {
+          setAllList(
+            [...list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0)),
+          );
+        }
+      } catch (e) {
+        if (!cancelled) setAllError(errorText(e));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [port, reloadTick]);
 
   const amountCents = dollarsToCents(amountText);
   const canSubmit =
@@ -86,8 +130,30 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
     }
   }, [canSubmit, receiptUri, jobId, port, amountCents, description]);
 
+  useEffect(() => {
+    onRegisterActions?.({ submit: onSubmit, canSubmit, busy: submitting });
+  }, [onRegisterActions, onSubmit, canSubmit, submitting]);
+
+  const onViewReceipt = useCallback(
+    async (path: string) => {
+      setReceiptError(null);
+      try {
+        const url = await adminPort.getReceiptUrl?.(path);
+        if (!url) {
+          setReceiptError('Receipt not available.');
+          return;
+        }
+        await Linking.openURL(url);
+      } catch (e) {
+        setReceiptError(errorText(e));
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [port],
+  );
+
   return (
-    <View style={{ padding: 12, gap: 8 }}>
+    <View style={{ paddingVertical: 12, paddingHorizontal: 16, gap: 8 }}>
       <Text style={{ fontWeight: '600' }}>New reimbursement</Text>
       <TextInput
         value={amountText}
@@ -114,22 +180,25 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
       />
       <ReceiptCapture uri={receiptUri} onChange={setReceiptUri} disabled={submitting} />
       {formError ? <Text style={{ color: '#b00020' }}>{formError}</Text> : null}
-      <Pressable
-        onPress={() => void onSubmit()}
-        disabled={!canSubmit}
-        style={{
-          padding: 12,
-          borderRadius: 6,
-          alignItems: 'center',
-          backgroundColor: canSubmit ? '#1a73e8' : '#bbb',
-        }}
-      >
-        {submitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={{ color: '#fff', fontWeight: '600' }}>Submit</Text>
-        )}
-      </Pressable>
+      {onRegisterActions ? null : (
+        <Pressable
+          onPress={() => void onSubmit()}
+          disabled={!canSubmit}
+          style={{
+            padding: 12,
+            borderRadius: 6,
+            alignItems: 'center',
+            backgroundColor: '#D9C7A0',
+            opacity: canSubmit ? 1 : 0.5,
+          }}
+        >
+          {submitting ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text style={{ color: '#000', fontWeight: '600' }}>Submit</Text>
+          )}
+        </Pressable>
+      )}
 
       <Text style={{ fontWeight: '600', marginTop: 12 }}>My reimbursements</Text>
       {loadError ? <Text style={{ color: '#b00020' }}>{loadError}</Text> : null}
@@ -149,6 +218,42 @@ export function ReimbursementPanel({ port, userId }: ReimbursementPanelProps) {
           ) : null}
         </View>
       ))}
+
+      {isAdmin ? (
+        <>
+          <Text style={{ fontWeight: '600', marginTop: 12 }}>All reimbursements</Text>
+          {allError ? <Text style={{ color: '#b00020' }}>{allError}</Text> : null}
+          {receiptError ? <Text style={{ color: '#b00020' }}>{receiptError}</Text> : null}
+          {allList === null && !allError ? <ActivityIndicator /> : null}
+          {allList !== null && allList.length === 0 ? <Text>No reimbursements yet.</Text> : null}
+          {(allList ?? []).map((r) => (
+            <View
+              key={r.id}
+              style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8, gap: 4 }}
+            >
+              <Text style={{ fontWeight: '600' }}>{r.employeeName}</Text>
+              <Text>
+                {formatMoney(r.amountCents)} - {r.status}
+              </Text>
+              <Text>{r.description}</Text>
+              <Text>{formatDate(r.createdAt)}</Text>
+              {r.receiptPhotoPath && typeof adminPort.getReceiptUrl === 'function' ? (
+                <Pressable
+                  onPress={() => void onViewReceipt(r.receiptPhotoPath as string)}
+                  style={{
+                    padding: 8,
+                    borderRadius: 6,
+                    alignItems: 'center',
+                    backgroundColor: '#D9C7A0',
+                  }}
+                >
+                  <Text style={{ color: '#000', fontWeight: '600' }}>View receipt</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
+        </>
+      ) : null}
     </View>
   );
 }

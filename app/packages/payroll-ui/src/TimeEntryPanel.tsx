@@ -7,11 +7,26 @@ import { View } from 'react-native';
 import { Button, Card, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
+import { errorText } from './errorText';
+
+export interface TimeEntryPanelActions {
+  saveAll: () => Promise<void>;
+  submitWeek: () => Promise<void>;
+  canSubmit: boolean;
+  busy: boolean;
+  clockIn: () => void | Promise<void>;
+  clockOut: () => void | Promise<void>;
+  clockedIn: boolean;
+}
 
 export interface TimeEntryPanelProps {
   port: PayrollSelfPort;
   userId: string;
   weekStartDow: number;
+  /** Lets the parent render its own Submit week control. */
+  onRegisterActions?: (a: TimeEntryPanelActions) => void;
+  /** Called after every successful mutation (save, delete, submit, clock in/out). */
+  onChanged?: () => void;
 }
 
 type Iso = wageEngine.IsoDate;
@@ -23,6 +38,21 @@ function pad(n: number): string {
 function toIso(ms: number): Iso {
   const d = new Date(ms);
   return (d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())) as Iso;
+}
+
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** "Mon 10/12" from an ISO date (computed in UTC from the date parts, no TZ shift). */
+function dayLabel(iso: string): string {
+  const y = parseInt(iso.slice(0, 4), 10);
+  const m = parseInt(iso.slice(5, 7), 10);
+  const d = parseInt(iso.slice(8, 10), 10);
+  const wd = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
+  return WEEKDAYS[wd] + ' ' + m + '/' + d;
+}
+
+function weekdayOnly(iso: string): string {
+  return dayLabel(iso).split(' ')[0]!;
 }
 
 function weekDays(weekStartDow: number): Iso[] {
@@ -62,18 +92,20 @@ function editable(e: PayrollTimeEntry): boolean {
 }
 
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
-  const { port, userId, weekStartDow } = props;
+  const { port, userId, weekStartDow, onRegisterActions, onChanged } = props;
   const days = useMemo(() => weekDays(weekStartDow), [weekStartDow]);
   const range = useMemo(() => ({ from: days[0]!, to: days[6]! }), [days]);
   const [entries, setEntries] = useState<PayrollTimeEntry[]>([]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>('');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
 
   const reload = useCallback(async () => {
     try {
       setEntries(await port.listEntries(range));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load time entries.');
+      setError("Couldn't load your time entries: " + errorText(e, 'Could not load time entries.'));
     }
   }, [port, range]);
 
@@ -87,11 +119,12 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       try {
         await fn();
         await reload();
+        if (onChanged) onChanged();
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Something went wrong.');
+        setError(errorText(e, 'Something went wrong.'));
       }
     },
-    [reload],
+    [reload, onChanged],
   );
 
   const openClock = entries.find(
@@ -123,51 +156,81 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     );
   };
 
-  const saveDay = (day: Iso) => {
-    const mins = parseMinutes(inputs[day] ?? '');
-    if (mins === null) {
-      setError('Enter hours as 1.5 or 1:30.');
-      return Promise.resolve();
+  const dirtyDays = days.filter((d) => (inputs[d] ?? '').trim() !== '');
+
+  const saveAll = useCallback(async () => {
+    if (dirtyDays.length === 0) return;
+    setError('');
+    setSaveState('saving');
+    try {
+      for (const day of dirtyDays) {
+        const mins = parseMinutes(inputs[day] ?? '');
+        if (mins === null) {
+          throw new Error(dayLabel(day) + ': enter hours as 1.5 or 1:30.');
+        }
+        const note = (notes[day] ?? '').trim();
+        const existing = entries.find((e) => e.workDate === day && e.source === 'manual' && editable(e));
+        const entry: PayrollTimeEntry = existing
+          ? { ...existing, minutes: mins, status: 'draft', rejectionReason: null, notes: note !== '' ? note : existing.notes }
+          : {
+              id: newId(),
+              userId,
+              workDate: day,
+              minutes: mins,
+              clockInAt: null,
+              clockOutAt: null,
+              source: 'manual',
+              status: 'draft',
+              notes: note !== '' ? note : null,
+              rejectionReason: null,
+            };
+        await port.upsertEntry(entry);
+        setInputs((p) => ({ ...p, [day]: '' }));
+        setNotes((p) => ({ ...p, [day]: '' }));
+      }
+      await reload();
+      setSaveState('saved');
+      if (onChanged) onChanged();
+    } catch (e) {
+      setError(errorText(e, 'Could not save.'));
+      setSaveState('idle');
+      await reload();
     }
-    const existing = entries.find((e) => e.workDate === day && e.source === 'manual' && editable(e));
-    const entry: PayrollTimeEntry = existing
-      ? { ...existing, minutes: mins, status: 'draft', rejectionReason: null }
-      : {
-          id: newId(),
-          userId,
-          workDate: day,
-          minutes: mins,
-          clockInAt: null,
-          clockOutAt: null,
-          source: 'manual',
-          status: 'draft',
-          notes: null,
-          rejectionReason: null,
-        };
-    return run(async () => {
-      await port.upsertEntry(entry);
-      setInputs((p) => ({ ...p, [day]: '' }));
-    });
-  };
+  }, [dirtyDays, inputs, notes, entries, port, userId, reload, onChanged]);
 
   const canSubmit = entries.some(editable);
+  const busy = saveState === 'saving';
+
+  const submitWeek = useCallback(() => run(() => port.submitWeek(range)), [run, port, range]);
+
+  useEffect(() => {
+    if (onRegisterActions) {
+      onRegisterActions({ saveAll, submitWeek, canSubmit, busy, clockIn, clockOut, clockedIn: !!openClock });
+    }
+    // clockIn/clockOut are recreated each render; they close over entries/days, so re-register when those change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRegisterActions, saveAll, submitWeek, canSubmit, busy, entries, days, userId, run, port]);
 
   return (
     <View>
-      <View style={{ flexDirection: 'row' }}>
-        <Button label="Clock in" onPress={clockIn} disabled={!!openClock} />
-        <Button label="Clock out" onPress={clockOut} disabled={!openClock} variant="secondary" />
+      <View style={{ marginTop: 4 }}>
+        <Button
+          label={busy ? 'Saving…' : 'Save All'}
+          onPress={saveAll}
+          disabled={busy || dirtyDays.length === 0}
+        />
+        {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       </View>
       {error !== '' ? <Text>{error}</Text> : null}
       {days.map((day) => {
         const dayEntries = entries.filter((e) => e.workDate === day);
         const total = dayEntries.reduce((s, e) => s + e.minutes, 0);
         return (
-          <Card key={day}>
-            <Text>{day + '  —  ' + fmt(total)}</Text>
+          <Card key={day} style={{ marginVertical: 2, padding: 6 }}>
+            <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
             {dayEntries.map((e) => (
-              <View key={e.id}>
-                <Text>
+              <View key={e.id} style={{ marginVertical: 0, flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ flex: 1 }}>
                   {fmt(e.minutes) + ' · ' + e.source + ' · ' + e.status +
                     (e.status === 'rejected' && e.rejectionReason ? ' (' + e.rejectionReason + ')' : '')}
                 </Text>
@@ -182,20 +245,23 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
               </View>
             ))}
             <TextField
-              label="Add hours (1.5 or 1:30)"
+              label={'Hours worked on ' + weekdayOnly(day) + ' (1.5 or 1:30)'}
               value={inputs[day] ?? ''}
-              onChangeText={(v) => setInputs((p) => ({ ...p, [day]: v }))}
+              onChangeText={(v) => {
+                setSaveState('idle');
+                setInputs((p) => ({ ...p, [day]: v }));
+              }}
               dense
             />
-            <Button label="Save" size="sm" onPress={() => saveDay(day)} />
+            <TextField
+              label="Notes (optional)"
+              value={notes[day] ?? ''}
+              onChangeText={(v) => setNotes((p) => ({ ...p, [day]: v }))}
+              dense
+            />
           </Card>
         );
       })}
-      <Button
-        label="Submit week"
-        onPress={() => run(() => port.submitWeek(range))}
-        disabled={!canSubmit}
-      />
     </View>
   );
 }

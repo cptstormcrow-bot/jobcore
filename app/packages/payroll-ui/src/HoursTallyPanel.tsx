@@ -7,6 +7,8 @@ import { errorText } from './errorText';
 export interface HoursTallyPanelProps {
   port: PayrollSelfPort;
   userId: string;
+  /** Bump to force the tally to reload. */
+  refreshKey?: number;
 }
 
 const TABS: { id: wageEngine.RollupGranularity; label: string }[] = [
@@ -25,7 +27,7 @@ function formatHm(min: number): string {
   return `${h}:${m < 10 ? '0' : ''}${m}`;
 }
 
-export function HoursTallyPanel({ port, userId }: HoursTallyPanelProps) {
+export function HoursTallyPanel({ port, userId, refreshKey }: HoursTallyPanelProps) {
   const [tab, setTab] = useState<wageEngine.RollupGranularity>('day');
   const [entries, setEntries] = useState<PayrollTimeEntry[] | null>(null);
   const [settings, setSettings] = useState<PayrollSettings | null>(null);
@@ -52,7 +54,7 @@ export function HoursTallyPanel({ port, userId }: HoursTallyPanelProps) {
     return () => {
       cancelled = true;
     };
-  }, [port, userId]);
+  }, [port, userId, refreshKey]);
 
   const rows = useMemo(() => {
     if (!entries || !settings) return [];
@@ -70,7 +72,7 @@ export function HoursTallyPanel({ port, userId }: HoursTallyPanelProps) {
   }, [entries, settings, tab]);
 
   return (
-    <View>
+    <View style={{ paddingHorizontal: 16 }}>
       <View style={{ flexDirection: 'row', marginBottom: 8 }}>
         {TABS.map((t) => (
           <Pressable
@@ -91,7 +93,7 @@ export function HoursTallyPanel({ port, userId }: HoursTallyPanelProps) {
         ))}
       </View>
       {error ? (
-        <Text style={{ color: '#b91c1c' }}>{`Could not load hours: ${error}`}</Text>
+        <Text style={{ color: '#b91c1c' }}>{`Couldn't load your hours: ${error}`}</Text>
       ) : entries === null ? (
         <ActivityIndicator />
       ) : rows.length === 0 ? (

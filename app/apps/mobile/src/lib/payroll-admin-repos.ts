@@ -8,6 +8,7 @@ import type {
   PayrollExportFormat,
   TeamWeek,
   PayrollEntryStatus,
+  AdminReimbursement,
 } from '../../../../packages/payroll-ui/src/port';
 import { requireOnline } from './offline-mutations';
 import { toPayrollTimeEntry } from './payroll-repos';
@@ -307,6 +308,37 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       );
       check(error);
       return exp;
+    },
+
+    async listAllReimbursements(): Promise<AdminReimbursement[]> {
+      requireOnline('load the reimbursements');
+      const { data, error } = await supabase
+        .from('reimbursements')
+        .select('id, user_id, amount_cents, description, job_id, receipt_photo_path, status, rejection_reason, created_at')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false });
+      check(error);
+      const names = await nameMap();
+      return ((data ?? []) as Row[]).map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        amountCents: r.amount_cents,
+        description: r.description,
+        jobId: r.job_id,
+        receiptPhotoPath: r.receipt_photo_path,
+        status: r.status,
+        rejectionReason: r.rejection_reason,
+        createdAt: r.created_at,
+        employeeName: names.get(r.user_id as string) ?? '',
+      })) as AdminReimbursement[];
+    },
+
+    async getReceiptUrl(path: string): Promise<string | null> {
+      requireOnline('load the receipt');
+      if (!path) return null;
+      const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 600);
+      check(error);
+      return data?.signedUrl ?? null;
     },
   };
 }

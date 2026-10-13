@@ -76,6 +76,9 @@ export interface PayrollReimbursement {
   createdAt: string;
 }
 
+/** A reimbursement as seen by an approver, with the requester's name. */
+export type AdminReimbursement = PayrollReimbursement & { employeeName: string };
+
 /** Input for submitting a new reimbursement. */
 export interface NewReimbursementInput {
   /** Client-generated uuid. */
@@ -153,6 +156,10 @@ export interface PayrollAdminPort {
   setQbAccountMap?(map: wageEngine.QbAccountMap): Promise<void>;
   /** Save payroll settings. */
   saveSettings?(settings: PayrollSettings): Promise<void>;
+  /** List every employee's reimbursements. */
+  listAllReimbursements?(): Promise<AdminReimbursement[]>;
+  /** Resolve a receipt storage path to a viewable URL, or null. */
+  getReceiptUrl?(path: string): Promise<string | null>;
 }
 
 /** Full port: self members plus optional admin members. */

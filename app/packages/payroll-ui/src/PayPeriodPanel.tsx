@@ -12,6 +12,8 @@ import { errorText } from './errorText';
 export interface PayPeriodPanelProps {
   port: PayrollSelfPort;
   userId: string;
+  /** Parent bumps this to force a reload. */
+  refreshKey?: number;
 }
 
 interface Loaded {
@@ -55,7 +57,7 @@ const STATUS_COLOR: Record<PayrollEntryStatus, string> = {
   rejected: '#b91c1c',
 };
 
-export function PayPeriodPanel({ port, userId }: PayPeriodPanelProps) {
+export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps) {
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -82,7 +84,7 @@ export function PayPeriodPanel({ port, userId }: PayPeriodPanelProps) {
     return () => {
       cancelled = true;
     };
-  }, [port, userId]);
+  }, [port, userId, refreshKey]);
 
   const calc = useMemo(() => {
     if (!data) return null;
@@ -110,13 +112,13 @@ export function PayPeriodPanel({ port, userId }: PayPeriodPanelProps) {
     }
   }, [data, userId]);
 
-  if (error) return <Text style={{ color: '#b91c1c' }}>{`Could not load pay period: ${error}`}</Text>;
+  if (error) return <Text style={{ color: '#b91c1c' }}>{`Couldn't load your pay period: ${error}`}</Text>;
   if (!data) return <ActivityIndicator />;
 
   const status = weekStatus(data.entries);
 
   return (
-    <View>
+    <View style={{ paddingHorizontal: 16 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
         <Text style={{ flex: 1, fontWeight: '600' }}>{`${data.weekStart} to ${data.weekEnd}`}</Text>
         <Text style={{ color: STATUS_COLOR[status], fontWeight: '600' }}>{status}</Text>

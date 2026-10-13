@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { View } from 'react-native';
-import { Button, EmptyState, Text } from '@jobcore/ui';
+import { EmptyState } from '@jobcore/ui';
 import { PayrollHome } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
@@ -21,7 +21,7 @@ export interface PayrollScreenProps {
 }
 
 export function PayrollScreen(props: PayrollScreenProps = {}) {
-  const { onBack, onOpenRun, onOpenSettings } = props;
+  const { onOpenRun, onOpenSettings } = props;
   const session = useModuleSession();
   const payroll = getModulePorts().payroll;
 
@@ -29,17 +29,19 @@ export function PayrollScreen(props: PayrollScreenProps = {}) {
     return (
       <View>
         <EmptyState title="Payroll is not available yet" />
-        {onBack ? <Button label="Back" onPress={onBack} /> : null}
       </View>
     );
   }
 
   return (
     <View style={{ flex: 1 }}>
-      {onBack ? <Button label="Back" onPress={onBack} /> : null}
-      {onOpenRun ? <Button label="Payroll Run" onPress={onOpenRun} /> : null}
-      {onOpenSettings ? <Button label="Payroll Settings" onPress={onOpenSettings} /> : null}
-      <PayrollHome mode="admin" port={payroll} userId={session.userId} />
+      <PayrollHome
+        mode="admin"
+        port={payroll}
+        userId={session.userId}
+        onOpenRun={onOpenRun}
+        onOpenSettings={onOpenSettings}
+      />
     </View>
   );
 }
