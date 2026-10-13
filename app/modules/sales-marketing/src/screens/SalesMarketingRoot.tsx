@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { EmptyState, AppChrome, type MenuActionItem } from '@jobcore/ui';
+import { EmptyState, AppChrome, useScreenNumber, type MenuActionItem } from '@jobcore/ui';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 
 import { Overview } from './Overview';
@@ -30,6 +30,7 @@ import { CallbackTasks } from './CallbackTasks';
 import { Payroll } from './Payroll';
 import { useModuleSession } from '../lib/module-session';
 
+type SubView = 'overview' | 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks' | 'payroll';
 
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
 
@@ -43,7 +44,7 @@ const HELP_SCREEN_KEYS: Record<SubView, HelpScreenKey> = {
   reviewLibrary: 'sm-reviews',
 };
 
-const SUBVIEW_LABELS: Record<SubView, string> = {
+const SUBVIEW_LABELS:Record<SubView, string> = {
   overview: 'Overview',
   reviewLibrary: 'Review Library',
   pitchPicker: 'Pitch Picker',
@@ -57,6 +58,7 @@ export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
   const session = useModuleSession();
   const [subView, setSubView] = React.useState<SubView>('overview');
+  useScreenNumber({ subView });
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
   // No service/service-area picker exists yet anywhere in this module —
   // these stay null until one lands; Composer already treats both as

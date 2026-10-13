@@ -961,6 +961,7 @@ export function AdminFinanceRoot() {
               jobsOnFile: loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length,
               qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
               awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
+          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
               pendingTimeOff: loadState.timeOffRequests.filter((request) => request.status === 'pending').length,
               employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner').length,
               needsAttentionPayments: needsAttentionCount,
@@ -978,7 +979,6 @@ export function AdminFinanceRoot() {
               </Pressable>
             ))}
           </ScrollView>
-          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
             <Button
@@ -1184,6 +1184,12 @@ export function AdminFinanceRoot() {
           showTest={showTestEmployeesRoster}
         />
       ) : subView === 'employee-invitations' ? (
+      ) : subView === 'payroll' ? (
+        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
+      ) : subView === 'payrollRun' ? (
+        <PayrollRunScreen onBack={() => goTop('payroll')} />
+      ) : subView === 'payrollSettings' ? (
+        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
         <EmployeeInvitationsScreen
           invitations={ports.invitations}
           onBack={handleBackToRoster}
@@ -1201,12 +1207,6 @@ export function AdminFinanceRoot() {
               loadState.kind === 'loaded'
                 ? loadState.techServiceAreas
                     .filter((tsa) => tsa.techId === selectedEmployee.id)
-      ) : subView === 'payroll' ? (
-        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
-      ) : subView === 'payrollRun' ? (
-        <PayrollRunScreen onBack={() => goTop('payroll')} />
-      ) : subView === 'payrollSettings' ? (
-        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
                     .map((tsa) => loadState.serviceAreas.find((a) => a.id === tsa.serviceAreaId)?.name)
                     .filter((n): n is string => Boolean(n))
                     .sort((x, y) => x.localeCompare(y))
@@ -1254,6 +1254,17 @@ export function AdminFinanceRoot() {
             techName={
               loadState.kind === 'loaded'
                 ? new Map(loadState.employees.map((t) => [t.id, t.fullName])).get(selectedEmployeeJob.assignedTechId ?? '')
+          onSetRate={async ({ userId, hourlyRateCents, effectiveFrom }) => {
+            const payroll = ports.payroll;
+            if (!payroll?.setRate) {
+              throw new Error('Rate changes are unavailable: the payroll port is not wired.');
+            }
+            await payroll.setRate(
+              userId,
+              hourlyRateCents,
+              effectiveFrom as Parameters<NonNullable<typeof payroll.setRate>>[2],
+            );
+          }}
                 : undefined
             }
             onBack={handleBackToEmployeeDetail}
@@ -1271,17 +1282,6 @@ export function AdminFinanceRoot() {
         ) : (
           (() => {
             const techs = loadState.employees.filter((e) => e.role === 'tech' && e.active);
-          onSetRate={async ({ userId, hourlyRateCents, effectiveFrom }) => {
-            const payroll = ports.payroll;
-            if (!payroll?.setRate) {
-              throw new Error('Rate changes are unavailable: the payroll port is not wired.');
-            }
-            await payroll.setRate(
-              userId,
-              hourlyRateCents,
-              effectiveFrom as Parameters<NonNullable<typeof payroll.setRate>>[2],
-            );
-          }}
             const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
             const calendarJobs = loadState.jobs
               .filter(
@@ -1403,6 +1403,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
+  payroll: 'Payroll',
+  payrollRun: 'Payroll Run',
+  payrollSettings: 'Payroll Settings',
     marginBottom: 6,
     justifyContent: 'center',
   },
@@ -1411,6 +1414,3 @@ const styles = StyleSheet.create({
   calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   calendarTechSelect: { width: 180 },
 });
-  payroll: 'Payroll',
-  payrollRun: 'Payroll Run',
-  payrollSettings: 'Payroll Settings',

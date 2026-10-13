@@ -67,7 +67,7 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setAdminFinanceModulePorts(buildAdminFinancePorts());
+    setAdminFinanceModulePorts(buildAdminFinancePorts({ orgId: state.organization.id, userId: state.profile.id }));
   }
   useEffect(() => {
     if (module?.id !== 'admin-finance') return undefined;
@@ -88,7 +88,7 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setFieldTechModulePorts(buildFieldTechPorts());
+    setFieldTechModulePorts(buildFieldTechPorts({ orgId: state.organization.id, userId: state.profile.id }));
   }
   useEffect(() => {
     if (module?.id !== 'field-tech') return undefined;
@@ -108,7 +108,7 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setSalesMarketingModulePorts(buildSalesMarketingPorts());
+    setSalesMarketingModulePorts(buildSalesMarketingPorts({ orgId: state.organization.id, userId: state.profile.id }));
   }
   useEffect(() => {
     if (module?.id !== 'sales-marketing') return undefined;
