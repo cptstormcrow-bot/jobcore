@@ -24,6 +24,7 @@ import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 import { buildSalesMarketingPorts } from '../../src/lib/sales-marketing-repos';
 import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import { JobTaskList } from '../../src/components/JobTaskList';
 
 /**
  * Static route file + dynamic segment.
@@ -88,7 +89,10 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setFieldTechModulePorts(buildFieldTechPorts({ orgId: state.organization.id, userId: state.profile.id }));
+    setFieldTechModulePorts({
+      ...buildFieldTechPorts({ orgId: state.organization.id, userId: state.profile.id }),
+      renderTaskList: (p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} />,
+    });
   }
   useEffect(() => {
     if (module?.id !== 'field-tech') return undefined;

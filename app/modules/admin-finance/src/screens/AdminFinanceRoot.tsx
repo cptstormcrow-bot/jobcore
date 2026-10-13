@@ -353,6 +353,22 @@ export function AdminFinanceRoot() {
     [loadState, customerNames],
   );
 
+  const [boardTaskTitles, setBoardTaskTitles] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    const repo = getModulePorts().jobPlanTasks;
+    if (!repo.listTitlesForJobs || boardJobs.length === 0) return;
+    let cancelled = false;
+    repo
+      .listTitlesForJobs(boardJobs.map((j) => j.id))
+      .then((m) => {
+        if (!cancelled) setBoardTaskTitles(m);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [boardJobs]);
+
   useEffect(() => {
     const employees = loadState.kind === 'loaded' ? loadState.employees : [];
     if (employees.length === 0) {
@@ -945,6 +961,7 @@ export function AdminFinanceRoot() {
           { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
           { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue'), isActive: (TOP[subView] ?? subView) === 'timeOffQueue' },
           { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
+          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
           { id: 'reports', label: 'Reports', onPress: () => goTop('reports'), isActive: (TOP[subView] ?? subView) === 'reports' },
           { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster'), isActive: (TOP[subView] ?? subView) === 'employee-roster' },
         ]}
@@ -961,7 +978,6 @@ export function AdminFinanceRoot() {
               jobsOnFile: loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length,
               qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
               awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
-          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
               pendingTimeOff: loadState.timeOffRequests.filter((request) => request.status === 'pending').length,
               employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner').length,
               needsAttentionPayments: needsAttentionCount,
@@ -1140,6 +1156,7 @@ export function AdminFinanceRoot() {
           ) : null}
           <AssignmentBoardScreen
             jobs={boardJobs}
+            taskTitlesByJobId={boardTaskTitles}
             techs={loadState.employees.map(
               (profile): TechColumnTech => ({
                 id: profile.id,
@@ -1167,6 +1184,12 @@ export function AdminFinanceRoot() {
           />
           </>
         )
+      ) : subView === 'payroll' ? (
+        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
+      ) : subView === 'payrollRun' ? (
+        <PayrollRunScreen onBack={() => goTop('payroll')} />
+      ) : subView === 'payrollSettings' ? (
+        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
       ) : subView === 'reports' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />
@@ -1184,12 +1207,6 @@ export function AdminFinanceRoot() {
           showTest={showTestEmployeesRoster}
         />
       ) : subView === 'employee-invitations' ? (
-      ) : subView === 'payroll' ? (
-        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
-      ) : subView === 'payrollRun' ? (
-        <PayrollRunScreen onBack={() => goTop('payroll')} />
-      ) : subView === 'payrollSettings' ? (
-        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
         <EmployeeInvitationsScreen
           invitations={ports.invitations}
           onBack={handleBackToRoster}
@@ -1237,6 +1254,17 @@ export function AdminFinanceRoot() {
           onIsTestChange={setEditorIsTest}
           paidTravel={editorPaidTravel}
           onPaidTravelChange={setEditorPaidTravel}
+          onSetRate={async ({ userId, hourlyRateCents, effectiveFrom }) => {
+            const payroll = ports.payroll;
+            if (!payroll?.setRate) {
+              throw new Error('Rate changes are unavailable: the payroll port is not wired.');
+            }
+            await payroll.setRate(
+              userId,
+              hourlyRateCents,
+              effectiveFrom as Parameters<NonNullable<typeof payroll.setRate>>[2],
+            );
+          }}
         />
       ) : subView === 'blackout-editor' ? (
         <BlackoutEditorScreen
@@ -1254,17 +1282,6 @@ export function AdminFinanceRoot() {
             techName={
               loadState.kind === 'loaded'
                 ? new Map(loadState.employees.map((t) => [t.id, t.fullName])).get(selectedEmployeeJob.assignedTechId ?? '')
-          onSetRate={async ({ userId, hourlyRateCents, effectiveFrom }) => {
-            const payroll = ports.payroll;
-            if (!payroll?.setRate) {
-              throw new Error('Rate changes are unavailable: the payroll port is not wired.');
-            }
-            await payroll.setRate(
-              userId,
-              hourlyRateCents,
-              effectiveFrom as Parameters<NonNullable<typeof payroll.setRate>>[2],
-            );
-          }}
                 : undefined
             }
             onBack={handleBackToEmployeeDetail}
@@ -1386,6 +1403,9 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   'employee-job-detail': 'Employee Job Detail',
   'employee-invitations': 'Pending Invitations',
   calendar: 'Calendar',
+  payroll: 'Payroll',
+  payrollRun: 'Payroll Run',
+  payrollSettings: 'Payroll Settings',
 };
 
 export default AdminFinanceRoot;
@@ -1403,9 +1423,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-  payroll: 'Payroll',
-  payrollRun: 'Payroll Run',
-  payrollSettings: 'Payroll Settings',
     marginBottom: 6,
     justifyContent: 'center',
   },

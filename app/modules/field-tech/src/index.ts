@@ -158,12 +158,12 @@ function FieldTechRoot(): React.ReactElement {
       label: 'Reviews',
       isActive: subView === 'reviews',
       onPress: () => setSubView('reviews'),
+    },
     {
       id: 'payroll',
       label: 'Payroll',
       isActive: subView === 'payroll',
       onPress: () => setSubView('payroll'),
-    },
     },
   ];
 
@@ -216,8 +216,8 @@ function FieldTechRoot(): React.ReactElement {
     jobs: 'Assigned Jobs',
     timeOff: 'Time Off',
     reviews: 'Reviews',
-    payroll: 'Payroll',
     prems: 'Prems',
+    payroll: 'Payroll',
   };
 
   let content: React.ReactElement;
@@ -230,9 +230,9 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'prems':
       content = React.createElement(PremJobs, null);
+      break;
     case 'payroll':
       content = React.createElement(Payroll, null);
-      break;
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {

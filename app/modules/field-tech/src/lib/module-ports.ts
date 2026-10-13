@@ -16,6 +16,7 @@
  * once S1.1 is present.
  */
 
+import type * as React from 'react';
 import type { PayrollSelfPort } from '@jobcore/payroll-ui';
 import type {
   ChecklistRepository,
@@ -29,6 +30,7 @@ import type {
   EstimateRepository,
   TimeEntryRepository,
   JobInvestigationRepository,
+  JobPlanTaskRepository,
   PremQueueRepository,
   JobPlanningPhotoRepo,
 } from '../data/ports';
@@ -44,13 +46,16 @@ export interface ModulePorts {
   camera: CameraRepository;
   estimates: EstimateRepository;
   investigations: JobInvestigationRepository;
+  planTasks: JobPlanTaskRepository;
   planningPhotos: JobPlanningPhotoRepo;
   timeEntries: TimeEntryRepository;
   localPrefs: { getBool(key: string, defaultValue: boolean): Promise<boolean>; setBool(key: string, value: boolean): Promise<void>; };
   techs: { list(organizationId: string): Promise<{ id: string; fullName: string }[]> };
+  premQueue: PremQueueRepository;
+  /** Host-supplied shared task list (module cannot import app components). Absent renders nothing. */
+  renderTaskList?: (p: { jobId: string; mode: 'edit' | 'read'; source?: string }) => React.ReactNode;
   /** Self-service payroll seam: own time entries, timesheet submit, own reimbursements, own pay. */
   payroll?: PayrollSelfPort;
-  premQueue: PremQueueRepository;
 }
 
 let current: ModulePorts | null = null;
