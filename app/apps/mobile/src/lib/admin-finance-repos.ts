@@ -15,6 +15,8 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
+import { buildPayrollAdminMembers } from './payroll-admin-repos';
 import { ReconciliationView } from '@jobcore/payment-review';
 import type { SupabaseSelectClient as PaymentReviewClient } from '@jobcore/payment-review';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
@@ -2694,11 +2696,22 @@ export function createTimeEntryRepository(): TimeEntryRepository {
 
 let cachedPorts: ModulePorts | null = null;
 
-export function buildAdminFinancePorts(): ModulePorts {
+export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePorts {
+  // Payroll is session-bound, so it is layered on per call and never cached.
+  const withPayroll = (base: ModulePorts): ModulePorts =>
+    session
+      ? {
+          ...base,
+          payroll: {
+            ...createPayrollRepos(supabase, session),
+            ...buildPayrollAdminMembers(supabase, session),
+          },
+        }
+      : base;
   setOnlineGuard(requireOnline);
   setPaymentReviewOnlineGuard(requireOnline);
   if (cachedPorts) {
-    return cachedPorts;
+    return withPayroll(cachedPorts);
   }
   cachedPorts = {
     jobs: createJobRepository(),
@@ -2742,5 +2755,5 @@ export function buildAdminFinancePorts(): ModulePorts {
       setBool: setBoolPref,
     },
   };
-  return cachedPorts;
+  return withPayroll(cachedPorts);
 }

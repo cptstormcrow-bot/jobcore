@@ -27,6 +27,7 @@ import type {
   CallbackTaskRepository,
   JobReportingRepository,
 } from '../data/ports';
+import type { PayrollSelfPort } from '@jobcore/payroll-ui';
 
 export interface ModulePorts {
   reviews: ReviewLibraryRepository;
@@ -41,6 +42,8 @@ export interface ModulePorts {
   /** Workstream J: sales callback tasks from completed jobs — see `data/ports.ts`. */
   callbackTasks: CallbackTaskRepository;
   jobReporting: JobReportingRepository;
+  /** Self-service payroll seam. Queued self writes are intentional even though sales-marketing is otherwise online-only. */
+  payroll?: PayrollSelfPort;
 }
 
 let current: ModulePorts | null = null;

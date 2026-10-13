@@ -107,6 +107,30 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
     queries: ['ft.premQueue.listOpen'],
     patch: (p, rows) => dropFromItems(rows, (r) => r.jobId === p.jobId || r.job_id === p.jobId || r.id === p.jobId),
   },
+  {
+    op: 'payroll_time.upsert',
+    queries: ['pr.time'],
+    patch: (p, rows) => {
+      const row: Row = { id: p.id, user_id: p.userId, userId: p.userId, work_date: p.workDate, workDate: p.workDate, minutes: p.minutes, clock_in_at: p.clockInAt, clockInAt: p.clockInAt, clock_out_at: p.clockOutAt, clockOutAt: p.clockOutAt, source: p.source, notes: p.notes ?? null };
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id)) return mapRows(rows, idIs(p.id), (r) => ({ ...r, ...row }));
+      return prepend(rows, { ...row, status: 'draft' });
+    },
+  },
+  { op: 'payroll_time.delete', queries: ['pr.time'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
+  {
+    op: 'payroll_timesheet.submit',
+    queries: ['pr.time'],
+    patch: (p, rows) => {
+      const from = str(p.weekStart);
+      const to = str(p.weekEnd);
+      if (!from || !to) return rows;
+      const inWeek = (r: Row) => {
+        const d = str(r.work_date) ?? str(r.workDate);
+        return d !== undefined && d >= from && d <= to && (r.status === 'draft' || r.status === 'rejected');
+      };
+      return mapRows(rows, inWeek, (r) => ({ ...r, status: 'submitted' }));
+    },
+  },
 ];
 
 export function findPatchSpecs(op: string): OpPatchSpec[] {

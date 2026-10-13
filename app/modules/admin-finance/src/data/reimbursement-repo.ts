@@ -51,6 +51,7 @@ export interface ReimbursementRow {
   status: string;
   approved_by: string | null;
   approved_at: string | null;
+  rejection_reason?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -70,6 +71,7 @@ export interface Reimbursement {
   status: ReimbursementStatus;
   approvedBy: string | null;
   approvedAt: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,6 +96,7 @@ export function toReimbursement(row: ReimbursementRow): Reimbursement {
     status: row.status,
     approvedBy: row.approved_by,
     approvedAt: row.approved_at,
+    rejectionReason: row.rejection_reason ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -163,6 +166,9 @@ export interface ReimbursementRepo {
    * a reason returns a `CalculationResult` failure, never a silent no-op.
    */
   reject(input: RejectReimbursementInput): Promise<CalculationResult<Reimbursement>>;
+
+  /** Marks an approved reimbursement as paid (`mark_reimbursement_paid`, 0082). */
+  markPaid(reimbursementId: string): Promise<CalculationResult<Reimbursement>>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -196,7 +202,6 @@ export async function approveReimbursementViaRpc(
   requireOnline('Approving a reimbursement');
   const { data, error } = await client.rpc('approve_reimbursement', {
     p_reimbursement_id: input.reimbursementId,
-    p_approved_by: input.approvedBy,
   });
   if (error) {
     return { ok: false, reason: error.message };
@@ -223,6 +228,24 @@ export async function rejectReimbursementViaRpc(
     p_reimbursement_id: input.reimbursementId,
     p_approved_by: input.approvedBy,
     p_reason: input.reason,
+  });
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: toReimbursement(data as ReimbursementRow) };
+}
+
+/**
+ * Marks an approved reimbursement as paid via the `mark_reimbursement_paid`
+ * RPC (migration 0082), which takes only the reimbursement id.
+ */
+export async function markReimbursementPaidViaRpc(
+  client: SupabaseRpcClient,
+  reimbursementId: string,
+): Promise<CalculationResult<Reimbursement>> {
+  requireOnline('Marking a reimbursement paid');
+  const { data, error } = await client.rpc('mark_reimbursement_paid', {
+    p_reimbursement_id: reimbursementId,
   });
   if (error) {
     return { ok: false, reason: error.message };

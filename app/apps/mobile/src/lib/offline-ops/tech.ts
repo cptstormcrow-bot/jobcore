@@ -463,6 +463,18 @@ const calendarEventCreate: OpHandler<CalendarEventCreatePayload> = async (p, ctx
 };
 
 const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx) => {
+  let receiptPath = p.receiptPhotoPath ?? null;
+  if (receiptPath && /^(file|content):\/\//i.test(receiptPath)) {
+    const extMatch = /\.([A-Za-z0-9]{2,5})(?:\?.*)?$/.exec(receiptPath);
+    const ext = extMatch ? extMatch[1].toLowerCase() : 'jpg';
+    const storagePath = `${ctx.orgId}/${p.techId}/${p.id}.${ext}`;
+    const blob = await (await fetch(receiptPath)).blob();
+    const { error: upErr } = await ctx.supabase.storage
+      .from('receipts')
+      .upload(storagePath, blob, { contentType: contentTypeFor(ext), upsert: true });
+    if (upErr && !isAlreadyExists(upErr)) throw upErr;
+    receiptPath = storagePath;
+  }
   const { error } = await ctx.supabase.from('reimbursements').insert({
     id: p.id,
     organization_id: ctx.orgId,
@@ -470,7 +482,7 @@ const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx
     job_id: p.jobId ?? null,
     amount_cents: p.amountCents,
     description: p.description ?? null,
-    receipt_photo_path: p.receiptPhotoPath ?? null,
+    receipt_photo_path: receiptPath,
   });
   check(error);
   return APPLIED;

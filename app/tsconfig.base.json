@@ -26,6 +26,8 @@
       "@jobcore/ui/*": ["packages/ui/src/*"],
       "@jobcore/core": ["packages/core/src/index.ts"],
       "@jobcore/core/*": ["packages/core/src/*"],
+      "@jobcore/payroll-ui": ["packages/payroll-ui/src/index.ts"],
+      "@jobcore/payroll-ui/*": ["packages/payroll-ui/src/*"],
       "@jobcore/admin-finance": ["modules/admin-finance/src/index.ts"],
       "@jobcore/admin-finance/*": ["modules/admin-finance/src/*"],
       "@jobcore/field-tech": ["modules/field-tech/src/index.ts"],

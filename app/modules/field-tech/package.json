@@ -17,6 +17,7 @@
   "dependencies": {
     "@jobcore/core": "*",
     "@jobcore/module-sdk": "*",
+    "@jobcore/payroll-ui": "*",
     "@jobcore/ui": "*",
     "date-fns": "^4.4.0",
     "expo-clipboard": "~7.0.0"

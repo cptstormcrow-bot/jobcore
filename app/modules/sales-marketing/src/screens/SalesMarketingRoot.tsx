@@ -27,9 +27,9 @@ import { PitchPicker, type PitchAngle } from './PitchPicker';
 import { Composer } from './Composer';
 import { Reporting } from './Reporting';
 import { CallbackTasks } from './CallbackTasks';
+import { Payroll } from './Payroll';
 import { useModuleSession } from '../lib/module-session';
 
-type SubView = 'overview' | 'reviewLibrary' | 'pitchPicker' | 'composer' | 'reporting' | 'callbackTasks';
 
 const SUBVIEW_LABELS: Record<SubView, string> = {
   overview: 'Overview',
@@ -38,6 +38,7 @@ const SUBVIEW_LABELS: Record<SubView, string> = {
   composer: 'Composer',
   reporting: 'Reporting',
   callbackTasks: 'Callback tasks',
+  payroll: 'Payroll',
 };
 
 export function SalesMarketingRoot(): React.ReactElement {
@@ -93,6 +94,12 @@ export function SalesMarketingRoot(): React.ReactElement {
         label: 'Callback tasks',
         isActive: subView === 'callbackTasks',
         onPress: () => setSubView('callbackTasks'),
+      },
+      {
+        id: 'payroll',
+        label: 'Payroll',
+        isActive: subView === 'payroll',
+        onPress: () => setSubView('payroll'),
       },
     ],
     [subView],
@@ -151,6 +158,9 @@ export function SalesMarketingRoot(): React.ReactElement {
       break;
     case 'callbackTasks':
       content = React.createElement(CallbackTasks, null);
+      break;
+    case 'payroll':
+      content = React.createElement(Payroll, null);
       break;
     case 'reviewLibrary':
       content = React.createElement(ReviewLibrary, null);

@@ -33,8 +33,10 @@ folded into commission.
 
 ## Billable hours
 
-There is no clock-in/out feature in this app. Billable hours are **derived**
-from job timestamps, not entered directly:
+`payroll_time_entries` (migration 0081) now holds daily free-entry hours and
+clock punches, and is the sole payroll hours source (see `payroll.md`). The
+job-timestamp derivation below applies to commission billable hours only; it
+is derived from job timestamps, not entered directly:
 
 - `enRouteAt` — tech marked en route to the job.
 - `inProgressAt` — tech marked as started work on site.

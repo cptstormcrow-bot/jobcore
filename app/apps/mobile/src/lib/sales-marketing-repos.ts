@@ -16,6 +16,7 @@
  */
 
 import { supabase } from './supabase';
+import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { requireOnline } from './offline-mutations';
 import type {
   ReviewLibraryRepository,
@@ -697,8 +698,9 @@ export function createJobReportingRepository(): JobReportingRepository {
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
-export function buildSalesMarketingPorts(): ModulePorts {
+export function buildSalesMarketingPorts(session?: PayrollRepoSession): ModulePorts {
   return {
+    ...(session ? { payroll: createPayrollRepos(supabase, session) } : {}),
     reviews: createReviewLibraryRepository(),
     marketingAssets: createMarketingAssetRepository(),
     postDrafts: createPostDraftRepository(),

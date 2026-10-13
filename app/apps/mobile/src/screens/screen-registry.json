@@ -683,5 +683,71 @@
     "route": "/reset-password",
     "file": "apps/mobile/app/reset-password.tsx",
     "createdAt": "2026-10-06T09:21:51-07:00"
+  },
+  {
+    "number": 81,
+    "key": "blackout-range-modal",
+    "title": "blackout-range-modal",
+    "file": "modules/admin-finance/src/screens/BlackoutRangeModal.tsx",
+    "createdAt": "2026-10-12T11:03:35-07:00"
+  },
+  {
+    "number": 82,
+    "key": "blackout-time-off-list",
+    "title": "blackout-time-off-list",
+    "file": "modules/admin-finance/src/screens/BlackoutTimeOffList.tsx",
+    "createdAt": "2026-10-12T11:03:35-07:00"
+  },
+  {
+    "number": 83,
+    "key": "time-off-tech-calendar",
+    "title": "time-off-tech-calendar",
+    "file": "modules/admin-finance/src/screens/TimeOffTechCalendar.tsx",
+    "createdAt": "2026-10-12T12:47:55-07:00"
+  },
+  {
+    "number": 84,
+    "key": "ft-Payroll",
+    "title": "Payroll",
+    "route": null,
+    "file": "modules/field-tech/src/screens/Payroll.tsx",
+    "createdAt": "2026-10-13T01:40:42.408Z",
+    "subView": "Payroll"
+  },
+  {
+    "number": 85,
+    "key": "sm-Payroll",
+    "title": "Payroll",
+    "route": null,
+    "file": "modules/sales-marketing/src/screens/Payroll.tsx",
+    "createdAt": "2026-10-13T01:40:43.373Z",
+    "subView": "Payroll"
+  },
+  {
+    "number": 86,
+    "key": "af-PayrollSettings",
+    "title": "Payroll Settings",
+    "route": null,
+    "file": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+    "createdAt": "2026-10-13T01:42:45.420Z",
+    "subView": "PayrollSettings"
+  },
+  {
+    "number": 87,
+    "key": "af-PayrollRun",
+    "title": "Payroll Run",
+    "route": null,
+    "file": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+    "createdAt": "2026-10-13T01:42:46.073Z",
+    "subView": "PayrollRun"
+  },
+  {
+    "number": 88,
+    "key": "af-Payroll",
+    "title": "Payroll",
+    "route": null,
+    "file": "modules/admin-finance/src/screens/PayrollScreen.tsx",
+    "createdAt": "2026-10-13T02:00:19.135Z",
+    "subView": "Payroll"
   }
 ]

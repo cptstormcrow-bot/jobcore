@@ -1291,5 +1291,87 @@
   "roles": [],
   "mounted": "unknown",
   "notes": "found by sweep, not in recon"
+ },
+ {
+  "key": "af-Payroll",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "Payroll",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PayrollScreen.tsx",
+  "title": "Payroll",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-PayrollRun",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "PayrollRun",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+  "title": "Payroll Run",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "af-PayrollSettings",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "PayrollSettings",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+  "title": "Payroll Settings",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "ft-Payroll",
+  "kind": "sub-view",
+  "module": "field-tech",
+  "route": null,
+  "subView": "Payroll",
+  "parentKey": "field-tech",
+  "file": "modules/field-tech/src/screens/Payroll.tsx",
+  "title": "Payroll",
+  "roles": [
+   "owner",
+   "admin",
+   "tech"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
+  "key": "sm-Payroll",
+  "kind": "sub-view",
+  "module": "sales-marketing",
+  "route": null,
+  "subView": "Payroll",
+  "parentKey": "sales-marketing",
+  "file": "modules/sales-marketing/src/screens/Payroll.tsx",
+  "title": "Payroll",
+  "roles": [
+   "owner",
+   "admin",
+   "sales"
+  ],
+  "mounted": true,
+  "notes": ""
  }
 ]

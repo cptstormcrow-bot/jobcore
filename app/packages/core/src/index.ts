@@ -267,3 +267,4 @@ export { allowedEstimateMoves, needsDownstreamWarning } from './estimateStatus.j
 
 export type { EvictionRow, OpPatchSpec } from './offline/read-cache.js';
 export { READ_CACHE_FLOOR_MS, READ_CACHE_MAX_AGE_MS, READ_CACHE_MAX_BYTES, stableStringify, buildReadCacheKey, readCacheRevision, selectEvictions, registerOpPatches, getOpPatches } from './offline/read-cache.js';
+export * as wageEngine from './wage-engine/index.js';

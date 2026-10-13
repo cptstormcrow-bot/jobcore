@@ -46,6 +46,9 @@ import { TimeOffQueueScreen } from './TimeOffQueueScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
+import { PayrollScreen } from './PayrollScreen';
+import { PayrollRunScreen } from './PayrollRunScreen';
+import { PayrollSettingsScreen } from './PayrollSettingsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
@@ -79,6 +82,7 @@ type SubView =
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
   | 'blackout-editor'
+  | 'payroll' | 'payrollRun' | 'payrollSettings'
   | 'calendar';
 
 const TOP: Partial<Record<SubView, SubView>> = {
@@ -88,6 +92,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
   'blackout-editor': 'timeOffQueue',
+  payrollRun: 'payroll', payrollSettings: 'payroll',
 };
 
 type LoadState =
@@ -956,6 +961,7 @@ export function AdminFinanceRoot() {
               </Pressable>
             ))}
           </ScrollView>
+          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
             <Button
@@ -1178,6 +1184,12 @@ export function AdminFinanceRoot() {
               loadState.kind === 'loaded'
                 ? loadState.techServiceAreas
                     .filter((tsa) => tsa.techId === selectedEmployee.id)
+      ) : subView === 'payroll' ? (
+        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
+      ) : subView === 'payrollRun' ? (
+        <PayrollRunScreen onBack={() => goTop('payroll')} />
+      ) : subView === 'payrollSettings' ? (
+        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
                     .map((tsa) => loadState.serviceAreas.find((a) => a.id === tsa.serviceAreaId)?.name)
                     .filter((n): n is string => Boolean(n))
                     .sort((x, y) => x.localeCompare(y))
@@ -1371,3 +1383,6 @@ const styles = StyleSheet.create({
   calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   calendarTechSelect: { width: 180 },
 });
+  payroll: 'Payroll',
+  payrollRun: 'Payroll Run',
+  payrollSettings: 'Payroll Settings',

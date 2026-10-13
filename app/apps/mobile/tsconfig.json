@@ -32,6 +32,9 @@
       "path": "../../packages/ui"
     },
     {
+      "path": "../../packages/payroll-ui"
+    },
+    {
       "path": "../../packages/module-sdk"
     },
     {

@@ -46,6 +46,8 @@ export interface EmployeeEditorScreenProps {
   profile?: Profile;
   /** Fired after a successful save (either mode). */
   onSaved?: () => void;
+  /** Optional dated rate setter; when present, rate changes go through it instead of the profile update. */
+  onSetRate?: (input: { userId: string; hourlyRateCents: number; effectiveFrom: string }) => Promise<void>;
   /** Fired when the user cancels out of the editor. */
   onCancel?: () => void;
   isTest?: boolean;
@@ -92,6 +94,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     techSkills: techSkillRepository,
     profile,
     onSaved,
+    onSetRate,
     onCancel,
     isTest,
     onIsTestChange,
@@ -114,6 +117,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [hourlyRateInput, setHourlyRateInput] = useState(
     (((profile as unknown as { defaultHourlyRateCents?: number })?.defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS) / 100).toFixed(2)
   );
+  const [effectiveFromInput, setEffectiveFromInput] = useState(new Date().toISOString().slice(0, 10));
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
@@ -254,6 +258,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     }
     setActionState({ kind: 'working' });
     try {
+      const initialRateCents = (profile as unknown as { defaultHourlyRateCents?: number }).defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS;
+      const newRateCents = Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100);
+      const rateViaSetter = !!onSetRate && newRateCents !== initialRateCents;
       await employeeRepository.updateEmployee(profile.id, {
         fullName: fullNameInput,
         phone: phoneInput || null,
@@ -264,8 +271,11 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         toolStatus: toolStatusInput && isToolStatus(toolStatusInput) ? toolStatusInput : null,
         paidTravel: paidTravelInput,
         paidTravelPolicyMessage: ptpmInput || null,
-        defaultHourlyRateCents: Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100),
+        ...(rateViaSetter ? {} : { defaultHourlyRateCents: newRateCents }),
       });
+      if (rateViaSetter && onSetRate) {
+        await onSetRate({ userId: profile.id, hourlyRateCents: newRateCents, effectiveFrom: effectiveFromInput });
+      }
       if (privateState === 'loaded') {
         if (!session) {
           throw new Error('No active session: private details were not saved.');
@@ -473,6 +483,14 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 onChangeText={setHourlyRateInput}
                 keyboardType="numeric"
               />
+              {onSetRate ? (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Rate effective from (YYYY-MM-DD)"
+                  value={effectiveFromInput}
+                  onChangeText={setEffectiveFromInput}
+                />
+              ) : null}
               <Select
                 label="Vehicle Status"
                 value={vehicleStatusInput}

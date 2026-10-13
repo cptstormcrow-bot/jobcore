@@ -3,3 +3,4 @@ import './tech';
 import './admin-jobs';
 import './admin-people';
 import './admin-finance';
+import './payroll';

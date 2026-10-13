@@ -15,6 +15,7 @@
 
 import * as ImagePicker from 'expo-image-picker';
 import { supabase, supabaseUrl } from './supabase';
+import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
 import { writeThrough, requireOnline } from './offline-mutations';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
@@ -1330,7 +1331,7 @@ export function createPremQueueRepository(): PremQueueRepository {
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
-export function buildFieldTechPorts(): ModulePorts {
+export function buildFieldTechPorts(session?: PayrollRepoSession): ModulePorts {
   // Online signing for planning/job photo URLs; local file wins, offline yields null.
   setSignedUrlResolver(async (storagePath: string) => {
     const { data } = await supabase.storage
@@ -1339,6 +1340,7 @@ export function buildFieldTechPorts(): ModulePorts {
     return data?.signedUrl ?? null;
   });
   return {
+    ...(session ? { payroll: createPayrollRepos(supabase, session) } : {}),
     checklist: createChecklistRepository(),
     photos: createJobPhotoRepository(),
     timeOff: createTimeOffRepository(),

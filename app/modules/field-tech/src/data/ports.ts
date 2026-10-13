@@ -640,21 +640,22 @@ export interface CalendarEventRepository {
 }
 
 /* ------------------------------------------------------------------ *
- * reimbursement_requests
+ * reimbursements
  * ------------------------------------------------------------------ */
 
 /**
  * `ReimbursementRequest*` here is a tech-submitted expense request against
- * `reimbursement_requests` — distinct from `@jobcore/core`'s `payroll.ts`
- * `Reimbursement { jobId, amount }`, which is a computed payroll rollup
- * line, not a row a tech creates. The `Request` suffix throughout this
+ * `reimbursements` (migration 0005, own-or-admin RLS) — distinct from the
+ * `Reimbursement { jobId, amount }` payroll rollup line, which is a computed
+ * value, not a row a tech creates. Payroll logic lives in the `@jobcore/core`
+ * wage-engine and the shared `@jobcore/payroll-ui` package. The `Request` suffix throughout this
  * block exists specifically to avoid colliding with that unrelated type.
  */
 
 /**
  * The full `ReimbursementRequestStatus` union, restated as a runtime tuple
  * so `toReimbursementRequest` can validate an untrusted row's `status`
- * string against it. Mirrors `reimbursement_requests_status_check` in the
+ * string against it. Mirrors `reimbursements_status_check` in the
  * migration.
  */
 export type ReimbursementRequestStatus = 'pending' | 'approved' | 'rejected';
@@ -669,7 +670,7 @@ function isReimbursementRequestStatus(value: string): value is ReimbursementRequ
   return (REIMBURSEMENT_REQUEST_STATUSES as readonly string[]).includes(value);
 }
 
-/** Mirrors `reimbursement_requests`. `status` is `string` — untrusted wire data until `toReimbursementRequest` validates it. */
+/** Mirrors `reimbursements`. `status` is `string` — untrusted wire data until `toReimbursementRequest` validates it. */
 export interface ReimbursementRequestRow {
   id: string;
   organization_id: string;
@@ -702,7 +703,7 @@ export interface ReimbursementRequest {
 }
 
 /**
- * Map a `reimbursement_requests` row to the domain `ReimbursementRequest`.
+ * Map a `reimbursements` row to the domain `ReimbursementRequest`.
  * Throws on an unrecognized `status` rather than widening the union —
  * fail closed instead of letting an unknown status slip past approve/reject
  * gating logic elsewhere.
@@ -727,7 +728,7 @@ export function toReimbursementRequest(row: ReimbursementRequestRow): Reimbursem
   };
 }
 
-/** Fields needed to insert one `reimbursement_requests` row. `status` always starts `'pending'` (see migration comment), so it is not a caller-supplied field. */
+/** Fields needed to insert one `reimbursements` row. `status` always starts `'pending'` (see migration comment), so it is not a caller-supplied field. */
 export interface ReimbursementRequestDraft {
   jobId?: string | null;
   amountCents: number;

@@ -16,6 +16,7 @@
  * once S1.1 is present.
  */
 
+import type { PayrollSelfPort } from '@jobcore/payroll-ui';
 import type {
   ChecklistRepository,
   JobPhotoRepository,
@@ -47,6 +48,8 @@ export interface ModulePorts {
   timeEntries: TimeEntryRepository;
   localPrefs: { getBool(key: string, defaultValue: boolean): Promise<boolean>; setBool(key: string, value: boolean): Promise<void>; };
   techs: { list(organizationId: string): Promise<{ id: string; fullName: string }[]> };
+  /** Self-service payroll seam: own time entries, timesheet submit, own reimbursements, own pay. */
+  payroll?: PayrollSelfPort;
   premQueue: PremQueueRepository;
 }
 

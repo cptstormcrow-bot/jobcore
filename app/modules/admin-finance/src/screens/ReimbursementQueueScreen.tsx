@@ -44,7 +44,7 @@ type LoadState =
 
 /** Per-row action state, keyed by reimbursement id. Absent = idle. */
 type RowActionState =
-  | { kind: 'submitting'; action: 'approve' | 'reject' }
+  | { kind: 'submitting'; action: 'approve' | 'reject' | 'pay' }
   | { kind: 'failed'; message: string };
 
 /** Local, honest formatter for cents — this screen has no shared money formatter to reuse. */
@@ -149,6 +149,31 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
       });
   }
 
+  function handleMarkPaid(item: Reimbursement) {
+    if (!reimbursementRepository || !session) {
+      return;
+    }
+    setRowActions((prev) => ({ ...prev, [item.id]: { kind: 'submitting', action: 'pay' } }));
+    reimbursementRepository
+      .markPaid(item.id)
+      .then((result) => {
+        if (!result.ok) {
+          setRowActions((prev) => ({ ...prev, [item.id]: { kind: 'failed', message: result.reason } }));
+          return;
+        }
+        replaceItem(item.id, result.value);
+        setRowActions((prev) => {
+          const next = { ...prev };
+          delete next[item.id];
+          return next;
+        });
+      })
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Could not mark this reimbursement paid.';
+        setRowActions((prev) => ({ ...prev, [item.id]: { kind: 'failed', message } }));
+      });
+  }
+
   if (!session) {
     return (
       <View style={styles.screen}>
@@ -189,7 +214,10 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
 
   const pending = loadState.items.filter((item) => item.status === 'pending');
 
-  if (pending.length === 0) {
+  const approved = loadState.items.filter((item) => item.status === 'approved');
+  const rejected = loadState.items.filter((item) => item.status === 'rejected');
+
+  if (pending.length === 0 && approved.length === 0 && rejected.length === 0) {
     return (
       <View style={styles.screen}>
         <EmptyState title="Reimbursements" message="No reimbursements are awaiting review." />
@@ -256,6 +284,54 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
             );
           })}
         </Card>
+        {approved.length > 0 && (
+          <>
+            <Text style={styles.groupHeading}>Approved - Awaiting Payment</Text>
+            <Card style={styles.card}>
+              {approved.map((item) => {
+                const rowState = rowActions[item.id];
+                const isSubmitting = rowState?.kind === 'submitting';
+                return (
+                  <View key={item.id} style={styles.row}>
+                    <ListItem
+                      title={formatAmount(item.amount)}
+                      subtitle={item.description ?? 'No description provided'}
+                    />
+                    {rowState?.kind === 'failed' && <Text style={styles.rowError}>{rowState.message}</Text>}
+                    <View style={styles.actions}>
+                      <Button
+                        label="Mark paid"
+                        variant="primary"
+                        size="sm"
+                        disabled={isSubmitting}
+                        onPress={() => handleMarkPaid(item)}
+                        style={styles.actionButton}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </Card>
+          </>
+        )}
+        {rejected.length > 0 && (
+          <>
+            <Text style={styles.groupHeading}>Rejected</Text>
+            <Card style={styles.card}>
+              {rejected.map((item) => (
+                <View key={item.id} style={styles.row}>
+                  <ListItem
+                    title={formatAmount(item.amount)}
+                    subtitle={item.description ?? 'No description provided'}
+                  />
+                  <Text style={styles.rowError}>
+                    {item.rejectionReason ? `Rejected: ${item.rejectionReason}` : 'Rejected (no reason recorded)'}
+                  </Text>
+                </View>
+              ))}
+            </Card>
+          </>
+        )}
       </View>
     </View>
   );

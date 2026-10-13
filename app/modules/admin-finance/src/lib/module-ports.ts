@@ -49,6 +49,7 @@ import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
 import type { ComponentType } from 'react';
 import type { ReconciliationViewProps, SupabaseSelectClient } from '@jobcore/payment-review';
+import type { PayrollPort } from '@jobcore/payroll-ui';
 
 export interface ModulePorts {
   jobs: JobRepository;
@@ -151,6 +152,8 @@ export interface ModulePorts {
     getBool(key: string, defaultValue: boolean): Promise<boolean>;
     setBool(key: string, value: boolean): Promise<void>;
   };
+  /** Payroll data seam: self-service members plus admin members (approve, set rate, runs, export). */
+  payroll?: PayrollPort;
 }
 
 let current: ModulePorts | null = null;
