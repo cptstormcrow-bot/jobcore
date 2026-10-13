@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Job } from '@jobcore/core';
-import { AppChrome, JobHeaderBlock, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
+import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
@@ -15,7 +15,6 @@ export type JobHeaderProps = {
   customer?: Customer | null;
   jobDetailMenuItems: MenuItem[];
   totalLaborSeconds: number;
-  onPressSchedule?: () => void;
   children?: React.ReactNode;
   gearItems?: ComponentProps<typeof AppChrome>['gearItems'];
   showBack?: ComponentProps<typeof AppChrome>['showBack'];
@@ -32,7 +31,6 @@ export function JobHeader({
   customer = null,
   jobDetailMenuItems,
   totalLaborSeconds,
-  onPressSchedule,
   gearItems,
   showBack,
   compactMenu,
@@ -57,7 +55,15 @@ export function JobHeader({
           { label: abbreviate(job.address) },
           { label: `#${job.jobNumber ?? '—'}` },
         ]}
-        titleBar={{ title: customer?.name ?? 'Unknown Customer', subtitle: job.address ?? undefined }}
+        titleContent={
+          <JobTitleBarHeader
+            customerName={customer?.name ?? 'Unknown Customer'}
+            address={job.address}
+            phone={customer?.phone}
+            ingressCode={ingressCode}
+            onCopy={copyToClipboard}
+          />
+        }
         titleBarTone="gold"
         helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
         gearItems={gearItems}
@@ -69,15 +75,9 @@ export function JobHeader({
       />
       {totalHoursLabel ? <Text style={styles.totalHours}>Total Hours: {totalHoursLabel}</Text> : null}
       <JobHeaderBlock
-        customerName={customer?.name}
-        address={job.address}
-        phone={customer?.phone}
         jobNumber={job.jobNumber}
         createdAt={job.createdAt}
         scheduledStart={job.scheduledStart}
-        ingressCode={ingressCode}
-        onPressSchedule={onPressSchedule}
-        onCopy={copyToClipboard}
       >
         {children}
       </JobHeaderBlock>

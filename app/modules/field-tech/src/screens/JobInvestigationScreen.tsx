@@ -18,7 +18,7 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -214,19 +214,24 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
   return (
     <View style={styles.container}>
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
-      {!embedded && <ScreenTitle title="Job Investigation" subtitle={job.address ?? undefined} />}
-      {!embedded && <Text style={styles.title}>Job {job.id}</Text>}
+      {!embedded && <ScreenTitle title="Job Investigation" />}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       {!embedded && (
-        <JobHeaderBlock
-          customerName={job.customerName}
-          address={job.address}
-          phone={job.customerPhone}
-          jobNumber={job.jobNumber}
-          createdAt={job.createdAt}
-          scheduledStart={job.scheduledStart}
-          onCopy={copyToClipboard}
-        />
+        <>
+          <JobTitleBarHeader
+            framed
+            customerName={job.customerName}
+            address={job.address}
+            phone={job.customerPhone}
+            ingressCode={job.ingressInstructions}
+            onCopy={copyToClipboard}
+          />
+          <JobHeaderBlock
+            jobNumber={job.jobNumber}
+            createdAt={job.createdAt}
+            scheduledStart={job.scheduledStart}
+          />
+        </>
       )}
       <Text style={styles.status}>
         {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}

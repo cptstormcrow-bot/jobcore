@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { useRouter } from 'expo-router';
@@ -45,6 +45,8 @@ export type AppChromeProps = {
   showBack?: boolean; // default true
   titleBar?: { title: string; subtitle?: string };
   titleBarTone?: 'primary' | 'gold';
+  /** custom content rendered inside the title-bar pill instead of title/subtitle */
+  titleContent?: ReactNode;
   helpContext?: { screenKey: ScreenKey; jobStatus?: JobStatus };
   gearItems?: MenuActionItem[]; // items for a \u2699 menu at the top-right of the drawer header (opt-in)
   gearTitle?: string; // optional highlighted title row at the top of the gear menu
@@ -157,6 +159,7 @@ export function AppChrome({
   showBack = true,
   titleBar,
   titleBarTone = 'primary',
+  titleContent,
   helpContext,
   gearItems,
   gearTitle,
@@ -251,8 +254,9 @@ export function AppChrome({
         >
           <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
-        {titleBar && wrapTitle(
+        {(titleBar || titleContent) && wrapTitle(
           <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold]}>
+            {titleContent ? titleContent : titleBar ? (<>
             <Text
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
               numberOfLines={1}
@@ -267,6 +271,7 @@ export function AppChrome({
                 {titleBar.subtitle}
               </Text>
             ) : null}
+            </>) : null}
           </View>,
           true
         )}

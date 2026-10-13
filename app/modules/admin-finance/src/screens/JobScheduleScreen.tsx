@@ -43,7 +43,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, JobTitleBarHeader, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
 import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
@@ -387,16 +387,21 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
         <Card style={styles.card}>
           {!embedded && <Text style={styles.title}>Schedule</Text>}
           {!embedded && (
-            <JobHeaderBlock
-              customerName={job.customerName}
-              address={job.address}
-              phone={job.customerPhone}
-              jobNumber={job.jobNumber}
-              createdAt={job.createdAt}
-              scheduledStart={job.scheduledStart}
-              ingressCode={job.ingressInstructions}
-              onCopy={async (text) => { await Clipboard.setStringAsync(text); }}
-            />
+            <>
+              <JobTitleBarHeader
+                framed
+                customerName={job.customerName}
+                address={job.address}
+                phone={job.customerPhone}
+                ingressCode={job.ingressInstructions}
+                onCopy={async (text) => { await Clipboard.setStringAsync(text); }}
+              />
+              <JobHeaderBlock
+                jobNumber={job.jobNumber}
+                createdAt={job.createdAt}
+                scheduledStart={job.scheduledStart}
+              />
+            </>
           )}
 
           <CalendarHeader

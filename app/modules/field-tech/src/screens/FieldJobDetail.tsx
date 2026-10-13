@@ -21,7 +21,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock } from '@jobcore/ui';
+import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -148,15 +148,18 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
 
   return (
     <View style={styles.container}>
-      <JobHeaderBlock
+      <JobTitleBarHeader
+        framed
         customerName={job.customerName}
         address={job.address}
         phone={resolvedPhone}
+        ingressCode={job.ingressInstructions}
+        onCopy={copyToClipboard}
+      />
+      <JobHeaderBlock
         jobNumber={job.jobNumber ?? job.id}
         createdAt={job.createdAt}
         scheduledStart={job.scheduledStart}
-        ingressCode={job.ingressInstructions}
-        onCopy={copyToClipboard}
       />
 
       <View style={styles.section}>

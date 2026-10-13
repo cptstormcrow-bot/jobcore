@@ -36,7 +36,7 @@ import React, { useMemo } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
@@ -112,17 +112,20 @@ export function CloseOutReviewScreen({
           <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
         ) : (
           <View style={styles.headerCard}>
-            <JobHeaderBlock
+            <JobTitleBarHeader
+              framed
               customerName={job.customerName}
               address={job.address}
               phone={job.customerPhone}
-              jobNumber={job.jobNumber}
-              createdAt={job.createdAt}
-              scheduledStart={job.scheduledStart}
               ingressCode={job.ingressInstructions}
               onCopy={async (text) => {
                 await Clipboard.setStringAsync(text);
               }}
+            />
+            <JobHeaderBlock
+              jobNumber={job.jobNumber}
+              createdAt={job.createdAt}
+              scheduledStart={job.scheduledStart}
             >
               <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
             </JobHeaderBlock>

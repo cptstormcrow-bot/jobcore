@@ -22,6 +22,8 @@ export * from './Checkbox';
 export * from './JobProgressBar';
 export { JobHeaderBlock } from './JobHeaderBlock';
 export type { JobHeaderBlockProps } from './JobHeaderBlock';
+export { JobTitleBarHeader } from './JobTitleBarHeader';
+export type { JobTitleBarHeaderProps } from './JobTitleBarHeader';
 export * from './ScreenTitle';
 export * from './Breadcrumb';
 export * from './AppChrome';

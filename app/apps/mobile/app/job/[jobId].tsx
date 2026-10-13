@@ -1378,7 +1378,6 @@ export default function JobDrilldownScreen() {
         ] : undefined}
         gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
         onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
-        onPressSchedule={() => selectRegion('schedule')}
       >
         {stageResults ? (
           <JobProgressBar
