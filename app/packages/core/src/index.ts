@@ -262,8 +262,8 @@ export interface Ctx {
 // Job Details 15-stage progress bar derivation.
 export type { StageKey, StageState, StageInput, StageInputs, StageResult } from './jobStages.js';
 export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep } from './jobStages.js';
-export type { EstimateStatusValue, EstimateEditorRole } from './estimateStatus.js';
-export { allowedEstimateMoves, needsDownstreamWarning } from './estimateStatus.js';
+export type { EstimateStatusValue, EstimateEditorRole, EstimateStageFlags } from './estimateStatus.js';
+export { allowedEstimateMoves, needsDownstreamWarning, estimateStageFlags } from './estimateStatus.js';
 
 export type { EvictionRow, OpPatchSpec } from './offline/read-cache.js';
 export { READ_CACHE_FLOOR_MS, READ_CACHE_MAX_AGE_MS, READ_CACHE_MAX_BYTES, stableStringify, buildReadCacheKey, readCacheRevision, selectEvictions, registerOpPatches, getOpPatches } from './offline/read-cache.js';

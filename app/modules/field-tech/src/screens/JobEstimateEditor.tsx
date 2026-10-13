@@ -17,7 +17,8 @@ import * as Clipboard from 'expo-clipboard';
 
 import type { Job } from '@jobcore/core';
 import { allowedEstimateMoves } from '@jobcore/core';
-import { Button, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock } from '@jobcore/ui';
+import { Button, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
+import type { EstimateStatusChoice } from '@jobcore/ui';
 import type { JobEstimate, JobEstimateLineItem, EstimateLineItemKind, JobInvestigation, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -244,7 +245,7 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
   }, [jobId, lineItems, estimate, totals, onEstimateChange]);
 
   const handleStatusSelect = React.useCallback(
-    async (next: 'draft' | 'submitted' | 'approved') => {
+    async (next: EstimateStatusChoice) => {
       if (next === 'submitted') {
         await handleSubmit();
         return;
@@ -319,16 +320,21 @@ export function JobEstimateEditor({ jobId, onBack, embedded = false, investigati
     <View style={styles.container}>
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
       {!embedded && (
-        <JobHeaderBlock
-          customerName={job.customerName}
-          address={job.address}
-          phone={job.customerPhone}
-          jobNumber={job.jobNumber ?? job.id}
-          createdAt={job.createdAt}
-          scheduledStart={job.scheduledStart}
-          ingressCode={job.ingressInstructions?.trim() || null}
-          onCopy={copyToClipboard}
-        />
+        <>
+          <JobTitleBarHeader
+            framed
+            customerName={job.customerName}
+            address={job.address}
+            phone={job.customerPhone}
+            ingressCode={job.ingressInstructions?.trim() || null}
+            onCopy={copyToClipboard}
+          />
+          <JobHeaderBlock
+            jobNumber={job.jobNumber ?? job.id}
+            createdAt={job.createdAt}
+            scheduledStart={job.scheduledStart}
+          />
+        </>
       )}
       <Text style={styles.status}>Estimate status:</Text>
       <EstimateStatusControl

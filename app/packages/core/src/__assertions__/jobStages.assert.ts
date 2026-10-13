@@ -67,6 +67,56 @@ test('next step ordering: red, then yellow, then gray', () => {
   assert.equal(r, 'Next Steps: Redo Job.');
 });
 
+const rejectedPrefix = () =>
+  inputs({
+    lead: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    job: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    premAvailable: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    completePrem: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    estimate: { complete: false, rejected: true },
+    approval: { complete: false, rejected: true },
+  });
+
+test('rejected estimate and approval are red with no doneAt', () => {
+  const r = deriveStageStates(rejectedPrefix());
+  const est = r.find((s) => s.key === 'estimate')!;
+  const app = r.find((s) => s.key === 'approval')!;
+  assert.equal(est.state, 'red');
+  assert.equal(app.state, 'red');
+  assert.equal(est.doneAt, null);
+  assert.equal(app.doneAt, null);
+});
+
+test('rejected wins over complete', () => {
+  const r = deriveStageStates(
+    inputs({ estimate: { complete: true, completedAt: '2026-01-01T00:00:00Z', rejected: true } }),
+  );
+  const est = r.find((s) => s.key === 'estimate')!;
+  assert.equal(est.state, 'red');
+  assert.equal(est.doneAt, null);
+});
+
+test('rejected stage drives Redo next step', () => {
+  assert.equal(deriveNextStep(deriveStageStates(rejectedPrefix())), 'Next Steps: Redo Estimate.');
+});
+
+test('leadingIndex ignores red rejected dots', () => {
+  assert.equal(leadingIndex(deriveStageStates(rejectedPrefix())), 3);
+});
+
+test('non-rejected complete estimate stays green (regression guard)', () => {
+  const i = inputs({
+    lead: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    job: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    premAvailable: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    completePrem: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+    estimate: { complete: true },
+  });
+  assert.equal(stateOf(i, 'estimate'), 'green');
+  assert.equal(stateOf(i, 'approval'), 'gray');
+  assert.equal(leadingIndex(deriveStageStates(i)), 4);
+});
+
 test('all done', () => {
   const all = inputs();
   for (const k of STAGE_KEYS) all[k] = { complete: true };

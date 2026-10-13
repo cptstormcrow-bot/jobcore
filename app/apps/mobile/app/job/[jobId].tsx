@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { deriveStageStates, deriveNextStep, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
+import { deriveStageStates, deriveNextStep, estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageInputs, StageKey } from '@jobcore/core';
 import { AppChrome, Breadcrumb, Button, colors, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
@@ -974,13 +974,14 @@ export default function JobDrilldownScreen() {
       completedAt: complete ? marks[key] ?? fallback ?? null : null,
     });
     const closed = job.status === 'closed';
+    const flags = estimateStageFlags(estimate?.status ?? null);
     const inputs: StageInputs = {
       lead: done(true, 'lead'),
       job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
       premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId || !!investigation?.submittedAt, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
       completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
-      estimate: { ...done(estimate !== null && estimate.status !== 'draft', 'estimate', estimate?.updatedAt), inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
-      approval: done(estimate?.status === 'approved', 'approval', estimate?.updatedAt),
+      estimate: { ...done(flags.estimateComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
+      approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected },
       schedule: done(!!job.scheduledStart, 'schedule'),
       assign: done(!!(job.assignedTechId), 'assign'),
       contact: done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt),

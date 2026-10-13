@@ -22,7 +22,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
 import type { Job } from '@jobcore/core';
 import type {
@@ -484,7 +484,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     });
   }
 
-  async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
+  async function handleMove(next: 'draft' | 'submitted' | 'approved' | 'rejected'): Promise<void> {
     if (!estimate) {
       return;
     }
@@ -516,8 +516,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         } else if (current.status !== 'submitted') {
           current = await estimates.upsertForJob(current.jobId, { status: 'submitted' });
         }
-        if (next === 'approved') {
-          const result = await approveEstimate(current, 'approved', { estimates, ctx, now: nowFn });
+        if (next === 'approved' || next === 'rejected') {
+          const result = await approveEstimate(current, next, { estimates, ctx, now: nowFn });
           if (!result.ok) {
             setActionState({ kind: 'failed', message: result.reason });
             return;
@@ -592,18 +592,23 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             />
           ) : null}
           {!embedded && (
-            <JobHeaderBlock
-              customerName={job.customerName}
-              address={job.address}
-              phone={job.customerPhone}
-              jobNumber={job.jobNumber}
-              createdAt={job.createdAt}
-              scheduledStart={job.scheduledStart}
-              ingressCode={job.ingressInstructions}
-              onCopy={async (text) => {
-                await Clipboard.setStringAsync(text);
-              }}
-            />
+            <>
+              <JobTitleBarHeader
+                framed
+                customerName={job.customerName}
+                address={job.address}
+                phone={job.customerPhone}
+                ingressCode={job.ingressInstructions}
+                onCopy={async (text) => {
+                  await Clipboard.setStringAsync(text);
+                }}
+              />
+              <JobHeaderBlock
+                jobNumber={job.jobNumber}
+                createdAt={job.createdAt}
+                scheduledStart={job.scheduledStart}
+              />
+            </>
           )}
           {job.description ? <ListItem title="Description" subtitle={job.description} /> : null}
           {visibleTasks.length > 0 ? (

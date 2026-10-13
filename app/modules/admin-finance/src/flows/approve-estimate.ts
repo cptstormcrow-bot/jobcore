@@ -3,9 +3,10 @@ import type { EstimateRepository, EstimateStatus, JobEstimate } from '../data/po
 
 /**
  * P3f.5b/P3f.5c — approveEstimate: admin-only transition of a job_estimates row
- * from 'submitted' to 'approved' or 'rejected'. Admin-only is enforced by RLS
- * (only job_estimates_admin_all can write any status other than the tech's
- * whitelisted draft->submitted). Deliberately does NOT call transitionJob() —
+ * from 'submitted' to 'approved' or 'rejected'. Admin-only is enforced by the UI
+ * role map in packages/core estimateStatus.ts; the DB policy on job_estimates
+ * is only job_estimates_org_all (org-scoped, migration 0036), not admin-only.
+ * Admin can set Rejected from Submitted. Deliberately does NOT call transitionJob() —
  * the job itself stays at its current public.jobs.status; auto-advancing
  * Job.status on estimate approval is deferred to Increment 4 (out of scope
  * here). No rollback on partial failure (matches transitionJob's own thin

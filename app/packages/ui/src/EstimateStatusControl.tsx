@@ -9,14 +9,15 @@ export type EstimateStatusControlProps = {
   status: EstimateStatusChoice;
   allowed: readonly EstimateStatusChoice[];
   busy?: boolean;
-  onSelect: (next: 'draft' | 'submitted' | 'approved') => void;
+  onSelect: (next: EstimateStatusChoice) => void;
   testID?: string;
 };
 
-const CHIPS: readonly { value: 'draft' | 'submitted' | 'approved'; label: string }[] = [
+const CHIPS: readonly { value: EstimateStatusChoice; label: string }[] = [
   { value: 'draft', label: 'Draft' },
   { value: 'submitted', label: 'Submitted' },
   { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
 ];
 
 export function EstimateStatusControl({ status, allowed, busy = false, onSelect, testID }: EstimateStatusControlProps) {
@@ -34,17 +35,12 @@ export function EstimateStatusControl({ status, allowed, busy = false, onSelect,
             accessibilityState={{ selected, disabled }}
             disabled={disabled}
             onPress={() => onSelect(value)}
-            style={[styles.chip, selected && styles.chipSelected, !selected && disabled && styles.dimmed]}
+            style={[styles.chip, selected && (value === 'rejected' ? styles.chipSelectedDanger : styles.chipSelected), !selected && disabled && styles.dimmed]}
           >
             <Text style={[styles.label, selected && styles.labelSelected]}>{label}</Text>
           </Pressable>
         );
       })}
-      {status === 'rejected' ? (
-        <View testID="estimate-status-pill-rejected" style={styles.pill}>
-          <Text style={styles.pillLabel}>Rejected</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -67,14 +63,5 @@ const styles = StyleSheet.create({
   dimmed: { opacity: 0.45 },
   label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, fontSize: typography.size.label, color: colors.text },
   labelSelected: { color: colors.white },
-  pill: {
-    minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceAlt,
-  },
-  pillLabel: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, fontSize: typography.size.label, color: colors.textMuted },
+  chipSelectedDanger: { backgroundColor: colors.danger, borderColor: colors.danger },
 });

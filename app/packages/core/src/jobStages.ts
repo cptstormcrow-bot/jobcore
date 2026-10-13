@@ -35,6 +35,8 @@ export interface StageInput {
   missingRequired?: boolean;
   /** True when the stage is under way but not complete (e.g. a prem is assigned, report not yet submitted); renders yellow. */
   inProgress?: boolean;
+  /** True when the stage was explicitly rejected (e.g. an estimate rejected by an admin); renders red and is never treated as done. Wins over `complete`. */
+  rejected?: boolean;
 }
 
 export type StageInputs = Record<StageKey, StageInput>;
@@ -49,7 +51,9 @@ export function deriveStageStates(inputs: StageInputs): StageResult[] {
   return STAGE_KEYS.map((key, i) => {
     const cur = inputs[key];
     let state: StageState;
-    if (cur.complete) {
+    if (cur.rejected) {
+      state = 'red';
+    } else if (cur.complete) {
       state = 'green';
       if (cur.missingRequired) state = 'yellow';
       else if (cur.completedAt) {
@@ -67,7 +71,7 @@ export function deriveStageStates(inputs: StageInputs): StageResult[] {
       if (cur.inProgress) state = 'yellow';
       else state = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete) ? 'red' : 'gray';
     }
-    return { key, state, doneAt: cur.complete ? cur.completedAt ?? null : null };
+    return { key, state, doneAt: cur.complete && !cur.rejected ? cur.completedAt ?? null : null };
   });
 }
 

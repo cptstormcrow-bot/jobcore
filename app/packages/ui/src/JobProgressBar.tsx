@@ -42,7 +42,7 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
         const i = from + k;
         const state = stateAt(i);
         const disabled = !!disabledKeys?.includes(stage.key);
-        const tappable = !!onStagePress && (state === 'green' || state === 'yellow');
+        const tappable = !!onStagePress && (state === 'green' || state === 'yellow' || state === 'red');
         const content = (
           <>
             <View style={styles.dotLine}>
