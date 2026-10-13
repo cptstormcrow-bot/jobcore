@@ -43,13 +43,21 @@ import type {
   JobPlanTasksRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
-import type { CalculationResult, PriceSheetRate } from '../money/types';
+import type { CalculationResult, PriceSheetRate, CompensationPolicy } from '../money/types';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
 import type { ComponentType } from 'react';
 import type { ReconciliationViewProps, SupabaseSelectClient } from '@jobcore/payment-review';
 import type { PayrollPort } from '@jobcore/payroll-ui';
+
+export type CloseOutPhotoRepository = Omit<JobPhotoRepository, 'add'> & {
+  add(
+    jobId: string,
+    uri: string,
+    meta?: { ext: string; contentType: string }
+  ): ReturnType<JobPhotoRepository['add']>;
+};
 
 export interface ModulePorts {
   jobs: JobRepository;
@@ -123,7 +131,10 @@ export interface ModulePorts {
   };
   reimbursements: ReimbursementRepo;
   payoutBatches: PayoutBatchRepo;
-  closeOutPhotos: JobPhotoRepository;
+  closeOutPhotos: CloseOutPhotoRepository;
+  compensationPolicy: {
+    getForOrganization(organizationId: string): Promise<CompensationPolicy | null>;
+  };
   closeOutNotes: JobNoteRepository;
   closeOutContactLog: JobContactLogRepository;
   /** Close-out-failure tracking repo (Slice 7). */

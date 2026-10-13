@@ -41,19 +41,16 @@ import {
   createTechServiceAreaRepository,
   createEstimateRepository,
   createJobInvestigationRepository,
-  createPaymentsRepository,
   createJobPlanTasksRepository,
   createPriceSheetStandardDurationRepository,
 } from '../../src/lib/admin-finance-repos';
 import type { JobDetailsPatch, CustomerPatch, CustomerCreateInput, Customer, ServiceArea, JobEstimate, JobInvestigation, TechServiceArea } from '../../../../modules/admin-finance/src/data/ports';
 import type { JobInvestigationInput } from '../../src/lib/admin-finance-repos';
-import { SETTLED_PAYMENT_STATUSES } from '../../../../modules/admin-finance/src/data/ports';
 import { candidatesFor } from '../../../../modules/admin-finance/src/domain/segway-candidates';
 import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qualify';
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
 import { unassignJob } from '../../../../modules/admin-finance/src/flows/unassign-job';
 import { approveEstimate } from '../../../../modules/admin-finance/src/flows/approve-estimate';
-import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
 import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
 import { JobTaskList } from '../../src/components/JobTaskList';
@@ -1143,28 +1140,6 @@ export default function JobDrilldownScreen() {
     }
   };
 
-  const confirmMarkPaid = (): void => {
-    if (!job || job.status !== 'completed') {
-      const message = 'Complete the job before marking it paid.';
-      setSaveError(message);
-      setActionError(message);
-      return;
-    }
-    const amount = estimate?.totalCost ?? 0;
-    const title = 'Confirm payment received';
-    const body = `Mark this job as paid for $${amount.toFixed(2)}?`;
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm(`${title}\n\n${body}`)) {
-        void handleMarkPaid();
-      }
-      return;
-    }
-    Alert.alert(title, body, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Yes', onPress: () => void handleMarkPaid() },
-    ]);
-  };
-
   const handleCancel = (): void => {
     skipAutosaveRef.current = true;
     goBackOrLanding();
@@ -1226,42 +1201,6 @@ export default function JobDrilldownScreen() {
     ]);
   };
 
-  const handleMarkPaid = async (): Promise<void> => {
-    if (!job || session.status !== 'authenticated') return;
-    if (session.profile.role !== 'owner' && session.profile.role !== 'admin') return;
-    if (job.status !== 'completed') {
-      const message = 'Complete the job before marking it paid.';
-      setSaveError(message);
-      setActionError(message);
-      return;
-    }
-    setBusyAction('paid');
-    setActionError(null);
-    try {
-      const payments = await createPaymentsRepository().listForJob(job.id);
-      const settled = payments.some((p) => SETTLED_PAYMENT_STATUSES.includes(p.status));
-      if (!settled) {
-        const amount = estimate?.totalCost ?? 0;
-        await createPaymentsRepository().recordManualPayment(job.organizationId, job.id, amount);
-      }
-      // A payment record is now guaranteed to exist (either it was already
-      // settled, or we just recorded one above), so this can be hardcoded.
-      const updated = await transitionJob(job, 'paid', {
-        role: session.profile.role,
-        now: () => new Date().toISOString(),
-        hasPaymentRecord: () => true,
-      });
-      setJob(updated);
-      await createJobRepository().updateStatus(job.id, 'paid');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Mark paid failed.';
-      setSaveError(message);
-      setActionError(message);
-    } finally {
-      setBusyAction(null);
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.center}>
@@ -1288,6 +1227,7 @@ export default function JobDrilldownScreen() {
           optionsItems={[]}
           breadcrumbSegments={[{ label: 'Jobs' }, { label: 'New Job' }]}
           titleBar={{ title: 'New Job' }}
+          helpContext={{ screenKey: 'job-create' }}
         />
         <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
           <JobDetailsForm
@@ -1323,9 +1263,9 @@ export default function JobDrilldownScreen() {
   const jobDetailMenuItems: MenuItem[] = [
     { id: 'plan', label: 'Job', onPress: () => selectRegion('details'), isActive: region === 'details' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
-    { id: 'estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
+    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
     ...(isAdmin
-      ? [{ id: 'assign', label: 'Assign', onPress: () => selectRegion('assign'), isActive: region === 'assign' }]
+      ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
     ...(role !== 'tech'
       ? [{
@@ -1335,14 +1275,14 @@ export default function JobDrilldownScreen() {
         }]
       : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
-    { id: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); } },
-    { id: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
-    { id: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
+    { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); } },
+    { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
+    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); void confirmMarkPaid(); } }]
+      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); selectRegion('closeout'); } }] as MenuItem[]
       : []),
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }]
+      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }] as MenuItem[]
       : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {

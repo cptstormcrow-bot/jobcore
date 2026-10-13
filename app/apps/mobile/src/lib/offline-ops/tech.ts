@@ -71,6 +71,7 @@ export interface JobPhotoCreatePayload {
   storagePath: string;
   localUri: string;
   ext: string;
+  contentType?: string;
   occurredAt: string;
   lat: number | null;
   lng: number | null;
@@ -240,7 +241,7 @@ const checklistInstanceSubmit: OpHandler<ChecklistInstanceSubmitPayload> = async
 };
 
 const jobPhotoCreate: OpHandler<JobPhotoCreatePayload> = async (p, ctx) => {
-  await uploadLocal(ctx.supabase, p.storagePath, p.localUri, contentTypeFor(p.ext));
+  await uploadLocal(ctx.supabase, p.storagePath, p.localUri, p.contentType ?? contentTypeFor(p.ext));
   const { error } = await ctx.supabase.from('job_photos').insert({
     id: p.id,
     organization_id: ctx.orgId,

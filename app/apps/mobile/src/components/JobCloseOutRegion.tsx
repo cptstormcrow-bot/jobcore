@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState } from '@jobcore/ui';
+import { EmptyState, colors } from '@jobcore/ui';
 import { CloseOutReviewScreen } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import type { CloseOutPhoto } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/closeout';
 import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-out-job';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
+import { photoMetaFrom } from '../lib/photo-asset-meta';
 
 export type JobCloseOutRegionProps = {
   job: Job;
@@ -21,6 +23,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const ctx = useMemo<Ctx>(() => ({ role, now: () => new Date().toISOString() }), [role]);
   const [photos, setPhotos] = useState<CloseOutPhoto[]>([]);
   const [notes, setNotes] = useState('');
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const awaiting = awaitingCloseOut(job);
 
   useEffect(() => {
@@ -43,24 +46,38 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
 
   // Library picker (not camera): works on web too. Lives here, not in the module.
   const handleAddPhoto = useCallback(async () => {
+    setPhotoError(null);
     try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          setPhotoError('Photo library permission was denied. Enable it in Settings to add photos.');
+          return;
+        }
+      }
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
-      const uri = result.canceled ? undefined : result.assets[0]?.uri;
-      if (!uri) {
+      const asset = result.canceled ? undefined : result.assets[0];
+      if (!asset?.uri) {
         return;
       }
-      const photo = await ports.closeOutPhotos.add(job.id, uri);
+      const photo = await ports.closeOutPhotos.add(job.id, asset.uri, photoMetaFrom(asset));
       setPhotos((prev) => [...prev, photo]);
-    } catch {
-      // Errors are not surfaced, matching the original close-out handlers.
+    } catch (err) {
+      setPhotoError(`Could not add photo: ${err instanceof Error ? err.message : String(err)}`);
     }
   }, [ports.closeOutPhotos, job.id]);
 
   const handleRemovePhoto = useCallback(
     (photoId: string) => {
-      void ports.closeOutPhotos.remove(photoId).then(() => {
-        setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
-      });
+      setPhotoError(null);
+      void ports.closeOutPhotos
+        .remove(photoId)
+        .then(() => {
+          setPhotos((prev) => prev.filter((photo) => photo.id !== photoId));
+        })
+        .catch((err: unknown) => {
+          setPhotoError(`Could not remove photo: ${err instanceof Error ? err.message : String(err)}`);
+        });
     },
     [ports.closeOutPhotos],
   );
@@ -78,28 +95,31 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       if (session.status !== 'authenticated') {
         return;
       }
-      void closeOutJob(target, {
-        ctx,
-        jobs: ports.jobs,
-        calendarEvents: ports.calendarEvents,
-        priceSheetRepository: ports.priceSheets,
-        // TODO(forward contract): no per-actor CompensationPolicy repository/field
-        // exists yet on ModuleSession or ModulePorts — placeholder zero-policy
-        // used until one is wired up.
-        compensationPolicy: {
-          id: '',
-          organizationId: session.organization.id,
-          commissionBasisPercent: 0,
-          hourlyRate: 0,
-        },
-        rates: [],
-        commissionRepository: ports.commissions,
-        closedByUserId: session.profile.id,
-      }).then((result) => {
-        if (result.ok) {
-          onClosed(result.job);
+      setPhotoError(null);
+      void (async () => {
+        try {
+          const policy = await ports.compensationPolicy.getForOrganization(session.organization.id);
+          if (!policy) {
+            setPhotoError('No compensation policy is configured for this organization. Ask an admin to set one up before closing out.');
+            return;
+          }
+          const result = await closeOutJob(target, {
+            ctx,
+            jobs: ports.jobs,
+            calendarEvents: ports.calendarEvents,
+            priceSheetRepository: ports.priceSheets,
+            compensationPolicy: policy,
+            rates: [],
+            commissionRepository: ports.commissions,
+            closedByUserId: session.profile.id,
+          });
+          if (result.ok) {
+            onClosed(result.job);
+          }
+        } catch (err) {
+          setPhotoError(`Could not close out: ${err instanceof Error ? err.message : String(err)}`);
         }
-      });
+      })();
     },
     [session, ctx, ports, onClosed],
   );
@@ -111,6 +131,8 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   }
 
   return (
+    <>
+    {photoError ? <Text style={{ color: colors.danger, padding: 8 }}>{photoError}</Text> : null}
     <CloseOutReviewScreen
       embedded
       job={job}
@@ -126,6 +148,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       contractorPayouts={undefined}
       customerContacts={undefined}
     />
+    </>
   );
 }
 

@@ -49,6 +49,7 @@ export async function writeThrough<T>(
   // Web has no SQLite queue: send directly, surface any error.
   if (Platform.OS === 'web') {
     await send({ op, payload: JSON.stringify(payload) });
+    await patchReadCache(op, payload);
     return { status: 'applied', data: optimistic };
   }
 
@@ -72,6 +73,7 @@ export async function writeThrough<T>(
   try {
     await send({ op, payload: JSON.stringify(payload) });
     await markDone(id);
+    await patchReadCache(op, payload);
     return { status: 'applied', data: optimistic };
   } catch (err) {
     const cls = err instanceof UnknownOpError ? 'permanent' : classifyReplayError(err);

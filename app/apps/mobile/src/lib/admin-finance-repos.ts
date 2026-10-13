@@ -96,7 +96,7 @@ import type {
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch, toCloseOutFailure } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
-import type { PriceSheet } from '../../../../modules/admin-finance/src/money/types';
+import type { PriceSheet, CompensationPolicy } from '../../../../modules/admin-finance/src/money/types';
 import type { PayPeriod } from '../../../../modules/admin-finance/src/money/rollup';
 import type { Lead, LeadRow } from '../../../../modules/admin-finance/src/domain/lead';
 import type { LeadPatch } from '../../../../modules/admin-finance/src/data/ports';
@@ -1276,12 +1276,14 @@ export function createCloseOutPhotosRepository(): JobPhotoRepository {
       );
     },
 
-    async add(jobId: string, uri: string): Promise<CloseOutPhoto> {
+    async add(jobId: string, uri: string, meta?: { ext: string; contentType: string }): Promise<CloseOutPhoto> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
       const photoId = newClientId();
-      const storagePath = storagePathFor(organizationId, jobId, photoId, 'jpg');
-      const localUri = await copyToLocal(uri, organizationId, jobId, photoId, 'jpg');
+      const ext = meta?.ext ?? 'jpg';
+      const contentType = meta?.contentType ?? 'image/jpeg';
+      const storagePath = storagePathFor(organizationId, jobId, photoId, ext);
+      const localUri = await copyToLocal(uri, organizationId, jobId, photoId, ext);
       const payload = {
         id: photoId,
         jobId,
@@ -1289,7 +1291,8 @@ export function createCloseOutPhotosRepository(): JobPhotoRepository {
         kind: 'after',
         storagePath,
         localUri,
-        ext: 'jpg',
+        ext,
+        contentType,
         occurredAt,
         lat: null,
         lng: null,
@@ -1301,6 +1304,39 @@ export function createCloseOutPhotosRepository(): JobPhotoRepository {
     async remove(photoId: string): Promise<void> {
       const occurredAt = new Date().toISOString();
       await writeThrough('job_photo.remove', { id: photoId }, occurredAt, { id: photoId } as never);
+    },
+  };
+}
+
+export function createCompensationPolicyRepository(): {
+  getForOrganization(organizationId: string): Promise<CompensationPolicy | null>;
+} {
+  return {
+    async getForOrganization(organizationId: string): Promise<CompensationPolicy | null> {
+      const { data, error } = await supabase
+        .from('compensation_policies')
+        .select('id, organization_id, commission_basis_percent, hourly_rate_cents')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) {
+        throw new Error(`getForOrganization failed: ${error.message}`);
+      }
+      const row = (data as Array<{
+        id: string;
+        organization_id: string;
+        commission_basis_percent: number | null;
+        hourly_rate_cents: number | null;
+      }> | null)?.[0];
+      if (!row) {
+        return null;
+      }
+      return {
+        id: row.id,
+        organizationId: row.organization_id,
+        commissionBasisPercent: Number(row.commission_basis_percent ?? 0),
+        hourlyRate: Number(row.hourly_rate_cents ?? 0) as CompensationPolicy['hourlyRate'],
+      };
     },
   };
 }
@@ -2740,6 +2776,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     payoutBatches: createPayoutBatchesRepository(),
     closeOutFailures: createCloseOutFailuresRepository(),
     closeOutPhotos: createCloseOutPhotosRepository(),
+    compensationPolicy: createCompensationPolicyRepository(),
     closeOutNotes: createCloseOutNotesRepository(),
     closeOutContactLog: createCloseOutContactLogRepository(),
     payments: createPaymentsRepository(),
