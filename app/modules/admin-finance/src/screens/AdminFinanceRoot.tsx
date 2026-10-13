@@ -95,6 +95,23 @@ const TOP: Partial<Record<SubView, SubView>> = {
   payrollRun: 'payroll', payrollSettings: 'payroll',
 };
 
+type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
+
+const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
+  overview: 'af-overview', jobs: 'af-jobs', planning: 'af-jobs', jobEstimate: 'af-jobs',
+  leadInbox: 'af-leads', leadCreate: 'af-leads', leadEdit: 'af-leads',
+  qualify: 'qualify-lead',
+  assignmentBoard: 'af-assignments',
+  priceSheetList: 'af-price-sheets', priceSheetEditor: 'af-price-sheets', priceSheetCreate: 'af-price-sheets',
+  timeOffQueue: 'af-time-off', 'blackout-editor': 'af-time-off',
+  reports: 'af-reports',
+  payments: 'af-payments', paymentReview: 'af-review',
+  'employee-roster': 'af-employees', 'employee-detail': 'af-employees', 'employee-editor': 'af-employees',
+  'employee-job-detail': 'af-employees', 'employee-invitations': 'af-employees',
+  calendar: 'af-calendar',
+  payroll: 'af-payments', payrollRun: 'af-payments', payrollSettings: 'af-payments',
+};
+
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
@@ -915,16 +932,16 @@ export function AdminFinanceRoot() {
           })),
         ]}
         optionsItems={optionsItems}
-        helpContext={{ screenKey: 'admin-finance' }}
+        helpContext={{ screenKey: HELP_SCREEN_KEY[subView] ?? 'admin-finance' }}
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
         menuItems={[
           { id: 'overview', label: 'Overview', onPress: () => goTop('overview'), isActive: (TOP[subView] ?? subView) === 'overview' },
-          { id: 'leadInbox', label: 'Leads', onPress: () => goTop('leadInbox'), isActive: (TOP[subView] ?? subView) === 'leadInbox' },
+          { id: 'leadInbox', helpId: 'create', label: 'Leads', onPress: () => goTop('leadInbox'), isActive: (TOP[subView] ?? subView) === 'leadInbox' },
           { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs'), isActive: (TOP[subView] ?? subView) === 'jobs' },
           { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard'), isActive: (TOP[subView] ?? subView) === 'assignmentBoard' },
           { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
-          { id: 'payments', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
+          { id: 'payments', helpId: 'payroll_rollup', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
           { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
           { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue'), isActive: (TOP[subView] ?? subView) === 'timeOffQueue' },
           { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
