@@ -51,35 +51,6 @@ export const adminFinanceModule: JobcoreModule = {
   jobActions: [
     { id: 'view-price-sheet', label: 'View Price Sheet' },
     { id: 'add-pay-period-note', label: 'Add Pay Period Note' },
-    {
-      id: 'close-out-and-mark-paid',
-      label: 'Close Out & Mark Paid',
-      onInvoke: async (job: Job) => {
-        // Distinct id from payment-review's own 'mark-paid' (jobActions ids
-        // are not checked for uniqueness across modules — Workstream D
-        // deregisters that one; until then both are live).
-        //
-        // `closeOutJob` (flows/close-out-job.ts) needs `calendarEvents`
-        // (CalendarEventRepository) plus a resolved `compensationPolicy` and
-        // active price-sheet `rates` on its `CloseOutJobDeps`. None of the
-        // three have a resolution path yet: `ModulePorts`
-        // (lib/module-ports.ts) has no `calendarEvents` field (field-tech's
-        // `ModulePorts` does — this module's never mirrored it, and
-        // `assign-job.ts`/`qualify-lead.ts` share the same gap), and no
-        // repository anywhere resolves a tech's `CompensationPolicy` or a
-        // price sheet's rate rows. Failing fast here with a descriptive
-        // error is the honest option — fabricating a fake calendar-event
-        // repository or a placeholder policy/rates would silently corrupt
-        // the commission write `closeOutJob` performs unconditionally.
-        throw new Error(
-          `close-out-and-mark-paid: cannot close out job ${job.id} yet — ` +
-            "ModulePorts has no calendarEvents (CalendarEventRepository) field, and " +
-            'no repository resolves a CompensationPolicy or active price-sheet rate rows. ' +
-            'These are prerequisites for flows/close-out-job.ts\'s closeOutJob(), not ' +
-            'introduced by this jobAction registration.',
-        );
-      },
-    },
     // Folded in from the retired payment-review module (Workstream D).
     // Renamed from payment-review's own `mark-paid` id to avoid a future
     // collision now that both actions live in the same module's jobActions
