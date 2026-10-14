@@ -1,13 +1,13 @@
 // JobCore screen #0008 - calendar - Calendar
 // P2e.2a/2b/2c - Calendar day + week view, status colours, role gate.
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { colors, spacing, Toggle, CalendarHeader, type CalendarMode } from '@jobcore/ui';
+import { View, StyleSheet, Text, Pressable } from 'react-native';
+import { colors, spacing, Toggle, CalendarHeader, Button, TechSelect, DayView, type CalendarMode } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, endOfWeek, format, startOfWeek } from 'date-fns';
-import { useRouter } from 'expo-router';
-import { WeekView, MonthView, type TimeOffEvent } from '@jobcore/ui';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { WeekView, MonthView, type TimeOffEvent, SandButton, SAND_BG, SAND_TEXT } from '@jobcore/ui';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
@@ -78,14 +78,35 @@ interface CalendarEventRow {
   title: string | null;
   description: string | null;
   event_time: string;
+  created_by: string | null;
   jobs: JobRow | null;
 }
 
-const CALENDAR_EVENT_COLUMNS = `id, organization_id, job_id, kind, title, description, event_time, jobs (${JOB_ROW_COLUMNS})`;
+const CALENDAR_EVENT_COLUMNS = `id, organization_id, job_id, kind, title, description, event_time, created_by, jobs (${JOB_ROW_COLUMNS})`;
 
 export default function CalendarScreen() {
-  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
-  const [mode, setMode] = useState<CalendarMode>('week');
+  const params = useLocalSearchParams<{ date?: string; jobId?: string; returnTo?: string }>();
+  const pick = (v: string | string[] | undefined): string | undefined => (Array.isArray(v) ? v[0] : v);
+  const dateParam = pick(params.date);
+  const jobIdParam = pick(params.jobId);
+  const returnToParam = pick(params.returnTo);
+  const parsedParamDate = (() => {
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return null;
+    const [y = 0, m = 1, d = 1] = dateParam.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d ? dt : null;
+  })();
+  const [selectedDay, setSelectedDay] = useState<Date>(parsedParamDate ?? new Date());
+  const [mode, setMode] = useState<CalendarMode>(parsedParamDate ? 'day' : 'week');
+  const [techs, setTechs] = useState<Array<{ id: string; name: string }>>([]);
+  const [techFilterId, setTechFilterId] = useState<string | null>(null);
+  const paramDateKey = parsedParamDate ? dateParam : null;
+  useEffect(() => {
+    if (!paramDateKey) return;
+    const [y = 0, m = 1, d = 1] = paramDateKey.split('-').map(Number);
+    setSelectedDay(new Date(y, m - 1, d));
+    setMode('day');
+  }, [paramDateKey]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [timeOffEvents, setTimeOffEvents] = useState<TimeOffEvent[]>([]);
   // Workstream K: "Show Test Jobs" toggle, default OFF — hides jobs.is_beta
@@ -96,6 +117,8 @@ export default function CalendarScreen() {
   // regression. Sit alongside showBeta, not a replacement for it.
   const [showJobsLayer, setShowJobsLayer] = useState(true);
   const [showTimeOffLayer, setShowTimeOffLayer] = useState(true);
+  const [showBlackoutPanel, setShowBlackoutPanel] = useState(false);
+  const [hiddenBlackoutTechIds, setHiddenBlackoutTechIds] = useState<string[]>([]);
   const router = useRouter();
   const rev = useReadCacheRevision();
 
@@ -160,6 +183,8 @@ export default function CalendarScreen() {
               title: row.title,
               description: row.description,
               eventTime: row.event_time,
+              // time_off rows log the blackout tech in created_by (0035); shop-wide leaves it undefined.
+              techId: row.created_by ?? undefined,
             });
           }
         }
@@ -171,24 +196,67 @@ export default function CalendarScreen() {
     };
   }, [orgId, rev]);
 
+  useEffect(() => {
+    if (!orgId) {
+      setTechs([]);
+      return;
+    }
+    let cancelled = false;
+    void supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('organization_id', orgId)
+      .order('full_name')
+      .then(({ data }) => {
+        if (cancelled || !data) return;
+        setTechs((data as Array<{ id: string; full_name: string | null }>).map((p) => ({ id: p.id, name: p.full_name ?? 'Tech' })));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
+
   const visibleJobs = showJobsLayer ? jobs.filter((job) => isBetaVisible(job, showBeta)) : [];
-  const visibleTimeOff = showTimeOffLayer ? timeOffEvents : [];
+  const visibleTimeOff = showTimeOffLayer
+    ? timeOffEvents.filter(
+        (e) => (!e.techId || !hiddenBlackoutTechIds.includes(e.techId)) && (!techFilterId || !e.techId || e.techId === techFilterId),
+      )
+    : [];
+  const toggleBlackoutTech = (id: string): void =>
+    setHiddenBlackoutTechIds((h) => (h.includes(id) ? h.filter((x) => x !== id) : [...h, id]));
+  // No in-app deep link to the blackout editor exists; open the admin-finance module (Time Off lives there).
+  const onAddBlackout = (): void => {
+    router.push('/m/admin-finance' as never);
+  };
 
   const goPrev = () =>
-    setSelectedDay((d) => (mode === 'week' ? addDays(d, -7) : addMonths(d, -1)));
+    setSelectedDay((d) => (mode === 'day' ? addDays(d, -1) : mode === 'week' ? addDays(d, -7) : addMonths(d, -1)));
   const goNext = () =>
-    setSelectedDay((d) => (mode === 'week' ? addDays(d, 7) : addMonths(d, 1)));
+    setSelectedDay((d) => (mode === 'day' ? addDays(d, 1) : mode === 'week' ? addDays(d, 7) : addMonths(d, 1)));
+  const showBack = Boolean(jobIdParam || returnToParam);
+  const onBack = (): void => {
+    if (returnToParam) router.push(returnToParam as never);
+    else if (jobIdParam) router.push(`/job/${jobIdParam}`);
+    else router.back();
+  };
   const goToday = () => setSelectedDay(new Date());
 
   const weekStart = startOfWeek(selectedDay);
   const weekEnd = endOfWeek(selectedDay);
   const label =
-    mode === 'week'
+    mode === 'day'
+      ? format(selectedDay, 'EEE, MMM d, yyyy')
+      : mode === 'week'
       ? `${format(weekStart, 'MMM d')} – ${format(weekEnd, 'MMM d, yyyy')}`
       : format(selectedDay, 'MMMM yyyy');
 
   return (
     <View style={styles.screen}>
+      {showBack ? (
+        <View style={styles.modeToggle}>
+          <Button label="Back" onPress={onBack} />
+        </View>
+      ) : null}
       <CalendarHeader mode={mode} onModeChange={setMode} label={label} onPrev={goPrev} onNext={goNext} onToday={goToday} />
       <View style={styles.modeToggle}>
         <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
@@ -198,12 +266,57 @@ export default function CalendarScreen() {
         <Toggle label="Jobs" value={showJobsLayer} onChange={setShowJobsLayer} />
         <Toggle label="Time Off" value={showTimeOffLayer} onChange={setShowTimeOffLayer} />
       </View>
-      {mode === 'week' ? (
+      <View style={styles.modeToggle}>
+        <TechSelect
+          label="Technicians"
+          value={techFilterId}
+          onChange={(v) => setTechFilterId(v === '' ? null : v)}
+          placeholder="All Techs"
+          options={[{ label: 'All Techs', value: '' }, ...techs.map((t) => ({ label: t.name, value: t.id }))]}
+        />
+      </View>
+      <View style={styles.modeToggle}>
+        <SandButton label="Blackouts" onPress={() => setShowBlackoutPanel((v) => !v)} />
+      </View>
+      {showBlackoutPanel ? (
+        <View style={{ backgroundColor: SAND_BG, padding: 12, borderRadius: 6, marginHorizontal: 8, marginBottom: 8 }}>
+          {techs.map((t) => {
+            const on = !hiddenBlackoutTechIds.includes(t.id);
+            return (
+              <Pressable
+                key={t.id}
+                onPress={() => toggleBlackoutTech(t.id)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: on }}
+                style={{ flexDirection: 'row', paddingVertical: 4 }}
+              >
+                <Text style={{ color: SAND_TEXT, fontWeight: '700' }}>{on ? '[x] ' : '[ ] '}{t.name}</Text>
+              </Pressable>
+            );
+          })}
+          <SandButton label="Add Blackout" onPress={onAddBlackout} />
+        </View>
+      ) : null}
+      {mode === 'day' ? (
+        <DayView
+          date={selectedDay}
+          jobs={visibleJobs}
+          timeOff={visibleTimeOff}
+          techs={techs}
+          techFilterId={techFilterId}
+          highlightJobId={jobIdParam ?? null}
+          onJobPress={(job) => router.push(`/job/${job.id}`)}
+        />
+      ) : mode === 'week' ? (
         <WeekView
           jobs={visibleJobs}
           anchorDay={selectedDay}
           timeOffEvents={visibleTimeOff}
           onSelectJob={(job) => router.push(`/job/${job.id}`)}
+          onDayPress={(d) => {
+            setSelectedDay(d);
+            setMode('day');
+          }}
         />
       ) : (
         <MonthView

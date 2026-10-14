@@ -28,7 +28,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, SandButton, SAND_BG, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
@@ -182,6 +182,8 @@ export function AdminFinanceRoot() {
   const [editorPaidTravel, setEditorPaidTravel] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
   const [showBlackouts, setShowBlackouts] = useState(true);
+  const [hiddenBlackoutTechIds, setHiddenBlackoutTechIds] = useState<string[]>([]);
+  const [showBlackoutPanel, setShowBlackoutPanel] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [qualifying, setQualifying] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -1321,7 +1323,7 @@ export function AdminFinanceRoot() {
                   : job,
               );
             const calendarTimeOffEvents = toCalendarTimeOffEvents(
-              loadState.timeOffRequests.filter((r) => showBlackouts || r.createdByAdminId === null),
+              loadState.timeOffRequests.filter((r) => (showBlackouts || r.createdByAdminId === null) && !hiddenBlackoutTechIds.includes(r.techId ?? '')),
               techNameById,
             ).filter(
               (e) => !selectedCalendarTechId || e.techId === selectedCalendarTechId,
@@ -1353,12 +1355,41 @@ export function AdminFinanceRoot() {
                       options={[{ label: 'All Techs', value: '' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
                       style={styles.calendarTechSelect}
                     />
-                    <Button
+                    <SandButton
+                      label={showBlackoutPanel ? 'Hide Blackouts' : 'Blackouts'}
+                      onPress={() => setShowBlackoutPanel((v) => !v)}
+                      testID="calendar-blackouts-toggle"
+                    />
+                    <SandButton
                       label="Add Blackout"
-                      size="sm"
                       onPress={() => handleAddBlackout(selectedCalendarTechId ?? undefined)}
+                      testID="calendar-add-blackout"
                     />
                   </View>
+                  {showBlackoutPanel ? (
+                    <View style={styles.blackoutPanel}>
+                      {techs.map((t) => {
+                        const on = !hiddenBlackoutTechIds.includes(t.id);
+                        return (
+                          <Pressable
+                            key={t.id}
+                            style={styles.blackoutRow}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: on }}
+                            testID={`calendar-blackout-tech-${t.id}`}
+                            onPress={() =>
+                              setHiddenBlackoutTechIds((prev) => (on ? [...prev, t.id] : prev.filter((x) => x !== t.id)))
+                            }
+                          >
+                            <View style={styles.blackoutBox}>
+                              <Text>{on ? '✓' : ''}</Text>
+                            </View>
+                            <Text style={styles.blackoutName}>{t.fullName}</Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ) : null}
                 </View>
                 {calendarMode === 'week' ? (
                   <WeekView
@@ -1438,4 +1469,8 @@ const styles = StyleSheet.create({
   overviewCardSubtitle: { fontSize: 12, lineHeight: 14, color: colors.textMuted },
   calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
   calendarTechSelect: { width: 180 },
+  blackoutPanel: { backgroundColor: SAND_BG, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.xs },
+  blackoutRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.xs },
+  blackoutBox: { width: 22, height: 22, borderWidth: 2, borderColor: '#000', alignItems: 'center', justifyContent: 'center', marginRight: spacing.sm },
+  blackoutName: { color: '#000', fontWeight: '600' },
 });

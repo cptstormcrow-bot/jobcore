@@ -6,7 +6,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_overview',
     kind: 'info',
     title: 'Overview',
-    body: 'Your starting point for Admin & Finance. Each card (Leads, Jobs, Assignments, Price Sheets, Payments & Payouts, Review, Time off, Calendar, Reports, Employees) shows a quick count; tap one to open it.',
+    body: 'Your starting point for Admin & Finance. Each card (Leads, Jobs, Assignments, Price Sheets, Payments & Payouts, Review, Payroll, Calendar, Reports, Employees) shows a quick count; tap one to open it.',
     context: { screens: ['af-overview'] },
   },
   {
@@ -55,7 +55,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_time_off',
     kind: 'action',
     title: 'Time Off',
-    body: 'Time-off requests from your techs and the upcoming blackouts. Tap "Add Blackout" to block out dates for a tech.',
+    body: 'Time-off requests from your techs and the upcoming blackouts. Reach it from Calendar: tap "Blackouts" to show every blackout and tick or untick each tech (all on by default), or tap "Add Blackout" to block out dates for a tech.',
     context: { screens: ['af-time-off'] },
   },
   {
@@ -130,7 +130,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'calendar',
     kind: 'info',
     title: 'Calendar',
-    body: 'See scheduled work by day or week. Use the toggles to show or hide "Jobs", "Time Off", and "Show Test Jobs".',
+    body: 'See scheduled work by day or week. Use the toggles to show or hide "Jobs", "Time Off", and "Show Test Jobs". Tap "Blackouts" to see every scheduled blackout and tick or untick each tech (all on by default), or "Add Blackout" to block out dates for a tech.',
     whereScreen: 'Calendar',
     whereHint: 'Use the previous, next and today controls at the top to move around.',
     context: { screens: ['calendar'] },

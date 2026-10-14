@@ -33,7 +33,7 @@ import { View, TextInput, ScrollView, StyleSheet, Pressable, Modal, KeyboardAvoi
 
 import type { TimeOffRequest } from '../data/ports';
 import { isActiveTimeOffStatus } from '../data/ports';
-import { ScreenTitle, Button, colors, CalendarHeader, WeekView, MonthView, TechSelect, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
+import { ScreenTitle, SandButton, SAND_BG, colors, CalendarHeader, WeekView, MonthView, TechSelect, type CalendarMode, type TimeOffEvent, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { DateRangeCalendar } from './DateRangeCalendar';
@@ -371,12 +371,10 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
                 <Text style={styles.requestStatus}>{item.status}</Text>
                 {item.reason !== null ? <Text style={styles.requestReason}>{item.reason}</Text> : null}
                 {cancellable ? (
-                  <Button
+                  <SandButton
                     label={cancelling ? 'Cancelling…' : 'Cancel'}
-                    variant="outline"
                     disabled={cancelling}
                     onPress={() => handleCancel(item.id)}
-                    style={styles.cancelButton}
                   />
                 ) : null}
               </View>
@@ -423,33 +421,27 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
               {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
               {selectedRequest !== null && cancelError !== null ? <Text style={styles.errorText}>{cancelError}</Text> : null}
               <View style={styles.modalButtons}>
-                <Button
+                <SandButton
                   label={isAdminAdded && selectedRequest !== null ? 'Close' : 'Cancel'}
-                  variant="outline"
                   onPress={closeModal}
-                  style={styles.cancelButton}
                 />
                 {selectedRequest === null ? (
-                  <Button
+                  <SandButton
                     label={submitting ? 'Submitting…' : 'Submit'}
                     disabled={!canSubmit}
                     onPress={handleSubmit}
-                    style={styles.submitButton}
                   />
                 ) : !isAdminAdded ? (
                   <>
-                    <Button
+                    <SandButton
                       label={cancellingId === selectedId ? 'Deleting…' : 'Delete'}
-                      variant="outline"
                       disabled={cancellingId !== null || submitting}
                       onPress={handleDelete}
-                      style={styles.cancelButton}
                     />
-                    <Button
+                    <SandButton
                       label={submitting ? 'Saving…' : 'Save'}
                       disabled={!canSubmit}
                       onPress={handleSave}
-                      style={styles.submitButton}
                     />
                   </>
                 ) : null}
@@ -466,6 +458,7 @@ export function TimeOff({ initialSelectedId }: TimeOffProps): React.ReactElement
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: SAND_BG,
   },
   content: {
     padding: 16,
@@ -500,9 +493,6 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  submitButton: {
-    marginTop: 12,
-  },
   requestRow: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -521,10 +511,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
-  cancelButton: {
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
   upcomingRow: {
     paddingVertical: 4,
   },
@@ -541,7 +527,7 @@ const styles = StyleSheet.create({
   },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
   sheetWrap: { width: '100%', maxHeight: '90%' },
-  sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: 8, padding: 16 },
+  sheet: { width: '100%', flexShrink: 1, backgroundColor: SAND_BG, borderRadius: 8, padding: 16 },
   modalTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
   modalRange: { fontSize: 15, marginBottom: 8 },
   modalButtons: { flexDirection: 'row', gap: 8, marginTop: 12 },
