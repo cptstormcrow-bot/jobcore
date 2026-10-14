@@ -63,12 +63,7 @@ export function HoursTallyPanel({ port, userId, refreshKey }: HoursTallyPanelPro
 
   const rows = useMemo(() => {
     if (!entries || !settings) return [];
-    const byDate = new Map<wageEngine.IsoDate, number>();
-    for (const e of entries) {
-      if (e.status === 'rejected') continue;
-      byDate.set(e.workDate, (byDate.get(e.workDate) ?? 0) + e.minutes);
-    }
-    const days: wageEngine.WorkedDay[] = [...byDate].map(([workDate, minutes]) => ({ workDate, minutes }));
+    const days: wageEngine.WorkedDay[] = wageEngine.workedDaysFromEntries(entries);
     try {
       const { overtime, payWeek } = settings;
       const childGran: wageEngine.RollupGranularity | null =

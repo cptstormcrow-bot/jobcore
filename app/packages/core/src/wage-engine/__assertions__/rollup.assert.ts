@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { allocateWorkweek, DEFAULT_OVERTIME_CONFIG } from '../ca-overtime.js';
 import { dayOfWeek } from '../periods.js';
-import { allocateRange, rollup } from '../rollup.js';
+import { allocateRange, currentPeriodMinutes, rollup, rollupKey, workedDaysFromEntries } from '../rollup.js';
 import type { RollupGranularity, WorkedDay } from '../types.js';
 
 const WEEK = { weekStartDow: 1, anchorDate: '2026-10-12' };
@@ -151,4 +151,57 @@ test('7-day week matches allocateWorkweek totals', () => {
 
 test('negative minutes throw RangeError', () => {
   assert.throws(() => rollup([{ workDate: '2026-10-12', minutes: -1 }], 'day', OT, WEEK), RangeError);
+});
+
+const ent = (workDate: string, minutes: number, status = 'approved') => ({ workDate, minutes, status });
+const MON = { weekStartDow: 1, anchorDate: '2026-10-12' };
+const SUN = { weekStartDow: 0, anchorDate: '2026-10-11' };
+
+test('workedDaysFromEntries drops rejected and sums per workDate', () => {
+  const days = workedDaysFromEntries([
+    ent('2026-10-12', 60),
+    ent('2026-10-12', 30),
+    ent('2026-10-13', 999, 'rejected'),
+  ] as never);
+  assert.deepEqual(days, [{ workDate: '2026-10-12', minutes: 90 }]);
+});
+
+test('currentPeriodMinutes: Monday vs Sunday week start differ across Sun/Mon', () => {
+  const entries = [ent('2026-10-11', 60), ent('2026-10-12', 120)] as never;
+  assert.equal(currentPeriodMinutes(entries, '2026-10-12', MON).weekMin, 120);
+  assert.equal(currentPeriodMinutes(entries, '2026-10-12', SUN).weekMin, 180);
+});
+
+test('currentPeriodMinutes: multi-day sums per bucket', () => {
+  const entries = [ent('2026-10-12', 60), ent('2026-10-13', 120), ent('2026-10-14', 30)] as never;
+  const r = currentPeriodMinutes(entries, '2026-10-14', MON);
+  assert.equal(r.weekMin, 210);
+  assert.equal(r.monthMin, 210);
+  assert.equal(r.yearMin, 210);
+});
+
+test('currentPeriodMinutes: month straddles a week (weekMin < monthMin)', () => {
+  const entries = [ent('2026-10-01', 60), ent('2026-10-12', 60)] as never;
+  const r = currentPeriodMinutes(entries, '2026-10-12', MON);
+  assert.ok(r.weekMin < r.monthMin);
+  assert.equal(r.weekMin, 60);
+  assert.equal(r.monthMin, 120);
+});
+
+test('currentPeriodMinutes: no entries or missing bucket -> 0', () => {
+  assert.deepEqual(currentPeriodMinutes([], '2026-10-12', MON), { weekMin: 0, monthMin: 0, yearMin: 0 });
+  const r = currentPeriodMinutes([ent('2025-01-06', 60)] as never, '2026-10-12', MON);
+  assert.deepEqual(r, { weekMin: 0, monthMin: 0, yearMin: 0 });
+});
+
+test('currentPeriodMinutes matches matching rollup() rows', () => {
+  const entries = [ent('2026-10-01', 480), ent('2026-10-12', 540), ent('2026-10-13', 540)] as never;
+  const days = workedDaysFromEntries(entries);
+  const today = '2026-10-13';
+  const r = currentPeriodMinutes(entries, today, MON);
+  const pick = (g: RollupGranularity) =>
+    rollup(days, g, OT, MON).find((x) => x.key === rollupKey(today, g, MON))?.totalMin ?? 0;
+  assert.equal(r.weekMin, pick('week'));
+  assert.equal(r.monthMin, pick('month'));
+  assert.equal(r.yearMin, pick('year'));
 });

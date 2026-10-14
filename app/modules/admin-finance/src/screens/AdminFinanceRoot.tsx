@@ -31,13 +31,12 @@ import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWe
 import { Card, ListItem, Button, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
-import { isBetaVisible, isTestVisible } from '@jobcore/core';
+import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
-import { bucketHours } from '../domain/hoursBuckets';
 import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
@@ -622,15 +621,26 @@ export function AdminFinanceRoot() {
       return undefined;
     }
     let cancelled = false;
-    getModulePorts()
-      .timeEntries.listForEmployee(selectedEmployee.id)
-      .then((entries) => {
+    (async () => {
+      try {
+        const payroll = getModulePorts().payroll;
+        if (!payroll || !payroll.listTeamEntries) {
+          if (!cancelled) setEmployeeHoursWorked(null);
+          return;
+        }
+        const settings = await payroll.getSettings();
+        const payWeek = settings.payWeek;
+        const today = wageEngine.formatIsoDate(Date.now());
+        const from = wageEngine.weekStartOf(wageEngine.addDays(today, -366), payWeek);
+        const weeks = await payroll.listTeamEntries({ from, to: today });
+        const mine = weeks.flatMap((w) => w.entries).filter((e) => e.userId === selectedEmployee.id);
+        const { weekMin, monthMin, yearMin } = wageEngine.currentPeriodMinutes(mine, today, payWeek);
         if (cancelled) return;
-        setEmployeeHoursWorked(bucketHours(entries, new Date()));
-      })
-      .catch(() => {
+        setEmployeeHoursWorked({ week: weekMin / 60, month: monthMin / 60, year: yearMin / 60 });
+      } catch {
         if (!cancelled) setEmployeeHoursWorked(null);
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -959,7 +969,6 @@ export function AdminFinanceRoot() {
           { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
           { id: 'payments', helpId: 'payroll_rollup', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
           { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
-          { id: 'timeOffQueue', label: 'Time Off', onPress: () => goTop('timeOffQueue'), isActive: (TOP[subView] ?? subView) === 'timeOffQueue' },
           { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
           { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
           { id: 'reports', label: 'Reports', onPress: () => goTop('reports'), isActive: (TOP[subView] ?? subView) === 'reports' },
@@ -978,7 +987,6 @@ export function AdminFinanceRoot() {
               jobsOnFile: loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length,
               qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
               awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
-              pendingTimeOff: loadState.timeOffRequests.filter((request) => request.status === 'pending').length,
               employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner').length,
               needsAttentionPayments: needsAttentionCount,
             }).map((card) => (

@@ -1,4 +1,4 @@
-import { allocateWorkweek } from './ca-overtime.js';
+import { allocateWorkweek, DEFAULT_OVERTIME_CONFIG } from './ca-overtime.js';
 import { weekStartOf } from './periods.js';
 import type {
   DayAllocation,
@@ -60,6 +60,38 @@ export function rollupKey(
     case 'year':
       return workDate.slice(0, 4);
   }
+}
+
+/** Minimal structural shape of a payroll time entry (core cannot import payroll-ui). */
+export interface WorkedEntryLike {
+  workDate: IsoDate;
+  minutes: number;
+  status: string;
+}
+
+/** Drop rejected entries and sum minutes per workDate, in the shape `rollup` consumes. */
+export function workedDaysFromEntries(entries: readonly WorkedEntryLike[]): WorkedDay[] {
+  const byDate = new Map<IsoDate, number>();
+  for (const e of entries) {
+    if (e.status === 'rejected') continue;
+    byDate.set(e.workDate, (byDate.get(e.workDate) ?? 0) + e.minutes);
+  }
+  return [...byDate].map(([workDate, minutes]) => ({ workDate, minutes }));
+}
+
+/** Worked minutes (regular + OT + DT) in the week, month and year containing `today`. */
+export function currentPeriodMinutes(
+  entries: readonly WorkedEntryLike[],
+  today: IsoDate,
+  payWeek: PayWeekConfig,
+): { weekMin: number; monthMin: number; yearMin: number } {
+  const days = workedDaysFromEntries(entries);
+  const pick = (g: RollupGranularity): number => {
+    const key = rollupKey(today, g, payWeek);
+    const rows = rollup(days, g, DEFAULT_OVERTIME_CONFIG, payWeek);
+    return rows.find((r) => r.key === key)?.totalMin ?? 0;
+  };
+  return { weekMin: pick('week'), monthMin: pick('month'), yearMin: pick('year') };
 }
 
 /**
