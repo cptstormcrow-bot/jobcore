@@ -465,11 +465,24 @@ const calendarEventCreate: OpHandler<CalendarEventCreatePayload> = async (p, ctx
 
 const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx) => {
   let receiptPath = p.receiptPhotoPath ?? null;
-  if (receiptPath && /^(file|content):\/\//i.test(receiptPath)) {
-    const extMatch = /\.([A-Za-z0-9]{2,5})(?:\?.*)?$/.exec(receiptPath);
-    const ext = extMatch?.[1]?.toLowerCase() ?? 'jpg';
-    const storagePath = `${ctx.orgId}/${p.techId}/${p.id}.${ext}`;
+  if (receiptPath && /^(file|content|blob|data):/i.test(receiptPath)) {
     const blob = await (await fetch(receiptPath)).blob();
+    let ext = 'jpg';
+    if (/^(file|content):\/\//i.test(receiptPath)) {
+      const extMatch = /\.([A-Za-z0-9]{2,5})(?:\?.*)?$/.exec(receiptPath);
+      ext = extMatch?.[1]?.toLowerCase() ?? 'jpg';
+    } else {
+      // Web picker URIs (blob:/data:) carry no extension; derive it from the MIME type.
+      const byMime: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/heic': 'heic',
+        'image/gif': 'gif',
+      };
+      ext = byMime[blob.type.toLowerCase()] ?? 'jpg';
+    }
+    const storagePath = `${ctx.orgId}/${p.techId}/${p.id}.${ext}`;
     const { error: upErr } = await ctx.supabase.storage
       .from('receipts')
       .upload(storagePath, blob, { contentType: contentTypeFor(ext), upsert: true });

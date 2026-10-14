@@ -67,10 +67,22 @@ const payrollTimesheetSubmit: OpHandler<PayrollTimesheetSubmitPayload> = async (
   return APPLIED;
 };
 
+export type PayrollTimesheetWithdrawPayload = PayrollTimesheetSubmitPayload;
+
+const payrollTimesheetWithdraw: OpHandler<PayrollTimesheetWithdrawPayload> = async (p, ctx) => {
+  const { error } = await ctx.supabase.rpc('withdraw_timesheet', {
+    p_week_start: p.weekStart,
+    p_week_end: p.weekEnd,
+  });
+  check(error);
+  return APPLIED;
+};
+
 export const PAYROLL_OP_HANDLERS: Record<string, OpHandler<any>> = {
   'payroll_time.upsert': payrollTimeUpsert,
   'payroll_time.delete': payrollTimeDelete,
   'payroll_timesheet.submit': payrollTimesheetSubmit,
+  'payroll_timesheet.withdraw': payrollTimesheetWithdraw,
 };
 
 registerOpHandlers(PAYROLL_OP_HANDLERS);

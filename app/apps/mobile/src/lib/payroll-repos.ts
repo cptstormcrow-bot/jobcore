@@ -133,6 +133,15 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
       );
     },
 
+    async withdrawWeek(range) {
+      await writeThrough(
+        'payroll_timesheet.withdraw',
+        { id: `${userId}:${range.from}:${range.to}`, weekStart: range.from, weekEnd: range.to },
+        new Date().toISOString(),
+        undefined,
+      );
+    },
+
     async getRateHistory(forUserId) {
       const uid = forUserId ?? userId;
       return readCached('pr.rateHistory', { uid }, async () => {
@@ -142,10 +151,23 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           .eq('user_id', uid)
           .order('effective_from', { ascending: true });
         check(error);
-        return ((data ?? []) as Row[]).map((r) => ({
+        const rows = ((data ?? []) as Row[]).map((r) => ({
           effectiveFrom: r.effective_from as wageEngine.IsoDate,
           hourlyRateCents: r.hourly_rate_cents as number,
         }));
+        if (rows.length > 0) return rows;
+        // Fallback: roster column profiles.hourly_rate_cents (Employee editor).
+        const { data: prof, error: profErr } = await supabase
+          .from('profiles')
+          .select('hourly_rate_cents')
+          .eq('id', uid)
+          .maybeSingle();
+        if (profErr) return rows;
+        const cents = (prof as Row | null)?.hourly_rate_cents;
+        if (typeof cents === 'number' && cents > 0) {
+          return [{ effectiveFrom: '1970-01-01' as wageEngine.IsoDate, hourlyRateCents: cents }];
+        }
+        return rows;
       });
     },
 

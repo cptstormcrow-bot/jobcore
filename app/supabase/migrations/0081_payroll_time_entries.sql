@@ -176,12 +176,12 @@ begin
 end;
 $$;
 
--- F) reject_timesheet ---------------------------------------------------------
+-- F) reject_timesheet (kick back: returns the week to the tech for editing) ----
 create or replace function public.reject_timesheet(
   p_user_id uuid,
   p_week_start date,
   p_week_end date,
-  p_reason text
+  p_reason text default null
 )
 returns integer
 language plpgsql
@@ -198,9 +198,6 @@ begin
      or p_week_end < p_week_start or p_week_end - p_week_start > 6 then
     raise exception 'invalid week range' using errcode = '22023';
   end if;
-  if p_reason is null or btrim(p_reason) = '' then
-    raise exception 'rejection reason required' using errcode = '22023';
-  end if;
 
   update public.payroll_time_entries
      set status = 'rejected',
@@ -210,7 +207,73 @@ begin
    where user_id = p_user_id
      and organization_id = public.current_org_id()
      and work_date between p_week_start and p_week_end
+     and status in ('submitted', 'approved');
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+-- F2) withdraw_timesheet (tech pulls back a submitted week; approved untouched) -
+create or replace function public.withdraw_timesheet(
+  p_week_start date,
+  p_week_end date
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_count integer;
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated' using errcode = '42501';
+  end if;
+  if p_week_start is null or p_week_end is null
+     or p_week_end < p_week_start or p_week_end - p_week_start > 6 then
+    raise exception 'invalid week range' using errcode = '22023';
+  end if;
+
+  update public.payroll_time_entries
+     set status = 'draft',
+         submitted_at = null
+   where user_id = auth.uid()
+     and organization_id = public.current_org_id()
+     and work_date between p_week_start and p_week_end
      and status = 'submitted';
+
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+-- F3) delete_timesheet (admin only; any status) -------------------------------
+create or replace function public.delete_timesheet(
+  p_user_id uuid,
+  p_week_start date,
+  p_week_end date
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_count integer;
+begin
+  if not public.is_org_admin() then
+    raise exception 'not authorized' using errcode = '42501';
+  end if;
+  if p_week_start is null or p_week_end is null
+     or p_week_end < p_week_start or p_week_end - p_week_start > 6 then
+    raise exception 'invalid week range' using errcode = '22023';
+  end if;
+
+  delete from public.payroll_time_entries
+   where user_id = p_user_id
+     and organization_id = public.current_org_id()
+     and work_date between p_week_start and p_week_end;
 
   get diagnostics v_count = row_count;
   return v_count;
@@ -229,6 +292,12 @@ grant execute on function public.approve_timesheet(uuid, date, date) to authenti
 
 revoke execute on function public.reject_timesheet(uuid, date, date, text) from public, anon;
 grant execute on function public.reject_timesheet(uuid, date, date, text) to authenticated;
+
+revoke execute on function public.withdraw_timesheet(date, date) from public, anon;
+grant execute on function public.withdraw_timesheet(date, date) to authenticated;
+
+revoke execute on function public.delete_timesheet(uuid, date, date) from public, anon;
+grant execute on function public.delete_timesheet(uuid, date, date) to authenticated;
 
 revoke all on function public.payroll_time_entries_touch_updated_at() from public, anon;
 

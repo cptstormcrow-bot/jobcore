@@ -33,6 +33,17 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
   const [timeActions, setTimeActions] = useState<TimeEntryPanelActions | null>(null);
   const [reimbActions, setReimbActions] = useState<ReimbursementPanelActions | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (!confirmDelete) return undefined;
+    if (active !== 'time') {
+      setConfirmDelete(false);
+      return undefined;
+    }
+    const t = setTimeout(() => setConfirmDelete(false), 4000);
+    return () => clearTimeout(t);
+  }, [confirmDelete, active]);
 
   useEffect(() => {
     let alive = true;
@@ -103,7 +114,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
             </View>
           ) : null}
           {active === 'time' ? (
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, justifyContent: 'flex-end' }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               <Pressable
                 onPress={() => void timeActions?.saveAll()}
                 disabled={!timeActions || timeActions.busy}
@@ -112,24 +123,6 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
                 style={[actionBtn, { opacity: !timeActions || timeActions.busy ? 0.5 : 1 }]}
               >
                 <Text style={actionTxt}>{timeActions?.busy ? 'Saving…' : 'Save all'}</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void timeActions?.clockIn()}
-                disabled={!timeActions || timeActions.busy}
-                accessibilityRole="button"
-                accessibilityLabel="Clock in"
-                style={[actionBtn, { opacity: !timeActions || timeActions.busy ? 0.5 : 1 }]}
-              >
-                <Text style={actionTxt}>Clock in</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void timeActions?.clockOut()}
-                disabled={!timeActions || timeActions.busy}
-                accessibilityRole="button"
-                accessibilityLabel="Clock out"
-                style={[actionBtn, { opacity: !timeActions || timeActions.busy ? 0.5 : 1 }]}
-              >
-                <Text style={actionTxt}>Clock out</Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -142,6 +135,35 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
                 style={[actionBtn, { opacity: !timeActions?.canSubmit || timeActions?.busy ? 0.5 : 1 }]}
               >
                 <Text style={actionTxt}>Submit week</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (!timeActions?.canWithdraw || timeActions?.busy) return;
+                  void timeActions.withdrawWeek();
+                }}
+                disabled={!timeActions?.canWithdraw || timeActions?.busy}
+                accessibilityRole="button"
+                accessibilityLabel="Withdraw week"
+                style={[actionBtn, { opacity: !timeActions?.canWithdraw || timeActions?.busy ? 0.5 : 1 }]}
+              >
+                <Text style={actionTxt}>Withdraw week</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  if (!timeActions?.canDelete || timeActions?.busy) return;
+                  if (!confirmDelete) {
+                    setConfirmDelete(true);
+                    return;
+                  }
+                  setConfirmDelete(false);
+                  void timeActions.deleteWeek();
+                }}
+                disabled={!timeActions?.canDelete || timeActions?.busy}
+                accessibilityRole="button"
+                accessibilityLabel="Delete week"
+                style={[actionBtn, { opacity: !timeActions?.canDelete || timeActions?.busy ? 0.5 : 1 }]}
+              >
+                <Text style={actionTxt}>{confirmDelete ? 'Tap again to delete' : 'Delete week'}</Text>
               </Pressable>
             </View>
           ) : null}

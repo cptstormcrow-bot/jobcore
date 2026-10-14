@@ -131,6 +131,20 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
       return mapRows(rows, inWeek, (r) => ({ ...r, status: 'submitted' }));
     },
   },
+  {
+    op: 'payroll_timesheet.withdraw',
+    queries: ['pr.time'],
+    patch: (p, rows) => {
+      const from = str(p.weekStart);
+      const to = str(p.weekEnd);
+      if (!from || !to) return rows;
+      const inWeek = (r: Row) => {
+        const d = str(r.work_date) ?? str(r.workDate);
+        return d !== undefined && d >= from && d <= to && (r.status === 'submitted' || r.status === 'approved');
+      };
+      return mapRows(rows, inWeek, (r) => ({ ...r, status: 'draft' }));
+    },
+  },
 ];
 
 export function findPatchSpecs(op: string): OpPatchSpec[] {

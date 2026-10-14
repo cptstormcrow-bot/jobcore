@@ -138,10 +138,14 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
   const onViewReceipt = useCallback(
     async (path: string) => {
       setReceiptError(null);
+      if (path.length > 200 || /^[a-z][a-z0-9+.-]*:/i.test(path)) {
+        setReceiptError('Receipt not available - this request has no stored receipt file.');
+        return;
+      }
       try {
         const url = await adminPort.getReceiptUrl?.(path);
         if (!url) {
-          setReceiptError('Receipt not available.');
+          setReceiptError('Receipt not available - this request has no stored receipt file.');
           return;
         }
         await Linking.openURL(url);

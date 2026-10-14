@@ -9,8 +9,8 @@
  */
 
 import React from 'react';
-import { ScrollView, View } from 'react-native';
-import { Button, EmptyState, Text, TextField, Toggle } from '@jobcore/ui';
+import { Pressable, ScrollView, View } from 'react-native';
+import { EmptyState, Text, TextField, Toggle } from '@jobcore/ui';
 import type { PayrollSettings } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
@@ -29,6 +29,28 @@ const QB_FIELDS: { key: QbKey; label: string }[] = [
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const sandButton = {
+  backgroundColor: '#D9C7A0',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+} as const;
+const sandButtonLabel = { color: '#000', fontWeight: '700' } as const;
+
+function SandButton(props: { label: string; onPress: () => void; disabled?: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={props.label}
+      disabled={props.disabled}
+      onPress={props.onPress}
+      style={[sandButton, props.disabled ? { opacity: 0.5 } : null]}
+    >
+      <Text style={sandButtonLabel}>{props.label}</Text>
+    </Pressable>
+  );
+}
 
 function toInt(text: string): number {
   const n = parseInt(text, 10);
@@ -69,7 +91,7 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
     return (
       <View>
         <EmptyState title="Payroll settings are not available yet" />
-        {onBack ? <Button label="Back" onPress={onBack} /> : null}
+        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
       </View>
     );
   }
@@ -96,7 +118,23 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
 
   return (
     <ScrollView style={{ flex: 1 }}>
-      {onBack ? <Button label="Back" onPress={onBack} /> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
+        {canSaveSettings && settings ? (
+          <SandButton
+            label="Save settings"
+            disabled={busy}
+            onPress={() => run(() => payroll.saveSettings!(settings), 'Settings saved')}
+          />
+        ) : null}
+        {canSaveQb && qb ? (
+          <SandButton
+            label="Save accounts"
+            disabled={busy}
+            onPress={() => run(() => payroll.setQbAccountMap!(qb), 'Accounts saved')}
+          />
+        ) : null}
+      </View>
       <Text>Payroll settings</Text>
       {error ? <Text>{error}</Text> : null}
       {message ? <Text>{message}</Text> : null}
@@ -142,13 +180,6 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
             disabled={!canSaveSettings}
             onChange={(v) => patchOvertime({ seventhDayRule: v })}
           />
-          {canSaveSettings ? (
-            <Button
-              label="Save settings"
-              disabled={busy}
-              onPress={() => run(() => payroll.saveSettings!(settings), 'Settings saved')}
-            />
-          ) : null}
         </View>
       ) : (
         !error && <Text>Loading...</Text>
@@ -166,13 +197,6 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
               onChangeText={(t) => setQb({ ...qb, [f.key]: t })}
             />
           ))}
-          {canSaveQb ? (
-            <Button
-              label="Save accounts"
-              disabled={busy}
-              onPress={() => run(() => payroll.setQbAccountMap!(qb), 'Accounts saved')}
-            />
-          ) : null}
         </View>
       ) : null}
     </ScrollView>

@@ -122,6 +122,8 @@ export interface PayrollSelfPort {
   deleteEntry(id: string): Promise<void>;
   /** Submit my entries in a range for approval. */
   submitWeek(range: PayrollDateRange): Promise<void>;
+  /** Return an own submitted (not approved) week to draft so it can be edited or deleted. */
+  withdrawWeek(range: PayrollDateRange): Promise<void>;
   /** Rate history for me, or for a given user. */
   getRateHistory(userId?: string): Promise<wageEngine.RateChange[]>;
   /** Current payroll settings. */
@@ -143,7 +145,9 @@ export interface PayrollAdminPort {
   /** Approve a user's week. */
   approveWeek?(userId: string, range: PayrollDateRange): Promise<void>;
   /** Reject a user's week with a reason. */
-  rejectWeek?(userId: string, range: PayrollDateRange, reason: string): Promise<void>;
+  rejectWeek?(userId: string, range: PayrollDateRange, reason?: string): Promise<void>;
+  /** Admin: delete a user's entries for the week so they can start over. */
+  deleteWeek?(userId: string, range: PayrollDateRange): Promise<void>;
   /** Set a user's hourly rate from a date. */
   setRate?(userId: string, hourlyRateCents: number, effectiveFrom: wageEngine.IsoDate): Promise<void>;
   /** Close a payroll run for a range. */

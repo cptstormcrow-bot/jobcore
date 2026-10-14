@@ -107,7 +107,17 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
         p_user_id: forUserId,
         p_week_start: range.from,
         p_week_end: range.to,
-        p_reason: reason,
+        p_reason: reason ?? null,
+      });
+      check(error);
+    },
+
+    async deleteWeek(forUserId, range) {
+      requireOnline('delete this week');
+      const { error } = await supabase.rpc('delete_timesheet', {
+        p_user_id: forUserId,
+        p_week_start: range.from,
+        p_week_end: range.to,
       });
       check(error);
     },
@@ -336,8 +346,14 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
     async getReceiptUrl(path: string): Promise<string | null> {
       requireOnline('load the receipt');
       if (!path) return null;
+      if (
+        path.length > 200 ||
+        !/^[0-9a-f-]{36}\/[0-9a-f-]{36}\/[^/]+\.[A-Za-z0-9]{2,5}$/i.test(path)
+      ) {
+        return null;
+      }
       const { data, error } = await supabase.storage.from('receipts').createSignedUrl(path, 600);
-      check(error);
+      if (error) throw new Error(error.message);
       return data?.signedUrl ?? null;
     },
   };

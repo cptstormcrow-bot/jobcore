@@ -6,8 +6,8 @@
  */
 
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { Button, EmptyState, Text, TextField } from '@jobcore/ui';
+import { Pressable, Text as RNText, View } from 'react-native';
+import { EmptyState, Text, TextField } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -25,7 +25,39 @@ const FORMATS: { key: PayrollExportFormat; label: string }[] = [
   { key: 'iif_journal', label: 'IIF' },
 ];
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const sandButton = {
+  backgroundColor: '#D9C7A0',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+} as const;
+const sandButtonLabel = { color: '#000', fontWeight: '700' } as const;
+
+function SandButton(props: {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  selected?: boolean;
+}) {
+  const { label, onPress, disabled, selected } = props;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      disabled={disabled}
+      style={[
+        sandButton,
+        selected ? { borderWidth: 2, borderColor: '#000' } : null,
+        disabled ? { opacity: 0.5 } : null,
+      ]}
+    >
+      <RNText style={sandButtonLabel}>{label}</RNText>
+    </Pressable>
+  );
+}
+
+const DATE_RE =/^\d{4}-\d{2}-\d{2}$/;
 
 function addDays(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -47,7 +79,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
     return (
       <View>
         <EmptyState title="Payroll is not available yet" />
-        {onBack ? <Button label="Back" onPress={onBack} /> : null}
+        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
       </View>
     );
   }
@@ -91,7 +123,6 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
 
   return (
     <View style={{ flex: 1 }}>
-      {onBack ? <Button label="Back" onPress={onBack} /> : null}
       <Text>Weekly payroll run</Text>
       <TextField
         label="Week start (YYYY-MM-DD)"
@@ -100,27 +131,27 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         placeholder="2026-10-05"
         error={weekStart && !validDate ? 'Use YYYY-MM-DD' : undefined}
       />
-      <Button
-        label="Close run"
-        onPress={onClose}
-        disabled={busy || !validDate || !closeRun}
-      />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
+        <SandButton
+          label="Close run"
+          onPress={onClose}
+          disabled={busy || !validDate || !closeRun}
+        />
         {FORMATS.map((f) => (
-          <Button
+          <SandButton
             key={f.key}
             label={f.label}
-            size="sm"
-            variant={format === f.key ? 'accent' : 'outline'}
+            selected={format === f.key}
             onPress={() => setFormat(f.key)}
           />
         ))}
+        <SandButton
+          label="Export"
+          onPress={onExport}
+          disabled={busy || !batchId || !exportRun}
+        />
       </View>
-      <Button
-        label="Export"
-        onPress={onExport}
-        disabled={busy || !batchId || !exportRun}
-      />
       {status ? <Text>{status}</Text> : null}
     </View>
   );

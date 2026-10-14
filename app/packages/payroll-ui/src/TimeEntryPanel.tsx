@@ -13,11 +13,12 @@ import { SandButton } from './SandButton';
 export interface TimeEntryPanelActions {
   saveAll: () => Promise<void>;
   submitWeek: () => Promise<void>;
+  withdrawWeek: () => Promise<void>;
+  deleteWeek: () => Promise<void>;
   canSubmit: boolean;
+  canWithdraw: boolean;
+  canDelete: boolean;
   busy: boolean;
-  clockIn: () => void | Promise<void>;
-  clockOut: () => void | Promise<void>;
-  clockedIn: boolean;
 }
 
 export interface TimeEntryPanelProps {
@@ -26,7 +27,7 @@ export interface TimeEntryPanelProps {
   weekStartDow: number;
   /** Lets the parent render its own Submit week control. */
   onRegisterActions?: (a: TimeEntryPanelActions) => void;
-  /** Called after every successful mutation (save, delete, submit, clock in/out). */
+  /** Called after every successful mutation (save, delete, submit). */
   onChanged?: () => void;
 }
 
@@ -128,36 +129,34 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     [reload, onChanged],
   );
 
-  const openClock = entries.find(
-    (e) => e.source === 'clock' && e.clockInAt !== null && e.clockOutAt === null && editable(e),
-  );
+  // Pre-fill each day's input with the total of its manual draft/rejected entries.
+  const prefill = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const d of days) {
+      const mins = entries
+        .filter((e) => e.workDate === d && e.source === 'manual' && editable(e))
+        .reduce((s, e) => s + e.minutes, 0);
+      const has = entries.some((e) => e.workDate === d && e.source === 'manual' && editable(e));
+      out[d] = has ? fmt(mins) : '';
+    }
+    return out;
+  }, [entries, days]);
+  const [lastPrefill, setLastPrefill] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const changed = days.filter((d) => (lastPrefill[d] ?? '') !== prefill[d]);
+    if (changed.length === 0) return;
+    setInputs((p) => {
+      const n = { ...p };
+      for (const d of changed) n[d] = prefill[d] ?? '';
+      return n;
+    });
+    setLastPrefill(prefill);
+  }, [prefill, lastPrefill, days]);
 
-  const clockIn = () =>
-    run(() =>
-      port.upsertEntry({
-        id: newId(),
-        userId,
-        workDate: days.find((d) => d === toIso(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()))) ?? days[0]!,
-        minutes: 0,
-        clockInAt: new Date().toISOString(),
-        clockOutAt: null,
-        source: 'clock',
-        status: 'draft',
-        notes: null,
-        rejectionReason: null,
-      }),
-    );
-
-  const clockOut = () => {
-    if (!openClock || !openClock.clockInAt) return Promise.resolve();
-    const out = new Date();
-    const mins = Math.max(0, Math.floor((out.getTime() - new Date(openClock.clockInAt).getTime()) / 60000));
-    return run(() =>
-      port.upsertEntry({ ...openClock, clockOutAt: out.toISOString(), minutes: mins }),
-    );
-  };
-
-  const dirtyDays = days.filter((d) => (inputs[d] ?? '').trim() !== '');
+  const dirtyDays = days.filter((d) => {
+    const t = (inputs[d] ?? '').trim();
+    return t !== '' && t !== (prefill[d] ?? '');
+  });
 
   const saveAll = useCallback(async () => {
     if (saveState === 'saving') return;
@@ -171,14 +170,18 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           throw new Error(dayLabel(day) + ': enter hours as 1.5 or 1:30.');
         }
         const note = (notes[day] ?? '').trim();
-        const anyManual = entries.find((e) => e.workDate === day && e.source === 'manual');
+        const manuals = entries.filter((e) => e.workDate === day && e.source === 'manual');
+        const editables = manuals.filter(editable);
+        const anyManual = editables[0] ?? manuals[0];
         if (anyManual && !editable(anyManual)) {
           if (anyManual.minutes === mins) {
             setInputs((p) => ({ ...p, [day]: '' }));
             setNotes((p) => ({ ...p, [day]: '' }));
             continue;
           }
-          throw new Error(dayLabel(day) + ' is already submitted or approved and cannot be changed.');
+          setInputs((p) => ({ ...p, [day]: '' }));
+          setNotes((p) => ({ ...p, [day]: '' }));
+          continue;
         }
         const existing = anyManual;
         const entry: PayrollTimeEntry = existing
@@ -196,7 +199,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
               rejectionReason: null,
             };
         await port.upsertEntry(entry);
-        setInputs((p) => ({ ...p, [day]: '' }));
+        for (const extra of editables.slice(1)) await port.deleteEntry(extra.id);
         setNotes((p) => ({ ...p, [day]: '' }));
       }
       await reload();
@@ -214,16 +217,35 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   const submitWeek = useCallback(() => run(() => port.submitWeek(range)), [run, port, range]);
 
+  const canWithdraw = entries.some((e) => e.status === 'submitted' || e.status === 'approved');
+  const canDelete = entries.some((e) => e.status !== 'approved');
+
+  const withdrawWeek = useCallback(() => run(() => port.withdrawWeek(range)), [run, port, range]);
+
+  const deleteWeek = useCallback(
+    () =>
+      run(async () => {
+        if (entries.some((e) => e.status === 'submitted')) await port.withdrawWeek(range);
+        for (const e of entries) {
+          if (e.status !== 'approved') await port.deleteEntry(e.id);
+        }
+      }),
+    [run, port, range, entries],
+  );
+
   useEffect(() => {
     if (onRegisterActions) {
-      onRegisterActions({ saveAll, submitWeek, canSubmit, busy, clockIn, clockOut, clockedIn: !!openClock });
+      onRegisterActions({ saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy });
     }
-    // clockIn/clockOut are recreated each render; they close over entries/days, so re-register when those change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRegisterActions, saveAll, submitWeek, canSubmit, busy, entries, days, userId, run, port]);
+  }, [onRegisterActions, saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy]);
 
   return (
     <View>
+      {error !== '' ? (
+        <View style={{ alignItems: 'center', marginVertical: 4 }}>
+          <Text style={{ color: '#b00020', textAlign: 'center' }}>{error}</Text>
+        </View>
+      ) : null}
       {onRegisterActions ? null : (
         <View style={{ marginTop: 4, alignSelf: 'flex-end' }}>
           <SandButton
@@ -233,13 +255,17 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           />
         </View>
       )}
+      {entries.length > 0 && !canSubmit ? (
+        <Text style={{ color: '#666666', fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw week to change it.</Text>
+      ) : null}
       <View>
         {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       </View>
-      {error !== '' ? <Text>{error}</Text> : null}
       {days.map((day) => {
         const dayEntries = entries.filter((e) => e.workDate === day);
         const total = dayEntries.reduce((s, e) => s + e.minutes, 0);
+        const dayManual = dayEntries.filter((e) => e.source === 'manual');
+        const locked = dayManual.length > 0 && !dayManual.some(editable);
         return (
           <Card key={day} style={{ marginVertical: 2, padding: 6 }}>
             <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
@@ -266,8 +292,16 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
                 setSaveState('idle');
                 setInputs((p) => ({ ...p, [day]: v }));
               }}
+              disabled={locked}
               dense
             />
+            {locked ? (
+              <Text style={{ color: '#666666', fontSize: 12 }}>
+                {dayManual.some((e) => e.status === 'submitted')
+                  ? 'Submitted for approval. Tap Withdraw week to change it.'
+                  : 'Approved. Tap Withdraw week to reopen it, then submit again after your changes.'}
+              </Text>
+            ) : null}
             <TextField
               label="Notes (optional)"
               value={notes[day] ?? ''}

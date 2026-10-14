@@ -100,17 +100,31 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
   const confirmReject = (w: TeamWeek) => {
     const rejectWeek = port.rejectWeek;
     if (!rejectWeek) {
-      setError('Rejecting is not available.');
+      setError('Kicking back is not available.');
       return;
     }
-    const r = reason.trim();
-    if (r === '') {
-      setError('A reason is required to reject a week.');
-      return;
-    }
+    const r = reason.trim() || undefined;
     setRejecting(null);
     setReason('');
     void act(() => rejectWeek(w.userId, { from: w.weekStart, to: w.weekEnd }, r));
+  };
+
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  useEffect(() => {
+    if (pendingDelete === null) return undefined;
+    const t = setTimeout(() => setPendingDelete(null), 4000);
+    return () => clearTimeout(t);
+  }, [pendingDelete]);
+
+  const tapDelete = (w: TeamWeek, key: string) => {
+    const deleteWeek = port.deleteWeek;
+    if (!deleteWeek) return;
+    if (pendingDelete !== key) {
+      setPendingDelete(key);
+      return;
+    }
+    setPendingDelete(null);
+    void act(() => deleteWeek(w.userId, { from: w.weekStart, to: w.weekEnd }));
   };
 
   return (
@@ -132,25 +146,34 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
                 <Text>{w.weekStart + ' to ' + w.weekEnd}</Text>
                 <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + w.status}</Text>
               </View>
-              {w.status === 'submitted' ? (
-                <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {w.status === 'submitted' ? (
                   <SandButton label="Approve" onPress={() => approve(w)} disabled={busy} />
+                ) : null}
+                {w.status === 'submitted' || w.status === 'approved' ? (
                   <SandButton
-                    label="Reject"
+                    label="Kick back"
                     onPress={() => {
                       setRejecting(key);
                       setReason('');
                     }}
                     disabled={busy}
                   />
-                </View>
-              ) : null}
+                ) : null}
+                {port.deleteWeek ? (
+                  <SandButton
+                    label={pendingDelete === key ? 'Tap again to delete' : 'Delete'}
+                    onPress={() => tapDelete(w, key)}
+                    disabled={busy}
+                  />
+                ) : null}
+              </View>
             </View>
             {rejecting === key ? (
               <View>
-                <TextField label="Reason (required)" value={reason} onChangeText={setReason} />
+                <TextField label="Reason (optional)" value={reason} onChangeText={setReason} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <SandButton label="Confirm reject" onPress={() => confirmReject(w)} disabled={busy} />
+                  <SandButton label="Confirm kick back" onPress={() => confirmReject(w)} disabled={busy} />
                   <SandButton label="Cancel" onPress={() => setRejecting(null)} />
                 </View>
               </View>
