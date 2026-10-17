@@ -334,7 +334,7 @@ ${toolbarHtml(undefined, true)}
 <main data-device="phone">
 <div class="sums">${countTable('By kind', countBy((s) => s.kind))}${countTable('By module', countBy((s) => s.module ?? 'none'))}${countTable('By mounted', countBy((s) => s.mounted))}</div>
 <div class="grid" id="grid">
-${[...screensOut].sort(numCmp).map(card).join('\n')}
+${[...screensOut].sort((a, b) => cmp(a.key, b.key)).map(card).join('\n')}
 </div>
 </main>
 ${dataScript}

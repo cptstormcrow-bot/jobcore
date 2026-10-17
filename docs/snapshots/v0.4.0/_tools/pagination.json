@@ -9,6 +9,15 @@
   "af-JobCreateScreen": [
     12
   ],
+  "af-Payroll": [
+    17
+  ],
+  "af-PayrollRun": [
+    16
+  ],
+  "af-PayrollSettings": [
+    16
+  ],
   "af-ReportsJobDetailScreen": [
     10
   ],
@@ -19,14 +28,14 @@
     12
   ],
   "af-blackout-editor": [
-    12
+    11
   ],
   "af-calendar": [
     12,
     34
   ],
   "af-closeOutQueue": [
-    11
+    12
   ],
   "af-closeOutReview": [
     11
@@ -38,13 +47,13 @@
     11
   ],
   "af-employee-invitations": [
-    12
+    11
   ],
   "af-employee-job-detail": [
-    13
+    12
   ],
   "af-employee-roster": [
-    11
+    10
   ],
   "af-jobEstimate": [
     11
@@ -54,13 +63,13 @@
     36
   ],
   "af-leadCreate": [
-    13
+    11
   ],
   "af-leadEdit": [
     11
   ],
   "af-leadInbox": [
-    12
+    13
   ],
   "af-overview": [
     13,
@@ -76,13 +85,13 @@
     13
   ],
   "af-payments-PayoutBatchDetailScreen": [
-    12
+    13
   ],
   "af-payments-PayoutBatchScreen": [
-    11
+    12
   ],
   "af-payments-ReimbursementQueueScreen": [
-    12
+    10
   ],
   "af-planning": [
     11
@@ -91,13 +100,14 @@
     12
   ],
   "af-priceSheetEditor": [
-    10
+    9,
+    21
   ],
   "af-priceSheetList": [
     13
   ],
   "af-qualify": [
-    11
+    10
   ],
   "af-reports": [
     11
@@ -105,11 +115,17 @@
   "af-timeOffQueue": [
     11
   ],
+  "blackout-range-modal": [
+    15
+  ],
+  "blackout-time-off-list": [
+    17
+  ],
   "calendar": [
     13
   ],
   "config-settings": [
-    15
+    14
   ],
   "config-test-jobs": [
     12
@@ -131,13 +147,16 @@
     12
   ],
   "ft-FieldJobDetail": [
-    14
+    13
   ],
   "ft-Greeting": [
-    13
+    14
   ],
   "ft-Overview": [
     13
+  ],
+  "ft-Payroll": [
+    18
   ],
   "ft-PremJobs": [
     14
@@ -149,17 +168,10 @@
     15
   ],
   "ft-StartChecklist": [
-    13
-  ],
-  "ft-TimeOff": [
     11
   ],
   "index": [
     15
-  ],
-  "job-detail": [
-    12,
-    30
   ],
   "job-region-arrive": [
     15
@@ -174,11 +186,8 @@
   "job-region-contact": [
     15
   ],
-  "job-region-estimate": [
-    13
-  ],
   "job-region-evisit": [
-    12
+    13
   ],
   "job-region-paid": [
     14
@@ -209,7 +218,7 @@
     16
   ],
   "root-layout": [
-    12
+    13
   ],
   "sales-marketing": [
     13,
@@ -222,30 +231,36 @@
     12
   ],
   "sm-CallbackTasks": [
-    13
+    11
   ],
   "sm-Composer": [
-    12
+    11
   ],
   "sm-Overview": [
     13
   ],
+  "sm-Payroll": [
+    18
+  ],
   "sm-PitchPicker": [
-    14
+    13
   ],
   "sm-Reporting": [
-    14
+    13
   ],
   "sm-ReviewLibrary": [
-    11
+    13
   ],
   "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
-    9
+    11
   ],
   "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
-    9
+    11
   ],
   "tabs-layout": [
     15
+  ],
+  "time-off-tech-calendar": [
+    17
   ]
 }

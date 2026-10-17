@@ -4,7 +4,7 @@
     {
       "name": "1 screen count matches",
       "pass": true,
-      "detail": "screens.json=74 ui-data=74"
+      "detail": "screens.json=87 ui-data=87"
     },
     {
       "name": "2 embedded data equals ui-data.json (inventory)",
@@ -39,7 +39,7 @@
     {
       "name": "5 sort toggle (inventory)",
       "pass": true,
-      "detail": "data-sort count=2"
+      "detail": "data-sort count=3"
     },
     {
       "name": "5 sort toggle (storyboard)",
@@ -59,7 +59,7 @@
     {
       "name": "8 inventory source order ascending",
       "pass": true,
-      "detail": "74 wrappers"
+      "detail": "87 wrappers"
     },
     {
       "name": "9 no placeholder content (inventory)",
@@ -74,7 +74,7 @@
     {
       "name": "10 device frame present (inventory)",
       "pass": true,
-      "detail": "jc-device=101 jobcore-ui-device=1 data-device=14"
+      "detail": "jc-device=114 jobcore-ui-device=1 data-device=14"
     },
     {
       "name": "10 device frame present (storyboard)",
@@ -104,7 +104,7 @@
     {
       "name": "13 data-cont-of targets real screens",
       "pass": true,
-      "detail": "78 cont blocks"
+      "detail": "94 cont blocks"
     },
     {
       "name": "14 continuation blocks have no id or screen marker",

@@ -284,7 +284,7 @@ const files = [
 ].map(f => path.relative(RA, f).replace(/\\/g, '/'));
 const covered = new Set(routes.map(r => r.file));
 const uncoveredFiles = files.filter(f => !covered.has(f)).sort();
-const entries = [...routes];
+const entries = routes.filter(r => !(r.retiredAt && r.retiredInto !== undefined));
 for (const f of uncoveredFiles) {
   const mm = f.match(/^modules\/([^/]+)\//);
   const kebab = path.basename(f, '.tsx').replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();

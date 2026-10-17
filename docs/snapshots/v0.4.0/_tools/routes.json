@@ -978,7 +978,9 @@
    "tech"
   ],
   "mounted": true,
-  "notes": ""
+  "notes": "",
+  "retiredAt": "2026-10-16",
+  "retiredInto": 11
  },
  {
   "key": "ft-PremJobs",
