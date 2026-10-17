@@ -18,11 +18,22 @@
  * Role is a separate, immediate action —
  * `EmployeeRepository.setEmployeeRole(profileId, newRole)` — fired the
  * moment a different role is picked, independent of the main save.
+ *
+ * Layout: Save and Cancel sit at the TOP under the title, followed by a tab
+ * bar (Email, Detail, Role, Service Areas, Skills) that shows one group of
+ * cards at a time. Role (Select), service-area toggles, skill toggles and the
+ * Change-email button are INSTANT saves and are never part of Save. In Add
+ * mode the Service Areas and Skills tabs only show a note, since the
+ * invitation carries just email/role/name. Cancel has a dirty guard: when any
+ * FORM field (Detail and Email fields, compared to their initial values)
+ * changed, an inline Discard changes? confirm (Keep editing / Discard) shows
+ * instead of leaving; instant-save controls are excluded from the check. The
+ * confirm is an inline row, not Alert.alert, because that is a no-op on RN web.
  */
 
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, Checkbox, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, Card, TabBar, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -35,6 +46,7 @@ import type {
 } from '../data/ports';
 import { isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
+import { numberAreas } from './employee-editor-logic';
 
 export interface EmployeeEditorScreenProps {
   employees?: EmployeeRepository;
@@ -56,7 +68,22 @@ export interface EmployeeEditorScreenProps {
   onPaidTravelChange?: (v: boolean) => void;
 }
 
-const ROLES: readonly Role[] = ['owner', 'admin', 'tech', 'sales'];
+const ROLE_OPTIONS = [
+  { label: 'owner', value: 'owner' },
+  { label: 'admin', value: 'admin' },
+  { label: 'tech', value: 'tech' },
+  { label: 'sales', value: 'sales' },
+];
+
+type EmpTab = 'email' | 'detail' | 'role' | 'areas' | 'skills';
+
+const EMP_TAB_ITEMS: { key: EmpTab; label: string }[] = [
+  { key: 'email', label: 'Email' },
+  { key: 'detail', label: 'Detail' },
+  { key: 'role', label: 'Role' },
+  { key: 'areas', label: 'Service Areas' },
+  { key: 'skills', label: 'Skills' },
+];
 
 const SKILLS = [
   'installation',
@@ -141,6 +168,23 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
   const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
 
+  const [activeTab, setActiveTab] = useState<EmpTab>('detail');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [initial] = useState(() => ({
+    fullName: fullNameInput,
+    phone: phoneInput,
+    address: addressInput,
+    license: driversLicenseInput,
+    vehicle: vehicleStatusInput,
+    tool: toolStatusInput,
+    rate: hourlyRateInput,
+    effective: effectiveFromInput,
+    isTest: isTestInput,
+    paidTravel: paidTravelInput,
+    ptpm: ptpmInput,
+  }));
+  const [privateInitial, setPrivateInitial] = useState({ ssn: '', ecName: '', ecPhone: '' });
+
   const session = getModuleSession();
 
   useEffect(() => {
@@ -152,6 +196,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       setSsnLast4Input(r?.ssnLast4 ?? '');
       setEcNameInput(r?.emergencyContactName ?? '');
       setEcPhoneInput(r?.emergencyContactPhone ?? '');
+      setPrivateInitial({ ssn: r?.ssnLast4 ?? '', ecName: r?.emergencyContactName ?? '', ecPhone: r?.emergencyContactPhone ?? '' });
       setPrivateState('loaded');
     }).catch(() => {
       if (cancelled) return;
@@ -212,6 +257,37 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   }
 
   const busy = actionState.kind === 'working';
+
+  // Dirty = FORM fields only (Detail + Email); instant-save controls are excluded.
+  const privateDirty =
+    isEditMode &&
+    privateState === 'loaded' &&
+    (ssnLast4Input !== privateInitial.ssn || ecNameInput !== privateInitial.ecName || ecPhoneInput !== privateInitial.ecPhone);
+  const emailDirty = isEditMode
+    ? emailActionState.kind !== 'done' && changeEmailInput.trim() !== (profile?.email ?? '').trim()
+    : emailInput !== '' || roleInput !== 'tech';
+  const isDirty =
+    fullNameInput !== initial.fullName ||
+    phoneInput !== initial.phone ||
+    addressInput !== initial.address ||
+    driversLicenseInput !== initial.license ||
+    vehicleStatusInput !== initial.vehicle ||
+    toolStatusInput !== initial.tool ||
+    hourlyRateInput !== initial.rate ||
+    effectiveFromInput !== initial.effective ||
+    isTestInput !== initial.isTest ||
+    paidTravelInput !== initial.paidTravel ||
+    ptpmInput !== initial.ptpm ||
+    privateDirty ||
+    emailDirty;
+
+  function handleCancel(): void {
+    if (!isDirty) {
+      onCancel?.();
+    } else {
+      setConfirmDiscard(true);
+    }
+  }
 
   async function handleCreate(): Promise<void> {
     if (!invitationRepository) return;
@@ -390,8 +466,68 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   return (
     <View style={styles.screen}>
       <ScreenTitle title={isEditMode ? 'Edit Employee' : 'Add Employee'} />
+      <View style={styles.topBar}>
+        <View style={styles.topRow}>
+          <Button
+            label={busy ? 'Saving...' : 'Save'}
+            variant="primary"
+            onPress={() => {
+              if (isEditMode) {
+                void handleUpdate();
+              } else {
+                void handleCreate();
+              }
+            }}
+            disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository) || privateState === 'loading'}
+            style={styles.topButton}
+          />
+          <Button
+            label="Cancel"
+            variant="outline"
+            onPress={handleCancel}
+            disabled={!onCancel}
+            style={styles.topButton}
+          />
+        </View>
+        {confirmDiscard ? (
+          <View style={styles.confirmRow}>
+            <Text style={styles.heading}>Discard changes?</Text>
+            <View style={styles.topRow}>
+              <Button
+                label="Keep editing"
+                variant="outline"
+                onPress={() => setConfirmDiscard(false)}
+                style={styles.topButton}
+              />
+              <Button
+                label="Discard"
+                variant="primary"
+                onPress={() => {
+                  setConfirmDiscard(false);
+                  onCancel?.();
+                }}
+                style={styles.topButton}
+              />
+            </View>
+          </View>
+        ) : null}
+        {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+        {actionState.kind === 'failed' && duplicateConflict ? (
+          <Button
+            label="Revoke pending invitation & resend"
+            variant="outline"
+            onPress={() => {
+              void handleRevokeAndResend();
+            }}
+            disabled={busy}
+            style={styles.action}
+          />
+        ) : null}
+        {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+      </View>
+      <TabBar items={EMP_TAB_ITEMS} activeKey={activeTab} onSelect={setActiveTab} />
       <ScrollView contentContainerStyle={styles.content}>
-        {isEditMode ? (
+        {activeTab === 'email' && isEditMode ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Email</Text>
             <Text style={styles.note}>{`Current email: ${profile?.email ?? 'Not on file'}`}</Text>
@@ -417,6 +553,23 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           </Card>
         ) : null}
 
+        {activeTab === 'email' && !isEditMode ? (
+          <Card style={styles.card}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={emailInput}
+              onChangeText={(text) => {
+                setEmailInput(text);
+                setDuplicateConflict(null);
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </Card>
+        ) : null}
+
+        {activeTab === 'detail' ? (
         <Card style={styles.card}>
           <TextInput
             style={styles.input}
@@ -519,42 +672,25 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 />
               ) : null}
             </>
-          ) : (
-            <>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={emailInput}
-                onChangeText={(text) => {
-                  setEmailInput(text);
-                  setDuplicateConflict(null);
-                }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </>
-          )}
+          ) : null}
         </Card>
+        ) : null}
 
+        {activeTab === 'role' ? (
         <Card style={styles.card}>
-          <Text style={styles.heading}>Role</Text>
-          <View style={styles.roleRow}>
-            {ROLES.map((role) => (
-              <Checkbox
-                key={role}
-                label={role}
-                checked={role === roleInput}
-                disabled={roleActionState.kind === 'working'}
-                onChange={() => {
-                  if (isEditMode) {
-                    void handleRoleChange(role);
-                  } else {
-                    setRoleInput(role);
-                  }
-                }}
-              />
-            ))}
-          </View>
+          <Select
+            label="Role"
+            value={roleInput}
+            options={ROLE_OPTIONS}
+            onChange={(v) => {
+              if (isEditMode) {
+                void handleRoleChange(v as Role);
+              } else {
+                setRoleInput(v as Role);
+              }
+            }}
+            disabled={roleActionState.kind === 'working'}
+          />
           {isEditMode && roleActionState.kind === 'working' ? (
             <Text style={styles.note}>Updating role...</Text>
           ) : null}
@@ -565,14 +701,23 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             <Text style={styles.note}>{roleActionState.message}</Text>
           ) : null}
         </Card>
+        ) : null}
 
-        {isEditMode ? (
+        {activeTab === 'areas' && !isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Service Areas</Text>
+            <Text style={styles.note}>Set after the employee accepts the invitation.</Text>
+          </Card>
+        ) : null}
+
+        {activeTab === 'areas' && isEditMode ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Service Areas</Text>
             {serviceAreaList.length === 0 ? (
               <Text style={styles.note}>No service areas are configured.</Text>
             ) : (
-              serviceAreaList.map((area) => {
+              numberAreas(serviceAreaList).map((numbered) => {
+                const area = { id: numbered.id, name: `${numbered.n}. ${numbered.name}` };
                 const rowState = serviceAreaActionState[area.id] ?? { kind: 'idle' };
                 return (
                   <View key={area.id}>
@@ -593,7 +738,14 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           </Card>
         ) : null}
 
-        {isEditMode ? (
+        {activeTab === 'skills' && !isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Skills</Text>
+            <Text style={styles.note}>Set after the employee accepts the invitation.</Text>
+          </Card>
+        ) : null}
+
+        {activeTab === 'skills' && isEditMode ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Skills</Text>
             {SKILLS.map((skill) => {
@@ -617,42 +769,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         ) : null}
 
       </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          label={busy ? 'Saving...' : 'Save'}
-          onPress={() => {
-            if (isEditMode) {
-              void handleUpdate();
-            } else {
-              void handleCreate();
-            }
-          }}
-          disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository) || privateState === 'loading'}
-          style={styles.action}
-        />
-        <Button
-          label="Cancel"
-          variant="outline"
-          onPress={() => onCancel?.()}
-          disabled={!onCancel}
-          style={styles.action}
-        />
-
-        {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
-        {actionState.kind === 'failed' && duplicateConflict ? (
-          <Button
-            label="Revoke pending invitation & resend"
-            variant="outline"
-            onPress={() => {
-              void handleRevokeAndResend();
-            }}
-            disabled={busy}
-            style={styles.action}
-          />
-        ) : null}
-        {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
-      </View>
     </View>
   );
 }
@@ -677,19 +793,27 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.md,
   },
-  roleRow: {
+  topBar: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  topRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
+  },
+  topButton: {
+    flex: 1,
+    marginBottom: spacing.sm,
+  },
+  confirmRow: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 4,
+    padding: spacing.sm,
     marginBottom: spacing.sm,
   },
   action: {
     marginBottom: spacing.sm,
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    padding: spacing.md,
   },
   note: {
     color: colors.textMuted,
