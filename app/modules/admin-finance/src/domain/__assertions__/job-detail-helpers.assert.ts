@@ -62,6 +62,38 @@ test('matchServiceAreaByZip: returns null when zip is null', () => {
   assert.equal(matchServiceAreaByZip(areas, null), null);
 });
 
+// --- matchServiceAreaByZip: city-name fallback ---
+
+const cityAreas = [
+  { id: 'a-sd', name: 'San Diego', zipCodes: ['92101'] },
+  { id: 'a-lj', name: 'La Jolla', zipCodes: ['92037'] },
+];
+
+test('matchServiceAreaByZip: zip match still wins over city name', () => {
+  const r = matchServiceAreaByZip(cityAreas, '92101', '412 Prospect St, La Jolla, CA 92101');
+  assert.equal(r?.id, 'a-sd');
+});
+
+test('matchServiceAreaByZip: no zip falls back to city name', () => {
+  const r = matchServiceAreaByZip(cityAreas, null, '412 Prospect St, La Jolla, CA');
+  assert.equal(r?.id, 'a-lj');
+});
+
+test('matchServiceAreaByZip: unmapped zip falls back to city name', () => {
+  const r = matchServiceAreaByZip(cityAreas, '99999', '412 Prospect St, La Jolla, CA 99999');
+  assert.equal(r?.id, 'a-lj');
+});
+
+test('matchServiceAreaByZip: no zip and no city match returns null', () => {
+  assert.equal(matchServiceAreaByZip(cityAreas, null, '1 Main St, Fresno, CA'), null);
+  assert.equal(matchServiceAreaByZip(cityAreas, null, 'La Jollaville Rd'), null);
+});
+
+test('matchServiceAreaByZip: city fallback is case-insensitive', () => {
+  const r = matchServiceAreaByZip(cityAreas, null, '412 prospect st, LA JOLLA, ca');
+  assert.equal(r?.id, 'a-lj');
+});
+
 // --- seedPlanningFromInvestigation ---
 
 function makePlanning(overrides: Partial<PlanningSeedFields> = {}): PlanningSeedFields {

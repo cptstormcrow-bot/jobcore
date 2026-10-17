@@ -352,7 +352,7 @@ export default function JobDrilldownScreen() {
     if (form.serviceAreaId !== null) return;
     const zip = extractZip(form.address);
     if (!zip) return;
-    const matched = matchServiceAreaByZip(serviceAreas, zip);
+    const matched = matchServiceAreaByZip(serviceAreas, zip, form.address);
     if (matched) {
       setForm((prev) => (prev.serviceAreaId === null ? { ...prev, serviceAreaId: matched.id } : prev));
     }
@@ -360,6 +360,23 @@ export default function JobDrilldownScreen() {
 
   // Tech -> service-area coverage rows, used to hard-filter the technician
   // dropdown on this screen. The Assignment Board stays decorate-only.
+  // Persist the derived area once when the stored job has none (same
+  // updateDetails path runSaveEdit uses); failures are non-fatal.
+  const persistedAreaRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (isCreate || !job?.id || serviceAreas.length === 0) return;
+    if (job.service_area_id) return;
+    if (persistedAreaRef.current === job.id) return;
+    const addr = job.address ?? '';
+    const matched = matchServiceAreaByZip(serviceAreas, extractZip(addr), addr);
+    if (!matched) return;
+    persistedAreaRef.current = job.id;
+    void createJobRepository()
+      .updateDetails(job.id, { serviceAreaId: matched.id } as JobDetailsPatch)
+      .then((u) => setJob((prev) => (prev && prev.id === u.id ? { ...prev, service_area_id: matched.id } : prev)))
+      .catch(() => undefined);
+  }, [isCreate, job?.id, job?.service_area_id, job?.address, serviceAreas]);
+
   const [techServiceAreas, setTechServiceAreas] = useState<TechServiceArea[]>([]);
   useEffect(() => {
     if (!org?.id) { setTechServiceAreas([]); return; }
@@ -909,7 +926,7 @@ export default function JobDrilldownScreen() {
       // currently unset -- manual selection always wins.
       if (patch.address !== undefined && merged.serviceAreaId === null) {
         const zip = extractZip(patch.address);
-        const matched = matchServiceAreaByZip(serviceAreas, zip);
+        const matched = matchServiceAreaByZip(serviceAreas, zip, patch.address);
         if (matched) {
           merged.serviceAreaId = matched.id;
         }
@@ -1263,9 +1280,12 @@ export default function JobDrilldownScreen() {
   const currentJob = job as Job;
   const premTechName = investigatorTechId ? techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId : null;
   const serviceTechName = currentJob.assignedTechId ? techs.find((t) => t.id === currentJob.assignedTechId)?.fullName ?? currentJob.assignedTechId : null;
-  const currentServiceAreaName = currentJob.service_area_id
-    ? serviceAreas.find((a) => a.id === currentJob.service_area_id)?.name ?? null
-    : null;
+  const currentServiceAreaName =
+    (currentJob.service_area_id
+      ? serviceAreas.find((a) => a.id === currentJob.service_area_id)?.name
+      : undefined) ??
+    matchServiceAreaByZip(serviceAreas, extractZip(form.address || currentJob.address || ''), form.address || currentJob.address || '')?.name ??
+    null;
 
   const jobDetailMenuItems: MenuItem[] = [
     { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },

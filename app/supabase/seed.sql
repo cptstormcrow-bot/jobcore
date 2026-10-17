@@ -173,6 +173,11 @@ values
    'Scripps Ranch', now())
 on conflict (id) do nothing;
 
+-- La Jolla zip codes (text[]; same set as migrations 0045/0090).
+update public.service_areas
+   set zip_codes = '{92037,92038,92039,92092,92093}'
+ where id = '00000000-0000-4000-8000-000000000401';
+
 -- ---------------------------------------------------------------------------
 -- 5b. Test employees — every service area and every skill (mirrors the live
 -- 2026-09-29 insert so any test employee can be assigned to any job).

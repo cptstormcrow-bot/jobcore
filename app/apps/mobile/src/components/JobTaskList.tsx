@@ -167,6 +167,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           <View style={styles.actions}>
             {!dim && <Button label="Defer" size="sm" variant="outline" onPress={() => void defer(row)} />}
             <Button label="Remove" size="sm" variant="outline" onPress={() => void remove(row)} />
+            <Button label="Add" size="sm" variant="primary" onPress={() => void addMisc()} />
           </View>
         )}
       </View>
@@ -200,9 +201,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           <View style={styles.flex}>
             <TextField dense placeholder="New task title" value={newTitle} onChangeText={setNewTitle} />
           </View>
-          <View style={styles.qty}>
-          </View>
-          <Button label="Add" size="sm" onPress={() => void addMisc()} />
+          <Button label="Add" size="sm" variant="primary" onPress={() => void addMisc()} />
         </View>
       )}
     </View>

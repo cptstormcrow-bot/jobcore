@@ -41,9 +41,23 @@ export interface JobInvestigationScreenProps {
 }
 
 /** Horizontal labelled input: label on the left, input on the right. */
-function FieldRow({ label, value, onChangeText }: { label: string; value: string; onChangeText: (text: string) => void }) {
+function PairRow({ children }: { children: React.ReactNode }) {
+  return <View style={styles.pairRow}>{React.Children.map(children, (c) => <View style={styles.pairCol}>{c}</View>)}</View>;
+}
+
+function FieldRow({
+  label,
+  value,
+  onChangeText,
+  stacked,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  stacked?: boolean;
+}) {
   return (
-    <View style={styles.fieldRow}>
+    <View style={stacked ? styles.fieldRowStacked : styles.fieldRow}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         style={styles.fieldInput}
@@ -216,7 +230,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
   return (
     <View style={styles.container}>
       {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
-      {!embedded && <ScreenTitle title="Job Investigation" />}
+      {!embedded && <ScreenTitle title="Prelim #0061" />}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       {!embedded && (
         <>
@@ -241,10 +255,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
           />
         </>
       )}
-      <Text style={styles.status}>
-        {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
-      </Text>
-
       <View style={styles.cardActions}>
         <View style={styles.actionCell}>
           <Button label="Add photo" onPress={() => void handleAddPhoto()} variant="primary" size="sm" />
@@ -264,15 +274,20 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       </View>
 
       <View style={styles.section}>
-        <Pressable
-          style={styles.checkboxRow}
-          onPress={() => setMaterialsArrived((prev) => !prev)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: materialsArrived }}
-        >
-          <Text style={styles.checkboxBox}>{materialsArrived ? '☑' : '☐'}</Text>
-          <Text style={styles.value}>Materials arrived *</Text>
-        </Pressable>
+        <PairRow>
+          <Pressable
+            style={styles.checkboxRow}
+            onPress={() => setMaterialsArrived((prev) => !prev)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: materialsArrived }}
+          >
+            <Text style={styles.checkboxBox}>{materialsArrived ? '☑' : '☐'}</Text>
+            <Text style={styles.value}>Materials arrived *</Text>
+          </Pressable>
+          <Text style={styles.status}>
+            {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
+          </Text>
+        </PairRow>
       </View>
 
       <View style={styles.section}>
@@ -282,10 +297,14 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Investigation notes</Text>
-        <FieldRow label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
-        <FieldRow label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
-        <FieldRow label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
-        <FieldRow label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
+        <PairRow>
+          <FieldRow stacked label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
+          <FieldRow stacked label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
+        </PairRow>
+        <PairRow>
+          <FieldRow stacked label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
+          <FieldRow stacked label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
+        </PairRow>
       </View>
 
       <View style={styles.section}>
@@ -310,7 +329,18 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 12,
+  },
+  pairRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 4,
+  },
+  pairCol: {
+    flex: 1,
+  },
+  fieldRowStacked: {
+    marginBottom: 4,
   },
   title: {
     fontSize: typography.size.h4,
@@ -327,7 +357,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   fieldLabel: {
     width: '38%',
@@ -346,13 +376,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   section: {
-    marginBottom: 10,
+    marginBottom: 6,
   },
   sectionTitle: {
     fontSize: typography.size.h6,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   cardActions: {
     flexDirection: 'row',

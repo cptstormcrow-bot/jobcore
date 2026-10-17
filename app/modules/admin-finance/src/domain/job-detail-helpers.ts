@@ -24,12 +24,24 @@ export function extractZip(address: string | null | undefined): string | null {
  * Finds the first service area whose `zipCodes` list contains `zip`.
  * Returns null if `zip` is null or no area matches.
  */
-export function matchServiceAreaByZip<T extends { id: string; zipCodes?: string[] | null }>(
-  areas: T[],
-  zip: string | null,
-): T | null {
-  if (!zip) return null;
-  return areas.find((area) => area.zipCodes?.includes(zip)) ?? null;
+export function matchServiceAreaByZip<
+  T extends { id: string; zipCodes?: string[] | null; name?: string | null },
+>(areas: T[], zip: string | null, address?: string | null): T | null {
+  if (zip) {
+    const byZip = areas.find((area) => area.zipCodes?.includes(zip));
+    if (byZip) return byZip;
+  }
+  // City-name fallback: case-insensitive whole-word match of area name in address.
+  if (!address) return null;
+  const hay = address.toLowerCase();
+  return (
+    areas.find((area) => {
+      const name = area.name?.trim().toLowerCase();
+      if (!name) return false;
+      const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(^|[^a-z0-9])${esc}($|[^a-z0-9])`).test(hay);
+    }) ?? null
+  );
 }
 
 /** Planning fields that can be seeded from an investigation's findings. */
