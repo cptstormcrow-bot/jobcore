@@ -10,6 +10,7 @@ import type { TimeOffRequestAdmin } from '../../../../modules/admin-finance/src/
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
+import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 
 /** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
@@ -100,6 +101,7 @@ export default function CalendarScreen() {
   const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRequestAdmin[]>([]);
   const [timeOffRev, setTimeOffRev] = useState(0);
   const timeOffRepo = useMemo(() => createTimeOffAdminRepository(), []);
+  const techTimeOffRepo = useMemo(() => createTimeOffRepository(), []);
   const router = useRouter();
   const rev = useReadCacheRevision();
 
@@ -213,6 +215,24 @@ export default function CalendarScreen() {
     setTimeOffRev((n) => n + 1);
   };
 
+  const isAdminRole = Boolean(role && role !== 'tech');
+
+  const onSubmitTimeOff = async (
+    draft: { startDate: string; endDate: string; reason: string | null },
+    techId: string,
+  ): Promise<void> => {
+    if (!orgId) return;
+    if (isAdminRole) await timeOffRepo.createBlackout(orgId, techId, draft);
+    else await techTimeOffRepo.create(orgId, techId, draft);
+    setTimeOffRev((n) => n + 1);
+  };
+
+  const onCancelTimeOff = async (requestId: string): Promise<void> => {
+    if (isAdminRole) await timeOffRepo.cancel(requestId);
+    else await techTimeOffRepo.cancel(requestId);
+    setTimeOffRev((n) => n + 1);
+  };
+
   return (
     <View style={styles.screen}>
       <UniversalCalendar
@@ -225,6 +245,8 @@ export default function CalendarScreen() {
         {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
         onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
         onSaveBlackouts={onSaveBlackouts}
+        onSubmitTimeOff={onSubmitTimeOff}
+        onCancelTimeOff={onCancelTimeOff}
       />
     </View>
   );

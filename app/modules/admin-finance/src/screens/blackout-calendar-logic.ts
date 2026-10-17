@@ -15,6 +15,11 @@ export function modeFromPref(v: boolean | null | undefined): CalMode {
   return v === true ? 'week' : 'month';
 }
 
+// Blackout day-pick mode: add the day if absent, remove it if present (returns a new array).
+export function togglePickedDay(prev: string[], isoDay: string): string[] {
+  return prev.includes(isoDay) ? prev.filter((d) => d !== isoDay) : [...prev, isoDay];
+}
+
 export async function readCalMode(localPrefs: LocalPrefsPort | undefined | null): Promise<CalMode> {
   if (!localPrefs) return 'month';
   try {

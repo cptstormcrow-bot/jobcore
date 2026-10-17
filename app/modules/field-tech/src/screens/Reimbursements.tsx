@@ -2,8 +2,8 @@
 /**
  * Reimbursements screen for the field-tech module.
  *
- * Reimbursement request form + read-only "my requests" list. Mirrors
- * `TimeOff.tsx`'s structure: session/ports resolved via
+ * Reimbursement request form + read-only "my requests" list. Time off now
+ * lives on the #0011 calendar. Structure: session/ports resolved via
  * `lib/module-session.ts` and `lib/module-ports.ts`, never constructed
  * locally. Uses this module's `ReimbursementRequestRepository` port
  * (`../data/ports.ts`, already-declared `ReimbursementRequest` /

@@ -1231,6 +1231,14 @@ export function AdminFinanceRoot() {
           employees={loadState.employees}
           timeOffRequests={loadState.timeOffRequests}
           onSelectJob={handleCalendarSelectJob}
+          onSubmitTimeOff={async (draft, techId) => {
+            await ports.timeOffAdmin.createBlackout(orgId!, techId, draft);
+            refreshJobs();
+          }}
+          onCancelTimeOff={async (requestId) => {
+            await ports.timeOffAdmin.cancel(requestId);
+            refreshJobs();
+          }}
           onSaveBlackouts={async (isoDays, techId) => {
             for (const day of isoDays) {
               await ports.timeOffAdmin.createBlackout(orgId!, techId, { startDate: day, endDate: day, reason: null });

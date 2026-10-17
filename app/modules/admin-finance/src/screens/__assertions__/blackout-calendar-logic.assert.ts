@@ -13,6 +13,7 @@ import {
   writeCalMode,
   filterTimeOffByTech,
   expandBlackoutsToEvents,
+  togglePickedDay,
 } from '../blackout-calendar-logic';
 import type { TimeOffRequestAdmin, TimeOffStatus } from '../../data/time-off-repo';
 
@@ -133,4 +134,32 @@ test('filterTimeOffByTech: all, one tech, unknown, sorted ascending', () => {
   assert.deepEqual(filterTimeOffByTech(rows, 'all').map((r) => r.id), ['1', '2', '3']);
   assert.deepEqual(filterTimeOffByTech(rows, 't1').map((r) => r.id), ['1', '2']);
   assert.deepEqual(filterTimeOffByTech(rows, 'nobody'), []);
+});
+
+test('togglePickedDay adds then removes a day without mutating the input', () => {
+  const input = ['2026-05-01'];
+  const added = togglePickedDay(input, '2026-05-02');
+  assert.deepEqual(added, ['2026-05-01', '2026-05-02']);
+  assert.deepEqual(input, ['2026-05-01']);
+  const removed = togglePickedDay(added, '2026-05-02');
+  assert.deepEqual(removed, ['2026-05-01']);
+  assert.deepEqual(added, ['2026-05-01', '2026-05-02']);
+});
+
+test('togglePickedDay on a different day keeps existing picks in order', () => {
+  assert.deepEqual(togglePickedDay(['2026-05-03', '2026-05-01'], '2026-05-02'), ['2026-05-03', '2026-05-01', '2026-05-02']);
+  assert.deepEqual(togglePickedDay(['2026-05-03', '2026-05-01', '2026-05-02'], '2026-05-01'), ['2026-05-03', '2026-05-02']);
+});
+
+test('filterTimeOffByTech returns only the requested tech rows', () => {
+  const rows = [
+    row('a', 'tech-1', '2026-06-01', '2026-06-01', 'approved'),
+    row('b', 'tech-2', '2026-06-02', '2026-06-02', 'approved'),
+    row('c', 'tech-1', '2026-06-03', '2026-06-03', 'pending'),
+  ];
+  assert.deepEqual(filterTimeOffByTech(rows, 'tech-1').map((r) => r.id), ['a', 'c']);
+});
+
+test('modeFromPref(undefined) is month', () => {
+  assert.equal(modeFromPref(undefined), 'month');
 });

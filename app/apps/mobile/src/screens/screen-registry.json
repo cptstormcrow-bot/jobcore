@@ -61,7 +61,9 @@
     "title": "Calendar",
     "route": "/calendar",
     "file": "apps/mobile/app/(tabs)/calendar.tsx",
-    "createdAt": "2026-08-01T14:34:52-07:00"
+    "createdAt": "2026-08-01T14:34:52-07:00",
+    "aliasOf": 11,
+    "aliasNote": "Tab route that renders the same UniversalCalendar as #0011; one calendar for everyone, differing only by default filters."
   },
   {
     "number": 9,
@@ -86,7 +88,8 @@
     "route": null,
     "file": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
     "createdAt": "2026-08-04T22:58:55-07:00",
-    "subView": "calendar"
+    "subView": "calendar",
+    "aliases": [8, 31]
   },
   {
     "number": 12,
@@ -258,7 +261,10 @@
     "route": null,
     "file": "modules/field-tech/src/screens/TimeOff.tsx",
     "createdAt": "2026-08-09T12:36:00-07:00",
-    "subView": "timeOff"
+    "subView": "timeOff",
+    "retiredAt": "2026-10-16",
+    "retiredInto": 11,
+    "retiredNote": "Time off now lives on the #0011 calendar; the app uses one calendar screen only. Time-off fields and blackouts are handled in #0011."
   },
   {
     "number": 32,

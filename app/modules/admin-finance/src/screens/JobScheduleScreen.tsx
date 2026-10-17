@@ -217,6 +217,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
   const [calJobs, setCalJobs] = useState<Job[]>([]);
   const [calEmployees, setCalEmployees] = useState<UniversalCalendarEmployee[]>([]);
   const [calTimeOff, setCalTimeOff] = useState<TimeOffRequestAdmin[]>([]);
+  const [timeOffRev, setTimeOffRev] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -240,7 +241,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     return () => {
       cancelled = true;
     };
-  }, [job.organizationId]);
+  }, [job.organizationId, timeOffRev]);
 
   function handleSelectDay(day: Date): void {
     setAnchorDay(day);
@@ -456,6 +457,15 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
                 for (const day of isoDays) {
                   await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, { startDate: day, endDate: day, reason: null });
                 }
+                setTimeOffRev((n) => n + 1);
+              }}
+              onSubmitTimeOff={async (draft, techId) => {
+                await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, draft);
+                setTimeOffRev((n) => n + 1);
+              }}
+              onCancelTimeOff={async (requestId) => {
+                await getModulePorts().timeOffAdmin.cancel(requestId);
+                setTimeOffRev((n) => n + 1);
               }}
               onPickDay={handleSelectDay}
             />

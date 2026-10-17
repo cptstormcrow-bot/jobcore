@@ -3,7 +3,7 @@
  * field-tech module registration (P4.S3.8).
  *
  * Full rewrite of the P1 placeholder. Wires in every screen produced by
- * S3.1-S3.7 (DayList, StartChecklist, Completion, Greeting, TimeOff,
+ * S3.1-S3.7 (DayList, StartChecklist, Completion, Greeting,
  * Earnings, FieldJobDetail), assembles the shared Job Detail `jobActions`
  * (Start / Complete / On-my-way), and declares field-tech's own migrations.
  *
@@ -30,7 +30,6 @@ import { DayList, type DayListProps } from './screens/DayList';
 import { StartChecklist } from './screens/StartChecklist';
 import { Completion } from './screens/Completion';
 import { Greeting } from './screens/Greeting';
-import { TimeOff } from './screens/TimeOff';
 import { Earnings } from './screens/Earnings';
 import { FieldJobDetail } from './screens/FieldJobDetail';
 import { Overview, type OverviewProps } from './screens/Overview';
@@ -54,16 +53,15 @@ export type { DayListProps } from './screens/DayList';
  * host's single `path` segment is the only route entry field-tech owns).
  * `Greeting`/`StartChecklist`/`Completion` are per-job flow steps reached
  * from a job in `DayList`, not top-level tabs, so this switcher only
- * covers the screens that render with no per-job prop: the day's job list
- * and the tech's own time-off requests.
+ * covers the screens that render with no per-job prop: the day's job list.
+ * Time off lives on the shared #0011 calendar tab (screen #0031 retired).
  */
-type SubView = 'overview' | 'jobs' | 'timeOff' | 'reviews' | 'prems' | 'payroll';
+type SubView = 'overview' | 'jobs' | 'reviews' | 'prems' | 'payroll';
 
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
 const HELP_SCREEN_KEYS: Record<SubView, HelpScreenKey> = {
   overview: 'ft-overview',
   jobs: 'ft-jobs',
-  timeOff: 'ft-time-off',
   prems: 'ft-prems',
   reviews: 'ft-reviews',
   payroll: 'ft-overview',
@@ -78,7 +76,6 @@ function FieldTechRoot(): React.ReactElement {
   useScreenNumber({ subView });
   const { showHelp } = useWalkthrough();
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
-  const [selectedTimeOffId, setSelectedTimeOffId] = React.useState<string | undefined>(undefined);
   const [showTestJobs, setShowTestJobs] = React.useState(false);
   const [defaultMonthView, setDefaultMonthView] = React.useState(true);
   const [drillLabel, setDrillLabel] = React.useState<string | null>(null);
@@ -136,16 +133,7 @@ function FieldTechRoot(): React.ReactElement {
       id: 'jobs',
       label: 'Jobs',
       isActive: subView === 'jobs',
-      onPress: () => {
-        setSelectedTimeOffId(undefined);
-        setSubView('jobs');
-      },
-    },
-    {
-      id: 'timeOff',
-      label: 'Time Off',
-      isActive: subView === 'timeOff',
-      onPress: () => setSubView('timeOff'),
+      onPress: () => setSubView('jobs'),
     },
     {
       id: 'prems',
@@ -214,7 +202,6 @@ function FieldTechRoot(): React.ReactElement {
   const SUBVIEW_LABELS: Record<SubView, string> = {
     overview: 'Overview',
     jobs: 'Assigned Jobs',
-    timeOff: 'Time Off',
     reviews: 'Reviews',
     prems: 'Prems',
     payroll: 'Payroll',
@@ -222,9 +209,6 @@ function FieldTechRoot(): React.ReactElement {
 
   let content: React.ReactElement;
   switch (subView) {
-    case 'timeOff':
-      content = React.createElement(TimeOff, { initialSelectedId: selectedTimeOffId });
-      break;
     case 'reviews':
       content = React.createElement(Reviews, null);
       break;
@@ -237,10 +221,7 @@ function FieldTechRoot(): React.ReactElement {
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {
         onSelectJob: (job: Job) => setSelectedJobId(job.id),
-        onOpenTimeOff: (event) => {
-          setSelectedTimeOffId(event.id);
-          setSubView('timeOff');
-        },
+        onOpenTimeOff: () => router.push('/calendar' as never),
         showTestJobs,
         defaultViewMode: defaultMonthView ? 'month' : 'week',
       });
@@ -249,7 +230,7 @@ function FieldTechRoot(): React.ReactElement {
     default:
       content = React.createElement<OverviewProps>(Overview, {
         onOpenJob: (jobId: string) => setSelectedJobId(jobId),
-        onOpenTimeOff: () => setSubView('timeOff'),
+        onOpenTimeOff: () => router.push('/calendar' as never),
         onDrillChange: setDrillLabel,
         onOpenJobs: () => setSubView('jobs'),
         showTestJobs,
@@ -295,7 +276,7 @@ const styles = StyleSheet.create({
 // (e.g. a job-flow navigator wiring Greeting -> StartChecklist -> Completion,
 // or a pay-period view wiring Earnings) without a deep import into this
 // package's internal file layout.
-export { DayList, StartChecklist, Completion, Greeting, TimeOff, Earnings, FieldJobDetail };
+export { DayList, StartChecklist, Completion, Greeting, Earnings, FieldJobDetail };
 
 /**
  * Assembles the `Ctx` a jobAction's `onInvoke` needs to call `transitionJob`.
