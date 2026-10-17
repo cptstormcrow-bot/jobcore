@@ -16,9 +16,9 @@
  * `onLayout`-recorded Y offset rather than a hardcoded value.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, type LayoutChangeEvent } from 'react-native';
-import { colors, spacing, typography, Text } from '@jobcore/ui';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { colors, spacing, TabBar } from '@jobcore/ui';
 import type { PaymentsRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatch } from '../money/payout-batch';
@@ -27,6 +27,13 @@ import { PaymentsScreen } from './PaymentsScreen';
 import { ReimbursementQueueScreen } from './ReimbursementQueueScreen';
 import { PayoutBatchScreen } from './PayoutBatchScreen';
 import { PayoutBatchDetailScreen } from './PayoutBatchDetailScreen';
+
+type HubTab = 'payments' | 'reimbursements' | 'payoutBatches';
+const HUB_TABS: Array<{ key: HubTab; label: string }> = [
+  { key: 'payments', label: 'Payments' },
+  { key: 'reimbursements', label: 'Reimbursements' },
+  { key: 'payoutBatches', label: 'Payout Batches' },
+];
 
 export interface PaymentsHubScreenProps {
   payments?: PaymentsRepository;
@@ -51,38 +58,29 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     onScrollHandled,
   } = props;
 
-  const scrollViewRef = useRef<ScrollView>(null);
-  const [payoutBatchesOffsetY, setPayoutBatchesOffsetY] = useState<number | null>(null);
-
-  function handlePayoutBatchesLayout(event: LayoutChangeEvent) {
-    setPayoutBatchesOffsetY(event.nativeEvent.layout.y);
-  }
+  const [activeKey, setActiveKey] = useState<HubTab>('payments');
 
   useEffect(() => {
-    if (scrollToSection !== 'payoutBatches' || payoutBatchesOffsetY === null) {
+    if (scrollToSection !== 'payoutBatches') {
       return;
     }
-    scrollViewRef.current?.scrollTo({ y: payoutBatchesOffsetY, animated: true });
+    setActiveKey('payoutBatches');
     onScrollHandled?.();
-  }, [scrollToSection, payoutBatchesOffsetY, onScrollHandled]);
+  }, [scrollToSection, onScrollHandled]);
 
   return (
     <View style={styles.screen}>
-      <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={styles.content}>
-        <Text style={styles.sectionHeading}>Payments</Text>
-        <PaymentsScreen payments={payments} />
-
-        <Text style={styles.sectionHeading}>Reimbursements</Text>
-        <ReimbursementQueueScreen reimbursements={reimbursements} />
-
-        <View onLayout={handlePayoutBatchesLayout}>
-          <Text style={styles.sectionHeading}>Payout Batches</Text>
-          {selectedPayoutBatch ? (
+      <TabBar items={HUB_TABS} activeKey={activeKey} onSelect={setActiveKey} style={styles.tabBar} />
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
+        {activeKey === 'payments' ? <PaymentsScreen payments={payments} /> : null}
+        {activeKey === 'reimbursements' ? <ReimbursementQueueScreen reimbursements={reimbursements} /> : null}
+        {activeKey === 'payoutBatches' ? (
+          selectedPayoutBatch ? (
             <PayoutBatchDetailScreen batch={selectedPayoutBatch} onBack={onBackFromPayoutBatch} />
           ) : (
             <PayoutBatchScreen payoutBatches={payoutBatches} onSelectBatch={onSelectPayoutBatch} />
-          )}
-        </View>
+          )
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -99,14 +97,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.xs,
   },
-  sectionHeading: {
-    color: colors.text,
-    fontSize: typography.size.h5,
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
+  tabBar: {
+    padding: spacing.xs,
+    gap: spacing.xs,
   },
 });

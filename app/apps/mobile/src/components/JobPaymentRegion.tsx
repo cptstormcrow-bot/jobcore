@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { EmptyState, colors } from '@jobcore/ui';
+import { Button, EmptyState, colors } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
-import { PAYMENT_METHODS } from '../../../../modules/admin-finance/src/data/ports';
+import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
+import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
 import { balanceCents, canRecordPayment, invoiceTotalCents, settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
 import { recordJobPayment } from '../../../../modules/admin-finance/src/flows/record-job-payment';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
@@ -23,8 +24,7 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [method, setMethod] = useState<PaymentMethod>('cash');
-  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>('zelle');
   const [busy, setBusy] = useState(false);
   const canConfirm = role === 'admin' || role === 'owner';
 
@@ -45,10 +45,11 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
     void load();
   }, [load]);
 
-  const handleConfirm = useCallback(() => {
+  const record = useCallback((useMethod: PaymentMethod) => {
     if (session.status !== 'authenticated' || !estimate) {
       return;
     }
+    const balanceNow = balanceCents(invoiceTotalCents(estimate), payments);
     setError(null);
     setBusy(true);
     void (async () => {
@@ -59,14 +60,13 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
           job,
           estimate,
           payments,
-          { amountDollars: Number(amount), method },
+          { amountDollars: balanceNow / 100, method: useMethod },
           { payments: ports.payments },
         );
         if (!result.ok) {
           setError(result.reason);
           return;
         }
-        setAmount('');
         await load();
       } catch (err) {
         setError(`Could not record payment: ${err instanceof Error ? err.message : String(err)}`);
@@ -74,7 +74,7 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
         setBusy(false);
       }
     })();
-  }, [session, estimate, role, job, payments, amount, method, ports.payments, load]);
+  }, [session, estimate, role, job, payments, ports.payments, load]);
 
   if (loading) {
     return <EmptyState title="Payments" message="Loading..." />;
@@ -87,12 +87,15 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
   const paid = settledTotalCents(payments);
   const balance = balanceCents(invoice, payments);
   const allowed = canRecordPayment(job, estimate);
+  const summary = estimate.summary?.trim() || job.description?.trim() || null;
   const enabled = canConfirm && allowed && !busy;
 
   return (
     <View style={{ padding: 12, gap: 8 }}>
       <Text style={{ fontWeight: '700', fontSize: 18 }}>Payments</Text>
-      <Text>Invoice total: {money(invoice)}</Text>
+      {summary ? <Text>{summary}</Text> : null}
+      <Text>Time on site: {formatWorkDuration(workDurationMs(job))}</Text>
+      <Text>Work total: {money(invoice)}</Text>
       <Text>Paid so far: {money(paid)}</Text>
       <Text>Balance: {money(balance)}</Text>
       {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
@@ -108,31 +111,31 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
         <Text>Payments cannot be recorded: the estimate must be approved and the job must not be cancelled.</Text>
       ) : (
         <View style={{ gap: 8 }}>
+          <Button
+            label="Take cash"
+            variant="primary"
+            size="lg"
+            fullWidth
+            disabled={!enabled || balance <= 0}
+            onPress={() => record('cash')}
+          />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {PAYMENT_METHODS.map((m) => (
-              <Pressable
+            {PAYMENT_METHOD_PICK_ORDER.filter((m) => m !== 'cash').map((m) => (
+              <Button
                 key={m}
+                label={PAYMENT_METHOD_LABELS[m]}
+                size="sm"
+                variant={method === m ? 'primary' : 'outline'}
                 onPress={() => setMethod(m)}
-                style={{ padding: 8, borderWidth: 1, borderRadius: 6, opacity: method === m ? 1 : 0.5 }}
-              >
-                <Text>{m}</Text>
-              </Pressable>
+              />
             ))}
           </View>
-          <TextInput
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="Amount (dollars)"
-            keyboardType="decimal-pad"
-            style={{ borderWidth: 1, borderRadius: 6, padding: 8 }}
+          <Button
+            label={`Confirm ${PAYMENT_METHOD_LABELS[method]} ${money(balance)}`}
+            variant="primary"
+            disabled={!enabled || balance <= 0 || method === 'cash'}
+            onPress={() => record(method)}
           />
-          <Pressable
-            onPress={handleConfirm}
-            disabled={!enabled}
-            style={{ padding: 10, borderRadius: 6, borderWidth: 1, opacity: enabled ? 1 : 0.4 }}
-          >
-            <Text>Confirm</Text>
-          </Pressable>
           {!canConfirm ? <Text>Admin/owner only</Text> : null}
         </View>
       )}

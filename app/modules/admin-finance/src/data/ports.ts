@@ -1079,8 +1079,27 @@ export interface PaymentRow {
 }
 
 /** How a payment was made. */
-export type PaymentMethod = 'cash' | 'check' | 'card' | 'ach' | 'paypal' | 'other';
-export const PAYMENT_METHODS: readonly PaymentMethod[] = ['cash', 'check', 'card', 'ach', 'paypal', 'other'];
+export type PaymentMethod =
+  | 'cash' | 'check' | 'zelle' | 'paypal' | 'venmo' | 'debit' | 'credit'
+  | 'card' | 'ach' | 'other';
+/** Every accepted value, including the legacy card / ach / other. */
+export const PAYMENT_METHODS: readonly PaymentMethod[] = [
+  'cash', 'check', 'zelle', 'paypal', 'venmo', 'debit', 'credit', 'card', 'ach', 'other',
+];
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  check: 'Check',
+  zelle: 'Zelle',
+  paypal: 'PayPal',
+  venmo: 'Venmo',
+  debit: 'Debit card',
+  credit: 'Credit card',
+  card: 'Card',
+  ach: 'ACH',
+  other: 'Other',
+};
+/** Order the method picker shows (legacy values are accepted but not offered). */
+export const PAYMENT_METHOD_PICK_ORDER: readonly PaymentMethod[] = ['cash', 'zelle', 'paypal', 'venmo', 'check', 'debit', 'credit'];
 
 /** The full `payments.status` union, restated as a runtime tuple so `toPayment` can validate an untrusted row. */
 export const PAYMENT_STATUSES = ['pending', 'confirmed', 'failed', 'manual_confirmed'] as const;
