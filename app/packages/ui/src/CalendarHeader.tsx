@@ -21,7 +21,7 @@ const MODES: { key: CalendarMode; title: string }[] = [
 ];
 
 // One compact row: Week | Month | Day tabs, then Prev / Today / Next in the
-// same gold style as the #0010 buttons (Button variant="primary"). The period
+// same sand style as every other button (Rule G1, Button variant="primary"). The period
 // label sits on a thin line underneath so Month fits a small phone.
 export function CalendarHeader({
   mode,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   navButton: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
     borderRadius: radius.sm,
     paddingVertical: 6,
     paddingHorizontal: 10,
