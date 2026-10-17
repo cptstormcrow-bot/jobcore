@@ -29,6 +29,16 @@ export type JobHeaderProps = {
 
 const copyToClipboard = async (text: string): Promise<void> => { await Clipboard.setStringAsync(text); };
 
+const formatClock = (iso: string | null | undefined): string | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const h = d.getHours();
+  const m = d.getMinutes();
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m < 10 ? `0${m}` : m}${h < 12 ? 'am' : 'pm'}`;
+};
+
 export function JobHeader({
   job,
   customer = null,
@@ -50,6 +60,17 @@ export function JobHeader({
   const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
   const router = useRouter();
   const headerLines = formatJobHeaderLines(job.jobNumber, job.createdAt);
+  const timeLines: string[] = [];
+  const enRouteClock = formatClock(job.enRouteAt);
+  const arrivedClock = formatClock(job.inProgressAt);
+  const completedClock = formatClock(job.completedAt);
+  if (enRouteClock) timeLines.push(`En route: ${enRouteClock}`);
+  if (arrivedClock) timeLines.push(`Arrived: ${arrivedClock}`);
+  if (completedClock) timeLines.push(`Completed: ${completedClock}`);
+  if (job.inProgressAt && job.completedAt) {
+    const billed = formatElapsed(job.inProgressAt, new Date(job.completedAt));
+    if (billed) timeLines.push(`Billed: ${billed}`);
+  }
   const onSchedulePress = () => {
     const d = job.scheduledStart ? new Date(job.scheduledStart) : null;
     const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
@@ -82,6 +103,7 @@ export function JobHeader({
             dateLine={headerLines.dateLine}
             scheduleLabel={formatScheduleLabel(job.scheduledStart)}
             onSchedulePress={onSchedulePress}
+            timeLines={timeLines}
           />
         }
         titleBarTone="gold"
@@ -222,6 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
     fontSize: typography.size.h6,
     color: colors.text,
+    textAlign: 'center',
     paddingHorizontal: spacing.md,
     marginTop: spacing.xs,
   },

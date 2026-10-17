@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   header: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
     padding: spacing.md,
     justifyContent: 'center',
   },

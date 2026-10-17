@@ -20,6 +20,7 @@ export type JobTitleBarHeaderProps = {
   dateLine?: string;
   scheduleLabel?: string;
   onSchedulePress?: () => void;
+  timeLines?: string[];
   inset?: number;
 };
 
@@ -37,6 +38,7 @@ export function JobTitleBarHeader({
   dateLine,
   scheduleLabel,
   onSchedulePress,
+  timeLines,
   inset = 0,
 }: JobTitleBarHeaderProps) {
   const [copiedKey, setCopiedKey] = useState<CopiedKey>(null);
@@ -153,6 +155,11 @@ export function JobTitleBarHeader({
             </Text>
           )
         ) : null}
+        {timeLines && timeLines.length > 0
+          ? timeLines.map((line) => (
+              <Text key={line} style={[styles.sideText, styles.rightText]} numberOfLines={1}>{line}</Text>
+            ))
+          : null}
       </View>
     </View>
   ) : (
@@ -168,7 +175,7 @@ export function JobTitleBarHeader({
 
 const styles = StyleSheet.create({
   frame: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
     borderRadius: radius.md,
     paddingVertical: 14,
     paddingHorizontal: spacing.md,
@@ -176,9 +183,9 @@ const styles = StyleSheet.create({
   },
   root: { alignSelf: 'stretch' },
   threeRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.sm },
-  leftCol: { flex: 1, alignItems: 'flex-start' },
+  leftCol: { flex: 1, alignItems: 'center' },
   centreCol: { flexShrink: 0, maxWidth: '60%', alignItems: 'center' },
-  rightCol: { flex: 1, alignItems: 'flex-end' },
+  rightCol: { flex: 1, alignItems: 'center' },
   jobLine: {
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.headingBold,
@@ -186,8 +193,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sideText: { fontSize: typography.size.small, color: colors.text },
-  rightText: { textAlign: 'right' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rightText: { textAlign: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   name: {
     fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.headingBold,

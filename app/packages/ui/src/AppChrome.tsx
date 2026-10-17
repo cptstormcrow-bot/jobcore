@@ -84,7 +84,7 @@ function MenuRow({
 
   const animatedBg = pressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [item.isActive ? colors.gold : 'transparent', colors.gold],
+    outputRange: [item.isActive ? colors.sand : 'transparent', colors.sand],
   });
 
   return (
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   titleBarGold: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
   },
   titleBarTextGold: {
     color: colors.text,
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   },
   wordmarkChip: {
     alignSelf: 'center',
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   rowActive: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
   },
   rowDisabled: {
     opacity: 0.5,
