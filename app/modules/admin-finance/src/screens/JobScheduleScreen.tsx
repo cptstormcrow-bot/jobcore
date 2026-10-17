@@ -43,12 +43,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, Button, DatePicker, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
-import { addMinutes, addMonths, format, subMonths } from 'date-fns';
+import { addMinutes, format } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
+import { UniversalCalendar, type UniversalCalendarEmployee } from './UniversalCalendar';
+import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 
 export interface JobScheduleScreenProps {
   job: Job;
@@ -211,6 +213,34 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
       setEndTime(parts.time);
     }
   }
+
+  const [calJobs, setCalJobs] = useState<Job[]>([]);
+  const [calEmployees, setCalEmployees] = useState<UniversalCalendarEmployee[]>([]);
+  const [calTimeOff, setCalTimeOff] = useState<TimeOffRequestAdmin[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const ports = getModulePorts();
+        const orgId = job.organizationId;
+        const [jobsList, profiles, timeOff] = await Promise.all([
+          ports.jobs.listForOrganization(orgId),
+          ports.employees.listEmployees(orgId),
+          ports.timeOffAdmin.listForOrganization(orgId),
+        ]);
+        if (cancelled) return;
+        setCalJobs(jobsList);
+        setCalEmployees(profiles.map((p) => ({ id: p.id, fullName: p.fullName, role: p.role, active: p.active })));
+        setCalTimeOff(timeOff);
+      } catch {
+        // leave arrays empty
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [job.organizationId]);
 
   function handleSelectDay(day: Date): void {
     setAnchorDay(day);
@@ -412,15 +442,24 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
             </>
           )}
 
-          <CalendarHeader
-            mode="month"
-            onModeChange={() => {}}
-            label={format(anchorDay, 'MMMM yyyy')}
-            onPrev={() => setAnchorDay((d) => subMonths(d, 1))}
-            onNext={() => setAnchorDay((d) => addMonths(d, 1))}
-            onToday={() => setAnchorDay(new Date())}
-          />
-          <MonthView jobs={[]} anchorDay={anchorDay} onSelectDay={handleSelectDay} />
+          <View style={{ height: 420 }}>
+            <UniversalCalendar
+              role="admin"
+              viewerId={null}
+              anchorDate={anchorDay}
+              initialMode="month"
+              jobs={calJobs}
+              employees={calEmployees}
+              timeOffRequests={calTimeOff}
+              onSelectJob={() => {}}
+              onSaveBlackouts={async (isoDays, techId) => {
+                for (const day of isoDays) {
+                  await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, { startDate: day, endDate: day, reason: null });
+                }
+              }}
+              onPickDay={handleSelectDay}
+            />
+          </View>
 
           <Text style={styles.sectionLabel}>Start time</Text>
           {renderFieldPicker('start')}

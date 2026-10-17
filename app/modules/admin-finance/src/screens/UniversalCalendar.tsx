@@ -63,6 +63,8 @@ export interface UniversalCalendarProps {
   onReturn?: () => void;
   onSelectJob: (job: Job) => void;
   onSaveBlackouts: (isoDays: string[], techId: string) => Promise<void> | void;
+  /** Host hook: when set, a month/week day tap (outside blackout pick mode) calls this instead of drilling into Day view. */
+  onPickDay?: (day: Date) => void;
 }
 
 export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Element {
@@ -191,6 +193,10 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           onDayPress={pickDays ? toggle : undefined}
           onSelectDay={(d) => {
             setAnchor(d);
+            if (props.onPickDay) {
+              props.onPickDay(d);
+              return;
+            }
             setMode('day');
           }}
           onSelectJob={onSelectJob}
@@ -201,7 +207,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           anchorDay={anchor}
           timeOffEvents={timeOffEvents}
           onSelectJob={onSelectJob}
-          onDayPress={pickDays ? (d) => toggle(format(d, 'yyyy-MM-dd')) : undefined}
+          onDayPress={pickDays ? (d) => toggle(format(d, 'yyyy-MM-dd')) : props.onPickDay}
         />
       ) : (
         <DayView date={anchor} jobs={calendarJobs} timeOff={timeOffEvents} onJobPress={onSelectJob} />
