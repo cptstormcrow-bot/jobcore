@@ -28,7 +28,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, SandButton, SAND_BG, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, ScreenTitle, SandButton, SAND_BG, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
@@ -1007,14 +1007,10 @@ export function AdminFinanceRoot() {
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
-            <Button
-              label="Add Job"
-              variant="primary"
-              size="sm"
-              fullWidth
-              onPress={() => router.push('/job/new')}
-              style={styles.card}
-            />
+            <ScreenTitle title="Jobs #0012" />
+            <View style={{ alignSelf: 'flex-start', marginBottom: spacing.sm }}>
+              <SandButton label="Add Job" onPress={() => router.push('/job/new')} />
+            </View>
             {(() => {
               const visibleJobs = loadState.jobs.filter(
                 (job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status),
@@ -1043,7 +1039,8 @@ export function AdminFinanceRoot() {
                         overline={job.customerName ?? undefined}
                         footer={footer}
                         onPress={() => router.push('/job/' + job.id)}
-                        right={<Button label="Plan" size="sm" onPress={() => router.push('/job/' + job.id + '?panel=plan')} />}
+                        style={{ paddingVertical: spacing.xs }}
+                        right={<SandButton label="Detail" onPress={() => router.push('/job/' + job.id)} />}
                       />
                     );
                   })}
