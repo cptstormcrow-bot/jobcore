@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { colors } from '@jobcore/ui';
 import type { PayrollPort } from './port';
 import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
@@ -18,12 +19,12 @@ export interface PayrollHomeProps {
 }
 
 const actionBtn = {
-  backgroundColor: '#D9C7A0',
+  backgroundColor: colors.sand, minHeight: 44,
   paddingHorizontal: 12,
   paddingVertical: 6,
   borderRadius: 6,
 } as const;
-const actionTxt = { color: '#000', fontWeight: '700' } as const;
+const actionTxt = { color: colors.text, fontWeight: '700' } as const;
 
 type TabId ='time' | 'hours' | 'period' | 'reimb' | 'approvals';
 
@@ -78,8 +79,9 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
             onPress={() => setActive(t.id)}
             accessibilityRole="tab"
             style={{
-              paddingVertical: 8,
+              paddingVertical: 4,
               paddingHorizontal: 12,
+              backgroundColor: active === t.id ? colors.sand : colors.sandInactive,
               borderBottomWidth: 2,
               borderBottomColor: active === t.id ? '#2563eb' : 'transparent',
             }}
@@ -88,7 +90,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
           </Pressable>
         ))}
         </View>
-        <View style={{ marginLeft: 'auto', alignItems: 'flex-end', paddingVertical: 4 }}>
+        <View style={{ alignItems: 'flex-end', paddingVertical: 0 }}>
           {mode === 'admin' && (onOpenRun || onOpenSettings) ? (
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {onOpenRun ? (
@@ -114,13 +116,13 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
             </View>
           ) : null}
           {active === 'time' ? (
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
               <Pressable
                 onPress={() => void timeActions?.saveAll()}
                 disabled={!timeActions || timeActions.busy}
                 accessibilityRole="button"
                 accessibilityLabel="Save all"
-                style={[actionBtn, { opacity: !timeActions || timeActions.busy ? 0.5 : 1 }]}
+                style={[actionBtn, { backgroundColor: !timeActions || timeActions.busy ? colors.sandInactive : colors.sand }]}
               >
                 <Text style={actionTxt}>{timeActions?.busy ? 'Saving…' : 'Save all'}</Text>
               </Pressable>
@@ -132,7 +134,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
                 disabled={!timeActions?.canSubmit || timeActions?.busy}
                 accessibilityRole="button"
                 accessibilityLabel="Submit week"
-                style={[actionBtn, { opacity: !timeActions?.canSubmit || timeActions?.busy ? 0.5 : 1 }]}
+                style={[actionBtn, { backgroundColor: !timeActions?.canSubmit || timeActions?.busy ? colors.sandInactive : colors.sand }]}
               >
                 <Text style={actionTxt}>Submit week</Text>
               </Pressable>
@@ -144,7 +146,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
                 disabled={!timeActions?.canWithdraw || timeActions?.busy}
                 accessibilityRole="button"
                 accessibilityLabel="Withdraw week"
-                style={[actionBtn, { opacity: !timeActions?.canWithdraw || timeActions?.busy ? 0.5 : 1 }]}
+                style={[actionBtn, { backgroundColor: !timeActions?.canWithdraw || timeActions?.busy ? colors.sandInactive : colors.sand }]}
               >
                 <Text style={actionTxt}>Withdraw week</Text>
               </Pressable>
@@ -161,7 +163,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
                 disabled={!timeActions?.canDelete || timeActions?.busy}
                 accessibilityRole="button"
                 accessibilityLabel="Delete week"
-                style={[actionBtn, { opacity: !timeActions?.canDelete || timeActions?.busy ? 0.5 : 1 }]}
+                style={[actionBtn, { backgroundColor: !timeActions?.canDelete || timeActions?.busy ? colors.sandInactive : colors.sand }]}
               >
                 <Text style={actionTxt}>{confirmDelete ? 'Tap again to delete' : 'Delete week'}</Text>
               </Pressable>
@@ -178,7 +180,7 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
               accessibilityLabel="Submit"
               style={[
                 actionBtn,
-                { marginTop: 6, opacity: !reimbActions?.canSubmit || reimbActions?.busy ? 0.5 : 1 },
+                { marginTop: 6, backgroundColor: !reimbActions?.canSubmit || reimbActions?.busy ? colors.sandInactive : colors.sand },
               ]}
             >
               <Text style={actionTxt}>Submit</Text>

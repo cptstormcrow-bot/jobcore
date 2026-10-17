@@ -242,12 +242,12 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
   return (
     <View>
       {error !== '' ? (
-        <View style={{ alignItems: 'center', marginVertical: 4 }}>
+        <View style={{ alignItems: 'center', marginVertical: 2 }}>
           <Text style={{ color: '#b00020', textAlign: 'center' }}>{error}</Text>
         </View>
       ) : null}
       {onRegisterActions ? null : (
-        <View style={{ marginTop: 4, alignSelf: 'flex-end' }}>
+        <View style={{ marginTop: 0, alignSelf: 'flex-end' }}>
           <SandButton
             label={busy ? 'Saving…' : 'Save all'}
             onPress={saveAll}
@@ -258,16 +258,14 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       {entries.length > 0 && !canSubmit ? (
         <Text style={{ color: '#666666', fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw week to change it.</Text>
       ) : null}
-      <View>
-        {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
-      </View>
+      {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       {days.map((day) => {
         const dayEntries = entries.filter((e) => e.workDate === day);
         const total = dayEntries.reduce((s, e) => s + e.minutes, 0);
         const dayManual = dayEntries.filter((e) => e.source === 'manual');
         const locked = dayManual.length > 0 && !dayManual.some(editable);
         return (
-          <Card key={day} style={{ marginVertical: 2, padding: 6 }}>
+          <Card key={day} style={{ marginVertical: 2, padding: 4 }}>
             <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
             {dayEntries.map((e) => (
               <View key={e.id} style={{ marginVertical: 0, flexDirection: 'row', alignItems: 'center' }}>
@@ -302,12 +300,14 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
                   : 'Approved. Tap Withdraw week to reopen it, then submit again after your changes.'}
               </Text>
             ) : null}
-            <TextField
-              label="Notes (optional)"
-              value={notes[day] ?? ''}
-              onChangeText={(v) => setNotes((p) => ({ ...p, [day]: v }))}
-              dense
-            />
+            {(notes[day] ?? '').trim() !== '' ? (
+              <TextField
+                label="Notes (optional)"
+                value={notes[day] ?? ''}
+                onChangeText={(v) => setNotes((p) => ({ ...p, [day]: v }))}
+                dense
+              />
+            ) : null}
           </Card>
         );
       })}
