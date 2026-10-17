@@ -1,3 +1,4 @@
+---BUILD REPORT---
 # Build report: Job header + Estimate screen #0057 redlines
 
 ## Request
@@ -27,7 +28,12 @@ Forward contracts:
 7. Rule 41 carry-over: the Android device pass for the header/drawer (plus Close-out menu item) remains owed from reports 2026-10-11_drawer-header-sand-navy-palette, 2026-10-12_closeout-moves-to-job-menu, 2026-10-13_payroll-screen-all-roles, 2026-10-13_employee-hours-follow-payroll, 2026-10-13_blackouts-calendar-payroll-card. This change alters the same header, so the device pass now also covers the new 3-part title bar, the 5px inset and the Day view. Not dischargeable without Jeff's device. The Rule 41 pre-write check was run (Explore hound, 2026-10-16) but originally missed FC(3) of 2026-10-12_closeout-moves-to-job-menu.md (Themis flagged it); FC(3) was found and is carried forward as item 8 below (2026-10-09_job-plan-reset-pinned-buttons says none).
 8. Carried from 2026-10-12_closeout-moves-to-job-menu.md FC(3): pressing 'Paid' before 'Close-out' does completed->paid with no commission row, so closeOutJob (app/modules/admin-finance/src/flows/close-out-job.ts:81) rejects the job as not ready. Not reconciled here. The Paid menu item now routes to the payment region (app/apps/mobile/app/job/[jobId].tsx:1289), a change owned by the payments session and outside these redlines.
 
+9. Live state update (supersedes "unapplied/undeployed" above): migration 0089 is APPLIED to hosted project vogkxkcceahtwyovpxsg; edge function `ups-track` is DEPLOYED (v1, ACTIVE, verify_jwt true); commit d34ec00 on branch jobcore-role-landing-0.1.3. `UPS_CLIENT_ID` / `UPS_CLIENT_SECRET` stay UNSET (Jeff's to enter). `estimate-resolve` is NOT redeployed: live is v3 (verify_jwt false), Jeff said "hold for now"; the committed index.ts is ahead of live, so Materials onsite, Contingencies, Fine Print and the PDF button are not on customer links yet. Vendored `estimate-layout.ts` must stay byte-identical to the module copy (SHA-256 16FFD2DBFA3854D4BB9EB418441B2F2140F8B6855E8D95AACA17652CFD3C0E96). Device passes are owed because the test plan was skipped; UI Inventory snapshot and version-history pages need regeneration (Rule 31).
+
+Rule 41: 12 prior open JobCore contracts reviewed, none resolvable in this change, carried as pointers only (tappable-stages FC-1/FC-2; prem-checklist-estimate-schedule FC-1/FC-2/FC-3; JD-08 in 2026-09-20_jobcore-redlines-stabilize.md:3; service_task_id not threaded into calculateCommission at commission.ts:103; 2026-10-11 drawer-sand FC-1/FC-2/FC-4; 2026-10-11 apk-0-4-0-build debts 1-4, 6-7 and contracts 8-13).
+
 ## Deviations / Defects
+(e) The `estimate-resolve` redeploy is held (blocked by the permission classifier, then Jeff said hold).
 (a) Header SOP narrowed: the 0.3.0 SOP widened the gold bar close to the buttons; Jeff's Round 5 5px inset overrides it for job screens only. Memory `feedback-jobcore-header-title-bar-sop` updated at closeout.
 (b) Migration renumbered 0088 to 0089 because the payroll session took 0088.
 (c) The 'Rejected' estimate status was dropped (UI type, DB constraint, and existing rows rewritten to draft). This goes beyond Jeff's literal redlines; he never explicitly dropped it. Flagged as a question for Jeff.
@@ -40,6 +46,7 @@ No other divergences found in the plan's Ledger or notes.
 ## DEFERRED
 none beyond the Forward contracts above.
 
-Test plan: declined by Jeff 2026-10-16 (Rule 43; Jeff answered "no test plan"). No self-check performed: not browser-verified.
+Test plan: declined by Jeff ("skip the test plan"), 2026-10-16
+(Rule 43; earlier answer "no test plan"). No self-check performed: not browser-verified.
 
 Commit/push: scoped commit, NO push; migration unapplied, no deploys.
