@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, Text, TextInput, View } from 'react-native';
+import { colors } from '@jobcore/ui';
 import type {
   AdminReimbursement,
   PayrollAdminPort,
@@ -191,10 +192,11 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
           disabled={!canSubmit}
           style={{
             padding: 12,
+            minHeight: 44,
             borderRadius: 6,
             alignItems: 'center',
-            backgroundColor: '#D9C7A0',
-            opacity: canSubmit ? 1 : 0.5,
+            justifyContent: 'center',
+            backgroundColor: canSubmit ? colors.sand : colors.sandInactive,
           }}
         >
           {submitting ? (

@@ -1,7 +1,9 @@
 import { createElement } from 'react';
 import { Pressable, Text } from 'react-native';
 
-export const SAND_BG = '#D9C7A0';
+import { colors } from './tokens';
+
+export const SAND_BG = colors.sand;
 export const SAND_TEXT = '#000';
 
 export const sandButtonStyle = {

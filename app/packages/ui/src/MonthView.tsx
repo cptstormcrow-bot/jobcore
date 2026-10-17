@@ -28,6 +28,10 @@ export interface MonthViewProps {
   onSelectTimeOff?: (event: TimeOffEvent) => void;
   variant?: 'dots' | 'list';
   maxVisibleItems?: number;
+  /** ISO day keys (yyyy-MM-dd) highlighted as picked, used by blackout day-picking mode. */
+  selectedDays?: string[];
+  /** When set, a day tap calls this with the ISO day key instead of onSelectDay. */
+  onDayPress?: (isoDay: string) => void;
 }
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -41,6 +45,8 @@ export function MonthView({
   onSelectTimeOff,
   variant = 'dots',
   maxVisibleItems = 4,
+  selectedDays,
+  onDayPress,
 }: MonthViewProps) {
   const gridStart = startOfWeek(startOfMonth(anchorDay), { weekStartsOn: 0 });
   const gridEnd = endOfWeek(endOfMonth(anchorDay), { weekStartsOn: 0 });
@@ -58,8 +64,17 @@ export function MonthView({
   }
 
   const listMode = variant === 'list';
+  const pickedSet = new Set(selectedDays ?? []);
 
   type TimeOffEventWithRange = TimeOffEvent & { startDate?: string | number | Date; endDate?: string | number | Date };
+
+  const pressDay = (day: Date) => {
+    if (onDayPress) {
+      onDayPress(format(day, 'yyyy-MM-dd'));
+    } else {
+      onSelectDay?.(day);
+    }
+  };
 
   const grid = (
     <View>
@@ -83,6 +98,7 @@ export function MonthView({
             const inMonth = isSameMonth(day, anchorDay);
             const selected = isSameDay(day, anchorDay);
             const today = isToday(day);
+            const picked = pickedSet.has(format(day, 'yyyy-MM-dd'));
 
             if (listMode) {
               const dayTimeOffList = timeOffEvents.filter((t) => {
@@ -100,8 +116,13 @@ export function MonthView({
               return (
                 <Pressable
                   key={day.toISOString()}
-                  onPress={() => onSelectDay?.(day)}
-                  style={[styles.cell, styles.cellList, selected && styles.cellSelected]}
+                  onPress={() => pressDay(day)}
+                  style={[
+                    styles.cell,
+                    styles.cellList,
+                    selected && styles.cellSelected,
+                    picked && styles.cellPicked,
+                  ]}
                 >
                   <Text
                     style={[
@@ -109,6 +130,7 @@ export function MonthView({
                       !inMonth && styles.dayTextMuted,
                       today && styles.dayTextToday,
                       selected && styles.dayTextSelected,
+                      picked && styles.dayTextPicked,
                       dayTimeOffList.length > 0 && styles.dayTextTimeOff,
                     ]}
                   >
@@ -143,8 +165,8 @@ export function MonthView({
             return (
               <Pressable
                 key={day.toISOString()}
-                onPress={() => onSelectDay?.(day)}
-                style={[styles.cell, selected && styles.cellSelected]}
+                onPress={() => pressDay(day)}
+                style={[styles.cell, selected && styles.cellSelected, picked && styles.cellPicked]}
               >
                 <Text
                   style={[
@@ -152,6 +174,7 @@ export function MonthView({
                     !inMonth && styles.dayTextMuted,
                     today && styles.dayTextToday,
                     selected && styles.dayTextSelected,
+                    picked && styles.dayTextPicked,
                     hasTimeOff && styles.dayTextTimeOff,
                   ]}
                 >
@@ -195,13 +218,16 @@ const styles = StyleSheet.create({
   },
   cell: {
     width: `${100 / 7}%`,
-    minHeight: 56,
+    minHeight: 40,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    padding: 4,
+    padding: 2,
   },
   cellSelected: {
     backgroundColor: colors.primary,
+  },
+  cellPicked: {
+    backgroundColor: colors.gold,
   },
   dayText: {
     fontSize: 12,
@@ -217,13 +243,17 @@ const styles = StyleSheet.create({
   dayTextSelected: {
     color: colors.white,
   },
+  dayTextPicked: {
+    color: colors.text,
+    fontWeight: '700',
+  },
   dayTextTimeOff: {
     color: colors.danger,
     fontWeight: '700',
   },
   dotsRow: {
     flexDirection: 'row',
-    marginTop: spacing.xs,
+    marginTop: 2,
     alignItems: 'center',
   },
   dot: {
@@ -249,7 +279,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cellList: {
-    minHeight: 110,
+    minHeight: 80,
   },
   listItemRow: {
     flexDirection: 'row',

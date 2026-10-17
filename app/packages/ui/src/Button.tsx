@@ -27,13 +27,9 @@ const paddingHorizontalBySize = { sm: spacing.lg, md: spacing.lg, lg: spacing.lg
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, fullWidth = false, style }: ButtonProps) {
   const isOutline = variant === 'outline';
-  // No orange anywhere (Jeff rule): accent is navy (colors.primary) with white label text.
-  // primary uses a lighter tan (#E1AF80) background per user decision; white
-  // label text on that tan only reaches ~2.0:1 contrast (fails WCAG AA), so
-  // primary's label uses colors.primary (dark navy) instead of white below.
-  const bg = variant === 'accent' ? colors.primary : variant === 'primary' ? colors.gold : variant === 'secondary' ? colors.primary : 'transparent';
-  // Outline text is navy on white; accent and secondary are navy backgrounds with white text.
-  const labelColor = isOutline ? colors.primary : variant === 'accent' ? colors.white : variant === 'primary' ? colors.text : colors.white;
+  // Rule G1: active = sand, disabled = sandInactive, dark text on all filled variants.
+  const bg = isOutline ? 'transparent' : disabled ? colors.sandInactive : colors.sand;
+  const labelColor = isOutline ? colors.primary : colors.text;
   return (
     <Pressable
       onPress={onPress}
@@ -51,7 +47,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
           paddingHorizontal: paddingHorizontalBySize[size],
         },
         isOutline && styles.outline,
-        disabled && styles.disabled,
+        disabled && isOutline && styles.disabled,
         style,
         fullWidth && { alignSelf: 'stretch' },
       ]}

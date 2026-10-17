@@ -117,8 +117,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   column: {
-    width: 160,
-    marginRight: spacing.sm,
+    width: 112,
+    marginRight: spacing.xs,
     borderRightColor: colors.border,
     borderRightWidth: 1,
     paddingHorizontal: spacing.xs,
@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
-    padding: spacing.sm,
-    marginTop: spacing.sm,
+    padding: spacing.xs,
+    marginTop: spacing.xs,
   },
   cardTime: {
     fontSize: typography.size.small,
@@ -168,6 +168,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.small,
     lineHeight: typography.size.small * typography.lineHeight.body,
     color: colors.textMuted,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
 });

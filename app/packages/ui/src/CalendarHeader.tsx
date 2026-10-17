@@ -14,6 +14,15 @@ export interface CalendarHeaderProps {
   onToday: () => void;
 }
 
+const MODES: { key: CalendarMode; title: string }[] = [
+  { key: 'week', title: 'Week' },
+  { key: 'month', title: 'Month' },
+  { key: 'day', title: 'Day' },
+];
+
+// One compact row: Week | Month | Day tabs, then Prev / Today / Next in the
+// same gold style as the #0010 buttons (Button variant="primary"). The period
+// label sits on a thin line underneath so Month fits a small phone.
 export function CalendarHeader({
   mode,
   onModeChange,
@@ -25,120 +34,86 @@ export function CalendarHeader({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onPrev}
-          style={styles.navButton}
-        >
-          <Text>‹ Prev</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onToday}
-          style={styles.navButton}
-        >
-          <Text>Today</Text>
-        </Pressable>
-        <Text style={styles.label} numberOfLines={1}>
-          {label}
-        </Text>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={onNext}
-          style={styles.navButton}
-        >
-          <Text>Next ›</Text>
-        </Pressable>
+        <View style={styles.segmentedControl}>
+          {MODES.map((m) => {
+            const selected = mode === m.key;
+            return (
+              <Pressable
+                key={m.key}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                onPress={() => onModeChange(m.key)}
+                style={[
+                  styles.segment,
+                  selected ? styles.segmentSelected : styles.segmentUnselected,
+                ]}
+              >
+                <Text style={selected ? styles.segmentTextSelected : styles.segmentText}>
+                  {m.title}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={styles.navGroup}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Previous"
+            hitSlop={6}
+            onPress={onPrev}
+            style={styles.navButton}
+          >
+            <Text style={styles.navText}>‹</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            hitSlop={6}
+            onPress={onToday}
+            style={styles.navButton}
+          >
+            <Text style={styles.navText}>Today</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Next"
+            hitSlop={6}
+            onPress={onNext}
+            style={styles.navButton}
+          >
+            <Text style={styles.navText}>›</Text>
+          </Pressable>
+        </View>
       </View>
-      <View style={styles.segmentedControl}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: mode === 'week' }}
-          onPress={() => onModeChange('week')}
-          style={[
-            styles.segment,
-            mode === 'week' ? styles.segmentSelected : styles.segmentUnselected,
-          ]}
-        >
-          <Text
-            style={mode === 'week' ? styles.segmentTextSelected : styles.segmentText}
-          >
-            Week
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: mode === 'month' }}
-          onPress={() => onModeChange('month')}
-          style={[
-            styles.segment,
-            mode === 'month' ? styles.segmentSelected : styles.segmentUnselected,
-          ]}
-        >
-          <Text
-            style={mode === 'month' ? styles.segmentTextSelected : styles.segmentText}
-          >
-            Month
-          </Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ selected: mode === 'day' }}
-          onPress={() => onModeChange('day')}
-          style={[
-            styles.segment,
-            mode === 'day' ? styles.segmentSelected : styles.segmentUnselected,
-          ]}
-        >
-          <Text
-            style={mode === 'day' ? styles.segmentTextSelected : styles.segmentText}
-          >
-            Day
-          </Text>
-        </Pressable>
-      </View>
+      <Text style={styles.label} numberOfLines={1}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    gap: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    gap: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  navButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  label: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: '700',
-    color: colors.text,
+    gap: 6,
   },
   segmentedControl: {
+    flex: 1,
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
     overflow: 'hidden',
-    alignSelf: 'stretch',
   },
   segment: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 6,
     alignItems: 'center',
   },
   segmentSelected: {
@@ -149,9 +124,34 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: colors.text,
+    fontSize: 13,
   },
   segmentTextSelected: {
     color: colors.white,
     fontWeight: '700',
+    fontSize: 13,
+  },
+  navGroup: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  navButton: {
+    backgroundColor: colors.gold,
+    borderRadius: radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navText: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  label: {
+    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 13,
+    color: colors.text,
   },
 });

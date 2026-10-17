@@ -22,6 +22,10 @@ export const colors = {
   textMutedDark: '#78818A',
   gold: '#E1AF80',
   border: '#E9ECEF',
+  sand: '#D9C7A0',
+  sandInactive: '#E8E0CD',
+  estimateApprovedBar: '#E0A800',
+  paidBar: '#2E7D32',
   overlay: 'rgba(27, 42, 74, 0.85)',
   // Semantic status colors — NOT defined in the brand CSS (source has no status
   // UI). Each is a distinct hue harmonized with the navy/sand brand, chosen so

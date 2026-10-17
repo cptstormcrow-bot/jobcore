@@ -1,10 +1,12 @@
 import { Pressable, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
+import { colors } from '@jobcore/ui';
 
 export const sandButtonStyle = {
-  backgroundColor: '#D9C7A0',
+  backgroundColor: colors.sand,
   paddingHorizontal: 12,
   paddingVertical: 6,
+  minHeight: 44,
   borderRadius: 6,
 } as const;
 
@@ -35,7 +37,7 @@ export function SandButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!disabled }}
       testID={testID}
-      style={[sandButtonStyle, disabled ? { opacity: 0.5 } : null, style]}
+      style={[sandButtonStyle, disabled ? { backgroundColor: colors.sandInactive } : null, style]}
     >
       <Text style={sandButtonTextStyle}>{label}</Text>
     </Pressable>

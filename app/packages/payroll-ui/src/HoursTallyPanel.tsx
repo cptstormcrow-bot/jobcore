@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
+import { colors } from '@jobcore/ui';
 import type { PayrollSelfPort, PayrollSettings, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
 
@@ -110,14 +111,16 @@ export function HoursTallyPanel({ port, userId, refreshKey }: HoursTallyPanelPro
             accessibilityRole="button"
             accessibilityState={{ selected: tab === t.id }}
             style={{
+              minHeight: 44,
+              justifyContent: 'center',
               paddingVertical: 6,
               paddingHorizontal: 12,
               marginRight: 6,
               borderRadius: 999,
-              backgroundColor: tab === t.id ? '#1d4ed8' : '#e5e7eb',
+              backgroundColor: tab === t.id ? colors.sand : colors.sandInactive,
             }}
           >
-            <Text style={{ color: tab === t.id ? '#fff' : '#111827' }}>{t.label}</Text>
+            <Text style={{ color: colors.text }}>{t.label}</Text>
           </Pressable>
         ))}
       </View>
