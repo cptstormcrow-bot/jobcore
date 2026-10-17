@@ -27,9 +27,8 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { addDays, addMonths, subMonths, addWeeks, subWeeks, startOfWeek, endOfWeek, startOfMonth, format } from 'date-fns';
-import { Card, ListItem, Button, ScreenTitle, SandButton, SAND_BG, TechSelect, EmptyState, LoadingState, ErrorState, WeekView, MonthView, CalendarHeader, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
-import type { TimeOffEvent, CalendarMode, MenuItem } from '@jobcore/ui';
+import { Card, ListItem, Button, ScreenTitle, SandButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
@@ -46,6 +45,7 @@ import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { PayrollScreen } from './PayrollScreen';
+import { UniversalCalendar } from './UniversalCalendar';
 import { PayrollRunScreen } from './PayrollRunScreen';
 import { PayrollSettingsScreen } from './PayrollSettingsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
@@ -117,51 +117,10 @@ type LoadState =
   | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[]; timeOffRequests: TimeOffRequestAdmin[] }
   | { kind: 'failed'; message: string };
 
-/**
- * Expands each `TimeOffRequestAdmin` (spanning a startDate/endDate range) into one
- * `TimeOffEvent` per calendar day in range, for the shared job+time-off Calendar view.
- */
-function parseCalendarDate(dateOnly: string): Date {
-  const [year, month, day] = dateOnly.split('-').map(Number);
-  if (year === undefined || month === undefined || day === undefined) {
-    throw new Error(`Invalid calendar date "${dateOnly}"`);
-  }
-  return new Date(year, month - 1, day);
-}
-
-function toCalendarTimeOffEvents(
-  requests: TimeOffRequestAdmin[],
-  techNameById: Map<string, string>,
-): TimeOffEvent[] {
-  const events: TimeOffEvent[] = [];
-  for (const request of requests) {
-    if (request.status === 'cancelled' || request.status === 'denied') continue;
-    const start = parseCalendarDate(request.startDate);
-    const end = parseCalendarDate(request.endDate);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      continue;
-    }
-    const techName = techNameById.get(request.techId) ?? 'Unknown tech';
-    let cursor = start;
-    while (cursor.getTime() <= end.getTime()) {
-      events.push({
-        id: `${request.id}-${cursor.toISOString().slice(0, 10)}`,
-        title: `${techName}: Time off`,
-        description: request.reason,
-        eventTime: cursor.toISOString(),
-        techId: request.techId,
-      });
-      cursor = addDays(cursor, 1);
-    }
-  }
-  return events;
-}
-
 const BOARD_HIDDEN_STATUSES = new Set<JobStatus>(['closed', 'cancelled', 'archived']);
 const PREF_KEY_SHOW_TEST_JOBS = 'admin-finance.assignment-board.show-test-jobs';
 const PREF_KEY_SHOW_TEST_EMPLOYEES = 'admin-finance.assignment-board.show-test-employees';
 const PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER = 'admin-finance.employee-roster.show-test-employees';
-const SHOW_BLACKOUTS_KEY = 'admin-finance.calendar.show-blackouts';
 
 /** Local, honest formatter — @jobcore/ui has no date formatter of its own. */
 function formatDate(iso: string | null): string {
@@ -181,9 +140,6 @@ export function AdminFinanceRoot() {
   const [editorIsTest, setEditorIsTest] = useState(false);
   const [editorPaidTravel, setEditorPaidTravel] = useState(false);
   const [showTestEmployeesRoster, setShowTestEmployeesRoster] = useState(false);
-  const [showBlackouts, setShowBlackouts] = useState(true);
-  const [hiddenBlackoutTechIds, setHiddenBlackoutTechIds] = useState<string[]>([]);
-  const [showBlackoutPanel, setShowBlackoutPanel] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [qualifying, setQualifying] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -195,9 +151,6 @@ export function AdminFinanceRoot() {
   const [needsAttentionCount, setNeedsAttentionCount] = useState<number | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
-  const [calendarAnchorDay, setCalendarAnchorDay] = useState(() => new Date());
-  const [selectedCalendarTechId, setSelectedCalendarTechId] = useState<string | null>(null);
-  const [calendarMode, setCalendarMode] = useState<CalendarMode>('month');
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
   const [techNames, setTechNames] = useState<Record<string, string>>({});
 
@@ -384,17 +337,15 @@ export function AdminFinanceRoot() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [jobs, employees, employeesRoster, blackouts] = await Promise.all([
+      const [jobs, employees, employeesRoster] = await Promise.all([
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, true),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, false),
-        ports.localPrefs.getBool(SHOW_BLACKOUTS_KEY, true),
       ]);
       if (cancelled) return;
       setShowTestJobs(jobs);
       setShowTestEmployees(employees);
       setShowTestEmployeesRoster(employeesRoster);
-      setShowBlackouts(blackouts);
     })();
     return () => {
       cancelled = true;
@@ -816,25 +767,9 @@ export function AdminFinanceRoot() {
     setSubView(blackoutReturnView);
   }
 
-  function handleCalendarPrev(): void {
-    setCalendarAnchorDay((prev) => (calendarMode === 'month' ? subMonths(prev, 1) : subWeeks(prev, 1)));
-  }
-
-  function handleCalendarNext(): void {
-    setCalendarAnchorDay((prev) => (calendarMode === 'month' ? addMonths(prev, 1) : addWeeks(prev, 1)));
-  }
-
-  function handleCalendarToday(): void {
-    setCalendarAnchorDay(calendarMode === 'month' ? startOfMonth(new Date()) : new Date());
-  }
-
   function handleCalendarSelectJob(job: Job) {
     if (job.assignedTechId) {
       router.push('/job/' + job.id);
-      return;
-    }
-    if (selectedCalendarTechId) {
-      handleAssign(job, selectedCalendarTechId);
       return;
     }
     setSubView('assignmentBoard');
@@ -849,23 +784,8 @@ export function AdminFinanceRoot() {
         ? 'Add Blackout'
         : SUBVIEW_LABELS[subView];
 
-  const handleShowBlackoutsChange = (v: boolean) => {
-    setShowBlackouts(v);
-    void ports.localPrefs.setBool(SHOW_BLACKOUTS_KEY, v);
-  };
-
   const optionsItems: MenuItem[] | undefined =
-    subView === 'calendar'
-      ? [
-          {
-            id: 'show-blackouts',
-            label: 'Show Blackouts',
-            kind: 'toggle',
-            checked: showBlackouts,
-            onToggle: handleShowBlackoutsChange,
-          },
-        ]
-      : subView === 'employee-editor'
+    subView === 'employee-editor'
         ? [
             {
               id: 'test-employee',
@@ -1304,109 +1224,20 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          (() => {
-            const techs = loadState.employees.filter((e) => e.role === 'tech' && e.active);
-            const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
-            const calendarJobs = loadState.jobs
-              .filter(
-                (job) =>
-                  job.scheduledStart &&
-                  isBetaVisible(job, showTestJobs) &&
-                  (!selectedCalendarTechId || job.assignedTechId === selectedCalendarTechId),
-              )
-              .map((job) =>
-                !selectedCalendarTechId
-                  ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address ?? 'No address'}` }
-                  : job,
-              );
-            const calendarTimeOffEvents = toCalendarTimeOffEvents(
-              loadState.timeOffRequests.filter((r) => (showBlackouts || r.createdByAdminId === null) && !hiddenBlackoutTechIds.includes(r.techId ?? '')),
-              techNameById,
-            ).filter(
-              (e) => !selectedCalendarTechId || e.techId === selectedCalendarTechId,
-            );
-            const label =
-              calendarMode === 'month'
-                ? format(calendarAnchorDay, 'MMMM yyyy')
-                : `${format(startOfWeek(calendarAnchorDay, { weekStartsOn: 0 }), 'MMM d')} – ${format(
-                    endOfWeek(calendarAnchorDay, { weekStartsOn: 0 }),
-                    'MMM d, yyyy'
-                  )}`;
-            return (
-              <View style={styles.screen}>
-                <View style={styles.content}>
-                  <View style={styles.calendarToolbar}>
-                    <CalendarHeader
-                      mode={calendarMode}
-                      onModeChange={setCalendarMode}
-                      label={label}
-                      onPrev={handleCalendarPrev}
-                      onNext={handleCalendarNext}
-                      onToday={handleCalendarToday}
-                    />
-                    <TechSelect
-                      label="Technicians"
-                      value={selectedCalendarTechId}
-                      onChange={(v) => setSelectedCalendarTechId(v === '' ? null : v)}
-                      placeholder="All Techs"
-                      options={[{ label: 'All Techs', value: '' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
-                      style={styles.calendarTechSelect}
-                    />
-                    <SandButton
-                      label={showBlackoutPanel ? 'Hide Blackouts' : 'Blackouts'}
-                      onPress={() => setShowBlackoutPanel((v) => !v)}
-                      testID="calendar-blackouts-toggle"
-                    />
-                    <SandButton
-                      label="Add Blackout"
-                      onPress={() => handleAddBlackout(selectedCalendarTechId ?? undefined)}
-                      testID="calendar-add-blackout"
-                    />
-                  </View>
-                  {showBlackoutPanel ? (
-                    <View style={styles.blackoutPanel}>
-                      {techs.map((t) => {
-                        const on = !hiddenBlackoutTechIds.includes(t.id);
-                        return (
-                          <Pressable
-                            key={t.id}
-                            style={styles.blackoutRow}
-                            accessibilityRole="checkbox"
-                            accessibilityState={{ checked: on }}
-                            testID={`calendar-blackout-tech-${t.id}`}
-                            onPress={() =>
-                              setHiddenBlackoutTechIds((prev) => (on ? [...prev, t.id] : prev.filter((x) => x !== t.id)))
-                            }
-                          >
-                            <View style={styles.blackoutBox}>
-                              <Text>{on ? '✓' : ''}</Text>
-                            </View>
-                            <Text style={styles.blackoutName}>{t.fullName}</Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  ) : null}
-                </View>
-                {calendarMode === 'week' ? (
-                  <WeekView
-                    jobs={calendarJobs}
-                    anchorDay={calendarAnchorDay}
-                    timeOffEvents={calendarTimeOffEvents}
-                    onSelectJob={handleCalendarSelectJob}
-                  />
-                ) : (
-                  <MonthView
-                    variant="list"
-                    jobs={calendarJobs}
-                    anchorDay={calendarAnchorDay}
-                    timeOffEvents={calendarTimeOffEvents}
-                    onSelectJob={handleCalendarSelectJob}
-                  />
-                )}
-              </View>
-            );
-          })()
+        <UniversalCalendar
+          role="admin"
+          viewerId={null}
+          jobs={loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs))}
+          employees={loadState.employees}
+          timeOffRequests={loadState.timeOffRequests}
+          onSelectJob={handleCalendarSelectJob}
+          onSaveBlackouts={async (isoDays, techId) => {
+            for (const day of isoDays) {
+              await ports.timeOffAdmin.createBlackout(orgId!, techId, { startDate: day, endDate: day, reason: null });
+            }
+            refreshJobs();
+          }}
+        />
         )
       ) : (
         <View style={styles.screen}>
@@ -1464,10 +1295,4 @@ const styles = StyleSheet.create({
   },
   overviewCardTitle: { fontSize: 15, lineHeight: 18, fontWeight: '600', color: colors.text },
   overviewCardSubtitle: { fontSize: 12, lineHeight: 14, color: colors.textMuted },
-  calendarToolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-  calendarTechSelect: { width: 180 },
-  blackoutPanel: { backgroundColor: SAND_BG, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.xs },
-  blackoutRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.xs },
-  blackoutBox: { width: 22, height: 22, borderWidth: 2, borderColor: '#000', alignItems: 'center', justifyContent: 'center', marginRight: spacing.sm },
-  blackoutName: { color: '#000', fontWeight: '600' },
 });
