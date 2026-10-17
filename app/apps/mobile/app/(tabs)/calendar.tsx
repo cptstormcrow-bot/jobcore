@@ -200,7 +200,7 @@ export default function CalendarScreen() {
 
   const onReturn = useCallback((): void => {
     if (returnToParam) router.push(returnToParam as never);
-    else if (jobIdParam) router.push(`/job/${jobIdParam}`);
+    else if (jobIdParam) router.push({ pathname: '/job/[jobId]', params: { jobId: jobIdParam, panel: 'plan' } });
     else router.back();
   }, [router, returnToParam, jobIdParam]);
   const showReturn = Boolean(jobIdParam || returnToParam);
@@ -223,7 +223,7 @@ export default function CalendarScreen() {
         timeOffRequests={timeOffRequests}
         anchorDate={anchorDate}
         {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
-        onSelectJob={(job) => router.push(`/job/${job.id}`)}
+        onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
         onSaveBlackouts={onSaveBlackouts}
       />
     </View>

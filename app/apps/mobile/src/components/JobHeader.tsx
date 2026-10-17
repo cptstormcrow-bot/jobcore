@@ -57,7 +57,7 @@ export function JobHeader({
       d && !Number.isNaN(d.getTime())
         ? `date=${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}&`
         : '';
-    const returnTo = encodeURIComponent(`/job/${job.id}`);
+    const returnTo = encodeURIComponent(`/job/${job.id}?panel=plan`);
     router.push(`/calendar?${datePart}jobId=${job.id}&returnTo=${returnTo}` as never);
   };
 

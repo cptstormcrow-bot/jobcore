@@ -428,7 +428,7 @@ export function AssignmentBoardScreen({
                     {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as Button/Select in rowActions). */}
                     <Pressable
                       style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
-                      onPress={() => router.push('/job/' + job.id)}
+                      onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                       accessibilityRole="button"
                       accessibilityLabel={`Open job${job.jobNumber != null ? ' #' + job.jobNumber : ''}`}
                       accessibilityHint="Opens the job page"

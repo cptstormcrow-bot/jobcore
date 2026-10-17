@@ -769,7 +769,7 @@ export function AdminFinanceRoot() {
 
   function handleCalendarSelectJob(job: Job) {
     if (job.assignedTechId) {
-      router.push('/job/' + job.id);
+      router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } });
       return;
     }
     setSubView('assignmentBoard');
@@ -958,9 +958,9 @@ export function AdminFinanceRoot() {
                         subtitle={formatDate(job.scheduledStart)}
                         overline={job.customerName ?? undefined}
                         footer={footer}
-                        onPress={() => router.push('/job/' + job.id)}
+                        onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                         style={{ paddingVertical: spacing.xs }}
-                        right={<SandButton label="Detail" onPress={() => router.push('/job/' + job.id)} />}
+                        right={<SandButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />}
                       />
                     );
                   })}

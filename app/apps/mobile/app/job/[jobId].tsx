@@ -1,4 +1,4 @@
-// JobCore screen #0039 - job-detail - New Job
+// JobCore screens #0041 (job-region-plan, /job/<id>?panel=plan) and the New Job create flow (/job/new). Former #0039 job-detail was retired into #0041 on 2026-10-16.
 // JobCore screen #0040 - job-region-assign - Assign
 // JobCore screen #0075 - job-region-contact - Contact
 // JobCore screen #0076 - job-region-arrive - Arrive
@@ -650,7 +650,7 @@ export default function JobDrilldownScreen() {
         ingressInstructions: form.ingressInstructions.trim() || null,
       } as JobDraft;
       const created = await createJobRepository().create(draft);
-      router.replace(`/job/${created.id}`);
+      router.replace(`/job/${created.id}?panel=plan` as never);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed.');
     } finally {
@@ -1446,7 +1446,7 @@ export default function JobDrilldownScreen() {
               onSave={() => void handleSaveEdit()}
               onCancel={handleCancel}
               onReset={isAdmin ? confirmResetTime : undefined}
-              onOpenJob={(id) => router.push(`/job/${id}` as never)}
+              onOpenJob={(id) => router.push(`/job/${id}?panel=plan` as never)}
             />
             <View style={styles.jobDetailPane}>
               <JobDetail job={currentJob} />
