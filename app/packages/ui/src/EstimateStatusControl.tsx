@@ -11,7 +11,7 @@ export type EstimateStatusControlProps = {
   busy?: boolean;
   onSelect: (next: EstimateStatusChoice) => void;
   testID?: string;
-  /** Smaller font/padding for the right-hand column beside the tech rows. */
+  /** Smaller font/padding for tight layouts. */
   compact?: boolean;
   /** Same visuals, no press handlers, nodes report disabled. */
   readOnly?: boolean;

@@ -10,7 +10,6 @@
 // param. Region switching replaces the old full-screen panel early-returns;
 // Contact/Arrive/Complete/Payment are header actions, not regions.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
@@ -311,7 +310,7 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
   const isTechEstimate = role === 'tech';
-  const [estimateChrome, setEstimateChrome] = useState<{ statusControl: ReactNode; optionsItems: MenuItem[] } | null>(null);
+  const [estimateChrome, setEstimateChrome] = useState<{ optionsItems: MenuItem[] } | null>(null);
   useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -1338,7 +1337,6 @@ export default function JobDrilldownScreen() {
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={isAdmin ? adminJobMenuItems : isTech ? techJobMenuItems : jobDetailMenuItems}
         optionsItems={region === 'estimate' ? estimateChrome?.optionsItems : undefined}
-        summaryRight={region === 'estimate' ? estimateChrome?.statusControl : undefined}
         showBack={isAdmin || isTech ? false : undefined}
         compactMenu={isAdmin || isTech || undefined}
         fitMenu={isAdmin || isTech || undefined}
@@ -1374,7 +1372,6 @@ export default function JobDrilldownScreen() {
           premBusy={assigning !== null}
           serviceBusy={assigning !== null}
           premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
-          summaryRight={region === 'estimate' ? estimateChrome?.statusControl : undefined}
           {...(isAdmin
             ? {
                 techs: eligibleTechOptions,
@@ -1447,6 +1444,8 @@ export default function JobDrilldownScreen() {
             onSaved={(updated) => setJob(updated)}
             totalTaskMinutes={totalTaskMinutes}
             standardMinutes={standardMinutes}
+            assignedTechName={serviceTechName ?? undefined}
+            premTechName={premTechName ?? undefined}
           />
         )}
         {(region === 'details' || region === 'plan') && (

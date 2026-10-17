@@ -24,7 +24,6 @@ export type JobHeaderProps = {
   onLogoPress?: ComponentProps<typeof AppChrome>['onLogoPress'];
   gearTitle?: ComponentProps<typeof AppChrome>['gearTitle'];
   optionsItems?: ComponentProps<typeof AppChrome>['optionsItems'];
-  summaryRight?: React.ReactNode;
 };
 
 const copyToClipboard = async (text: string): Promise<void> => { await Clipboard.setStringAsync(text); };
@@ -145,7 +144,6 @@ export type JobSummaryRestProps = {
   serviceBusy?: boolean;
   premIndicator?: string | null;
   statusError?: string | null;
-  summaryRight?: React.ReactNode;
 };
 
 type TechRowProps = {
@@ -193,7 +191,6 @@ export function JobSummaryRest({
   serviceBusy,
   premIndicator = null,
   statusError = null,
-  summaryRight,
 }: JobSummaryRestProps) {
   const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
@@ -202,8 +199,6 @@ export function JobSummaryRest({
     <View style={styles.root}>
       <View style={styles.summary}>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
-        <View style={summaryRight ? { flexDirection: 'row', alignItems: 'flex-start' } : undefined}>
-        <View style={summaryRight ? { flex: 1 } : undefined}>
         <TechRow
           label="Prem Tech"
           techId={premTechId}
@@ -227,9 +222,6 @@ export function JobSummaryRest({
           ) : (
             <Text style={[styles.summaryLine, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
           )}
-        </View>
-        </View>
-        {summaryRight ? <View style={{ marginLeft: spacing.sm }}>{summaryRight}</View> : null}
         </View>
       </View>
       {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}
