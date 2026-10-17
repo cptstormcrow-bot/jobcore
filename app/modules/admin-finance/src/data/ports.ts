@@ -18,6 +18,7 @@ import type { LeadPatchInput as LeadPatch } from './lead-repo';
 export { toLead } from '../domain/lead';
 import type { JobDraft } from '../domain/qualify';
 import type { NewLeadDraft } from '../domain/intake-normalize';
+import type { JobTimelineItem } from '../domain/job-timeline';
 import type { CommissionLine } from '../money/types';
 
 /* ------------------------------------------------------------------ *
@@ -692,9 +693,32 @@ export type CustomerCreateInput = Pick<Customer, 'name' | 'phone' | 'email' | 'a
 /** Patch shape for `CustomerRepository.update` — same `Partial<Pick<...>>` convention as `JobSchedulingPatch`. */
 export type CustomerPatch = Partial<Pick<Customer, 'name' | 'phone' | 'email' | 'address'>>;
 
+/** Domain (camelCase) shape of one `customer_contacts` row. */
+export interface CustomerContact {
+  id: string;
+  customerId: string;
+  kind: 'phone' | 'email' | 'alt';
+  label: string | null;
+  value: string;
+  createdAt: string;
+}
+
+/** One prior job for a customer, as listed on the customer's history. */
+export interface CustomerJobHistoryItem {
+  jobId: string;
+  jobNumber: Job['jobNumber'];
+  title: string | null;
+  status: JobStatus;
+  createdAt: string;
+}
+
 /** Read/write access to customers. */
 export interface CustomerRepository {
   getById(id: string): Promise<Customer | null>;
+  /** Read-only: the customer's extra contacts (`customer_contacts`). */
+  listContacts(customerId: string): Promise<CustomerContact[]>;
+  /** Read-only: the customer's jobs, as history items. */
+  listJobHistory(customerId: string): Promise<CustomerJobHistoryItem[]>;
   create(input: CustomerCreateInput): Promise<Customer>;
   update(id: string, patch: CustomerPatch): Promise<Customer>;
   /** Atomic: update the job's linked customer, or create one and link it to the job (RPC save_job_customer). */
@@ -984,6 +1008,12 @@ export interface AuditLogRepository {
   listForOrganization(organizationId: string, filter?: AuditLogFilter): Promise<AuditLogEntry[]>;
 }
 
+/** Read-only chronological record of a job, first contact onward (#0018 Trail tab). */
+export interface JobTimelineRepository {
+  /** Merged, ascending-by-time timeline for one job. Photos are excluded (no timestamp). */
+  listForJob(jobId: string): Promise<JobTimelineItem[]>;
+}
+
 /* ------------------------------------------------------------------ *
  * Calendar event port (Workstream E — `calendar_events` table,
  * `app/supabase/0014_calendar_events.sql`). `writeAudit()` is confirmed
@@ -1045,7 +1075,12 @@ export interface PaymentRow {
   confirmed_at: string | null;
   confirmed_by: string | null;
   created_at: string;
+  method: string | null;
 }
+
+/** How a payment was made. */
+export type PaymentMethod = 'cash' | 'check' | 'card' | 'ach' | 'paypal' | 'other';
+export const PAYMENT_METHODS: readonly PaymentMethod[] = ['cash', 'check', 'card', 'ach', 'paypal', 'other'];
 
 /** The full `payments.status` union, restated as a runtime tuple so `toPayment` can validate an untrusted row. */
 export const PAYMENT_STATUSES = ['pending', 'confirmed', 'failed', 'manual_confirmed'] as const;
@@ -1070,6 +1105,7 @@ export interface Payment {
   confirmedAt: string | null;
   confirmedBy: string | null;
   createdAt: string;
+  method: PaymentMethod | null;
 }
 
 /**
@@ -1092,6 +1128,7 @@ export function toPayment(row: PaymentRow): Payment {
     confirmedAt: row.confirmed_at,
     confirmedBy: row.confirmed_by,
     createdAt: row.created_at,
+    method: row.method !== null && (PAYMENT_METHODS as readonly string[]).includes(row.method) ? (row.method as PaymentMethod) : null,
   };
 }
 
@@ -1110,6 +1147,8 @@ export interface PaymentsRepository {
   listManuallyConfirmed(organizationId: string): Promise<Payment[]>;
   listForJob(jobId: string): Promise<Payment[]>;
   recordManualPayment(organizationId: string, jobId: string, amount: number): Promise<Payment>;
+  /** Record a payment with its method. `input.amount` is in dollars, the same units as `recordManualPayment`'s `amount`. */
+  recordPayment(orgId: string, jobId: string, input: { amount: number; method: PaymentMethod }): Promise<Payment>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1170,7 +1209,19 @@ export interface JobPlanningPhotoRepository {
 export type EstimateStatus = 'draft' | 'submitted' | 'approved';
 export type EstimateLineItemKind = 'material' | 'labor' | 'other';
 
+export interface EstimateContingency {
+  description: string;
+  price: number | null;
+}
+
 export interface JobEstimate {
+  materialsOnsite: boolean;
+  trackingNumber: string | null;
+  trackingStatus: string | null;
+  trackingCheckedAt: string | null;
+  finePrint: string | null;
+  pdfDelivery: boolean;
+  contingencies: EstimateContingency[];
   jobId: string;
   organizationId: string;
   status: EstimateStatus;
@@ -1179,19 +1230,7 @@ export interface JobEstimate {
   laborNotes: string | null;
   materialsCost: number;
   laborCost: number;
-export interface EstimateContingency {
-  description: string;
-  price: number | null;
-}
-
   otherCost: number;
-  materialsOnsite: boolean;
-  trackingNumber: string | null;
-  trackingStatus: string | null;
-  trackingCheckedAt: string | null;
-  finePrint: string | null;
-  pdfDelivery: boolean;
-  contingencies: EstimateContingency[];
   totalCost: number;
   scheduledStart: string | null;
   scheduledEnd: string | null;
@@ -1206,6 +1245,13 @@ export interface EstimateContingency {
 }
 
 export interface JobEstimateInput {
+  materialsOnsite?: boolean;
+  trackingNumber?: string | null;
+  trackingStatus?: string | null;
+  trackingCheckedAt?: string | null;
+  finePrint?: string | null;
+  pdfDelivery?: boolean;
+  contingencies?: EstimateContingency[];
   status?: EstimateStatus;
   summary?: string | null;
   materialsNotes?: string | null;
@@ -1215,13 +1261,6 @@ export interface JobEstimateInput {
   otherCost?: number;
   totalCost?: number;
   scheduledStart?: string | null;
-  materialsOnsite?: boolean;
-  trackingNumber?: string | null;
-  trackingStatus?: string | null;
-  trackingCheckedAt?: string | null;
-  finePrint?: string | null;
-  pdfDelivery?: boolean;
-  contingencies?: EstimateContingency[];
   scheduledEnd?: string | null;
   paymentTerms?: string | null;
   depositAmount?: number | null;
@@ -1260,6 +1299,9 @@ export interface EstimateRepository {
   updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem>;
   removeLineItem(lineItemId: string): Promise<void>;
   issueShareLink(jobId: string): Promise<{ token: string; url: string }>;
+  trackShipment(trackingNumber: string): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }>;
+  getFinePrintTemplate(): Promise<string | null>;
+  setFinePrintTemplate(text: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1269,9 +1311,6 @@ export interface EstimateRepository {
 /** One task belonging to a service, selectable when pricing a `PriceSheetRate`. */
 export interface ServiceTask {
   id: string;
-  trackShipment(trackingNumber: string): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }>;
-  getFinePrintTemplate(): Promise<string | null>;
-  setFinePrintTemplate(text: string): Promise<void>;
   organizationId: string;
   serviceId: string;
   name: string;

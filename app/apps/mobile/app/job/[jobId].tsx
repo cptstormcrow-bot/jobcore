@@ -177,7 +177,7 @@ const JOB_ROW_COLUMNS =
 // Deep-link `?panel=` -> unified `JobRegion`. `start-checklist`/`completion`
 // have no dedicated region in the unified screen (those flows are reached
 // from `details`), so they map back to `details`.
-const DEEP_LINK_PANELS = ['plan', 'schedule', 'jobEstimate', 'jobInvestigation', 'start-checklist', 'completion'] as const;
+const DEEP_LINK_PANELS = ['plan', 'schedule', 'jobEstimate', 'jobInvestigation', 'start-checklist', 'completion', 'closeout'] as const;
 type DeepLinkPanel = (typeof DEEP_LINK_PANELS)[number];
 function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
   return (DEEP_LINK_PANELS as readonly string[]).includes(v ?? '');
@@ -186,6 +186,8 @@ function regionFromPanel(panel: string | undefined): JobRegion {
   if (panel === 'details') return 'details';
   if (!isDeepLinkPanel(panel)) return 'details';
   switch (panel) {
+    case 'closeout':
+      return 'closeout';
     case 'plan':
       return 'plan';
     case 'jobEstimate':
@@ -358,8 +360,6 @@ export default function JobDrilldownScreen() {
     }
   }, [serviceAreas, form.address, form.serviceAreaId]);
 
-  // Tech -> service-area coverage rows, used to hard-filter the technician
-  // dropdown on this screen. The Assignment Board stays decorate-only.
   // Persist the derived area once when the stored job has none (same
   // updateDetails path runSaveEdit uses); failures are non-fatal.
   const persistedAreaRef = useRef<string | null>(null);
@@ -377,6 +377,8 @@ export default function JobDrilldownScreen() {
       .catch(() => undefined);
   }, [isCreate, job?.id, job?.service_area_id, job?.address, serviceAreas]);
 
+  // Tech -> service-area coverage rows, used to hard-filter the technician
+  // dropdown on this screen. The Assignment Board stays decorate-only.
   const [techServiceAreas, setTechServiceAreas] = useState<TechServiceArea[]>([]);
   useEffect(() => {
     if (!org?.id) { setTechServiceAreas([]); return; }
@@ -1306,10 +1308,10 @@ export default function JobDrilldownScreen() {
     { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); } }] as MenuItem[]
+      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
       : []),
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }] as MenuItem[]
+      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
       : []),
     { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
@@ -1359,7 +1361,7 @@ export default function JobDrilldownScreen() {
           />
         ) : null}
       </JobHeader>
-      <View style={styles.rule} />
+      <View style={[styles.rule, { backgroundColor: job?.status === 'paid' || job?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
           job={currentJob}

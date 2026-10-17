@@ -62,7 +62,7 @@ export interface CloseOutFailureResolveRetryPayload {
   jobId: string; resolvedBy: string; note?: string | null; occurredAt: string;
 }
 export interface PaymentRecordManualPayload {
-  id: string; jobId: string; amount: number; confirmedAt: string;
+  id: string; jobId: string; amount: number; confirmedAt: string; method?: string | null;
 }
 
 /* ------------------------------ helpers ------------------------------ */
@@ -297,6 +297,7 @@ export const ADMIN_FINANCE_OP_HANDLERS: Record<string, OpHandler<any>> = {
       provider_id: 'manual',
       amount: p.amount,
       status: 'manual_confirmed',
+      method: p.method ?? null,
       external_ref: null,
       confirmed_at: p.confirmedAt,
       confirmed_by: userId,

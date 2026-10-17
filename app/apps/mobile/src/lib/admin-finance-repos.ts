@@ -56,6 +56,7 @@ import type {
   PaymentRow,
   PaymentsRepository,
   Payment,
+  PaymentMethod,
   CalendarEventRepository,
   CalendarEventDraft,
   TechServiceAreaRepository,
@@ -63,6 +64,8 @@ import type {
   CustomerRow,
   Customer,
   CustomerRepository,
+  CustomerContact,
+  CustomerJobHistoryItem,
   CustomerCreateInput,
   CustomerPatch,
   EmployeeRepository,
@@ -96,6 +99,9 @@ import type {
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch, toCloseOutFailure } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
+import { buildJobTimeline } from '../../../../modules/admin-finance/src/domain/job-timeline';
+import type { JobTimelineItem, JobTimelineSources } from '../../../../modules/admin-finance/src/domain/job-timeline';
+import type { JobTimelineRepository } from '../../../../modules/admin-finance/src/data/ports';
 import type { PriceSheet, CompensationPolicy } from '../../../../modules/admin-finance/src/money/types';
 import type { PayPeriod } from '../../../../modules/admin-finance/src/money/rollup';
 import type { Lead, LeadRow } from '../../../../modules/admin-finance/src/domain/lead';
@@ -1573,6 +1579,89 @@ export function createCloseOutFailuresRepository(): CloseOutFailureRepository {
  * AuditLogRepository
  * ------------------------------------------------------------------ */
 
+/**
+ * Read-only merged job timeline (#0018 Trail). Each source is read best-effort:
+ * a failed read contributes nothing and never fails the whole timeline.
+ * job_time_segments has no voided_at column, so voidedAt is always null.
+ */
+export function createJobTimelineRepository(): JobTimelineRepository {
+  async function rows<T>(q: PromiseLike<{ data: unknown; error: { message: string } | null }>): Promise<T[]> {
+    try {
+      const { data, error } = await q;
+      return error ? [] : ((data ?? []) as T[]);
+    } catch {
+      return [];
+    }
+  }
+  return {
+    async listForJob(jobId: string): Promise<JobTimelineItem[]> {
+      return readCached('af.jobTimeline.listForJob', { jobId }, async () => {
+        const [job, audit, contacts, notes, segments, payments, calendar, failures] = await Promise.all([
+          rows<{ created_at: string }>(supabase.from('jobs').select('created_at').eq('id', jobId)),
+          rows<{ action: string; actor_id: string | null; created_at: string }>(
+            supabase.from('audit_log').select('action, actor_id, created_at').eq('entity', 'job').eq('entity_id', jobId),
+          ),
+          rows<{ contact_type: string; note: string | null; contacted_by: string | null; created_at: string }>(
+            supabase.from('job_contact_log').select('contact_type, note, contacted_by, created_at').eq('job_id', jobId),
+          ),
+          rows<{ kind: string; body: string; tech_id: string | null; occurred_at: string }>(
+            supabase.from('job_notes').select('kind, body, tech_id, occurred_at').eq('job_id', jobId),
+          ),
+          rows<{ reason_code: string; started_at: string; ended_at: string | null; tech_id: string }>(
+            supabase.from('job_time_segments').select('reason_code, started_at, ended_at, tech_id').eq('job_id', jobId),
+          ),
+          rows<{ amount: number | string; status: string; method: string | null; created_at: string }>(
+            supabase.from('payments').select('amount, status, method, created_at').eq('job_id', jobId),
+          ),
+          rows<{ kind: string; title: string | null; event_time: string; created_by: string | null }>(
+            supabase.from('calendar_events').select('kind, title, event_time, created_by').eq('job_id', jobId),
+          ),
+          rows<{ stage: string; reason: string; status: string; created_at: string }>(
+            supabase.from('close_out_failures').select('stage, reason, status, created_at').eq('job_id', jobId),
+          ),
+        ]);
+        const sources: JobTimelineSources = {
+          jobCreatedAt: job[0]?.created_at ?? null,
+          audit: audit.map((r) => ({ action: r.action, actorId: r.actor_id, createdAt: r.created_at })),
+          contacts: contacts.map((r) => ({
+            contactType: r.contact_type,
+            note: r.note,
+            contactedBy: r.contacted_by,
+            createdAt: r.created_at,
+          })),
+          notes: notes.map((r) => ({ kind: r.kind, body: r.body, techId: r.tech_id, occurredAt: r.occurred_at })),
+          segments: segments.map((r) => ({
+            reasonCode: r.reason_code,
+            startedAt: r.started_at,
+            endedAt: r.ended_at,
+            techId: r.tech_id,
+            voidedAt: null,
+          })),
+          payments: payments.map((r) => ({
+            amount: Number(r.amount),
+            status: r.status,
+            method: r.method,
+            createdAt: r.created_at,
+          })),
+          calendar: calendar.map((r) => ({
+            kind: r.kind,
+            title: r.title,
+            eventTime: r.event_time,
+            createdBy: r.created_by,
+          })),
+          failures: failures.map((r) => ({
+            stage: r.stage,
+            reason: r.reason,
+            status: r.status,
+            createdAt: r.created_at,
+          })),
+        };
+        return buildJobTimeline(sources);
+      });
+    },
+  };
+}
+
 export function createAuditLogRepository(): AuditLogRepository {
   return {
     async listForOrganization(organizationId: string, filter?: AuditLogFilter): Promise<AuditLogEntry[]> {
@@ -1735,6 +1824,26 @@ export function createPaymentsRepository(): PaymentsRepository {
       const res = await writeThrough('payment.record_manual', { id, jobId, amount, confirmedAt }, confirmedAt, optimistic as never);
       return res.data as Payment;
     },
+    async recordPayment(organizationId: string, jobId: string, input: { amount: number; method: PaymentMethod }): Promise<Payment> {
+      const id = newClientId();
+      const confirmedAt = new Date().toISOString();
+      const { amount, method } = input;
+      const optimistic = toPayment({
+        id,
+        organization_id: organizationId,
+        job_id: jobId,
+        provider_id: 'manual',
+        amount,
+        method,
+        status: 'manual_confirmed',
+        external_ref: null,
+        confirmed_at: confirmedAt,
+        confirmed_by: requireModuleSession().userId,
+        created_at: confirmedAt,
+      } as unknown as PaymentRow);
+      const res = await writeThrough('payment.record_manual', { id, jobId, amount, method, confirmedAt }, confirmedAt, optimistic as never);
+      return res.data as Payment;
+    },
   };
 }
 
@@ -1851,6 +1960,54 @@ export function createCustomerRepository(): CustomerRepository {
           throw new Error(`getById failed: ${error.message}`);
         }
         return data ? toCustomer(data as CustomerRow) : null;
+      });
+    },
+
+    async listContacts(customerId: string): Promise<CustomerContact[]> {
+      return readCached('af.customers.listContacts', { customerId }, async () => {
+        const { data, error } = await supabase
+          .from('customer_contacts')
+          .select('id, customer_id, kind, label, value, created_at')
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: true });
+        if (error) {
+          throw new Error(`listContacts failed: ${error.message}`);
+        }
+        return ((data ?? []) as Array<{
+          id: string;
+          customer_id: string;
+          kind: CustomerContact['kind'];
+          label: string | null;
+          value: string;
+          created_at: string;
+        }>).map((r) => ({
+          id: r.id,
+          customerId: r.customer_id,
+          kind: r.kind,
+          label: r.label,
+          value: r.value,
+          createdAt: r.created_at,
+        }));
+      });
+    },
+
+    async listJobHistory(customerId: string): Promise<CustomerJobHistoryItem[]> {
+      return readCached('af.customers.listJobHistory', { customerId }, async () => {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('customer_id', customerId)
+          .order('created_at', { ascending: false });
+        if (error) {
+          throw new Error(`listJobHistory failed: ${error.message}`);
+        }
+        return ((data ?? []) as JobRow[]).map(toJob).map((j) => ({
+          jobId: j.id,
+          jobNumber: j.jobNumber,
+          title: j.description,
+          status: j.status,
+          createdAt: j.createdAt,
+        }));
       });
     },
 
@@ -2055,6 +2212,13 @@ function toJobEstimate(row: {
   updated_at: string;
   created_by: string | null;
   updated_by: string | null;
+  materials_onsite?: boolean | null;
+  tracking_number?: string | null;
+  tracking_status?: string | null;
+  tracking_checked_at?: string | null;
+  fine_print?: string | null;
+  pdf_delivery?: boolean | null;
+  contingencies?: unknown;
 }): JobEstimate {
   return {
     jobId: row.job_id,
@@ -2076,14 +2240,19 @@ function toJobEstimate(row: {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: row.created_by,
-  materials_onsite?: boolean | null;
-  tracking_number?: string | null;
-  tracking_status?: string | null;
-  tracking_checked_at?: string | null;
-  fine_print?: string | null;
-  pdf_delivery?: boolean | null;
-  contingencies?: unknown;
     updatedBy: row.updated_by,
+    materialsOnsite: row.materials_onsite ?? false,
+    trackingNumber: row.tracking_number ?? null,
+    trackingStatus: row.tracking_status ?? null,
+    trackingCheckedAt: row.tracking_checked_at ?? null,
+    finePrint: row.fine_print ?? null,
+    pdfDelivery: row.pdf_delivery ?? false,
+    contingencies: Array.isArray(row.contingencies)
+      ? (row.contingencies as Array<Record<string, unknown> | null>).map((c) => ({
+          description: String(c?.description ?? ''),
+          price: c?.price === null || c?.price === undefined ? null : Number(c.price),
+        }))
+      : [],
   };
 }
 
@@ -2105,18 +2274,6 @@ function toJobEstimateLineItem(row: {
     jobId: row.job_id,
     organizationId: row.organization_id,
     kind: row.kind,
-    materialsOnsite: row.materials_onsite ?? false,
-    trackingNumber: row.tracking_number ?? null,
-    trackingStatus: row.tracking_status ?? null,
-    trackingCheckedAt: row.tracking_checked_at ?? null,
-    finePrint: row.fine_print ?? null,
-    pdfDelivery: row.pdf_delivery ?? false,
-    contingencies: Array.isArray(row.contingencies)
-      ? (row.contingencies as Array<Record<string, unknown> | null>).map((c) => ({
-          description: String(c?.description ?? ''),
-          price: c?.price === null || c?.price === undefined ? null : Number(c.price),
-        }))
-      : [],
     description: row.description,
     quantity: Number(row.quantity),
     unitCost: Number(row.unit_cost),
@@ -2196,27 +2353,6 @@ export function createEstimateRepository(): EstimateRepository {
       if (input.internalNotes !== undefined) {
         patch.internal_notes = input.internalNotes;
       }
-
-      const optimistic = {
-        job_id: jobId,
-        organization_id: organizationId,
-        status: 'draft',
-        summary: null,
-        materials_notes: null,
-        labor_notes: null,
-        materials_cost: 0,
-        labor_cost: 0,
-        other_cost: 0,
-        total_cost: 0,
-        scheduled_start: null,
-        scheduled_end: null,
-        payment_terms: null,
-        deposit_amount: null,
-        customer_notes: null,
-        internal_notes: null,
-        created_at: occurredAt,
-        updated_at: occurredAt,
-        created_by: userId,
       if (input.materialsOnsite !== undefined) {
         patch.materials_onsite = input.materialsOnsite;
       }
@@ -2238,6 +2374,27 @@ export function createEstimateRepository(): EstimateRepository {
       if (input.contingencies !== undefined) {
         patch.contingencies = input.contingencies;
       }
+
+      const optimistic = {
+        job_id: jobId,
+        organization_id: organizationId,
+        status: 'draft',
+        summary: null,
+        materials_notes: null,
+        labor_notes: null,
+        materials_cost: 0,
+        labor_cost: 0,
+        other_cost: 0,
+        total_cost: 0,
+        scheduled_start: null,
+        scheduled_end: null,
+        payment_terms: null,
+        deposit_amount: null,
+        customer_notes: null,
+        internal_notes: null,
+        created_at: occurredAt,
+        updated_at: occurredAt,
+        created_by: userId,
         updated_by: userId,
         ...patch,
       };
@@ -2342,27 +2499,6 @@ export function createEstimateRepository(): EstimateRepository {
       const token = data as string;
       return { token, url: `${supabaseUrl}/functions/v1/estimate-resolve?token=${token}` };
     },
-  };
-}
-
-/* ------------------------------------------------------------------ *
- * JobInvestigationRepository (mirrors `job_investigations`,
- * `app/supabase/0023_field_ops_segway_and_estimating.sql`; unique
- * `job_id` constraint added by `app/supabase/0038_job_investigations_unique_job.sql`
- * so `upsertForJob` can use `onConflict: 'job_id'`, same idiom as
- * `JobPlanningRepository.upsertForJob` above). Not yet declared in
- * `ports.ts` — this shape is defined locally until a `ModulePorts` slot
- * is added there.
- * ------------------------------------------------------------------ */
-
-export interface JobInvestigation {
-  id: string;
-  jobId: string;
-  organizationId: string;
-  techId: string;
-  ingressNotes: string | null;
-  logisticsNotes: string | null;
-  parkingNotes: string | null;
 
     async trackShipment(
       trackingNumber: string,
@@ -2429,6 +2565,27 @@ export interface JobInvestigation {
         throw new Error(`setFinePrintTemplate failed: ${error.message}`);
       }
     },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * JobInvestigationRepository (mirrors `job_investigations`,
+ * `app/supabase/0023_field_ops_segway_and_estimating.sql`; unique
+ * `job_id` constraint added by `app/supabase/0038_job_investigations_unique_job.sql`
+ * so `upsertForJob` can use `onConflict: 'job_id'`, same idiom as
+ * `JobPlanningRepository.upsertForJob` above). Not yet declared in
+ * `ports.ts` — this shape is defined locally until a `ModulePorts` slot
+ * is added there.
+ * ------------------------------------------------------------------ */
+
+export interface JobInvestigation {
+  id: string;
+  jobId: string;
+  organizationId: string;
+  techId: string;
+  ingressNotes: string | null;
+  logisticsNotes: string | null;
+  parkingNotes: string | null;
   stateAssessment: string | null;
   roomWork: { room: string; work: string }[];
   measurements: string | null;
@@ -2885,6 +3042,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     compensationPolicy: createCompensationPolicyRepository(),
     closeOutNotes: createCloseOutNotesRepository(),
     closeOutContactLog: createCloseOutContactLogRepository(),
+    jobTimeline: createJobTimelineRepository(),
     payments: createPaymentsRepository(),
     calendarEvents: createCalendarEventRepository(),
     timeOffAdmin: createTimeOffAdminRepository(),

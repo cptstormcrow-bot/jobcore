@@ -2,10 +2,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState, colors } from '@jobcore/ui';
+import { EmptyState, colors, spacing } from '@jobcore/ui';
 import { CloseOutReviewScreen } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import type { CloseOutPhoto } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/closeout';
+import { settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
+import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
+import type { CustomerContact, CustomerJobHistoryItem } from '../../../../modules/admin-finance/src/data/ports';
 import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-out-job';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
@@ -24,7 +27,66 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [photos, setPhotos] = useState<CloseOutPhoto[]>([]);
   const [notes, setNotes] = useState('');
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
+  const [contacts, setContacts] = useState<CustomerContact[]>([]);
+  const [jobHistory, setJobHistory] = useState<CustomerJobHistoryItem[]>([]);
   const awaiting = awaitingCloseOut(job);
+
+  useEffect(() => {
+    const customerId = job.customerId;
+    if (!customerId) {
+      setContacts([]);
+      setJobHistory([]);
+      return undefined;
+    }
+    let cancelled = false;
+    ports.customers
+      .listContacts(customerId)
+      .then((rows) => {
+        if (!cancelled) {
+          setContacts(rows);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setContacts([]);
+        }
+      });
+    ports.customers
+      .listJobHistory(customerId)
+      .then((rows) => {
+        if (!cancelled) {
+          setJobHistory(rows);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setJobHistory([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.customerId, ports.customers]);
+
+  useEffect(() => {
+    let cancelled = false;
+    ports.jobTimeline
+      .listForJob(job.id)
+      .then((items) => {
+        if (!cancelled) {
+          setTimeline(items);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTimeline([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.id, ports.jobTimeline]);
 
   useEffect(() => {
     if (!awaiting) {
@@ -103,8 +165,10 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
             setPhotoError('No compensation policy is configured for this organization. Ask an admin to set one up before closing out.');
             return;
           }
+          const paymentRows = await ports.payments.listForJob(target.id);
+          const settled = settledTotalCents(paymentRows) > 0;
           const result = await closeOutJob(target, {
-            ctx,
+            ctx: { ...ctx, hasPaymentRecord: () => settled },
             jobs: ports.jobs,
             calendarEvents: ports.calendarEvents,
             priceSheetRepository: ports.priceSheets,
@@ -132,7 +196,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
 
   return (
     <>
-    {photoError ? <Text style={{ color: colors.danger, padding: 8 }}>{photoError}</Text> : null}
+    {photoError ? <Text style={{ color: colors.danger, padding: spacing.sm }}>{photoError}</Text> : null}
     <CloseOutReviewScreen
       embedded
       job={job}
@@ -146,7 +210,9 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       hoursLogged={undefined}
       techPayouts={undefined}
       contractorPayouts={undefined}
-      customerContacts={undefined}
+      customerContacts={contacts.map((c) => ({ label: c.label ?? c.kind, value: c.value }))}
+      jobHistory={jobHistory}
+      timeline={timeline}
     />
     </>
   );

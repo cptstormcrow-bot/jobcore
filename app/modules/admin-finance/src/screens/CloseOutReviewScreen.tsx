@@ -32,12 +32,14 @@
  * tokens — no raw color/spacing/typography literals.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, TabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
+import type { JobTimelineItem } from '../domain/job-timeline';
+import type { CustomerJobHistoryItem } from '../data/ports';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
 export interface CloseOutPhoto {
@@ -70,11 +72,27 @@ export interface CloseOutReviewScreenProps {
   contractorPayouts?: { contractorName: string; amount: number }[];
   /** Itemized customer contacts (e.g. phone/email/alt-phone). */
   customerContacts?: { label: string; value: string }[];
+  /** The customer's other jobs, newest first as supplied; read-only. */
+  jobHistory?: ReadonlyArray<CustomerJobHistoryItem>;
   /** Hosted inside the job page: no title, no flex root, no nested scroller. */
   embedded?: boolean;
   /** Opens the calendar from the title bar's schedule link; absent means the label is plain text. */
   onOpenCalendar?: () => void;
+  /** Job activity trail, already in ascending order; read-only. */
+  timeline?: JobTimelineItem[];
 }
+
+type CloseOutTab = 'hours' | 'payouts' | 'contacts' | 'photos' | 'notes' | 'trail' | 'closeout';
+
+const CLOSE_OUT_TABS: Array<{ key: CloseOutTab; label: string }> = [
+  { key: 'hours', label: 'Hours' },
+  { key: 'payouts', label: 'Payouts' },
+  { key: 'contacts', label: 'Contacts' },
+  { key: 'photos', label: 'Photos' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'trail', label: 'Trail' },
+  { key: 'closeout', label: 'Close out' },
+];
 
 export function CloseOutReviewScreen({
   job,
@@ -90,9 +108,12 @@ export function CloseOutReviewScreen({
   techPayouts,
   contractorPayouts,
   customerContacts,
+  jobHistory,
   embedded,
   onOpenCalendar,
+  timeline,
 }: CloseOutReviewScreenProps) {
+  const [activeTab, setActiveTab] = useState<CloseOutTab>('hours');
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
 
   if (!job) {
@@ -109,7 +130,7 @@ export function CloseOutReviewScreen({
 
   return (
     <View style={embedded ? undefined : styles.screen}>
-      {!embedded && <ScreenTitle title="Close-Out Review" />}
+      <ScreenTitle title="Close-Out #0018" />
       <Body {...bodyProps}>
         {embedded ? (
           <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
@@ -141,6 +162,18 @@ export function CloseOutReviewScreen({
           </View>
         )}
 
+        <TabBar items={CLOSE_OUT_TABS} activeKey={activeTab} onSelect={setActiveTab} style={styles.tabBar} />
+        <View style={styles.actionRow}>
+          <Button label="Contact" onPress={() => onContact?.(job.id)} variant="secondary" size="sm" />
+          <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
+          <Button
+            label="Close out job"
+            onPress={() => onCloseOut?.(job)}
+            disabled={blockers.length > 0}
+            size="sm"
+          />
+        </View>
+        {activeTab === 'hours' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Hours logged</Text>
           {hoursLogged ? (
@@ -149,7 +182,8 @@ export function CloseOutReviewScreen({
             <Text style={styles.empty}>No hours logged.</Text>
           )}
         </Card>
-
+        ) : null}
+        {activeTab === 'payouts' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Payouts</Text>
           <Text style={styles.subTitle}>Tech payouts</Text>
@@ -173,7 +207,8 @@ export function CloseOutReviewScreen({
             ))
           )}
         </Card>
-
+        ) : null}
+        {activeTab === 'contacts' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Customer contacts</Text>
           {!customerContacts || customerContacts.length === 0 ? (
@@ -185,9 +220,24 @@ export function CloseOutReviewScreen({
               </Text>
             ))
           )}
-          <Button label="Contact" onPress={() => onContact?.(job.id)} variant="secondary" size="sm" />
+          <Text style={styles.subTitle}>Job history</Text>
+          {!jobHistory || jobHistory.length === 0 ? (
+            <Text style={styles.empty}>No prior jobs on file.</Text>
+          ) : (
+            jobHistory.map((item) => (
+              <View key={item.jobId} style={styles.trailRow}>
+                <Text style={styles.body}>
+                  #{item.jobNumber} {item.title ?? 'Untitled'}
+                </Text>
+                <Text style={styles.trailMeta}>
+                  {item.status} · {item.createdAt.slice(0, 10)}
+                </Text>
+              </View>
+            ))
+          )}
         </Card>
-
+        ) : null}
+        {activeTab === 'photos' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Photos</Text>
           {photos.length === 0 ? (
@@ -204,9 +254,9 @@ export function CloseOutReviewScreen({
               ))}
             </View>
           )}
-          <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
         </Card>
-
+        ) : null}
+        {activeTab === 'notes' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Quality notes</Text>
           <TextInput
@@ -219,7 +269,30 @@ export function CloseOutReviewScreen({
             textAlignVertical="top"
           />
         </Card>
-
+        ) : null}
+        {activeTab === 'trail' ? (
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Trail</Text>
+          {!timeline || timeline.length === 0 ? (
+            <Text style={styles.empty}>No activity recorded yet.</Text>
+          ) : (
+            timeline.map((item, index) => {
+              const when = new Date(item.at);
+              const whenLabel = Number.isNaN(when.getTime()) ? item.at : when.toLocaleString();
+              return (
+                <View key={index} style={styles.trailRow}>
+                  <Text style={styles.body}>{item.label}</Text>
+                  <Text style={styles.trailMeta}>
+                    {whenLabel} · {item.kind}
+                    {item.actor ? ` · ${item.actor}` : ''}
+                  </Text>
+                </View>
+              );
+            })
+          )}
+        </Card>
+        ) : null}
+        {activeTab === 'closeout' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Close out</Text>
           {blockers.length === 0 ? (
@@ -231,12 +304,9 @@ export function CloseOutReviewScreen({
               </Text>
             ))
           )}
-          <Button
-            label="Close out job"
-            onPress={() => onCloseOut?.(job)}
-            disabled={blockers.length > 0}
-          />
         </Card>
+
+        ) : null}
       </Body>
     </View>
   );
@@ -270,21 +340,39 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     textTransform: 'capitalize',
   },
+  tabBar: {
+    paddingHorizontal: 0,
+    paddingVertical: spacing.xs,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
   section: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   sectionTitle: {
     color: colors.text,
     fontSize: typography.size.h5,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   empty: {
     color: colors.textLight,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.sm,
+  },
+  trailRow: {
+    marginBottom: spacing.xs,
+  },
+  trailMeta: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
   },
   body: {
     color: colors.text,

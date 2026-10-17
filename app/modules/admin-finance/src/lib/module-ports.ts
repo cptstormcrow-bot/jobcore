@@ -27,6 +27,7 @@ import type {
   JobPhotoRepository,
   JobNoteRepository,
   JobContactLogRepository,
+  JobTimelineRepository,
   CloseOutFailureRepository,
   PaymentsRepository,
   CalendarEventRepository,
@@ -137,6 +138,7 @@ export interface ModulePorts {
   };
   closeOutNotes: JobNoteRepository;
   closeOutContactLog: JobContactLogRepository;
+  jobTimeline: JobTimelineRepository;
   /** Close-out-failure tracking repo (Slice 7). */
   closeOutFailures: CloseOutFailureRepository;
   payments: PaymentsRepository;
