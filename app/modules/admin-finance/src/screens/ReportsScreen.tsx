@@ -25,7 +25,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, TabBar, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { byStatus } from '../reporting/group-by';
@@ -40,7 +40,6 @@ export interface ReportsScreenProps {
   showTestJobs?: boolean;
   /** Bubbles a job selection up to the parent (level 2 — `ReportsJobDetailScreen.tsx` is wired by AdminFinanceRoot.tsx, not built here). */
   onSelectJob?: (job: Job) => void;
-  onBack?: () => void;
 }
 
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
@@ -64,14 +63,12 @@ function JobListDrillDown(props: {
   jobs: Job[];
   showTestJobs: boolean;
   onSelectJob?: (job: Job) => void;
-  onBack: () => void;
 }) {
-  const { jobs, showTestJobs, onSelectJob, onBack } = props;
+  const { jobs, showTestJobs, onSelectJob } = props;
   const visibleJobs = jobs.filter((job) => isBetaVisible(job, showTestJobs));
 
   return (
     <Card style={styles.card}>
-      <Button label="< Back" variant="primary" size="sm" onPress={onBack} style={styles.backButton} />
       {visibleJobs.length === 0 ? (
         <EmptyState title="No jobs" message="No jobs match this group." />
       ) : (
@@ -89,8 +86,9 @@ function JobListDrillDown(props: {
 }
 
 export function ReportsScreen(props: ReportsScreenProps = {}) {
-  const { jobs, commissions, showTestJobs = false, onSelectJob, onBack } = props;
+  const { jobs, commissions, showTestJobs = false, onSelectJob } = props;
   const [drill, setDrill] = useState<DrillState>(null);
+  const [activeTab, setActiveTab] = useState<'status' | 'slots' | 'commission'>('status');
 
   const session = getModuleSession();
 
@@ -145,16 +143,28 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
     .map((id) => jobsById.get(id))
     .filter((job): job is Job => job !== undefined);
 
-  const backProps = { showTestJobs, onSelectJob, onBack: () => setDrill(null) };
+  const backProps = { showTestJobs, onSelectJob };
 
   return (
     <View style={styles.screen}>
       {banner}
       <ScrollView contentContainerStyle={styles.content}>
-        {onBack ? (
-          <Button label="< Back" variant="primary" size="sm" onPress={onBack} style={styles.backButton} />
-        ) : null}
-        <ScreenTitle title="Reports" />
+        <ScreenTitle title="Reports #0023" />
+        <TabBar
+          items={[
+            { key: 'status' as const, label: 'Status' },
+            { key: 'slots' as const, label: 'Slot Hit Rate' },
+            { key: 'commission' as const, label: 'Commission Totals' },
+          ]}
+          activeKey={activeTab}
+          onSelect={(key) => {
+            setActiveTab(key);
+            setDrill(null);
+          }}
+          style={styles.tabBar}
+        />
+        {activeTab === 'status' ? (
+          <>
         <Text style={styles.groupHeading}>By Status</Text>
         {drill?.section === 'status' ? (
           <JobListDrillDown jobs={statusGroups[drill.key] ?? []} {...backProps} />
@@ -170,7 +180,11 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
             ))}
           </Card>
         )}
+          </>
+        ) : null}
 
+        {activeTab === 'slots' ? (
+          <>
         <Text style={styles.groupHeading}>Slot Hit Rate</Text>
         {drill?.section === 'slotHitRate' ? (
           <JobListDrillDown jobs={slotHitRateGroups[drill.key] ?? []} {...backProps} />
@@ -187,7 +201,11 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
             <ListItem title="Hit Rate" subtitle={formatPercent(hitRate.hitRate)} />
           </Card>
         )}
+          </>
+        ) : null}
 
+        {activeTab === 'commission' ? (
+          <>
         <Text style={styles.groupHeading}>Commission Totals</Text>
         {drill?.section === 'commissionTotals' ? (
           <JobListDrillDown
@@ -210,6 +228,8 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
             <ListItem title="Job Count" subtitle={`${totals.jobCount}`} />
           </Card>
         )}
+          </>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -232,20 +252,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
+  },
+  tabBar: {
+    paddingVertical: spacing.xs,
   },
   groupHeading: {
     color: colors.text,
     fontSize: typography.size.h5,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: 4,
   },
   card: {
-    marginBottom: spacing.md,
-  },
-  backButton: {
     marginBottom: spacing.sm,
-    alignSelf: 'flex-start',
   },
 });
