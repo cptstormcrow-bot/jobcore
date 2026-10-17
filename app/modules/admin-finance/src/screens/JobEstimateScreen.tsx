@@ -21,11 +21,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert, useWindowDimensions } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
-import { ESTIMATE_LABELS, computeTotals, formatMoney } from '../domain/estimate-layout';
+import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
 import type { Job } from '@jobcore/core';
 import type {
@@ -117,6 +117,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
+  const { width: windowWidth } = useWindowDimensions();
+  const tabStyle = windowWidth < 600 ? styles.tabNarrow : undefined;
   const [lineItems, setLineItems] = useState<JobEstimateLineItem[]>([]);
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [moving, setMoving] = useState(false);
@@ -320,6 +322,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [templateText, setTemplateText] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateInput, setTemplateInput] = useState('');
+  const [activeTab, setActiveTab] = useState<'copy' | 'tasks' | 'contingency' | 'manual' | 'priceSheet' | 'lineItem' | 'finePrint'>('copy');
 
   useEffect(() => {
     let cancelled = false;
@@ -428,6 +431,28 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     const next = contingencyRows.filter((_, i) => i !== index);
     setContingencyRows(next);
     saveContingencies(next);
+  }
+
+  useEffect(() => {
+    if (!estimate) return;
+    if ((estimate.finePrint ?? '').trim() !== '') return;
+    if (finePrintInput.trim() !== '') return;
+    const seed = templateText && templateText.trim() !== '' ? templateText : DEFAULT_FINE_PRINT_PLACEHOLDER;
+    setFinePrintInput(seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estimate, templateText]);
+
+  async function resetTemplate(): Promise<void> {
+    setActionState({ kind: 'working' });
+    try {
+      await estimates.setFinePrintTemplate(DEFAULT_FINE_PRINT_PLACEHOLDER);
+      setTemplateText(DEFAULT_FINE_PRINT_PLACEHOLDER);
+      setTemplateInput(DEFAULT_FINE_PRINT_PLACEHOLDER);
+      setActionState({ kind: 'done', message: 'Fine-print template reset to default.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not reset the template.';
+      setActionState({ kind: 'failed', message });
+    }
   }
 
   async function saveTemplate(): Promise<void> {
@@ -764,7 +789,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         {!embedded && (
           <Button
             label={onBack ? 'Back to Job' : 'Estimate'}
-            variant="outline"
+            size="sm"
             onPress={() => onBack?.()}
             disabled={!onBack}
             style={styles.action}
@@ -802,6 +827,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 void persist({ materialsOnsite: next });
               }}
             />
+            <View style={styles.trackingRow}>
             {editable || trackingInput ? (
               <TextField
                 label={ESTIMATE_LABELS.trackingNumber}
@@ -813,30 +839,44 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   }
                 }}
                 disabled={!editable || busy}
-                style={styles.field}
+                style={styles.trackingField}
               />
             ) : null}
             {editable ? (
               <Button
                 label={checkingUps ? 'Checking...' : 'Check UPS'}
-                variant="outline"
                 size="sm"
                 onPress={() => {
                   void runTrackingLookup(trackingInput);
                 }}
                 disabled={busy || checkingUps || !trackingInput.trim()}
-                style={styles.action}
+                style={styles.trackingButton}
               />
             ) : null}
+            </View>
             {trackingLine ? <Text style={styles.note}>{trackingLine}</Text> : null}
           </View>
         </View>
 
+        <View style={styles.tabRow} testID="estimate-tab-bar">
+          <Button label="Copy Link" size="tab" style={tabStyle} variant={activeTab === 'copy' ? 'secondary' : 'outline'} onPress={() => setActiveTab('copy')} />
+          <Button label="Build from Tasks" size="tab" style={tabStyle} variant={activeTab === 'tasks' ? 'secondary' : 'outline'} onPress={() => setActiveTab('tasks')} />
+          <Button label="Contingency" size="tab" style={tabStyle} variant={activeTab === 'contingency' ? 'secondary' : 'outline'} onPress={() => setActiveTab('contingency')} />
+          {priceSheetQuickAddAvailable ? (
+            <>
+              <Button label="Manual" size="tab" style={tabStyle} variant={activeTab === 'manual' ? 'secondary' : 'outline'} onPress={() => { setActiveTab('manual'); setAddMode('manual'); }} />
+              <Button label="Price Sheet" size="tab" style={tabStyle} variant={activeTab === 'priceSheet' ? 'secondary' : 'outline'} onPress={() => { setActiveTab('priceSheet'); setAddMode('priceSheet'); }} />
+            </>
+          ) : null}
+          <Button label="Line Item" size="tab" style={tabStyle} variant={activeTab === 'lineItem' ? 'secondary' : 'outline'} onPress={() => setActiveTab('lineItem')} />
+          <Button label="Fine Print" size="tab" style={tabStyle} variant={activeTab === 'finePrint' ? 'secondary' : 'outline'} onPress={() => setActiveTab('finePrint')} />
+        </View>
+
+        {activeTab === 'copy' ? (
         <View style={styles.linkRow} testID="estimate-link-row">
           <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimateLink.toUpperCase()}</Text>
           <Button
             label={busy ? 'Working...' : 'Copy estimate link'}
-            variant="outline"
             size="sm"
             onPress={() => {
               void handleShare();
@@ -848,7 +888,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
           {shareError ? <ErrorState message={shareError} /> : null}
         </View>
+        ) : null}
 
+        {activeTab === 'tasks' ? (
         <Card style={styles.card}>
           {!embedded && (
             <>
@@ -883,6 +925,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               {editable ? (
                 <Button
                   label={busy ? 'Building...' : 'Build lines from tasks'}
+                  size="sm"
                   onPress={() => {
                     void handleBuildFromTasks();
                   }}
@@ -895,6 +938,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           {editable && estimate?.status === 'submitted' ? (
             <Button
               label={busy ? 'Approving...' : 'Approve'}
+              variant="primary"
+              size="sm"
               onPress={() => {
                 void handleApprove();
               }}
@@ -903,7 +948,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             />
           ) : null}
         </Card>
+        ) : null}
 
+        {activeTab === 'contingency' ? (
         <Card style={styles.card}>
           <Text style={styles.heading}>{ESTIMATE_LABELS.contingencies}</Text>
           <Text style={styles.note}>Possible extras. They are not included in the total.</Text>
@@ -930,7 +977,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   />
                   <Button
                     label="Remove"
-                    variant="outline"
                     size="sm"
                     onPress={() => removeContingency(index)}
                     disabled={busy}
@@ -940,7 +986,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               ))}
               <Button
                 label="Add contingency"
-                variant="outline"
                 size="sm"
                 onPress={addContingency}
                 disabled={busy}
@@ -959,9 +1004,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             ))
           )}
         </Card>
+        ) : null}
 
+        {activeTab === 'manual' || activeTab === 'priceSheet' || activeTab === 'lineItem' ? (
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.lineItems}</Text>
+          {activeTab === 'lineItem' ? (
+          <>
           {lineItems.length === 0 ? (
             <EmptyState title="No line items" message="Add a line item below." />
           ) : (
@@ -992,6 +1041,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   />
                   <Button
                     label={busy ? 'Saving...' : 'Save'}
+                    variant="primary"
+                    size="sm"
                     onPress={() => {
                       void handleSaveEdit(item);
                     }}
@@ -1000,7 +1051,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   />
                   <Button
                     label="Cancel"
-                    variant="outline"
+                    size="sm"
                     onPress={cancelEdit}
                     disabled={busy}
                     style={styles.action}
@@ -1015,7 +1066,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   right={editable ? (
                     <Button
                       label="Remove"
-                      variant="outline"
                       size="sm"
                       onPress={() => {
                         void handleRemoveLineItem(item);
@@ -1028,29 +1078,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             )}
             </View>
           )}
-
-          {editable ? (
-          <>
-          {priceSheetQuickAddAvailable ? (
-            <View style={styles.buttonRow}>
-              <Button
-                label={ESTIMATE_LABELS.addManual}
-                variant="primary"
-                size="sm"
-                onPress={() => setAddMode('manual')}
-                disabled={busy}
-                style={styles.buttonFlex}
-              />
-              <Button
-                label={ESTIMATE_LABELS.lookupPriceSheet}
-                variant={addMode === 'priceSheet' ? 'secondary' : 'outline'}
-                size="sm"
-                onPress={() => setAddMode('priceSheet')}
-                disabled={busy}
-                style={styles.buttonFlex}
-              />
-            </View>
+          </>
           ) : null}
+
+          {activeTab !== 'lineItem' && editable ? (
+          <>
 
           {addMode === 'priceSheet' && priceSheetQuickAddAvailable ? (
             <>
@@ -1107,6 +1139,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
               <Button
                 label={busy ? 'Adding...' : 'Add Line Item'}
+                size="sm"
                 onPress={() => {
                   void handlePriceSheetQuickAdd();
                 }}
@@ -1150,6 +1183,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               />
               <Button
                 label={busy ? 'Adding...' : 'Add Line Item'}
+                size="sm"
                 onPress={() => {
                   void handleAddLineItem();
                 }}
@@ -1161,7 +1195,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </>
           ) : null}
         </Card>
+        ) : null}
 
+        {activeTab === 'finePrint' ? (
         <Card style={styles.card}>
           <Text style={styles.heading}>{ESTIMATE_LABELS.finePrint}</Text>
           {editable ? (
@@ -1195,6 +1231,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   <View style={styles.buttonRow}>
                     <Button
                       label="Save template"
+                      variant="primary"
                       size="sm"
                       onPress={() => {
                         void saveTemplate();
@@ -1204,7 +1241,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     />
                     <Button
                       label="Cancel"
-                      variant="outline"
                       size="sm"
                       onPress={() => setEditingTemplate(false)}
                       disabled={busy}
@@ -1213,9 +1249,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   </View>
                 </>
               ) : (
+                <>
                 <Button
-                  label="Edit template"
-                  variant="outline"
+                  label="Edit Fine Print Template"
                   size="sm"
                   onPress={() => {
                     setTemplateInput(templateText ?? '');
@@ -1224,12 +1260,23 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   disabled={busy}
                   style={styles.action}
                 />
+                <Button
+                  label="Reset to default"
+                  size="sm"
+                  onPress={() => {
+                    void resetTemplate();
+                  }}
+                  disabled={busy}
+                  style={styles.action}
+                />
+                </>
               )}
             </>
           ) : (
             <Text style={styles.note}>{(estimate?.finePrint ?? '').trim() !== '' ? estimate?.finePrint : templateText ?? ''}</Text>
           )}
         </Card>
+        ) : null}
 
         <Card style={styles.card}>
           <Text style={styles.heading}>Payment Outlay</Text>
@@ -1242,7 +1289,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         {estimate?.pdfDelivery ? (
           <Button
             label="Print / Save as PDF"
-            variant="outline"
+            size="sm"
             onPress={handlePrint}
             disabled={Platform.OS !== 'web'}
             style={styles.action}
@@ -1264,10 +1311,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   card: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   heading: {
     color: colors.text,
@@ -1289,8 +1336,8 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   buttonFlex: {
     flex: 1,
@@ -1313,37 +1360,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   summaryCell: {
     flexGrow: 1,
     flexBasis: 160,
   },
+  tabRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
   linkRow: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   field: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   label: {
     color: colors.text,
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     marginBottom: spacing.xs,
   },
   editRow: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   action: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   note: {
     color: colors.textMuted,
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  trackingRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  trackingField: {
+    flex: 1,
+  },
+  trackingButton: {},
+  tabNarrow: {
+    flexGrow: 1,
+    flexBasis: '30%',
   },
 });
