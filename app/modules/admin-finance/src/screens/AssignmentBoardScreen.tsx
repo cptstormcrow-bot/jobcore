@@ -671,7 +671,8 @@ const styles = StyleSheet.create({
   actionButton: {
     paddingHorizontal: spacing.xs,
     paddingVertical: 0,
-    minHeight: 32,
+    minHeight: 44,
+    backgroundColor: colors.sand,
   },
   hint: {
     color: colors.textMuted,

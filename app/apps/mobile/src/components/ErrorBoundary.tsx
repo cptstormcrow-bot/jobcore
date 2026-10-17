@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { colors, Text } from '@jobcore/ui';
+import { Button, Text } from '@jobcore/ui';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -42,9 +42,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <View style={styles.center}>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.message}>{this.state.error.message}</Text>
-          <Pressable style={styles.button} onPress={this.handleGoBack}>
-            <Text style={styles.buttonText}>Go back</Text>
-          </Pressable>
+          <Button label="Go back" onPress={this.handleGoBack} />
         </View>
       );
     }
@@ -71,15 +69,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 16,
     textAlign: 'center',
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    backgroundColor: colors.text,
-  },
-  buttonText: {
-    color: colors.white,
-    fontWeight: '600',
   },
 });

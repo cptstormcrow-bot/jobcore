@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { Pressable, Text as RNText, View } from 'react-native';
-import { EmptyState, Text, TextField } from '@jobcore/ui';
+import { colors, EmptyState, Text, TextField } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -26,9 +26,11 @@ const FORMATS: { key: PayrollExportFormat; label: string }[] = [
 ];
 
 const sandButton = {
-  backgroundColor: '#D9C7A0',
+  backgroundColor: colors.sand,
   paddingHorizontal: 12,
   paddingVertical: 6,
+  minHeight: 44,
+  justifyContent: 'center',
   borderRadius: 6,
 } as const;
 const sandButtonLabel = { color: '#000', fontWeight: '700' } as const;
@@ -49,7 +51,7 @@ function SandButton(props: {
       style={[
         sandButton,
         selected ? { borderWidth: 2, borderColor: '#000' } : null,
-        disabled ? { opacity: 0.5 } : null,
+        disabled ? { backgroundColor: colors.sandInactive } : null,
       ]}
     >
       <RNText style={sandButtonLabel}>{label}</RNText>
