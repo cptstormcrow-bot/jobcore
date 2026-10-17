@@ -30,6 +30,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
   const [jobHistory, setJobHistory] = useState<CustomerJobHistoryItem[]>([]);
+  const [techPayouts, setTechPayouts] = useState<{ techName: string; amount: number; basis: 'hourly' | 'commission' }[]>([]);
   const awaiting = awaitingCloseOut(job);
 
   useEffect(() => {
@@ -87,6 +88,33 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       cancelled = true;
     };
   }, [job.id, ports.jobTimeline]);
+
+  useEffect(() => {
+    if (session.status !== 'authenticated') {
+      setTechPayouts([]);
+      return undefined;
+    }
+    let cancelled = false;
+    ports.commissions
+      .listForOrganization(session.organization.id)
+      .then((rows) => {
+        if (!cancelled) {
+          setTechPayouts(
+            rows
+              .filter((row) => row.jobId === job.id)
+              .map((row) => ({ techName: 'Technician', amount: row.amount / 100, basis: 'commission' as const })),
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTechPayouts([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.id, ports.commissions, session]);
 
   useEffect(() => {
     if (!awaiting) {
@@ -207,8 +235,9 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       onRemovePhoto={handleRemovePhoto}
       onChangeNotes={handleChangeNotes}
       onCloseOut={handleCloseOut}
-      hoursLogged={undefined}
-      techPayouts={undefined}
+      hoursLogged={job.totalLaborSeconds > 0 ? job.totalLaborSeconds / 3600 : undefined}
+      techPayouts={techPayouts}
+      // No job-scoped contractor payout source exists yet.
       contractorPayouts={undefined}
       customerContacts={contacts.map((c) => ({ label: c.label ?? c.kind, value: c.value }))}
       jobHistory={jobHistory}
