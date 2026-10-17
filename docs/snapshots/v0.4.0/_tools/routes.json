@@ -155,7 +155,9 @@
    "tech"
   ],
   "mounted": true,
-  "notes": "not declared in root Stack; picked up from file"
+  "notes": "not declared in root Stack; picked up from file",
+  "retiredAt": "2026-10-16",
+  "retiredInto": 41
  },
  {
   "key": "account",

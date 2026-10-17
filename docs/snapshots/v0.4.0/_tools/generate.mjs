@@ -23,6 +23,9 @@ const registryPath = path.resolve(process.env.JOBCORE_SCREEN_REGISTRY || path.jo
 const registryRaw = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
 const registryEntries = Array.isArray(registryRaw) ? registryRaw : (registryRaw.entries || registryRaw.screens || []);
 const registry = new Map(registryEntries.filter((e) => !e.retiredAt).map((e) => [e.key, e]));
+const retiredIntoKeys = new Set(registryEntries.filter((e) => e.retiredAt && e.retiredInto !== undefined).map((e) => e.key));
+// retired screens that forward to an active screen (retiredInto) are not rendered
+src.screens = src.screens.filter((s) => !retiredIntoKeys.has(s.key));
 {
   const screenKeys = new Set(src.screens.map((s) => s.key));
   const offenders = [];

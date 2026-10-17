@@ -48,7 +48,7 @@ export function mintNumbers(registry, candidates, now) {
     if (!candKeys.has(e.key) && !e.retiredAt) {
       copy.retiredAt = now;
       retired.push(copy);
-    } else if (candKeys.has(e.key) && e.retiredAt) {
+    } else if (candKeys.has(e.key) && e.retiredAt && e.retiredInto === undefined) {
       delete copy.retiredAt;
     }
     return copy;
@@ -81,8 +81,21 @@ export function checkRegistry(registry, screenKeys) {
     }
   }
   const keys = new Set(screenKeys);
+  const byNumber = new Map(registry.map((e) => [e.number, e]));
+  const targetActive = (n) => {
+    const t = byNumber.get(n);
+    return t !== undefined && !t.retiredAt;
+  };
   for (const k of keys) {
-    if (!seenActive.has(k)) problems.push(`screen key has no active entry: ${k}`);
+    if (seenActive.has(k)) continue;
+    const forwarded = registry.some((e) => e.key === k && e.retiredAt
+      && e.retiredInto !== undefined && targetActive(e.retiredInto));
+    if (!forwarded) problems.push(`screen key has no active entry: ${k}`);
+  }
+  for (const e of registry) {
+    if (e.retiredInto !== undefined && !targetActive(e.retiredInto)) {
+      problems.push(`retiredInto target not active: ${e.number} -> ${e.retiredInto}`);
+    }
   }
   for (const k of seenActive) {
     if (!keys.has(k)) problems.push(`active entry not in screen keys: ${k}`);

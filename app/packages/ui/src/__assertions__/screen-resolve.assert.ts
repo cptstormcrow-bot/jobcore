@@ -134,3 +134,20 @@ test('lowest number tie-break', () => {
   assert.equal(resolveScreen('/x/1', t)?.number, 8);
   assert.equal(resolveScreen('/x/1', [...t].reverse())?.number, 8);
 });
+
+test('retiredInto fallback', () => {
+  const RI = [
+    e(10, '/target'),
+    e(11, '/gone/[id]', { retiredAt: '2026-10-16', retiredInto: 10 }),
+    e(12, '/dangling/[id]', { retiredAt: '2026-10-16', retiredInto: 999 }),
+    e(13, '/plain', { retiredAt: '2026-10-16' }),
+    e(14, '/live/[id]'),
+    e(15, '/live/[id]', { retiredAt: '2026-10-16', retiredInto: 10 }),
+  ];
+  for (const reg of [RI, [...RI].reverse()]) {
+    assert.equal(resolveScreen('/gone/7', reg)?.number, 10);
+    assert.equal(resolveScreen('/dangling/7', reg), null);
+    assert.equal(resolveScreen('/plain', reg), null);
+    assert.equal(resolveScreen('/live/7', reg)?.number, 14);
+  }
+});

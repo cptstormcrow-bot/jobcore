@@ -58,6 +58,20 @@ test('checkRegistry problem classes and tombstone exemption', () => {
   assert.equal(checkRegistry([e(1, 'a')], ['a', 'm']).length, 1);
   assert.equal(checkRegistry([e(1, 'a'), e(2, 'x')], ['a']).length, 1);
   assert.deepEqual(checkRegistry([e(1, 'a'), e(2, 'x', { retiredAt: 'N' })], ['a']), []);
+  assert.deepEqual(checkRegistry([e(1, 'a'), e(2, 'x', { retiredAt: 'N', retiredInto: 1 })], ['a', 'x']), []);
+  assert.equal(checkRegistry([e(1, 'a'), e(2, 'x', { retiredAt: 'N' })], ['a', 'x']).length, 1);
+  assert.equal(checkRegistry([e(1, 'a'), e(2, 'x', { retiredAt: 'N', retiredInto: 9 })], ['a', 'x']).length, 2);
+  assert.ok(checkRegistry([e(1, 'a', { retiredAt: 'N' }), e(2, 'x', { retiredAt: 'N', retiredInto: 1 })], ['x']).length >= 1);
+});
+
+test('mintNumbers keeps retiredInto tombstones retired', () => {
+  const e = (number, key, extra = {}) => ({ number, key, title: '', route: '', file: '', createdAt: '', ...extra });
+  const reg = [e(1, 'a'), e(2, 'x', { retiredAt: 'N', retiredInto: 1 })];
+  const r = mintNumbers(reg, [c('a', 'a.ts', '2026-01-01'), c('x', 'x.ts', '2026-01-02')], 'N2');
+  const x = r.registry.find((en) => en.key === 'x');
+  assert.equal(x.retiredAt, 'N');
+  assert.equal(x.retiredInto, 1);
+  assert.equal(r.added.length, 0);
 });
 
 test('lookup', () => {

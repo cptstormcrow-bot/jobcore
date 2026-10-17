@@ -7,6 +7,8 @@ export type RegistryEntry = {
   createdAt: string;
   subView?: string;
   retiredAt?: string;
+  // number of the active entry a retired route now resolves to
+  retiredInto?: number;
 };
 
 export function normalizePath(p: string): string {
@@ -63,9 +65,22 @@ export function resolveScreen(
     const m = matchRoute(e.route, pathname);
     if (m.matched) cands.push({ e, d: m.dynamicCount });
   }
-  const base = cands
+  let base = cands
     .filter((c) => !c.e.subView)
     .sort((a, b) => a.d - b.d || a.e.number - b.e.number)[0];
+  if (!base) {
+    // a retired route falls back to the active entry it was merged into
+    for (const r of registry) {
+      if (!r.retiredAt || r.retiredInto == null) continue;
+      if (typeof r.route !== 'string' || r.route === '') continue;
+      if (!matchRoute(r.route, pathname).matched) continue;
+      const target = active.find((a) => a.number === r.retiredInto);
+      if (target) {
+        base = { e: target, d: 0 };
+        break;
+      }
+    }
+  }
   if (typeof subView === 'string' && subView !== '') {
     const hit = cands
       .filter((c) => c.e.subView === subView)
