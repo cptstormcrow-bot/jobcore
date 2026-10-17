@@ -800,18 +800,16 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           <View style={styles.summaryCell}>
             <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimate.toUpperCase()}</Text>
             <Text style={styles.cellValue}>{estimate?.status ?? 'draft'}</Text>
-            {!props.onChrome && estimate ? (
-              <EstimateStatusControl
-                status={estimate.status}
-                allowed={editable ? allowedEstimateMoves('admin', estimate.status) : []}
-           readOnly={!editable}
-                busy={moving}
-                onSelect={(next) => {
-                  void handleMove(next);
-                }}
-                testID="estimate-status-control"
-              />
-            ) : null}
+            <EstimateStatusControl
+              status={estimate?.status ?? 'draft'}
+              allowed={estimate && editable ? allowedEstimateMoves('admin', estimate.status) : []}
+              readOnly={!editable || !estimate}
+              busy={moving}
+              onSelect={(next) => {
+                void handleMove(next);
+              }}
+              testID="estimate-status-control"
+            />
           </View>
           <View style={styles.summaryCell}>
             <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
