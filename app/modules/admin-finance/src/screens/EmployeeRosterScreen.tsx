@@ -116,11 +116,15 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title="Employee Roster" />
-        <Button label="Add Employee" style={styles.action} onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
-        {onViewInvitations ? (
-          <Button label="Pending Invitations" variant="outline" style={styles.action} onPress={() => onViewInvitations?.()} />
-        ) : null}
+        <View style={styles.headerRow}>
+          <ScreenTitle title="Employee Roster" />
+          <View style={styles.headerActions}>
+            <Button label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
+            {onViewInvitations ? (
+              <Button label="Pending Invitations" onPress={() => onViewInvitations?.()} />
+            ) : null}
+          </View>
+        </View>
         {visibleEmployees.length === 0 ? (
           <EmptyState title="Employee Roster" message="This organization has no employees on file." />
         ) : (
@@ -159,7 +163,16 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.md,
   },
-  action: {
-    marginBottom: spacing.sm,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: spacing.md,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
 });
