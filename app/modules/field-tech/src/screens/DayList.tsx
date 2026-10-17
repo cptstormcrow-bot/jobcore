@@ -29,7 +29,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, TabBar, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, TabBar, Button, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
@@ -276,9 +276,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                         <Text style={styles.modalTimeOffText}>{event.description ?? 'Day off'}</Text>
                       </View>
                     ))}
-                  <Pressable style={styles.modalCloseButton} onPress={() => setSelectedDay(null)}>
-                    <Text style={styles.modalCloseButtonText}>Close</Text>
-                  </Pressable>
+                  <Button label="Close" style={styles.modalCloseButton} onPress={() => setSelectedDay(null)} />
                 </>
               ) : null}
             </ScrollView>
@@ -371,11 +369,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     marginRight: spacing.sm,
     borderRadius: radius.sm,
-    backgroundColor: colors.surfaceAlt,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: colors.sand,
   },
   navButtonText: {
     fontSize: typography.size.label,
-    color: colors.primary,
+    color: colors.text,
     fontWeight: '600',
   },
   weekLabel: {
@@ -444,14 +444,5 @@ const styles = StyleSheet.create({
   modalCloseButton: {
     marginTop: 16,
     alignSelf: 'flex-start',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceAlt,
-  },
-  modalCloseButtonText: {
-    fontSize: typography.size.label,
-    color: colors.primary,
-    fontWeight: '600',
   },
 });

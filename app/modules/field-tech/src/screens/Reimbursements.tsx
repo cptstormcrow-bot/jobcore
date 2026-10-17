@@ -14,12 +14,12 @@
  */
 
 import * as React from 'react';
-import { View, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, TextInput, FlatList, StyleSheet } from 'react-native';
 
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors, Text } from '@jobcore/ui';
+import { Button, colors, Text } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -165,14 +165,13 @@ export function Reimbursements(): React.ReactElement {
           editable={!submitting}
         />
         {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={submitting ? 'Submitting…' : 'Submit request'}
           disabled={!canSubmit}
           onPress={handleSubmit}
-          style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
-        >
-          <Text style={styles.submitButtonText}>{submitting ? 'Submitting…' : 'Submit request'}</Text>
-        </Pressable>
+          fullWidth
+          style={styles.submitButton}
+        />
       </View>
 
       <View style={styles.section}>
@@ -241,18 +240,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     marginTop: 12,
-    alignItems: 'center',
-  },
-  submitButtonDisabled: {
-    opacity: 0.5,
-  },
-  submitButtonText: {
-    fontSize: 14,
   },
   requestRow: {
     paddingVertical: 8,

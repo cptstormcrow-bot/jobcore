@@ -18,9 +18,9 @@
  */
 
 import * as React from 'react';
-import { View, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { ScreenTitle, Toggle, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, Toggle, Button, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
@@ -141,16 +141,12 @@ export function CallbackTasks(): React.ReactElement {
                   Open job{item.openJobNumber != null ? ` #${item.openJobNumber}` : ''} in progress
                 </Text>
               ) : (
-              <Pressable
-                accessibilityRole="button"
+              <Button
+                label={markingIds.has(item.jobId) ? 'Marking…' : 'Mark Called Back'}
                 disabled={markingIds.has(item.jobId)}
                 onPress={() => handleMarkCalledBack(item)}
-                style={[styles.markButton, markingIds.has(item.jobId) && styles.markButtonDisabled]}
-              >
-                <Text style={styles.markButtonText}>
-                  {markingIds.has(item.jobId) ? 'Marking…' : 'Mark Called Back'}
-                </Text>
-              </Pressable>
+                style={{ marginTop: 8, alignSelf: 'flex-start' }}
+              />
               )}
             </View>
           )}
@@ -193,22 +189,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMutedDark,
     marginTop: 2,
-  },
-  markButton: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  markButtonDisabled: {
-    opacity: 0.5,
-  },
-  markButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
   },
 });
 

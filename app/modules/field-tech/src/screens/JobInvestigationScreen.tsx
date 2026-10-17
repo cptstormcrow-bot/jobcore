@@ -362,18 +362,6 @@ const styles = StyleSheet.create({
   actionCell: {
     flex: 1,
   },
-  removeButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    justifyContent: 'center',
-  },
-  removeButtonText: {
-    color: '#ffffff',
-    fontFamily: typography.fontFamily.body,
-    fontWeight: typography.weight.semibold,
-  },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',

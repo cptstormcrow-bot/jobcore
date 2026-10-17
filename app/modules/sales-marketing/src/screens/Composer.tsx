@@ -49,7 +49,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
-import { ScreenTitle, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, Button } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -360,12 +360,7 @@ export function Composer({
             onPress={() => setPlatform(g.platform)}
             style={[styles.platformChip, platform === g.platform && styles.platformChipActive]}
           >
-            <Text
-              style={[
-                styles.platformChipText,
-                platform === g.platform && styles.platformChipTextActive,
-              ]}
-            >
+            <Text style={styles.platformChipText}>
               {g.label}
             </Text>
           </Pressable>
@@ -413,30 +408,23 @@ export function Composer({
       {error !== null ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {!approved ? (
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={busy ? 'Approving…' : 'Approve draft'}
           onPress={() => void handleApprove()}
           disabled={busy || draftId === null}
-          style={[styles.primaryButton, (busy || draftId === null) && styles.buttonDisabled]}
-        >
-          <Text style={styles.primaryButtonText}>{busy ? 'Approving…' : 'Approve draft'}</Text>
-        </Pressable>
+          style={styles.approveButton}
+        />
       ) : (
         <Text style={styles.approvedText}>Draft approved — ready to post.</Text>
       )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Manual export (always available)</Text>
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          label={busy ? 'Exporting…' : 'Export images, copy caption, share'}
           onPress={() => void handleManualExport()}
           disabled={!approved || busy}
-          style={[styles.secondaryButton, (!approved || busy) && styles.buttonDisabled]}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {busy ? 'Exporting…' : 'Export images, copy caption, share'}
-          </Text>
-        </Pressable>
+        />
         {manualLogged ? <Text style={styles.infoText}>Logged to campaign log.</Text> : null}
       </View>
 
@@ -444,16 +432,11 @@ export function Composer({
         <Text style={styles.sectionTitle}>Direct post</Text>
         {metaEnabled ? (
           <>
-            <Pressable
-              accessibilityRole="button"
+            <Button
+              label={busy ? 'Posting…' : 'Post directly via Meta'}
               onPress={() => void handleDirectPost()}
               disabled={!approved || busy}
-              style={[styles.secondaryButton, (!approved || busy) && styles.buttonDisabled]}
-            >
-              <Text style={styles.secondaryButtonText}>
-                {busy ? 'Posting…' : 'Post directly via Meta'}
-              </Text>
-            </Pressable>
+            />
             {directResult !== null && directResult.status === 'posted' ? (
               <Text style={styles.infoText}>
                 Posted. Platform post id: {directResult.platformPostId}
@@ -517,17 +500,16 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: colors.surfaceAlt,
+    minHeight: 44,
+    justifyContent: 'center',
+    backgroundColor: colors.sandInactive,
   },
   platformChipActive: {
-    backgroundColor: colors.text,
+    backgroundColor: colors.sand,
   },
   platformChipText: {
     fontSize: 13,
     color: colors.text,
-  },
-  platformChipTextActive: {
-    color: colors.white,
   },
   guidanceText: {
     fontSize: 13,
@@ -589,31 +571,8 @@ const styles = StyleSheet.create({
     color: colors.success,
     marginBottom: 16,
   },
-  primaryButton: {
-    backgroundColor: colors.text,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
+  approveButton: {
     marginBottom: 16,
-  },
-  primaryButtonText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryButtonText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
   doneButton: {
     borderRadius: 8,

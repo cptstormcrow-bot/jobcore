@@ -36,7 +36,7 @@
 
 import * as React from 'react';
 import { View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { ScreenTitle, colors, Text } from '@jobcore/ui';
+import { Button, ScreenTitle, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
@@ -242,16 +242,12 @@ export function ReviewLibrary(): React.ReactElement {
                 <Text style={styles.meta}>
                   {item.platform} · job {item.jobId} · {item.submittedAt}
                 </Text>
-                <Pressable
-                  accessibilityRole="button"
+                <Button
+                  label={curatedIds.has(item.id) ? 'Curated as testimonial' : 'Curate as testimonial'}
                   disabled={curatedIds.has(item.id)}
                   onPress={() => handleCurate(item)}
-                  style={[styles.curateButton, curatedIds.has(item.id) && styles.curateButtonDisabled]}
-                >
-                  <Text style={styles.curateButtonText}>
-                    {curatedIds.has(item.id) ? 'Curated as testimonial' : 'Curate as testimonial'}
-                  </Text>
-                </Pressable>
+                  style={styles.curateButton}
+                />
               </View>
             </View>
           )}
@@ -283,18 +279,21 @@ const styles = StyleSheet.create({
   ratingChip: {
     paddingVertical: 6,
     paddingHorizontal: 12,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: 16,
-    backgroundColor: colors.surfaceAlt,
+    backgroundColor: colors.sandInactive,
   },
   ratingChipActive: {
-    backgroundColor: colors.text,
+    backgroundColor: colors.sand,
   },
   ratingChipText: {
     fontSize: 13,
     color: colors.text,
   },
   ratingChipTextActive: {
-    color: colors.white,
+    color: colors.text,
+    fontWeight: '600',
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
@@ -363,18 +362,6 @@ const styles = StyleSheet.create({
   curateButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-  },
-  curateButtonDisabled: {
-    opacity: 0.5,
-  },
-  curateButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.text,
   },
 });
 
