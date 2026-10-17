@@ -17,6 +17,7 @@ export * from './Toggle';
 export * from './WeekView';
 export * from './MonthView';
 export * from './DayView';
+export * from './DayTimelinePicker';
 export * from './CalendarHeader';
 export * from './DateRangeCalendar';
 export * from './Checkbox';

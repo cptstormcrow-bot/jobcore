@@ -43,7 +43,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, Button, DayTimelinePicker, DatePicker, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
 import { addMinutes, format } from 'date-fns';
 import type { Job } from '@jobcore/core';
@@ -66,6 +66,10 @@ export interface JobScheduleScreenProps {
   totalTaskMinutes?: number;
   /** Org's price-sheet standard duration (minutes), when known; the fallback default when no task minutes are available. */
   standardMinutes?: number;
+  /** Assigned tech's display name, shown in the top band; absent renders a dash. */
+  assignedTechName?: string;
+  /** Prem tech's display name, shown in the top band; absent renders a dash. */
+  premTechName?: string;
 }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -149,7 +153,7 @@ type ScheduleField = 'start' | 'end';
 type AndroidStage = 'date' | 'time';
 type AndroidPickerState = { field: ScheduleField; stage: AndroidStage; datePart: Date } | null;
 
-export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onOpenCalendar, onSaved, embedded, totalTaskMinutes, standardMinutes }: JobScheduleScreenProps) {
+export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onOpenCalendar, onSaved, embedded, totalTaskMinutes, standardMinutes, assignedTechName, premTechName }: JobScheduleScreenProps) {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -405,6 +409,34 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     );
   }
 
+  // Day-timeline inputs: the day being scheduled (current Start, else the calendar anchor day),
+  // with other jobs and time-off overlapping that day as busy ranges (this job excluded).
+  const timelineDate = startDate && startTime ? startPickerDate : anchorDay;
+  const timelineSelectedMs = startDate && startTime ? startPickerDate.getTime() : null;
+  const timelineBusy = (() => {
+    const dayStart = new Date(timelineDate.getFullYear(), timelineDate.getMonth(), timelineDate.getDate()).getTime();
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const out: Array<{ id: string; startMs: number; endMs: number; label?: string }> = [];
+    for (const j of calJobs) {
+      if (j.id === job.id || !j.scheduledStart) continue;
+      const s = new Date(j.scheduledStart).getTime();
+      const e = j.scheduledEnd ? new Date(j.scheduledEnd).getTime() : s + effectiveDefault * 60000;
+      if (Number.isNaN(s) || Number.isNaN(e) || e <= dayStart || s >= dayEnd) continue;
+      out.push({ id: j.id, startMs: s, endMs: e, label: j.jobNumber ? String(j.jobNumber) : undefined });
+    }
+    for (const t of calTimeOff) {
+      if (t.status === 'cancelled' || t.status === 'denied') continue;
+      const [sy, sm, sd] = t.startDate.split('-').map(Number);
+      const [ey, em, ed] = t.endDate.split('-').map(Number);
+      if (!sy || !sm || !sd || !ey || !em || !ed) continue;
+      const s = new Date(sy, sm - 1, sd).getTime();
+      const e = new Date(ey, em - 1, ed + 1).getTime();
+      if (e <= dayStart || s >= dayEnd) continue;
+      out.push({ id: 'timeoff-' + t.id, startMs: s, endMs: e, label: 'Time off' });
+    }
+    return out;
+  })();
+
   const Root = embedded ? View : ScrollView;
   const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
 
@@ -418,7 +450,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
         )}
 
         <Card style={styles.card}>
-          {!embedded && <Text style={styles.title}>Schedule</Text>}
+          {!embedded && <Text style={styles.title}>Schedule #0058</Text>}
           {!embedded && (
             <>
               <JobTitleBarHeader
@@ -443,33 +475,35 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
             </>
           )}
 
-          <View style={{ height: 420 }}>
-            <UniversalCalendar
-              role="admin"
-              viewerId={null}
-              anchorDate={anchorDay}
-              initialMode="month"
-              jobs={calJobs}
-              employees={calEmployees}
-              timeOffRequests={calTimeOff}
-              onSelectJob={() => {}}
-              onSaveBlackouts={async (isoDays, techId) => {
-                for (const day of isoDays) {
-                  await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, { startDate: day, endDate: day, reason: null });
-                }
-                setTimeOffRev((n) => n + 1);
-              }}
-              onSubmitTimeOff={async (draft, techId) => {
-                await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, draft);
-                setTimeOffRev((n) => n + 1);
-              }}
-              onCancelTimeOff={async (requestId) => {
-                await getModulePorts().timeOffAdmin.cancel(requestId);
-                setTimeOffRev((n) => n + 1);
-              }}
-              onPickDay={handleSelectDay}
-            />
+          <View style={styles.topBand}>
+            <View style={styles.techCol}>
+              <Text style={styles.techLine}>Tech: {assignedTechName ?? '—'}</Text>
+              <Text style={styles.techLine}>Prem Tech: {premTechName ?? '—'}</Text>
+            </View>
+            <View style={styles.actions}>
+              <Button
+                label="Clear Schedule"
+                variant="outline"
+                onPress={handleClearSchedule}
+                style={styles.action}
+              />
+              <Button
+                label={saving ? 'Saving...' : 'Save'}
+                onPress={() => void handleSave()}
+                disabled={saving}
+                style={styles.action}
+              />
+              <Button label="Cancel" variant="outline" onPress={resetFromJob} style={styles.action} />
+            </View>
           </View>
+
+          <Text style={styles.sectionLabel}>Start Time</Text>
+          <DayTimelinePicker
+            date={timelineDate}
+            busy={timelineBusy}
+            selectedStartMs={timelineSelectedMs}
+            onPick={(ms) => applyPickedDate('start', new Date(ms))}
+          />
 
           <Text style={styles.sectionLabel}>Start time</Text>
           {renderFieldPicker('start')}
@@ -508,19 +542,31 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
             <Text style={styles.hintText}>Scheduled for {startPickerDate.toLocaleString()}</Text>
           )}
 
-          <View style={styles.actions}>
-            <Button
-              label="Clear schedule"
-              variant="outline"
-              onPress={handleClearSchedule}
-              style={styles.action}
-            />
-            <Button label="Cancel" variant="outline" onPress={resetFromJob} style={styles.action} />
-            <Button
-              label={saving ? 'Saving...' : 'Save'}
-              onPress={() => void handleSave()}
-              disabled={saving}
-              style={styles.action}
+          <View style={{ height: 420 }}>
+            <UniversalCalendar
+              role="admin"
+              viewerId={null}
+              anchorDate={anchorDay}
+              initialMode="month"
+              jobs={calJobs}
+              employees={calEmployees}
+              timeOffRequests={calTimeOff}
+              onSelectJob={() => {}}
+              onSaveBlackouts={async (isoDays, techId) => {
+                for (const day of isoDays) {
+                  await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, { startDate: day, endDate: day, reason: null });
+                }
+                setTimeOffRev((n) => n + 1);
+              }}
+              onSubmitTimeOff={async (draft, techId) => {
+                await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, draft);
+                setTimeOffRev((n) => n + 1);
+              }}
+              onCancelTimeOff={async (requestId) => {
+                await getModulePorts().timeOffAdmin.cancel(requestId);
+                setTimeOffRev((n) => n + 1);
+              }}
+              onPickDay={handleSelectDay}
             />
           </View>
         </Card>
@@ -618,5 +664,21 @@ const styles = StyleSheet.create({
   },
   action: {
     marginLeft: spacing.sm,
+  },
+  topBand: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  techCol: {
+    flexShrink: 1,
+  },
+  techLine: {
+    color: colors.text,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
   },
 });
