@@ -2076,6 +2076,13 @@ function toJobEstimate(row: {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: row.created_by,
+  materials_onsite?: boolean | null;
+  tracking_number?: string | null;
+  tracking_status?: string | null;
+  tracking_checked_at?: string | null;
+  fine_print?: string | null;
+  pdf_delivery?: boolean | null;
+  contingencies?: unknown;
     updatedBy: row.updated_by,
   };
 }
@@ -2098,6 +2105,18 @@ function toJobEstimateLineItem(row: {
     jobId: row.job_id,
     organizationId: row.organization_id,
     kind: row.kind,
+    materialsOnsite: row.materials_onsite ?? false,
+    trackingNumber: row.tracking_number ?? null,
+    trackingStatus: row.tracking_status ?? null,
+    trackingCheckedAt: row.tracking_checked_at ?? null,
+    finePrint: row.fine_print ?? null,
+    pdfDelivery: row.pdf_delivery ?? false,
+    contingencies: Array.isArray(row.contingencies)
+      ? (row.contingencies as Array<Record<string, unknown> | null>).map((c) => ({
+          description: String(c?.description ?? ''),
+          price: c?.price === null || c?.price === undefined ? null : Number(c.price),
+        }))
+      : [],
     description: row.description,
     quantity: Number(row.quantity),
     unitCost: Number(row.unit_cost),
@@ -2198,6 +2217,27 @@ export function createEstimateRepository(): EstimateRepository {
         created_at: occurredAt,
         updated_at: occurredAt,
         created_by: userId,
+      if (input.materialsOnsite !== undefined) {
+        patch.materials_onsite = input.materialsOnsite;
+      }
+      if (input.trackingNumber !== undefined) {
+        patch.tracking_number = input.trackingNumber;
+      }
+      if (input.trackingStatus !== undefined) {
+        patch.tracking_status = input.trackingStatus;
+      }
+      if (input.trackingCheckedAt !== undefined) {
+        patch.tracking_checked_at = input.trackingCheckedAt;
+      }
+      if (input.finePrint !== undefined) {
+        patch.fine_print = input.finePrint;
+      }
+      if (input.pdfDelivery !== undefined) {
+        patch.pdf_delivery = input.pdfDelivery;
+      }
+      if (input.contingencies !== undefined) {
+        patch.contingencies = input.contingencies;
+      }
         updated_by: userId,
         ...patch,
       };
@@ -2323,6 +2363,72 @@ export interface JobInvestigation {
   ingressNotes: string | null;
   logisticsNotes: string | null;
   parkingNotes: string | null;
+
+    async trackShipment(
+      trackingNumber: string,
+    ): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }> {
+      const fail = (error: string) => ({ ok: false, status: null, delivered: false, error });
+      try {
+        const client: {
+          functions: {
+            invoke(fn: string, opts: { body: Record<string, unknown> }): Promise<{ data: unknown; error: { message: string } | null }>;
+          };
+        } = supabase;
+        const result = await client.functions.invoke('ups-track', { body: { trackingNumber } });
+        if (result.error) {
+          return fail(result.error.message || 'ups-lookup-failed');
+        }
+        const d = result.data as Record<string, unknown> | null | undefined;
+        if (!d || typeof d !== 'object') {
+          return fail('ups-lookup-failed');
+        }
+        const ok = d.ok === true;
+        const out: { ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string } = {
+          ok,
+          status: typeof d.status === 'string' ? d.status : null,
+          delivered: d.delivered === true,
+        };
+        if (typeof d.deliveredAt === 'string') {
+          out.deliveredAt = d.deliveredAt;
+        }
+        if (typeof d.error === 'string') {
+          out.error = d.error;
+        } else if (!ok) {
+          out.error = 'ups-lookup-failed';
+        }
+        return out;
+      } catch (e) {
+        return fail(e instanceof Error && e.message ? e.message : 'ups-lookup-failed');
+      }
+    },
+
+    async getFinePrintTemplate(): Promise<string | null> {
+      const { organizationId } = requireModuleSession();
+      const { data, error } = await supabase
+        .from('estimate_settings')
+        .select('fine_print_template')
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      if (error) {
+        throw new Error(`getFinePrintTemplate failed: ${error.message}`);
+      }
+      const t = (data as { fine_print_template?: string | null } | null)?.fine_print_template;
+      return typeof t === 'string' ? t : null;
+    },
+
+    async setFinePrintTemplate(text: string): Promise<void> {
+      requireOnline('save the estimate fine print');
+      const { organizationId } = requireModuleSession();
+      const { error } = await supabase
+        .from('estimate_settings')
+        .upsert(
+          { organization_id: organizationId, fine_print_template: text, updated_at: new Date().toISOString() },
+          { onConflict: 'organization_id' },
+        );
+      if (error) {
+        throw new Error(`setFinePrintTemplate failed: ${error.message}`);
+      }
+    },
   stateAssessment: string | null;
   roomWork: { room: string; work: string }[];
   measurements: string | null;

@@ -10,7 +10,7 @@
  * holds an `investigator` assignment on the job. Mirrors
  * `FieldJobDetail.tsx`'s component/styling conventions exactly (same
  * header/layout pattern, same loading/error state idiom, same navigation
- * prop typing) and `JobEstimateEditor.tsx`'s upsert/submit idiom for the
+ * prop typing) and the shared `JobEstimateScreen` upsert/submit idiom for the
  * sibling `investigations` port.
  */
 
@@ -18,7 +18,7 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
+import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -30,6 +30,8 @@ export interface JobInvestigationScreenProps {
   onBack?: () => void;
   /** Inlined inside a host screen (e.g. Job Detail) that already owns navigation/scroll: suppresses the Back row and the duplicate screen title. */
   embedded?: boolean;
+  /** Opens the calendar from the title bar's schedule link; absent means a plain label. */
+  onOpenCalendar?: () => void;
   /** Parent-supplied job (e.g. admin view); skips the tech-scoped lookup. */
   job?: Job;
   /** Called after a successful save that stamped submittedAt (not on Save Draft or failure). */
@@ -67,7 +69,7 @@ function formatDateTime(value: string | null): string {
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: jobProp, onSubmitted, renderTaskList }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpenCalendar, job: jobProp, onSubmitted, renderTaskList }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -220,6 +222,11 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
         <>
           <JobTitleBarHeader
             framed
+            inset={5}
+            jobLine={formatJobHeaderLines(job.jobNumber, job.createdAt).jobLine}
+            dateLine={formatJobHeaderLines(job.jobNumber, job.createdAt).dateLine}
+            scheduleLabel={formatScheduleLabel(job.scheduledStart)}
+            onSchedulePress={onOpenCalendar}
             customerName={job.customerName}
             address={job.address}
             phone={job.customerPhone}
@@ -227,6 +234,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, job: j
             onCopy={copyToClipboard}
           />
           <JobHeaderBlock
+            hideJobLine
             jobNumber={job.jobNumber}
             createdAt={job.createdAt}
             scheduledStart={job.scheduledStart}

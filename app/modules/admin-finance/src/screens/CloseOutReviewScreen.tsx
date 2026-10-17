@@ -36,7 +36,7 @@ import React, { useMemo } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
@@ -72,6 +72,8 @@ export interface CloseOutReviewScreenProps {
   customerContacts?: { label: string; value: string }[];
   /** Hosted inside the job page: no title, no flex root, no nested scroller. */
   embedded?: boolean;
+  /** Opens the calendar from the title bar's schedule link; absent means the label is plain text. */
+  onOpenCalendar?: () => void;
 }
 
 export function CloseOutReviewScreen({
@@ -89,6 +91,7 @@ export function CloseOutReviewScreen({
   contractorPayouts,
   customerContacts,
   embedded,
+  onOpenCalendar,
 }: CloseOutReviewScreenProps) {
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
 
@@ -114,6 +117,11 @@ export function CloseOutReviewScreen({
           <View style={styles.headerCard}>
             <JobTitleBarHeader
               framed
+              inset={5}
+              jobLine={formatJobHeaderLines(job.jobNumber, job.createdAt).jobLine}
+              dateLine={formatJobHeaderLines(job.jobNumber, job.createdAt).dateLine}
+              scheduleLabel={formatScheduleLabel(job.scheduledStart)}
+              onSchedulePress={onOpenCalendar}
               customerName={job.customerName}
               address={job.address}
               phone={job.customerPhone}
@@ -123,6 +131,7 @@ export function CloseOutReviewScreen({
               }}
             />
             <JobHeaderBlock
+              hideJobLine
               jobNumber={job.jobNumber}
               createdAt={job.createdAt}
               scheduledStart={job.scheduledStart}

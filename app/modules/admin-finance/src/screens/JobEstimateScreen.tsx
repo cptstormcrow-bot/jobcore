@@ -19,15 +19,20 @@
  * line item's `id`/`createdAt` survive a save.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
+import { ESTIMATE_LABELS, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
 import type { Job } from '@jobcore/core';
 import type {
   EstimateRepository,
+  EstimateContingency,
   JobEstimate,
+  JobEstimateInput,
   JobEstimateLineItem,
   JobEstimateLineItemDraft,
   EstimateLineItemKind,
@@ -57,6 +62,10 @@ export interface JobEstimateScreenProps {
   serviceAreas?: ServiceArea[];
   /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
   embedded?: boolean;
+  /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
+  editable?: boolean;
+  /** Publishes the header-right status control and options-menu items to the host; null on unmount. */
+  onChrome?: (chrome: { statusControl: ReactNode; optionsItems: MenuItem[] } | null) => void;
 }
 
 /** Applies one area adjustment to a base DOLLAR value using the `percent`/`flat` convention.
@@ -75,6 +84,9 @@ type ActionState =
   | { kind: 'working' }
   | { kind: 'failed'; message: string }
   | { kind: 'done'; message: string };
+
+/** Editable contingency row; price kept as text until saved. */
+type ContingencyDraft = { description: string; priceText: string };
 
 type LoadState =
   | { kind: 'idle' }
@@ -100,6 +112,7 @@ function formatCurrency(amount: number): string {
 
 export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const { job, onBack, embedded } = props;
+  const editable = props.editable ?? true;
   const estimates = props.estimates ?? getModulePorts().estimates;
 
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
@@ -279,6 +292,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       .then(([loadedEstimate, loadedLineItems]) => {
         if (cancelled) return;
         setEstimate(loadedEstimate);
+        setTrackingInput(loadedEstimate?.trackingNumber ?? '');
+        setFinePrintInput(loadedEstimate?.finePrint ?? '');
+        setContingencyRows(
+          (loadedEstimate?.contingencies ?? []).map((c) => ({ description: c.description, priceText: c.price === null ? '' : String(c.price) })),
+        );
         setLineItems(loadedLineItems);
         setLoadState({ kind: 'loaded' });
       })
@@ -293,6 +311,140 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }, [estimates, job.id]);
 
   const busy = actionState.kind === 'working';
+
+  const [trackingInput, setTrackingInput] = useState('');
+  const [trackingMsg, setTrackingMsg] = useState<string | null>(null);
+  const [checkingUps, setCheckingUps] = useState(false);
+  const [contingencyRows, setContingencyRows] = useState<ContingencyDraft[]>([]);
+  const [finePrintInput, setFinePrintInput] = useState('');
+  const [templateText, setTemplateText] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState(false);
+  const [templateInput, setTemplateInput] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    try {
+      estimates
+        .getFinePrintTemplate()
+        .then((text) => {
+          if (!cancelled) setTemplateText(text);
+        })
+        .catch(() => {
+          if (!cancelled) setTemplateText(null);
+        });
+    } catch {
+      setTemplateText(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [estimates]);
+
+  /** Persists a partial header update through the normal upsert path. */
+  async function persist(input: JobEstimateInput): Promise<JobEstimate | null> {
+    try {
+      const next = await estimates.upsertForJob(job.id, input);
+      setEstimate(next);
+      props.onEstimateChange?.(next);
+      return next;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the estimate.';
+      setActionState({ kind: 'failed', message });
+      return null;
+    }
+  }
+
+  async function runTrackingLookup(raw: string): Promise<void> {
+    const number = raw.trim();
+    setTrackingMsg(null);
+    if (!number) {
+      await persist({ trackingNumber: null, trackingStatus: null, trackingCheckedAt: null });
+      return;
+    }
+    setCheckingUps(true);
+    try {
+      let result: Awaited<ReturnType<EstimateRepository['trackShipment']>>;
+      try {
+        result = await estimates.trackShipment(number);
+      } catch (error: unknown) {
+        result = { ok: false, status: null, delivered: false, error: error instanceof Error ? error.message : 'UPS lookup failed.' };
+      }
+      const checkedAt = new Date().toISOString();
+      if (result.error === 'ups-not-configured') {
+        setTrackingMsg('UPS lookup not set up yet');
+        await persist({ trackingNumber: number });
+      } else if (!result.ok && result.error && !/not.?found/i.test(result.error)) {
+        setTrackingMsg(result.error);
+        await persist({ trackingNumber: number });
+      } else if (!result.ok || (!result.status && !result.delivered)) {
+        await persist({ trackingNumber: number, trackingStatus: 'Not found', trackingCheckedAt: checkedAt });
+      } else if (result.delivered) {
+        await persist({ trackingNumber: number, trackingStatus: 'Delivered', trackingCheckedAt: result.deliveredAt ?? checkedAt, materialsOnsite: true });
+      } else {
+        await persist({ trackingNumber: number, trackingStatus: result.status, trackingCheckedAt: checkedAt });
+      }
+    } catch (error: unknown) {
+      setTrackingMsg(error instanceof Error ? error.message : 'UPS lookup failed.');
+    } finally {
+      setCheckingUps(false);
+    }
+  }
+
+  function trackingStatusLine(): string | null {
+    if (trackingMsg) return trackingMsg;
+    if (!estimate?.trackingNumber || !estimate.trackingStatus) return null;
+    if (estimate.trackingStatus === 'Not found') return 'Not found at UPS';
+    const when = estimate.trackingCheckedAt ? ` · checked ${new Date(estimate.trackingCheckedAt).toLocaleString()}` : '';
+    return `UPS: ${estimate.trackingStatus}${when}`;
+  }
+  const trackingLine = trackingStatusLine();
+
+  function toContingencies(rows: ContingencyDraft[]): EstimateContingency[] {
+    return rows
+      .filter((r) => r.description.trim() !== '')
+      .map((r) => {
+        const text = r.priceText.replace(/[$,\s]/g, '');
+        const n = text === '' ? Number.NaN : Number(text);
+        return { description: r.description.trim(), price: Number.isFinite(n) ? n : null };
+      });
+  }
+
+  function saveContingencies(rows: ContingencyDraft[]): void {
+    const next = toContingencies(rows);
+    const current = estimate?.contingencies ?? [];
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    void persist({ contingencies: next });
+  }
+
+  function addContingency(): void {
+    setContingencyRows((prev) => [...prev, { description: '', priceText: '' }]);
+  }
+
+  function updateContingency(index: number, patch: Partial<ContingencyDraft>): void {
+    setContingencyRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  function removeContingency(index: number): void {
+    const next = contingencyRows.filter((_, i) => i !== index);
+    setContingencyRows(next);
+    saveContingencies(next);
+  }
+
+  async function saveTemplate(): Promise<void> {
+    setActionState({ kind: 'working' });
+    try {
+      await estimates.setFinePrintTemplate(templateInput);
+      setTemplateText(templateInput);
+      setEditingTemplate(false);
+      setActionState({ kind: 'done', message: 'Fine-print template saved.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the template.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  const layoutTotals = computeTotals(lineItems, estimate?.contingencies ?? []);
+  const linkEnabled = estimate?.status === 'submitted' || estimate?.status === 'approved';
 
   const totals = lineItems.reduce(
     (acc, item) => {
@@ -484,7 +636,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     });
   }
 
-  async function handleMove(next: 'draft' | 'submitted' | 'approved' | 'rejected'): Promise<void> {
+  async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
     if (!estimate) {
       return;
     }
@@ -516,7 +668,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         } else if (current.status !== 'submitted') {
           current = await estimates.upsertForJob(current.jobId, { status: 'submitted' });
         }
-        if (next === 'approved' || next === 'rejected') {
+        if (next === 'approved') {
           const result = await approveEstimate(current, next, { estimates, ctx, now: nowFn });
           if (!result.ok) {
             setActionState({ kind: 'failed', message: result.reason });
@@ -535,6 +687,51 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       setMoving(false);
     }
   }
+
+  const onChromeRef = useRef(props.onChrome);
+  onChromeRef.current = props.onChrome;
+  const handleMoveRef = useRef(handleMove);
+  handleMoveRef.current = handleMove;
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
+  const chromeStatus = estimate?.status ?? null;
+  const chromePdf = estimate?.pdfDelivery ?? false;
+  const hasChrome = !!props.onChrome;
+  useEffect(() => {
+    const publish = onChromeRef.current;
+    if (!publish || !chromeStatus) return undefined;
+    const optionsItems: MenuItem[] = editable
+      ? [
+          {
+            id: 'estimate-pdf-delivery',
+            label: ESTIMATE_LABELS.pdfDelivery,
+            kind: 'toggle',
+            checked: chromePdf,
+            onToggle: (next: boolean) => {
+              void persistRef.current({ pdfDelivery: next });
+            },
+          },
+        ]
+      : [];
+    publish({
+      statusControl: (
+        <EstimateStatusControl
+          compact
+          status={chromeStatus}
+          allowed={editable ? allowedEstimateMoves('admin', chromeStatus) : []}
+           readOnly={!editable}
+          onSelect={(next) => {
+            void handleMoveRef.current(next);
+          }}
+          testID="estimate-status-control"
+        />
+      ),
+      optionsItems,
+    });
+    return () => {
+      onChromeRef.current?.(null);
+    };
+  }, [chromeStatus, chromePdf, editable, hasChrome]);
 
   function handlePrint(): void {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -574,23 +771,85 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           />
         )}
         {!embedded && <ScreenTitle title="Estimate" />}
-        <Text style={styles.guidance}>
-          Give the customer a number before you hang up. Submit once they accept.
-        </Text>
+        <View style={styles.summaryRow} testID="estimate-summary-row">
+          <View style={styles.summaryCell}>
+            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimate.toUpperCase()}</Text>
+            <Text style={styles.cellValue}>{estimate?.status ?? 'draft'}</Text>
+            {!props.onChrome && estimate ? (
+              <EstimateStatusControl
+                status={estimate.status}
+                allowed={editable ? allowedEstimateMoves('admin', estimate.status) : []}
+           readOnly={!editable}
+                busy={moving}
+                onSelect={(next) => {
+                  void handleMove(next);
+                }}
+                testID="estimate-status-control"
+              />
+            ) : null}
+          </View>
+          <View style={styles.summaryCell}>
+            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
+            <Text style={styles.cellValue}>{formatMoney(layoutTotals.total)}</Text>
+          </View>
+          <View style={styles.summaryCell}>
+            <Text style={styles.cellLabel}>MATERIALS ONSITE</Text>
+            <Checkbox
+              label={ESTIMATE_LABELS.materialsOnsite}
+              checked={!!estimate?.materialsOnsite}
+              disabled={!editable || busy || !estimate}
+              onChange={(next) => {
+                void persist({ materialsOnsite: next });
+              }}
+            />
+            {editable || trackingInput ? (
+              <TextField
+                label={ESTIMATE_LABELS.trackingNumber}
+                value={trackingInput}
+                onChangeText={setTrackingInput}
+                onBlur={() => {
+                  if (editable && trackingInput.trim() !== (estimate?.trackingNumber ?? '')) {
+                    void runTrackingLookup(trackingInput);
+                  }
+                }}
+                disabled={!editable || busy}
+                style={styles.field}
+              />
+            ) : null}
+            {editable ? (
+              <Button
+                label={checkingUps ? 'Checking...' : 'Check UPS'}
+                variant="outline"
+                size="sm"
+                onPress={() => {
+                  void runTrackingLookup(trackingInput);
+                }}
+                disabled={busy || checkingUps || !trackingInput.trim()}
+                style={styles.action}
+              />
+            ) : null}
+            {trackingLine ? <Text style={styles.note}>{trackingLine}</Text> : null}
+          </View>
+        </View>
+
+        <View style={styles.linkRow} testID="estimate-link-row">
+          <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimateLink.toUpperCase()}</Text>
+          <Button
+            label={busy ? 'Working...' : 'Copy estimate link'}
+            variant="outline"
+            size="sm"
+            onPress={() => {
+              void handleShare();
+            }}
+            disabled={busy || !linkEnabled}
+            style={styles.action}
+          />
+          {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
+          {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
+          {shareError ? <ErrorState message={shareError} /> : null}
+        </View>
 
         <Card style={styles.card}>
-          <ListItem title="Status" subtitle={estimate?.status ?? 'draft'} />
-          {estimate ? (
-            <EstimateStatusControl
-              status={estimate.status}
-              allowed={allowedEstimateMoves('admin', estimate.status)}
-              busy={moving}
-              onSelect={(next) => {
-                void handleMove(next);
-              }}
-              testID="estimate-status-control"
-            />
-          ) : null}
           {!embedded && (
             <>
               <JobTitleBarHeader
@@ -610,7 +869,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               />
             </>
           )}
-          {job.description ? <ListItem title="Description" subtitle={job.description} /> : null}
+          {job.description ? <ListItem title={ESTIMATE_LABELS.description} subtitle={job.description} /> : null}
           {visibleTasks.length > 0 ? (
             <View testID="estimate-task-list">
               <Text style={styles.heading}>Tasks</Text>
@@ -621,17 +880,19 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   subtitle={t.kind === 'misc' ? 'Hourly · clock' : `Qty ${t.quantity}`}
                 />
               ))}
-              <Button
-                label={busy ? 'Building...' : 'Build lines from tasks'}
-                onPress={() => {
-                  void handleBuildFromTasks();
-                }}
-                disabled={busy}
-                style={styles.action}
-              />
+              {editable ? (
+                <Button
+                  label={busy ? 'Building...' : 'Build lines from tasks'}
+                  onPress={() => {
+                    void handleBuildFromTasks();
+                  }}
+                  disabled={busy}
+                  style={styles.action}
+                />
+              ) : null}
             </View>
           ) : null}
-          {estimate?.status === 'submitted' ? (
+          {editable && estimate?.status === 'submitted' ? (
             <Button
               label={busy ? 'Approving...' : 'Approve'}
               onPress={() => {
@@ -644,11 +905,68 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         </Card>
 
         <Card style={styles.card}>
-          <Text style={styles.heading}>Line Items</Text>
+          <Text style={styles.heading}>{ESTIMATE_LABELS.contingencies}</Text>
+          <Text style={styles.note}>Possible extras. They are not included in the total.</Text>
+          {editable ? (
+            <>
+              {contingencyRows.map((row, index) => (
+                <View key={index} style={styles.editRow}>
+                  <TextField
+                    label="Description"
+                    value={row.description}
+                    onChangeText={(text) => updateContingency(index, { description: text })}
+                    onBlur={() => saveContingencies(contingencyRows)}
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <TextField
+                    label="Price (optional)"
+                    value={row.priceText}
+                    onChangeText={(text) => updateContingency(index, { priceText: text })}
+                    onBlur={() => saveContingencies(contingencyRows)}
+                    placeholder="0.00"
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <Button
+                    label="Remove"
+                    variant="outline"
+                    size="sm"
+                    onPress={() => removeContingency(index)}
+                    disabled={busy}
+                    style={styles.action}
+                  />
+                </View>
+              ))}
+              <Button
+                label="Add contingency"
+                variant="outline"
+                size="sm"
+                onPress={addContingency}
+                disabled={busy}
+                style={styles.action}
+              />
+            </>
+          ) : (estimate?.contingencies ?? []).length === 0 ? (
+            <Text style={styles.note}>None.</Text>
+          ) : (
+            (estimate?.contingencies ?? []).map((c, index) => (
+              <ListItem
+                key={index}
+                title={c.description}
+                subtitle={c.price !== null ? formatMoney(c.price) : 'No price'}
+              />
+            ))
+          )}
+        </Card>
+
+        <Card style={styles.card}>
+          <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.lineItems}</Text>
           {lineItems.length === 0 ? (
             <EmptyState title="No line items" message="Add a line item below." />
           ) : (
-            lineItems.map((item) =>
+            <View style={styles.itemList}>
+            {lineItems.map((item) =>
               editingId === item.id ? (
                 <View key={item.id} style={styles.editRow}>
                   <TextField
@@ -693,8 +1011,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   key={item.id}
                   title={`${KIND_LABEL[item.kind]} — ${item.description}`}
                   subtitle={`${item.quantity} x ${formatCurrency(item.unitCost)} = ${formatCurrency(item.lineTotal)}`}
-                  onPress={() => beginEdit(item)}
-                  right={
+                  onPress={editable ? () => beginEdit(item) : undefined}
+                  right={editable ? (
                     <Button
                       label="Remove"
                       variant="outline"
@@ -704,31 +1022,32 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                       }}
                       disabled={busy}
                     />
-                  }
+                  ) : undefined}
                 />
               ),
-            )
+            )}
+            </View>
           )}
 
-          <Text style={styles.subheading}>Add Line Item</Text>
-
+          {editable ? (
+          <>
           {priceSheetQuickAddAvailable ? (
-            <View style={styles.action}>
+            <View style={styles.buttonRow}>
               <Button
-                label="Manual"
-                variant={addMode === 'manual' ? 'primary' : 'outline'}
+                label={ESTIMATE_LABELS.addManual}
+                variant="primary"
                 size="sm"
                 onPress={() => setAddMode('manual')}
                 disabled={busy}
-                style={styles.action}
+                style={styles.buttonFlex}
               />
               <Button
-                label="From Price Sheet"
-                variant={addMode === 'priceSheet' ? 'primary' : 'outline'}
+                label={ESTIMATE_LABELS.lookupPriceSheet}
+                variant={addMode === 'priceSheet' ? 'secondary' : 'outline'}
                 size="sm"
                 onPress={() => setAddMode('priceSheet')}
                 disabled={busy}
-                style={styles.action}
+                style={styles.buttonFlex}
               />
             </View>
           ) : null}
@@ -839,6 +1158,77 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               />
             </>
           )}
+          </>
+          ) : null}
+        </Card>
+
+        <Card style={styles.card}>
+          <Text style={styles.heading}>{ESTIMATE_LABELS.finePrint}</Text>
+          {editable ? (
+            <>
+              <TextField
+                label="Fine print for this estimate"
+                value={finePrintInput}
+                onChangeText={setFinePrintInput}
+                onBlur={() => {
+                  const next = finePrintInput.trim() === '' ? null : finePrintInput;
+                  if (next !== (estimate?.finePrint ?? null)) {
+                    void persist({ finePrint: next });
+                  }
+                }}
+                placeholder={templateText ?? ''}
+                multiline
+                disabled={busy}
+                style={styles.field}
+              />
+              {finePrintInput.trim() === '' && templateText ? <Text style={styles.note}>{templateText}</Text> : null}
+              {editingTemplate ? (
+                <>
+                  <TextField
+                    label="Organization fine-print template"
+                    value={templateInput}
+                    onChangeText={setTemplateInput}
+                    multiline
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <View style={styles.buttonRow}>
+                    <Button
+                      label="Save template"
+                      size="sm"
+                      onPress={() => {
+                        void saveTemplate();
+                      }}
+                      disabled={busy}
+                      style={styles.buttonFlex}
+                    />
+                    <Button
+                      label="Cancel"
+                      variant="outline"
+                      size="sm"
+                      onPress={() => setEditingTemplate(false)}
+                      disabled={busy}
+                      style={styles.buttonFlex}
+                    />
+                  </View>
+                </>
+              ) : (
+                <Button
+                  label="Edit template"
+                  variant="outline"
+                  size="sm"
+                  onPress={() => {
+                    setTemplateInput(templateText ?? '');
+                    setEditingTemplate(true);
+                  }}
+                  disabled={busy}
+                  style={styles.action}
+                />
+              )}
+            </>
+          ) : (
+            <Text style={styles.note}>{(estimate?.finePrint ?? '').trim() !== '' ? estimate?.finePrint : templateText ?? ''}</Text>
+          )}
         </Card>
 
         <Card style={styles.card}>
@@ -849,24 +1239,15 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           <ListItem title="Total" subtitle={formatCurrency(totals.total)} />
         </Card>
 
-        <Button
-          label={busy ? 'Working...' : 'Share Link'}
-          onPress={() => {
-            void handleShare();
-          }}
-          disabled={busy}
-          style={styles.action}
-        />
-        {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
-        {shareError ? <ErrorState message={shareError} /> : null}
-
-        <Button
-          label="Print / Save as PDF"
-          variant="outline"
-          onPress={handlePrint}
-          disabled={Platform.OS !== 'web'}
-          style={styles.action}
-        />
+        {estimate?.pdfDelivery ? (
+          <Button
+            label="Print / Save as PDF"
+            variant="outline"
+            onPress={handlePrint}
+            disabled={Platform.OS !== 'web'}
+            style={styles.action}
+          />
+        ) : null}
 
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
@@ -895,13 +1276,52 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     marginBottom: spacing.xs,
   },
-  subheading: {
+  sectionTitle: {
     color: colors.text,
-    fontSize: typography.size.small,
+    fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginTop: spacing.sm,
+    marginBottom: 0,
+  },
+  itemList: {
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  buttonFlex: {
+    flex: 1,
+  },
+  cellLabel: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
     marginBottom: spacing.xs,
+  },
+  cellValue: {
+    color: colors.text,
+    fontSize: typography.size.h5,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.xs,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  summaryCell: {
+    flexGrow: 1,
+    flexBasis: 160,
+  },
+  linkRow: {
+    marginBottom: spacing.sm,
   },
   field: {
     marginBottom: spacing.sm,
@@ -921,12 +1341,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   note: {
-    color: colors.textMuted,
-    fontSize: typography.size.small,
-    fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
-  },
-  guidance: {
     color: colors.textMuted,
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,

@@ -105,3 +105,16 @@ export function useScreenNumber(opts?: { subView?: string }) {
     subView: ctx.subView,
   };
 }
+
+// Read-only variant: same value as useScreenNumber() but never joins the owner
+// stack, so display-only consumers (the badge) cannot mask a real owner's subView.
+export function useScreenNumberReadOnly() {
+  const ctx = useContext(ScreenNumberContext);
+  if (!ctx) return NOOP_VALUE;
+  return {
+    enabled: ctx.enabled,
+    setEnabled: ctx.setEnabled,
+    registry: ctx.registry,
+    subView: ctx.subView,
+  };
+}

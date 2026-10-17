@@ -2,13 +2,14 @@ import React from 'react';
 import type { ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, colors, spacing, typography, Text } from '@jobcore/ui';
+import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, formatJobHeaderLines, formatScheduleLabel, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 
-export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout';
+export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
 
 export type JobHeaderProps = {
   job: Job;
@@ -22,6 +23,8 @@ export type JobHeaderProps = {
   fitMenu?: ComponentProps<typeof AppChrome>['fitMenu'];
   onLogoPress?: ComponentProps<typeof AppChrome>['onLogoPress'];
   gearTitle?: ComponentProps<typeof AppChrome>['gearTitle'];
+  optionsItems?: ComponentProps<typeof AppChrome>['optionsItems'];
+  summaryRight?: React.ReactNode;
 };
 
 const copyToClipboard = async (text: string): Promise<void> => { await Clipboard.setStringAsync(text); };
@@ -37,6 +40,7 @@ export function JobHeader({
   fitMenu,
   onLogoPress,
   gearTitle,
+  optionsItems,
   children,
 }: JobHeaderProps) {
   const totalHoursLabel =
@@ -44,12 +48,24 @@ export function JobHeader({
       ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
       : null;
   const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
+  const router = useRouter();
+  const headerLines = formatJobHeaderLines(job.jobNumber, job.createdAt);
+  const onSchedulePress = () => {
+    const d = job.scheduledStart ? new Date(job.scheduledStart) : null;
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const datePart =
+      d && !Number.isNaN(d.getTime())
+        ? `date=${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}&`
+        : '';
+    const returnTo = encodeURIComponent(`/job/${job.id}`);
+    router.push(`/calendar?${datePart}jobId=${job.id}&returnTo=${returnTo}` as never);
+  };
 
   return (
     <View style={styles.root}>
       <AppChrome
         menuItems={jobDetailMenuItems}
-        optionsItems={[]}
+        optionsItems={optionsItems ?? []}
         breadcrumbSegments={[
           { label: 'Jobs' },
           { label: abbreviate(job.address) },
@@ -62,9 +78,14 @@ export function JobHeader({
             phone={customer?.phone}
             ingressCode={ingressCode}
             onCopy={copyToClipboard}
+            jobLine={headerLines.jobLine}
+            dateLine={headerLines.dateLine}
+            scheduleLabel={formatScheduleLabel(job.scheduledStart)}
+            onSchedulePress={onSchedulePress}
           />
         }
         titleBarTone="gold"
+        titleBarInset={5}
         helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
         gearItems={gearItems}
         showBack={showBack}
@@ -78,6 +99,7 @@ export function JobHeader({
         jobNumber={job.jobNumber}
         createdAt={job.createdAt}
         scheduledStart={job.scheduledStart}
+        hideJobLine
       >
         {children}
       </JobHeaderBlock>
@@ -101,6 +123,7 @@ export type JobSummaryRestProps = {
   serviceBusy?: boolean;
   premIndicator?: string | null;
   statusError?: string | null;
+  summaryRight?: React.ReactNode;
 };
 
 type TechRowProps = {
@@ -148,6 +171,7 @@ export function JobSummaryRest({
   serviceBusy,
   premIndicator = null,
   statusError = null,
+  summaryRight,
 }: JobSummaryRestProps) {
   const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
@@ -156,6 +180,8 @@ export function JobSummaryRest({
     <View style={styles.root}>
       <View style={styles.summary}>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
+        <View style={summaryRight ? { flexDirection: 'row', alignItems: 'flex-start' } : undefined}>
+        <View style={summaryRight ? { flex: 1 } : undefined}>
         <TechRow
           label="Prem Tech"
           techId={premTechId}
@@ -179,6 +205,9 @@ export function JobSummaryRest({
           ) : (
             <Text style={[styles.summaryLine, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
           )}
+        </View>
+        </View>
+        {summaryRight ? <View style={{ marginLeft: spacing.sm }}>{summaryRight}</View> : null}
         </View>
       </View>
       {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}

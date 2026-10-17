@@ -55,6 +55,7 @@ export type AppChromeProps = {
   logoMenuItems?: MenuActionItem[]; // in-menu logo switcher list (opt-in)
   onLogoPress?: () => void; // logo acts as Back (opt-in)
   onTitlePress?: () => void; // header logo/title press -> overview (opt-in)
+  titleBarInset?: number; // px to inset the title-bar pill on both sides (default 0)
 };
 
 function MenuRow({
@@ -167,6 +168,7 @@ export function AppChrome({
   logoMenuItems,
   onLogoPress,
   onTitlePress,
+  titleBarInset = 0,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -226,8 +228,9 @@ export function AppChrome({
   };
 
   const handleOptionPress = (item: MenuItem) => {
+    if (item.kind === 'toggle') return; // toggles keep the options modal open
     setOMenuOpen(false);
-    if (item.kind !== 'toggle') item.onPress?.();
+    item.onPress?.();
   };
 
   const handleGearPress = (item: MenuActionItem) => {
@@ -255,7 +258,7 @@ export function AppChrome({
           <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
         {(titleBar || titleContent) && wrapTitle(
-          <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold]}>
+          <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }]}>
             {titleContent ? titleContent : titleBar ? (<>
             <Text
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}

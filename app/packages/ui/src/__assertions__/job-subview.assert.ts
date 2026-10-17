@@ -23,7 +23,7 @@ test('jobSubViewFor table', () => {
   assert.equal(jobSubViewFor(inp({ region: 'assign' })), 'job:assign');
   assert.equal(jobSubViewFor(inp({ region: 'schedule' })), 'job:schedule');
   assert.equal(jobSubViewFor(inp({ region: 'estimate', isTechEstimate: false })), 'jobEstimate');
-  assert.equal(jobSubViewFor(inp({ region: 'estimate', isTechEstimate: true })), 'job:estimate-tech');
+  assert.equal(jobSubViewFor(inp({ region: 'estimate', isTechEstimate: true })), 'jobEstimate');
   assert.equal(jobSubViewFor(inp({ region: 'closeout' })), 'closeOutReview');
   assert.equal(jobSubViewFor(inp({ region: 'bogus' })), undefined);
   for (const s of JOB_ACTION_STAGES) {
@@ -62,7 +62,7 @@ test('end-to-end resolve', () => {
   assert.equal(n({ region: 'plan' }), 41);
   assert.equal(n({ region: 'estimate', isTechEstimate: false }), 57);
   assert.equal(n({ region: 'schedule' }), 58);
-  assert.equal(n({ region: 'estimate', isTechEstimate: true }), 59);
+  assert.equal(n({ region: 'estimate', isTechEstimate: true }), 57);
   assert.equal(n({ region: 'evisit' }), 61);
   assert.equal(n({ region: 'closeout' }), 18);
   assert.equal(n({ activeStage: 'contact' }), 75);

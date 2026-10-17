@@ -25,10 +25,11 @@ export interface WeekViewProps {
   onSelectJob?: (job: Job) => void;
   onSelectTimeOff?: (event: TimeOffEvent) => void;
   onSelectDay?: (day: Date) => void;
+  onDayPress?: (date: Date) => void;
 }
 
 
-export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff, onSelectDay }: WeekViewProps) {
+export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff, onSelectDay, onDayPress }: WeekViewProps) {
   const weekStart = startOfWeek(anchorDay, { weekStartsOn: 0 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -86,9 +87,17 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                 </Pressable>
               ))}
               {dayJobs.length > 3 && (
-                <Text style={styles.moreLabel} numberOfLines={1}>
-                  +{dayJobs.length - 3} more
-                </Text>
+                onDayPress ? (
+                  <Pressable onPress={() => onDayPress(day)}>
+                    <Text style={styles.moreLabel} numberOfLines={1}>
+                      +{dayJobs.length - 3} more
+                    </Text>
+                  </Pressable>
+                ) : (
+                  <Text style={styles.moreLabel} numberOfLines={1}>
+                    +{dayJobs.length - 3} more
+                  </Text>
+                )
               )}
             </View>
           );

@@ -747,7 +747,7 @@ export interface ReimbursementRequestRepository {
   create(organizationId: string, techId: string, draft: ReimbursementRequestDraft): Promise<ReimbursementRequest>;
 }
 
-export type EstimateStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type EstimateStatus = 'draft' | 'submitted' | 'approved';
 export type EstimateLineItemKind = 'material' | 'labor' | 'other';
 
 export interface JobEstimate {

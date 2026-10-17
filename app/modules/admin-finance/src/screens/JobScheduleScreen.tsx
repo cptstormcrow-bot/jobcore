@@ -43,7 +43,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, JobTitleBarHeader, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, Button, DatePicker, MonthView, CalendarHeader, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
 import { addMinutes, addMonths, format, subMonths } from 'date-fns';
 import type { Job } from '@jobcore/core';
@@ -54,6 +54,8 @@ export interface JobScheduleScreenProps {
   job: Job;
   jobRepository?: JobRepository;
   onBack?: () => void;
+  /** Opens the calendar from the title bar's schedule link; absent means the label is plain text. */
+  onOpenCalendar?: () => void;
   /** Fires with the updated `Job` after a successful save, so a host (e.g. the Job Detail screen) can refresh its own copy. */
   onSaved?: (job: Job) => void;
   /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
@@ -145,7 +147,7 @@ type ScheduleField = 'start' | 'end';
 type AndroidStage = 'date' | 'time';
 type AndroidPickerState = { field: ScheduleField; stage: AndroidStage; datePart: Date } | null;
 
-export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onSaved, embedded, totalTaskMinutes, standardMinutes }: JobScheduleScreenProps) {
+export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onOpenCalendar, onSaved, embedded, totalTaskMinutes, standardMinutes }: JobScheduleScreenProps) {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -390,6 +392,11 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
             <>
               <JobTitleBarHeader
                 framed
+                inset={5}
+                jobLine={formatJobHeaderLines(job.jobNumber, job.createdAt).jobLine}
+                dateLine={formatJobHeaderLines(job.jobNumber, job.createdAt).dateLine}
+                scheduleLabel={formatScheduleLabel(job.scheduledStart)}
+                onSchedulePress={onOpenCalendar}
                 customerName={job.customerName}
                 address={job.address}
                 phone={job.customerPhone}
@@ -397,6 +404,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
                 onCopy={async (text) => { await Clipboard.setStringAsync(text); }}
               />
               <JobHeaderBlock
+                hideJobLine
                 jobNumber={job.jobNumber}
                 createdAt={job.createdAt}
                 scheduledStart={job.scheduledStart}

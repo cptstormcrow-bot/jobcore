@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { formatCreatedDate, formatJobNumberLine, formatScheduledLabel } from '../job-header-format';
+import {
+  formatCreatedDate,
+  formatJobHeaderLines,
+  formatJobNumberLine,
+  formatScheduleLabel,
+  formatScheduledLabel,
+} from '../job-header-format';
 
 const norm = (s: string) => s.replace(/\s+/g, ' ');
 const ISO = '2026-10-01T12:00:00Z';
@@ -19,16 +25,32 @@ test('formatCreatedDate Date object', () => {
 });
 
 test('formatJobNumberLine', () => {
-  assert.equal(formatJobNumberLine(3, ISO, 'en-US'), 'Job #3 - Created: ' + expectedDate);
-  assert.equal(formatJobNumberLine(null, null, 'en-US'), 'Job #— - Created: —');
-  assert.equal(formatJobNumberLine('0047', ISO, 'en-US'), 'Job #0047 - Created: ' + expectedDate);
+  assert.equal(formatJobNumberLine(3, ISO, 'en-US'), 'Job #3 - ' + expectedDate);
+  assert.equal(formatJobNumberLine(null, null, 'en-US'), 'Job #— - —');
+  assert.equal(formatJobNumberLine('0047', ISO, 'en-US'), 'Job #0047 - ' + expectedDate);
+});
+
+test('formatJobHeaderLines', () => {
+  assert.deepEqual(formatJobHeaderLines(4, ISO, 'en-US'), { jobLine: 'Job #4', dateLine: expectedDate });
+  assert.deepEqual(formatJobHeaderLines(null, null, 'en-US'), { jobLine: 'Job #—', dateLine: '—' });
+});
+
+test('formatScheduleLabel times', () => {
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 0)), 'Monday, Dec 14, 2026 - 9am');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 30)), 'Monday, Dec 14, 2026 - 9:30am');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 12, 0)), 'Monday, Dec 14, 2026 - 12pm');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 0, 0)), 'Monday, Dec 14, 2026 - 12am');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 15, 5)), 'Monday, Dec 14, 2026 - 3:05pm');
+});
+test('formatScheduleLabel unscheduled', () => {
+  assert.equal(formatScheduleLabel(null), 'Unscheduled');
+  assert.equal(formatScheduleLabel(undefined), 'Unscheduled');
+  assert.equal(formatScheduleLabel(''), 'Unscheduled');
+  assert.equal(formatScheduleLabel('not a date'), 'Unscheduled');
 });
 
 test('formatScheduledLabel scheduled morning', () => {
-  assert.equal(
-    norm(formatScheduledLabel('2026-10-23T08:00:00', true, 'en-US')),
-    'Scheduled - Friday, October 23, 2026 at 8:00 am',
-  );
+  assert.equal(formatScheduledLabel(new Date(2026, 9, 23, 8, 0), true, 'en-US'), 'Friday, Oct 23, 2026 - 8am');
 });
 test('formatScheduledLabel unscheduled', () => {
   assert.equal(formatScheduledLabel(null, true, 'en-US'), 'Unscheduled ▸');
@@ -36,5 +58,5 @@ test('formatScheduledLabel unscheduled', () => {
   assert.equal(formatScheduledLabel('garbage', true, 'en-US'), 'Unscheduled ▸');
 });
 test('formatScheduledLabel afternoon', () => {
-  assert.ok(norm(formatScheduledLabel('2026-10-23T15:05:00', true, 'en-US')).endsWith('3:05 pm'));
+  assert.ok(norm(formatScheduledLabel('2026-10-23T15:05:00', true, 'en-US')).endsWith('3:05pm'));
 });

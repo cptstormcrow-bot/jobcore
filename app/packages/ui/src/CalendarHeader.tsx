@@ -3,7 +3,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, radius } from './tokens';
 
-export type CalendarMode = 'week' | 'month';
+export type CalendarMode = 'week' | 'month' | 'day';
 
 export interface CalendarHeaderProps {
   mode: CalendarMode;
@@ -82,6 +82,21 @@ export function CalendarHeader({
             style={mode === 'month' ? styles.segmentTextSelected : styles.segmentText}
           >
             Month
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: mode === 'day' }}
+          onPress={() => onModeChange('day')}
+          style={[
+            styles.segment,
+            mode === 'day' ? styles.segmentSelected : styles.segmentUnselected,
+          ]}
+        >
+          <Text
+            style={mode === 'day' ? styles.segmentTextSelected : styles.segmentText}
+          >
+            Day
           </Text>
         </Pressable>
       </View>

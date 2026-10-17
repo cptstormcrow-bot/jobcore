@@ -17,6 +17,13 @@
 // commission/payroll table — this is a public page.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  computeTotals,
+  ESTIMATE_LABELS,
+  formatMoney,
+  materialsOnsiteLabel,
+} from "./estimate-layout.ts";
+import type { ContingencyItem } from "./estimate-layout.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -59,6 +66,10 @@ interface EstimatePageData {
   depositAmount: number | null;
   customerNotes: string | null;
   lineItems: JobEstimateLineItem[];
+  materialsOnsite: boolean;
+  finePrint: string;
+  pdfDelivery: boolean;
+  contingencies: ContingencyItem[];
 }
 
 // ---------------------------------------------------------------------------
@@ -105,10 +116,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function formatMoney(amount: number): string {
-  return `$${amount.toFixed(2)}`;
 }
 
 function formatDateTime(value: string | null): string {
@@ -217,7 +224,7 @@ async function fetchEstimatePageData(jobId: string): Promise<EstimatePageData | 
   const { data: estimate, error: estimateError } = await supabase
     .from("job_estimates")
     .select(
-      "status, summary, materials_cost, labor_cost, other_cost, total_cost, scheduled_start, scheduled_end, payment_terms, deposit_amount, customer_notes",
+      "status, summary, materials_cost, labor_cost, other_cost, total_cost, scheduled_start, scheduled_end, payment_terms, deposit_amount, customer_notes, materials_onsite, fine_print, pdf_delivery, contingencies",
     )
     .eq("job_id", jobId)
     .maybeSingle();
@@ -227,6 +234,16 @@ async function fetchEstimatePageData(jobId: string): Promise<EstimatePageData | 
   }
   if (!estimate) {
     return null;
+  }
+
+  const { data: settings, error: settingsError } = await supabase
+    .from("estimate_settings")
+    .select("fine_print_template")
+    .eq("organization_id", job.organization_id)
+    .maybeSingle();
+
+  if (settingsError) {
+    throw settingsError;
   }
 
   const { data: lineItems, error: lineItemsError } = await supabase
@@ -257,6 +274,26 @@ async function fetchEstimatePageData(jobId: string): Promise<EstimatePageData | 
     paymentTerms: estimate.payment_terms,
     depositAmount: estimate.deposit_amount === null ? null : Number(estimate.deposit_amount),
     customerNotes: estimate.customer_notes,
+    materialsOnsite: estimate.materials_onsite === true,
+    finePrint:
+      typeof estimate.fine_print === "string" && estimate.fine_print.trim() !== ""
+        ? estimate.fine_print
+        : typeof settings?.fine_print_template === "string"
+          ? settings.fine_print_template
+          : "",
+    pdfDelivery: estimate.pdf_delivery === true,
+    contingencies: Array.isArray(estimate.contingencies)
+      ? estimate.contingencies
+          .filter((c: unknown) => c !== null && typeof c === "object")
+          .map((c: { description?: unknown; price?: unknown }) => ({
+            description: typeof c.description === "string" ? c.description : "",
+            price:
+              c.price === null || c.price === undefined || !Number.isFinite(Number(c.price))
+                ? null
+                : Number(c.price),
+          }))
+          .filter((c: ContingencyItem) => c.description.trim() !== "")
+      : [],
     lineItems: (lineItems ?? []).map((row) => ({
       id: row.id,
       kind: row.kind,
@@ -288,6 +325,31 @@ function renderEstimateHtml(data: EstimatePageData): string {
         </tr>`,
     )
     .join("");
+
+  const totals = computeTotals(
+    data.lineItems.map((li) => ({ quantity: li.quantity, unitCost: li.unit_cost })),
+    data.contingencies,
+  );
+  const contingencyRows = data.contingencies
+    .map(
+      (c) =>
+        `<li>${escapeHtml(c.description)}${c.price !== null ? ` &mdash; ${formatMoney(c.price)}` : ""}</li>`,
+    )
+    .join("");
+  const contingencySection = contingencyRows
+    ? `<h2>${escapeHtml(ESTIMATE_LABELS.contingencies)}</h2>
+    <p class="muted">Possible extras - NOT included in the total.</p>
+    <ul>${contingencyRows}</ul>`
+    : "";
+  const finePrintSection = data.finePrint.trim()
+    ? `<h2>${escapeHtml(ESTIMATE_LABELS.finePrint)}</h2>
+    <p class="muted" style="white-space: pre-wrap;">${escapeHtml(data.finePrint)}</p>`
+    : "";
+  const printButton = data.pdfDelivery
+    ? `<div class="no-print">
+      <button onclick="window.print()">Print / Save as PDF</button>
+    </div>`
+    : "";
 
   return `<!doctype html>
 <html lang="en">
@@ -326,6 +388,9 @@ function renderEstimateHtml(data: EstimatePageData): string {
     <p>${escapeHtml(data.jobAddress ?? "No address on file")}</p>
     <p class="muted">${escapeHtml(data.jobDescription ?? "")}</p>
     ${data.summary ? `<p>${escapeHtml(data.summary)}</p>` : ""}
+    <p>${escapeHtml(ESTIMATE_LABELS.materialsOnsite)} ${materialsOnsiteLabel(data.materialsOnsite)}</p>
+
+    ${contingencySection}
 
     <h2>Materials &amp; Line Items</h2>
     <table>
@@ -352,15 +417,15 @@ function renderEstimateHtml(data: EstimatePageData): string {
       <tr><td class="label">Materials</td><td class="value">${formatMoney(data.materialsCost)}</td></tr>
       <tr><td class="label">Labor</td><td class="value">${formatMoney(data.laborCost)}</td></tr>
       <tr><td class="label">Other</td><td class="value">${formatMoney(data.otherCost)}</td></tr>
-      <tr class="grand"><td class="label">Total</td><td class="value">${formatMoney(data.totalCost)}</td></tr>
+      <tr class="grand"><td class="label">Total</td><td class="value">${formatMoney(totals.total)}</td></tr>
     </table>
     ${data.depositAmount !== null ? `<p>Deposit required: ${formatMoney(data.depositAmount)}</p>` : ""}
     ${data.paymentTerms ? `<p class="muted">Payment terms: ${escapeHtml(data.paymentTerms)}</p>` : ""}
     ${data.customerNotes ? `<p class="muted">${escapeHtml(data.customerNotes)}</p>` : ""}
 
-    <div class="no-print">
-      <button onclick="window.print()">Print / Save as PDF</button>
-    </div>
+    ${finePrintSection}
+
+    ${printButton}
   </div>
 </body>
 </html>`;

@@ -69,7 +69,7 @@ export function TimeOffTechCalendar({ rows, techs }: TimeOffTechCalendarProps) {
       <TechSelect value={techFilter} options={selectOptions} onChange={setTechFilter} style={styles.field} />
       <CalendarHeader
         mode={mode}
-        onModeChange={changeMode}
+        onModeChange={(m) => changeMode(m === 'day' ? 'week' : m)}
         label={format(anchorDay, mode === 'month' ? 'MMMM yyyy' : "'Week of' MMM d")}
         onPrev={() => step(-1)}
         onNext={() => step(1)}

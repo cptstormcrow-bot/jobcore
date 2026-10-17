@@ -1167,7 +1167,7 @@ export interface JobPlanningPhotoRepository {
   addForJob(jobId: string, photo: JobPlanningPhotoInput): Promise<JobPlanningPhoto>;
 }
 
-export type EstimateStatus = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type EstimateStatus = 'draft' | 'submitted' | 'approved';
 export type EstimateLineItemKind = 'material' | 'labor' | 'other';
 
 export interface JobEstimate {
@@ -1179,7 +1179,19 @@ export interface JobEstimate {
   laborNotes: string | null;
   materialsCost: number;
   laborCost: number;
+export interface EstimateContingency {
+  description: string;
+  price: number | null;
+}
+
   otherCost: number;
+  materialsOnsite: boolean;
+  trackingNumber: string | null;
+  trackingStatus: string | null;
+  trackingCheckedAt: string | null;
+  finePrint: string | null;
+  pdfDelivery: boolean;
+  contingencies: EstimateContingency[];
   totalCost: number;
   scheduledStart: string | null;
   scheduledEnd: string | null;
@@ -1203,6 +1215,13 @@ export interface JobEstimateInput {
   otherCost?: number;
   totalCost?: number;
   scheduledStart?: string | null;
+  materialsOnsite?: boolean;
+  trackingNumber?: string | null;
+  trackingStatus?: string | null;
+  trackingCheckedAt?: string | null;
+  finePrint?: string | null;
+  pdfDelivery?: boolean;
+  contingencies?: EstimateContingency[];
   scheduledEnd?: string | null;
   paymentTerms?: string | null;
   depositAmount?: number | null;
@@ -1250,6 +1269,9 @@ export interface EstimateRepository {
 /** One task belonging to a service, selectable when pricing a `PriceSheetRate`. */
 export interface ServiceTask {
   id: string;
+  trackShipment(trackingNumber: string): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }>;
+  getFinePrintTemplate(): Promise<string | null>;
+  setFinePrintTemplate(text: string): Promise<void>;
   organizationId: string;
   serviceId: string;
   name: string;

@@ -1,22 +1,20 @@
 /**
  * Estimate status change rules.
- * Only an admin can move a Submitted estimate to 'rejected'; the admin resubmits it. A tech never touches Approved or Rejected.
+ * A tech never touches Approved.
  * Leaving Approved warns because the Estimate/Approval stages go red once schedule/assign are done.
  */
-export type EstimateStatusValue = 'draft' | 'submitted' | 'approved' | 'rejected';
+export type EstimateStatusValue = 'draft' | 'submitted' | 'approved';
 export type EstimateEditorRole = 'admin' | 'tech';
 
 const ADMIN: Record<EstimateStatusValue, EstimateStatusValue[]> = {
   draft: ['submitted', 'approved'],
-  submitted: ['draft', 'approved', 'rejected'],
+  submitted: ['draft', 'approved'],
   approved: ['draft', 'submitted'],
-  rejected: ['draft', 'submitted'],
 };
 const TECH: Record<EstimateStatusValue, EstimateStatusValue[]> = {
   draft: ['submitted'],
   submitted: ['draft'],
   approved: [],
-  rejected: [],
 };
 
 export function allowedEstimateMoves(
@@ -41,6 +39,6 @@ export function estimateStageFlags(status: EstimateStatusValue | null | undefine
   return {
     estimateComplete: status === 'submitted' || status === 'approved',
     approvalComplete: status === 'approved',
-    rejected: status === 'rejected',
+    rejected: false,
   };
 }

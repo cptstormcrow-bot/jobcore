@@ -16,6 +16,11 @@ export type JobTitleBarHeaderProps = {
   ingressCode?: string | null;
   onCopy: (text: string) => void | Promise<void>;
   framed?: boolean;
+  jobLine?: string;
+  dateLine?: string;
+  scheduleLabel?: string;
+  onSchedulePress?: () => void;
+  inset?: number;
 };
 
 type CopiedKey = 'ingress' | 'address' | 'phone' | null;
@@ -28,6 +33,11 @@ export function JobTitleBarHeader({
   ingressCode,
   onCopy,
   framed,
+  jobLine,
+  dateLine,
+  scheduleLabel,
+  onSchedulePress,
+  inset = 0,
 }: JobTitleBarHeaderProps) {
   const [copiedKey, setCopiedKey] = useState<CopiedKey>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -115,7 +125,45 @@ export function JobTitleBarHeader({
     </View>
   );
 
-  return framed ? <View style={styles.frame}>{content}</View> : content;
+  const threePart = jobLine !== undefined;
+  const body = threePart ? (
+    <View style={styles.threeRow}>
+      <View style={styles.leftCol}>
+        <Text style={styles.jobLine} numberOfLines={1}>
+          {jobLine}
+        </Text>
+        {dateLine ? (
+          <Text style={styles.sideText} numberOfLines={1}>
+            {dateLine}
+          </Text>
+        ) : null}
+      </View>
+      <View style={styles.centreCol}>{content}</View>
+      <View style={styles.rightCol}>
+        {scheduleLabel ? (
+          onSchedulePress ? (
+            <Pressable accessibilityRole="link" hitSlop={8} onPress={onSchedulePress}>
+              <Text style={[styles.sideText, styles.underline, styles.rightText]} numberOfLines={2}>
+                {scheduleLabel}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text style={[styles.sideText, styles.rightText]} numberOfLines={2}>
+              {scheduleLabel}
+            </Text>
+          )
+        ) : null}
+      </View>
+    </View>
+  ) : (
+    content
+  );
+
+  return framed ? (
+    <View style={[styles.frame, inset ? { marginHorizontal: inset } : null]}>{body}</View>
+  ) : (
+    body
+  );
 }
 
 const styles = StyleSheet.create({
@@ -127,6 +175,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   root: { alignSelf: 'stretch' },
+  threeRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.sm },
+  leftCol: { flex: 1, alignItems: 'flex-start' },
+  centreCol: { flexShrink: 0, maxWidth: '60%', alignItems: 'center' },
+  rightCol: { flex: 1, alignItems: 'flex-end' },
+  jobLine: {
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: typography.weight.bold,
+    color: colors.text,
+  },
+  sideText: { fontSize: typography.size.small, color: colors.text },
+  rightText: { textAlign: 'right' },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   name: {
     fontSize: typography.size.h4,

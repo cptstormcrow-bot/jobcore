@@ -3,11 +3,11 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../Text';
 import { colors, radius, spacing } from '../tokens';
-import { useScreenNumber } from './ScreenNumberContext';
+import { useScreenNumberReadOnly } from './ScreenNumberContext';
 import { resolveScreen } from './screen-resolve';
 
 export function ScreenNumberBadge({ pathname }: { pathname: string }) {
-  const { enabled, registry, subView } = useScreenNumber();
+  const { enabled, registry, subView } = useScreenNumberReadOnly();
   const insets = useSafeAreaInsets();
   if (!enabled) return null;
   const entry = resolveScreen(pathname, registry, subView);

@@ -81,16 +81,16 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
     <View testID={testID} style={styles.wrap}>
       {renderRow(0, ROW_SPLIT)}
       {renderRow(ROW_SPLIT, stages.length)}
-      {nextStep ? <Text style={styles.next}>{nextStep}</Text> : null}
+      {nextStep ? <Text style={styles.next} numberOfLines={1}>{nextStep}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: spacing.xs, paddingVertical: 2 },
+  wrap: { paddingHorizontal: spacing.xs, paddingTop: 0, paddingBottom: 0 },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
   // flex:1 cells keep a 44px minimum tap target in both directions.
-  cell: { flex: 1, minWidth: 44, minHeight: 40, alignItems: 'center', justifyContent: 'flex-start' },
+  cell: { flex: 1, minWidth: 44, minHeight: 30, alignItems: 'center', justifyContent: 'flex-start' },
   disabled: { opacity: 0.4 },
   dotLine: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', height: 20 },
   half: { flex: 1, height: 4 },
@@ -102,7 +102,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   next: {
-    marginTop: 2,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingVertical: 1,
     fontSize: typography.size.small,
     color: colors.text,
     fontFamily: typography.fontFamily.bodyMedium,

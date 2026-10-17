@@ -281,23 +281,6 @@
   "notes": ""
  },
  {
-  "key": "job-region-estimate",
-  "kind": "region",
-  "module": null,
-  "route": "/job/[jobId]",
-  "subView": "job:estimate-tech",
-  "parentKey": "job-detail",
-  "file": "modules/field-tech/src/screens/JobEstimateEditor.tsx",
-  "title": "Estimate",
-  "roles": [
-   "owner",
-   "admin",
-   "tech"
-  ],
-  "mounted": true,
-  "notes": ""
- },
- {
   "key": "job-region-assign",
   "kind": "region",
   "module": null,

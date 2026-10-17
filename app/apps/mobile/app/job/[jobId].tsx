@@ -10,6 +10,7 @@
 // param. Region switching replaces the old full-screen panel early-returns;
 // Contact/Arrive/Complete/Payment are header actions, not regions.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
@@ -57,7 +58,6 @@ import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
 import { JobTaskList } from '../../src/components/JobTaskList';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
-import { JobEstimateEditor } from '../../../../modules/field-tech/src/screens/JobEstimateEditor';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
 import { setModuleSession } from '@jobcore/admin-finance';
 import {
@@ -187,7 +187,7 @@ function regionFromPanel(panel: string | undefined): JobRegion {
   if (!isDeepLinkPanel(panel)) return 'details';
   switch (panel) {
     case 'plan':
-      return 'details';
+      return 'plan';
     case 'jobEstimate':
       return 'estimate';
     case 'jobInvestigation':
@@ -309,6 +309,7 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
   const isTechEstimate = role === 'tech';
+  const [estimateChrome, setEstimateChrome] = useState<{ statusControl: ReactNode; optionsItems: MenuItem[] } | null>(null);
   useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -1267,7 +1268,7 @@ export default function JobDrilldownScreen() {
     : null;
 
   const jobDetailMenuItems: MenuItem[] = [
-    { id: 'plan', label: 'Job', onPress: () => selectRegion('details'), isActive: region === 'details' },
+    { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' },
     ...(isAdmin
@@ -1285,7 +1286,7 @@ export default function JobDrilldownScreen() {
     { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); } },
     ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { setActiveStage('paid'); selectRegion('payment'); } }] as MenuItem[]
+      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); } }] as MenuItem[]
       : []),
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout') }] as MenuItem[]
@@ -1314,6 +1315,8 @@ export default function JobDrilldownScreen() {
         customer={customer}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={isAdmin ? adminJobMenuItems : isTech ? techJobMenuItems : jobDetailMenuItems}
+        optionsItems={region === 'estimate' ? estimateChrome?.optionsItems : undefined}
+        summaryRight={region === 'estimate' ? estimateChrome?.statusControl : undefined}
         showBack={isAdmin || isTech ? false : undefined}
         compactMenu={isAdmin || isTech || undefined}
         fitMenu={isAdmin || isTech || undefined}
@@ -1349,6 +1352,7 @@ export default function JobDrilldownScreen() {
           premBusy={assigning !== null}
           serviceBusy={assigning !== null}
           premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+          summaryRight={region === 'estimate' ? estimateChrome?.statusControl : undefined}
           {...(isAdmin
             ? {
                 techs: eligibleTechOptions,
@@ -1395,10 +1399,7 @@ export default function JobDrilldownScreen() {
             }}
           />
         )}
-        {region === 'estimate' && isTechEstimate && (
-          <JobEstimateEditor jobId={currentJob.id} embedded investigation={investigation ?? undefined} onEstimateChange={setEstimate} />
-        )}
-        {region === 'estimate' && !isTechEstimate && (
+        {region === 'estimate' && (
           <JobEstimateScreen
             job={currentJob}
             embedded
@@ -1408,6 +1409,8 @@ export default function JobDrilldownScreen() {
             priceSheetRates={priceEstimatingRates}
             priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
             serviceAreas={serviceAreas}
+            editable={!isTechEstimate}
+            onChrome={setEstimateChrome}
           />
         )}
         {region === 'closeout' && role && (
@@ -1424,7 +1427,7 @@ export default function JobDrilldownScreen() {
             standardMinutes={standardMinutes}
           />
         )}
-        {region === 'details' && (
+        {(region === 'details' || region === 'plan') && (
           <>
             <JobOverviewRegion
               jobId={currentJob.id}

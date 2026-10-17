@@ -21,7 +21,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader } from '@jobcore/ui';
+import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -37,6 +37,8 @@ export interface FieldJobDetailProps {
    * to reach outside its own data seam to get it.
    */
   customerPhone?: string | null;
+  /** Opens the calendar from the title bar schedule label. Absent = plain label. */
+  onOpenCalendar?: () => void;
 }
 
 function formatDateTime(value: string | null): string {
@@ -56,7 +58,7 @@ function mapsUrl(address: string): string {
  * distinctly, tap-to-call / tap-to-map actions, and read-only admin notes.
  * Renders nothing financial.
  */
-export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): React.ReactElement {
+export function FieldJobDetail({ jobId, customerPhone, onOpenCalendar }: FieldJobDetailProps): React.ReactElement {
   const session = getModuleSession();
   const rev = useReadCacheRevision();
   const hasLoadedRef = React.useRef(false);
@@ -150,6 +152,11 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
     <View style={styles.container}>
       <JobTitleBarHeader
         framed
+        inset={5}
+        jobLine={formatJobHeaderLines(job.jobNumber ?? job.id, job.createdAt).jobLine}
+        dateLine={formatJobHeaderLines(job.jobNumber ?? job.id, job.createdAt).dateLine}
+        scheduleLabel={formatScheduleLabel(job.scheduledStart)}
+        onSchedulePress={onOpenCalendar}
         customerName={job.customerName}
         address={job.address}
         phone={resolvedPhone}
@@ -157,6 +164,7 @@ export function FieldJobDetail({ jobId, customerPhone }: FieldJobDetailProps): R
         onCopy={copyToClipboard}
       />
       <JobHeaderBlock
+        hideJobLine
         jobNumber={job.jobNumber ?? job.id}
         createdAt={job.createdAt}
         scheduledStart={job.scheduledStart}

@@ -5,9 +5,8 @@ export type JobSubViewInput = {
   isCreate: boolean;
   region: string;
   activeStage?: JobActionStage | null;
-  // isTechEstimate must be the SAME boolean that decides JobEstimateEditor vs JobEstimateScreen
-  // in the job host, not the admin flag.
-  isTechEstimate: boolean;
+  // Ignored: tech and admin share one estimate screen (#0057). Kept so callers still compile.
+  isTechEstimate?: boolean;
 };
 
 export function jobSubViewFor(input: JobSubViewInput): string | undefined {
@@ -25,7 +24,7 @@ export function jobSubViewFor(input: JobSubViewInput): string | undefined {
     case 'closeout':
       return 'closeOutReview';
     case 'estimate':
-      return input.isTechEstimate ? 'job:estimate-tech' : 'jobEstimate';
+      return 'jobEstimate';
     default:
       return undefined;
   }

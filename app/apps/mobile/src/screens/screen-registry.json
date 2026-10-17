@@ -503,7 +503,8 @@
     "route": "/job/[jobId]",
     "file": "modules/field-tech/src/screens/JobEstimateEditor.tsx",
     "createdAt": "2026-08-30T21:20:35-07:00",
-    "subView": "job:estimate-tech"
+    "subView": "job:estimate-tech",
+    "retiredAt": "2026-10-13"
   },
   {
     "number": 60,
