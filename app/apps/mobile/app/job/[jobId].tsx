@@ -258,6 +258,7 @@ export default function JobDrilldownScreen() {
     setFieldTechModuleSession({ org, role, userId: session.profile.id });
     setFieldTechModulePorts(buildFieldTechPorts());
   }
+  const moduleSessionReady = session.status === 'authenticated' && !!org && !!role;
 
   useEffect(() => {
     return () => clearFieldTechModuleSession();
@@ -407,7 +408,7 @@ export default function JobDrilldownScreen() {
   // Estimate + investigation lookups (used by the assign gate, the tail
   // read view, and the JobDetailsForm's evisit read-only fields).
   useEffect(() => {
-    if (isCreate || !job?.id) {
+    if (isCreate || !job?.id || !moduleSessionReady) {
       setEstimate(null);
       setInvestigation(null);
       setInvestigatorTechId(null);
@@ -416,9 +417,13 @@ export default function JobDrilldownScreen() {
     let cancelled = false;
     void createEstimateRepository().getForJob(job.id).then((value) => {
       if (!cancelled) setEstimate(value);
+    }).catch(() => {
+      if (!cancelled) setEstimate(null);
     });
     void createJobInvestigationRepository().getForJob(job.id).then((value) => {
       if (!cancelled) setInvestigation(value);
+    }).catch(() => {
+      if (!cancelled) setInvestigation(null);
     });
     setInvestigatorTechId(null);
     void createJobAssignmentRepository()
@@ -430,7 +435,7 @@ export default function JobDrilldownScreen() {
         if (!cancelled) setInvestigatorTechId(null);
       });
     return () => { cancelled = true; };
-  }, [isCreate, job?.id]);
+  }, [isCreate, job?.id, moduleSessionReady]);
 
   useEffect(() => {
     setForm((prev) => ({
