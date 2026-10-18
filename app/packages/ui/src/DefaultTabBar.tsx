@@ -2,7 +2,7 @@
  * DEFAULT JobCore tab bar spec - source: screen #0010 (Payroll). Anchored directly
  * under the header; active tab = bold text + darkened background + blue underline.
  * Use this for any 'tab bar' / 'tabs along the top' request; never inline a bar.
- * NOTE: the older TabBar.tsx is a different wrapping-pill style used by 6 legacy screens.
+ * NOTE: the legacy wrapping-pill TabBar.tsx was retired 2026-10-18; this is the only tab bar.
  */
 import React from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';

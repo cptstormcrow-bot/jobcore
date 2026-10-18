@@ -18,7 +18,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { colors, spacing, TabBar } from '@jobcore/ui';
+import { colors, spacing, DefaultTabBar } from '@jobcore/ui';
 import type { PaymentsRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatch } from '../money/payout-batch';
@@ -29,10 +29,10 @@ import { PayoutBatchScreen } from './PayoutBatchScreen';
 import { PayoutBatchDetailScreen } from './PayoutBatchDetailScreen';
 
 type HubTab = 'payments' | 'reimbursements' | 'payoutBatches';
-const HUB_TABS: Array<{ key: HubTab; label: string }> = [
-  { key: 'payments', label: 'Payments' },
-  { key: 'reimbursements', label: 'Reimbursements' },
-  { key: 'payoutBatches', label: 'Payout Batches' },
+const HUB_TABS: Array<{ id: HubTab; label: string }> = [
+  { id: 'payments', label: 'Payments' },
+  { id: 'reimbursements', label: 'Reimbursements' },
+  { id: 'payoutBatches', label: 'Payout Batches' },
 ];
 
 export interface PaymentsHubScreenProps {
@@ -70,7 +70,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <TabBar items={HUB_TABS} activeKey={activeKey} onSelect={setActiveKey} style={styles.tabBar} />
+      <DefaultTabBar tabs={HUB_TABS} activeId={activeKey} onChange={setActiveKey} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {activeKey === 'payments' ? <PaymentsScreen payments={payments} /> : null}
         {activeKey === 'reimbursements' ? <ReimbursementQueueScreen reimbursements={reimbursements} /> : null}
@@ -98,9 +98,5 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.xs,
-  },
-  tabBar: {
-    padding: spacing.xs,
-    gap: spacing.xs,
   },
 });

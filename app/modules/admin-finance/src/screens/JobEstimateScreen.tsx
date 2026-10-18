@@ -22,7 +22,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, TabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
@@ -741,21 +741,21 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   const tabBar = (
     <View testID="estimate-tab-bar">
-      <TabBar
-        items={[
-          { key: 'tasks', label: 'Build from Tasks' },
-          { key: 'contingency', label: 'Contingency' },
+      <DefaultTabBar
+        tabs={[
+          { id: 'tasks', label: 'Build from Tasks' },
+          { id: 'contingency', label: 'Contingency' },
           ...(priceSheetQuickAddAvailable
             ? [
-                { key: 'manual', label: 'Manual' },
-                { key: 'priceSheet', label: 'Price Sheet' },
+                { id: 'manual', label: 'Manual' },
+                { id: 'priceSheet', label: 'Price Sheet' },
               ]
             : []),
-          { key: 'lineItem', label: 'Line Item' },
-          { key: 'finePrint', label: 'Fine Print' },
+          { id: 'lineItem', label: 'Line Item' },
+          { id: 'finePrint', label: 'Fine Print' },
         ]}
-        activeKey={activeTab}
-        onSelect={(key) => {
+        activeId={activeTab}
+        onChange={(key) => {
           setActiveTab(key as typeof activeTab);
           if (key === 'manual' || key === 'priceSheet') setAddMode(key);
         }}

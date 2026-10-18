@@ -29,7 +29,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, TabBar, Button, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, Button, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
@@ -171,7 +171,41 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
   const weekLabel =
     viewMode === 'week' ? format(anchorDay, 'MMM d, yyyy') : format(anchorDay, 'MMMM yyyy');
 
+  const weekNav = (
+    <View style={styles.weekNav}>
+      <Pressable
+        style={styles.navButton}
+        onPress={() =>
+          setAnchorDay((d) => (viewMode === 'week' ? addDays(d, -7) : addMonths(d, -1)))
+        }
+      >
+        <Text style={styles.navButtonText}>Prev</Text>
+      </Pressable>
+      <Pressable style={styles.navButton} onPress={() => setAnchorDay(new Date())}>
+        <Text style={styles.navButtonText}>Today</Text>
+      </Pressable>
+      <Pressable
+        style={styles.navButton}
+        onPress={() =>
+          setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7) : addMonths(d, 1)))
+        }
+      >
+        <Text style={styles.navButtonText}>Next</Text>
+      </Pressable>
+    </View>
+  );
+
   return (
+    <View style={styles.screen}>
+    <DefaultTabBar
+      tabs={[
+        { id: 'week', label: 'Week' },
+        { id: 'month', label: 'Month' },
+      ]}
+      activeId={viewMode}
+      onChange={(k) => setViewMode(k as 'week' | 'month')}
+      rightSlot={weekNav}
+    />
     <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
       <ScreenTitle title="Next Job" />
       {nextJob === undefined ? (
@@ -184,38 +218,6 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
 
       <View style={styles.weekHeader}>
         <Text style={styles.weekLabel}>{weekLabel}</Text>
-      </View>
-      <View style={styles.controlsRow}>
-        <TabBar
-          items={[
-            { key: 'week', label: 'Week' },
-            { key: 'month', label: 'Month' },
-          ]}
-          activeKey={viewMode}
-          onSelect={(k) => setViewMode(k as 'week' | 'month')}
-          style={styles.modeToggle}
-        />
-        <View style={styles.weekNav}>
-          <Pressable
-            style={styles.navButton}
-            onPress={() =>
-              setAnchorDay((d) => (viewMode === 'week' ? addDays(d, -7) : addMonths(d, -1)))
-            }
-          >
-            <Text style={styles.navButtonText}>Prev</Text>
-          </Pressable>
-          <Pressable style={styles.navButton} onPress={() => setAnchorDay(new Date())}>
-            <Text style={styles.navButtonText}>Today</Text>
-          </Pressable>
-          <Pressable
-            style={styles.navButton}
-            onPress={() =>
-              setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7) : addMonths(d, 1)))
-            }
-          >
-            <Text style={styles.navButtonText}>Next</Text>
-          </Pressable>
-        </View>
       </View>
       {viewMode === 'week' ? (
         <View style={styles.weekStrip}>
@@ -296,6 +298,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
         ))
       )}
     </ScrollView>
+    </View>
   );
 }
 
@@ -387,17 +390,8 @@ const styles = StyleSheet.create({
     height: 260,
     marginTop: spacing.sm,
   },
-  modeToggle: {
-    marginTop: spacing.sm,
-    paddingHorizontal: 0,
-  },
   monthStrip: {
     marginTop: spacing.sm,
-  },
-  controlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   previousRow: {
     paddingVertical: spacing.sm,

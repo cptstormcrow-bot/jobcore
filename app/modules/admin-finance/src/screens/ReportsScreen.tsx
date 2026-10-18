@@ -25,7 +25,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, TabBar, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, DefaultTabBar, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { byStatus } from '../reporting/group-by';
@@ -148,21 +148,22 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
   return (
     <View style={styles.screen}>
       {banner}
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.header}>
         <ScreenTitle title="Reports #0023" />
-        <TabBar
-          items={[
-            { key: 'status' as const, label: 'Status' },
-            { key: 'slots' as const, label: 'Slot Hit Rate' },
-            { key: 'commission' as const, label: 'Commission Totals' },
-          ]}
-          activeKey={activeTab}
-          onSelect={(key) => {
-            setActiveTab(key);
-            setDrill(null);
-          }}
-          style={styles.tabBar}
-        />
+      </View>
+      <DefaultTabBar
+        tabs={[
+          { id: 'status' as const, label: 'Status' },
+          { id: 'slots' as const, label: 'Slot Hit Rate' },
+          { id: 'commission' as const, label: 'Commission Totals' },
+        ]}
+        activeId={activeTab}
+        onChange={(key) => {
+          setActiveTab(key);
+          setDrill(null);
+        }}
+      />
+      <ScrollView contentContainerStyle={styles.content}>
         {activeTab === 'status' ? (
           <>
         <Text style={styles.groupHeading}>By Status</Text>
@@ -254,8 +255,9 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.sm,
   },
-  tabBar: {
-    paddingVertical: spacing.xs,
+  header: {
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
   },
   groupHeading: {
     color: colors.text,

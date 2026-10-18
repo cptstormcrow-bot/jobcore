@@ -36,7 +36,7 @@ import React, { useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, TabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 import type { JobTimelineItem } from '../domain/job-timeline';
 import type { CustomerJobHistoryItem } from '../data/ports';
@@ -84,14 +84,14 @@ export interface CloseOutReviewScreenProps {
 
 type CloseOutTab = 'hours' | 'payouts' | 'contacts' | 'photos' | 'notes' | 'trail' | 'closeout';
 
-const CLOSE_OUT_TABS: Array<{ key: CloseOutTab; label: string }> = [
-  { key: 'hours', label: 'Hours' },
-  { key: 'payouts', label: 'Payouts' },
-  { key: 'contacts', label: 'Contacts' },
-  { key: 'photos', label: 'Photos' },
-  { key: 'notes', label: 'Notes' },
-  { key: 'trail', label: 'Trail' },
-  { key: 'closeout', label: 'Close out' },
+const CLOSE_OUT_TABS: Array<{ id: CloseOutTab; label: string }> = [
+  { id: 'hours', label: 'Hours' },
+  { id: 'payouts', label: 'Payouts' },
+  { id: 'contacts', label: 'Contacts' },
+  { id: 'photos', label: 'Photos' },
+  { id: 'notes', label: 'Notes' },
+  { id: 'trail', label: 'Trail' },
+  { id: 'closeout', label: 'Close out' },
 ];
 
 export function CloseOutReviewScreen({
@@ -131,10 +131,8 @@ export function CloseOutReviewScreen({
   return (
     <View style={embedded ? undefined : styles.screen}>
       <ScreenTitle title="Close-Out #0018" />
-      <Body {...bodyProps}>
-        {embedded ? (
-          <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
-        ) : (
+      {embedded ? null : (
+        <View style={styles.fixedTop}>
           <View style={styles.headerCard}>
             <JobTitleBarHeader
               framed
@@ -160,9 +158,16 @@ export function CloseOutReviewScreen({
               <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
             </JobHeaderBlock>
           </View>
-        )}
-
-        <TabBar items={CLOSE_OUT_TABS} activeKey={activeTab} onSelect={setActiveTab} style={styles.tabBar} />
+          <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
+        </View>
+      )}
+      <Body {...bodyProps}>
+        {embedded ? (
+          <>
+            <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
+            <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
+          </>
+        ) : null}
         <View style={styles.actionRow}>
           <Button label="Contact" onPress={() => onContact?.(job.id)} variant="secondary" size="sm" />
           <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
@@ -340,9 +345,9 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     textTransform: 'capitalize',
   },
-  tabBar: {
-    paddingHorizontal: 0,
-    paddingVertical: spacing.xs,
+  fixedTop: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
   },
   actionRow: {
     flexDirection: 'row',

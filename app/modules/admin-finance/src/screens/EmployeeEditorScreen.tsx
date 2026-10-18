@@ -33,7 +33,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, TabBar, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -77,12 +77,12 @@ const ROLE_OPTIONS = [
 
 type EmpTab = 'email' | 'detail' | 'role' | 'areas' | 'skills';
 
-const EMP_TAB_ITEMS: { key: EmpTab; label: string }[] = [
-  { key: 'email', label: 'Email' },
-  { key: 'detail', label: 'Detail' },
-  { key: 'role', label: 'Role' },
-  { key: 'areas', label: 'Service Areas' },
-  { key: 'skills', label: 'Skills' },
+const EMP_TAB_ITEMS: { id: EmpTab; label: string }[] = [
+  { id: 'email', label: 'Email' },
+  { id: 'detail', label: 'Detail' },
+  { id: 'role', label: 'Role' },
+  { id: 'areas', label: 'Service Areas' },
+  { id: 'skills', label: 'Skills' },
 ];
 
 const SKILLS = [
@@ -525,7 +525,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         ) : null}
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
       </View>
-      <TabBar items={EMP_TAB_ITEMS} activeKey={activeTab} onSelect={setActiveTab} />
+      <DefaultTabBar tabs={EMP_TAB_ITEMS} activeId={activeTab} onChange={setActiveTab} />
       <ScrollView contentContainerStyle={styles.content}>
         {activeTab === 'email' && isEditMode ? (
           <Card style={styles.card}>
