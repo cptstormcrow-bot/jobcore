@@ -52,6 +52,7 @@ import type { JobDraft } from '../../../../modules/admin-finance/src/domain/qual
 import { assignJob } from '../../../../modules/admin-finance/src/flows/assign-job';
 import { unassignJob } from '../../../../modules/admin-finance/src/flows/unassign-job';
 import { approveEstimate } from '../../../../modules/admin-finance/src/flows/approve-estimate';
+import { canAssignServiceTech } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
 import { JobTaskList } from '../../src/components/JobTaskList';
@@ -305,6 +306,7 @@ export default function JobDrilldownScreen() {
   const [pendingAssign, setPendingAssign] = useState<{ kind: 'prem' | 'service'; techId: string | null } | null>(null);
   useEffect(() => { setPendingAssign(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
+  const serviceGateOpen = canAssignServiceTech(estimate);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
@@ -685,7 +687,8 @@ export default function JobDrilldownScreen() {
    * via `transitionJob`, so a plain local patch would go stale).
    */
   const handleAssignInstaller = async (techId: string): Promise<void> => {
-    if (!job || session.status !== 'authenticated' || !org?.id) return;
+    if (!serviceGateOpen) return;
+    if (!job ||session.status !== 'authenticated' || !org?.id) return;
     setAssigning(techId);
     setActionError(null);
     const fail = (message: string) => {
@@ -1375,12 +1378,16 @@ export default function JobDrilldownScreen() {
           serviceTechName={serviceTechName}
           premBusy={assigning !== null}
           serviceBusy={assigning !== null}
+          serviceGateOpen={serviceGateOpen}
           premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
           {...(isAdmin
             ? {
                 techs: eligibleTechOptions,
                 onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
-                onRequestAssignService: (techId: string | null) => setPendingAssign({ kind: 'service', techId }),
+                onRequestAssignService: (techId: string | null) => {
+                  if (techId !== null && !serviceGateOpen) return;
+                  setPendingAssign({ kind: 'service', techId });
+                },
               }
             : {})}
         />
@@ -1404,7 +1411,7 @@ export default function JobDrilldownScreen() {
             if (!p) return;
             void (p.kind === 'prem'
               ? (p.techId ? handleAssignInvestigator(p.techId) : handleUnassign('prem'))
-              : (p.techId ? handleAssignInstaller(p.techId) : handleUnassign('service')));
+              : (p.techId ? (serviceGateOpen ? handleAssignInstaller(p.techId) : undefined) : handleUnassign('service')));
           }}
         />
         {isAdmin && region === 'evisit' && investigatorTechId ? (

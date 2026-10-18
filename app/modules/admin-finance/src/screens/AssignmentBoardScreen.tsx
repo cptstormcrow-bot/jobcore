@@ -46,6 +46,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
+import { sortPoolJobs, type SortMode } from '../domain/assignment-pool-sort';
 import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind } from './assignment-board-helpers';
 
 export interface AssignmentBoardScreenProps {
@@ -141,6 +142,7 @@ export function AssignmentBoardScreen({
   const [reassign, setReassign] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
+  const [sortMode, setSortMode] = useState<SortMode>('soonest');
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
@@ -158,14 +160,21 @@ export function AssignmentBoardScreen({
 
   const techById = useMemo(() => new Map(techs.map((t) => [t.id, t])), [techs]);
 
+  // Same condition that drives the "Tech: X" line in the pool row.
+  const isAssigned = (job: Job): boolean => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id]);
+
   const poolJobs = useMemo(
     () =>
-      jobs.filter(
-        (job) =>
-          isBetaVisible(job, showTestJobs) &&
-          (category === 'all' || jobCategoryOf(job) === category)
+      sortPoolJobs(
+        jobs.filter(
+          (job) =>
+            isBetaVisible(job, showTestJobs) &&
+            (category === 'all' || jobCategoryOf(job) === category)
+        ),
+        sortMode,
+        (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id]),
       ),
-    [jobs, showTestJobs, category]
+    [jobs, showTestJobs, category, sortMode, investigatorTechIdByJob]
   );
 
   const jobsByTech = useMemo(() => {
@@ -395,12 +404,25 @@ export function AssignmentBoardScreen({
                 key={cat}
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
                 variant={category === cat ? 'primary' : 'outline'}
+                style={category === cat ? undefined : styles.inactiveButton}
                 size="sm"
                 onPress={() => setCategory(cat)}
               />
             ))}
           </View>
           ) : null}
+          <View style={styles.categorySegmentRow}>
+            {(['soonest', 'newest'] as const).map((mode) => (
+              <Button
+                key={mode}
+                label={mode === 'soonest' ? 'Soonest' : 'Newest'}
+                variant={sortMode === mode ? 'primary' : 'outline'}
+                style={sortMode === mode ? undefined : styles.inactiveButton}
+                size="sm"
+                onPress={() => setSortMode(mode)}
+              />
+            ))}
+          </View>
           <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No unassigned jobs.</Text>
@@ -424,7 +446,7 @@ export function AssignmentBoardScreen({
               const showConfirm = needsConfirm(kind, picked, serviceId, premId);
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
-                  <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
+                  <View style={[styles.poolRow, selected ? styles.poolRowSelected : null, isAssigned(job) ? { opacity: 0.5 } : null]}>
                     {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as Button/Select in rowActions). */}
                     <Pressable
                       style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
@@ -448,10 +470,10 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} />
+                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={[styles.actionButton, kind === 'service' ? null : styles.inactiveButton]} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={styles.actionButton} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} />
+                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={[styles.actionButton, kind === 'prem' ? null : styles.inactiveButton]} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} />
                       </View>
                       {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
@@ -672,7 +694,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingVertical: 0,
     minHeight: 44,
-    backgroundColor: colors.sand,
+  },
+  // G1: unselected segment/toggle buttons show sandInactive; selected uses the Button primary sand.
+  inactiveButton: {
+    backgroundColor: colors.sandInactive,
   },
   hint: {
     color: colors.textMuted,

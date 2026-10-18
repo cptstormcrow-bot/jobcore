@@ -8,6 +8,7 @@ import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, formatJobHead
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
+import { SERVICE_TECH_GATE_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 
 export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
 
@@ -144,6 +145,7 @@ export type JobSummaryRestProps = {
   serviceBusy?: boolean;
   premIndicator?: string | null;
   statusError?: string | null;
+  serviceGateOpen?: boolean;
 };
 
 type TechRowProps = {
@@ -154,9 +156,10 @@ type TechRowProps = {
   onRequest?: (techId: string | null) => void;
   busy?: boolean;
   indicator?: string | null;
+  disabledWhenUnassigned?: boolean;
 };
 
-function TechRow({ label, techId, techName, techs, onRequest, busy, indicator }: TechRowProps) {
+function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, disabledWhenUnassigned }: TechRowProps) {
   return (
     <View style={styles.techRow}>
       <Text style={styles.summaryLine}>{label}:</Text>
@@ -167,7 +170,7 @@ function TechRow({ label, techId, techName, techs, onRequest, busy, indicator }:
             value={techId ?? ''}
             options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
             placeholder="Choose technician"
-            disabled={busy}
+            disabled={busy || (disabledWhenUnassigned && !techId)}
             onChange={(id) => { if ((id || null) === (techId ?? null)) return; onRequest(id || null); }}
           />
         </View>
@@ -191,6 +194,7 @@ export function JobSummaryRest({
   serviceBusy,
   premIndicator = null,
   statusError = null,
+  serviceGateOpen = false,
 }: JobSummaryRestProps) {
   const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
@@ -215,7 +219,9 @@ export function JobSummaryRest({
           techs={techs}
           onRequest={onRequestAssignService}
           busy={serviceBusy}
+          disabledWhenUnassigned={!serviceGateOpen}
         />
+        {!serviceGateOpen && !serviceTechId ? <Text style={styles.arriveHint}>{SERVICE_TECH_GATE_HINT}</Text> : null}
         <View style={styles.techRow}>
           {serviceAreaName ? (
             <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
