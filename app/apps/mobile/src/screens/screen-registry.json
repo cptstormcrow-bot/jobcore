@@ -63,7 +63,10 @@
     "file": "apps/mobile/app/(tabs)/calendar.tsx",
     "createdAt": "2026-08-01T14:34:52-07:00",
     "aliasOf": 11,
-    "aliasNote": "Tab route that renders the same UniversalCalendar as #0011; one calendar for everyone, differing only by default filters."
+    "aliasNote": "Tab route that renders the same UniversalCalendar as #0011; one calendar for everyone, differing only by default filters.",
+    "retiredAt": "2026-10-17",
+    "retiredInto": 11,
+    "retiredNote": "Retired. #0011 Calendar replaces it. Every bullet previously listed under Calendar #0008 (called from the title bar) now lives under #0011."
   },
   {
     "number": 9,
