@@ -31,6 +31,7 @@ export * from './ScreenTitle';
 export * from './Breadcrumb';
 export * from './AppChrome';
 export * from './TabBar';
+export * from './DefaultTabBar';
 export * from './telephony';
 export * from './walkthrough/walkthrough-content';
 export * from './walkthrough/WalkthroughProvider';

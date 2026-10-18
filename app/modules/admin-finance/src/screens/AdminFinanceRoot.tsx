@@ -46,8 +46,6 @@ import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { PayrollScreen } from './PayrollScreen';
 import { UniversalCalendar } from './UniversalCalendar';
-import { PayrollRunScreen } from './PayrollRunScreen';
-import { PayrollSettingsScreen } from './PayrollSettingsScreen';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
@@ -1112,11 +1110,9 @@ export function AdminFinanceRoot() {
           </>
         )
       ) : subView === 'payroll' ? (
-        <PayrollScreen onBack={() => goTop('overview')} onOpenRun={() => setSubView('payrollRun')} onOpenSettings={() => setSubView('payrollSettings')} />
-      ) : subView === 'payrollRun' ? (
-        <PayrollRunScreen onBack={() => goTop('payroll')} />
-      ) : subView === 'payrollSettings' ? (
-        <PayrollSettingsScreen onBack={() => goTop('payroll')} />
+        <PayrollScreen onBack={() => goTop('overview')} />
+      ) : subView === 'payrollRun' || subView === 'payrollSettings' ? (
+        <PayrollScreen onBack={() => goTop('overview')} initialTab={subView === 'payrollRun' ? 'run' : 'settings'} />
       ) : subView === 'reports' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />

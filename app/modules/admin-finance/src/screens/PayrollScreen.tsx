@@ -13,15 +13,16 @@ import { EmptyState } from '@jobcore/ui';
 import { PayrollHome } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
+import { PayrollRunScreen } from './PayrollRunScreen';
+import { PayrollSettingsScreen } from './PayrollSettingsScreen';
 
 export interface PayrollScreenProps {
   onBack?: () => void;
-  onOpenRun?: () => void;
-  onOpenSettings?: () => void;
+  initialTab?: 'run' | 'settings';
 }
 
 export function PayrollScreen(props: PayrollScreenProps = {}) {
-  const { onOpenRun, onOpenSettings } = props;
+  const { initialTab } = props;
   const session = useModuleSession();
   const payroll = getModulePorts().payroll;
 
@@ -39,8 +40,9 @@ export function PayrollScreen(props: PayrollScreenProps = {}) {
         mode="admin"
         port={payroll}
         userId={session.userId}
-        onOpenRun={onOpenRun}
-        onOpenSettings={onOpenSettings}
+        initialTab={initialTab}
+        renderRun={() => <PayrollRunScreen />}
+        renderSettings={() => <PayrollSettingsScreen />}
       />
     </View>
   );

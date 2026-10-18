@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { colors } from '@jobcore/ui';
+import { colors, DefaultTabBar } from '@jobcore/ui';
 import type { PayrollPort } from './port';
 import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
@@ -10,12 +11,19 @@ import { ReimbursementPanel } from './ReimbursementPanel';
 import type { ReimbursementPanelActions } from './ReimbursementPanel';
 import { TimesheetApprovalPanel } from './TimesheetApprovalPanel';
 
+export type TabId = 'time' | 'hours' | 'period' | 'reimb' | 'approvals' | 'run' | 'settings';
+
 export interface PayrollHomeProps {
   port: PayrollPort;
   userId: string;
   mode: 'self' | 'admin';
+  /** @deprecated Run is now a tab; use renderRun. Ignored. */
   onOpenRun?: () => void;
+  /** @deprecated Settings is now a tab; use renderSettings. Ignored. */
   onOpenSettings?: () => void;
+  renderRun?: () => ReactNode;
+  renderSettings?: () => ReactNode;
+  initialTab?: TabId;
 }
 
 const actionBtn = {
@@ -26,15 +34,14 @@ const actionBtn = {
 } as const;
 const actionTxt = { color: colors.text, fontWeight: '700' } as const;
 
-type TabId ='time' | 'hours' | 'period' | 'reimb' | 'approvals';
-
-export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: PayrollHomeProps) {
-  const [active, setActive] = useState<TabId>('time');
+export function PayrollHome({ port, userId, mode, renderRun, renderSettings, initialTab }: PayrollHomeProps) {
+  const [active, setActive] = useState<TabId>(initialTab ?? 'time');
   const [weekStartDow, setWeekStartDow] = useState(0);
   const [timeActions, setTimeActions] = useState<TimeEntryPanelActions | null>(null);
   const [reimbActions, setReimbActions] = useState<ReimbursementPanelActions | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const onChanged = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     if (!confirmDelete) return undefined;
@@ -68,53 +75,14 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
   if (mode === 'admin' && port.listTeamEntries && port.approveWeek && port.rejectWeek) {
     tabs.push({ id: 'approvals', label: 'Approvals' });
   }
+  if (mode === 'admin') {
+    tabs.push({ id: 'run', label: 'Payroll Run' });
+    tabs.push({ id: 'settings', label: 'Payroll Settings' });
+  }
 
-  return (
-    <View style={{ flex: 1, paddingHorizontal: 16 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', flexShrink: 1 }}>
-        {tabs.map((t) => (
-          <Pressable
-            key={t.id}
-            onPress={() => setActive(t.id)}
-            accessibilityRole="tab"
-            style={{
-              paddingVertical: 4,
-              paddingHorizontal: 12,
-              backgroundColor: active === t.id ? colors.sand : colors.sandInactive,
-              borderBottomWidth: 2,
-              borderBottomColor: active === t.id ? '#2563eb' : 'transparent',
-            }}
-          >
-            <Text style={{ fontWeight: active === t.id ? '700' : '400' }}>{t.label}</Text>
-          </Pressable>
-        ))}
-        </View>
-        <View style={{ alignItems: 'flex-end', paddingVertical: 0 }}>
-          {mode === 'admin' && (onOpenRun || onOpenSettings) ? (
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {onOpenRun ? (
-                <Pressable
-                  onPress={onOpenRun}
-                  accessibilityRole="button"
-                  accessibilityLabel="Payroll Run"
-                  style={actionBtn}
-                >
-                  <Text style={actionTxt}>Payroll Run</Text>
-                </Pressable>
-              ) : null}
-              {onOpenSettings ? (
-                <Pressable
-                  onPress={onOpenSettings}
-                  accessibilityRole="button"
-                  accessibilityLabel="Payroll Settings"
-                  style={actionBtn}
-                >
-                  <Text style={actionTxt}>Payroll Settings</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ) : null}
+  const rightSlot =
+    active === 'time' || active === 'reimb' ? (
+      <View style={{ alignItems: 'flex-end', paddingHorizontal: 16 }}>
           {active === 'time' ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
               <Pressable
@@ -186,16 +154,20 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
               <Text style={actionTxt}>Submit</Text>
             </Pressable>
           ) : null}
-        </View>
       </View>
-      <ScrollView style={{ flex: 1 }}>
+    ) : undefined;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <DefaultTabBar tabs={tabs} activeId={active} onChange={(id) => setActive(id as TabId)} rightSlot={rightSlot} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
         {active === 'time' ? (
           <TimeEntryPanel
             port={port}
             userId={userId}
             weekStartDow={weekStartDow}
             onRegisterActions={setTimeActions}
-            onChanged={() => setRefreshKey((k) => k + 1)}
+            onChanged={onChanged}
           />
         ) : null}
         {active === 'hours' ? (
@@ -210,6 +182,8 @@ export function PayrollHome({ port, userId, mode, onOpenRun, onOpenSettings }: P
         {active === 'approvals' ? (
           <TimesheetApprovalPanel port={port} weekStartDow={weekStartDow} />
         ) : null}
+        {active === 'run' && mode === 'admin' && renderRun?.()}
+        {active === 'settings' && mode === 'admin' && renderSettings?.()}
       </ScrollView>
     </View>
   );
