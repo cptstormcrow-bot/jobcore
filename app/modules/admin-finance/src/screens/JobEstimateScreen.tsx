@@ -20,9 +20,9 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, TabBar, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, TabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
@@ -621,31 +621,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     }
   }
 
-  async function handleApprove(): Promise<void> {
-    if (!estimate) {
-      return;
-    }
-    setActionState({ kind: 'working' });
-    try {
-      const session = getModuleSession();
-      const result = await approveEstimate(estimate, 'approved', {
-        estimates,
-        ctx: { role: session ? session.role : 'admin', now: () => new Date().toISOString() },
-        now: () => new Date().toISOString(),
-      });
-      if (result.ok) {
-        setEstimate(result.estimate);
-        props.onEstimateChange?.(result.estimate);
-        setActionState({ kind: 'done', message: 'Estimate approved.' });
-      } else {
-        setActionState({ kind: 'failed', message: result.reason });
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not approve the estimate.';
-      setActionState({ kind: 'failed', message });
-    }
-  }
-
   async function confirmMove(message: string): Promise<boolean> {
     if (Platform.OS === 'web') {
       return typeof window !== 'undefined' ? window.confirm(message) : false;
@@ -826,15 +801,19 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               testID="estimate-status-control"
             />
             <View style={styles.linkRow} testID="estimate-link-row">
-              <Button
-                label={busy ? 'Working...' : 'Copy estimate link'}
-                size="sm"
+              <Pressable
+                testID="estimate-link-button"
+                accessibilityRole="button"
+                accessibilityLabel="Copy estimate link"
+                accessibilityState={{ disabled: busy || !linkEnabled }}
+                disabled={busy || !linkEnabled}
                 onPress={() => {
                   void handleShare();
                 }}
-                disabled={busy || !linkEnabled}
-                style={[styles.action, styles.linkButton]}
-              />
+                style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
+              >
+                <Text style={styles.linkChipLabel}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
+              </Pressable>
               {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
               {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
               {shareError ? <ErrorState message={shareError} /> : null}
@@ -935,18 +914,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 />
               ) : null}
             </View>
-          ) : null}
-          {editable && estimate?.status === 'submitted' ? (
-            <Button
-              label={busy ? 'Approving...' : 'Approve'}
-              variant="primary"
-              size="sm"
-              onPress={() => {
-                void handleApprove();
-              }}
-              disabled={busy}
-              style={styles.action}
-            />
           ) : null}
         </Card>
         ) : null}
@@ -1371,10 +1338,24 @@ const styles = StyleSheet.create({
   linkRow: {
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
-  linkButton: {
-    width: '100%',
+  linkChip: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.sandInactive,
+  },
+  linkChipDisabled: { borderColor: colors.border, opacity: 0.6 },
+  linkChipLabel: {
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    fontSize: typography.size.label,
+    color: colors.text,
   },
   field: {
     marginBottom: spacing.xs,
