@@ -1,10 +1,11 @@
 /**
  * Pure ordering for the Assignment Board job pool.
- * Unassigned jobs first, assigned last; within each group the chosen mode applies.
- * Returns a NEW array; the input is never mutated.
+ * sortPoolJobs orders by scheduledStart only (asc = earliest first, desc = latest first);
+ * jobs with a missing/invalid scheduledStart go last in both directions.
+ * filterUnassigned is a separate filter. Both return NEW arrays; the input is never mutated.
  */
 
-export type SortMode = 'soonest' | 'newest';
+export type SortDirection = 'asc' | 'desc';
 
 export interface PoolSortJob {
   scheduledStart?: string | null;
@@ -27,22 +28,24 @@ function byCreatedDesc(a: PoolSortJob, b: PoolSortJob): number {
   return tb - ta;
 }
 
-function bySoonest(a: PoolSortJob, b: PoolSortJob): number {
-  const ta = time(a.scheduledStart);
-  const tb = time(b.scheduledStart);
-  if (ta === null && tb !== null) return 1;
-  if (ta !== null && tb === null) return -1;
-  if (ta !== null && tb !== null && ta !== tb) return ta - tb;
-  return byCreatedDesc(a, b);
-}
-
 export function sortPoolJobs<T extends PoolSortJob>(
   jobs: readonly T[],
-  mode: SortMode,
+  direction: SortDirection,
+): T[] {
+  const sign = direction === 'asc' ? 1 : -1;
+  return [...jobs].sort((a, b) => {
+    const ta = time(a.scheduledStart);
+    const tb = time(b.scheduledStart);
+    if (ta === null && tb !== null) return 1;
+    if (ta !== null && tb === null) return -1;
+    if (ta !== null && tb !== null && ta !== tb) return sign * (ta - tb);
+    return byCreatedDesc(a, b);
+  });
+}
+
+export function filterUnassigned<T>(
+  jobs: readonly T[],
   isAssigned: (job: T) => boolean,
 ): T[] {
-  const cmp = mode === 'soonest' ? bySoonest : byCreatedDesc;
-  const unassigned = jobs.filter((j) => !isAssigned(j));
-  const assigned = jobs.filter((j) => isAssigned(j));
-  return [...unassigned.sort(cmp), ...assigned.sort(cmp)];
+  return jobs.filter((j) => !isAssigned(j));
 }

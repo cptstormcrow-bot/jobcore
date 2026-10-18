@@ -46,7 +46,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
-import { sortPoolJobs, type SortMode } from '../domain/assignment-pool-sort';
+import { filterUnassigned, sortPoolJobs, type SortDirection } from '../domain/assignment-pool-sort';
 import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind } from './assignment-board-helpers';
 
 export interface AssignmentBoardScreenProps {
@@ -142,7 +142,8 @@ export function AssignmentBoardScreen({
   const [reassign, setReassign] = useState<PendingAssignment | null>(null);
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
-  const [sortMode, setSortMode] = useState<SortMode>('soonest');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
@@ -160,21 +161,17 @@ export function AssignmentBoardScreen({
 
   const techById = useMemo(() => new Map(techs.map((t) => [t.id, t])), [techs]);
 
-  // Same condition that drives the "Tech: X" line in the pool row.
-  const isAssigned = (job: Job): boolean => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id]);
-
   const poolJobs = useMemo(
-    () =>
-      sortPoolJobs(
-        jobs.filter(
-          (job) =>
-            isBetaVisible(job, showTestJobs) &&
-            (category === 'all' || jobCategoryOf(job) === category)
-        ),
-        sortMode,
-        (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id]),
-      ),
-    [jobs, showTestJobs, category, sortMode, investigatorTechIdByJob]
+    () => {
+      const visible = jobs.filter(
+        (job) =>
+          isBetaVisible(job, showTestJobs) &&
+          (category === 'all' || jobCategoryOf(job) === category)
+      );
+      const scoped = unassignedOnly ? filterUnassigned(visible, (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id])) : visible;
+      return sortPoolJobs(scoped, sortDirection);
+    },
+    [jobs, showTestJobs, category, sortDirection, unassignedOnly, investigatorTechIdByJob]
   );
 
   const jobsByTech = useMemo(() => {
@@ -412,20 +409,24 @@ export function AssignmentBoardScreen({
           </View>
           ) : null}
           <View style={styles.categorySegmentRow}>
-            {(['soonest', 'newest'] as const).map((mode) => (
-              <Button
-                key={mode}
-                label={mode === 'soonest' ? 'Soonest' : 'Newest'}
-                variant={sortMode === mode ? 'primary' : 'outline'}
-                style={sortMode === mode ? undefined : styles.inactiveButton}
-                size="sm"
-                onPress={() => setSortMode(mode)}
-              />
-            ))}
+            <Button
+              label={sortDirection === 'asc' ? 'First to Last' : 'Last to First'}
+              variant="outline"
+              style={styles.inactiveButton}
+              size="sm"
+              onPress={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+            />
+            <Button
+              label="Unassigned"
+              variant={unassignedOnly ? 'primary' : 'outline'}
+              style={unassignedOnly ? undefined : styles.inactiveButton}
+              size="sm"
+              onPress={() => setUnassignedOnly((v) => !v)}
+            />
           </View>
           <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
-            <Text style={styles.empty}>No unassigned jobs.</Text>
+            <Text style={styles.empty}>{unassignedOnly ? 'No unassigned jobs.' : 'No jobs.'}</Text>
           ) : (
             poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
@@ -446,7 +447,7 @@ export function AssignmentBoardScreen({
               const showConfirm = needsConfirm(kind, picked, serviceId, premId);
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
-                  <View style={[styles.poolRow, selected ? styles.poolRowSelected : null, isAssigned(job) ? { opacity: 0.5 } : null]}>
+                  <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
                     {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as Button/Select in rowActions). */}
                     <Pressable
                       style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
