@@ -2,7 +2,7 @@
  * Pure ordering for the Assignment Board job pool.
  * sortPoolJobs orders by scheduledStart only (asc = earliest first, desc = latest first);
  * jobs with a missing/invalid scheduledStart go last in both directions.
- * filterUnassigned is a separate filter. Both return NEW arrays; the input is never mutated.
+ * unassignedFirst is a stable partition (unassigned ahead of assigned, order kept within each group). Both return NEW arrays; the input is never mutated.
  */
 
 export type SortDirection = 'asc' | 'desc';
@@ -43,9 +43,9 @@ export function sortPoolJobs<T extends PoolSortJob>(
   });
 }
 
-export function filterUnassigned<T>(
-  jobs: readonly T[],
-  isAssigned: (job: T) => boolean,
-): T[] {
-  return jobs.filter((j) => !isAssigned(j));
+export function unassignedFirst<T>(jobs: readonly T[], isAssigned: (job: T) => boolean): T[] {
+  const unassigned: T[] = [];
+  const assigned: T[] = [];
+  for (const j of jobs) (isAssigned(j) ? assigned : unassigned).push(j);
+  return [...unassigned, ...assigned];
 }

@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { filterUnassigned, sortPoolJobs } from '../assignment-pool-sort';
+import { sortPoolJobs, unassignedFirst } from '../assignment-pool-sort';
 
 interface J {
   id: string;
@@ -64,14 +64,27 @@ test('pool sort: assigned jobs are not grouped', () => {
   assert.deepEqual(sortPoolJobs(jobs, 'asc').map((j) => j.id), ['assignedEarly', 'unassignedLate']);
 });
 
-test('filterUnassigned: keeps only unassigned and does not mutate', () => {
+test('unassignedFirst: unassigned ahead of assigned, order kept within each group, input not mutated', () => {
   const jobs: J[] = [
     { id: 'a', tech: true },
     { id: 'b' },
     { id: 'c', tech: false },
+    { id: 'd', tech: true },
   ];
-  const out = filterUnassigned(jobs, isAssigned);
-  assert.deepEqual(out.map((j) => j.id), ['b', 'c']);
+  const out = unassignedFirst(jobs, isAssigned);
+  assert.deepEqual(out.map((j) => j.id), ['b', 'c', 'a', 'd']);
   assert.notEqual(out, jobs);
-  assert.deepEqual(jobs.map((j) => j.id), ['a', 'b', 'c']);
+  assert.deepEqual(jobs.map((j) => j.id), ['a', 'b', 'c', 'd']);
+});
+
+test('unassignedFirst after sortPoolJobs desc keeps date order per group and nulls last', () => {
+  const jobs: J[] = [
+    { id: 'aLate', scheduledStart: '2026-03-01T00:00:00Z', tech: true },
+    { id: 'uMid', scheduledStart: '2026-02-01T00:00:00Z' },
+    { id: 'uEarly', scheduledStart: '2026-01-01T00:00:00Z' },
+    { id: 'aNone', scheduledStart: null, tech: true },
+    { id: 'uNone', scheduledStart: null },
+  ];
+  const ids = unassignedFirst(sortPoolJobs(jobs, 'desc'), isAssigned).map((j) => j.id);
+  assert.deepEqual(ids, ['uMid', 'uEarly', 'uNone', 'aLate', 'aNone']);
 });

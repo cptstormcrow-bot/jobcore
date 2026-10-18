@@ -46,7 +46,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
-import { filterUnassigned, sortPoolJobs, type SortDirection } from '../domain/assignment-pool-sort';
+import { sortPoolJobs, unassignedFirst, type SortDirection } from '../domain/assignment-pool-sort';
 import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind } from './assignment-board-helpers';
 
 export interface AssignmentBoardScreenProps {
@@ -143,7 +143,7 @@ export function AssignmentBoardScreen({
   const [category, setCategory] = useState<'real' | 'beta' | 'test' | 'all'>('real');
   useEffect(() => { if (!showTestJobs) setCategory('real'); }, [showTestJobs]);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [unassignedOnTop, setUnassignedOnTop] = useState(false);
   const [visitKind, setVisitKind] = useState<Record<string, 'service' | 'prem'>>({});
   const [choice, setChoice] = useState<Record<string, string>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
@@ -168,10 +168,10 @@ export function AssignmentBoardScreen({
           isBetaVisible(job, showTestJobs) &&
           (category === 'all' || jobCategoryOf(job) === category)
       );
-      const scoped = unassignedOnly ? filterUnassigned(visible, (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id])) : visible;
-      return sortPoolJobs(scoped, sortDirection);
+      const sorted = sortPoolJobs(visible, sortDirection);
+      return unassignedOnTop ? unassignedFirst(sorted, (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id])) : sorted;
     },
-    [jobs, showTestJobs, category, sortDirection, unassignedOnly, investigatorTechIdByJob]
+    [jobs, showTestJobs, category, sortDirection, unassignedOnTop, investigatorTechIdByJob]
   );
 
   const jobsByTech = useMemo(() => {
@@ -418,15 +418,15 @@ export function AssignmentBoardScreen({
             />
             <Button
               label="Unassigned"
-              variant={unassignedOnly ? 'primary' : 'outline'}
-              style={unassignedOnly ? undefined : styles.inactiveButton}
+              variant={unassignedOnTop ? 'primary' : 'outline'}
+              style={unassignedOnTop ? undefined : styles.inactiveButton}
               size="sm"
-              onPress={() => setUnassignedOnly((v) => !v)}
+              onPress={() => setUnassignedOnTop((v) => !v)}
             />
           </View>
           <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
-            <Text style={styles.empty}>{unassignedOnly ? 'No unassigned jobs.' : 'No jobs.'}</Text>
+            <Text style={styles.empty}>No jobs.</Text>
           ) : (
             poolJobs.map((job) => {
               const selected = job.id === selectedJobId;
