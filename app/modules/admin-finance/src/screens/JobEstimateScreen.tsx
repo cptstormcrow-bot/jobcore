@@ -130,7 +130,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [editQuantityInput, setEditQuantityInput] = useState('');
   const [editUnitCostInput, setEditUnitCostInput] = useState('');
 
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
   const [planTasks, setPlanTasks] = useState<JobPlanTaskRow[]>([]);
@@ -608,10 +608,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   async function handleShare(): Promise<void> {
     setShareError(null);
+    setLinkCopied(false);
     setActionState({ kind: 'working' });
     try {
       const { url } = await estimates.issueShareLink(job.id);
-      setShareUrl(url);
+      setLinkCopied(true);
       await Clipboard.setStringAsync(url);
       setActionState({ kind: 'done', message: 'Link copied to clipboard.' });
     } catch (error: unknown) {
@@ -815,7 +816,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 <Text style={styles.linkChipLabel}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
               </Pressable>
               {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
-              {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
+              {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
               {shareError ? <ErrorState message={shareError} /> : null}
             </View>
             {estimate?.status !== 'submitted' && estimate?.status !== 'approved' && !lineItems.some((item) => item.kind === 'labor') ? (
@@ -823,21 +824,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 Estimate is blank - fill it in.
               </Text>
             ) : null}
-          </View>
-          <View style={styles.summaryCell}>
-            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
-            <Text style={styles.cellValue}>{formatMoney(layoutTotals.total)}</Text>
-          </View>
-          <View style={styles.summaryCell}>
-            <Text style={styles.cellLabel}>MATERIALS ONSITE</Text>
-            <Checkbox
-              label={ESTIMATE_LABELS.materialsOnsite}
-              checked={!!estimate?.materialsOnsite}
-              disabled={!editable || busy || !estimate}
-              onChange={(next) => {
-                void persist({ materialsOnsite: next });
-              }}
-            />
             <View style={styles.trackingRow}>
             {editable || trackingInput ? (
               <TextField
@@ -867,9 +853,22 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             </View>
             {trackingLine ? <Text style={styles.note}>{trackingLine}</Text> : null}
           </View>
+          <View style={styles.summaryCell}>
+            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
+            <Text style={styles.cellValue}>{formatMoney(layoutTotals.total)}</Text>
+          </View>
+          <View style={styles.summaryCell}>
+            <Text style={styles.cellLabel}>MATERIALS ONSITE</Text>
+            <Checkbox
+              label={ESTIMATE_LABELS.materialsOnsite}
+              checked={!!estimate?.materialsOnsite}
+              disabled={!editable || busy}
+              onChange={(next) => {
+                void persist({ materialsOnsite: next });
+              }}
+            />
+          </View>
         </View>
-
-
         {activeTab === 'tasks' ? (
         <Card style={styles.card}>
           {!embedded && (
@@ -1282,14 +1281,14 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   card: {
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   heading: {
     color: colors.text,
     fontSize: typography.size.h5,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   sectionTitle: {
     color: colors.text,
@@ -1329,15 +1328,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: spacing.xs,
-    marginBottom: spacing.xs,
+    marginBottom: 0,
   },
   summaryCell: {
     flexGrow: 1,
     flexBasis: 160,
   },
   linkRow: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
+    marginBottom: 2,
     alignItems: 'stretch',
   },
   linkChip: {
@@ -1383,6 +1382,7 @@ const styles = StyleSheet.create({
   blankHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingTop: 2 },
   trackingRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'flex-end',
     gap: spacing.xs,
     marginBottom: spacing.xs,
