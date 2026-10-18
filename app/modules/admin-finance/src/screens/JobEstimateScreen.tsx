@@ -661,6 +661,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
+    if (next !== 'draft' && !lineItems.some((item) => item.kind === 'labor')) {
+      setActionState({ kind: 'failed', message: 'Estimate is blank - fill it in.' });
+      return;
+    }
     if (estimate && needsDownstreamWarning(estimate.status, next)) {
       const ok = await confirmMove(
         'Moving this estimate out of Approved will turn the Approval and Estimate stages red on the job timeline until it is approved again. Continue?'

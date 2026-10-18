@@ -1002,7 +1002,7 @@ export default function JobDrilldownScreen() {
       job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
       premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId || !!investigation?.submittedAt, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
       completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
-      estimate: { ...done(flags.estimateComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: !!investigation?.submittedAt && !(estimate && estimate.status !== 'draft') },
+      estimate: { ...done(flags.approvalComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: estimate?.status === 'submitted' },
       approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected },
       schedule: done(!!job.scheduledStart, 'schedule'),
       assign: done(!!(job.assignedTechId), 'assign'),
@@ -1014,7 +1014,11 @@ export default function JobDrilldownScreen() {
       closeout: done(closed, 'closeout'),
       history: done(closed, 'history'),
     };
-    const states = deriveStageStates(inputs);
+    const derived = deriveStageStates(inputs);
+    // Draft/none stays gray (Jeff: gray draft, yellow submitted, green approved).
+    const states = (estimate?.status ?? 'draft') === 'draft'
+      ? derived.map((s) => (s.key === 'estimate' ? { ...s, state: 'gray' as const } : s))
+      : derived;
     return { states, nextStep: deriveNextStep(states) };
   }, [job, estimate, investigation, investigatorTechId, stageExtras]);
 
