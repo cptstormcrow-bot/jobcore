@@ -20,7 +20,6 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, useWindowDimensions } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
@@ -65,7 +64,7 @@ export interface JobEstimateScreenProps {
   /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
   editable?: boolean;
   /** Publishes the header-right status control and options-menu items to the host; null on unmount. */
-  onChrome?: (chrome: { statusControl: ReactNode; optionsItems: MenuItem[] } | null) => void;
+  onChrome?: (chrome: { optionsItems: MenuItem[] } | null) => void;
 }
 
 /** Applies one area adjustment to a base DOLLAR value using the `percent`/`flat` convention.
@@ -662,10 +661,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
-    if (!estimate) {
-      return;
-    }
-    if (needsDownstreamWarning(estimate.status, next)) {
+    if (estimate && needsDownstreamWarning(estimate.status, next)) {
       const ok = await confirmMove(
         'Moving this estimate out of Approved will turn the Approval and Estimate stages red on the job timeline until it is approved again. Continue?'
       );
@@ -679,9 +675,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       const session = getModuleSession();
       const nowFn = () => new Date().toISOString();
       const ctx = { role: session ? session.role : 'admin', now: nowFn };
-      let current: JobEstimate = estimate;
+      let current: JobEstimate = estimate ?? (await estimates.upsertForJob(job.id, { status: 'draft' }));
       if (next === 'draft') {
-        current = await estimates.upsertForJob(estimate.jobId, { status: 'draft' });
+        current = await estimates.upsertForJob(current.jobId, { status: 'draft' });
       } else {
         if (current.status === 'draft') {
           const submitted = await submitEstimate(current, { estimates, ctx, now: nowFn });
@@ -715,8 +711,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   const onChromeRef = useRef(props.onChrome);
   onChromeRef.current = props.onChrome;
-  const handleMoveRef = useRef(handleMove);
-  handleMoveRef.current = handleMove;
   const persistRef = useRef(persist);
   persistRef.current = persist;
   const chromeStatus = estimate?.status ?? null;
@@ -739,18 +733,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         ]
       : [];
     publish({
-      statusControl: (
-        <EstimateStatusControl
-          compact
-          status={chromeStatus}
-          allowed={editable ? allowedEstimateMoves('admin', chromeStatus) : []}
-           readOnly={!editable}
-          onSelect={(next) => {
-            void handleMoveRef.current(next);
-          }}
-          testID="estimate-status-control"
-        />
-      ),
       optionsItems,
     });
     return () => {
@@ -802,8 +784,14 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             <Text style={styles.cellValue}>{estimate?.status ?? 'draft'}</Text>
             <EstimateStatusControl
               status={estimate?.status ?? 'draft'}
-              allowed={estimate && editable ? allowedEstimateMoves('admin', estimate.status) : []}
-              readOnly={!editable || !estimate}
+              allowed={
+                editable
+                  ? estimate
+                    ? allowedEstimateMoves('admin', estimate.status)
+                    : (['draft', 'submitted', 'approved'] as ReturnType<typeof allowedEstimateMoves>)
+                  : []
+              }
+              readOnly={!editable}
               busy={moving}
               onSelect={(next) => {
                 void handleMove(next);
