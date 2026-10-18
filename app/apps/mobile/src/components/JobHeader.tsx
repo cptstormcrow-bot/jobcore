@@ -146,6 +146,7 @@ export type JobSummaryRestProps = {
   premIndicator?: string | null;
   statusError?: string | null;
   serviceGateOpen?: boolean;
+  hideTechFields?: boolean;
 };
 
 type TechRowProps = {
@@ -181,6 +182,68 @@ function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, d
   );
 }
 
+export type JobTechFieldsProps = Pick<
+  JobSummaryRestProps,
+  | 'serviceAreaName'
+  | 'techs'
+  | 'premTechId'
+  | 'serviceTechId'
+  | 'premTechName'
+  | 'serviceTechName'
+  | 'onRequestAssignPrem'
+  | 'onRequestAssignService'
+  | 'premBusy'
+  | 'serviceBusy'
+  | 'premIndicator'
+  | 'serviceGateOpen'
+>;
+
+export function JobTechFields({
+  serviceAreaName = null,
+  techs,
+  premTechId = null,
+  serviceTechId = null,
+  premTechName = null,
+  serviceTechName = null,
+  onRequestAssignPrem,
+  onRequestAssignService,
+  premBusy,
+  serviceBusy,
+  premIndicator = null,
+  serviceGateOpen = false,
+}: JobTechFieldsProps) {
+  return (
+    <>
+      <TechRow
+        label="Prem Tech"
+        techId={premTechId}
+        techName={premTechName}
+        techs={techs}
+        onRequest={onRequestAssignPrem}
+        busy={premBusy}
+        indicator={premIndicator}
+      />
+      <TechRow
+        label="Service Tech"
+        techId={serviceTechId}
+        techName={serviceTechName}
+        techs={techs}
+        onRequest={onRequestAssignService}
+        busy={serviceBusy}
+        disabledWhenUnassigned={!serviceGateOpen}
+      />
+      {!serviceGateOpen && !serviceTechId ? <Text style={styles.arriveHint}>{SERVICE_TECH_GATE_HINT}</Text> : null}
+      <View style={styles.techRow}>
+        {serviceAreaName ? (
+          <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
+        ) : (
+          <Text style={[styles.summaryLine, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
+        )}
+      </View>
+    </>
+  );
+}
+
 export function JobSummaryRest({
   serviceAreaName = null,
   techs,
@@ -195,6 +258,7 @@ export function JobSummaryRest({
   premIndicator = null,
   statusError = null,
   serviceGateOpen = false,
+  hideTechFields = false,
 }: JobSummaryRestProps) {
   const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
   const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
@@ -203,32 +267,22 @@ export function JobSummaryRest({
     <View style={styles.root}>
       <View style={styles.summary}>
         {statusError ? <Text style={styles.statusError}>{statusError}</Text> : null}
-        <TechRow
-          label="Prem Tech"
-          techId={premTechId}
-          techName={premTechName}
-          techs={techs}
-          onRequest={onRequestAssignPrem}
-          busy={premBusy}
-          indicator={premIndicator}
-        />
-        <TechRow
-          label="Service Tech"
-          techId={serviceTechId}
-          techName={serviceTechName}
-          techs={techs}
-          onRequest={onRequestAssignService}
-          busy={serviceBusy}
-          disabledWhenUnassigned={!serviceGateOpen}
-        />
-        {!serviceGateOpen && !serviceTechId ? <Text style={styles.arriveHint}>{SERVICE_TECH_GATE_HINT}</Text> : null}
-        <View style={styles.techRow}>
-          {serviceAreaName ? (
-            <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
-          ) : (
-            <Text style={[styles.summaryLine, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
-          )}
-        </View>
+        {hideTechFields ? null : (
+          <JobTechFields
+            serviceAreaName={serviceAreaName}
+            techs={techs}
+            premTechId={premTechId}
+            serviceTechId={serviceTechId}
+            premTechName={premTechName}
+            serviceTechName={serviceTechName}
+            onRequestAssignPrem={onRequestAssignPrem}
+            onRequestAssignService={onRequestAssignService}
+            premBusy={premBusy}
+            serviceBusy={serviceBusy}
+            premIndicator={premIndicator}
+            serviceGateOpen={serviceGateOpen}
+          />
+        )}
       </View>
       {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}
     </View>

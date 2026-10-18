@@ -215,6 +215,13 @@ const ESTIMATE_COLUMNS: Record<string, string> = {
   depositAmount: 'deposit_amount',
   customerNotes: 'customer_notes',
   internalNotes: 'internal_notes',
+  materialsOnsite: 'materials_onsite',
+  trackingNumber: 'tracking_number',
+  trackingStatus: 'tracking_status',
+  trackingCheckedAt: 'tracking_checked_at',
+  finePrint: 'fine_print',
+  pdfDelivery: 'pdf_delivery',
+  contingencies: 'contingencies',
 };
 
 const checklistInstanceCreate: OpHandler<ChecklistInstanceCreatePayload> = async (p, ctx) => {

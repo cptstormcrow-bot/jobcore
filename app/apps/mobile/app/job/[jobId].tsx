@@ -15,10 +15,10 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { deriveStageStates, deriveNextStep, estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageInputs, StageKey } from '@jobcore/core';
-import { AppChrome, Breadcrumb, Button, colors, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Button, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
-import { JobHeader, JobSummaryRest, type JobRegion } from '../../src/components/JobHeader';
+import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
 import JobPaymentRegion from '../../src/components/JobPaymentRegion';
@@ -35,9 +35,6 @@ import {
   createEmployeeRepository,
   createJobAssignmentRepository,
   createCalendarEventRepository,
-  createPriceSheetRepository,
-  createPriceSheetPublishRepository,
-  createPriceSheetAreaAdjustmentsRepository,
   createServiceAreaRepository,
   createTechServiceAreaRepository,
   createEstimateRepository,
@@ -57,7 +54,7 @@ import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from
 import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
 import { JobTaskList } from '../../src/components/JobTaskList';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
-import { JobEstimateScreen } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
+import { JobEstimateScreen, type EstimateChrome } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
 import { setModuleSession } from '@jobcore/admin-finance';
 import {
@@ -269,19 +266,6 @@ export default function JobDrilldownScreen() {
   // (real UUID) jobId means edit-mode.
   const isCreate = jobId === 'new';
 
-  const priceEstimatingRates = useMemo(() => {
-    return {
-      list: async (priceSheetId: string) => {
-        try {
-          const value = await createPriceSheetPublishRepository().listRates(priceSheetId);
-          return { ok: true as const, value };
-        } catch (err) {
-          return { ok: false as const, reason: err instanceof Error ? err.message : String(err) };
-        }
-      },
-    };
-  }, []);
-
   const rev = useReadCacheRevision();
   // jobId for which the form has already been seeded; background refetches (rev bumps) must not re-seed/reset the form.
   const formSeededForRef = useRef<string | null>(null);
@@ -313,7 +297,7 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
   const isTechEstimate = role === 'tech';
-  const [estimateChrome, setEstimateChrome] = useState<{ optionsItems: MenuItem[] } | null>(null);
+  const [estimateChrome, setEstimateChrome] = useState<EstimateChrome | null>(null);
   useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -1372,8 +1356,14 @@ export default function JobDrilldownScreen() {
         ) : null}
       </JobHeader>
       <View style={[styles.rule, { backgroundColor: job?.status === 'paid' || job?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
+      {region === 'estimate' && estimateChrome?.tabs ? (
+        <View testID="estimate-tab-bar">
+          <DefaultTabBar tabs={estimateChrome.tabs} activeId={estimateChrome.activeTab} onChange={estimateChrome.onTabChange} />
+        </View>
+      ) : null}
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
+          hideTechFields={region === 'estimate'}
           job={currentJob}
           statusError={actionError}
           serviceAreaName={currentServiceAreaName}
@@ -1440,9 +1430,29 @@ export default function JobDrilldownScreen() {
             embedded
             onEstimateChange={setEstimate}
             estimates={createEstimateRepository()}
-            priceSheets={createPriceSheetRepository()}
-            priceSheetRates={priceEstimatingRates}
-            priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
+            techSlot={
+              <JobTechFields
+                serviceAreaName={currentServiceAreaName}
+                premTechId={investigatorTechId}
+                serviceTechId={currentJob.assignedTechId ?? null}
+                premTechName={premTechName}
+                serviceTechName={serviceTechName}
+                premBusy={assigning !== null}
+                serviceBusy={assigning !== null}
+                serviceGateOpen={serviceGateOpen}
+                premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+                {...(isAdmin
+                  ? {
+                      techs: eligibleTechOptions,
+                      onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                      onRequestAssignService: (techId: string | null) => {
+                        if (techId !== null && !serviceGateOpen) return;
+                        setPendingAssign({ kind: 'service', techId });
+                      },
+                    }
+                  : {})}
+              />
+            }
             serviceAreas={serviceAreas}
             editable={!isTechEstimate}
             onChrome={setEstimateChrome}
