@@ -6,10 +6,11 @@
  * `PriceSheetEditorScreen.tsx`'s prop-driven data pattern but WITHOUT a load
  * state machine, since there is nothing to load here.
  *
- * Contents, top to bottom: the employee name header with a tap-to-copy phone
- * (copies the number to the clipboard) sharing its line, right-aligned, the Back/Edit/Deactivate
- * action buttons, a detail card (one label/value row per field), the Skills
- * card (wrapped chips), and the Service Areas card.
+ * Contents, top to bottom: the Back/Edit/Deactivate action buttons (G1 sand
+ * SandButtons, same style as #0010), the employee name header with a tap-to-copy
+ * icon right beside the name (copies the phone number to the clipboard), a detail
+ * card (one label/value row per field, including Phone), the Skills card
+ * (wrapped chips), and the Service Areas card.
  *
  * Navigation is caller-supplied callback props only (no router, no Modal,
  * in this module) — `onEdit`, `onBack`, `onDeactivate`, `onReactivate`,
@@ -24,7 +25,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { SandButton } from '@jobcore/payroll-ui';
 import type { Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
 import type { ProfilePrivate } from '../data/ports';
@@ -93,6 +95,16 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.actionsRow}>
+          <SandButton label="Back" onPress={onBack} style={styles.actionInline} />
+          <SandButton label="Edit" onPress={onEdit} style={styles.actionInline} />
+          {employee.active ? (
+            <SandButton label="Deactivate" onPress={onDeactivate} style={styles.actionInline} />
+          ) : (
+            <SandButton label="Reactivate" onPress={onReactivate} style={styles.actionInline} />
+          )}
+        </View>
+
         <View style={styles.nameRow}>
           <View style={styles.nameCol}>
             <ScreenTitle title={employee.fullName} />
@@ -102,30 +114,20 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
               onPress={copyPhone}
               accessibilityRole="button"
               accessibilityLabel={`Copy phone number ${employee.phone}`}
-              style={styles.phoneRow}
+              hitSlop={12}
+              style={styles.copyIcon}
             >
-              <Text style={styles.phoneValue}>{employee.phone}</Text>
-              <Text style={styles.note}>{copied ? 'Copied' : 'Tap to copy'}</Text>
+              <Text style={styles.copyGlyph}>{copied ? '\u2713' : '\u29C9'}</Text>
+              {copied ? <Text style={styles.note}>Copied</Text> : null}
             </Pressable>
-          ) : (
-            <Text style={styles.note}>No phone on file</Text>
-          )}
-        </View>
-
-        <View style={styles.actionsRow}>
-          <Button label="Back" variant="outline" size="sm" onPress={onBack} style={styles.actionInline} />
-          <Button label="Edit" size="sm" onPress={onEdit} style={styles.actionInline} />
-          {employee.active ? (
-            <Button label="Deactivate" variant="secondary" size="sm" onPress={onDeactivate} style={styles.actionInline} />
-          ) : (
-            <Button label="Reactivate" variant="secondary" size="sm" onPress={onReactivate} style={styles.actionInline} />
-          )}
+          ) : null}
         </View>
 
         <Card style={styles.card}>
           <InfoRow label="Role" value={employee.role} />
           <InfoRow label="Status" value={employee.active ? 'Active' : 'Inactive'} />
           {employee.isTest ? <InfoRow label="Test Employee" value="Yes" /> : null}
+          <InfoRow label="Phone" value={employee.phone ?? 'Not on file'} />
           <InfoRow label="Email" value={employee.email ?? 'Not on file'} />
           <InfoRow label="Address" value={employee.address ?? 'Not on file'} />
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
@@ -204,6 +206,8 @@ const styles = StyleSheet.create({
   },
   actionInline: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoRow: {
     flexDirection: 'row',
@@ -228,18 +232,17 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
   },
-  nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   nameCol: { flexShrink: 1 },
-  phoneRow: {
+  copyIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
     paddingVertical: spacing.xs,
   },
-  phoneValue: {
+  copyGlyph: {
     color: colors.primary,
-    fontSize: typography.size.body,
+    fontSize: typography.size.h5,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
   },
