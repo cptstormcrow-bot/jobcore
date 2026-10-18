@@ -20,9 +20,9 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, Platform, Alert, useWindowDimensions } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, TabBar, Select, TextField, colors, spacing, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
@@ -116,8 +116,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
-  const { width: windowWidth } = useWindowDimensions();
-  const tabStyle = windowWidth < 600 ? styles.tabNarrow : undefined;
   const [lineItems, setLineItems] = useState<JobEstimateLineItem[]>([]);
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [moving, setMoving] = useState(false);
@@ -321,7 +319,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [templateText, setTemplateText] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateInput, setTemplateInput] = useState('');
-  const [activeTab, setActiveTab] = useState<'copy' | 'tasks' | 'contingency' | 'manual' | 'priceSheet' | 'lineItem' | 'finePrint'>('copy');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'contingency' | 'manual' | 'priceSheet' | 'lineItem' | 'finePrint'>('tasks');
 
   useEffect(() => {
     let cancelled = false;
@@ -765,12 +763,38 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     );
   }
 
+  const tabBar = (
+    <View testID="estimate-tab-bar">
+      <TabBar
+        items={[
+          { key: 'tasks', label: 'Build from Tasks' },
+          { key: 'contingency', label: 'Contingency' },
+          ...(priceSheetQuickAddAvailable
+            ? [
+                { key: 'manual', label: 'Manual' },
+                { key: 'priceSheet', label: 'Price Sheet' },
+              ]
+            : []),
+          { key: 'lineItem', label: 'Line Item' },
+          { key: 'finePrint', label: 'Fine Print' },
+        ]}
+        activeKey={activeTab}
+        onSelect={(key) => {
+          setActiveTab(key as typeof activeTab);
+          if (key === 'manual' || key === 'priceSheet') setAddMode(key);
+        }}
+      />
+    </View>
+  );
+
   const Root = embedded ? View : ScrollView;
   const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
 
   return (
     <View style={styles.screen}>
+      {!embedded ? tabBar : null}
       <Root {...rootProps}>
+        {embedded ? tabBar : null}
         {!embedded && (
           <Button
             label={onBack ? 'Back to Job' : 'Estimate'}
@@ -801,6 +825,20 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               }}
               testID="estimate-status-control"
             />
+            <View style={styles.linkRow} testID="estimate-link-row">
+              <Button
+                label={busy ? 'Working...' : 'Copy estimate link'}
+                size="sm"
+                onPress={() => {
+                  void handleShare();
+                }}
+                disabled={busy || !linkEnabled}
+                style={[styles.action, styles.linkButton]}
+              />
+              {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
+              {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
+              {shareError ? <ErrorState message={shareError} /> : null}
+            </View>
             {estimate?.status !== 'submitted' && estimate?.status !== 'approved' && !lineItems.some((item) => item.kind === 'labor') ? (
               <Text style={styles.blankHint} testID="estimate-blank-hint">
                 Estimate is blank - fill it in.
@@ -852,37 +890,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </View>
         </View>
 
-        <View style={styles.tabRow} testID="estimate-tab-bar">
-          <Button label="Copy Link" size="tab" style={tabStyle} variant={activeTab === 'copy' ? 'secondary' : 'outline'} onPress={() => setActiveTab('copy')} />
-          <Button label="Build from Tasks" size="tab" style={tabStyle} variant={activeTab === 'tasks' ? 'secondary' : 'outline'} onPress={() => setActiveTab('tasks')} />
-          <Button label="Contingency" size="tab" style={tabStyle} variant={activeTab === 'contingency' ? 'secondary' : 'outline'} onPress={() => setActiveTab('contingency')} />
-          {priceSheetQuickAddAvailable ? (
-            <>
-              <Button label="Manual" size="tab" style={tabStyle} variant={activeTab === 'manual' ? 'secondary' : 'outline'} onPress={() => { setActiveTab('manual'); setAddMode('manual'); }} />
-              <Button label="Price Sheet" size="tab" style={tabStyle} variant={activeTab === 'priceSheet' ? 'secondary' : 'outline'} onPress={() => { setActiveTab('priceSheet'); setAddMode('priceSheet'); }} />
-            </>
-          ) : null}
-          <Button label="Line Item" size="tab" style={tabStyle} variant={activeTab === 'lineItem' ? 'secondary' : 'outline'} onPress={() => setActiveTab('lineItem')} />
-          <Button label="Fine Print" size="tab" style={tabStyle} variant={activeTab === 'finePrint' ? 'secondary' : 'outline'} onPress={() => setActiveTab('finePrint')} />
-        </View>
-
-        {activeTab === 'copy' ? (
-        <View style={styles.linkRow} testID="estimate-link-row">
-          <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimateLink.toUpperCase()}</Text>
-          <Button
-            label={busy ? 'Working...' : 'Copy estimate link'}
-            size="sm"
-            onPress={() => {
-              void handleShare();
-            }}
-            disabled={busy || !linkEnabled}
-            style={styles.action}
-          />
-          {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
-          {shareUrl ? <Text style={styles.note}>Link copied to clipboard: {shareUrl}</Text> : null}
-          {shareError ? <ErrorState message={shareError} /> : null}
-        </View>
-        ) : null}
 
         {activeTab === 'tasks' ? (
         <Card style={styles.card}>
@@ -1361,14 +1368,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: 160,
   },
-  tabRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
-  },
   linkRow: {
+    marginTop: spacing.sm,
     marginBottom: spacing.xs,
+    alignItems: 'center',
+  },
+  linkButton: {
+    width: '100%',
   },
   field: {
     marginBottom: spacing.xs,
@@ -1404,8 +1410,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trackingButton: {},
-  tabNarrow: {
-    flexGrow: 1,
-    flexBasis: '30%',
-  },
 });
