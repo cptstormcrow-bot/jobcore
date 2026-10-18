@@ -513,7 +513,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         )}
         {!embedded && <ScreenTitle title="Estimate" />}
         <View style={styles.summaryRow} testID="estimate-summary-row">
-          <View style={styles.summaryCell}>
+          <View style={[styles.summaryCell, styles.summaryCellWide]}>
             <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimate.toUpperCase()}</Text>
             <Text style={styles.cellValue}>{estimate?.status ?? 'draft'}</Text>
             <EstimateStatusControl
@@ -886,6 +886,9 @@ const styles = StyleSheet.create({
   summaryCell: {
     flexGrow: 1,
     flexBasis: 160,
+  },
+  summaryCellWide: {
+    flexBasis: '100%',
   },
   linkRow: {
     marginTop: spacing.xs,
