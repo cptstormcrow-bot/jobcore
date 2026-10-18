@@ -32,6 +32,6 @@ Unstaged and unrelated to the gate: `app/packages/ui/src/AppChrome.tsx`; `app/mo
 ## DEFERRED
 none
 
-Test plan: not yet requested; Jeff was asked per Rule 43, answer pending.
+Test plan: declined by Jeff (Rule 43, asked 2026-10-18); none authored.
 
 Commit/push: committed as d152b66, NO push.
