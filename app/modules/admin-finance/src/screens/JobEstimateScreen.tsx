@@ -662,7 +662,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
     if (next !== 'draft' && !lineItems.some((item) => item.kind === 'labor')) {
-      setActionState({ kind: 'failed', message: 'Estimate is blank - fill it in.' });
       return;
     }
     if (estimate && needsDownstreamWarning(estimate.status, next)) {
@@ -802,6 +801,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               }}
               testID="estimate-status-control"
             />
+            {estimate?.status !== 'submitted' && estimate?.status !== 'approved' && !lineItems.some((item) => item.kind === 'labor') ? (
+              <Text style={styles.blankHint} testID="estimate-blank-hint">
+                Estimate is blank - fill it in.
+              </Text>
+            ) : null}
           </View>
           <View style={styles.summaryCell}>
             <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
@@ -1389,6 +1393,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.xs,
   },
+  blankHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingTop: 2 },
   trackingRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
