@@ -74,7 +74,7 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
       .then((result) => {
         if (!cancelled) {
           hasLoadedRef.current = true;
-          setLoadState({ kind: 'loaded', items: result });
+          setLoadState({ kind: 'loaded', items: Array.isArray(result) ? result : [] });
         }
       })
       .catch((error: unknown) => {

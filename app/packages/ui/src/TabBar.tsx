@@ -25,7 +25,7 @@ export interface TabBarProps<T extends string> {
 export function TabBar<T extends string>({ items, activeKey, onSelect, style }: TabBarProps<T>) {
   return (
     <View style={[styles.row, style]}>
-      {items.map(({ key, label }) => (
+      {(Array.isArray(items) ? items : []).map(({ key, label }) => (
         <Button
           key={key}
           label={label}
