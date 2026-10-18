@@ -58,7 +58,7 @@
       "navTargets": []
     },
     "af-assignmentBoard": {
-      "summary": "Admin board of qualified/scheduled jobs: unassigned pool plus tech columns. Pick a visit kind (Service/Prem), choose a tech via Select, tap Confirm; a WarningSheet shows warn-only warnings. Category filter chips; tap job opens it.",
+      "summary": "Admin board of qualified/scheduled jobs: unassigned pool plus tech columns. Pick a visit kind (Service/Prem), choose a tech via Select, tap Confirm; a WarningSheet shows warn-only warnings. Category filter chips. Action buttons are G1 sand buttons. A Soonest/Newest sort segment row (default Soonest) orders the pool: unassigned jobs first, assigned jobs dimmed and last. Tap a job opens #0041.",
       "flowStage": "scheduled",
       "specStage": "Admin close-out",
       "purpose": "Lets owners/admins assign qualified or scheduled jobs to active techs, with warn-only conflict warnings before confirming.",
@@ -125,11 +125,11 @@
       "navTargets": []
     },
     "af-employee-invitations": {
-      "summary": "Admins see a list of pending employee invitations for their organization. Each row has a Revoke button that removes it on success or shows an inline error. Has loading, empty and error states.",
+      "summary": "Admins see a list of pending employee invitations for their organization. An email field and Send button at the top create a new pending invitation (role tech, no name); a blank, invalid or already-pending email shows an inline error. Each row has a Revoke button that removes it on success or shows an inline error. Has loading, empty and error states.",
       "flowStage": "none",
       "specStage": "Ancillary",
-      "purpose": "Lets owners and admins review and revoke outstanding employee invitations.",
-      "missing": "No resend or copy-link action, and no link to create an invitation. Only an optional onBack prop; no navigation is wired in the source.",
+      "purpose": "Lets owners and admins invite an employee by email, and review and revoke outstanding employee invitations.",
+      "missing": "No emailed link, resend or copy-link action: the invitee signs up with the same email and their record becomes Active. Only an optional onBack prop; no navigation is wired in the source.",
       "navTargets": []
     },
     "af-employee-job-detail": {
@@ -193,7 +193,7 @@
       "navTargets": []
     },
     "af-leadInbox": {
-      "summary": "Admin sees a \"Leads\" list of unconverted leads, newest first, including needs_info ones with badges. Taps a lead row to open it, or \"New Lead\" to create one. Has loading, error and empty states.",
+      "summary": "Admin sees a \"Leads\" list of unconverted leads, newest first, including needs_info ones with badges. Taps a lead row to open it, or \"New Lead\" to create one. Action buttons are G1 sand buttons with tightened vertical spacing. Reached via nav drawer section \"Sales & Marketing\" > \"Leads\". Has loading, error and empty states.",
       "flowStage": "new",
       "specStage": "Admin close-out",
       "purpose": "Lets owners/admins triage incoming leads before they are converted into jobs.",
@@ -561,10 +561,10 @@
       ]
     },
     "job-region-schedule": {
-      "summary": "Admin panel on Job Detail to set a job's scheduled start and end date/time via native pickers (\"Pick date\" on Android), then Save, \"Clear schedule\" or \"Cancel\"; \"Back to Job\" when not embedded. Time dropdowns use Select.",
+      "summary": "Schedule #0058: admin panel on Job Detail for setting a job's schedule. Heading \"Schedule #0058\" with sand buttons Clear Schedule, Save and Cancel. A top band shows the assigned Tech and Prem Tech on the left and a Start Time day-timeline picker on the right. Below it sit the Start, Quick start, End, Scheduled for and Estimated fields, then the #0011 calendar.",
       "flowStage": "scheduled",
       "specStage": "Job Detail",
-      "purpose": "Lets an admin set or clear a job's scheduled start/end time from Job Detail, saving through JobRepository.updateDetails.",
+      "purpose": "Lets an admin set or clear a job's scheduled start/end time from Job Detail (day-timeline Start Time picker, Quick start, End, Scheduled for, Estimated, with the #0011 calendar below), saving through JobRepository.updateDetails.",
       "missing": "",
       "navTargets": []
     },

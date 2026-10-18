@@ -125,12 +125,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   action: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
 });

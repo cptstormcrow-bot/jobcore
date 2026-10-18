@@ -205,3 +205,4 @@ and push notifications - any change to sdassemblypro.com, its PHP, its forms, or
 - State-machine unit suite (P2b.3) - unblocked once P3c.6 lands a test runner.
 - Offline `replay` wiring (P2-d).
 - Re-run `handoff/P2E-AIRPLANE-MODE-TEST.md` once a job data seam lands (P2-e) - P3d.1 is that seam.
+- 2026-10-18 screen notes: #0014 (Lead inbox) - G1 sand buttons, tighter spacing, Leads moved under new nav-drawer section "Sales & Marketing" (no overview). #0016 (Assignment pool) - G1 sand buttons, Soonest/Newest sort (assigned dimmed/last), job tap opens #0041.

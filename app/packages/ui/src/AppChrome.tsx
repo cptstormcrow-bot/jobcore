@@ -24,6 +24,7 @@ export type MenuActionItem = {
   disabled?: boolean;
   submenu?: MenuItem[];
   helpId?: WalkthroughStepId;
+  section?: string;
 };
 export type MenuToggleItem = {
   id: string;
@@ -35,6 +36,7 @@ export type MenuToggleItem = {
   isActive?: boolean;
   submenu?: undefined;
   helpId?: WalkthroughStepId;
+  section?: string;
 };
 export type MenuItem = MenuActionItem | MenuToggleItem;
 
@@ -334,6 +336,9 @@ export function AppChrome({
             {i > 0 && dividerBefore(drawerItems[i - 1]?.kind === 'toggle' ? 'toggle' : 'action', item.kind === 'toggle' ? 'toggle' : 'action') ? (
               <View style={styles.divider} />
             ) : null}
+            {item.section !== undefined && item.section !== drawerItems[i - 1]?.section ? (
+              <Text style={styles.sectionHeader}>{item.section}</Text>
+            ) : null}
             <MenuRow item={item} onLeafPress={handleLeafPress} variant="drawer" onHelp={handleHelpPress} />
           </React.Fragment>
         ))}
@@ -598,6 +603,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: spacing.md,
     paddingVertical: 0,
+  },
+  sectionHeader: {
+    fontSize: typography.size.label,
+    fontWeight: typography.weight.medium,
+    color: colors.textMuted,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   rowTextDrawer: {
     fontSize: typography.size.label,
