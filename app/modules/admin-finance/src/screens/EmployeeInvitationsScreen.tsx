@@ -10,13 +10,18 @@
  * in the organization. Each row carries a "Revoke" action calling
  * `InvitationRepository.revokeInvitation`, removing the row from local state
  * on success and surfacing an inline `ErrorState` on rejection.
+ *
+ * An email-only "Invite by email" field + Send button sits above the list in
+ * both the empty and populated branches; it calls
+ * `InvitationRepository.createInvitation` (role 'tech') and reloads the list.
  */
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, colors, spacing, typography } from '@jobcore/ui';
 import type { Invitation, InvitationRepository } from '../data/ports';
+import { DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface EmployeeInvitationsScreenProps {
@@ -35,6 +40,11 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
   const { invitations: invitationRepository, onBack } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [revokeErrors, setRevokeErrors] = useState<Record<string, string>>({});
+  const [email, setEmail] = useState('');
+  const [sending, setSending] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
 
   const session = getModuleSession();
   const rev = useReadCacheRevision();
@@ -63,7 +73,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
     return () => {
       cancelled = true;
     };
-  }, [session, invitationRepository, rev]);
+  }, [session, invitationRepository, rev, reloadTick]);
 
   if (!session) {
     return (
@@ -123,11 +133,66 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
     }
   }
 
+  async function handleSend(): Promise<void> {
+    if (!invitationRepository || !session) return;
+    const address = email.trim().toLowerCase();
+    if (!address) {
+      setInviteError('Enter an email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setInviteError('Enter a valid email address.');
+      return;
+    }
+    setSending(true);
+    setInviteError(null);
+    setNotice(null);
+    try {
+      await invitationRepository.createInvitation(session.org.id, address, 'tech', '');
+      setEmail('');
+      setNotice(`Invite saved for ${address}. They must sign up with exactly this email.`);
+      setReloadTick((t) => t + 1);
+    } catch (error: unknown) {
+      if (error instanceof DuplicateInvitationError) {
+        setInviteError(`${address} already has a pending invitation.`);
+      } else {
+        setInviteError(error instanceof Error && error.message ? error.message : 'Could not save the invitation.');
+      }
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const inviteForm = (
+    <Card style={styles.card}>
+      <Text style={styles.heading}>Invite by email</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="name@example.com"
+        accessibilityLabel="Invite by email"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <Button
+        label={sending ? 'Sending...' : 'Send'}
+        onPress={() => void handleSend()}
+        disabled={sending}
+        style={styles.action}
+      />
+      {inviteError ? <ErrorState message={inviteError} /> : null}
+      {notice ? <Text style={styles.note}>{notice}</Text> : null}
+    </Card>
+  );
+
   if (loadState.invitations.length === 0) {
     return (
       <View style={styles.screen}>
         <ScreenTitle title="Employee Invitations" />
         <ScrollView contentContainerStyle={styles.content}>
+          {inviteForm}
           <EmptyState title="Employee Invitations" message="This organization has no pending invitations." />
         </ScrollView>
       </View>
@@ -138,6 +203,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
     <View style={styles.screen}>
       <ScreenTitle title="Employee Invitations" />
       <ScrollView contentContainerStyle={styles.content}>
+        {inviteForm}
         <Card style={styles.card}>
           {loadState.invitations.map((invitation) => (
             <View key={invitation.id}>
@@ -176,5 +242,29 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: spacing.md,
+  },
+  heading: {
+    color: colors.text,
+    fontSize: typography.size.h5,
+    fontFamily: typography.fontFamily.heading,
+    fontWeight: typography.weight.semibold,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.textMuted,
+    borderRadius: 4,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    color: colors.text,
+    fontFamily: typography.fontFamily.body,
+  },
+  action: {
+    marginBottom: spacing.sm,
+  },
+  note: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
   },
 });

@@ -123,7 +123,7 @@ const runEdge = (url) =>
   new Promise((resolve, reject) => {
     const child = spawn(
       edge,
-      ['--headless', '--disable-gpu', '--virtual-time-budget=5000', '--dump-dom', url],
+      ['--headless', '--disable-gpu', '--virtual-time-budget=30000', '--dump-dom', url],
       { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true },
     );
     let stdout = '';
