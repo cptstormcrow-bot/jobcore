@@ -10,9 +10,12 @@ export interface CheckboxProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   boxStyle?: StyleProp<ViewStyle>;
+  /** 'box' (default) = filled box with dot; 'check' = bordered box with a bold checkmark glyph. */
+  variant?: 'box' | 'check';
 }
 
-export function Checkbox({ label, checked, onChange, disabled = false, style, boxStyle }: CheckboxProps) {
+export function Checkbox({ label, checked, onChange, disabled = false, style, boxStyle, variant = 'box' }: CheckboxProps) {
+  const isCheck = variant === 'check';
   return (
     <Pressable
       onPress={() => onChange?.(!checked)}
@@ -23,8 +26,8 @@ export function Checkbox({ label, checked, onChange, disabled = false, style, bo
       hitSlop={8}
       style={[styles.base, disabled && styles.disabled, style]}
     >
-      <View style={[styles.box, boxStyle, checked && styles.boxChecked]}>
-        {checked && <View style={styles.checkMark} />}
+      <View style={[styles.box, boxStyle, checked && (isCheck ? styles.boxCheckedOutline : styles.boxChecked)]}>
+        {checked && (isCheck ? <Text style={styles.checkGlyph}>✓</Text> : <View style={styles.checkMark} />)}
       </View>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
@@ -49,6 +52,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   boxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
+  boxCheckedOutline: { borderColor: colors.primary },
+  checkGlyph: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: 'bold',
+    lineHeight: 20,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
   checkMark: { width: 10, height: 10, borderRadius: radius.sm / 2, backgroundColor: colors.white },
   label: { fontFamily: typography.fontFamily.body, fontSize: typography.size.body, color: colors.text },
 });

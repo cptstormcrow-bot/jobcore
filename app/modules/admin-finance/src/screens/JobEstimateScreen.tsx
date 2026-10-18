@@ -156,6 +156,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateInput, setTemplateInput] = useState('');
   const [activeTab, setActiveTab] = useState<EstimateTab>('contingency');
+  const [materialsOnsiteLocal, setMaterialsOnsiteLocal] = useState<boolean | null>(null);
+  const materialsInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -595,10 +597,17 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             <Text style={styles.cellLabel}>MATERIALS ONSITE</Text>
             <Checkbox
               label={ESTIMATE_LABELS.materialsOnsite}
-              checked={!!estimate?.materialsOnsite}
-              disabled={!editable || busy}
+              variant="check"
+              checked={materialsOnsiteLocal ?? !!estimate?.materialsOnsite}
+              disabled={!editable}
               onChange={(next) => {
-                void persist({ materialsOnsite: next });
+                if (materialsInFlight.current) return;
+                materialsInFlight.current = true;
+                setMaterialsOnsiteLocal(next);
+                void persist({ materialsOnsite: next }).finally(() => {
+                  materialsInFlight.current = false;
+                  setMaterialsOnsiteLocal(null);
+                });
               }}
             />
           </View>
@@ -929,16 +938,17 @@ const styles = StyleSheet.create({
   trackingButton: {},
   techColumns: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
+    alignItems: 'flex-start',
+    width: '100%',
     gap: spacing.xs,
   },
   techLeftCol: {
-    flexGrow: 1,
-    flexBasis: 200,
+    flex: 1,
+    minWidth: 0,
   },
   techRightCol: {
-    flexGrow: 1,
-    flexBasis: 200,
-    alignItems: 'flex-start',
+    flex: 1,
+    minWidth: 0,
   },
 });
