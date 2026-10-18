@@ -5,7 +5,7 @@
 Jeff: "The assignments sort feature was badly implemented, lets remove the dimming and concentrate on sort. Last to first and first to last. Make the button a toggle for "unassigned" Remove the other button."
 
 ## What changed
-Commit 3fdd19f `feat(assignments): two-way pool sort, Unassigned toggle, remove dimming`, branch jobcore-role-landing-0.1.3, 3 files. Not pushed.
+Commit 3fdd19f `feat(assignments): two-way pool sort, Unassigned toggle, remove dimming`, branch jobcore-role-landing-0.1.3, 3 files. Follow-up commit c056680 `fix(assignments): Unassigned toggle sorts to top`. Not pushed.
 
 - `app/modules/admin-finance/src/domain/assignment-pool-sort.ts`: `SortMode` replaced by `SortDirection` ('asc' | 'desc'); `sortPoolJobs(jobs, direction)` no longer groups assigned jobs; new `filterUnassigned(jobs, isAssigned)` (first commit), later replaced by `unassignedFirst(jobs, isAssigned)`, a stable partition (unassigned first, relative order inside each group kept, input not mutated), applied after `sortPoolJobs`, per the follow-up commit `fix(assignments): Unassigned toggle sorts to top`.
 - `app/modules/admin-finance/src/domain/__assertions__/assignment-pool-sort.assert.ts`: asserts asc, desc, nulls last, no input mutation, no grouping of assigned jobs, and (after the correction) `unassignedFirst`.
@@ -32,4 +32,4 @@ none
 
 Test plan: declined — Jeff declined the Rule 43 test plan on 2026-10-18.
 
-Commit/push: committed as 3fdd19f, NO push.
+Commit/push: committed as 3fdd19f and c056680, NO push.
