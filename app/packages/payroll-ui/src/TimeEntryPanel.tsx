@@ -153,10 +153,14 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     setLastPrefill(prefill);
   }, [prefill, lastPrefill, days]);
 
-  const dirtyDays = days.filter((d) => {
-    const t = (inputs[d] ?? '').trim();
-    return t !== '' && t !== (prefill[d] ?? '');
-  });
+  const dirtyDays = useMemo(
+    () =>
+      days.filter((d) => {
+        const t = (inputs[d] ?? '').trim();
+        return t !== '' && t !== (prefill[d] ?? '');
+      }),
+    [days, inputs, prefill],
+  );
 
   const saveAll = useCallback(async () => {
     if (saveState === 'saving') return;
