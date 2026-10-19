@@ -5,6 +5,8 @@ import { colors, spacing, radius, typography } from './tokens';
 
 export interface CheckboxProps {
   label: string;
+  /** Overrides the screen-reader name. Defaults to `label`; use it when the visual label is intentionally empty. */
+  accessibilityLabel?: string;
   checked: boolean;
   onChange?: (checked: boolean) => void;
   disabled?: boolean;
@@ -14,14 +16,14 @@ export interface CheckboxProps {
   variant?: 'box' | 'check';
 }
 
-export function Checkbox({ label, checked, onChange, disabled = false, style, boxStyle, variant = 'box' }: CheckboxProps) {
+export function Checkbox({ label, accessibilityLabel, checked, onChange, disabled = false, style, boxStyle, variant = 'box' }: CheckboxProps) {
   const isCheck = variant === 'check';
   return (
     <Pressable
       onPress={() => onChange?.(!checked)}
       disabled={disabled}
       accessibilityRole="checkbox"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ checked, disabled }}
       hitSlop={8}
       style={[styles.base, disabled && styles.disabled, style]}

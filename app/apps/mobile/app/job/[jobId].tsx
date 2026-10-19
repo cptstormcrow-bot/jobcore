@@ -1357,7 +1357,7 @@ export default function JobDrilldownScreen() {
       </JobHeader>
       <View style={[styles.rule, { backgroundColor: job?.status === 'paid' || job?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
       {region === 'estimate' && estimateChrome?.tabs ? (
-        <View testID="estimate-tab-bar">
+        <View testID="estimate-tab-bar" style={styles.tabBarWrap}>
           <DefaultTabBar tabs={estimateChrome.tabs} activeId={estimateChrome.activeTab} onChange={estimateChrome.onTabChange} />
         </View>
       ) : null}
@@ -1522,6 +1522,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   footerButton: { flex: 1 },
+  tabBarWrap: {},
   center: {
     flex: 1,
     alignItems: 'center',

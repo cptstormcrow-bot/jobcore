@@ -304,6 +304,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   }
 
   const layoutTotals = computeTotals(lineItems, estimate?.contingencies ?? []);
+  const totalText = formatMoney(layoutTotals.total);
   const linkEnabled = estimate?.status === 'submitted' || estimate?.status === 'approved';
 
   const totals = lineItems.reduce(
@@ -433,6 +434,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   onChromeRef.current = props.onChrome;
   const persistRef = useRef(persist);
   persistRef.current = persist;
+  const handleShareRef = useRef(handleShare);
+  handleShareRef.current = handleShare;
   const chromeStatus = estimate?.status ?? null;
   const chromePdf = estimate?.pdfDelivery ?? false;
   const hasChrome = !!props.onChrome;
@@ -491,6 +494,12 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         tabs={ESTIMATE_TABS}
         activeId={activeTab}
         onChange={(key) => setActiveTab(key as EstimateTab)}
+        rightSlot={
+          <View style={styles.totalColumn}>
+            <Text style={styles.totalLabel}>Total Estimate</Text>
+            <Text style={styles.cellValue}>{totalText}</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -514,8 +523,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         {!embedded && <ScreenTitle title="Estimate" />}
         <View style={styles.summaryRow} testID="estimate-summary-row">
           <View style={[styles.summaryCell, styles.summaryCellWide]}>
-            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.estimate.toUpperCase()}</Text>
-            <Text style={styles.cellValue}>{estimate?.status ?? 'draft'}</Text>
+            <View style={styles.statusRow} testID="estimate-status-row">
+            <View style={styles.statusControlWrap}>
             <EstimateStatusControl
               status={estimate?.status ?? 'draft'}
               allowed={
@@ -532,26 +541,32 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               }}
               testID="estimate-status-control"
             />
+            </View>
+            <View style={styles.statusCenterGroup} testID="estimate-center-group">
+              <View style={styles.linkRowHug} testID="estimate-link-row">
+                <Pressable
+                  testID="estimate-link-button"
+                  accessibilityRole="button"
+                  accessibilityLabel="Copy estimate link"
+                  accessibilityState={{ disabled: busy || !linkEnabled }}
+                  disabled={busy || !linkEnabled}
+                  onPress={() => { void handleShare(); }}
+                  style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
+                >
+                  <Text style={styles.linkChipLabel}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
+                </Pressable>
+                {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
+                {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
+                {shareError ? <ErrorState message={shareError} /> : null}
+              </View>
+              <View style={[styles.totalColumn, styles.statusCenterTotal]}>
+                <Text style={styles.totalLabel}>Total Estimate</Text>
+                <Text style={styles.cellValue}>{totalText}</Text>
+              </View>
+            </View>
+            </View>
             <View style={styles.techColumns}>
             <View style={styles.techLeftCol}>
-            <View style={styles.linkRow} testID="estimate-link-row">
-              <Pressable
-                testID="estimate-link-button"
-                accessibilityRole="button"
-                accessibilityLabel="Copy estimate link"
-                accessibilityState={{ disabled: busy || !linkEnabled }}
-                disabled={busy || !linkEnabled}
-                onPress={() => {
-                  void handleShare();
-                }}
-                style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
-              >
-                <Text style={styles.linkChipLabel}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
-              </Pressable>
-              {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
-              {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
-              {shareError ? <ErrorState message={shareError} /> : null}
-            </View>
             {estimate?.status !== 'submitted' && estimate?.status !== 'approved' && !lineItems.some((item) => item.kind === 'labor') ? (
               <Text style={styles.blankHint} testID="estimate-blank-hint">
                 Estimate is blank - fill it in.
@@ -585,31 +600,28 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             ) : null}
             </View>
             {trackingLine ? <Text style={styles.note}>{trackingLine}</Text> : null}
+              <View>
+                <Checkbox
+                  label="Materials Onsite?"
+                  variant="check"
+                  checked={materialsOnsiteLocal ?? !!estimate?.materialsOnsite}
+                  disabled={!editable}
+                  onChange={(next) => {
+                    if (materialsInFlight.current) return;
+                    materialsInFlight.current = true;
+                    setMaterialsOnsiteLocal(next);
+                    void persist({ materialsOnsite: next }).finally(() => {
+                      materialsInFlight.current = false;
+                      setMaterialsOnsiteLocal(null);
+                    });
+                  }}
+                />
+              </View>
             </View>
-            {props.techSlot ? <View style={styles.techRightCol}>{props.techSlot}</View> : null}
+            <View style={styles.techRightCol}>
+              {props.techSlot}
             </View>
-          </View>
-          <View style={styles.summaryCell}>
-            <Text style={styles.cellLabel}>{ESTIMATE_LABELS.totalCost.toUpperCase()}</Text>
-            <Text style={styles.cellValue}>{formatMoney(layoutTotals.total)}</Text>
-          </View>
-          <View style={styles.summaryCell}>
-            <Text style={styles.cellLabel}>MATERIALS ONSITE</Text>
-            <Checkbox
-              label={ESTIMATE_LABELS.materialsOnsite}
-              variant="check"
-              checked={materialsOnsiteLocal ?? !!estimate?.materialsOnsite}
-              disabled={!editable}
-              onChange={(next) => {
-                if (materialsInFlight.current) return;
-                materialsInFlight.current = true;
-                setMaterialsOnsiteLocal(next);
-                void persist({ materialsOnsite: next }).finally(() => {
-                  materialsInFlight.current = false;
-                  setMaterialsOnsiteLocal(null);
-                });
-              }}
-            />
+            </View>
           </View>
         </View>
 
@@ -876,6 +888,16 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     marginBottom: spacing.xs,
   },
+  statusControlWrap: { alignSelf: 'flex-start' },
+  statusRow: { flexDirection: 'row', alignItems: 'center' },
+  statusCenterGroup: { flex: 1, minWidth: 0, flexShrink: 1, flexWrap: 'wrap', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  statusCenterTotal: { marginLeft: 8 },
+  totalColumn: { alignItems: 'flex-end' },
+  totalLabel: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+  },
   summaryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -890,16 +912,13 @@ const styles = StyleSheet.create({
   summaryCellWide: {
     flexBasis: '100%',
   },
-  linkRow: {
-    marginTop: spacing.xs,
-    marginBottom: 2,
-    alignItems: 'stretch',
-  },
+  linkRowHug: { alignItems: 'center' },
   linkChip: {
+    alignSelf: 'center',
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.primary,
