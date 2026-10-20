@@ -34,14 +34,17 @@ export type JobOverviewRegionProps = {
 
 const CLOSED = new Set(['completed', 'complete', 'closed', 'cancelled', 'canceled', 'invoiced', 'paid']);
 
-function Section({ title, children, open: initial = true }: { title: string; children: ReactNode; open?: boolean }) {
+function Section({ title, children, open: initial = true }: { title?: string; children: ReactNode; open?: boolean }) {
   const [open, setOpen] = useState(initial);
+  const isOpen = title === undefined ? true : open;
   return (
     <View style={styles.section}>
-      <Pressable onPress={() => setOpen((o) => !o)} style={styles.header}>
-        <Text style={styles.headerText}>{(open ? '- ' : '+ ') + title}</Text>
-      </Pressable>
-      {open ? <View style={styles.body}>{children}</View> : null}
+      {title === undefined ? null : (
+        <Pressable onPress={() => setOpen((o) => !o)} style={styles.header}>
+          <Text style={styles.headerText}>{(open ? '- ' : '+ ') + title}</Text>
+        </Pressable>
+      )}
+      {isOpen ? <View style={styles.body}>{children}</View> : null}
     </View>
   );
 }
@@ -114,7 +117,7 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
 
   return (
     <View>
-      <Section title="Customer, contact & location">
+      <Section>
         <JobDetailsForm
           compact
           mode="edit"

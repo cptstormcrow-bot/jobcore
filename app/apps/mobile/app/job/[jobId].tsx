@@ -992,7 +992,13 @@ export default function JobDrilldownScreen() {
     const inputs: StageInputs = {
       lead: done(true, 'lead'),
       job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
-      premAvailable: { ...done(!!job.needsPremAt || !!investigatorTechId || !!investigation?.submittedAt, 'premAvailable', job.needsPremAt ?? investigation?.submittedAt), inProgress: false },
+      premAvailable: {
+        complete: !!investigation?.submittedAt,
+        completedAt: investigation?.submittedAt ?? null,
+        inProgress: (!!job.needsPremAt || !!investigatorTechId) && !investigation?.submittedAt,
+        notRequired: !job.needsPremAt && !investigatorTechId,
+        sticky: true,
+      },
       completePrem: done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt),
       estimate: { ...done(flags.approvalComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: estimate?.status === 'submitted' },
       approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected },
@@ -1375,6 +1381,13 @@ export default function JobDrilldownScreen() {
           serviceBusy={assigning !== null}
           serviceGateOpen={serviceGateOpen}
           premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+          {...(role !== 'tech' && (region === 'details' || region === 'plan')
+            ? {
+                needsPrem: !!currentJob.needsPremAt || !!investigatorTechId,
+                onToggleNeedsPrem: () => { void handleToggleNeedsPrem(); },
+                needsPremDisabled: !!investigation?.submittedAt || !!investigatorTechId || busyAction === 'needs-prem',
+              }
+            : {})}
           {...(isAdmin
             ? {
                 techs: eligibleTechOptions,

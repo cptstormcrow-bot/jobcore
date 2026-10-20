@@ -1,14 +1,13 @@
 import React from 'react';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, formatJobHeaderLines, formatScheduleLabel, colors, spacing, typography, Text } from '@jobcore/ui';
+import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, Checkbox, formatJobHeaderLines, formatScheduleLabel, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
-import { SERVICE_TECH_GATE_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 
 export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
 
@@ -147,6 +146,12 @@ export type JobSummaryRestProps = {
   statusError?: string | null;
   serviceGateOpen?: boolean;
   hideTechFields?: boolean;
+  /** Whether the job is flagged "Prem Needed". */
+  needsPrem?: boolean;
+  /** Disables the Prem Needed checkbox (e.g. while saving). */
+  needsPremDisabled?: boolean;
+  /** Toggles the flag; the checkbox renders only when provided. */
+  onToggleNeedsPrem?: () => void;
 };
 
 type TechRowProps = {
@@ -158,9 +163,10 @@ type TechRowProps = {
   busy?: boolean;
   indicator?: string | null;
   disabledWhenUnassigned?: boolean;
+  trailing?: ReactNode;
 };
 
-function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, disabledWhenUnassigned }: TechRowProps) {
+function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, disabledWhenUnassigned, trailing }: TechRowProps) {
   return (
     <View style={styles.techRow}>
       <Text style={styles.summaryLine}>{label}:</Text>
@@ -178,6 +184,7 @@ function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, d
       ) : (
         <Text style={styles.summaryLine}>{techName ?? 'Unassigned'}</Text>
       )}
+      {trailing}
     </View>
   );
 }
@@ -196,6 +203,9 @@ export type JobTechFieldsProps = Pick<
   | 'serviceBusy'
   | 'premIndicator'
   | 'serviceGateOpen'
+  | 'needsPrem'
+  | 'needsPremDisabled'
+  | 'onToggleNeedsPrem'
 >;
 
 export function JobTechFields({
@@ -211,6 +221,9 @@ export function JobTechFields({
   serviceBusy,
   premIndicator = null,
   serviceGateOpen = false,
+  needsPrem,
+  needsPremDisabled,
+  onToggleNeedsPrem,
 }: JobTechFieldsProps) {
   return (
     <>
@@ -222,6 +235,17 @@ export function JobTechFields({
         onRequest={onRequestAssignPrem}
         busy={premBusy}
         indicator={premIndicator}
+        trailing={onToggleNeedsPrem ? (
+          <Checkbox
+            label="Prem Needed"
+            accessibilityLabel="Prem Needed"
+            variant="check"
+            checked={!!needsPrem}
+            disabled={needsPremDisabled}
+            onChange={() => onToggleNeedsPrem()}
+            style={styles.premNeededCheckbox}
+          />
+        ) : undefined}
       />
       <TechRow
         label="Service Tech"
@@ -232,12 +256,11 @@ export function JobTechFields({
         busy={serviceBusy}
         disabledWhenUnassigned={!serviceGateOpen}
       />
-      {!serviceGateOpen && !serviceTechId ? <Text style={styles.arriveHint}>{SERVICE_TECH_GATE_HINT}</Text> : null}
       <View style={styles.techRow}>
         {serviceAreaName ? (
-          <Text style={styles.summaryLine}>Service Area: {serviceAreaName}</Text>
+          <Text style={[styles.summaryLine, styles.serviceAreaText]}>Service Area: {serviceAreaName}</Text>
         ) : (
-          <Text style={[styles.summaryLine, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
+          <Text style={[styles.summaryLine, styles.serviceAreaText, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
         )}
       </View>
     </>
@@ -259,10 +282,10 @@ export function JobSummaryRest({
   statusError = null,
   serviceGateOpen = false,
   hideTechFields = false,
+  needsPrem,
+  needsPremDisabled,
+  onToggleNeedsPrem,
 }: JobSummaryRestProps) {
-  const arriveEligible = Boolean(serviceTechId) || Boolean(serviceTechName);
-  const arriveHint = !arriveEligible ? 'Assign a tech before starting.' : null;
-
   return (
     <View style={styles.root}>
       <View style={styles.summary}>
@@ -281,10 +304,12 @@ export function JobSummaryRest({
             serviceBusy={serviceBusy}
             premIndicator={premIndicator}
             serviceGateOpen={serviceGateOpen}
+            needsPrem={needsPrem}
+            needsPremDisabled={needsPremDisabled}
+            onToggleNeedsPrem={onToggleNeedsPrem}
           />
         )}
       </View>
-      {arriveHint ? <Text style={styles.arriveHint}>{arriveHint}</Text> : null}
     </View>
   );
 }
@@ -323,6 +348,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusError: { color: colors.danger, fontSize: typography.size.small, marginTop: 2 },
-  arriveHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingHorizontal: spacing.md, paddingTop: 2 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
+  serviceAreaText: { flex: 1 },
+  premNeededCheckbox: { minHeight: 28, marginBottom: 0 },
 });
