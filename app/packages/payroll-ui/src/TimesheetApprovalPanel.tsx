@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, PayrollButton, Text, TextField } from '@jobcore/ui';
+import { Card, PayrollButton, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollAdminPort, PayrollDateRange, TeamWeek } from './port';
 import { errorText } from './errorText';
@@ -129,9 +129,9 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
   return (
     <View>
       <View>
-        <Button label="Previous week" size="sm" variant="outline" onPress={() => setOffset(offset - 1)} />
+        <PayrollButton label="Previous week" onPress={() => setOffset(offset - 1)} />
         <Text>{range.from + ' to ' + range.to}</Text>
-        <Button label="Next week" size="sm" variant="outline" onPress={() => setOffset(offset + 1)} />
+        <PayrollButton label="Next week" onPress={() => setOffset(offset + 1)} />
       </View>
       {error !== '' ? <Text>{error}</Text> : null}
       {weeks.length === 0 ? <Text>No timesheets for this week.</Text> : null}
