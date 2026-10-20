@@ -42,7 +42,7 @@ NOT verified: Jeff's own visual pass; the ⋮ identity (row menu vs overflow); t
 1. PayrollButton is the standing button; every new button uses it. Legacy `Button` is deprecated and roughly 50 files still use it (app/docs/ui-conventions.md:27): never write "all buttons" as done.
 2. UI Inventory extract.mjs (app/docs/snapshots/v0.4.0/_tools/extract.mjs) does not pick up `<PayrollButton label="...">`: af-employee-roster buttonLabels is [] before and after (EmployeeRosterScreen.tsx ~lines 122/124 hold "Add Employee" and "Pending Invitations"). A follow-up session to fix it is proposed.
 3. The three paginate overflow screens (ft-Payroll, sm-Payroll, layout) remain open (memory jobcore-ui-inventory-0058-regen).
-4. Rule 43 test plan owed: pending Jeff's answer.
+4. Rule 43 test plan: declined by Jeff; nothing owed.
 
 Carried from payroll-button-sop report, status checked this run (one narrowed read each):
 - (a) PayrollButton export at app/packages/ui/src/index.ts:34: the line `export * from './PayrollButton';` is present. Whether it is unused: not re-verified.
@@ -65,8 +65,8 @@ Carried from payroll-button-sop report, status checked this run (one narrowed re
 Committed locally on jobcore-role-landing-0.1.3 (821914b by this task; df61726 contains this task's pipeline output but was committed by another actor; see Changes). No upstream, nothing pushed. This report itself will be committed separately by the main session with a scoped pathspec.
 
 ## Test plan:
-Test plan: pending, Jeff not yet asked (Rule 43).
+Test plan: declined by Jeff (Rule 43).
 
 ## Summary
-The standing button is PayrollButton; this task converted the TimesheetApprovalPanel week buttons (821914b) and regenerated the UI Inventory v0.4.0 snapshot, whose output was committed in df61726 by another actor. The Karen gate passed (all tsc exit 0, npm test 389/389) and the inventory pipeline ran with all 7 steps exit 0. Payments Reimbursements and Payout Batches buttons and the Job #N card were checked in the built-in browser, but Jeff's own visual pass is not done. The retrofit is partial by design (about 50 files still use legacy Button), three overflow screens and the PayrollButton label under-count in extract.mjs remain open, and the Rule 43 test-plan question is still owed.
+The standing button is PayrollButton; this task converted the TimesheetApprovalPanel week buttons (821914b) and regenerated the UI Inventory v0.4.0 snapshot, whose output was committed in df61726 by another actor. The Karen gate passed (all tsc exit 0, npm test 389/389) and the inventory pipeline ran with all 7 steps exit 0. Payments Reimbursements and Payout Batches buttons and the Job #N card were checked in the built-in browser, but Jeff's own visual pass is not done. The retrofit is partial by design (about 50 files still use legacy Button), three overflow screens and the PayrollButton label under-count in extract.mjs remain open, and Jeff declined the Rule 43 test plan.
 ---END BUILD REPORT---
