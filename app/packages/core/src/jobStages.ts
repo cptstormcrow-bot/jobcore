@@ -37,6 +37,10 @@ export interface StageInput {
   inProgress?: boolean;
   /** True when the stage was explicitly rejected (e.g. an estimate rejected by an admin); renders red and is never treated as done. Wins over `complete`. */
   rejected?: boolean;
+  /** True when a complete stage must stay green once done: skips the "earlier stage changed after completion" yellow downgrade. `missingRequired` and `rejected` still apply. */
+  sticky?: boolean;
+  /** True when the stage does not apply to this job: while incomplete it reads gray instead of red (an `inProgress` stage is still yellow). */
+  notRequired?: boolean;
 }
 
 export type StageInputs = Record<StageKey, StageInput>;
@@ -45,18 +49,21 @@ export interface StageResult {
   key: StageKey;
   state: StageState;
   doneAt: string | null;
+  /** True when the stage is gray because it does not apply and a later stage is already complete; `deriveNextStep` skips it. */
+  notRequired?: boolean;
 }
 
 export function deriveStageStates(inputs: StageInputs): StageResult[] {
   return STAGE_KEYS.map((key, i) => {
     const cur = inputs[key];
     let state: StageState;
+    let skipped = false;
     if (cur.rejected) {
       state = 'red';
     } else if (cur.complete) {
       state = 'green';
       if (cur.missingRequired) state = 'yellow';
-      else if (cur.completedAt) {
+      else if (cur.completedAt && !cur.sticky) {
         // Yellow when any earlier stage changed after this one was completed.
         for (let j = 0; j < i; j++) {
           const prev = STAGE_KEYS[j]; if (!prev) continue; const changed = inputs[prev].changedAt;
@@ -66,12 +73,15 @@ export function deriveStageStates(inputs: StageInputs): StageResult[] {
           }
         }
       }
+    } else if (cur.inProgress) {
+      state = 'yellow';
     } else {
-      // Red when a later stage is already complete (this one needs redoing).
-      if (cur.inProgress) state = 'yellow';
-      else state = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete) ? 'red' : 'gray';
+      // Red when a later stage is already complete (this one needs redoing), unless the stage does not apply.
+      const laterDone = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete);
+      if (laterDone && cur.notRequired) { state = 'gray'; skipped = true; }
+      else state = laterDone ? 'red' : 'gray';
     }
-    return { key, state, doneAt: cur.complete && !cur.rejected ? cur.completedAt ?? null : null };
+    return { key, state, doneAt: cur.complete && !cur.rejected ? cur.completedAt ?? null : null, ...(skipped ? { notRequired: true } : {}) };
   });
 }
 
@@ -106,7 +116,7 @@ export function deriveNextStep(states: StageResult[]): string {
   if (red) return `Next Steps: Redo ${STAGE_LABELS[red.key]}.`;
   const yellow = states.find((s) => s.state === 'yellow');
   if (yellow) return `Next Steps: Review ${STAGE_LABELS[yellow.key]}.`;
-  const gray = states.find((s) => s.state === 'gray');
+  const gray = states.find((s) => s.state === 'gray' && !s.notRequired);
   if (gray) return `Next Steps: ${NEXT_PHRASE[gray.key]}.`;
   return 'Next Steps: All done.';
 }

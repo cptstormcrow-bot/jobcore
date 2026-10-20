@@ -122,3 +122,61 @@ test('all done', () => {
   for (const k of STAGE_KEYS) all[k] = { complete: true };
   assert.equal(deriveNextStep(deriveStageStates(all)), 'Next Steps: All done.');
 });
+
+const premLeadBumped = (prem: StageInput) =>
+  inputs({
+    lead: { complete: true, completedAt: '2026-01-01T00:00:00Z', changedAt: '2026-01-05T00:00:00Z' },
+    premAvailable: prem,
+  });
+
+test('sticky complete stage stays green despite a later upstream change', () => {
+  const done = { complete: true, completedAt: '2026-01-02T00:00:00Z' };
+  assert.equal(stateOf(premLeadBumped({ ...done, sticky: true }), 'premAvailable'), 'green');
+  assert.equal(stateOf(premLeadBumped(done), 'premAvailable'), 'yellow');
+});
+
+test('sticky does not hide missingRequired or rescue a rejected stage', () => {
+  const done = { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true };
+  assert.equal(stateOf(premLeadBumped({ ...done, missingRequired: true }), 'premAvailable'), 'yellow');
+  const rej = deriveStageStates(premLeadBumped({ ...done, rejected: true })).find((s) => s.key === 'premAvailable')!;
+  assert.equal(rej.state, 'red');
+  assert.equal(rej.doneAt, null);
+});
+
+test('notRequired incomplete stage with a later stage complete is gray, not red', () => {
+  const i = inputs({
+    lead: { complete: true },
+    job: { complete: true },
+    premAvailable: { complete: false, notRequired: true },
+    estimate: { complete: true },
+  });
+  assert.equal(stateOf(i, 'premAvailable'), 'gray');
+  assert.deepEqual(deriveStageStates(i).filter((s) => s.notRequired).map((s) => s.key), ['premAvailable']);
+  assert.equal(stateOf(i, 'completePrem'), 'red');
+});
+
+test('inProgress beats notRequired', () => {
+  const i = inputs({
+    estimate: { complete: true },
+    premAvailable: { complete: false, inProgress: true, notRequired: true },
+  });
+  const p = deriveStageStates(i).find((s) => s.key === 'premAvailable')!;
+  assert.equal(p.state, 'yellow');
+  assert.equal(p.notRequired, undefined);
+});
+
+test('next step skips a notRequired gray stage', () => {
+  const base = {
+    lead: { complete: true },
+    job: { complete: true },
+    completePrem: { complete: true },
+  };
+  assert.equal(
+    deriveNextStep(deriveStageStates(inputs({ ...base, premAvailable: { complete: false, notRequired: true } }))),
+    'Next Steps: Build the estimate.',
+  );
+  assert.equal(
+    deriveNextStep(deriveStageStates(inputs({ ...base, premAvailable: { complete: false } }))),
+    'Next Steps: Redo Prem available.',
+  );
+});

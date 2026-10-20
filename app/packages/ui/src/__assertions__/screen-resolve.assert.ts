@@ -127,7 +127,11 @@ test('real registry sanity', () => {
   assert.equal(resolveScreen('/m/admin-finance', r)?.number, 10);
   assert.equal(resolveScreen('/m/field-tech', r)?.number, 6);
   assert.equal(resolveScreen('/m/sales-marketing', r)?.number, 38);
-  assert.equal(resolveScreen('/m/admin-finance', r, 'paymentReview')?.number, 33);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'paymentReview')?.number, 89);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'Payroll')?.number, 88);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'PayrollRun')?.number, 87);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'PayrollSettings')?.number, 86);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'payments')?.number, 63);
 });
 
 test('scopeOf maps payment-review into admin-finance', () => {
@@ -139,9 +143,9 @@ test('scopeOf maps payment-review into admin-finance', () => {
 test('paymentReview subView resolves under admin-finance shell', () => {
   const fx: RegistryEntry[] = [
     e(10, '/m/admin-finance', { file: 'modules/admin-finance/src/a.tsx' }),
-    e(33, null, { subView: 'paymentReview', file: 'modules/payment-review/src/screens/ReconciliationView.tsx' }),
+    e(89, null, { subView: 'paymentReview', file: 'modules/payment-review/src/screens/ReconciliationView.tsx' }),
   ];
-  assert.equal(resolveScreen('/m/admin-finance', fx, 'paymentReview')?.number, 33);
+  assert.equal(resolveScreen('/m/admin-finance', fx, 'paymentReview')?.number, 89);
   assert.equal(resolveScreen('/m/admin-finance', fx, undefined)?.number, 10);
 });
 

@@ -1,5 +1,5 @@
 /**
- * DEFAULT JobCore button spec - source: screen #0010 (Payroll). Short (32pt) sand button,
+ * DEFAULT JobCore button spec - source: screen #0010 (Payroll) (registry #0010 = Admin & Finance root; Payroll = #88). Short (32pt) sand button,
  * label centered both ways; hitSlop keeps the 44pt touch target.
  * Future JobCore buttons use this component; never inline a one-off button style.
  */

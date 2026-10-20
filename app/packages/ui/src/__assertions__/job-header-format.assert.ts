@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   formatCreatedDate,
   formatJobHeaderLines,
+  formatJobNumberLabel,
   formatJobNumberLine,
   formatScheduleLabel,
   formatScheduledLabel,
@@ -28,6 +29,12 @@ test('formatJobNumberLine', () => {
   assert.equal(formatJobNumberLine(3, ISO, 'en-US'), 'Job #3 - ' + expectedDate);
   assert.equal(formatJobNumberLine(null, null, 'en-US'), 'Job #— - —');
   assert.equal(formatJobNumberLine('0047', ISO, 'en-US'), 'Job #0047 - ' + expectedDate);
+});
+
+test('formatJobNumberLabel', () => {
+  assert.equal(formatJobNumberLabel(7), 'Job #7');
+  assert.equal(formatJobNumberLabel(null), 'Job #—');
+  assert.equal(formatJobNumberLabel(undefined), 'Job #—');
 });
 
 test('formatJobHeaderLines', () => {

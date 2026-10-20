@@ -36,10 +36,8 @@ export interface SandButtonProps {
 }
 
 /**
- * The JobCore "Payroll" button style - a standing SOP. This is the only button style for
- * in-screen action buttons: label centred on both axes, about 27px tall. Never inline a
- * one-off button or a local copy. `Button` (packages/ui/src/Button.tsx) now carries this same
- * Payroll look (same padding, 14px label, radius 6), so both are valid; SandButton adds the `selected` and `testID` extras. Use `selected` for a picker/toggle row (mirrors DefaultTabBar).
+ * Sand button: about 27px tall, padding 12 horizontal / 4 vertical, supports
+ * `selected` and `testID`. Stays as the sand variant alongside Button and PayrollButton.
  */
 export function SandButton({ label, onPress, disabled, selected, testID, accessibilityLabel, style }: SandButtonProps) {
   const hasSelected = selected !== undefined;

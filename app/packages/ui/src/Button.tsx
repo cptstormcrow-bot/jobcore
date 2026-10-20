@@ -13,11 +13,10 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Button now follows the Payroll look and matches SandButton (./sand.ts):
-// tight padding, radius 6, 14px label, same height at every size. No minHeight.
-// A transparent 1px border is kept on every variant (so the outline variant does
-// not change the box), absorbed in the padding: 4-1=3 vertical, 12-1=11 horizontal.
-// SandButton remains the sand variant with the selected/testID extras.
+// Button is the general-purpose button and carries the app-wide Payroll look:
+// padding 3 vertical / 11 horizontal, 1px transparent border (kept on every
+// variant so the box never changes), radius 6, 14px label, no fixed height.
+// PayrollButton (./PayrollButton) and SandButton (./sand) remain available.
 const paddingBySize = { sm: 3, md: 3, lg: 3, tab: 3 } as const;
 const fontBySize = { sm: 14, md: 14, lg: 14, tab: 14 } as const;
 const paddingHorizontalBySize = { sm: 11, md: 11, lg: 11, tab: 11 } as const;
@@ -54,10 +53,9 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
 }
 
 const styles = StyleSheet.create({
-  // Button follows the Payroll look and matches SandButton: height comes from
-  // paddingBySize above (same at every size), no minHeight. The Pressable's
-  // per-side hitSlop (same as SandButton) keeps the tap target comfortable.
-  // SandButton remains the sand variant with selected/testID extras.
+  // Button: height comes from paddingBySize above (same at every size),
+  // no minHeight, not a fixed 32pt. The Pressable's hitSlop (6/6/3/3) keeps the
+  // tap target comfortable.
   // borderWidth is reserved on `base` (not just `outline`) so toggling variant
   // never changes the rendered box size — only borderColor toggles, including
   // to 'transparent' when there's no visible border to draw.

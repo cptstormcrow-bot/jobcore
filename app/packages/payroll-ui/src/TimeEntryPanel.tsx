@@ -4,11 +4,10 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, DefaultTabBar, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
+import { Card, DefaultTabBar, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
-import { SandButton } from './SandButton';
 
 export interface TimeEntryPanelActions {
   saveAll: () => Promise<void>;
@@ -309,10 +308,8 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
                     (e.status === 'rejected' && e.rejectionReason ? ' (' + e.rejectionReason + ')' : '')}
                 </Text>
                 {editable(e) ? (
-                  <Button
+                  <PayrollButton
                     label="Delete"
-                    size="sm"
-                    variant="outline"
                     onPress={() => run(() => port.deleteEntry(e.id))}
                   />
                 ) : null}

@@ -673,10 +673,10 @@
   "notes": ""
  },
  {
-  "key": "af-paymentReview",
+  "key": "af-review",
   "kind": "sub-view",
   "module": "admin-finance",
-  "route": null,
+  "route": "/m/admin-finance",
   "subView": "paymentReview",
   "parentKey": "admin-finance",
   "file": "modules/payment-review/src/screens/ReconciliationView.tsx",

@@ -224,7 +224,7 @@
         "/account"
       ]
     },
-    "af-paymentReview": {
+    "af-review": {
       "summary": "Read-only reconciliation list for owner/admin. A \"Needs attention\" section shows pending or failed payments. A \"Manually confirmed\" section groups manual_confirmed payments by the tech who confirmed them. It has no buttons or pickers.",
       "flowStage": "paid",
       "specStage": "Admin close-out",

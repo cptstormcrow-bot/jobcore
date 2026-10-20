@@ -1,5 +1,5 @@
 /**
- * DEFAULT JobCore tab bar spec - source: screen #0010 (Payroll). Anchored directly
+ * DEFAULT JobCore tab bar spec - source: screen #0010 (Payroll) (registry #0010 = Admin & Finance root; Payroll = #88). Anchored directly
  * under the header; active tab = bold text + darkened background + blue underline.
  * Use this for any 'tab bar' / 'tabs along the top' request; never inline a bar.
  * NOTE: the legacy wrapping-pill TabBar.tsx was retired 2026-10-18; this is the only tab bar.
