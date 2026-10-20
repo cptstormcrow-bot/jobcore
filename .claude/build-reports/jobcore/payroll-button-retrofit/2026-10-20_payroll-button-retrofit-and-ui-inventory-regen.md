@@ -60,6 +60,7 @@ Carried from payroll-button-sop report, status checked this run (one narrowed re
 - Foreign stash stash@{0} ("On jobcore-job-detail-action-buttons: fx-06b-baseline") left untouched.
 - Rule 43 ordering missed: the test-plan question was not put to Jeff before the commit; recorded here and asked at wrap-up.
 - The earlier payroll-button-sop report is partly stale (Button-carries-the-look design, "nothing committed"); this report supersedes it where they differ.
+- Plan slices S1-S13 were already applied by earlier commit `10de642` (Payroll button style SOP applied app-wide); S1-S5 were no-ops (PayrollButton already canonical, 0 divergent copies) and S6 (LeadRow badge/phone) was already satisfied. This task's real changes were limited to G1-G3 (Prem Needed checkbox cf4bd7d, TimesheetApprovalPanel PayrollButton 821914b, UI Inventory regen df61726).
 
 ## Commits
 Committed locally on jobcore-role-landing-0.1.3 (821914b by this task; df61726 contains this task's pipeline output but was committed by another actor; see Changes). No upstream, nothing pushed. This report itself will be committed separately by the main session with a scoped pathspec.
