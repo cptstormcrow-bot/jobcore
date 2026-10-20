@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, Text, TextInput, View } from 'react-native';
-import { colors } from '@jobcore/ui';
+import { ActivityIndicator, Linking, Text, TextInput, View } from 'react-native';
+import { PayrollButton } from '@jobcore/ui';
 import type {
   AdminReimbursement,
   PayrollAdminPort,
@@ -9,7 +9,6 @@ import type {
 } from './port';
 import { ReceiptCapture } from './ReceiptCapture';
 import { errorText } from './errorText';
-import { SandButton } from './SandButton';
 
 export type ReimbursementPanelActions = {
   submit: () => void | Promise<void>;
@@ -187,24 +186,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
       <ReceiptCapture uri={receiptUri} onChange={setReceiptUri} disabled={submitting} />
       {formError ? <Text style={{ color: '#b00020' }}>{formError}</Text> : null}
       {onRegisterActions ? null : (
-        <Pressable
-          onPress={() => void onSubmit()}
-          disabled={!canSubmit}
-          style={{
-            padding: 12,
-            minHeight: 44,
-            borderRadius: 6,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: canSubmit ? colors.sand : colors.sandInactive,
-          }}
-        >
-          {submitting ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <Text style={{ color: '#000', fontWeight: '600' }}>Submit</Text>
-          )}
-        </Pressable>
+        <PayrollButton label="Submit" onPress={() => void onSubmit()} disabled={!canSubmit} />
       )}
 
       <Text style={{ fontWeight: '600', marginTop: 12 }}>My reimbursements</Text>
@@ -248,7 +230,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
                   <Text>{formatDate(r.createdAt)}</Text>
                 </View>
                 {r.receiptPhotoPath && typeof adminPort.getReceiptUrl === 'function' ? (
-                  <SandButton
+                  <PayrollButton
                     label="View receipt"
                     onPress={() => void onViewReceipt(r.receiptPhotoPath as string)}
                     style={{ alignSelf: 'center' }}

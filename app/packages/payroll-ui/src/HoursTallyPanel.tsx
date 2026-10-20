@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { colors } from '@jobcore/ui';
 import type { PayrollSelfPort, PayrollSettings, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
 
@@ -10,14 +9,11 @@ export interface HoursTallyPanelProps {
   userId: string;
   /** Bump to force the tally to reload. */
   refreshKey?: number;
+  /** Range to tally; chosen by the parent. Defaults to 'day'. */
+  range?: HoursRange;
 }
 
-const TABS: { id: wageEngine.RollupGranularity; label: string }[] = [
-  { id: 'day', label: 'Day' },
-  { id: 'week', label: 'Week' },
-  { id: 'month', label: 'Month' },
-  { id: 'year', label: 'Year' },
-];
+export type HoursRange = 'day' | 'week' | 'month' | 'year';
 
 const HISTORY_DAYS = 400;
 
@@ -33,8 +29,8 @@ function formatHm(min: number): string {
   return `${h}:${m < 10 ? '0' : ''}${m}`;
 }
 
-export function HoursTallyPanel({ port, userId, refreshKey }: HoursTallyPanelProps) {
-  const [tab, setTab] = useState<wageEngine.RollupGranularity>('day');
+export function HoursTallyPanel({ port, userId, refreshKey, range = 'day' }: HoursTallyPanelProps) {
+  const tab: wageEngine.RollupGranularity = range;
   const [entries, setEntries] = useState<PayrollTimeEntry[] | null>(null);
   const [settings, setSettings] = useState<PayrollSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,27 +99,6 @@ export function HoursTallyPanel({ port, userId, refreshKey }: HoursTallyPanelPro
 
   return (
     <View style={{ paddingHorizontal: 16 }}>
-      <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-        {TABS.map((t) => (
-          <Pressable
-            key={t.id}
-            onPress={() => setTab(t.id)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: tab === t.id }}
-            style={{
-              minHeight: 44,
-              justifyContent: 'center',
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              marginRight: 6,
-              borderRadius: 999,
-              backgroundColor: tab === t.id ? colors.sand : colors.sandInactive,
-            }}
-          >
-            <Text style={{ color: colors.text }}>{t.label}</Text>
-          </Pressable>
-        ))}
-      </View>
       {error ? (
         <Text style={{ color: '#b91c1c' }}>{`Couldn't load your hours: ${error}`}</Text>
       ) : entries === null ? (

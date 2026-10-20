@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, Text, TextField } from '@jobcore/ui';
+import { Button, Card, DefaultTabBar, Text, TextField, colors } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -25,7 +25,7 @@ export interface TimeEntryPanelProps {
   port: PayrollSelfPort;
   userId: string;
   weekStartDow: number;
-  /** Lets the parent render its own Submit week control. */
+  /** Lets the parent render its own Submit control. */
   onRegisterActions?: (a: TimeEntryPanelActions) => void;
   /** Called after every successful mutation (save, delete, submit). */
   onChanged?: () => void;
@@ -57,12 +57,13 @@ function weekdayOnly(iso: string): string {
   return dayLabel(iso).split(' ')[0]!;
 }
 
-function weekDays(weekStartDow: number): Iso[] {
+/** The 7 days of the week containing today, shifted by `weekOffset` whole weeks. */
+function weekDays(weekStartDow: number, weekOffset = 0): Iso[] {
   const now = new Date();
   const todayMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   const dow = new Date(todayMs).getUTCDay();
   const back = (dow - weekStartDow + 7) % 7;
-  const startMs = todayMs - back * 86400000;
+  const startMs = todayMs - back * 86400000 + weekOffset * 7 * 86400000;
   const out: Iso[] = [];
   for (let i = 0; i < 7; i++) out.push(toIso(startMs + i * 86400000));
   return out;
@@ -93,11 +94,35 @@ function editable(e: PayrollTimeEntry): boolean {
   return e.status === 'draft' || e.status === 'rejected';
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "Oct 12" from an ISO date. */
+function monthDay(iso: string): string {
+  return MONTHS[parseInt(iso.slice(5, 7), 10) - 1] + ' ' + parseInt(iso.slice(8, 10), 10);
+}
+
+type WeekOffset = -1 | 0 | 1;
+type WeekTab = 'last' | 'this' | 'next';
+const WEEK_TABS: Array<{ id: WeekTab; label: string }> = [
+  { id: 'last', label: 'Last week' },
+  { id: 'this', label: 'This week' },
+  { id: 'next', label: 'Next week' },
+];
+const TAB_OFFSET: Record<WeekTab, WeekOffset> = { last: -1, this: 0, next: 1 };
+
+const cellStyle = { flex: 1, textAlign: 'center' as const, fontSize: 11, paddingVertical: 2, paddingHorizontal: 1 };
+
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const { port, userId, weekStartDow, onRegisterActions, onChanged } = props;
-  const days = useMemo(() => weekDays(weekStartDow), [weekStartDow]);
+  const [weekTab, setWeekTab] = useState<WeekTab>('this');
+  const weekOffset = TAB_OFFSET[weekTab];
+  const days = useMemo(() => weekDays(weekStartDow, weekOffset), [weekStartDow, weekOffset]);
   const range = useMemo(() => ({ from: days[0]!, to: days[6]! }), [days]);
+  // Submitted-hours table: the current week plus the 3 before it, newest first.
+  const tableWeeks = useMemo(() => [0, -1, -2, -3].map((o) => weekDays(weekStartDow, o)), [weekStartDow]);
+  const tableRange = useMemo(() => ({ from: tableWeeks[3]![0]!, to: tableWeeks[0]![6]! }), [tableWeeks]);
   const [entries, setEntries] = useState<PayrollTimeEntry[]>([]);
+  const [tableEntries, setTableEntries] = useState<PayrollTimeEntry[]>([]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>('');
@@ -105,11 +130,13 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   const reload = useCallback(async () => {
     try {
-      setEntries(await port.listEntries(range));
+      const [sel, tbl] = await Promise.all([port.listEntries(range), port.listEntries(tableRange)]);
+      setEntries(sel);
+      setTableEntries(tbl);
     } catch (e) {
       setError("Couldn't load your time entries: " + errorText(e, 'Could not load time entries.'));
     }
-  }, [port, range]);
+  }, [port, range, tableRange]);
 
   useEffect(() => {
     void reload();
@@ -253,14 +280,18 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       {onRegisterActions ? null : (
         <View style={{ marginTop: 0, alignSelf: 'flex-end' }}>
           <SandButton
-            label={busy ? 'Saving…' : 'Save all'}
+            label={busy ? 'Saving…' : 'Save'}
             onPress={saveAll}
             disabled={busy || dirtyDays.length === 0}
           />
         </View>
       )}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <Card style={{ flexGrow: 1, flexBasis: 320, padding: 6 }}>
+      <DefaultTabBar tabs={WEEK_TABS} activeId={weekTab} onChange={setWeekTab} />
+      <Text style={{ textAlign: 'center', marginVertical: 4 }}>{monthDay(days[0]!) + ' - ' + monthDay(days[6]!)}</Text>
       {entries.length > 0 && !canSubmit ? (
-        <Text style={{ color: '#666666', fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw week to change it.</Text>
+        <Text style={{ color: colors.textMutedDark, fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw to change it.</Text>
       ) : null}
       {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
       {days.map((day) => {
@@ -300,8 +331,8 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
             {locked ? (
               <Text style={{ color: '#666666', fontSize: 12 }}>
                 {dayManual.some((e) => e.status === 'submitted')
-                  ? 'Submitted for approval. Tap Withdraw week to change it.'
-                  : 'Approved. Tap Withdraw week to reopen it, then submit again after your changes.'}
+                  ? 'Submitted for approval. Tap Withdraw to change it.'
+                  : 'Approved. Tap Withdraw to reopen it, then submit again after your changes.'}
               </Text>
             ) : null}
             {(notes[day] ?? '').trim() !== '' ? (
@@ -315,6 +346,34 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           </Card>
         );
       })}
+      </Card>
+      <Card style={{ flexGrow: 1, flexBasis: 320, padding: 6 }}>
+        <Text style={{ textAlign: 'center', fontWeight: '700', marginBottom: 4 }}>Submitted hours</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={[cellStyle, { flex: 1.4, fontWeight: '700' }]}>Week</Text>
+          {tableWeeks[0]!.map((d) => (
+            <Text key={d} style={[cellStyle, { fontWeight: '700' }]}>{weekdayOnly(d)}</Text>
+          ))}
+          <Text style={[cellStyle, { fontWeight: '700' }]}>Total</Text>
+        </View>
+        {tableWeeks.map((wk) => {
+          let weekTotal = 0;
+          return (
+            <View key={wk[0]} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border }}>
+              <Text style={[cellStyle, { flex: 1.4 }]}>{monthDay(wk[0]!)}</Text>
+              {wk.map((d) => {
+                const mins = tableEntries
+                  .filter((e) => e.workDate === d && (e.status === 'submitted' || e.status === 'approved'))
+                  .reduce((s, e) => s + e.minutes, 0);
+                weekTotal += mins;
+                return <Text key={d} style={cellStyle}>{mins > 0 ? fmt(mins) : '-'}</Text>;
+              })}
+              <Text style={[cellStyle, { fontWeight: '700' }]}>{weekTotal > 0 ? fmt(weekTotal) : '-'}</Text>
+            </View>
+          );
+        })}
+      </Card>
+      </View>
     </View>
   );
 }

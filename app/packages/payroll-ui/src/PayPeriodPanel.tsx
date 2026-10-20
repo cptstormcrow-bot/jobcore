@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
+import { SandButton } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
   PayrollSelfPort,
@@ -50,6 +51,18 @@ function weekStatus(entries: PayrollTimeEntry[]): PayrollEntryStatus {
   return 'approved';
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** 'YYYY-MM-DD' to 'Oct 12'. */
+function shortDate(d: string): string {
+  return `${MONTHS[Number(d.slice(5, 7)) - 1]} ${Number(d.slice(8, 10))}`;
+}
+
+/** 'Oct 12 - Oct 18, 2026'. */
+function formatRange(start: string, end: string): string {
+  return `${shortDate(start)} - ${shortDate(end)}, ${end.slice(0, 4)}`;
+}
+
 const STATUS_COLOR: Record<PayrollEntryStatus, string> = {
   draft: '#6b7280',
   submitted: '#1d4ed8',
@@ -60,6 +73,8 @@ const STATUS_COLOR: Record<PayrollEntryStatus, string> = {
 export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps) {
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 0 = the pay week containing today, negative = older. Lives outside the reload so stepping never resets it.
+  const [periodOffset, setPeriodOffset] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,8 +84,9 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
       try {
         const settings = await port.getSettings();
         const today = wageEngine.formatIsoDate(new Date().getTime());
-        const weekStart = wageEngine.weekStartOf(today, settings.payWeek);
-        const weekEnd = wageEngine.weekEndOf(today, settings.payWeek);
+        const ref = wageEngine.addDays(today, 7 * periodOffset);
+        const weekStart = wageEngine.weekStartOf(ref, settings.payWeek);
+        const weekEnd = wageEngine.weekEndOf(ref, settings.payWeek);
         const [entries, rates] = await Promise.all([
           port.listEntries({ from: weekStart, to: weekEnd }),
           port.getRateHistory(userId),
@@ -84,7 +100,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
     return () => {
       cancelled = true;
     };
-  }, [port, userId, refreshKey]);
+  }, [port, userId, refreshKey, periodOffset]);
 
   const calc = useMemo(() => {
     if (!data) return null;
@@ -112,41 +128,72 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
     }
   }, [data, userId]);
 
-  if (error) return <Text style={{ color: '#b91c1c' }}>{`Couldn't load your pay period: ${error}`}</Text>;
-  if (!data) return <ActivityIndicator />;
+  const status = data ? weekStatus(data.entries) : 'draft';
+  const rangeLabel = data ? formatRange(data.weekStart, data.weekEnd) : 'Loading...';
 
-  const status = weekStatus(data.entries);
+  const picker = (
+    <View style={{ alignItems: 'center', marginBottom: 8 }}>
+      <SandButton
+        label="▲"
+        accessibilityLabel="Next pay period"
+        disabled={periodOffset === 0}
+        onPress={() => setPeriodOffset((o) => Math.min(0, o + 1))}
+      />
+      <Text style={{ fontWeight: '600', marginVertical: 6 }}>{rangeLabel}</Text>
+      <SandButton
+        label="▼"
+        accessibilityLabel="Previous pay period"
+        onPress={() => setPeriodOffset((o) => o - 1)}
+      />
+    </View>
+  );
+
+  let body;
+  if (error) {
+    body = <Text style={{ color: '#b91c1c' }}>{`Couldn't load your pay period: ${error}`}</Text>;
+  } else if (!data) {
+    body = <ActivityIndicator />;
+  } else if (data.entries.length === 0) {
+    body = <Text style={{ textAlign: 'center' }}>No payroll for this week</Text>;
+  } else {
+    body = (
+      <View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+          <Text style={{ flex: 1, fontWeight: '600' }}>{`Your week: ${rangeLabel}`}</Text>
+          <Text style={{ color: STATUS_COLOR[status], fontWeight: '600' }}>{status}</Text>
+        </View>
+        {calc === null ? (
+          <Text>Your hours could not be calculated.</Text>
+        ) : (
+          <View>
+            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+              <Text style={{ flex: 1 }}>Your regular hours</Text>
+              <Text>{formatHm(calc.totals.regularMin)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+              <Text style={{ flex: 1, color: '#b45309' }}>Your OT</Text>
+              <Text>{formatHm(calc.totals.otMin)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+              <Text style={{ flex: 1, color: '#b91c1c' }}>Your DT</Text>
+              <Text>{formatHm(calc.totals.dtMin)}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+              <Text style={{ flex: 1, fontWeight: '600' }}>You earned (estimated)</Text>
+              <Text style={{ fontWeight: '600' }}>
+                {calc.grossCents === null ? 'No rate on file' : formatDollars(calc.grossCents)}
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  }
 
   return (
     <View style={{ paddingHorizontal: 16 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-        <Text style={{ flex: 1, fontWeight: '600' }}>{`${data.weekStart} to ${data.weekEnd}`}</Text>
-        <Text style={{ color: STATUS_COLOR[status], fontWeight: '600' }}>{status}</Text>
-      </View>
-      {calc === null ? (
-        <Text>Hours could not be calculated.</Text>
-      ) : (
-        <View>
-          <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
-            <Text style={{ flex: 1 }}>Regular</Text>
-            <Text>{formatHm(calc.totals.regularMin)}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
-            <Text style={{ flex: 1, color: '#b45309' }}>OT</Text>
-            <Text>{formatHm(calc.totals.otMin)}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
-            <Text style={{ flex: 1, color: '#b91c1c' }}>DT</Text>
-            <Text>{formatHm(calc.totals.dtMin)}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
-            <Text style={{ flex: 1, fontWeight: '600' }}>Estimated gross</Text>
-            <Text style={{ fontWeight: '600' }}>
-              {calc.grossCents === null ? 'No rate on file' : formatDollars(calc.grossCents)}
-            </Text>
-          </View>
-        </View>
-      )}
+      {picker}
+      {body}
     </View>
   );
 }
