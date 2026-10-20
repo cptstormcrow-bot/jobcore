@@ -17,13 +17,13 @@ export interface StepperPickerProps {
   style?: StyleProp<ViewStyle>;
 }
 
-/** JobCore standard picker: previous arrow on the LEFT, value in the middle, next arrow on the RIGHT. */
+/** JobCore standard picker: previous arrow on the LEFT, value in the middle, next arrow on the RIGHT, all grouped together (centered, not spread to the edges). */
 export function StepperPicker(props: StepperPickerProps) {
   const { value, onPrev, onNext, prevLabel, nextLabel, prevDisabled, nextDisabled, testID, style } = props;
   return (
     <View
       testID={testID}
-      style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }, style]}
+      style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }, style]}
     >
       <PayrollButton
         label="◀"
@@ -32,7 +32,7 @@ export function StepperPicker(props: StepperPickerProps) {
         onPress={onPrev}
         testID={testID ? `${testID}-prev` : undefined}
       />
-      <Text style={{ fontWeight: '600', flex: 1, textAlign: 'center', marginHorizontal: 8 }}>{value}</Text>
+      <Text style={{ fontWeight: '600', minWidth: 150, textAlign: 'center', marginHorizontal: 12 }}>{value}</Text>
       <PayrollButton
         label="▶"
         accessibilityLabel={nextLabel}
