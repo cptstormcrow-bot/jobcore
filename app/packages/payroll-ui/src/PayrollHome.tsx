@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { DefaultTabBar, SandButton } from '@jobcore/ui';
+import { DefaultTabBar, PayrollButton } from '@jobcore/ui';
 import type { PayrollPort } from './port';
 import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
@@ -79,13 +79,13 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
       <View style={{ alignItems: 'flex-end', paddingHorizontal: 16 }}>
           {active === 'time' ? (
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
-              <SandButton
+              <PayrollButton
                 label={timeActions?.busy ? 'Saving...' : 'Save'}
                 onPress={() => void timeActions?.saveAll()}
                 disabled={!timeActions || timeActions.busy}
                 accessibilityLabel="Save"
               />
-              <SandButton
+              <PayrollButton
                 label="Submit"
                 onPress={() => {
                   if (!timeActions?.canSubmit || timeActions?.busy) return;
@@ -94,7 +94,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
                 disabled={!timeActions?.canSubmit || timeActions?.busy}
                 accessibilityLabel="Submit"
               />
-              <SandButton
+              <PayrollButton
                 label="Withdraw"
                 onPress={() => {
                   if (!timeActions?.canWithdraw || timeActions?.busy) return;
@@ -103,7 +103,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
                 disabled={!timeActions?.canWithdraw || timeActions?.busy}
                 accessibilityLabel="Withdraw"
               />
-              <SandButton
+              <PayrollButton
                 label={confirmDelete ? 'Tap again to delete' : 'Delete'}
                 onPress={() => {
                   if (!timeActions?.canDelete || timeActions?.busy) return;
@@ -120,7 +120,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
             </View>
           ) : null}
           {active === 'reimb' ? (
-            <SandButton
+            <PayrollButton
               label="Submit"
               onPress={() => {
                 if (!reimbActions?.canSubmit || reimbActions?.busy) return;

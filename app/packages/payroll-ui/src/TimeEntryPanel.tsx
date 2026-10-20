@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, DefaultTabBar, Text, TextField, colors } from '@jobcore/ui';
+import { Button, Card, DefaultTabBar, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -279,7 +279,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
       ) : null}
       {onRegisterActions ? null : (
         <View style={{ marginTop: 0, alignSelf: 'flex-end' }}>
-          <SandButton
+          <PayrollButton
             label={busy ? 'Saving…' : 'Save'}
             onPress={saveAll}
             disabled={busy || dirtyDays.length === 0}

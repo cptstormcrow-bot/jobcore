@@ -4,11 +4,10 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Button, Card, Text, TextField } from '@jobcore/ui';
+import { Button, Card, PayrollButton, Text, TextField } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollAdminPort, PayrollDateRange, TeamWeek } from './port';
 import { errorText } from './errorText';
-import { SandButton } from './SandButton';
 
 export interface TimesheetApprovalPanelProps {
   port: PayrollAdminPort;
@@ -148,10 +147,10 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {w.status === 'submitted' ? (
-                  <SandButton label="Approve" onPress={() => approve(w)} disabled={busy} />
+                  <PayrollButton label="Approve" onPress={() => approve(w)} disabled={busy} />
                 ) : null}
                 {w.status === 'submitted' || w.status === 'approved' ? (
-                  <SandButton
+                  <PayrollButton
                     label="Kick back"
                     onPress={() => {
                       setRejecting(key);
@@ -161,7 +160,7 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
                   />
                 ) : null}
                 {port.deleteWeek ? (
-                  <SandButton
+                  <PayrollButton
                     label={pendingDelete === key ? 'Tap again to delete' : 'Delete'}
                     onPress={() => tapDelete(w, key)}
                     disabled={busy}
@@ -173,8 +172,8 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
               <View>
                 <TextField label="Reason (optional)" value={reason} onChangeText={setReason} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <SandButton label="Confirm kick back" onPress={() => confirmReject(w)} disabled={busy} />
-                  <SandButton label="Cancel" onPress={() => setRejecting(null)} />
+                  <PayrollButton label="Confirm kick back" onPress={() => confirmReject(w)} disabled={busy} />
+                  <PayrollButton label="Cancel" onPress={() => setRejecting(null)} />
                 </View>
               </View>
             ) : null}

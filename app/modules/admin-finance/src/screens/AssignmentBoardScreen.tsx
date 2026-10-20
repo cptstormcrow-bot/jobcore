@@ -40,7 +40,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, SandButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -409,7 +409,7 @@ export function AssignmentBoardScreen({
           {showTestJobs ? (
           <View style={styles.categorySegmentRow}>
             {(showTestJobs ? (['real', 'beta', 'test', 'all'] as const) : (['real'] as const)).map((cat) => (
-              <SandButton
+              <PayrollButton
                 key={cat}
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
                 onPress={() => setCategory(cat)}
@@ -442,7 +442,7 @@ export function AssignmentBoardScreen({
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
-                    {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as SandButton/Select in rowActions). */}
+                    {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as PayrollButton/Select in rowActions). */}
                     <Pressable
                       style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
                       onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
@@ -465,12 +465,12 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <SandButton label="Service" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Service" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <SandButton label="Prem" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Prem" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
                       </View>
-                      {/* Own Pressable (via SandButton/Select) so RN's nested-touch-responder
+                      {/* Own Pressable (via PayrollButton/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
                           select-for-assignment Pressable above. */}
                       <TechSelect
@@ -481,7 +481,7 @@ export function AssignmentBoardScreen({
                         style={styles.assignSelect}
                       />
                       <View style={styles.confirmSlot}>
-                        {showConfirm ? <SandButton label="Confirm" onPress={() => handleRowConfirm(job)} /> : null}
+                        {showConfirm ? <PayrollButton label="Confirm" onPress={() => handleRowConfirm(job)} /> : null}
                       </View>
                     </View>
                   </View>

@@ -11,7 +11,7 @@
  *
  * `@jobcore/ui` has no Picker/Select/SegmentedControl primitive
  * so this is composed from
- * `SandButton` (the Payroll button style) plus a plain `View`/`Text` label, styled purely from
+ * `PayrollButton` (the Payroll button style) plus a plain `View`/`Text` label, styled purely from
  * `tokens.ts` — the same "compose from primitives + tokens when no
  * dedicated primitive exists" rule `LeadRow.tsx` follows. AC-11: zero raw
  * hex/rgba color literals in this file.
@@ -19,7 +19,7 @@
 
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { SandButton, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
 export const SOURCE_VALUES = ['website', 'costco', 'ikea', 'owm'] as const;
 export const PAYER_VALUES = ['customer', 'partner'] as const;
@@ -55,11 +55,11 @@ export function AxisPicker<T extends string>({ label, values, selected, onSelect
       <Text style={styles.label}>{label}</Text>
       <View style={styles.row}>
         {values.map((value) => (
-          <SandButton
+          <PayrollButton
             key={value}
             label={LABELS[value] ?? value}
             onPress={() => onSelect(value)}
-            selected={selected === value}
+            style={selected === value ? { borderBottomWidth: 2, borderBottomColor: colors.info } : undefined}
           />
         ))}
       </View>

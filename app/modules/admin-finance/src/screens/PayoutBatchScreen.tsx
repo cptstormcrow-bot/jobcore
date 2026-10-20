@@ -19,7 +19,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -224,24 +224,10 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
               />
               {approveState?.kind === 'failed' && <Text style={styles.rowError}>{approveState.message}</Text>}
               {canApprove && (
-                <Button
-                  label="Approve"
-                  variant="primary"
-                  size="sm"
-                  disabled={isSubmitting}
-                  onPress={() => handleApprove(batch)}
-                  style={styles.actionButton}
-                />
+                <PayrollButton label="Approve" disabled={isSubmitting} onPress={() => handleApprove(batch)} />
               )}
               {canMarkPaid && (
-                <Button
-                  label="Mark Paid"
-                  variant="primary"
-                  size="sm"
-                  disabled={isSubmitting}
-                  onPress={() => handleMarkPaid(batch)}
-                  style={styles.actionButton}
-                />
+                <PayrollButton label="Mark Paid" disabled={isSubmitting} onPress={() => handleMarkPaid(batch)} />
               )}
               {batch.lines.map((line: FrozenPayoutLine) => (
                 <View key={`${line.userId}-${line.frozenAt}`} style={styles.lineRow}>
@@ -290,9 +276,6 @@ const styles = StyleSheet.create({
   rowError: {
     color: colors.danger,
     fontSize: typography.size.label,
-    marginBottom: spacing.xs,
-  },
-  actionButton: {
     marginBottom: spacing.xs,
   },
   lineRow: {

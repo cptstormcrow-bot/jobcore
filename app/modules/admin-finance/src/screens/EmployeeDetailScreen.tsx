@@ -6,8 +6,8 @@
  * `PriceSheetEditorScreen.tsx`'s prop-driven data pattern but WITHOUT a load
  * state machine, since there is nothing to load here.
  *
- * Contents, top to bottom: the Back/Edit/Deactivate action buttons (G1 sand
- * SandButtons, same style as #0010), the employee name header with a tap-to-copy
+ * Contents, top to bottom: the Back/Edit/Deactivate action buttons (G1
+ * PayrollButtons, same style as #0010), the employee name header with a tap-to-copy
  * icon right beside the name (copies the phone number to the clipboard), a detail
  * card (one label/value row per field, including Phone), the Skills card
  * (wrapped chips), and the Service Areas card.
@@ -25,8 +25,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Card, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
-import { SandButton } from '@jobcore/payroll-ui';
+import { Card, ScreenTitle, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
 import type { ProfilePrivate } from '../data/ports';
@@ -96,12 +95,12 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.actionsRow}>
-          <SandButton label="Back" onPress={onBack} style={styles.actionInline} />
-          <SandButton label="Edit" onPress={onEdit} style={styles.actionInline} />
+          <PayrollButton label="Back" onPress={onBack} style={styles.actionInline} />
+          <PayrollButton label="Edit" onPress={onEdit} style={styles.actionInline} />
           {employee.active ? (
-            <SandButton label="Deactivate" onPress={onDeactivate} style={styles.actionInline} />
+            <PayrollButton label="Deactivate" onPress={onDeactivate} style={styles.actionInline} />
           ) : (
-            <SandButton label="Reactivate" onPress={onReactivate} style={styles.actionInline} />
+            <PayrollButton label="Reactivate" onPress={onReactivate} style={styles.actionInline} />
           )}
         </View>
 

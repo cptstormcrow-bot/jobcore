@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Text, TextInput, View } from 'react-native';
-import { SandButton } from './SandButton';
+import { PayrollButton } from '@jobcore/ui';
 import type {
   AdminReimbursement,
   PayrollAdminPort,
@@ -186,7 +186,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
       <ReceiptCapture uri={receiptUri} onChange={setReceiptUri} disabled={submitting} />
       {formError ? <Text style={{ color: '#b00020' }}>{formError}</Text> : null}
       {onRegisterActions ? null : (
-        <SandButton label="Submit" onPress={() => void onSubmit()} disabled={!canSubmit} />
+        <PayrollButton label="Submit" onPress={() => void onSubmit()} disabled={!canSubmit} />
       )}
 
       <Text style={{ fontWeight: '600', marginTop: 12 }}>My reimbursements</Text>
@@ -230,7 +230,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
                   <Text>{formatDate(r.createdAt)}</Text>
                 </View>
                 {r.receiptPhotoPath && typeof adminPort.getReceiptUrl === 'function' ? (
-                  <SandButton
+                  <PayrollButton
                     label="View receipt"
                     onPress={() => void onViewReceipt(r.receiptPhotoPath as string)}
                     style={{ alignSelf: 'center' }}

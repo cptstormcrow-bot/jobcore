@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { EmptyState, SandButton, Text, TextField } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -47,7 +47,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
     return (
       <View>
         <EmptyState title="Payroll is not available yet" />
-        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
+        {onBack ? <PayrollButton label="Back" onPress={onBack} /> : null}
       </View>
     );
   }
@@ -100,21 +100,21 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         error={weekStart && !validDate ? 'Use YYYY-MM-DD' : undefined}
       />
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {onBack ? <SandButton label="Back" onPress={onBack} /> : null}
-        <SandButton
+        {onBack ? <PayrollButton label="Back" onPress={onBack} /> : null}
+        <PayrollButton
           label="Close run"
           onPress={onClose}
           disabled={busy || !validDate || !closeRun}
         />
         {FORMATS.map((f) => (
-          <SandButton
+          <PayrollButton
             key={f.key}
             label={f.label}
-            selected={format === f.key}
+            style={format === f.key ? { borderBottomWidth: 2, borderBottomColor: '#2563eb' } : undefined}
             onPress={() => setFormat(f.key)}
           />
         ))}
-        <SandButton
+        <PayrollButton
           label="Export"
           onPress={onExport}
           disabled={busy || !batchId || !exportRun}

@@ -27,7 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, SandButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
@@ -941,7 +941,7 @@ export function AdminFinanceRoot() {
           <ScrollView contentContainerStyle={styles.content}>
             <View style={styles.jobsTitleRow}>
               <Text style={styles.jobsTitle}>Jobs</Text>
-              <SandButton label="Add Job" onPress={() => router.push('/job/new')} />
+              <PayrollButton label="Add Job" onPress={() => router.push('/job/new')} />
             </View>
             {(() => {
               const visibleJobs = loadState.jobs.filter(
@@ -972,7 +972,7 @@ export function AdminFinanceRoot() {
                         footer={footer}
                         onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                         style={{ paddingVertical: spacing.xs }}
-                        right={<SandButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />}
+                        right={<PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />}
                       />
                     );
                   })}

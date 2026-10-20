@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { SandButton } from '@jobcore/ui';
+import { PayrollButton } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
   PayrollSelfPort,
@@ -133,14 +133,14 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
 
   const picker = (
     <View style={{ alignItems: 'center', marginBottom: 8 }}>
-      <SandButton
+      <PayrollButton
         label="▲"
         accessibilityLabel="Next pay period"
         disabled={periodOffset === 0}
         onPress={() => setPeriodOffset((o) => Math.min(0, o + 1))}
       />
       <Text style={{ fontWeight: '600', marginVertical: 6 }}>{rangeLabel}</Text>
-      <SandButton
+      <PayrollButton
         label="▼"
         accessibilityLabel="Previous pay period"
         onPress={() => setPeriodOffset((o) => o - 1)}

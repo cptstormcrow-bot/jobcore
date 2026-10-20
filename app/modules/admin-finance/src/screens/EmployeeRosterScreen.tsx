@@ -15,7 +15,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { SandButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -119,9 +119,9 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
         <View style={styles.headerRow}>
           <ScreenTitle title="Employee Roster" />
           <View style={styles.headerActions}>
-            <SandButton label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
+            <PayrollButton label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
             {onViewInvitations ? (
-              <SandButton label="Pending Invitations" onPress={() => onViewInvitations?.()} />
+              <PayrollButton label="Pending Invitations" onPress={() => onViewInvitations?.()} />
             ) : null}
           </View>
         </View>

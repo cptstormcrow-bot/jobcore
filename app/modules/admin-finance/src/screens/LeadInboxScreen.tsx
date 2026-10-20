@@ -17,7 +17,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { SandButton, Card, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
+import { PayrollButton, Card, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { selectInboxLeads } from '../domain/lead-inbox';
 import type { LeadRepository } from '../data/ports';
@@ -103,7 +103,7 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead, onCreateL
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>Leads</Text>
-          <SandButton label="New Lead" onPress={() => onCreateLead?.()} disabled={!onCreateLead} />
+          <PayrollButton label="New Lead" onPress={() => onCreateLead?.()} disabled={!onCreateLead} />
         </View>
         {inboxLeads.length === 0 ? (
           <EmptyState title="No leads" message="This organization has no unconverted leads." />

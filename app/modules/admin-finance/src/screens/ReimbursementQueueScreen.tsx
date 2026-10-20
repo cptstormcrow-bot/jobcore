@@ -15,7 +15,7 @@
  * Reject REQUIRES a reason (`RejectReimbursementInput.reason`,
  * `validateRejectReason`) — this screen surfaces a minimal inline reason
  * input per row rather than inventing a modal/dialog component that isn't
- * in `@jobcore/ui` (`Button`, `Card`, `ListItem`, `EmptyState`,
+ * in `@jobcore/ui` (`PayrollButton`, `Card`, `ListItem`, `EmptyState`,
  * `LoadingState`, `ErrorState` only). The reason `TextInput` comes from
  * `react-native` directly, matching how `View`/`Text`/`ScrollView` are
  * already sourced in `PriceSheetListScreen.tsx`.
@@ -28,7 +28,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, TextInput, StyleSheet } from 'react-native';
-import { Card, ListItem, Button, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
 
@@ -252,31 +252,22 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
                   />
                 )}
                 <View style={styles.actions}>
-                  <Button
+                  <PayrollButton
                     label="Approve"
-                    variant="primary"
-                    size="sm"
                     disabled={isSubmitting}
                     onPress={() => handleApprove(item)}
-                    style={styles.actionButton}
                   />
                   {rejectOpen ? (
-                    <Button
+                    <PayrollButton
                       label="Confirm Reject"
-                      variant="outline"
-                      size="sm"
                       disabled={isSubmitting || (rejectReasons[item.id] ?? '').trim().length === 0}
                       onPress={() => handleReject(item)}
-                      style={styles.actionButton}
                     />
                   ) : (
-                    <Button
+                    <PayrollButton
                       label="Reject"
-                      variant="outline"
-                      size="sm"
                       disabled={isSubmitting}
                       onPress={() => setRejectOpenFor(item.id)}
-                      style={styles.actionButton}
                     />
                   )}
                 </View>
@@ -299,13 +290,10 @@ export function ReimbursementQueueScreen(props: ReimbursementQueueScreenProps = 
                     />
                     {rowState?.kind === 'failed' && <Text style={styles.rowError}>{rowState.message}</Text>}
                     <View style={styles.actions}>
-                      <Button
+                      <PayrollButton
                         label="Mark paid"
-                        variant="primary"
-                        size="sm"
                         disabled={isSubmitting}
                         onPress={() => handleMarkPaid(item)}
-                        style={styles.actionButton}
                       />
                     </View>
                   </View>
@@ -374,9 +362,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
+    flexWrap: 'wrap',
+    gap: 6,
   },
 });

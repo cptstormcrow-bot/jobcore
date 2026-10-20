@@ -1,7 +1,7 @@
 // JobCore screen #0062 - af-leadEdit - Edit Lead
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { Card, SandButton, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import type { Lead } from '../domain/lead';
@@ -126,9 +126,9 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
   return (
     <View style={styles.screen}>
     <View style={styles.actions}>
-      <SandButton label="Back" onPress={() => onBack?.()} />
-      <SandButton label="Save" onPress={handleSave} disabled={!canSubmit} />
-      <SandButton label="Create job" onPress={handleCreateJob} disabled={submitting} />
+      <PayrollButton label="Back" onPress={() => onBack?.()} />
+      <PayrollButton label="Save" onPress={handleSave} disabled={!canSubmit} />
+      <PayrollButton label="Create job" onPress={handleCreateJob} disabled={submitting} />
     </View>
     {readinessHint ? <Text style={[styles.guidance, styles.hintPad]}>{readinessHint}</Text> : null}
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
