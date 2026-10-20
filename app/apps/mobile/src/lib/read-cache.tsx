@@ -92,7 +92,8 @@ export async function patchReadCache(op: string, payload: unknown): Promise<void
       if (!row) continue;
       try {
         const rows = JSON.parse(row.payload);
-        const next = JSON.stringify(spec.patch(payload as never, rows));
+        const params = (() => { try { const v = JSON.parse(row.params); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; } catch { return {}; } })();
+        const next = JSON.stringify(spec.patch(payload as never, rows, params));
         await putCached({ key: row.key, orgId: row.orgId, userId: row.userId, query: row.query, params: row.params, payload: next, fetchedAt: row.fetchedAt, bytes: next.length });
       } catch {
         await deleteKeys([m.key]);

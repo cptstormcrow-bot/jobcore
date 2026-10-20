@@ -1,6 +1,6 @@
 // Optimistic read-cache patches: each queued op patches the cached query rows it affects (pure functions).
 // `queries` are exact cached query names (3rd key segment), as used by readCached(...) in the repo files.
-export type OpPatchSpec = { op: string; queries: string[]; patch: (payload: Record<string, unknown>, rows: unknown) => unknown };
+export type OpPatchSpec = { op: string; queries: string[]; patch: (payload: Record<string, unknown>, rows: unknown, params?: Record<string, unknown>) => unknown };
 
 type Row = Record<string, unknown>;
 const isObj = (v: unknown): v is Row => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -32,6 +32,20 @@ function dropFromItems(rows: unknown, pred: (r: Row) => boolean): unknown {
 }
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 const idIs = (id: unknown) => (r: Row) => id !== undefined && r.id === id;
+
+const INV_QUERIES = ['af.assignments.getInvestigatorTechId', 'af.assignments.listInvestigatorTechIds'];
+function setInvestigator(rows: unknown, params: Record<string, unknown> | undefined, jobId: unknown, techId: string | null): unknown {
+  if (typeof jobId !== 'string' || !jobId) return rows;
+  const p = params ?? {};
+  if (rows === null || typeof rows === 'string') return p.jobId === jobId ? techId : rows;
+  if (isObj(rows)) {
+    if (!Array.isArray(p.jobIds) || !p.jobIds.includes(jobId)) return rows;
+    const next: Record<string, unknown> = { ...rows };
+    if (techId === null) delete next[jobId]; else next[jobId] = techId;
+    return next;
+  }
+  return rows;
+}
 
 const JOB_QUERIES = ['ft.jobs.listAssignedToTech', 'ft.jobs.getById', 'af.jobs.getById', 'af.jobs.listForOrganization', 'app.jobs.byId', 'app.jobs.list'];
 
@@ -114,6 +128,34 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
       const row: Row = { id: p.id, user_id: p.userId, userId: p.userId, work_date: p.workDate, workDate: p.workDate, minutes: p.minutes, clock_in_at: p.clockInAt, clockInAt: p.clockInAt, clock_out_at: p.clockOutAt, clockOutAt: p.clockOutAt, source: p.source, notes: p.notes ?? null };
       if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id)) return mapRows(rows, idIs(p.id), (r) => ({ ...r, ...row }));
       return prepend(rows, { ...row, status: 'draft' });
+    },
+  },
+  {
+    op: 'job_assignment.remove_investigator',
+    queries: INV_QUERIES,
+    patch: (p, rows, params) => (isObj(p) ? setInvestigator(rows, params, p.jobId, null) : rows),
+  },
+  {
+    op: 'job_assignment.create',
+    queries: INV_QUERIES,
+    patch: (p, rows, params) => {
+      if (!isObj(p) || !isObj(p.draft) || p.draft.kind !== 'investigator') return rows;
+      const techId = str(p.draft.techId);
+      return techId ? setInvestigator(rows, params, p.draft.jobId, techId) : rows;
+    },
+  },
+  {
+    op: 'job_assignment.remove_for_job',
+    queries: INV_QUERIES,
+    patch: (p, rows, params) => (isObj(p) && p.kind === 'investigator' ? setInvestigator(rows, params, p.jobId, null) : rows),
+  },
+  {
+    op: 'job_assignment.claim',
+    queries: INV_QUERIES,
+    patch: (p, rows, params) => {
+      if (!isObj(p)) return rows;
+      const techId = str(p.techId);
+      return techId ? setInvestigator(rows, params, p.jobId, techId) : rows;
     },
   },
   { op: 'payroll_time.delete', queries: ['pr.time'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },

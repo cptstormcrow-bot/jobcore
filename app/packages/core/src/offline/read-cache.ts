@@ -63,7 +63,7 @@ export function selectEvictions(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type OpPatchSpec<P = any, R = any> = { op: string; queries: string[]; patch(payload: P, rows: R[]): R[] };
+export type OpPatchSpec<P = any, R = any> = { op: string; queries: string[]; patch(payload: P, rows: R[], params?: Record<string, unknown>): R[] };
 
 const patchRegistry = new Map<string, OpPatchSpec[]>();
 
