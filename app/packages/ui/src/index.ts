@@ -32,6 +32,7 @@ export * from './Breadcrumb';
 export * from './AppChrome';
 export * from './DefaultTabBar';
 export * from './PayrollButton';
+export * from './StepperPicker';
 export * from './telephony';
 export * from './walkthrough/walkthrough-content';
 export * from './walkthrough/WalkthroughProvider';

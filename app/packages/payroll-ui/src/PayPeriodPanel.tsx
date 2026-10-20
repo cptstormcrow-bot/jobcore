@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { PayrollButton } from '@jobcore/ui';
+import { StepperPicker } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
   PayrollSelfPort,
@@ -132,20 +132,14 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
   const rangeLabel = data ? formatRange(data.weekStart, data.weekEnd) : 'Loading...';
 
   const picker = (
-    <View style={{ alignItems: 'center', marginBottom: 8 }}>
-      <PayrollButton
-        label="▲"
-        accessibilityLabel="Next pay period"
-        disabled={periodOffset === 0}
-        onPress={() => setPeriodOffset((o) => Math.min(0, o + 1))}
-      />
-      <Text style={{ fontWeight: '600', marginVertical: 6 }}>{rangeLabel}</Text>
-      <PayrollButton
-        label="▼"
-        accessibilityLabel="Previous pay period"
-        onPress={() => setPeriodOffset((o) => o - 1)}
-      />
-    </View>
+    <StepperPicker
+      value={rangeLabel}
+      prevLabel="Previous pay period"
+      nextLabel="Next pay period"
+      onPrev={() => setPeriodOffset((o) => o - 1)}
+      onNext={() => setPeriodOffset((o) => Math.min(0, o + 1))}
+      nextDisabled={periodOffset === 0}
+    />
   );
 
   let body;

@@ -28,3 +28,11 @@ The standing "Payroll style" button is `PayrollButton` (`app/packages/ui/src/Pay
 - The two `SandButton` definitions (`sand.ts`, `payroll-ui/src/SandButton.tsx`) and the payroll-ui `index.ts` export were deleted 2026-10-20; `sand.ts` keeps `SAND_BG`/`SAND_TEXT` (used by `UniversalCalendar`).
 - `PayrollButton` has no `selected` prop and no children. Express a selected state through `style` with `borderBottomWidth: 2` and a blue `borderBottomColor`. `AssignmentBoardScreen` Service/Prem uses `'#2563eb'`; `AxisPicker` and the `PayrollRunScreen` format selector follow the same pattern (`AxisPicker` uses `colors.info` because of its no-raw-hex rule).
 - Source screen: #0010 (Payroll) (registry #0010 = Admin & Finance root; Payroll = #88).
+
+## Standard picker
+
+- Any value-stepping picker in JobCore (pay period, week, month, date range) uses `StepperPicker` from `@jobcore/ui` (`packages/ui/src/StepperPicker.tsx`). Never hand-roll one.
+- Layout is fixed: previous arrow (◀) on the LEFT, the current value centered, next arrow (▶) on the RIGHT, all on one row. Arrows are never stacked top/bottom.
+- Arrows are `PayrollButton`s, so they follow the Payroll button style.
+- Props: `value`, `onPrev`, `onNext`, `prevLabel`, `nextLabel` (accessibility labels), optional `prevDisabled` / `nextDisabled`. Disable "next" when stepping past the present makes no sense (e.g. the current pay period).
+- Reference use: the Pay period tab on screen #0088 (`packages/payroll-ui/src/PayPeriodPanel.tsx`).
