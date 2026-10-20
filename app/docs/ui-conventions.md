@@ -19,12 +19,12 @@ Jeff's rule (2026-10-18): the default tab bar for all JobCore screens is the one
 
 ## Buttons (Payroll style)
 
-The standing "Payroll style" button is `PayrollButton` (`app/packages/ui/src/PayrollButton.tsx`, exported from `@jobcore/ui`), taken from the screen #0010 Payroll header buttons (registry #0010 = Admin & Finance root; Payroll = #88). `PayrollButton` is the standard. `Button` (`app/packages/ui/src/Button.tsx`) and `SandButton` (`app/packages/ui/src/sand.ts`, re-exported by `app/packages/payroll-ui/src/SandButton.tsx`) are legacy and deprecated; neither carries the Payroll look.
+The standing "Payroll style" button is `PayrollButton` (`app/packages/ui/src/PayrollButton.tsx`, exported from `@jobcore/ui`), taken from the screen #0010 Payroll header buttons (registry #0010 = Admin & Finance root; Payroll = #88). `PayrollButton` is the standard. `Button` (`app/packages/ui/src/Button.tsx`) is legacy and deprecated and does not carry the Payroll look; the `SandButton` component was deleted 2026-10-20 (`sand.ts` now holds only the `SAND_BG` / `SAND_TEXT` colour constants).
 
 - Fixed height 32, `paddingHorizontal` 14, radius 6; 14/18/700 label (`#000`) centred on both axes; `hitSlop` top 6 / bottom 6.
 - Sand fill, `colors.sandInactive` when disabled.
-- All NEW buttons use `PayrollButton`; do not use the legacy `Button` or `SandButton`; no one-off inline button styles.
+- All NEW buttons use `PayrollButton`; do not use the legacy `Button`; no one-off inline button styles.
 - `PayrollButton` (from `@jobcore/ui`) is the current button. Retrofit status: all live buttons use `PayrollButton` (2026-10-20), including admin-finance screens, `AxisPicker`, and the payroll-ui panels `TimesheetApprovalPanel`, `PayPeriodPanel`, `PayrollHome`, `ReceiptCapture`, `ReimbursementPanel` and `TimeEntryPanel`.
-- The two `SandButton` definitions (`app/packages/ui/src/sand.ts` and `app/packages/payroll-ui/src/SandButton.tsx`) and the payroll-ui `index.ts` export are retained and become deletable in a later cleanup; the orphaned `SandButton` import in `TimeEntryPanel.tsx` was removed 2026-10-20.
+- The two `SandButton` definitions (`sand.ts`, `payroll-ui/src/SandButton.tsx`) and the payroll-ui `index.ts` export were deleted 2026-10-20; `sand.ts` keeps `SAND_BG`/`SAND_TEXT` (used by `UniversalCalendar`).
 - `PayrollButton` has no `selected` prop and no children. Express a selected state through `style` with `borderBottomWidth: 2` and a blue `borderBottomColor`. `AssignmentBoardScreen` Service/Prem uses `'#2563eb'`; `AxisPicker` and the `PayrollRunScreen` format selector follow the same pattern (`AxisPicker` uses `colors.info` because of its no-raw-hex rule).
 - Source screen: #0010 (Payroll) (registry #0010 = Admin & Finance root; Payroll = #88).
