@@ -36,6 +36,8 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
 
 const styles = StyleSheet.create({
   button: {
+    // label-fit width: never stretch across a column parent (Jeff 2026-10-20)
+    alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
     height: 32,

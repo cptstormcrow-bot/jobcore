@@ -204,7 +204,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   actionInline: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
