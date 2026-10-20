@@ -6,8 +6,8 @@
  */
 
 import React, { useState } from 'react';
-import { Pressable, Text as RNText, View } from 'react-native';
-import { colors, EmptyState, Text, TextField } from '@jobcore/ui';
+import { View } from 'react-native';
+import { EmptyState, SandButton, Text, TextField } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -24,40 +24,6 @@ const FORMATS: { key: PayrollExportFormat; label: string }[] = [
   { key: 'qbo_journal_csv', label: 'QBO journal CSV' },
   { key: 'iif_journal', label: 'IIF' },
 ];
-
-const sandButton = {
-  backgroundColor: colors.sand,
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  minHeight: 44,
-  justifyContent: 'center',
-  borderRadius: 6,
-} as const;
-const sandButtonLabel = { color: '#000', fontWeight: '700' } as const;
-
-function SandButton(props: {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  selected?: boolean;
-}) {
-  const { label, onPress, disabled, selected } = props;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      disabled={disabled}
-      style={[
-        sandButton,
-        selected ? { borderWidth: 2, borderColor: '#000' } : null,
-        disabled ? { backgroundColor: colors.sandInactive } : null,
-      ]}
-    >
-      <RNText style={sandButtonLabel}>{label}</RNText>
-    </Pressable>
-  );
-}
 
 const DATE_RE =/^\d{4}-\d{2}-\d{2}$/;
 

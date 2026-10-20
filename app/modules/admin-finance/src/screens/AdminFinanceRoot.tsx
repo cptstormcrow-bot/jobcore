@@ -27,7 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Card, ListItem, Button, ScreenTitle, SandButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius } from '@jobcore/ui';
+import { Card, ListItem, Button, SandButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
@@ -128,11 +128,25 @@ function formatDate(iso: string | null): string {
   return parsed.toLocaleDateString();
 }
 
+// Registry keys are case-sensitive, so lowercase host sub-views fall back to #10 without this map.
+const SCREEN_NUMBER_KEY: Record<string, string> = { payroll: 'Payroll', payrollRun: 'PayrollRun', payrollSettings: 'PayrollSettings' };
+
 export function AdminFinanceRoot() {
   const router = useRouter();
   const [subView, setSubView] = useState<SubView>('overview');
-  useScreenNumber({ subView: subView === 'paymentReview' ? undefined : subView });
+  useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const jobNumbers = useMemo<Record<string, number | null | undefined>>(() => {
+    const map: Record<string, number | null | undefined> = {};
+    for (const job of loadState.kind === 'loaded' ? loadState.jobs : []) map[job.id] = job.jobNumber;
+    return map;
+  }, [loadState]);
+  const employeeNames = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {};
+    for (const employee of loadState.kind === 'loaded' ? loadState.employees : []) map[employee.id] = employee.fullName;
+    return map;
+  }, [loadState]);
+  const onOpenJob = (jobId: string) => router.push({ pathname: '/job/[jobId]', params: { jobId, panel: 'plan' } });
   const [showTestJobs, setShowTestJobs] = useState(false);
   const [showTestEmployees, setShowTestEmployees] = useState(true);
   const [editorIsTest, setEditorIsTest] = useState(false);
@@ -925,8 +939,8 @@ export function AdminFinanceRoot() {
           </ScrollView>
         ) : (
           <ScrollView contentContainerStyle={styles.content}>
-            <ScreenTitle title="Jobs #0012" />
-            <View style={{ alignSelf: 'flex-start', marginBottom: spacing.sm }}>
+            <View style={styles.jobsTitleRow}>
+              <Text style={styles.jobsTitle}>Jobs</Text>
               <SandButton label="Add Job" onPress={() => router.push('/job/new')} />
             </View>
             {(() => {
@@ -1061,11 +1075,14 @@ export function AdminFinanceRoot() {
           onBackFromPayoutBatch={handleBackToPayoutBatches}
           scrollToSection={paymentsScrollTarget}
           onScrollHandled={() => setPaymentsScrollTarget(null)}
+          jobNumbers={jobNumbers}
+          employeeNames={employeeNames}
+          onOpenJob={onOpenJob}
         />
       ) : subView === 'paymentReview' ? (
         (() => {
           const { ReconciliationView, client } = getModulePorts().paymentReview;
-          return <ReconciliationView client={client} />;
+          return <ReconciliationView client={client} jobNumbers={jobNumbers} employeeNames={employeeNames} onOpenJob={onOpenJob} />;
         })()
       ) : subView === 'assignmentBoard' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
@@ -1285,6 +1302,18 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md },
   card: { marginBottom: spacing.md },
+  jobsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: spacing.xs,
+  },
+  jobsTitle: {
+    color: colors.text,
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.headingBold,
+  },
   overviewContent: { paddingTop: spacing.xs },
   overviewCard: {
     minHeight: 48,

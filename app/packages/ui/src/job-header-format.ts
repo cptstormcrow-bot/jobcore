@@ -22,6 +22,11 @@ export function formatJobNumberLine(
   return `Job #${jobNumber ?? '—'} - ${formatCreatedDate(createdAt, locale)}`;
 }
 
+/** "Job #<n>" for a finite job number; "Job #—" otherwise (never falls back to a raw id). */
+export function formatJobNumberLabel(n: number | null | undefined): string {
+  return typeof n === 'number' && Number.isFinite(n) ? `Job #${n}` : 'Job #—';
+}
+
 /** Two separate lines: "Job #<n>" and the created date (em dash when missing/invalid). */
 export function formatJobHeaderLines(
   jobNumber: number | string | null | undefined,

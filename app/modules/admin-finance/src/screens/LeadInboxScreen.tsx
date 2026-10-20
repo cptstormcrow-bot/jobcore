@@ -16,8 +16,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing } from '@jobcore/ui';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { SandButton, Card, EmptyState, LoadingState, ErrorState, colors, spacing, typography } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { selectInboxLeads } from '../domain/lead-inbox';
 import type { LeadRepository } from '../data/ports';
@@ -101,8 +101,10 @@ export function LeadInboxScreen({ leads: leadRepository, onSelectLead, onCreateL
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle title="Leads" />
-        <Button label="New Lead" onPress={() => onCreateLead?.()} disabled={!onCreateLead} style={styles.action} />
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Leads</Text>
+          <SandButton label="New Lead" onPress={() => onCreateLead?.()} disabled={!onCreateLead} />
+        </View>
         {inboxLeads.length === 0 ? (
           <EmptyState title="No leads" message="This organization has no unconverted leads." />
         ) : (
@@ -130,7 +132,16 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: spacing.sm,
   },
-  action: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
     marginBottom: spacing.xs,
+  },
+  title: {
+    color: colors.text,
+    fontSize: typography.size.h4,
+    fontFamily: typography.fontFamily.headingBold,
   },
 });

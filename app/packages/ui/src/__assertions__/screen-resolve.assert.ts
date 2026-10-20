@@ -127,6 +127,22 @@ test('real registry sanity', () => {
   assert.equal(resolveScreen('/m/admin-finance', r)?.number, 10);
   assert.equal(resolveScreen('/m/field-tech', r)?.number, 6);
   assert.equal(resolveScreen('/m/sales-marketing', r)?.number, 38);
+  assert.equal(resolveScreen('/m/admin-finance', r, 'paymentReview')?.number, 33);
+});
+
+test('scopeOf maps payment-review into admin-finance', () => {
+  assert.equal(scopeOf('modules/payment-review/src/screens/ReconciliationView.tsx'), 'modules/admin-finance');
+  assert.equal(scopeOf('modules/admin-finance/src/x.tsx'), 'modules/admin-finance');
+  assert.equal(scopeOf('modules/sales-marketing/src/x.tsx'), 'modules/sales-marketing');
+});
+
+test('paymentReview subView resolves under admin-finance shell', () => {
+  const fx: RegistryEntry[] = [
+    e(10, '/m/admin-finance', { file: 'modules/admin-finance/src/a.tsx' }),
+    e(33, null, { subView: 'paymentReview', file: 'modules/payment-review/src/screens/ReconciliationView.tsx' }),
+  ];
+  assert.equal(resolveScreen('/m/admin-finance', fx, 'paymentReview')?.number, 33);
+  assert.equal(resolveScreen('/m/admin-finance', fx, undefined)?.number, 10);
 });
 
 test('lowest number tie-break', () => {

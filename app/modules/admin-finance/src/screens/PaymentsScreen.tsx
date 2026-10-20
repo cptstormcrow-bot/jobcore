@@ -20,13 +20,17 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
-import { View, StyleSheet } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text } from '@jobcore/ui';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PaymentsScreenProps {
   payments?: PaymentsRepository;
+  jobNumbers?: Record<string, number | null | undefined>;
+  /** Display names keyed by employee id; an unmatched confirmer renders as `Unknown tech`. */
+  employeeNames?: Record<string, string>;
+  onOpenJob?: (jobId: string) => void;
 }
 
 type LoadState =
@@ -56,7 +60,18 @@ function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenProps = {}) {
+export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob }: PaymentsScreenProps = {}) {
+  const renderJobTitle = (jobId: string) => {
+    const label = formatJobNumberLabel(jobNumbers?.[jobId]);
+    if (!onOpenJob) {
+      return <Text style={styles.action}>{label}</Text>;
+    }
+    return (
+      <Pressable accessibilityRole="button" accessibilityLabel={`Open ${label}`} onPress={() => onOpenJob(jobId)}>
+        <Text style={styles.action}>{label}</Text>
+      </Pressable>
+    );
+  };
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const session = getModuleSession();
   const rev = useReadCacheRevision();
@@ -131,7 +146,7 @@ export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenP
           <Card style={styles.card}>
             {loadState.needsAttention.map((payment) => (
               <View key={payment.id} style={styles.row}>
-                <Text style={styles.action}>Job {payment.jobId}</Text>
+                {renderJobTitle(payment.jobId)}
                 <Text style={styles.detail}>
                   {payment.status} — {formatAmount(payment.amount)}
                 </Text>
@@ -146,13 +161,13 @@ export function PaymentsScreen({ payments: paymentsRepository }: PaymentsScreenP
         ) : (
           Array.from(confirmedGroups.entries()).map(([techId, groupedPayments]) => (
             <Card key={techId} style={styles.card}>
-              <Text style={styles.groupTitle}>{techId}</Text>
+              <Text style={styles.groupTitle}>{employeeNames?.[techId] ?? 'Unknown tech'}</Text>
               {groupedPayments.map((payment) => (
                 <View key={payment.id} style={styles.row}>
-                  <Text style={styles.action}>Job {payment.jobId}</Text>
+                  {renderJobTitle(payment.jobId)}
                   <Text style={styles.detail}>
                     {formatAmount(payment.amount)}
-                    {payment.confirmedAt ? ` — ${payment.confirmedAt}` : ''}
+                    {payment.confirmedAt ? ` — ${formatCreatedDate(payment.confirmedAt)}` : ''}
                   </Text>
                 </View>
               ))}

@@ -44,6 +44,10 @@ export interface PaymentsHubScreenProps {
   onBackFromPayoutBatch: () => void;
   scrollToSection?: 'payoutBatches' | null;
   onScrollHandled?: () => void;
+  jobNumbers?: Record<string, number | null | undefined>;
+  onOpenJob?: (jobId: string) => void;
+  /** Display names keyed by employee id; passed through to the Payments screen. */
+  employeeNames?: Record<string, string>;
 }
 
 export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
@@ -56,6 +60,9 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     onBackFromPayoutBatch,
     scrollToSection,
     onScrollHandled,
+    jobNumbers,
+    onOpenJob,
+    employeeNames,
   } = props;
 
   const [activeKey, setActiveKey] = useState<HubTab>('payments');
@@ -72,7 +79,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     <View style={styles.screen}>
       <DefaultTabBar tabs={HUB_TABS} activeId={activeKey} onChange={setActiveKey} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {activeKey === 'payments' ? <PaymentsScreen payments={payments} /> : null}
+        {activeKey === 'payments' ? <PaymentsScreen payments={payments} jobNumbers={jobNumbers} onOpenJob={onOpenJob} employeeNames={employeeNames} /> : null}
         {activeKey === 'reimbursements' ? <ReimbursementQueueScreen reimbursements={reimbursements} /> : null}
         {activeKey === 'payoutBatches' ? (
           selectedPayoutBatch ? (

@@ -17,12 +17,12 @@ Jeff's rule (2026-10-18): the default tab bar for all JobCore screens is the one
 - Source screen: #0010 (Payroll).
 - The Hours tab uses a second `DefaultTabBar` (Day/Week/Month/Year) under the top tab bar.
 
-## Buttons (PayrollButton)
+## Buttons (Payroll style)
 
-The default JobCore button is `PayrollButton` from `@jobcore/ui` (`app/packages/ui/src/PayrollButton.tsx`), taken from the screen #0010 Payroll header buttons.
+The standing "Payroll style" button is `SandButton` (`app/packages/ui/src/sand.ts`, re-exported by `app/packages/payroll-ui/src/SandButton.tsx`), taken from the screen #0010 Payroll header buttons. `Button` (`app/packages/ui/src/Button.tsx`) now carries the same look.
 
-- 32pt tall, label centered both ways, sand fill, `colors.sandInactive` when disabled; `hitSlop` keeps the 44pt touch target.
-- Props: `label`, `onPress`, `disabled?`, `accessibilityLabel?`, `testID?`, `style?`.
-- All NEW buttons use it; no one-off inline button styles.
-- Existing `SandButton` screens are not retrofitted unless requested.
+- Padding 3/11 plus a 1px transparent border, 14px label, radius 6, no `minHeight`, `hitSlop` 6/6/3/3.
+- Sand fill, `colors.sandInactive` when disabled.
+- All NEW buttons use `SandButton` or `Button`; no one-off inline button styles.
+- `PayrollButton` is superseded; do not use it in new code.
 - Source screen: #0010 (Payroll).

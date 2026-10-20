@@ -9,8 +9,8 @@
  */
 
 import React from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
-import { colors, EmptyState, Text, TextField, Toggle } from '@jobcore/ui';
+import { ScrollView, View } from 'react-native';
+import { EmptyState, SandButton, Text, TextField, Toggle } from '@jobcore/ui';
 import type { PayrollSettings } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
@@ -29,30 +29,6 @@ const QB_FIELDS: { key: QbKey; label: string }[] = [
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-const sandButton = {
-  backgroundColor: colors.sand,
-  paddingHorizontal: 12,
-  paddingVertical: 6,
-  minHeight: 44,
-  justifyContent: 'center',
-  borderRadius: 6,
-} as const;
-const sandButtonLabel = { color: '#000', fontWeight: '700' } as const;
-
-function SandButton(props: { label: string; onPress: () => void; disabled?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={props.label}
-      disabled={props.disabled}
-      onPress={props.onPress}
-      style={[sandButton, props.disabled ? { backgroundColor: colors.sandInactive } : null]}
-    >
-      <Text style={sandButtonLabel}>{props.label}</Text>
-    </Pressable>
-  );
-}
 
 function toInt(text: string): number {
   const n = parseInt(text, 10);

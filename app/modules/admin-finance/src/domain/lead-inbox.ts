@@ -7,9 +7,8 @@
  *
  * Filters to unconverted leads only (`convertedJobId === null`). Never
  * filters by readiness — an incomplete (`needs_info`) lead is first-class
- * and must appear like any other (`03-P3-admin-finance.md` lines 48-53:
- * "Show them plainly as needs info; do not hide them and do not fabricate
- * defaults").
+ * and appears like any other: no badge, no hidden rows, and defaults are
+ * never fabricated (`03-P3-admin-finance.md` lines 48-53).
  */
 
 import type { Lead } from './lead';

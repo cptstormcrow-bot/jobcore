@@ -1,7 +1,7 @@
 // JobCore screen #0062 - af-leadEdit - Edit Lead
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { Card, Button, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, SandButton, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import type { Lead } from '../domain/lead';
@@ -124,7 +124,14 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+    <View style={styles.screen}>
+    <View style={styles.actions}>
+      <SandButton label="Back" onPress={() => onBack?.()} />
+      <SandButton label="Save" onPress={handleSave} disabled={!canSubmit} />
+      <SandButton label="Create job" onPress={handleCreateJob} disabled={submitting} />
+    </View>
+    {readinessHint ? <Text style={[styles.guidance, styles.hintPad]}>{readinessHint}</Text> : null}
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <ScreenTitle eyebrow="Lead" title="Edit lead" subtitle={lead.sourceForm ?? undefined} />
       <Card style={styles.card}>
         <Text style={styles.label}>Name</Text>
@@ -189,20 +196,16 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
         ) : null}
 
         {submitError ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        {readinessHint ? <Text style={styles.guidance}>{readinessHint}</Text> : null}
 
-        <View style={styles.actions}>
-          <Button label="Back" variant="secondary" onPress={onBack} style={styles.action} />
-          <Button label="Save" onPress={handleSave} disabled={!canSubmit} style={styles.action} />
-          <Button label="Create job" onPress={handleCreateJob} disabled={submitting} style={styles.action} />
-        </View>
       </Card>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
+  scroll: { flex: 1 },
   content: { padding: spacing.md },
   card: { padding: spacing.md },
   guidance: {
@@ -236,11 +239,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: spacing.md,
-    gap: spacing.sm,
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    paddingBottom: 6,
+    backgroundColor: colors.offWhite,
   },
-  action: {
-    marginLeft: spacing.sm,
-  },
+  hintPad: { paddingHorizontal: spacing.md },
 });

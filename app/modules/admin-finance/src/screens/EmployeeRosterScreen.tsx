@@ -15,7 +15,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { SandButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -119,9 +119,9 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
         <View style={styles.headerRow}>
           <ScreenTitle title="Employee Roster" />
           <View style={styles.headerActions}>
-            <Button label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
+            <SandButton label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
             {onViewInvitations ? (
-              <Button label="Pending Invitations" onPress={() => onViewInvitations?.()} />
+              <SandButton label="Pending Invitations" onPress={() => onViewInvitations?.()} />
             ) : null}
           </View>
         </View>
@@ -173,6 +173,6 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: 6,
   },
 });

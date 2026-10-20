@@ -1,4 +1,4 @@
-// JobCore screen #0033 - af-paymentReview - Review
+// JobCore screen #0089 - af-review - Review
 /**
  * Reconciliation screen for the payment-review module.
  *
@@ -7,6 +7,7 @@
  *    (queried against the `payments` table's `status` column).
  *  - Manually confirmed: `'manual_confirmed'` payments grouped by the tech
  *    who confirmed them (`confirmed_by`).
+ *  Both lists show the short job number (`Job #N`) and tap-to-open-job.
  *
  * Data-fetch shape mirrors `data/ports.ts`'s `hasSettledPaymentForJob` /
  * `SupabaseSelectClient` discipline (a narrow `.from().select().in()`
@@ -28,13 +29,19 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, formatJobNumberLabel, formatCreatedDate } from '@jobcore/ui';
 
 import type { PaymentRow, SupabaseSelectClient } from '../data/ports';
 
 export interface ReconciliationViewProps {
   /** Injected query client — the host is the sole source, mirroring `index.ts`'s `setSupabaseClient`. */
   client: SupabaseSelectClient;
+  /** Short human job numbers keyed by job id; a missing entry renders as `Job #—`. */
+  jobNumbers?: Record<string, number | null | undefined>;
+  /** Display names keyed by employee id; an unmatched confirmer renders as `Unknown tech`. */
+  employeeNames?: Record<string, string>;
+  /** Tapping a job row opens that job. */
+  onOpenJob?: (jobId: string) => void;
 }
 
 const NEEDS_ATTENTION_STATUSES: readonly string[] = ['pending', 'failed'];
@@ -66,7 +73,7 @@ function formatAmount(amount: number): string {
  * Read-only — this screen issues no writes against `payments` or any other
  * table.
  */
-export function ReconciliationView({ client }: ReconciliationViewProps): React.ReactElement {
+export function ReconciliationView({ client, jobNumbers, employeeNames, onOpenJob }: ReconciliationViewProps): React.ReactElement {
   const [needsAttention, setNeedsAttention] = useState<PaymentRow[]>([]);
   const [manualConfirmed, setManualConfirmed] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,7 +138,8 @@ export function ReconciliationView({ client }: ReconciliationViewProps): React.R
           {needsAttention.map((row) => (
             <ListItem
               key={row.id}
-              title={`Job ${row.job_id}`}
+              title={formatJobNumberLabel(jobNumbers?.[row.job_id])}
+              onPress={onOpenJob ? () => onOpenJob(row.job_id) : undefined}
               subtitle={`${row.status} — ${formatAmount(row.amount)}`}
             />
           ))}
@@ -144,12 +152,13 @@ export function ReconciliationView({ client }: ReconciliationViewProps): React.R
       ) : (
         Array.from(confirmedGroups.entries()).map(([techId, rows]) => (
           <Card key={techId} style={styles.section}>
-            <Text style={styles.groupTitle}>{techId}</Text>
+            <Text style={styles.groupTitle}>{employeeNames?.[techId] ?? UNKNOWN_CONFIRMER_LABEL}</Text>
             {rows.map((row) => (
               <ListItem
                 key={row.id}
-                title={`Job ${row.job_id}`}
-                subtitle={`${formatAmount(row.amount)}${row.confirmed_at ? ` — ${row.confirmed_at}` : ''}`}
+                title={formatJobNumberLabel(jobNumbers?.[row.job_id])}
+                onPress={onOpenJob ? () => onOpenJob(row.job_id) : undefined}
+                subtitle={`${formatAmount(row.amount)}${row.confirmed_at ? ` — ${formatCreatedDate(row.confirmed_at)}` : ''}`}
               />
             ))}
           </Card>

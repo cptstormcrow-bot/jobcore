@@ -40,7 +40,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, Button, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, SandButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -391,39 +391,33 @@ export function AssignmentBoardScreen({
 
   return (
     <View style={styles.screen}>
+      <View style={styles.sortTabsRow}>
+        <DefaultTabBar<'order' | 'off'>
+          tabs={[{ id: 'order', label: sortDirection === 'asc' ? 'First to Last' : 'Last to First' }]}
+          activeId={sortDirection === 'asc' ? 'order' : 'off'}
+          onChange={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+        />
+        <DefaultTabBar<'unassigned' | 'off'>
+          tabs={[{ id: 'unassigned', label: 'Unassigned' }]}
+          activeId={unassignedOnTop ? 'unassigned' : 'off'}
+          onChange={() => setUnassignedOnTop((v) => !v)}
+        />
+      </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator {...(Platform.OS === 'android' ? { persistentScrollbar: true } : {})}>
         <Card style={styles.poolCard}>
-          <Text style={styles.poolTitle}>Jobs</Text>
+          <Text style={styles.poolTitle}>Job Assignments</Text>
           {showTestJobs ? (
           <View style={styles.categorySegmentRow}>
             {(showTestJobs ? (['real', 'beta', 'test', 'all'] as const) : (['real'] as const)).map((cat) => (
-              <Button
+              <SandButton
                 key={cat}
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
-                variant={category === cat ? 'primary' : 'outline'}
-                style={category === cat ? undefined : styles.inactiveButton}
-                size="sm"
                 onPress={() => setCategory(cat)}
+                style={{ borderBottomWidth: 2, borderBottomColor: category === cat ? '#2563eb' : 'transparent' }}
               />
             ))}
           </View>
           ) : null}
-          <View style={styles.categorySegmentRow}>
-            <Button
-              label={sortDirection === 'asc' ? 'First to Last' : 'Last to First'}
-              variant="outline"
-              style={styles.inactiveButton}
-              size="sm"
-              onPress={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            />
-            <Button
-              label="Unassigned"
-              variant={unassignedOnTop ? 'primary' : 'outline'}
-              style={unassignedOnTop ? undefined : styles.inactiveButton}
-              size="sm"
-              onPress={() => setUnassignedOnTop((v) => !v)}
-            />
-          </View>
           <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No jobs.</Text>
@@ -448,7 +442,7 @@ export function AssignmentBoardScreen({
               return (
                 <Pressable key={job.id} onPress={() => handleSelectUnassignedJob(job)}>
                   <View style={[styles.poolRow, selected ? styles.poolRowSelected : null]}>
-                    {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as Button/Select in rowActions). */}
+                    {/* Own Pressable: innermost responder wins, so this tap does not also fire the row's select Pressable (same as SandButton/Select in rowActions). */}
                     <Pressable
                       style={({ pressed }) => [styles.rowDetail, pressed ? { opacity: 0.6 } : null]}
                       onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
@@ -471,12 +465,12 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <Button label="Service" variant={kind === 'service' ? 'primary' : 'outline'} size="sm" style={[styles.actionButton, kind === 'service' ? null : styles.inactiveButton]} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} />
+                        <SandButton label="Service" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <Button label="Prem" variant={kind === 'prem' ? 'primary' : 'outline'} size="sm" style={[styles.actionButton, kind === 'prem' ? null : styles.inactiveButton]} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} />
+                        <SandButton label="Prem" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
                       </View>
-                      {/* Own Pressable (via Button/Select) so RN's nested-touch-responder
+                      {/* Own Pressable (via SandButton/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
                           select-for-assignment Pressable above. */}
                       <TechSelect
@@ -487,7 +481,7 @@ export function AssignmentBoardScreen({
                         style={styles.assignSelect}
                       />
                       <View style={styles.confirmSlot}>
-                        {showConfirm ? <Button label="Confirm" variant="primary" size="sm" style={styles.actionButton} onPress={() => handleRowConfirm(job)} /> : null}
+                        {showConfirm ? <SandButton label="Confirm" onPress={() => handleRowConfirm(job)} /> : null}
                       </View>
                     </View>
                   </View>
@@ -690,16 +684,7 @@ const styles = StyleSheet.create({
     minWidth: 56,
     marginRight: spacing.xs,
   },
-  // Board-only override of the 2026-08-30 44px standard in packages/ui Button.tsx.
-  actionButton: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 0,
-    minHeight: 44,
-  },
-  // G1: unselected segment/toggle buttons show sandInactive; selected uses the Button primary sand.
-  inactiveButton: {
-    backgroundColor: colors.sandInactive,
-  },
+  sortTabsRow: { flexDirection: 'row', flexWrap: 'wrap' },
   hint: {
     color: colors.textMuted,
     fontSize: typography.size.label,

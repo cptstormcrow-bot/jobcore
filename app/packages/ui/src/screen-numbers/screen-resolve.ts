@@ -47,7 +47,11 @@ export function matchRoute(
 export function scopeOf(file: string): string {
   const segs = file.split('/');
   const mi = segs.indexOf('modules');
-  if (mi >= 0 && mi + 1 < segs.length) return 'modules/' + segs[mi + 1];
+  if (mi >= 0 && mi + 1 < segs.length) {
+    const mod = segs[mi + 1];
+    // payment-review's ReconciliationView renders inside the admin-finance shell (Review sub-view), so it shares that scope.
+    return 'modules/' + (mod === 'payment-review' ? 'admin-finance' : mod);
+  }
   const ai = segs.indexOf('app');
   if (ai >= 0 && segs[ai + 1] === 'job') return 'job-detail';
   return 'other:' + segs.slice(0, -1).join('/');

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius, typography } from './tokens';
+import { colors, typography } from './tokens';
 
 export interface ButtonProps {
   label: string;
@@ -13,17 +13,14 @@ export interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-// Vertical metrics (padding + minHeight) are intentionally the SAME across every
-// size — this is the deliberate, permanent, app-wide button standard (per user
-// decision 2026-08-30): this exact uniform-height treatment applies to every
-// button in the app, including every button added from now on. sm/md/lg/tab
-// still differ by font size and horizontal padding only; height must never be
-// split into per-size variants. minHeight uses the standard 44px mobile
-// tap-target minimum, applied uniformly rather than per-size.
-const paddingBySize = { sm: spacing.sm, md: spacing.sm, lg: spacing.sm, tab: spacing.sm } as const;
-const fontBySize = { sm: typography.size.label, md: typography.size.body, lg: typography.size.h6, tab: typography.size.label } as const;
-const minHeightBySize = { sm: 44, md: 44, lg: 44, tab: 44 } as const;
-const paddingHorizontalBySize = { sm: spacing.lg, md: spacing.lg, lg: spacing.lg, tab: spacing.sm } as const;
+// Button now follows the Payroll look and matches SandButton (./sand.ts):
+// tight padding, radius 6, 14px label, same height at every size. No minHeight.
+// A transparent 1px border is kept on every variant (so the outline variant does
+// not change the box), absorbed in the padding: 4-1=3 vertical, 12-1=11 horizontal.
+// SandButton remains the sand variant with the selected/testID extras.
+const paddingBySize = { sm: 3, md: 3, lg: 3, tab: 3 } as const;
+const fontBySize = { sm: 14, md: 14, lg: 14, tab: 14 } as const;
+const paddingHorizontalBySize = { sm: 11, md: 11, lg: 11, tab: 11 } as const;
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, fullWidth = false, style }: ButtonProps) {
   const isOutline = variant === 'outline';
@@ -37,13 +34,12 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      hitSlop={8}
+      hitSlop={{ top: 6, bottom: 6, left: 3, right: 3 }}
       style={[
         styles.base,
         {
           backgroundColor: bg,
           paddingVertical: paddingBySize[size],
-          minHeight: minHeightBySize[size],
           paddingHorizontal: paddingHorizontalBySize[size],
         },
         isOutline && styles.outline,
@@ -58,25 +54,22 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
 }
 
 const styles = StyleSheet.create({
-  // Height comes entirely from paddingBySize/minHeightBySize above (same value
-  // at every size now) — no redundant minHeight here. This is well under the
-  // WCAG 2.5.5 44px touch-target minimum; `hitSlop={8}` on the Pressable above
-  // adds back an 8px hit-testing margin on all sides as a partial mitigation,
-  // per explicit user instruction to prioritize on-screen density over that
-  // guideline (tablet/phone space complaint).
+  // Button follows the Payroll look and matches SandButton: height comes from
+  // paddingBySize above (same at every size), no minHeight. The Pressable's
+  // per-side hitSlop (same as SandButton) keeps the tap target comfortable.
+  // SandButton remains the sand variant with selected/testID extras.
   // borderWidth is reserved on `base` (not just `outline`) so toggling variant
   // never changes the rendered box size — only borderColor toggles, including
   // to 'transparent' when there's no visible border to draw.
   base: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: 'transparent',
   },
   outline: { borderColor: colors.primary },
   disabled: { opacity: 0.5 },
-  label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, textAlign: 'center' },
+  label: { fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, textAlign: 'center', includeFontPadding: false, textAlignVertical: 'center' },
   labelPrimary: { fontFamily: typography.fontFamily.headingBold, fontWeight: typography.weight.bold },
 });
