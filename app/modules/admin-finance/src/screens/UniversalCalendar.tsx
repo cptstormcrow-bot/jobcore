@@ -1,5 +1,5 @@
 // JobCore shared Universal Calendar (admin + tech) - month/week/day with blackout day-picking and time-off requests (replaces #0031).
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { Button, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
@@ -84,6 +84,8 @@ export interface UniversalCalendarProps {
   onPickDay?: (day: Date) => void;
   onSubmitTimeOff?: (draft: UniversalCalendarTimeOffDraft, techId: string) => Promise<void> | void;
   onCancelTimeOff?: (requestId: string) => Promise<void> | void;
+  /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
+  renderDayActions?: (day: Date) => ReactNode;
 }
 
 export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Element {
@@ -361,7 +363,10 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           onDayPress={dayPickActive ? (d) => handleDayPress(format(d, 'yyyy-MM-dd')) : props.onPickDay}
         />
       ) : (
-        <DayView date={anchor} jobs={calendarJobs} timeOff={timeOffEvents} onJobPress={onSelectJob} />
+        <>
+          {props.renderDayActions?.(anchor)}
+          <DayView date={anchor} jobs={calendarJobs} timeOff={timeOffEvents} onJobPress={onSelectJob} />
+        </>
       )}
     </View>
   );

@@ -40,7 +40,6 @@ import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
-import { TimeOffQueueScreen } from './TimeOffQueueScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
@@ -73,7 +72,6 @@ type SubView =
   | 'planning' | 'jobEstimate'
   | 'assignmentBoard'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
-  | 'timeOffQueue'
   | 'reports'
   | 'payments' | 'paymentReview'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
@@ -88,7 +86,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
   priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
-  'blackout-editor': 'timeOffQueue',
+  'blackout-editor': 'calendar',
   payrollRun: 'payroll', payrollSettings: 'payroll',
 };
 
@@ -100,7 +98,7 @@ const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
   qualify: 'qualify-lead',
   assignmentBoard: 'af-assignments',
   priceSheetList: 'af-price-sheets', priceSheetEditor: 'af-price-sheets', priceSheetCreate: 'af-price-sheets',
-  timeOffQueue: 'af-time-off', 'blackout-editor': 'af-time-off',
+  'blackout-editor': 'af-time-off',
   reports: 'af-reports',
   payments: 'af-payments', paymentReview: 'af-review',
   'employee-roster': 'af-employees', 'employee-detail': 'af-employees', 'employee-editor': 'af-employees',
@@ -757,7 +755,7 @@ export function AdminFinanceRoot() {
   }
 
   const [blackoutInitialTechId, setBlackoutInitialTechId] = useState<string | undefined>(undefined);
-  const [blackoutReturnView, setBlackoutReturnView] = useState<SubView>('timeOffQueue');
+  const [blackoutReturnView, setBlackoutReturnView] = useState<SubView>('calendar');
 
   const activeTechs =
     loadState.kind === 'loaded'
@@ -766,7 +764,7 @@ export function AdminFinanceRoot() {
 
   function handleAddBlackout(initialTechId?: string) {
     setBlackoutInitialTechId(initialTechId);
-    setBlackoutReturnView(subView === 'calendar' ? 'calendar' : 'timeOffQueue');
+    setBlackoutReturnView('calendar');
     setSubView('blackout-editor');
   }
 
@@ -1063,8 +1061,6 @@ export function AdminFinanceRoot() {
           serviceAreas={loadState.kind === 'loaded' ? loadState.serviceAreas : []}
           onPublished={handlePublished}
         />
-      ) : subView === 'timeOffQueue' ? (
-        <TimeOffQueueScreen timeOffAdmin={ports.timeOffAdmin} onAddBlackout={handleAddBlackout} techs={activeTechs} />
       ) : subView === 'payments' ? (
         <PaymentsHubScreen
           payments={ports.payments}
@@ -1282,7 +1278,6 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',
   priceSheetCreate: 'New Price Sheet',
-  timeOffQueue: 'Time Off',
   reports: 'Reports',
   payments: 'Payments',
   paymentReview: 'Review',

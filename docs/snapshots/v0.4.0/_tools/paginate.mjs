@@ -19,7 +19,7 @@ const CONT_HEADER_MM = 14;
 const PAD_PX = 16;
 // Slack for rounding and borders.
 const SAFETY_PX = 14;
-const EDGE_TIMEOUT_MS = 60000;
+const EDGE_TIMEOUT_MS = 120000;
 
 // Card layout shared by the measure and check passes, so .info is measured at the width it prints at.
 const PAGE_W_PX = Math.round(PAGE_W_MM * MM);
@@ -123,7 +123,7 @@ const runEdge = (url) =>
   new Promise((resolve, reject) => {
     const child = spawn(
       edge,
-      ['--headless', '--disable-gpu', '--virtual-time-budget=30000', '--dump-dom', url],
+      ['--headless', '--disable-gpu', '--virtual-time-budget=60000', '--dump-dom', url],
       { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true },
     );
     let stdout = '';

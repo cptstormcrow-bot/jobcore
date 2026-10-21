@@ -18553,7 +18553,7 @@
         "titleDynamic": false,
         "subtitleDynamic": false
       },
-      "summary": "Admin & Finance landing: scrollable cards (Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Review, Time off, Calendar, Reports, Employees) with live counts; tap opens that sub-view. Gear menu: Logins, Settings, Profile.",
+      "summary": "Admin & Finance landing: scrollable cards (Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Review, Calendar, Reports, Employees) with live counts; tap opens that sub-view. Gear menu: Logins, Settings, Profile.",
       "flowStage": "none",
       "specStage": "Admin close-out",
       "purpose": "Gives owners/admins a one-tap dashboard hub with counts to jump into each admin/finance area of the org.",
@@ -22449,55 +22449,6 @@
       }
     },
     {
-      "key": "af-timeOffQueue",
-      "kind": "sub-view",
-      "module": "admin-finance",
-      "route": null,
-      "subView": "timeOffQueue",
-      "parentKey": "admin-finance",
-      "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-      "title": "Time Off",
-      "roles": [
-        "owner",
-        "admin"
-      ],
-      "mounted": true,
-      "notes": "",
-      "fileMissing": true,
-      "testIDs": [],
-      "accessibilityLabels": [],
-      "buttonLabels": [],
-      "components": {},
-      "pickers": [],
-      "menus": [],
-      "navTargets": [],
-      "tables": [],
-      "rpcs": [],
-      "repoMethods": [],
-      "imports": [],
-      "lineCount": 0,
-      "titleInSource": null,
-      "elements": [],
-      "chrome": null,
-      "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list, with a read-only Blackout calendar below them. An \"Add Blackout\" button opens the blackout editor; each Upcoming row has a \"Cancel\" button. The calendar shows pending and approved blackouts on a Month view by default (Week is remembered on this device), with a picker to show All Techs or one tech. Pending requests are decided automatically.",
-      "flowStage": "none",
-      "specStage": "Ancillary",
-      "purpose": "Lets owners/admins review technician time-off requests and manage approved blackouts, which feed scheduling.",
-      "missing": "No approve/deny actions: pending requests are decided by a database trigger. Add Blackout navigates via the onAddBlackout callback, which the host must wire to BlackoutEditorScreen.",
-      "flowRank": 66,
-      "anchor": "screen-af-timeOffQueue",
-      "identifiers": {
-        "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-        "route": null,
-        "subView": "timeOffQueue",
-        "title": "Time Off",
-        "titleInSource": null,
-        "testIDs": [],
-        "accessibilityLabels": [],
-        "buttonLabels": []
-      }
-    },
-    {
       "key": "blackout-range-modal",
       "kind": "sub-view",
       "mounted": "unknown",
@@ -22611,7 +22562,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 67,
+      "flowRank": 66,
       "anchor": "screen-blackout-range-modal",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/BlackoutRangeModal.tsx",
@@ -22701,7 +22652,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 68,
+      "flowRank": 67,
       "anchor": "screen-blackout-time-off-list",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/BlackoutTimeOffList.tsx",
@@ -22900,9 +22851,15 @@
             "runJobSimulator",
             "type DryRunReport"
           ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
         }
       ],
-      "lineCount": 356,
+      "lineCount": 363,
       "titleInSource": "No Test Jobs",
       "elements": [
         {
@@ -22910,7 +22867,7 @@
           "label": "No Test Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 170,
+          "line": 177,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22919,7 +22876,7 @@
           "label": "Spawn test jobs to see them here.",
           "placeholder": null,
           "variant": null,
-          "line": 170,
+          "line": 177,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22928,7 +22885,7 @@
           "label": "{deletingId === job.id ? 'Deleting…' : 'D}",
           "placeholder": null,
           "variant": "outline",
-          "line": 182,
+          "line": 189,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22937,7 +22894,7 @@
           "label": "{spawning ? 'Spawning…' : 'Spawn Test Job}",
           "placeholder": null,
           "variant": "outline",
-          "line": 205,
+          "line": 212,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22946,7 +22903,7 @@
           "label": "{deletingAll ? 'Deleting all…' : 'Delete }",
           "placeholder": null,
           "variant": "outline",
-          "line": 212,
+          "line": 219,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22955,7 +22912,7 @@
           "label": "{simulating ? 'Running…' : 'Run Job Simul}",
           "placeholder": null,
           "variant": "outline",
-          "line": 219,
+          "line": 226,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22964,7 +22921,7 @@
           "label": "Dismiss",
           "placeholder": null,
           "variant": "primary",
-          "line": 230,
+          "line": 237,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22973,7 +22930,7 @@
           "label": "{simulating ? 'Running…' : 'Run Again'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 236,
+          "line": 243,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         }
@@ -23191,7 +23148,7 @@
       "specStage": "DayList",
       "purpose": "Hosts the technician's home area and wires per-job actions (on-my-way, start, complete) through status transitions.",
       "missing": "Nothing notable; reviews and prems sub-views exist in source though the row's navTargets omit them.",
-      "flowRank": 71,
+      "flowRank": 70,
       "anchor": "screen-field-tech",
       "identifiers": {
         "file": "modules/field-tech/src/index.ts",
@@ -23328,7 +23285,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 78,
+      "flowRank": 77,
       "anchor": "screen-forgot-password",
       "identifiers": {
         "file": "apps/mobile/app/forgot-password.tsx",
@@ -24086,7 +24043,7 @@
       "specStage": "Job Detail",
       "purpose": "Gives field techs a self-contained, finance-free view of one job's timing, contact, location and admin notes.",
       "missing": "No status-change actions (accept, en route, start, complete), no checklist or payment links, no navigation out; no route of its own (jobId passed as prop). Display only.",
-      "flowRank": 72,
+      "flowRank": 71,
       "anchor": "screen-ft-FieldJobDetail",
       "identifiers": {
         "file": "modules/field-tech/src/screens/FieldJobDetail.tsx",
@@ -24405,7 +24362,7 @@
       "specStage": "Ancillary",
       "purpose": "Give a field tech a quick at-a-glance summary of their assigned jobs, time off, reimbursements, notes, photos and checklists.",
       "missing": "Reimbursement and time-off cards have no direct link to their own screens beyond callbacks; navigation relies on optional onOpenJob/onOpenTimeOff props, which do nothing if the parent omits them.",
-      "flowRank": 73,
+      "flowRank": 72,
       "anchor": "screen-ft-Overview",
       "identifiers": {
         "file": "modules/field-tech/src/screens/Overview.tsx",
@@ -24492,7 +24449,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 74,
+      "flowRank": 73,
       "anchor": "screen-ft-Payroll",
       "identifiers": {
         "file": "modules/field-tech/src/screens/Payroll.tsx",
@@ -24609,7 +24566,7 @@
       "specStage": "Ancillary",
       "purpose": "Lets techs see the queue of jobs flagged as needing a Prem, claim one, and jump to record its Prem report.",
       "missing": "No notable gaps; shows \"Prem queue not available yet\" when the port reports unavailable. No back/detail nav beyond the Record button.",
-      "flowRank": 75,
+      "flowRank": 74,
       "anchor": "screen-ft-PremJobs",
       "identifiers": {
         "file": "modules/field-tech/src/screens/PremJobs.tsx",
@@ -24745,7 +24702,7 @@
       "specStage": "Ancillary",
       "purpose": "Lets field techs request expense reimbursement and track the status of their own prior requests.",
       "missing": "Not mounted (no route or sub-view). Receipt photo capture deferred. Amount entered in raw cents. Job ID is free text, not a job picker. No approve/deny here (admin-side elsewhere).",
-      "flowRank": 76,
+      "flowRank": 75,
       "anchor": "screen-ft-Reimbursements",
       "identifiers": {
         "file": "modules/field-tech/src/screens/Reimbursements.tsx",
@@ -24807,7 +24764,7 @@
       "specStage": "Ancillary",
       "purpose": "Stub destination so the field-tech AppChrome H menu Reviews item resolves to a real screen instead of a dead onPress.",
       "missing": "Whole feature is unbuilt: a \"coming soon\" stub with no review data, no controls, and no navigation out (source comment: no Reviews feature exists yet in field-tech).",
-      "flowRank": 77,
+      "flowRank": 76,
       "anchor": "screen-ft-Reviews",
       "identifiers": {
         "file": "modules/field-tech/src/screens/Reviews.tsx",
@@ -25361,7 +25318,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -25594,7 +25551,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -25603,7 +25560,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26152,7 +26109,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26242,7 +26199,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26250,8 +26207,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26260,7 +26217,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26269,7 +26226,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26277,8 +26234,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26287,7 +26244,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26295,8 +26252,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26305,7 +26262,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26313,17 +26270,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26332,25 +26280,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26359,7 +26289,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26834,7 +26773,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -27067,7 +27006,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27076,7 +27015,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27625,7 +27564,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27715,7 +27654,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27723,8 +27662,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27733,7 +27672,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27742,7 +27681,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27750,8 +27689,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27760,7 +27699,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27768,8 +27707,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27778,7 +27717,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27786,17 +27725,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27805,25 +27735,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27832,7 +27744,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28307,7 +28228,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -28540,7 +28461,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28549,7 +28470,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29098,7 +29019,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29188,7 +29109,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29196,8 +29117,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29206,7 +29127,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29215,7 +29136,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29223,8 +29144,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29233,7 +29154,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29241,8 +29162,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29251,7 +29172,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29259,17 +29180,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29278,25 +29190,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29305,7 +29199,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29780,7 +29683,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -30013,7 +29916,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30022,7 +29925,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30571,7 +30474,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30661,7 +30564,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30669,8 +30572,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30679,7 +30582,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30688,7 +30591,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30696,8 +30599,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30706,7 +30609,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30714,8 +30617,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30724,7 +30627,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30732,17 +30635,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30751,25 +30645,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30778,7 +30654,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31468,7 +31353,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -31701,7 +31586,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -31710,7 +31595,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32259,7 +32144,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32349,7 +32234,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32357,8 +32242,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32367,7 +32252,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32376,7 +32261,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32384,8 +32269,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32394,7 +32279,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32402,8 +32287,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32412,7 +32297,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32420,17 +32305,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32439,25 +32315,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32466,7 +32324,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32941,7 +32808,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -33174,7 +33041,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33183,7 +33050,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33732,7 +33599,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33822,7 +33689,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33830,8 +33697,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33840,7 +33707,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33849,7 +33716,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33857,8 +33724,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33867,7 +33734,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33875,8 +33742,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33885,7 +33752,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33893,17 +33760,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33912,25 +33770,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33939,7 +33779,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34125,23 +33974,23 @@
       ],
       "mounted": true,
       "notes": "",
-      "testIDs": [],
+      "testIDs": [
+        "schedule-set-time"
+      ],
       "accessibilityLabels": [],
       "buttonLabels": [
         "Pick date",
         "Back to Job",
         "Clear Schedule",
-        "Cancel"
+        "Cancel",
+        "Set time"
       ],
       "components": {
-        "Button": 5,
-        "Text": 13,
+        "Text": 11,
         "Card": 1,
-        "Select": 1,
         "DateTimePicker": 3
       },
       "pickers": [
-        "Select",
         "DateTimePicker"
       ],
       "menus": [],
@@ -34154,10 +34003,9 @@
           "src": "@jobcore/ui",
           "names": [
             "Card",
-            "Button",
-            "DayTimelinePicker",
-            "DatePicker",
-            "Select",
+            "PayrollButton",
+            "TimeRangePopup",
+            "defaultEnd",
             "JobHeaderBlock",
             "JobTitleBarHeader",
             "formatJobHeaderLines",
@@ -34183,7 +34031,7 @@
           ]
         }
       ],
-      "lineCount": 685,
+      "lineCount": 669,
       "titleInSource": null,
       "elements": [
         {
@@ -34191,7 +34039,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34199,8 +34047,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34209,7 +34057,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34218,7 +34066,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34226,8 +34074,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34236,7 +34084,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34244,8 +34092,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34254,7 +34102,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34262,17 +34110,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34281,25 +34120,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34308,7 +34129,7 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -34392,6 +34213,15 @@
           "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
         }
       ],
       "chrome": {
@@ -34414,13 +34244,16 @@
         "subView": "job:schedule",
         "title": "Schedule",
         "titleInSource": null,
-        "testIDs": [],
+        "testIDs": [
+          "schedule-set-time"
+        ],
         "accessibilityLabels": [],
         "buttonLabels": [
           "Pick date",
           "Back to Job",
           "Clear Schedule",
-          "Cancel"
+          "Cancel",
+          "Set time"
         ]
       }
     },
@@ -34702,7 +34535,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 79,
+      "flowRank": 78,
       "anchor": "screen-layout",
       "identifiers": {
         "file": "apps/mobile/app/m/_layout.tsx",
@@ -35446,7 +35279,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 80,
+      "flowRank": 79,
       "anchor": "screen-reset-password",
       "identifiers": {
         "file": "apps/mobile/app/reset-password.tsx",
@@ -35829,7 +35662,7 @@
       "specStage": "Ancillary",
       "purpose": "Hosts the sales/marketing module's six sub-screens as state-driven tabs under a single route for owner, admin and sales roles.",
       "missing": "No service or service-area picker exists; serviceId and serviceAreaId stay null so Composer gets no service context. No job-status tie-in.",
-      "flowRank": 81,
+      "flowRank": 80,
       "anchor": "screen-sales-marketing",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/SalesMarketingRoot.tsx",
@@ -36441,7 +36274,7 @@
       "specStage": "Ancillary",
       "purpose": "Lets sales/marketing staff assemble, approve, and export or post a social media draft from a pitch angle without auto-posting or fabricating claims.",
       "missing": "No route of its own (sub-view only); Done just calls the onDone prop. Direct post is unavailable unless meta-publish is enabled, in which case the UI says so.",
-      "flowRank": 82,
+      "flowRank": 81,
       "anchor": "screen-sm-Composer",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/Composer.tsx",
@@ -36579,7 +36412,7 @@
       "specStage": "Ancillary",
       "purpose": "Gives owner/admin/sales users an at-a-glance dashboard of callbacks, reviews and marketing reporting totals.",
       "missing": "No link to callback tasks or reporting; only the reviews link, and it depends on the optional onOpenReviewLibrary prop being supplied by the parent.",
-      "flowRank": 83,
+      "flowRank": 82,
       "anchor": "screen-sm-Overview",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/Overview.tsx",
@@ -36663,7 +36496,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 84,
+      "flowRank": 83,
       "anchor": "screen-sm-Payroll",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/Payroll.tsx",
@@ -36759,7 +36592,7 @@
       "specStage": "Ancillary",
       "purpose": "Lets a sales rep choose the pitch angle for a marketing post before composing it.",
       "missing": "No inbound route; navigation is via the onNavigateToComposer prop. The source says SalesMarketingRoot threads it \"once it threads this prop through\", so the wiring may be incomplete.",
-      "flowRank": 85,
+      "flowRank": 84,
       "anchor": "screen-sm-PitchPicker",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/PitchPicker.tsx",
@@ -36903,7 +36736,7 @@
       "specStage": "Ancillary",
       "purpose": "Gives owner, admin and sales users a non-financial overview of marketing activity and lead sources for the sales-marketing module.",
       "missing": "Display only: no period picker, filters, drill-down or export. Reviews are not broken out by service or community because the ports lack those fields. No navigation out of the screen.",
-      "flowRank": 86,
+      "flowRank": 85,
       "anchor": "screen-sm-Reporting",
       "identifiers": {
         "file": "modules/sales-marketing/src/screens/Reporting.tsx",
@@ -37388,7 +37221,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 69,
+      "flowRank": 68,
       "anchor": "screen-time-off-tech-calendar",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/TimeOffTechCalendar.tsx",
@@ -37557,7 +37390,7 @@
       "specStage": "Ancillary",
       "purpose": "",
       "missing": "",
-      "flowRank": 70,
+      "flowRank": 69,
       "anchor": "screen-universal-calendar",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
@@ -38309,12 +38142,6 @@
     },
     {
       "from": "af-overview",
-      "to": "af-timeOffQueue",
-      "kind": "description",
-      "resolved": true
-    },
-    {
-      "from": "af-overview",
       "to": "config-settings",
       "kind": "route",
       "resolved": true
@@ -38382,12 +38209,6 @@
     {
       "from": "af-reports",
       "to": "onSelectJob -> ReportsJobDetailScreen (via AdminFinanceRoot)",
-      "kind": "description",
-      "resolved": false
-    },
-    {
-      "from": "af-timeOffQueue",
-      "to": "BlackoutEditorScreen (via onAddBlackout)",
       "kind": "description",
       "resolved": false
     },
@@ -39376,145 +39197,138 @@
     {
       "id": "R48",
       "kind": "dead-end",
-      "key": "config-settings",
-      "claim": "Screen \"Settings\" is a dead end: no outgoing navigation was resolved.",
-      "evidence": "config-settings · apps/mobile/app/config/settings.tsx · 0 resolved outgoing edges"
-    },
-    {
-      "id": "R49",
-      "kind": "dead-end",
       "key": "config-test-jobs",
       "claim": "Screen \"Test Jobs\" is a dead end: no outgoing navigation was resolved.",
       "evidence": "config-test-jobs · apps/mobile/app/config/test-jobs.tsx · 0 resolved outgoing edges"
     },
     {
-      "id": "R50",
+      "id": "R49",
       "kind": "dead-end",
       "key": "ft-DayList",
       "claim": "Screen \"Jobs\" is a dead end: no outgoing navigation was resolved.",
       "evidence": "ft-DayList · modules/field-tech/src/screens/DayList.tsx · 0 resolved outgoing edges"
     },
     {
-      "id": "R54",
+      "id": "R50",
       "kind": "dead-end",
-      "key": "ft-Reviews",
-      "claim": "Screen \"Reviews\" is a dead end: no outgoing navigation was resolved.",
-      "evidence": "ft-Reviews · modules/field-tech/src/screens/Reviews.tsx · 0 resolved outgoing edges"
+      "key": "ft-FieldJobDetail",
+      "claim": "Screen \"Job Detail\" is a dead end: no outgoing navigation was resolved.",
+      "evidence": "ft-FieldJobDetail · modules/field-tech/src/screens/FieldJobDetail.tsx · 0 resolved outgoing edges"
     },
     {
-      "id": "R55",
+      "id": "R54",
       "kind": "dead-end",
       "key": "index",
       "claim": "Screen \"index\" is a dead end: no outgoing navigation was resolved.",
       "evidence": "index · apps/mobile/app/index.tsx · 0 resolved outgoing edges"
     },
     {
+      "id": "R55",
+      "kind": "dead-end",
+      "key": "module-host",
+      "claim": "Screen \"Module Host\" is a dead end: no outgoing navigation was resolved.",
+      "evidence": "module-host · apps/mobile/app/m/[moduleId].tsx · 0 resolved outgoing edges"
+    },
+    {
       "id": "R64",
       "kind": "dead-end",
-      "key": "sm-PitchPicker",
-      "claim": "Screen \"Pitch Picker\" is a dead end: no outgoing navigation was resolved.",
-      "evidence": "sm-PitchPicker · modules/sales-marketing/src/screens/PitchPicker.tsx · 0 resolved outgoing edges"
+      "key": "sm-Reporting",
+      "claim": "Screen \"Reporting\" is a dead end: no outgoing navigation was resolved.",
+      "evidence": "sm-Reporting · modules/sales-marketing/src/screens/Reporting.tsx · 0 resolved outgoing edges"
     },
     {
       "id": "R67",
-      "kind": "dead-end",
-      "key": "tabs-layout",
-      "claim": "Screen \"Tabs\" is a dead end: no outgoing navigation was resolved.",
-      "evidence": "tabs-layout · apps/mobile/app/(tabs)/_layout.tsx · 0 resolved outgoing edges"
+      "kind": "not-navigable",
+      "key": "af-Payroll",
+      "claim": "Screen \"Payroll\" is not navigable: nothing links to it.",
+      "evidence": "af-Payroll · modules/admin-finance/src/screens/PayrollScreen.tsx · 0 resolved inbound edges"
     },
     {
       "id": "R75",
-      "kind": "not-navigable",
-      "key": "af-payments-ReimbursementQueueScreen",
-      "claim": "Screen \"Reimbursements\" is not navigable: nothing links to it.",
-      "evidence": "af-payments-ReimbursementQueueScreen · modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx · 0 resolved inbound edges"
-    },
-    {
-      "id": "R76",
       "kind": "not-navigable",
       "key": "af-planning",
       "claim": "Screen \"Planning\" is not navigable: nothing links to it.",
       "evidence": "af-planning · modules/admin-finance/src/screens/PlanningScreen.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R77",
+      "id": "R76",
       "kind": "not-navigable",
       "key": "config-test-jobs",
       "claim": "Screen \"Test Jobs\" is not navigable: nothing links to it.",
       "evidence": "config-test-jobs · apps/mobile/app/config/test-jobs.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R78",
+      "id": "R77",
       "kind": "not-navigable",
       "key": "ft-FieldJobDetail",
       "claim": "Screen \"Job Detail\" is not navigable: nothing links to it.",
       "evidence": "ft-FieldJobDetail · modules/field-tech/src/screens/FieldJobDetail.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R79",
+      "id": "R78",
       "kind": "not-navigable",
       "key": "ft-Payroll",
       "claim": "Screen \"Payroll\" is not navigable: nothing links to it.",
       "evidence": "ft-Payroll · modules/field-tech/src/screens/Payroll.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R80",
+      "id": "R79",
       "kind": "not-navigable",
       "key": "not-found",
       "claim": "Screen \"Not Found\" is not navigable: nothing links to it.",
       "evidence": "not-found · apps/mobile/app/+not-found.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R81",
+      "id": "R80",
       "kind": "not-navigable",
       "key": "root-layout",
       "claim": "Screen \"Root Layout\" is not navigable: nothing links to it.",
       "evidence": "root-layout · apps/mobile/app/_layout.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R82",
+      "id": "R81",
       "kind": "not-navigable",
       "key": "sm-CallbackTasks",
       "claim": "Screen \"Callback tasks\" is not navigable: nothing links to it.",
       "evidence": "sm-CallbackTasks · modules/sales-marketing/src/screens/CallbackTasks.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R83",
+      "id": "R82",
       "kind": "not-navigable",
       "key": "sm-Composer",
       "claim": "Screen \"Compose Post\" is not navigable: nothing links to it.",
       "evidence": "sm-Composer · modules/sales-marketing/src/screens/Composer.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R84",
+      "id": "R83",
       "kind": "not-navigable",
       "key": "sm-Overview",
       "claim": "Screen \"Overview\" is not navigable: nothing links to it.",
       "evidence": "sm-Overview · modules/sales-marketing/src/screens/Overview.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R85",
+      "id": "R84",
       "kind": "not-navigable",
       "key": "sm-Payroll",
       "claim": "Screen \"Payroll\" is not navigable: nothing links to it.",
       "evidence": "sm-Payroll · modules/sales-marketing/src/screens/Payroll.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R86",
+      "id": "R85",
       "kind": "not-navigable",
       "key": "sm-PitchPicker",
       "claim": "Screen \"Pitch Picker\" is not navigable: nothing links to it.",
       "evidence": "sm-PitchPicker · modules/sales-marketing/src/screens/PitchPicker.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R87",
+      "id": "R86",
       "kind": "not-navigable",
       "key": "sm-Reporting",
       "claim": "Screen \"Reporting\" is not navigable: nothing links to it.",
       "evidence": "sm-Reporting · modules/sales-marketing/src/screens/Reporting.tsx · 0 resolved inbound edges"
     },
     {
-      "id": "R88",
+      "id": "R87",
       "kind": "not-navigable",
       "key": "sm-ReviewLibrary",
       "claim": "Screen \"Review Library\" is not navigable: nothing links to it.",
@@ -39717,191 +39531,185 @@
     {
       "id": "M35",
       "specStage": "Ancillary",
-      "claim": "No approve/deny actions: pending requests are decided by a database trigger. Add Blackout navigates via the onAddBlackout callback, which the host must wire to BlackoutEditorScreen.",
-      "evidence": "af-timeOffQueue · modules/admin-finance/src/screens/TimeOffQueueScreen.tsx"
-    },
-    {
-      "id": "M36",
-      "specStage": "Ancillary",
       "claim": "Placeholder only: no actual settings, empty menuItems and optionsItems, no navigation or controls; \"coming soon\" text.",
       "evidence": "config-settings · apps/mobile/app/config/settings.tsx"
     },
     {
-      "id": "M37",
+      "id": "M36",
       "specStage": "Ancillary",
       "claim": "No router navigation out of the screen; no link to job detail from rows. Empty state only says to spawn jobs.",
       "evidence": "config-test-jobs · apps/mobile/app/config/test-jobs.tsx"
     },
     {
-      "id": "M38",
+      "id": "M37",
       "specStage": "DayList",
       "claim": "Nothing notable; reviews and prems sub-views exist in source though the row's navTargets omit them.",
       "evidence": "field-tech · modules/field-tech/src/index.ts"
     },
     {
-      "id": "M39",
+      "id": "M38",
       "specStage": "Completion",
       "claim": "Exported but not mounted in any route. No navigation of its own; it only calls onDone after the job moves to completed. No visible link onward to QR payment/review.",
       "evidence": "ft-Completion · modules/field-tech/src/screens/Completion.tsx"
     },
     {
-      "id": "M40",
+      "id": "M39",
       "specStage": "DayList",
       "claim": "No direct routing; navigation is only via optional callbacks (onSelectJob, onOpenJob, onOpenTimeOff) supplied by the parent. Rows are inert if the parent omits them.",
       "evidence": "ft-DayList · modules/field-tech/src/screens/DayList.tsx"
     },
     {
-      "id": "M41",
+      "id": "M40",
       "specStage": "Ancillary",
       "claim": "Exported but unmounted: no route or inbound navigation. Takes job, period, bonusRule, etc. as props with no loader. No outbound navigation; dispute is the only action.",
       "evidence": "ft-Earnings · modules/field-tech/src/screens/Earnings.tsx"
     },
     {
-      "id": "M42",
+      "id": "M41",
       "specStage": "Job Detail",
       "claim": "No status-change actions (accept, en route, start, complete), no checklist or payment links, no navigation out; no route of its own (jobId passed as prop). Display only.",
       "evidence": "ft-FieldJobDetail · modules/field-tech/src/screens/FieldJobDetail.tsx"
     },
     {
-      "id": "M44",
-      "specStage": "Ancillary",
-      "claim": "Reimbursement and time-off cards have no direct link to their own screens beyond callbacks; navigation relies on optional onOpenJob/onOpenTimeOff props, which do nothing if the parent omits them.",
-      "evidence": "ft-Overview · modules/field-tech/src/screens/Overview.tsx"
+      "id": "M42",
+      "specStage": "Greeting",
+      "claim": "Exported but unmounted: no route or caller. Accept does not transition the job (passive by design, status stays assigned). Navigation is only via the onDone callback.",
+      "evidence": "ft-Greeting · modules/field-tech/src/screens/Greeting.tsx"
     },
     {
-      "id": "M45",
+      "id": "M44",
       "specStage": "Ancillary",
       "claim": "No notable gaps; shows \"Prem queue not available yet\" when the port reports unavailable. No back/detail nav beyond the Record button.",
       "evidence": "ft-PremJobs · modules/field-tech/src/screens/PremJobs.tsx"
     },
     {
-      "id": "M46",
+      "id": "M45",
       "specStage": "Ancillary",
       "claim": "Not mounted (no route or sub-view). Receipt photo capture deferred. Amount entered in raw cents. Job ID is free text, not a job picker. No approve/deny here (admin-side elsewhere).",
       "evidence": "ft-Reimbursements · modules/field-tech/src/screens/Reimbursements.tsx"
     },
     {
-      "id": "M47",
+      "id": "M46",
       "specStage": "Ancillary",
       "claim": "Whole feature is unbuilt: a \"coming soon\" stub with no review data, no controls, and no navigation out (source comment: no Reviews feature exists yet in field-tech).",
       "evidence": "ft-Reviews · modules/field-tech/src/screens/Reviews.tsx"
     },
     {
-      "id": "M48",
+      "id": "M47",
       "specStage": "StartChecklist",
       "claim": "Exported but unmounted: no route or inbound navigation. It has no outbound navigation after submit; it only transitions job status.",
       "evidence": "ft-StartChecklist · modules/field-tech/src/screens/StartChecklist.tsx"
     },
     {
-      "id": "M49",
+      "id": "M48",
       "specStage": "Greeting",
       "claim": "Redirect destinations live in RoleLandingRedirect, which was not read, so they are not listed. The screen itself has no UI.",
       "evidence": "index · apps/mobile/app/index.tsx"
     },
     {
-      "id": "M50",
+      "id": "M49",
       "specStage": "Job Detail",
       "claim": "Nothing notable; region renders only when isAdmin, so owner/tech roles listed in the row never see it. Row buttonLabels only lists Cancel.",
       "evidence": "job-region-assign · apps/mobile/app/job/[jobId].tsx"
     },
     {
-      "id": "M51",
+      "id": "M50",
       "specStage": "Job Detail",
       "claim": "No router navigation; only an onBack callback. Reached from the tech's job detail once an investigator assignment exists, and can be embedded there. No link onward after Submit.",
       "evidence": "job-region-evisit · modules/field-tech/src/screens/JobInvestigationScreen.tsx"
     },
     {
-      "id": "M52",
+      "id": "M51",
       "specStage": "Job Detail",
       "claim": "Flow stage inferred (planning precedes scheduling); PlanningScreen internals not read. No explicit link to the Schedule tab from here.",
       "evidence": "job-region-plan · apps/mobile/app/job/[jobId].tsx"
     },
     {
-      "id": "M53",
+      "id": "M52",
       "specStage": "Job Detail",
       "claim": "No job list: the empty state says it \"lands in a later slice\". Owners and admins never get a job. Techs get only the first assigned job (limit 1), with no day list or switching.",
       "evidence": "jobs · apps/mobile/app/(tabs)/jobs.tsx"
     },
     {
-      "id": "M54",
+      "id": "M53",
       "specStage": "Ancillary",
       "claim": "No visible 404 message or manual navigation. Redirect target depends on RoleLandingRedirect, which was not read.",
       "evidence": "not-found · apps/mobile/app/+not-found.tsx"
     },
     {
-      "id": "M55",
+      "id": "M54",
       "specStage": "Admin close-out",
       "claim": "Rows are not tappable; nothing links to the job or to Mark Paid (owned by admin-finance). No logo-switcher entry; reached only via admin-finance Review.",
       "evidence": "payment-review · modules/payment-review/src/index.ts"
     },
     {
-      "id": "M56",
+      "id": "M55",
       "specStage": "Ancillary",
       "claim": "No navigation calls in source (no explicit back or sign-out button); no inbound nav verified from this file alone.",
       "evidence": "profile · apps/mobile/app/profile.tsx"
     },
     {
-      "id": "M57",
+      "id": "M56",
       "specStage": "Ancillary",
       "claim": "No service or service-area picker exists; serviceId and serviceAreaId stay null so Composer gets no service context. No job-status tie-in.",
       "evidence": "sales-marketing · modules/sales-marketing/src/screens/SalesMarketingRoot.tsx"
     },
     {
-      "id": "M58",
+      "id": "M57",
       "specStage": "Greeting",
       "claim": "No forgot-password or reset link; the only navigation is to sign-up.",
       "evidence": "sign-in · apps/mobile/app/sign-in.tsx"
     },
     {
-      "id": "M59",
+      "id": "M58",
       "specStage": "Ancillary",
       "claim": "No link back to sign-in and no forgot-password or email-confirmation handling. Navigation relies on the session listener swapping routes after success.",
       "evidence": "sign-up · apps/mobile/app/sign-up.tsx"
     },
     {
-      "id": "M60",
+      "id": "M59",
       "specStage": "Ancillary",
       "claim": "No navigation out: no link to the job detail or customer contact/call action. Only write is Mark Called Back; no notes or outcome capture.",
       "evidence": "sm-CallbackTasks · modules/sales-marketing/src/screens/CallbackTasks.tsx"
     },
     {
-      "id": "M61",
+      "id": "M60",
       "specStage": "Ancillary",
       "claim": "No route of its own (sub-view only); Done just calls the onDone prop. Direct post is unavailable unless meta-publish is enabled, in which case the UI says so.",
       "evidence": "sm-Composer · modules/sales-marketing/src/screens/Composer.tsx"
     },
     {
-      "id": "M62",
+      "id": "M61",
       "specStage": "Ancillary",
       "claim": "No link to callback tasks or reporting; only the reviews link, and it depends on the optional onOpenReviewLibrary prop being supplied by the parent.",
       "evidence": "sm-Overview · modules/sales-marketing/src/screens/Overview.tsx"
     },
     {
-      "id": "M63",
+      "id": "M62",
       "specStage": "Ancillary",
       "claim": "No inbound route; navigation is via the onNavigateToComposer prop. The source says SalesMarketingRoot threads it \"once it threads this prop through\", so the wiring may be incomplete.",
       "evidence": "sm-PitchPicker · modules/sales-marketing/src/screens/PitchPicker.tsx"
     },
     {
-      "id": "M64",
+      "id": "M63",
       "specStage": "Ancillary",
       "claim": "Display only: no period picker, filters, drill-down or export. Reviews are not broken out by service or community because the ports lack those fields. No navigation out of the screen.",
       "evidence": "sm-Reporting · modules/sales-marketing/src/screens/Reporting.tsx"
     },
     {
-      "id": "M65",
+      "id": "M64",
       "specStage": "Ancillary",
       "claim": "No outbound navigation. Filters are raw id text inputs, not pickers. Shows raw jobId since Review lacks service/community display fields; no link to the job.",
       "evidence": "sm-ReviewLibrary · modules/sales-marketing/src/screens/ReviewLibrary.tsx"
     },
     {
-      "id": "M67",
+      "id": "M65",
       "specStage": "Ancillary",
-      "claim": "Not a standalone screen; only used by TimeOff.tsx as a controlled component. No navigation of its own.",
-      "evidence": "sweep-modules-field-tech-src-screens-daterangecalendar-tsx · modules/field-tech/src/screens/DateRangeCalendar.tsx"
+      "claim": "Not a routed screen; a component with no navigation. Parents supply fields and handlers; mount points not verified from this file.",
+      "evidence": "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx · modules/admin-finance/src/screens/AccordionEditRow.tsx"
     },
     {
-      "id": "M68",
+      "id": "M67",
       "specStage": "DayList",
       "claim": "No role-based tab filtering or other tabs (settings, profile) declared; all three roles see the same two tabs.",
       "evidence": "tabs-layout · apps/mobile/app/(tabs)/_layout.tsx"

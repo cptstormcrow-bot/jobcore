@@ -1,14 +1,15 @@
 // JobCore screen #0008 - calendar - Calendar
 // Thin wrapper: loads data, renders the shared UniversalCalendar.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { colors } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniversalCalendar, parseCalendarDate, type UniversalCalendarEmployee } from '../../../../modules/admin-finance/src/screens/UniversalCalendar';
+import { CalendarTimeOffSection } from '../../../../modules/admin-finance/src/components/CalendarTimeOffSection';
 import type { TimeOffRequestAdmin } from '../../../../modules/admin-finance/src/data/time-off-repo';
-import { useSession } from '../../src/lib/session';
 import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
+import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
 import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
@@ -109,13 +110,13 @@ export default function CalendarScreen() {
   // Role gate (spec 02-P2 L83-84): owner/admin/sales see every tech's jobs, a tech only their own.
   // The component scopes tech views; this screen only passes the role and viewer id.
   const s = useSession();
-  const role = s.status === 'authenticated' ? s.profile.role : undefined;
   // createBlackout (admin-finance-repos.ts) reads the session through the relative SOURCE path.
   // Injected synchronously in the render body: child effects run before parent effects, and
   // the setters are idempotent module-scope writes.
   if (s.status === 'authenticated') {
     setAdminFinanceSourceModuleSession({ org: s.organization, role: s.profile.role, userId: s.profile.id });
   }
+  const role = s.status === 'authenticated' ? s.profile.role : undefined;
   const viewerId = s.status === 'authenticated' ? s.profile.id : null;
   const orgId = s.status === 'authenticated' ? s.organization.id : undefined;
 
@@ -240,6 +241,35 @@ export default function CalendarScreen() {
     setTimeOffRev((n) => n + 1);
   };
 
+  const calendarNode = (
+    <UniversalCalendar
+        role={role && role !== 'tech' ? 'admin' : 'tech'}
+        viewerId={viewerId}
+        jobs={jobs}
+        employees={employees}
+        timeOffRequests={timeOffRequests}
+        anchorDate={anchorDate}
+        {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
+        onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
+        onSaveBlackouts={onSaveBlackouts}
+        onSubmitTimeOff={onSubmitTimeOff}
+        onCancelTimeOff={onCancelTimeOff}
+      />
+  );
+
+  if (isAdminRole) {
+    return (
+      <ScrollView style={styles.screen}>
+        <View style={styles.calendarBlock}>{calendarNode}</View>
+        <CalendarTimeOffSection
+          timeOffAdmin={timeOffRepo}
+          techs={employees.filter((e) => e.role === 'tech' && e.active)}
+          onChanged={() => setTimeOffRev((n) => n + 1)}
+        />
+      </ScrollView>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <UniversalCalendar
@@ -263,5 +293,8 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.offWhite,
+  },
+  calendarBlock: {
+    height: 720,
   },
 });

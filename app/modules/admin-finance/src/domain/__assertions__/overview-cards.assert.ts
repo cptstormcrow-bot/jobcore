@@ -13,7 +13,7 @@ import { buildOverviewCards } from '../overview-cards';
 // .tsx and cannot load under npm test): 'overview' plus the 10 card ids.
 const HAMBURGER_IDS = [
   'overview', 'leadInbox', 'jobs', 'assignmentBoard', 'priceSheetList',
-  'payments', 'paymentReview', 'timeOffQueue', 'payroll', 'calendar', 'reports', 'employee-roster',
+  'payments', 'paymentReview', 'payroll', 'calendar', 'reports', 'employee-roster',
 ];
 
 const COUNTS = {

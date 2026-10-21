@@ -173,7 +173,7 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
       ) : (
         rows.map((row) => (
           <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text>{row.name}</Text>
+            <Text>{row.title}</Text>
             <TextInput
               style={{ width: 60, textAlign: 'center' }}
               keyboardType="numeric"

@@ -21682,38 +21682,6 @@
       }
     },
     {
-      "key": "af-timeOffQueue",
-      "kind": "sub-view",
-      "module": "admin-finance",
-      "route": null,
-      "subView": "timeOffQueue",
-      "parentKey": "admin-finance",
-      "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-      "title": "Time Off",
-      "roles": [
-        "owner",
-        "admin"
-      ],
-      "mounted": true,
-      "notes": "",
-      "fileMissing": true,
-      "testIDs": [],
-      "accessibilityLabels": [],
-      "buttonLabels": [],
-      "components": {},
-      "pickers": [],
-      "menus": [],
-      "navTargets": [],
-      "tables": [],
-      "rpcs": [],
-      "repoMethods": [],
-      "imports": [],
-      "lineCount": 0,
-      "titleInSource": null,
-      "elements": [],
-      "chrome": null
-    },
-    {
       "key": "blackout-range-modal",
       "kind": "sub-view",
       "mounted": "unknown",
@@ -22418,9 +22386,15 @@
             "runJobSimulator",
             "type DryRunReport"
           ]
+        },
+        {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
         }
       ],
-      "lineCount": 356,
+      "lineCount": 363,
       "titleInSource": "No Test Jobs",
       "elements": [
         {
@@ -22428,7 +22402,7 @@
           "label": "No Test Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 170,
+          "line": 177,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22437,7 +22411,7 @@
           "label": "Spawn test jobs to see them here.",
           "placeholder": null,
           "variant": null,
-          "line": 170,
+          "line": 177,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22446,7 +22420,7 @@
           "label": "{deletingId === job.id ? 'Deleting…' : 'D}",
           "placeholder": null,
           "variant": "outline",
-          "line": 182,
+          "line": 189,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22455,7 +22429,7 @@
           "label": "{spawning ? 'Spawning…' : 'Spawn Test Job}",
           "placeholder": null,
           "variant": "outline",
-          "line": 205,
+          "line": 212,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22464,7 +22438,7 @@
           "label": "{deletingAll ? 'Deleting all…' : 'Delete }",
           "placeholder": null,
           "variant": "outline",
-          "line": 212,
+          "line": 219,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22473,7 +22447,7 @@
           "label": "{simulating ? 'Running…' : 'Run Job Simul}",
           "placeholder": null,
           "variant": "outline",
-          "line": 219,
+          "line": 226,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -22482,7 +22456,7 @@
           "label": "Dismiss",
           "placeholder": null,
           "variant": "primary",
-          "line": 230,
+          "line": 237,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -22491,7 +22465,7 @@
           "label": "{simulating ? 'Running…' : 'Run Again'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 236,
+          "line": 243,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         }
@@ -24606,7 +24580,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -24839,7 +24813,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -24848,7 +24822,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -25397,7 +25371,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -25487,7 +25461,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25495,8 +25469,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25505,7 +25479,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25514,7 +25488,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25522,8 +25496,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25532,7 +25506,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25540,8 +25514,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25550,7 +25524,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25558,17 +25532,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25577,25 +25542,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -25604,7 +25551,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26057,7 +26013,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -26290,7 +26246,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26299,7 +26255,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26848,7 +26804,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26938,7 +26894,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26946,8 +26902,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26956,7 +26912,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26965,7 +26921,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26973,8 +26929,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26983,7 +26939,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -26991,8 +26947,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27001,7 +26957,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27009,17 +26965,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27028,25 +26975,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27055,7 +26984,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -27508,7 +27446,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -27741,7 +27679,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27750,7 +27688,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28299,7 +28237,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28389,7 +28327,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28397,8 +28335,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28407,7 +28345,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28416,7 +28354,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28424,8 +28362,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28434,7 +28372,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28442,8 +28380,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28452,7 +28390,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28460,17 +28398,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28479,25 +28408,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28506,7 +28417,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -28959,7 +28879,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -29192,7 +29112,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29201,7 +29121,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29750,7 +29670,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29840,7 +29760,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29848,8 +29768,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29858,7 +29778,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29867,7 +29787,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29875,8 +29795,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29885,7 +29805,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29893,8 +29813,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29903,7 +29823,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29911,17 +29831,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29930,25 +29841,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -29957,7 +29850,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -30602,7 +30504,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -30835,7 +30737,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30844,7 +30746,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -31393,7 +31295,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -31483,7 +31385,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31491,8 +31393,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31501,7 +31403,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31510,7 +31412,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31518,8 +31420,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31528,7 +31430,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31536,8 +31438,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31546,7 +31448,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31554,17 +31456,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31573,25 +31466,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -31600,7 +31475,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32053,7 +31937,7 @@
           ]
         }
       ],
-      "lineCount": 1550,
+      "lineCount": 1551,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -32286,7 +32170,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32295,7 +32179,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32844,7 +32728,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 239,
+          "line": 228,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32934,7 +32818,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32942,8 +32826,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32952,7 +32836,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32961,7 +32845,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32969,8 +32853,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32979,7 +32863,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32987,8 +32871,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -32997,7 +32881,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33005,17 +32889,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33024,25 +32899,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33051,7 +32908,16 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33215,23 +33081,23 @@
       ],
       "mounted": true,
       "notes": "",
-      "testIDs": [],
+      "testIDs": [
+        "schedule-set-time"
+      ],
       "accessibilityLabels": [],
       "buttonLabels": [
         "Pick date",
         "Back to Job",
         "Clear Schedule",
-        "Cancel"
+        "Cancel",
+        "Set time"
       ],
       "components": {
-        "Button": 5,
-        "Text": 13,
+        "Text": 11,
         "Card": 1,
-        "Select": 1,
         "DateTimePicker": 3
       },
       "pickers": [
-        "Select",
         "DateTimePicker"
       ],
       "menus": [],
@@ -33244,10 +33110,9 @@
           "src": "@jobcore/ui",
           "names": [
             "Card",
-            "Button",
-            "DayTimelinePicker",
-            "DatePicker",
-            "Select",
+            "PayrollButton",
+            "TimeRangePopup",
+            "defaultEnd",
             "JobHeaderBlock",
             "JobTitleBarHeader",
             "formatJobHeaderLines",
@@ -33273,7 +33138,7 @@
           ]
         }
       ],
-      "lineCount": 685,
+      "lineCount": 669,
       "titleInSource": null,
       "elements": [
         {
@@ -33281,7 +33146,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 367,
+          "line": 387,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33289,8 +33154,8 @@
           "type": "button",
           "label": "Pick date",
           "placeholder": null,
-          "variant": "outline",
-          "line": 385,
+          "variant": null,
+          "line": 405,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33299,7 +33164,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 393,
+          "line": 411,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33308,7 +33173,7 @@
           "label": null,
           "placeholder": null,
           "variant": null,
-          "line": 401,
+          "line": 419,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33316,8 +33181,8 @@
           "type": "button",
           "label": "Back to Job",
           "placeholder": null,
-          "variant": "outline",
-          "line": 448,
+          "variant": null,
+          "line": 440,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33326,7 +33191,7 @@
           "label": "Schedule #0058",
           "placeholder": null,
           "variant": null,
-          "line": 453,
+          "line": 445,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33334,8 +33199,8 @@
           "type": "button",
           "label": "Clear Schedule",
           "placeholder": null,
-          "variant": "outline",
-          "line": 484,
+          "variant": null,
+          "line": 476,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33344,7 +33209,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 490,
+          "line": 477,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33352,17 +33217,8 @@
           "type": "button",
           "label": "Cancel",
           "placeholder": null,
-          "variant": "outline",
-          "line": 496,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Start Time",
-          "placeholder": null,
           "variant": null,
-          "line": 500,
+          "line": 483,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33371,25 +33227,7 @@
           "label": "Start time",
           "placeholder": null,
           "variant": null,
-          "line": 508,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Quick start time",
-          "placeholder": null,
-          "variant": null,
-          "line": 511,
-          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "select",
-          "label": null,
-          "placeholder": "Select a time",
-          "variant": null,
-          "line": 512,
+          "line": 487,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33398,7 +33236,7 @@
           "label": "End time (auto)",
           "placeholder": null,
           "variant": null,
-          "line": 525,
+          "line": 490,
           "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         },
@@ -33481,6 +33319,15 @@
           "variant": "primary",
           "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Set time",
+          "placeholder": null,
+          "variant": null,
+          "line": 540,
+          "via": "modules/admin-finance/src/screens/JobScheduleScreen.tsx",
           "dynamic": false
         }
       ],

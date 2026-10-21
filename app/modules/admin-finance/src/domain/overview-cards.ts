@@ -6,7 +6,7 @@
 
 export type OverviewCardId =
   | 'leadInbox' | 'jobs' | 'assignmentBoard' |'priceSheetList'
-  | 'payments' | 'paymentReview' | 'timeOffQueue' | 'payroll' | 'calendar' | 'reports' | 'employee-roster';
+  | 'payments' | 'paymentReview' | 'payroll' | 'calendar' | 'reports' | 'employee-roster';
 
 export interface OverviewCounts {
   jobsOnFile: number;

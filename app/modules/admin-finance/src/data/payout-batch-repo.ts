@@ -177,15 +177,14 @@ export async function persistPayoutBatchViaRpc(
 ): Promise<CalculationResult<PayoutBatch>> {
   requireOnline('Creating a payout batch');
   const { data, error } = await client.rpc('create_payout_batch', {
-    p_organization_id: batch.organizationId,
     p_period_start: batch.periodStart,
     p_period_end: batch.periodEnd,
     p_lines: batch.lines.map((line) => ({
       user_id: line.userId,
-      hours_amount_cents: line.hoursAmount,
+      hours_amount: line.hoursAmount,
       commission_amount_cents: line.commissionAmount,
       bonus_amount_cents: line.bonusAmount,
-      reimbursement_amount_cents: line.reimbursementAmount,
+      reimbursement_amount: line.reimbursementAmount,
       total_amount_cents: line.totalAmount,
       frozen_at: line.frozenAt,
       source_hash: line.sourceHash,
@@ -194,6 +193,8 @@ export async function persistPayoutBatchViaRpc(
   if (error) {
     return { ok: false, reason: error.message };
   }
-  const payload = data as PayoutBatchWithLinesRow;
-  return { ok: true, value: toPayoutBatch(payload.batch, payload.lines) };
+  // The RPC returns a single `payout_batches` row (not `{batch, lines}`);
+  // the frozen lines are the ones just sent in.
+  const row = data as PayoutBatchRow;
+  return { ok: true, value: { ...toPayoutBatch(row, []), lines: batch.lines } };
 }

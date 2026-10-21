@@ -4,8 +4,8 @@ import type { EstimateRepository, EstimateStatus, JobEstimate } from '../data/po
 /**
  * P3f.5b/P3f.5c — approveEstimate: admin-only transition of a job_estimates row
  * from 'submitted' to 'approved' only. Admin-only is enforced by the UI
- * role map in packages/core estimateStatus.ts; the DB policy on job_estimates
- * is only job_estimates_org_all (org-scoped, migration 0036), not admin-only.
+ * role map in packages/core estimateStatus.ts and is now DB-enforced by
+ * migration 0093 (job_estimates_status_role_gate trigger; techs cannot approve).
  * Deliberately does NOT call transitionJob() —
  * the job itself stays at its current public.jobs.status; auto-advancing
  * Job.status on estimate approval is deferred to Increment 4 (out of scope

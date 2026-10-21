@@ -625,22 +625,6 @@
   "notes": ""
  },
  {
-  "key": "af-timeOffQueue",
-  "kind": "sub-view",
-  "module": "admin-finance",
-  "route": null,
-  "subView": "timeOffQueue",
-  "parentKey": "admin-finance",
-  "file": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-  "title": "Time Off",
-  "roles": [
-   "owner",
-   "admin"
-  ],
-  "mounted": true,
-  "notes": ""
- },
- {
   "key": "af-blackout-editor",
   "kind": "sub-view",
   "module": "admin-finance",

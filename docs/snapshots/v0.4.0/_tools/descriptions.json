@@ -204,7 +204,7 @@
       ]
     },
     "af-overview": {
-      "summary": "Admin & Finance landing: scrollable cards (Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Review, Time off, Calendar, Reports, Employees) with live counts; tap opens that sub-view. Gear menu: Logins, Settings, Profile.",
+      "summary": "Admin & Finance landing: scrollable cards (Leads, Jobs, Assignments, Close-Outs, Price Sheets, Payments, Review, Calendar, Reports, Employees) with live counts; tap opens that sub-view. Gear menu: Logins, Settings, Profile.",
       "flowStage": "none",
       "specStage": "Admin close-out",
       "purpose": "Gives owners/admins a one-tap dashboard hub with counts to jump into each admin/finance area of the org.",
@@ -217,7 +217,6 @@
         "priceSheetList",
         "payments",
         "paymentReview",
-        "timeOffQueue",
         "calendar",
         "reports",
         "employee-roster",
@@ -331,16 +330,6 @@
         "drill: status",
         "drill: slotHitRate",
         "drill: commissionTotals"
-      ]
-    },
-    "af-timeOffQueue": {
-      "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list, with a read-only Blackout calendar below them. An \"Add Blackout\" button opens the blackout editor; each Upcoming row has a \"Cancel\" button. The calendar shows pending and approved blackouts on a Month view by default (Week is remembered on this device), with a picker to show All Techs or one tech. Pending requests are decided automatically.",
-      "flowStage": "none",
-      "specStage": "Ancillary",
-      "purpose": "Lets owners/admins review technician time-off requests and manage approved blackouts, which feed scheduling.",
-      "missing": "No approve/deny actions: pending requests are decided by a database trigger. Add Blackout navigates via the onAddBlackout callback, which the host must wire to BlackoutEditorScreen.",
-      "navTargets": [
-        "BlackoutEditorScreen (via onAddBlackout)"
       ]
     },
     "calendar": {
