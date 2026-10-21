@@ -40,7 +40,7 @@ NOT verified: Jeff's own visual pass; the ⋮ identity (row menu vs overflow); t
 
 ## Forward contracts:
 1. PayrollButton is the standing button; every new button uses it. Legacy `Button` is deprecated and roughly 50 files still use it (app/docs/ui-conventions.md:27): never write "all buttons" as done.
-2. UI Inventory extract.mjs (app/docs/snapshots/v0.4.0/_tools/extract.mjs) does not pick up `<PayrollButton label="...">`: af-employee-roster buttonLabels is [] before and after (EmployeeRosterScreen.tsx ~lines 122/124 hold "Add Employee" and "Pending Invitations"). A follow-up session to fix it is proposed.
+2. SUPERSEDED by dabf215 (extractor now reads PayrollButton labels; snapshot labels 71→105; fix in extract.mjs regex /<(?:Button|PayrollButton)\b([\s\S]*?)>/g). Original text: UI Inventory extract.mjs (app/docs/snapshots/v0.4.0/_tools/extract.mjs) does not pick up `<PayrollButton label="...">`: af-employee-roster buttonLabels is [] before and after (EmployeeRosterScreen.tsx ~lines 122/124 hold "Add Employee" and "Pending Invitations"). A follow-up session to fix it is proposed.
 3. The three paginate overflow screens (ft-Payroll, sm-Payroll, layout) remain open (memory jobcore-ui-inventory-0058-regen).
 4. Rule 43 test plan: declined by Jeff; nothing owed.
 
@@ -51,7 +51,7 @@ Carried from payroll-button-sop report, status checked this run (one narrowed re
 - (d) docs/snapshots/v0.4.0/_tools/routes.json diffs: `git status --short` filtered for routes.json showed no pending diff; the file path itself was not located from app/. Otherwise not re-verified.
 
 ## Deviations / Defects
-- extract.mjs under-counts PayrollButton labels (see Forward contract 2): inventory buttonLabels are incomplete for PayrollButton screens.
+- SUPERSEDED by dabf215 (extractor fixed; labels 71→105; 7 of 54 PayrollButton tags with dynamic labels are still not captured). Original: extract.mjs under-counts PayrollButton labels (see Forward contract 2): inventory buttonLabels are incomplete for PayrollButton screens.
 - Console warning observed in the browser: React "Cannot update a component (`AdminFinanceRoot`) while rendering a different component (`ModuleScreen`)" (setState-in-render). Not shown to be caused by this change; NOT verified as pre-existing. The console is not claimed clean.
 - Three paginate overflow screens remain: ft-Payroll, sm-Payroll, layout.
 - About 50 files still use the legacy Button: the retrofit is partial by design (ui-conventions.md:27).
@@ -61,13 +61,14 @@ Carried from payroll-button-sop report, status checked this run (one narrowed re
 - Rule 43 ordering missed: the test-plan question was not put to Jeff before the commit; recorded here and asked at wrap-up.
 - The earlier payroll-button-sop report is partly stale (Button-carries-the-look design, "nothing committed"); this report supersedes it where they differ.
 - Plan slices S1-S13 were already applied by earlier commit `10de642` (Payroll button style SOP applied app-wide); S1-S5 were no-ops (PayrollButton already canonical, 0 divergent copies) and S6 (LeadRow badge/phone) was already satisfied. This task's real changes were limited to G1-G3 (Prem Needed checkbox cf4bd7d, TimesheetApprovalPanel PayrollButton 821914b, UI Inventory regen df61726).
+- Pagination output is non-reproducible: after dabf215, a fresh non-check paginate run reproduced HEAD pagination.json on 8 of the side session's 11 moved keys; the other 3 keys (HEAD vs fresh) are unverified and the mechanism is unproven. The committed pagination.json is the side session's output, restored from backup (hash matched) before commit.
 
 ## Commits
-Committed locally on jobcore-role-landing-0.1.3 (821914b by this task; df61726 contains this task's pipeline output but was committed by another actor; see Changes). No upstream, nothing pushed. This report itself will be committed separately by the main session with a scoped pathspec.
+Committed locally on jobcore-role-landing-0.1.3 (821914b by this task; df61726 contains this task's pipeline output but was committed by another actor; see Changes). No upstream, nothing pushed. This report itself will be committed separately by the main session with a scoped pathspec. Later commits: 973e653 (PayrollButton label-width fix) and dabf215 (extractor reads PayrollButton labels; v0.4.0 snapshot regenerated, 7 files), both local, not pushed.
 
 ## Test plan:
 Test plan: declined by Jeff (Rule 43).
 
 ## Summary
-The standing button is PayrollButton; this task converted the TimesheetApprovalPanel week buttons (821914b) and regenerated the UI Inventory v0.4.0 snapshot, whose output was committed in df61726 by another actor. The Karen gate passed (all tsc exit 0, npm test 389/389) and the inventory pipeline ran with all 7 steps exit 0. Payments Reimbursements and Payout Batches buttons and the Job #N card were checked in the built-in browser, but Jeff's own visual pass is not done. The retrofit is partial by design (about 50 files still use legacy Button), three overflow screens and the PayrollButton label under-count in extract.mjs remain open, and Jeff declined the Rule 43 test plan.
+The standing button is PayrollButton; this task converted the TimesheetApprovalPanel week buttons (821914b) and regenerated the UI Inventory v0.4.0 snapshot, whose output was committed in df61726 by another actor. The Karen gate passed (all tsc exit 0, npm test 389/389) and the inventory pipeline ran with all 7 steps exit 0. Payments Reimbursements and Payout Batches buttons and the Job #N card were checked in the built-in browser, but Jeff's own visual pass is not done. The retrofit is partial by design (about 50 files still use legacy Button), three overflow screens and Jeff declined the Rule 43 test plan. The extract.mjs PayrollButton label under-count was SUPERSEDED by dabf215, which fixed the extractor and regenerated the snapshot.
 ---END BUILD REPORT---
