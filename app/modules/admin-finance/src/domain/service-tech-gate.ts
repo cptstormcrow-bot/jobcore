@@ -6,7 +6,7 @@
  * Prem Tech assignment is not gated.
  */
 
-export const SERVICE_TECH_GATE_HINT = 'Mark Materials Onsite on the estimate first.';
+export const SERVICE_TECH_GATE_HINT = 'Cannot assign Service Tech until materials arrive onsite.';
 
 /**
  * Returns true only when the estimate's `materialsOnsite` flag is exactly

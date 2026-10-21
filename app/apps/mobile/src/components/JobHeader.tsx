@@ -1,12 +1,13 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import type { Job } from '@jobcore/core';
 import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, Checkbox, formatJobHeaderLines, formatScheduleLabel, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
+import { SERVICE_TECH_GATE_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 
 export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
 
@@ -152,29 +153,43 @@ type TechRowProps = {
   busy?: boolean;
   indicator?: string | null;
   disabledWhenUnassigned?: boolean;
+  /** Shown under the row when the picker is locked by a closed gate and the user taps it or picks a tech. */
+  blockedMessage?: string;
   trailing?: ReactNode;
 };
 
-function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, disabledWhenUnassigned, trailing }: TechRowProps) {
+function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, disabledWhenUnassigned, blockedMessage, trailing }: TechRowProps) {
+  const gateClosed = !!disabledWhenUnassigned && !!blockedMessage;
+  const blocked = gateClosed && !busy && !techId;
+  const [noteOpen, setNoteOpen] = React.useState(false);
+  React.useEffect(() => { if (!gateClosed) setNoteOpen(false); }, [gateClosed]);
   return (
-    <View style={styles.techRow}>
-      <Text style={styles.summaryLine}>{label}:</Text>
-      {indicator ? <Text style={styles.indicator}>{indicator}</Text> : null}
-      {techs && onRequest ? (
-        <View style={styles.techSelect}>
-          <TechSelect
-            value={techId ?? ''}
-            options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
-            placeholder="Choose technician"
-            disabled={busy || (disabledWhenUnassigned && !techId)}
-            onChange={(id) => { if ((id || null) === (techId ?? null)) return; onRequest(id || null); }}
-          />
-        </View>
-      ) : (
-        <Text style={styles.summaryLine}>{techName ?? 'Unassigned'}</Text>
-      )}
-      {trailing}
-    </View>
+    <>
+      <View style={styles.techRow}>
+        <Text style={styles.summaryLine}>{label}:</Text>
+        {indicator ? <Text style={styles.indicator}>{indicator}</Text> : null}
+        {techs && onRequest ? (
+          <View style={styles.techSelect}>
+            <TechSelect
+              value={techId ?? ''}
+              options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
+              placeholder="Choose technician"
+              disabled={busy || (disabledWhenUnassigned && !techId)}
+              onChange={(id) => {
+                if ((id || null) === (techId ?? null)) return;
+                if (gateClosed && id) { setNoteOpen(true); return; }
+                onRequest(id || null);
+              }}
+            />
+            {blocked ? <Pressable style={StyleSheet.absoluteFill} onPress={() => setNoteOpen(true)} accessibilityRole="button" accessibilityLabel={blockedMessage} /> : null}
+          </View>
+        ) : (
+          <Text style={styles.summaryLine}>{techName ?? 'Unassigned'}</Text>
+        )}
+        {trailing}
+      </View>
+      {gateClosed && noteOpen ? <Text style={styles.blockedNote}>{blockedMessage}</Text> : null}
+    </>
   );
 }
 
@@ -244,6 +259,7 @@ export function JobTechFields({
         onRequest={onRequestAssignService}
         busy={serviceBusy}
         disabledWhenUnassigned={!serviceGateOpen}
+        blockedMessage={SERVICE_TECH_GATE_HINT}
       />
       <View style={styles.techRow}>
         {serviceAreaName ? (
@@ -340,4 +356,5 @@ const styles = StyleSheet.create({
   serviceAreaUnassigned: { color: colors.textMutedDark },
   serviceAreaText: { flex: 1 },
   premNeededCheckbox: { minHeight: 28, marginBottom: 0 },
+  blockedNote: { fontFamily: typography.fontFamily.body, fontSize: typography.size.small, color: colors.textMutedDark, marginTop: 2 },
 });
