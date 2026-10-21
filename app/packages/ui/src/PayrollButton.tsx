@@ -15,9 +15,10 @@ export interface PayrollButtonProps {
   accessibilityLabel?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
+  tone?: 'default' | 'danger';
 }
 
-export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style }: PayrollButtonProps) {
+export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style, tone }: PayrollButtonProps) {
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -27,7 +28,7 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       accessibilityState={{ disabled: !!disabled }}
       hitSlop={{ top: 6, bottom: 6 }}
       testID={testID}
-      style={[styles.button, disabled ? styles.disabled : null, style]}
+      style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, style]}
     >
       <Text style={styles.text}>{label}</Text>
     </Pressable>

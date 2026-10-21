@@ -1359,6 +1359,7 @@ export default function JobDrilldownScreen() {
             nextStep={stageResults.nextStep ?? ''}
             onStagePress={handleStagePress}
             disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
+        onSchedulePress={() => selectRegion('schedule')}
             testID="job-progress-bar"
           />
         ) : null}

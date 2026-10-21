@@ -17,7 +17,6 @@ export * from './Toggle';
 export * from './WeekView';
 export * from './MonthView';
 export * from './DayView';
-export * from './DayTimelinePicker';
 export * from './CalendarHeader';
 export * from './DateRangeCalendar';
 export * from './Checkbox';
@@ -32,6 +31,23 @@ export * from './Breadcrumb';
 export * from './AppChrome';
 export * from './DefaultTabBar';
 export * from './PayrollButton';
+export { TimeRangePopup } from './TimeRangePopup';
+export type { TimeRangePopupProps } from './TimeRangePopup';
+export {
+  TIME_STEP_MIN,
+  FIRST_TIME,
+  LAST_TIME,
+  toMinutes,
+  fromMinutes,
+  format12h,
+  stepTime,
+  defaultEnd,
+  clampRange,
+  isValidRange,
+  stepStart,
+  stepEnd,
+} from './time-range';
+export type { TimeRange } from './time-range';
 export * from './StepperPicker';
 export * from './telephony';
 export * from './walkthrough/walkthrough-content';

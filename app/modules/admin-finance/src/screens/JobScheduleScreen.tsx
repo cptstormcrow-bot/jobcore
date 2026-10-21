@@ -43,9 +43,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Card, Button, DayTimelinePicker, DatePicker, Select, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, TimeRangePopup, defaultEnd, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
-import { addMinutes, format } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
@@ -74,17 +73,6 @@ export interface JobScheduleScreenProps {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-/** 30-minute-step time-of-day quick picks, 7:00am-7:00pm inclusive. */
-const TIME_OF_DAY_OPTIONS: Array<{ hh: number; mm: number; label: string }> = Array.from(
-  { length: 25 },
-  (_, i) => {
-    const totalMinutes = 7 * 60 + i * 30;
-    const hh = Math.floor(totalMinutes / 60);
-    const mm = totalMinutes % 60;
-    return { hh, mm, label: format(new Date(2000, 0, 1, hh, mm), 'h:mm a') };
-  }
-);
 
 /** Local, honest split — @jobcore/ui's DatePicker has no time-of-day support. */
 function splitIsoDateTime(iso: string | null): { date: string; time: string } {
@@ -152,6 +140,7 @@ const toLocalInputValue = (d: Date) =>
 type ScheduleField = 'start' | 'end';
 type AndroidStage = 'date' | 'time';
 type AndroidPickerState = { field: ScheduleField; stage: AndroidStage; datePart: Date } | null;
+type TimePopupState = { mode: 'pick' | 'edit'; day: Date } | null;
 
 export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBack, onOpenCalendar, onSaved, embedded, totalTaskMinutes, standardMinutes, assignedTechName, premTechName }: JobScheduleScreenProps) {
   const [startDate, setStartDate] = useState('');
@@ -169,6 +158,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
   const [endPickerDate, setEndPickerDate] = useState<Date>(() => (job.scheduledEnd ? new Date(job.scheduledEnd) : new Date()));
   const [androidPicker, setAndroidPicker] = useState<AndroidPickerState>(null);
   const [anchorDay, setAnchorDay] = useState<Date>(() => new Date());
+  const [timePopup, setTimePopup] = useState<TimePopupState>(null);
 
   function resetFromJob(): void {
     const start = splitIsoDateTime(job.scheduledStart);
@@ -247,35 +237,6 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     };
   }, [job.organizationId, timeOffRev]);
 
-  function handleSelectDay(day: Date): void {
-    setAnchorDay(day);
-    const next = new Date(
-      day.getFullYear(),
-      day.getMonth(),
-      day.getDate(),
-      startPickerDate.getHours(),
-      startPickerDate.getMinutes(),
-      0,
-      0
-    );
-    applyPickedDate('start', next);
-    applyPickedDate('end', addMinutes(next, effectiveDefault));
-  }
-
-  function applyTimeOfDay(hh: number, mm: number): void {
-    const next = new Date(
-      startPickerDate.getFullYear(),
-      startPickerDate.getMonth(),
-      startPickerDate.getDate(),
-      hh,
-      mm,
-      0,
-      0
-    );
-    applyPickedDate('start', next);
-    applyPickedDate('end', addMinutes(next, effectiveDefault));
-  }
-
   function handleClearSchedule(): void {
     setStartDate('');
     setStartTime('');
@@ -302,6 +263,86 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     setAndroidPicker(null);
   }
 
+  // Persistence core shared by Save, the time popup's Save and Cancel visit.
+  // Both values null means unscheduled (the job stays open).
+  async function persistSchedule(startIso: string | null, endIso: string | null): Promise<void> {
+    if (startIso && endIso && startIso > endIso) {
+      setSaveError('Scheduled start must be before scheduled end.');
+      return;
+    }
+
+    const repo = jobRepositoryProp ?? getModulePorts().jobs;
+    setSaving(true);
+    setSaveError(null);
+    setSaved(false);
+    try {
+      const updated = await repo.updateDetails(job.id, {
+        scheduledStart: startIso,
+        scheduledEnd: endIso,
+      });
+      const s = splitIsoDateTime(startIso);
+      const e = splitIsoDateTime(endIso);
+      setStartDate(s.date);
+      setStartTime(s.time);
+      setEndDate(e.date);
+      setEndTime(e.time);
+      setStartPickerDate(startIso ? new Date(startIso) : new Date());
+      setEndPickerDate(endIso ? new Date(endIso) : new Date());
+      setCalJobs((prev) => prev.map((j) => (j.id === updated.id ? updated : j)));
+      setSaved(true);
+      onSaved?.(updated);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not save the schedule.';
+      setSaveError(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCancelVisit(): Promise<void> {
+    await persistSchedule(null, null);
+    setTimePopup(null);
+  }
+
+  // start/end are 'HH:MM' on the popup's day (end is the same day as start).
+  async function handlePopupSave(start: string, end: string): Promise<void> {
+    if (!timePopup) {
+      return;
+    }
+    const d = timePopup.day;
+    const dayStr = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const s = combineDateTime(dayStr, start, 'start');
+    if (s.error) {
+      setSaveError(s.error);
+      return;
+    }
+    const e = combineDateTime(dayStr, end, 'end');
+    if (e.error) {
+      setSaveError(e.error);
+      return;
+    }
+    await persistSchedule(s.value, e.value);
+    setTimePopup(null);
+  }
+
+  // Other jobs' scheduled visits on the given local calendar day.
+  function otherVisitsOn(day: Date): number {
+    return calJobs.filter((j) => {
+      if (j.id === job.id || !j.scheduledStart) {
+        return false;
+      }
+      const at = new Date(j.scheduledStart);
+      return at.getFullYear() === day.getFullYear() && at.getMonth() === day.getMonth() && at.getDate() === day.getDate();
+    }).length;
+  }
+
+  function popupInitial(p: NonNullable<TimePopupState>): { start: string; end: string } {
+    if (p.mode === 'edit') {
+      return { start: startTime, end: endTime };
+    }
+    return { start: '08:00', end: defaultEnd('08:00', totalTaskMinutes && totalTaskMinutes > 0 ? totalTaskMinutes : effectiveDefault) };
+  }
+
   async function handleSave() {
     if (saving) {
       return;
@@ -316,28 +357,7 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
       setSaveError(end.error);
       return;
     }
-    if (start.value && end.value && start.value > end.value) {
-      setSaveError('Scheduled start must be before scheduled end.');
-      return;
-    }
-
-    const repo = jobRepositoryProp ?? getModulePorts().jobs;
-    setSaving(true);
-    setSaveError(null);
-    setSaved(false);
-    try {
-      const updated = await repo.updateDetails(job.id, {
-        scheduledStart: start.value,
-        scheduledEnd: end.value,
-      });
-      setSaved(true);
-      onSaved?.(updated);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not save the schedule.';
-      setSaveError(message);
-    } finally {
-      setSaving(false);
-    }
+    await persistSchedule(start.value, end.value);
   }
 
   function renderFieldPicker(field: ScheduleField) {
@@ -382,10 +402,8 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     const activeForField = androidPicker?.field === field ? androidPicker : null;
     return (
       <View>
-        <Button
+        <PayrollButton
           label="Pick date"
-          variant="outline"
-          size="sm"
           onPress={() => setAndroidPicker({ field, stage: 'date', datePart: pickerDate })}
         />
         <Text style={styles.hintText}>{displayText}</Text>
@@ -409,43 +427,17 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
     );
   }
 
-  // Day-timeline inputs: the day being scheduled (current Start, else the calendar anchor day),
-  // with other jobs and time-off overlapping that day as busy ranges (this job excluded).
-  const timelineDate = startDate && startTime ? startPickerDate : anchorDay;
-  const timelineSelectedMs = startDate && startTime ? startPickerDate.getTime() : null;
-  const timelineBusy = (() => {
-    const dayStart = new Date(timelineDate.getFullYear(), timelineDate.getMonth(), timelineDate.getDate()).getTime();
-    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-    const out: Array<{ id: string; startMs: number; endMs: number; label?: string }> = [];
-    for (const j of calJobs) {
-      if (j.id === job.id || !j.scheduledStart) continue;
-      const s = new Date(j.scheduledStart).getTime();
-      const e = j.scheduledEnd ? new Date(j.scheduledEnd).getTime() : s + effectiveDefault * 60000;
-      if (Number.isNaN(s) || Number.isNaN(e) || e <= dayStart || s >= dayEnd) continue;
-      out.push({ id: j.id, startMs: s, endMs: e, label: j.jobNumber ? String(j.jobNumber) : undefined });
-    }
-    for (const t of calTimeOff) {
-      if (t.status === 'cancelled' || t.status === 'denied') continue;
-      const [sy, sm, sd] = t.startDate.split('-').map(Number);
-      const [ey, em, ed] = t.endDate.split('-').map(Number);
-      if (!sy || !sm || !sd || !ey || !em || !ed) continue;
-      const s = new Date(sy, sm - 1, sd).getTime();
-      const e = new Date(ey, em - 1, ed + 1).getTime();
-      if (e <= dayStart || s >= dayEnd) continue;
-      out.push({ id: 'timeoff-' + t.id, startMs: s, endMs: e, label: 'Time off' });
-    }
-    return out;
-  })();
-
   const Root = embedded ? View : ScrollView;
   const rootProps = embedded ? {} : { contentContainerStyle: styles.content };
+  const popupInit = timePopup ? popupInitial(timePopup) : { start: '08:00', end: '09:00' };
+  const popupVisits = timePopup ? otherVisitsOn(timePopup.day) : 0;
 
   return (
     <View style={styles.screen}>
       <Root {...rootProps}>
         {!embedded && onBack && (
           <View style={styles.backRow}>
-            <Button label="Back to Job" variant="outline" size="sm" onPress={onBack} />
+            <PayrollButton label="Back to Job" onPress={onBack} />
           </View>
         )}
 
@@ -481,46 +473,19 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
               <Text style={styles.techLine}>Prem Tech: {premTechName ?? '—'}</Text>
             </View>
             <View style={styles.actions}>
-              <Button
-                label="Clear Schedule"
-                variant="outline"
-                onPress={handleClearSchedule}
-                style={styles.action}
-              />
-              <Button
+              <PayrollButton label="Clear Schedule" onPress={handleClearSchedule} style={styles.action} />
+              <PayrollButton
                 label={saving ? 'Saving...' : 'Save'}
                 onPress={() => void handleSave()}
                 disabled={saving}
                 style={styles.action}
               />
-              <Button label="Cancel" variant="outline" onPress={resetFromJob} style={styles.action} />
+              <PayrollButton label="Cancel" onPress={resetFromJob} style={styles.action} />
             </View>
           </View>
 
-          <Text style={styles.sectionLabel}>Start Time</Text>
-          <DayTimelinePicker
-            date={timelineDate}
-            busy={timelineBusy}
-            selectedStartMs={timelineSelectedMs}
-            onPick={(ms) => applyPickedDate('start', new Date(ms))}
-          />
-
           <Text style={styles.sectionLabel}>Start time</Text>
           {renderFieldPicker('start')}
-
-          <Text style={styles.sectionLabel}>Quick start time</Text>
-          <Select
-            value={`${startPickerDate.getHours()}-${startPickerDate.getMinutes()}`}
-            options={TIME_OF_DAY_OPTIONS.map((opt) => ({
-              label: opt.label,
-              value: `${opt.hh}-${opt.mm}`,
-            }))}
-            placeholder="Select a time"
-            onChange={(value) => {
-              const [hhStr, mmStr] = value.split('-');
-              applyTimeOfDay(Number(hhStr), Number(mmStr));
-            }}
-          />
 
           <Text style={styles.sectionLabel}>End time (auto)</Text>
           <Text style={styles.hintText}>
@@ -551,7 +516,11 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
               jobs={calJobs}
               employees={calEmployees}
               timeOffRequests={calTimeOff}
-              onSelectJob={() => {}}
+              onSelectJob={(j) => {
+                if (j.id === job.id) {
+                  setTimePopup({ mode: 'edit', day: j.scheduledStart ? new Date(j.scheduledStart) : anchorDay });
+                }
+              }}
               onSaveBlackouts={async (isoDays, techId) => {
                 for (const day of isoDays) {
                   await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, techId, { startDate: day, endDate: day, reason: null });
@@ -566,11 +535,26 @@ export function JobScheduleScreen({ job, jobRepository: jobRepositoryProp, onBac
                 await getModulePorts().timeOffAdmin.cancel(requestId);
                 setTimeOffRev((n) => n + 1);
               }}
-              onPickDay={handleSelectDay}
+              renderDayActions={(day) => (
+                <View style={{ marginVertical: spacing.xs }}>
+                  <PayrollButton label="Set time" onPress={() => setTimePopup({ mode: 'pick', day })} testID="schedule-set-time" />
+                </View>
+              )}
             />
           </View>
         </Card>
       </Root>
+      <TimeRangePopup
+        visible={timePopup !== null}
+        title={timePopup?.mode === 'edit' ? 'Reschedule' : 'Set time'}
+        date={timePopup?.day ?? anchorDay}
+        initialStart={popupInit.start}
+        initialEnd={popupInit.end}
+        onSave={handlePopupSave}
+        onClose={() => setTimePopup(null)}
+        onCancelVisit={timePopup?.mode === 'edit' ? handleCancelVisit : undefined}
+        note={popupVisits > 0 ? `${popupVisits} other visit${popupVisits === 1 ? '' : 's'} this day` : undefined}
+      />
     </View>
   );
 }

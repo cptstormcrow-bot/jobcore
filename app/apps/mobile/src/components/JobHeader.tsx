@@ -2,7 +2,6 @@ import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { AppChrome, JobHeaderBlock, JobTitleBarHeader, TechSelect, Checkbox, formatJobHeaderLines, formatScheduleLabel, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
@@ -24,6 +23,7 @@ export type JobHeaderProps = {
   onLogoPress?: ComponentProps<typeof AppChrome>['onLogoPress'];
   gearTitle?: ComponentProps<typeof AppChrome>['gearTitle'];
   optionsItems?: ComponentProps<typeof AppChrome>['optionsItems'];
+  onSchedulePress?: () => void;
 };
 
 const copyToClipboard = async (text: string): Promise<void> => { await Clipboard.setStringAsync(text); };
@@ -50,6 +50,7 @@ export function JobHeader({
   onLogoPress,
   gearTitle,
   optionsItems,
+  onSchedulePress,
   children,
 }: JobHeaderProps) {
   const totalHoursLabel =
@@ -57,7 +58,6 @@ export function JobHeader({
       ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
       : null;
   const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
-  const router = useRouter();
   const headerLines = formatJobHeaderLines(job.jobNumber, job.createdAt);
   const timeLines: string[] = [];
   const enRouteClock = formatClock(job.enRouteAt);
@@ -70,17 +70,6 @@ export function JobHeader({
     const billed = formatElapsed(job.inProgressAt, new Date(job.completedAt));
     if (billed) timeLines.push(`Billed: ${billed}`);
   }
-  const onSchedulePress = () => {
-    const d = job.scheduledStart ? new Date(job.scheduledStart) : null;
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-    const datePart =
-      d && !Number.isNaN(d.getTime())
-        ? `date=${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}&`
-        : '';
-    const returnTo = encodeURIComponent(`/job/${job.id}?panel=plan`);
-    router.push(`/calendar?${datePart}jobId=${job.id}&returnTo=${returnTo}` as never);
-  };
-
   return (
     <View style={styles.root}>
       <AppChrome
