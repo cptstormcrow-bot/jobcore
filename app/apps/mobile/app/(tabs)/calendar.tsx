@@ -8,6 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniversalCalendar, parseCalendarDate, type UniversalCalendarEmployee } from '../../../../modules/admin-finance/src/screens/UniversalCalendar';
 import type { TimeOffRequestAdmin } from '../../../../modules/admin-finance/src/data/time-off-repo';
 import { useSession } from '../../src/lib/session';
+import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import { supabase } from '../../src/lib/supabase';
 import { createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
 import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
@@ -109,6 +110,12 @@ export default function CalendarScreen() {
   // The component scopes tech views; this screen only passes the role and viewer id.
   const s = useSession();
   const role = s.status === 'authenticated' ? s.profile.role : undefined;
+  // createBlackout (admin-finance-repos.ts) reads the session through the relative SOURCE path.
+  // Injected synchronously in the render body: child effects run before parent effects, and
+  // the setters are idempotent module-scope writes.
+  if (s.status === 'authenticated') {
+    setAdminFinanceSourceModuleSession({ org: s.organization, role: s.profile.role, userId: s.profile.id });
+  }
   const viewerId = s.status === 'authenticated' ? s.profile.id : null;
   const orgId = s.status === 'authenticated' ? s.organization.id : undefined;
 

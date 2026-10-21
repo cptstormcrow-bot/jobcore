@@ -7,6 +7,10 @@ import { EmptyState, LoadingState, colors } from '@jobcore/ui';
 import { setModuleSession, clearModuleSession } from '@jobcore/admin-finance';
 import { setModulePorts as setAdminFinanceModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
 import {
+  setModuleSession as setAdminFinanceSourceModuleSession,
+  clearModuleSession as clearAdminFinanceSourceModuleSession,
+} from '../../../../modules/admin-finance/src/lib/module-session';
+import {
   setModuleSession as setFieldTechModuleSession,
   clearModuleSession as clearFieldTechModuleSession,
 } from '../../../../modules/field-tech/src/lib/module-session';
@@ -68,11 +72,21 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
+    // admin-finance-repos.ts reads the session through the relative SOURCE path, a different
+    // module instance from the package (dist) copy written above — inject both.
+    setAdminFinanceSourceModuleSession({
+      org: state.organization,
+      role: state.profile.role,
+      userId: state.profile.id,
+    });
     setAdminFinanceModulePorts(buildAdminFinancePorts({ orgId: state.organization.id, userId: state.profile.id }));
   }
   useEffect(() => {
     if (module?.id !== 'admin-finance') return undefined;
-    return () => clearModuleSession();
+    return () => {
+      clearModuleSession();
+      clearAdminFinanceSourceModuleSession();
+    };
   }, [module?.id]);
 
   // Host-side injection for the field-tech module's session + ports seams

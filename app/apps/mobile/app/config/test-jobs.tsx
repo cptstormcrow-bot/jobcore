@@ -21,6 +21,7 @@ import type { JobStatus } from '@jobcore/core';
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';
 import { useSession } from '../../src/lib/session';
 import { runJobSimulator, type DryRunReport } from '../../src/lib/job-simulator';
+import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 
 interface TestJobRow {
   id: string;
@@ -43,6 +44,12 @@ function statusColor(status: string): string {
 
 export default function TestJobsScreen(): React.ReactElement {
   const session = useSession();
+  // Inject the admin-finance source-copy module session synchronously in render (not in an
+  // effect): the job simulator's estimate/payment repos call requireModuleSession() and throw
+  // when nothing was injected. The setter is an idempotent module-scope write.
+  if (session.status === 'authenticated') {
+    setAdminFinanceSourceModuleSession({ org: session.organization, role: session.profile.role, userId: session.profile.id });
+  }
   const organizationId = session.status === 'authenticated' ? session.organization.id : null;
   const actorProfile = session.status === 'authenticated' ? session.profile : null;
 

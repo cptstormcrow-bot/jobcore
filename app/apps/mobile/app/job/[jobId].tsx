@@ -57,6 +57,7 @@ import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens
 import { JobEstimateScreen, type EstimateChrome } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
 import { setModuleSession } from '@jobcore/admin-finance';
+import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import {
   setModuleSession as setFieldTechModuleSession,
   clearModuleSession as clearFieldTechModuleSession,
@@ -252,6 +253,7 @@ export default function JobDrilldownScreen() {
 
   if (session.status === 'authenticated' && org && role) {
     setModuleSession({ org, role, userId: session.profile.id });
+    setAdminFinanceSourceModuleSession({ org, role, userId: session.profile.id });
     setFieldTechModuleSession({ org, role, userId: session.profile.id });
     setFieldTechModulePorts(buildFieldTechPorts());
   }
