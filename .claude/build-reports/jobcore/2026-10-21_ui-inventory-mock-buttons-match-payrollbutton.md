@@ -42,10 +42,10 @@ Rule 41 lineage: contracts 2 and 3 above are the prior open items, honored as de
 Docs sweep: done 2026-10-21 (Rule 31). Jobcore tree *.md Grep for mk-button/BTN_VARIANTS/.m-btn/mock button found only this report. PowerShell Select-String over the Jobcore memory dir and E:\Jeff\.claude\reference found 0 hits. No docs needed updating.
 
 ## Commits
-None by this task. The four regenerated files plus render-mockup.mjs are unstaged for the main session to commit with a scoped pathspec.
+8305e8b (scoped, unpushed): render-mockup.mjs, pagination.json, ui-inventory.html, ui-inventory.pdf, ui-storyboard.html, and this report.
 
 ## Test plan:
-Test plan: asked Jeff (Rule 43) — answer pending
+Test plan: declined by Jeff (Rule 43), 2026-10-21 — "No test plan"
 
 ## Summary
 The UI Inventory mock buttons were changed to match the current Payroll button style (sand #D9C7A0, 32px high, 6px radius, bold black text, auto width) in one source file, and the inventory, storyboard, pagination data and PDF were regenerated. The HTML is verified; the PDF look is unverified, and the 3-screen overflow remains open.
