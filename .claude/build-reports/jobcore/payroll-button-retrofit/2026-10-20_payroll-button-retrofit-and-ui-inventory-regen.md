@@ -39,7 +39,7 @@ Browser verification (built-in browser, dev server localhost:8081):
 NOT verified: Jeff's own visual pass; the ⋮ identity (row menu vs overflow); that the 459px Approve width is deliberate.
 
 ## Forward contracts:
-1. PayrollButton is the standing button; every new button uses it. Legacy `Button` is deprecated and roughly 50 files still use it (app/docs/ui-conventions.md:27): never write "all buttons" as done.
+1. PayrollButton is the standing button; every new button uses it. Legacy `Button` is deprecated and roughly 50 files still use it (app/docs/ui-conventions.md:27): never write "all buttons" as done. RESOLVED 2026-10-21: Jeff declared this no longer applicable ("2 and 3 are not a thing anymore").
 2. SUPERSEDED by dabf215 (extractor now reads PayrollButton labels; snapshot labels 71→105; fix in extract.mjs regex /<(?:Button|PayrollButton)\b([\s\S]*?)>/g). Original text: UI Inventory extract.mjs (app/docs/snapshots/v0.4.0/_tools/extract.mjs) does not pick up `<PayrollButton label="...">`: af-employee-roster buttonLabels is [] before and after (EmployeeRosterScreen.tsx ~lines 122/124 hold "Add Employee" and "Pending Invitations"). A follow-up session to fix it is proposed.
 3. The three paginate overflow screens (ft-Payroll, sm-Payroll, layout) remain open (memory jobcore-ui-inventory-0058-regen).
 4. Rule 43 test plan: declined by Jeff; nothing owed.

@@ -58,9 +58,9 @@ Evidence table (Rule 29; line counts by [IO.File]::ReadAllLines(path).Length; ch
 | .claude/build-reports/jobcore/2026-10-20_schedule-unify-time-range-popup.md | absent before this write | - | - |
 
 ## Forward contracts:
-- FC1: The UI Inventory v0.4.0 snapshot is stale for #0058 after this change. Its regeneration is deferred until the three-screen pagination overflow (ft-Payroll, sm-Payroll, layout) is diagnosed. app/docs/snapshots/v0.4.0/_tools/descriptions.json:564 needs a rewrite at that point.
-- FC2: UniversalCalendar's legacy "Blackouts" and "Request time off" Buttons still owe a PayrollButton conversion; they were left because they also appear on the Calendar tab another stream is editing.
-- FC3: The roughly 50-file legacy Button to PayrollButton conversion remains open (app/docs/ui-conventions.md:27). This change converts only the JobScheduleScreen buttons and adds every new button as a PayrollButton.
+- FC1: The UI Inventory v0.4.0 snapshot is stale for #0058 after this change. Its regeneration is deferred until the three-screen pagination overflow (ft-Payroll, sm-Payroll, layout) is diagnosed. app/docs/snapshots/v0.4.0/_tools/descriptions.json:564 needs a rewrite at that point. RESOLVED 2026-10-21: regen done (85 screens, 179 PDF pages, ui-inventory.pdf 7,978,379 bytes, descriptions.json #0058 rewritten).
+- FC2: UniversalCalendar's legacy "Blackouts" and "Request time off" Buttons still owe a PayrollButton conversion; they were left because they also appear on the Calendar tab another stream is editing. RESOLVED 2026-10-21: Jeff declared this no longer applicable ("2 and 3 are not a thing anymore").
+- FC3: The roughly 50-file legacy Button to PayrollButton conversion remains open (app/docs/ui-conventions.md:27). This change converts only the JobScheduleScreen buttons and adds every new button as a PayrollButton. RESOLVED 2026-10-21: Jeff declared this no longer applicable ("2 and 3 are not a thing anymore").
 
 Rule 41 lineage evaluation (project lineage jobcore, reports dated 2026-08-16 or later, project-local root, 95 files scanned; every row below was checked against disk before listing). Closed contracts need no action; the three that touch this change are carried forward unaltered with a reason; the rest belong to other streams and are left as is.
 
@@ -72,7 +72,7 @@ Rule 41 lineage evaluation (project lineage jobcore, reports dated 2026-08-16 or
 | C4 | 2026-10-16: push of migration 0090 | Closed: already applied (0093 report row 14) |
 | C5 | width-fix FC2: extract.mjs PayrollButton under-count | Closed: superseded by commit dabf215 |
 | S1 | payroll-button-sop FC1 and FC3, blackouts-calendar-payroll-card FCs | Dropped as standing notes, not action items |
-| O1 | payroll-button-retrofit/2026-10-20_payroll-button-retrofit-and-ui-inventory-regen.md:42, about 50 files still use the legacy Button | Carried forward unaltered as FC3; outside this change |
+| O1 | payroll-button-retrofit/2026-10-20_payroll-button-retrofit-and-ui-inventory-regen.md:42, about 50 files still use the legacy Button | Carried forward unaltered as FC3; outside this change. RESOLVED 2026-10-21: Jeff declared this no longer applicable ("2 and 3 are not a thing anymore"). |
 | O2 | same report :44, three paginate overflow screens (ft-Payroll, sm-Payroll, layout), cause undiagnosed | Carried forward unaltered as the precondition of FC1; cannot be resolved without a diagnosis |
 | O3 | jobcore-v0.3.0-ui-inventory-storyboard/2026-10-05_ui-inventory-print-pagination-no-clipping.md:30, regenerate pagination.json when screen content changes | Carried forward unaltered as part of FC1; regen deferred with the inventory |
 | U1 | estimate-0057-pinned-tabs-two-column/2026-10-18_estimate-0057-pinned-tabs-two-column.md:20, migration 0089 live status unknown | Unrelated; left as is (needs Jeff's go for any live push) |

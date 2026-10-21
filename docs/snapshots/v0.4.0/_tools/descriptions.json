@@ -550,10 +550,10 @@
       ]
     },
     "job-region-schedule": {
-      "summary": "Schedule #0058: admin panel on Job Detail for setting a job's schedule. Heading \"Schedule #0058\" with sand buttons Clear Schedule, Save and Cancel. A top band shows the assigned Tech and Prem Tech on the left and a Start Time day-timeline picker on the right. Below it sit the Start, Quick start, End, Scheduled for and Estimated fields, then the #0011 calendar.",
+      "summary": "Schedule #0058: the one screen opened by both the job menu Schedule item and the header \"Unscheduled\" label. A month calendar; picking a date drills into that day. The day view has a \"Set time\" button that opens a compact From/To time popup (30-minute steppers, an \"End must be after start\" error, Save and Close). Tapping this job's own calendar entry opens \"Reschedule\" with a danger \"Cancel visit\" button that unschedules the job, which returns to Unscheduled; other jobs' entries do nothing. The old large start-time picker is gone.",
       "flowStage": "scheduled",
       "specStage": "Job Detail",
-      "purpose": "Lets an admin set or clear a job's scheduled start/end time from Job Detail (day-timeline Start Time picker, Quick start, End, Scheduled for, Estimated, with the #0011 calendar below), saving through JobRepository.updateDetails.",
+      "purpose": "Lets an admin schedule a job by picking a date on the month calendar and a From/To time in a compact popup, reschedule it, or cancel the visit so the job returns to Unscheduled.",
       "missing": "",
       "navTargets": []
     },
