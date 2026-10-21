@@ -201,7 +201,10 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Detail"
+      ],
       "components": {
         "Text": 4,
         "Card": 1,
@@ -374,12 +377,6 @@
           ]
         },
         {
-          "src": "./TimeOffQueueScreen",
-          "names": [
-            "TimeOffQueueScreen"
-          ]
-        },
-        {
           "src": "./PaymentsHubScreen",
           "names": [
             "PaymentsHubScreen"
@@ -513,7 +510,7 @@
           ]
         }
       ],
-      "lineCount": 1332,
+      "lineCount": 1327,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -521,7 +518,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -530,7 +527,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -539,7 +536,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 927,
+          "line": 925,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -548,7 +545,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 935,
+          "line": 933,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -557,7 +554,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 936,
+          "line": 934,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -566,7 +563,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 943,
+          "line": 941,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Add Job",
+          "placeholder": null,
+          "variant": null,
+          "line": 942,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -575,7 +581,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -584,7 +590,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -593,7 +599,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -602,9 +608,18 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Detail",
+          "placeholder": null,
+          "variant": null,
+          "line": 973,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
         },
         {
           "type": "empty",
@@ -648,6 +663,15 @@
           "placeholder": null,
           "variant": null,
           "line": 105,
+          "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "New Lead",
+          "placeholder": null,
+          "variant": null,
+          "line": 106,
           "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
           "dynamic": false
         },
@@ -805,6 +829,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 129,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save",
+          "placeholder": null,
+          "variant": null,
+          "line": 130,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Create job",
+          "placeholder": null,
+          "variant": null,
+          "line": 131,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "Edit lead",
           "placeholder": null,
@@ -917,7 +968,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1010,
+          "line": 1008,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1016,7 +1067,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1025,7 +1076,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1574,7 +1625,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1583,7 +1634,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -2192,186 +2243,6 @@
         },
         {
           "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Sign in to view this organization's time-off queue.",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No data source is connected for this module yet.",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Add Blackout",
-          "placeholder": null,
-          "variant": null,
-          "line": 162,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 174,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No time-off requests are awaiting review.",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 179,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 189,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 211,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Pending Review",
-          "placeholder": null,
-          "variant": null,
-          "line": 213,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 229,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 239,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
           "label": "Assignment board",
           "placeholder": null,
           "variant": null,
@@ -2399,6 +2270,15 @@
         },
         {
           "type": "button",
+          "label": "{cat === 'real' ? 'Real' : cat === 'beta'}",
+          "placeholder": null,
+          "variant": null,
+          "line": 412,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{job.customerName}",
           "placeholder": null,
           "variant": null,
@@ -2414,6 +2294,33 @@
           "line": 446,
           "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Service",
+          "placeholder": null,
+          "variant": null,
+          "line": 468,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Prem",
+          "placeholder": null,
+          "variant": null,
+          "line": 471,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm",
+          "placeholder": null,
+          "variant": null,
+          "line": 484,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -2821,6 +2728,24 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Add Employee",
+          "placeholder": null,
+          "variant": null,
+          "line": 122,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Pending Invitations",
+          "placeholder": null,
+          "variant": null,
+          "line": 124,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Employee Roster",
           "placeholder": null,
@@ -2983,6 +2908,42 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Edit",
+          "placeholder": null,
+          "variant": null,
+          "line": 99,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Deactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 101,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "{employee.fullName}",
           "placeholder": null,
@@ -3023,7 +2984,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3032,7 +2993,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3509,7 +3470,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3518,7 +3479,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3527,7 +3488,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -3536,7 +3497,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -3545,7 +3506,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -3554,7 +3515,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -3563,7 +3524,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -3572,7 +3533,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -3581,7 +3542,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -3590,7 +3551,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -3599,7 +3560,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -3608,7 +3569,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3617,7 +3578,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -3644,7 +3605,10 @@
         "titleInSource": "Admin & Finance",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Add Job",
+          "Detail"
+        ]
       }
     },
     {
@@ -3897,6 +3861,15 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 50,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "field",
           "label": "Week start (YYYY-MM-DD)",
           "placeholder": "2026-10-05",
@@ -3906,11 +3879,83 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Close run",
+          "placeholder": null,
+          "variant": null,
+          "line": 104,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "{f.label}",
+          "placeholder": null,
+          "variant": null,
+          "line": 110,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Export",
+          "placeholder": null,
+          "variant": null,
+          "line": 117,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Payroll settings are not available yet",
           "placeholder": null,
           "variant": null,
           "line": 71,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 72,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 100,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save settings",
+          "placeholder": null,
+          "variant": null,
+          "line": 102,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save accounts",
+          "placeholder": null,
+          "variant": null,
+          "line": 109,
           "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
           "dynamic": false
         },
@@ -4011,7 +4056,11 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Close run",
+        "Export"
+      ],
       "components": {
         "Text": 2,
         "TextField": 1,
@@ -4065,11 +4114,56 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 50,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "field",
           "label": "Week start (YYYY-MM-DD)",
           "placeholder": "2026-10-05",
           "variant": null,
           "line": 95,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Close run",
+          "placeholder": null,
+          "variant": null,
+          "line": 104,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "{f.label}",
+          "placeholder": null,
+          "variant": null,
+          "line": 110,
+          "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Export",
+          "placeholder": null,
+          "variant": null,
+          "line": 117,
           "via": "modules/admin-finance/src/screens/PayrollRunScreen.tsx",
           "dynamic": false
         }
@@ -4096,7 +4190,11 @@
         "titleInSource": "Payroll is not available yet",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Back",
+          "Close run",
+          "Export"
+        ]
       }
     },
     {
@@ -4116,7 +4214,11 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Save settings",
+        "Save accounts"
+      ],
       "components": {
         "Text": 8,
         "TextField": 5,
@@ -4163,6 +4265,42 @@
           "placeholder": null,
           "variant": null,
           "line": 71,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 72,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 100,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save settings",
+          "placeholder": null,
+          "variant": null,
+          "line": 102,
+          "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save accounts",
+          "placeholder": null,
+          "variant": null,
+          "line": 109,
           "via": "modules/admin-finance/src/screens/PayrollSettingsScreen.tsx",
           "dynamic": false
         },
@@ -4243,7 +4381,11 @@
         "titleInSource": "Payroll settings are not available yet",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Back",
+          "Save settings",
+          "Save accounts"
+        ]
       }
     },
     {
@@ -4758,7 +4900,11 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Service",
+        "Prem",
+        "Confirm"
+      ],
       "components": {
         "Text": 11,
         "Card": 2,
@@ -4880,6 +5026,15 @@
         },
         {
           "type": "button",
+          "label": "{cat === 'real' ? 'Real' : cat === 'beta'}",
+          "placeholder": null,
+          "variant": null,
+          "line": 412,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{job.customerName}",
           "placeholder": null,
           "variant": null,
@@ -4895,6 +5050,33 @@
           "line": 446,
           "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Service",
+          "placeholder": null,
+          "variant": null,
+          "line": 468,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Prem",
+          "placeholder": null,
+          "variant": null,
+          "line": 471,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm",
+          "placeholder": null,
+          "variant": null,
+          "line": 484,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -5027,7 +5209,11 @@
         "titleInSource": "Assignment board",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Service",
+          "Prem",
+          "Confirm"
+        ]
       }
     },
     {
@@ -5321,7 +5507,10 @@
       "notes": "inline",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Detail"
+      ],
       "components": {
         "Text": 4,
         "Card": 1,
@@ -5494,12 +5683,6 @@
           ]
         },
         {
-          "src": "./TimeOffQueueScreen",
-          "names": [
-            "TimeOffQueueScreen"
-          ]
-        },
-        {
           "src": "./PaymentsHubScreen",
           "names": [
             "PaymentsHubScreen"
@@ -5633,7 +5816,7 @@
           ]
         }
       ],
-      "lineCount": 1332,
+      "lineCount": 1327,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -5641,7 +5824,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -5650,7 +5833,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -5659,7 +5842,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 927,
+          "line": 925,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -5668,7 +5851,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 935,
+          "line": 933,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -5677,7 +5860,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 936,
+          "line": 934,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -5686,7 +5869,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 943,
+          "line": 941,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Add Job",
+          "placeholder": null,
+          "variant": null,
+          "line": 942,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -5695,7 +5887,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -5704,7 +5896,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -5713,7 +5905,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -5722,9 +5914,18 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Detail",
+          "placeholder": null,
+          "variant": null,
+          "line": 973,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
         },
         {
           "type": "empty",
@@ -5768,6 +5969,15 @@
           "placeholder": null,
           "variant": null,
           "line": 105,
+          "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "New Lead",
+          "placeholder": null,
+          "variant": null,
+          "line": 106,
           "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
           "dynamic": false
         },
@@ -5925,6 +6135,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 129,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save",
+          "placeholder": null,
+          "variant": null,
+          "line": 130,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Create job",
+          "placeholder": null,
+          "variant": null,
+          "line": 131,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "Edit lead",
           "placeholder": null,
@@ -6037,7 +6274,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1010,
+          "line": 1008,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6136,7 +6373,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6145,7 +6382,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6694,7 +6931,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6703,7 +6940,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -7312,186 +7549,6 @@
         },
         {
           "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Sign in to view this organization's time-off queue.",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No data source is connected for this module yet.",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Add Blackout",
-          "placeholder": null,
-          "variant": null,
-          "line": 162,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 174,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No time-off requests are awaiting review.",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 179,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 189,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 211,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Pending Review",
-          "placeholder": null,
-          "variant": null,
-          "line": 213,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 229,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 239,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
           "label": "Assignment board",
           "placeholder": null,
           "variant": null,
@@ -7519,6 +7576,15 @@
         },
         {
           "type": "button",
+          "label": "{cat === 'real' ? 'Real' : cat === 'beta'}",
+          "placeholder": null,
+          "variant": null,
+          "line": 412,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{job.customerName}",
           "placeholder": null,
           "variant": null,
@@ -7534,6 +7600,33 @@
           "line": 446,
           "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Service",
+          "placeholder": null,
+          "variant": null,
+          "line": 468,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Prem",
+          "placeholder": null,
+          "variant": null,
+          "line": 471,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm",
+          "placeholder": null,
+          "variant": null,
+          "line": 484,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -7941,6 +8034,24 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Add Employee",
+          "placeholder": null,
+          "variant": null,
+          "line": 122,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Pending Invitations",
+          "placeholder": null,
+          "variant": null,
+          "line": 124,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Employee Roster",
           "placeholder": null,
@@ -8103,6 +8214,42 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Edit",
+          "placeholder": null,
+          "variant": null,
+          "line": 99,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Deactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 101,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "{employee.fullName}",
           "placeholder": null,
@@ -8143,7 +8290,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -8152,7 +8299,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -8629,7 +8776,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -8638,7 +8785,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -8647,7 +8794,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -8656,7 +8803,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -8665,7 +8812,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -8674,7 +8821,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -8683,7 +8830,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -8692,7 +8839,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -8701,7 +8848,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -8710,7 +8857,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -8719,7 +8866,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -8728,7 +8875,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -8737,7 +8884,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -8764,7 +8911,10 @@
         "titleInSource": "Admin & Finance",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Add Job",
+          "Detail"
+        ]
       }
     },
     {
@@ -9218,7 +9368,12 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Edit",
+        "Deactivate",
+        "Reactivate"
+      ],
       "components": {
         "Text": 13,
         "Card": 3,
@@ -9252,9 +9407,45 @@
           ]
         }
       ],
-      "lineCount": 273,
+      "lineCount": 272,
       "titleInSource": null,
       "elements": [
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Edit",
+          "placeholder": null,
+          "variant": null,
+          "line": 99,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Deactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 101,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
         {
           "type": "header",
           "label": "{employee.fullName}",
@@ -9314,7 +9505,12 @@
         "titleInSource": null,
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Back",
+          "Edit",
+          "Deactivate",
+          "Reactivate"
+        ]
       }
     },
     {
@@ -10167,7 +10363,10 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Add Employee",
+        "Pending Invitations"
+      ],
       "components": {
         "Card": 1,
         "ListItem": 1,
@@ -10268,6 +10467,24 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Add Employee",
+          "placeholder": null,
+          "variant": null,
+          "line": 122,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Pending Invitations",
+          "placeholder": null,
+          "variant": null,
+          "line": 124,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Employee Roster",
           "placeholder": null,
@@ -10326,7 +10543,10 @@
         "titleInSource": "Employee Roster",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Add Employee",
+          "Pending Invitations"
+        ]
       }
     },
     {
@@ -10839,7 +11059,10 @@
       "notes": "inline",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Detail"
+      ],
       "components": {
         "Text": 4,
         "Card": 1,
@@ -11012,12 +11235,6 @@
           ]
         },
         {
-          "src": "./TimeOffQueueScreen",
-          "names": [
-            "TimeOffQueueScreen"
-          ]
-        },
-        {
           "src": "./PaymentsHubScreen",
           "names": [
             "PaymentsHubScreen"
@@ -11151,7 +11368,7 @@
           ]
         }
       ],
-      "lineCount": 1332,
+      "lineCount": 1327,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -11159,7 +11376,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11168,7 +11385,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11177,7 +11394,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 927,
+          "line": 925,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -11186,7 +11403,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 935,
+          "line": 933,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -11195,7 +11412,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 936,
+          "line": 934,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -11204,7 +11421,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 943,
+          "line": 941,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Add Job",
+          "placeholder": null,
+          "variant": null,
+          "line": 942,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11213,7 +11439,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11222,7 +11448,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11231,7 +11457,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -11240,9 +11466,18 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Detail",
+          "placeholder": null,
+          "variant": null,
+          "line": 973,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
         },
         {
           "type": "empty",
@@ -11286,6 +11521,15 @@
           "placeholder": null,
           "variant": null,
           "line": 105,
+          "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "New Lead",
+          "placeholder": null,
+          "variant": null,
+          "line": 106,
           "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
           "dynamic": false
         },
@@ -11443,6 +11687,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 129,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save",
+          "placeholder": null,
+          "variant": null,
+          "line": 130,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Create job",
+          "placeholder": null,
+          "variant": null,
+          "line": 131,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "Edit lead",
           "placeholder": null,
@@ -11555,7 +11826,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1010,
+          "line": 1008,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11654,7 +11925,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -11663,7 +11934,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12212,7 +12483,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12221,7 +12492,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12830,186 +13101,6 @@
         },
         {
           "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Sign in to view this organization's time-off queue.",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No data source is connected for this module yet.",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Add Blackout",
-          "placeholder": null,
-          "variant": null,
-          "line": 162,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 174,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No time-off requests are awaiting review.",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 179,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 189,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 211,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Pending Review",
-          "placeholder": null,
-          "variant": null,
-          "line": 213,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 229,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 239,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
           "label": "Assignment board",
           "placeholder": null,
           "variant": null,
@@ -13037,6 +13128,15 @@
         },
         {
           "type": "button",
+          "label": "{cat === 'real' ? 'Real' : cat === 'beta'}",
+          "placeholder": null,
+          "variant": null,
+          "line": 412,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{job.customerName}",
           "placeholder": null,
           "variant": null,
@@ -13052,6 +13152,33 @@
           "line": 446,
           "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Service",
+          "placeholder": null,
+          "variant": null,
+          "line": 468,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Prem",
+          "placeholder": null,
+          "variant": null,
+          "line": 471,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm",
+          "placeholder": null,
+          "variant": null,
+          "line": 484,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -13459,6 +13586,24 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Add Employee",
+          "placeholder": null,
+          "variant": null,
+          "line": 122,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Pending Invitations",
+          "placeholder": null,
+          "variant": null,
+          "line": 124,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Employee Roster",
           "placeholder": null,
@@ -13621,6 +13766,42 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Edit",
+          "placeholder": null,
+          "variant": null,
+          "line": 99,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Deactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 101,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "{employee.fullName}",
           "placeholder": null,
@@ -13661,7 +13842,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -13670,7 +13851,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14147,7 +14328,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14156,7 +14337,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14165,7 +14346,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -14174,7 +14355,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -14183,7 +14364,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -14192,7 +14373,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -14201,7 +14382,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -14210,7 +14391,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -14219,7 +14400,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -14228,7 +14409,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -14237,7 +14418,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -14246,7 +14427,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14255,7 +14436,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -14282,7 +14463,10 @@
         "titleInSource": "Admin & Finance",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Add Job",
+          "Detail"
+        ]
       }
     },
     {
@@ -14516,7 +14700,11 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Save",
+        "Create job"
+      ],
       "components": {
         "Text": 14,
         "Card": 1,
@@ -14601,6 +14789,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 129,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save",
+          "placeholder": null,
+          "variant": null,
+          "line": 130,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Create job",
+          "placeholder": null,
+          "variant": null,
+          "line": 131,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "Edit lead",
           "placeholder": null,
@@ -14680,6 +14895,33 @@
           "line": 160,
           "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
           "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
         }
       ],
       "chrome": {
@@ -14704,7 +14946,11 @@
         "titleInSource": "No active session",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Back",
+          "Save",
+          "Create job"
+        ]
       }
     },
     {
@@ -14724,7 +14970,9 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "New Lead"
+      ],
       "components": {
         "Text": 1,
         "Card": 1,
@@ -14827,6 +15075,15 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "New Lead",
+          "placeholder": null,
+          "variant": null,
+          "line": 106,
+          "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "No leads",
           "placeholder": null,
@@ -14885,7 +15142,9 @@
         "titleInSource": "Leads",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "New Lead"
+        ]
       }
     },
     {
@@ -14905,7 +15164,10 @@
       "notes": "inline",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Add Job",
+        "Detail"
+      ],
       "components": {
         "Text": 4,
         "Card": 1,
@@ -15078,12 +15340,6 @@
           ]
         },
         {
-          "src": "./TimeOffQueueScreen",
-          "names": [
-            "TimeOffQueueScreen"
-          ]
-        },
-        {
           "src": "./PaymentsHubScreen",
           "names": [
             "PaymentsHubScreen"
@@ -15217,7 +15473,7 @@
           ]
         }
       ],
-      "lineCount": 1332,
+      "lineCount": 1327,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -15225,7 +15481,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15234,7 +15490,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 851,
+          "line": 849,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15243,7 +15499,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 927,
+          "line": 925,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -15252,7 +15508,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 935,
+          "line": 933,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -15261,7 +15517,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 936,
+          "line": 934,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -15270,7 +15526,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 943,
+          "line": 941,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Add Job",
+          "placeholder": null,
+          "variant": null,
+          "line": 942,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15279,7 +15544,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15288,7 +15553,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 951,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15297,7 +15562,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -15306,9 +15571,18 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 967,
+          "line": 965,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Detail",
+          "placeholder": null,
+          "variant": null,
+          "line": 973,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
         },
         {
           "type": "empty",
@@ -15352,6 +15626,15 @@
           "placeholder": null,
           "variant": null,
           "line": 105,
+          "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "New Lead",
+          "placeholder": null,
+          "variant": null,
+          "line": 106,
           "via": "modules/admin-finance/src/screens/LeadInboxScreen.tsx",
           "dynamic": false
         },
@@ -15509,6 +15792,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 129,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Save",
+          "placeholder": null,
+          "variant": null,
+          "line": 130,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Create job",
+          "placeholder": null,
+          "variant": null,
+          "line": 131,
+          "via": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "Edit lead",
           "placeholder": null,
@@ -15621,7 +15931,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1010,
+          "line": 1008,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15720,7 +16030,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15729,7 +16039,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1026,
+          "line": 1024,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16278,7 +16588,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16287,7 +16597,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1039,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16896,186 +17206,6 @@
         },
         {
           "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Sign in to view this organization's time-off queue.",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No data source is connected for this module yet.",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Add Blackout",
-          "placeholder": null,
-          "variant": null,
-          "line": 162,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 174,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No time-off requests are awaiting review.",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 179,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 189,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 211,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Pending Review",
-          "placeholder": null,
-          "variant": null,
-          "line": 213,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 229,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 239,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
           "label": "Assignment board",
           "placeholder": null,
           "variant": null,
@@ -17103,6 +17233,15 @@
         },
         {
           "type": "button",
+          "label": "{cat === 'real' ? 'Real' : cat === 'beta'}",
+          "placeholder": null,
+          "variant": null,
+          "line": 412,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{job.customerName}",
           "placeholder": null,
           "variant": null,
@@ -17118,6 +17257,33 @@
           "line": 446,
           "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Service",
+          "placeholder": null,
+          "variant": null,
+          "line": 468,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Prem",
+          "placeholder": null,
+          "variant": null,
+          "line": 471,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm",
+          "placeholder": null,
+          "variant": null,
+          "line": 484,
+          "via": "modules/admin-finance/src/screens/AssignmentBoardScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -17525,6 +17691,24 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Add Employee",
+          "placeholder": null,
+          "variant": null,
+          "line": 122,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Pending Invitations",
+          "placeholder": null,
+          "variant": null,
+          "line": 124,
+          "via": "modules/admin-finance/src/screens/EmployeeRosterScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "empty",
           "label": "Employee Roster",
           "placeholder": null,
@@ -17687,6 +17871,42 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Edit",
+          "placeholder": null,
+          "variant": null,
+          "line": 99,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Deactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 101,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reactivate",
+          "placeholder": null,
+          "variant": null,
+          "line": 103,
+          "via": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "header",
           "label": "{employee.fullName}",
           "placeholder": null,
@@ -17727,7 +17947,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17736,7 +17956,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1180,
+          "line": 1176,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18213,7 +18433,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18222,7 +18442,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1231,
+          "line": 1227,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18231,7 +18451,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -18240,7 +18460,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -18249,7 +18469,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -18258,7 +18478,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -18267,7 +18487,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -18276,7 +18496,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -18285,7 +18505,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -18294,7 +18514,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -18303,7 +18523,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -18312,7 +18532,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18321,7 +18541,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1265,
+          "line": 1261,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -18348,7 +18568,10 @@
         "titleInSource": "Admin & Finance",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Add Job",
+          "Detail"
+        ]
       }
     },
     {
@@ -18632,6 +18855,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Approve",
+          "placeholder": null,
+          "variant": null,
+          "line": 255,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm Reject",
+          "placeholder": null,
+          "variant": null,
+          "line": 261,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reject",
+          "placeholder": null,
+          "variant": null,
+          "line": 267,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "section",
           "label": "Approved - Awaiting Payment",
           "placeholder": null,
@@ -18657,6 +18907,15 @@
           "line": 287,
           "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Mark paid",
+          "placeholder": null,
+          "variant": null,
+          "line": 293,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -18691,6 +18950,15 @@
           "placeholder": null,
           "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 37,
           "via": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
           "dynamic": false
         },
@@ -18864,6 +19132,24 @@
           "line": 220,
           "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Approve",
+          "placeholder": null,
+          "variant": null,
+          "line": 227,
+          "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Mark Paid",
+          "placeholder": null,
+          "variant": null,
+          "line": 230,
+          "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+          "dynamic": false
         }
       ],
       "chrome": {
@@ -19116,7 +19402,9 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Back"
+      ],
       "components": {
         "Text": 5,
         "Card": 2,
@@ -19153,6 +19441,15 @@
           "placeholder": null,
           "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 37,
           "via": "modules/admin-finance/src/screens/PayoutBatchDetailScreen.tsx",
           "dynamic": false
         },
@@ -19251,7 +19548,9 @@
         "titleInSource": "Payout Batch Detail",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Back"
+        ]
       }
     },
     {
@@ -19271,7 +19570,10 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Approve",
+        "Mark Paid"
+      ],
       "components": {
         "Text": 5,
         "Card": 1,
@@ -19418,6 +19720,24 @@
           "line": 220,
           "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Approve",
+          "placeholder": null,
+          "variant": null,
+          "line": 227,
+          "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Mark Paid",
+          "placeholder": null,
+          "variant": null,
+          "line": 230,
+          "via": "modules/admin-finance/src/screens/PayoutBatchScreen.tsx",
+          "dynamic": false
         }
       ],
       "chrome": {
@@ -19442,7 +19762,10 @@
         "titleInSource": "Payout Batches",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Approve",
+          "Mark Paid"
+        ]
       }
     },
     {
@@ -19462,7 +19785,12 @@
       "notes": "",
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [],
+      "buttonLabels": [
+        "Approve",
+        "Confirm Reject",
+        "Reject",
+        "Mark paid"
+      ],
       "components": {
         "Text": 6,
         "Card": 3,
@@ -19612,6 +19940,33 @@
           "dynamic": false
         },
         {
+          "type": "button",
+          "label": "Approve",
+          "placeholder": null,
+          "variant": null,
+          "line": 255,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Confirm Reject",
+          "placeholder": null,
+          "variant": null,
+          "line": 261,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reject",
+          "placeholder": null,
+          "variant": null,
+          "line": 267,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
+        },
+        {
           "type": "section",
           "label": "Approved - Awaiting Payment",
           "placeholder": null,
@@ -19637,6 +19992,15 @@
           "line": 287,
           "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
           "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Mark paid",
+          "placeholder": null,
+          "variant": null,
+          "line": 293,
+          "via": "modules/admin-finance/src/screens/ReimbursementQueueScreen.tsx",
+          "dynamic": false
         },
         {
           "type": "section",
@@ -19688,7 +20052,12 @@
         "titleInSource": "Reimbursements",
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": []
+        "buttonLabels": [
+          "Approve",
+          "Confirm Reject",
+          "Reject",
+          "Mark paid"
+        ]
       }
     },
     {
@@ -21395,6 +21764,33 @@
         },
         {
           "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{LABELS[value] ?? value}",
+          "placeholder": null,
+          "variant": null,
+          "line": 58,
+          "via": "modules/admin-finance/src/components/AxisPicker.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
           "label": "{area.name}",
           "placeholder": null,
           "variant": "{serviceAreaId === area.id ? 'primary' : }",
@@ -22067,274 +22463,22 @@
       ],
       "mounted": true,
       "notes": "",
+      "fileMissing": true,
       "testIDs": [],
       "accessibilityLabels": [],
-      "buttonLabels": [
-        "Add Blackout",
-        "Cancel"
-      ],
-      "components": {
-        "Button": 3,
-        "Text": 3,
-        "Card": 3,
-        "ListItem": 3,
-        "ScreenTitle": 2,
-        "EmptyState": 3,
-        "LoadingState": 1,
-        "ErrorState": 3,
-        "ScrollView": 2
-      },
+      "buttonLabels": [],
+      "components": {},
       "pickers": [],
       "menus": [],
       "navTargets": [],
       "tables": [],
       "rpcs": [],
       "repoMethods": [],
-      "imports": [
-        {
-          "src": "../lib/read-cache",
-          "names": [
-            "useReadCacheRevision"
-          ]
-        },
-        {
-          "src": "@jobcore/ui",
-          "names": [
-            "Button",
-            "Card",
-            "ListItem",
-            "EmptyState",
-            "LoadingState",
-            "ErrorState",
-            "ScreenTitle",
-            "colors",
-            "spacing",
-            "typography",
-            "Text"
-          ]
-        },
-        {
-          "src": "../lib/module-session",
-          "names": [
-            "getModuleSession"
-          ]
-        },
-        {
-          "src": "./TimeOffTechCalendar",
-          "names": [
-            "TimeOffTechCalendar"
-          ]
-        }
-      ],
-      "lineCount": 285,
-      "titleInSource": "Time Off",
-      "elements": [
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Sign in to view this organization's time-off queue.",
-          "placeholder": null,
-          "variant": null,
-          "line": 126,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No data source is connected for this module yet.",
-          "placeholder": null,
-          "variant": null,
-          "line": 134,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Add Blackout",
-          "placeholder": null,
-          "variant": null,
-          "line": 162,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 174,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "No time-off requests are awaiting review.",
-          "placeholder": null,
-          "variant": null,
-          "line": 176,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 179,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 185,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 189,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Blackout calendar",
-          "placeholder": null,
-          "variant": null,
-          "line": 68,
-          "via": "modules/admin-finance/src/screens/TimeOffTechCalendar.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "header",
-          "label": "Time Off",
-          "placeholder": null,
-          "variant": null,
-          "line": 211,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Pending Review",
-          "placeholder": null,
-          "variant": null,
-          "line": 213,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 218,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "section",
-          "label": "Upcoming Blackouts",
-          "placeholder": null,
-          "variant": null,
-          "line": 229,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "listitem",
-          "label": "{`${formatDate(item.startDate)} – ${forma}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "listitem",
-          "label": "{item.reason ?? 'No reason provided'}",
-          "placeholder": null,
-          "variant": null,
-          "line": 235,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "button",
-          "label": "Cancel",
-          "placeholder": null,
-          "variant": null,
-          "line": 239,
-          "via": "modules/admin-finance/src/screens/TimeOffQueueScreen.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Blackout calendar",
-          "placeholder": null,
-          "variant": null,
-          "line": 68,
-          "via": "modules/admin-finance/src/screens/TimeOffTechCalendar.tsx",
-          "dynamic": false
-        }
-      ],
-      "chrome": {
-        "title": null,
-        "subtitle": null,
-        "titleBarTone": null,
-        "titleDynamic": false,
-        "subtitleDynamic": false
-      },
+      "imports": [],
+      "lineCount": 0,
+      "titleInSource": null,
+      "elements": [],
+      "chrome": null,
       "summary": "Admin sees time-off requests: a pending queue and an Upcoming Blackouts list, with a read-only Blackout calendar below them. An \"Add Blackout\" button opens the blackout editor; each Upcoming row has a \"Cancel\" button. The calendar shows pending and approved blackouts on a Month view by default (Week is remembered on this device), with a picker to show All Techs or one tech. Pending requests are decided automatically.",
       "flowStage": "none",
       "specStage": "Ancillary",
@@ -22347,13 +22491,10 @@
         "route": null,
         "subView": "timeOffQueue",
         "title": "Time Off",
-        "titleInSource": "Time Off",
+        "titleInSource": null,
         "testIDs": [],
         "accessibilityLabels": [],
-        "buttonLabels": [
-          "Add Blackout",
-          "Cancel"
-        ]
+        "buttonLabels": []
       }
     },
     {
@@ -25195,6 +25336,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -25214,7 +25361,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -25222,7 +25369,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -25231,7 +25378,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -25429,7 +25576,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -25438,7 +25585,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -25447,7 +25594,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -25456,7 +25603,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26005,7 +26152,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26032,7 +26179,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -26041,7 +26188,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -26050,34 +26197,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -26086,7 +26233,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -26221,7 +26368,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -26230,7 +26377,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -26239,7 +26386,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -26248,7 +26395,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -26257,7 +26404,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -26266,7 +26413,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -26275,7 +26422,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -26284,7 +26431,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -26293,7 +26440,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -26302,7 +26449,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -26662,6 +26809,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -26681,7 +26834,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -26689,7 +26842,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -26698,7 +26851,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -26896,7 +27049,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -26905,7 +27058,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -26914,7 +27067,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -26923,7 +27076,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27472,7 +27625,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -27499,7 +27652,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -27508,7 +27661,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -27517,34 +27670,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -27553,7 +27706,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -27688,7 +27841,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -27697,7 +27850,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -27706,7 +27859,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -27715,7 +27868,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -27724,7 +27877,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -27733,7 +27886,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -27742,7 +27895,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -27751,7 +27904,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -27760,7 +27913,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -27769,7 +27922,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -28129,6 +28282,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -28148,7 +28307,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -28156,7 +28315,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28165,7 +28324,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28363,7 +28522,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28372,7 +28531,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28381,7 +28540,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28390,7 +28549,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28939,7 +29098,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -28966,7 +29125,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -28975,7 +29134,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -28984,34 +29143,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -29020,7 +29179,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -29155,7 +29314,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -29164,7 +29323,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -29173,7 +29332,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -29182,7 +29341,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -29191,7 +29350,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -29200,7 +29359,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -29209,7 +29368,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -29218,7 +29377,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -29227,7 +29386,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -29236,7 +29395,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -29596,6 +29755,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -29615,7 +29780,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -29623,7 +29788,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29632,7 +29797,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29830,7 +29995,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29839,7 +30004,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29848,7 +30013,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -29857,7 +30022,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30406,7 +30571,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -30433,7 +30598,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30442,7 +30607,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30451,34 +30616,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30487,7 +30652,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30622,7 +30787,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -30631,7 +30796,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -30640,7 +30805,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -30649,7 +30814,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -30658,7 +30823,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -30667,7 +30832,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -30676,7 +30841,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -30685,7 +30850,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -30694,7 +30859,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -30703,7 +30868,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -31278,6 +31443,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -31297,7 +31468,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -31305,7 +31476,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31314,7 +31485,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31512,7 +31683,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31521,7 +31692,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31530,7 +31701,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -31539,7 +31710,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32088,7 +32259,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -32115,7 +32286,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32124,7 +32295,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32133,34 +32304,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32169,7 +32340,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32304,7 +32475,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -32313,7 +32484,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -32322,7 +32493,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -32331,7 +32502,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -32340,7 +32511,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -32349,7 +32520,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -32358,7 +32529,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -32367,7 +32538,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -32376,7 +32547,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -32385,7 +32556,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -32745,6 +32916,12 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -32764,7 +32941,7 @@
           ]
         }
       ],
-      "lineCount": 1548,
+      "lineCount": 1550,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -32772,7 +32949,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32781,7 +32958,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1242,
+          "line": 1244,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32979,7 +33156,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1269,
+          "line": 1271,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32988,7 +33165,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1270,
+          "line": 1272,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32997,7 +33174,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33006,7 +33183,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33555,7 +33732,7 @@
           "label": "Prem Needed",
           "placeholder": null,
           "variant": null,
-          "line": 255,
+          "line": 239,
           "via": "apps/mobile/src/components/JobHeader.tsx",
           "dynamic": false
         },
@@ -33582,7 +33759,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -33591,7 +33768,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 80,
+          "line": 104,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -33600,34 +33777,34 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No estimate yet. Payments open once an estimate is approved.",
+          "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 83,
+          "line": 107,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Take cash",
-          "placeholder": null,
-          "variant": "primary",
-          "line": 114,
-          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 124,
+          "line": 142,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "field",
+          "label": "Cash received",
+          "placeholder": "{(balance / 100).toFixed(2)}",
+          "variant": null,
+          "line": 154,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -33636,7 +33813,7 @@
           "label": "{`Confirm ${PAYMENT_METHOD_LABELS[method]}",
           "placeholder": null,
           "variant": "primary",
-          "line": 133,
+          "line": 179,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -33771,7 +33948,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 41,
+          "line": 43,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -33780,7 +33957,7 @@
           "label": "{(open ? '- ' : '+ ') + title}",
           "placeholder": null,
           "variant": null,
-          "line": 42,
+          "line": 44,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -33789,7 +33966,7 @@
           "label": "{j.number ?? ''}",
           "placeholder": null,
           "variant": null,
-          "line": 146,
+          "line": 149,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -33798,7 +33975,7 @@
           "label": "{picked[t.id] ? '[x]' : '[ ]'}",
           "placeholder": null,
           "variant": null,
-          "line": 151,
+          "line": 154,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -33807,7 +33984,7 @@
           "label": "Project title",
           "placeholder": null,
           "variant": null,
-          "line": 155,
+          "line": 158,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -33816,7 +33993,7 @@
           "label": "{`Open Job #${blockedJob.number ?? ''}`}",
           "placeholder": null,
           "variant": "outline",
-          "line": 157,
+          "line": 160,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": true
         },
@@ -33825,7 +34002,7 @@
           "label": "Start project",
           "placeholder": null,
           "variant": "outline",
-          "line": 158,
+          "line": 161,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -33834,7 +34011,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 161,
+          "line": 164,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -33843,7 +34020,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 165,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -33852,7 +34029,7 @@
           "label": "Reset",
           "placeholder": null,
           "variant": "secondary",
-          "line": 163,
+          "line": 166,
           "via": "apps/mobile/src/components/JobOverviewRegion.tsx",
           "dynamic": false
         },
@@ -34140,7 +34317,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -34149,7 +34326,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -34158,7 +34335,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -34167,7 +34344,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -34176,7 +34353,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -34185,7 +34362,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -34194,7 +34371,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -34203,7 +34380,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -34212,7 +34389,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         }
@@ -34594,6 +34771,13 @@
           ]
         },
         {
+          "src": "../../../../modules/admin-finance/src/lib/module-session",
+          "names": [
+            "setModuleSession as setAdminFinanceSourceModuleSession",
+            "clearModuleSession as clearAdminFinanceSourceModuleSession"
+          ]
+        },
+        {
           "src": "../../../../modules/field-tech/src/lib/module-session",
           "names": [
             "setModuleSession as setFieldTechModuleSession",
@@ -34663,7 +34847,7 @@
           ]
         }
       ],
-      "lineCount": 180,
+      "lineCount": 194,
       "titleInSource": "Module unavailable",
       "elements": [
         {
@@ -34752,7 +34936,7 @@
           "label": "Module unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 145,
+          "line": 159,
           "via": "apps/mobile/app/m/[moduleId].tsx",
           "dynamic": false
         },
@@ -34761,7 +34945,7 @@
           "label": "This module is not enabled for your organization, or your role cannot open it.",
           "placeholder": null,
           "variant": null,
-          "line": 145,
+          "line": 159,
           "via": "apps/mobile/app/m/[moduleId].tsx",
           "dynamic": false
         },
@@ -34770,7 +34954,7 @@
           "label": "{module.displayName}",
           "placeholder": null,
           "variant": null,
-          "line": 158,
+          "line": 172,
           "via": "apps/mobile/app/m/[moduleId].tsx",
           "dynamic": true
         },
@@ -34779,7 +34963,7 @@
           "label": "This module has no screens yet.",
           "placeholder": null,
           "variant": null,
-          "line": 158,
+          "line": 172,
           "via": "apps/mobile/app/m/[moduleId].tsx",
           "dynamic": false
         },
@@ -37276,7 +37460,7 @@
           ]
         }
       ],
-      "lineCount": 400,
+      "lineCount": 405,
       "titleInSource": null,
       "elements": [
         {
@@ -37284,7 +37468,7 @@
           "label": "{returnLabel}",
           "placeholder": null,
           "variant": null,
-          "line": 242,
+          "line": 244,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -37293,7 +37477,7 @@
           "label": "{pickDays ? 'Cancel' : 'Blackouts'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 266,
+          "line": 268,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -37302,7 +37486,7 @@
           "label": "{requesting ? 'Cancel' : 'Request time of}",
           "placeholder": null,
           "variant": "primary",
-          "line": 270,
+          "line": 272,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -37311,7 +37495,7 @@
           "label": "{`Save ${picked.length} day(s)`}",
           "placeholder": null,
           "variant": "primary",
-          "line": 279,
+          "line": 281,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": true
         },
@@ -37320,7 +37504,7 @@
           "label": "Start date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 294,
+          "line": 296,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -37329,7 +37513,7 @@
           "label": "End date (YYYY-MM-DD)",
           "placeholder": "YYYY-MM-DD",
           "variant": null,
-          "line": 297,
+          "line": 299,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -37338,7 +37522,7 @@
           "label": "Reason (optional)",
           "placeholder": null,
           "variant": null,
-          "line": 300,
+          "line": 302,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -37347,7 +37531,7 @@
           "label": "Submit request",
           "placeholder": null,
           "variant": "primary",
-          "line": 303,
+          "line": 305,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         },
@@ -37356,7 +37540,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "primary",
-          "line": 324,
+          "line": 326,
           "via": "modules/admin-finance/src/screens/UniversalCalendar.tsx",
           "dynamic": false
         }

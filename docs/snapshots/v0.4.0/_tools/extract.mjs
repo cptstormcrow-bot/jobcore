@@ -28,7 +28,7 @@ function extract(src) {
   const testIDs = uniq(all(/testID=(?:"([^"]*)"|\{\s*'([^']*)'\s*\}|\{\s*"([^"]*)"\s*\})/g, src, m => m[1] ?? m[2] ?? m[3]));
   const accessibilityLabels = uniq(all(/accessibilityLabel="([^"]*)"/g, src, m => m[1]));
   const btn = [];
-  for (const m of src.matchAll(/<Button\b([\s\S]*?)>/g)) {
+  for (const m of src.matchAll(/<(?:Button|PayrollButton)\b([\s\S]*?)>/g)) {
     const l = m[1].match(/\b(?:label|title)="([^"]*)"/);
     if (l) btn.push(l[1]);
   }
@@ -200,7 +200,7 @@ function scanElements(src, via, imports, chromeOut) {
     if (imports && imports[n]) { els.push({ __import: imports[n], line }); continue; }
     if (n === 'TextField') els.push(mk('field', A('label'), A('placeholder'), null, line, via));
     else if (n === 'TextInput') els.push(mk('field', A('label') || A('accessibilityLabel'), A('placeholder'), null, line, via));
-    else if (n === 'Button') {
+    else if (n === 'Button' || n === 'PayrollButton') {
       let r = A('label') || A('title');
       if (!r) { const ch = childrenOf(src, tag); if (ch != null) r = resolveChildren(ch); }
       if (r) els.push(mk('button', r, null, A('variant') || A('tone'), line, via));
