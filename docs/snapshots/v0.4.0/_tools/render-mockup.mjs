@@ -65,9 +65,6 @@ export function cssVars() {
 .m-empty{text-align:center;color:var(--c-textMuted);font-size:13px;margin:auto}
 .m-row{font-size:12px;color:var(--c-textLight);display:flex;align-items:center;gap:6px}
 .m-row u{display:inline-block;width:14px;height:14px;border:1px solid var(--c-border);border-radius:3px;background:var(--c-surface)}
-.m-btn{height:44px;min-height:44px;box-sizing:border-box;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;background:var(--c-primary)}
-.m-btn.s{background:var(--c-secondary)}
-.m-btn.o{background:transparent;color:var(--c-primary);border:2px solid var(--c-primary)}
 .m-tabs{display:flex;background:var(--c-surface);border-top:1px solid var(--c-border)}
 .m-tabs span{flex:1;text-align:center;padding:10px 0;font-size:12px;color:var(--c-textMuted)}
 .m-tabs span.a{color:var(--c-secondary);border-bottom:3px solid var(--c-secondary)}
@@ -172,7 +169,6 @@ const KT = KIT.tokens;
 
 const FF = (f) => (/Poppins/.test(f || '') ? 'Poppins,sans-serif' : 'Inter,sans-serif');
 const px = (n) => `${n}px`;
-const BTN_VARIANTS = ['primary', 'secondary', 'outline', 'accent'];
 
 function camelWords(k) { return String(k).replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase(); }
 
@@ -257,9 +253,7 @@ function renderElement(e, job, pos) {
   const type = String(e.type);
   const tf = KC.TextField, sel = KC.Select, tg = KC.Toggle, ei = KC.EmptyState, st = KC.ScreenTitle, li = KC.ListItem;
   if (type === 'button') {
-    const vn = BTN_VARIANTS.includes(e.variant) ? e.variant : 'primary';
-    const v = KC.Button.variants[vn];
-    const style = `box-sizing:border-box;width:100%;min-height:${px(KC.Button.base.minHeight)};padding:${px(KC.Button.base.paddingVertical)} ${px(KC.Button.base.paddingHorizontal)};border-radius:${px(KC.Button.base.borderRadius)};border:${KC.Button.base.borderWidth}px solid ${v.borderColor || 'transparent'};background:${v.backgroundColor};color:${v.color};font-family:${FF(v.fontFamily || KC.Button.base.label.fontFamily)};font-weight:${v.fontWeight || KC.Button.base.label.fontWeight};font-size:${px(KC.Button.sizes.sm.fontSize)};display:flex;align-items:center;justify-content:center;text-align:center`;
+    const style = `box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;align-self:flex-start;width:auto;height:32px;padding:0 14px;border-radius:6px;border:0;background:#D9C7A0;color:#000;font-family:${FF(KC.Button.base.label.fontFamily)};font-weight:700;font-size:14px;line-height:18px;text-align:center;white-space:nowrap`;
     return `<div class="mk-button" ${attrs} style="${style}">${esc(lab.text)}</div>`;
   }
   if (type === 'field') {
@@ -362,7 +356,6 @@ export const FRAME_CSS = [
   '.jc-device .phone-screen{width:100%;max-width:100%;background:#F8F9FA;border-radius:28px;overflow:hidden;box-sizing:border-box}',
   '.jc-device .m-body{box-sizing:border-box;padding:12px;font-size:14px;border-color:#E9ECEF}',
   '.jc-device [data-el]{box-sizing:border-box;max-width:100%}',
-  '.jc-device [data-el="button"]{padding:10px 14px;border-radius:10px;font-size:14px}',
   '.jc-device [data-el="field"],.jc-device [data-el="select"]{padding:10px 12px;border:1px solid #E9ECEF;border-radius:10px;font-size:14px;color:#212529}',
   '.jc-device [data-el="toggle"]{font-size:14px;color:#212529}',
   '.jc-device [data-el="listitem"]{padding:10px 12px;border-bottom:1px solid #E9ECEF;font-size:14px}',
@@ -372,7 +365,6 @@ export const FRAME_CSS = [
   '[data-device="pad"] .jc-device{width:820px;border-radius:22px;border-width:10px}',
   '[data-device="pad"] .jc-device .phone,[data-device="pad"] .jc-device .phone-screen{border-radius:14px}',
   '[data-device="pad"] .jc-device .m-body{padding:20px;font-size:16px}',
-  '[data-device="pad"] .jc-device [data-el="button"]{padding:12px 18px;font-size:16px}',
   '[data-device="pad"] .jc-device [data-el="field"],[data-device="pad"] .jc-device [data-el="select"]{padding:12px 14px;font-size:16px}',
   '[data-device="pad"] .jc-device [data-el="toggle"],[data-device="pad"] .jc-device [data-el="listitem"]{padding:12px 14px;font-size:16px}',
   '[data-device="pad"] .jc-device [data-el="section"],[data-device="pad"] .jc-device [data-el="empty"]{font-size:15px}',
