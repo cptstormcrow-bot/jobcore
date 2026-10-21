@@ -35,6 +35,9 @@ import {
   createEmployeeRepository,
   createJobAssignmentRepository,
   createCalendarEventRepository,
+  createPriceSheetRepository,
+  createPriceSheetPublishRepository,
+  createPriceSheetAreaAdjustmentsRepository,
   createServiceAreaRepository,
   createTechServiceAreaRepository,
   createEstimateRepository,
@@ -267,6 +270,19 @@ export default function JobDrilldownScreen() {
   // Mode detection: the `new` route param means create-mode; any other
   // (real UUID) jobId means edit-mode.
   const isCreate = jobId === 'new';
+
+  const priceEstimatingRates = useMemo(() => {
+    return {
+      list: async (priceSheetId: string) => {
+        try {
+          const value = await createPriceSheetPublishRepository().listRates(priceSheetId);
+          return { ok: true as const, value };
+        } catch (err) {
+          return { ok: false as const, reason: err instanceof Error ? err.message : String(err) };
+        }
+      },
+    };
+  }, []);
 
   const rev = useReadCacheRevision();
   // jobId for which the form has already been seeded; background refetches (rev bumps) must not re-seed/reset the form.
@@ -1446,6 +1462,9 @@ export default function JobDrilldownScreen() {
             embedded
             onEstimateChange={setEstimate}
             estimates={createEstimateRepository()}
+            priceSheets={createPriceSheetRepository()}
+            priceSheetRates={priceEstimatingRates}
+            priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
             techSlot={
               <JobTechFields
                 serviceAreaName={currentServiceAreaName}
