@@ -2,11 +2,11 @@
 // P2e.3b / S2.3 - Job Detail host. JobDetail owns its own rendering; this
 // screen just selects the job and passes it through.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { AppChrome, Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
@@ -72,6 +72,17 @@ export default function JobsScreen() {
   const role = session.status === 'authenticated' ? session.profile.role : undefined;
   const userId = session.status === 'authenticated' ? session.session.user.id : undefined;
 
+  const isFinanceRole = role === 'owner' || role === 'admin';
+
+  // #0009 is only a placeholder for owner/admin: their Jobs list is #0012 (the admin-finance
+  // 'jobs' sub-view). replace (not push) keeps Back from returning here and bouncing forward again;
+  // the ts nonce makes AdminFinanceRoot's effect re-fire if that screen is already mounted.
+  useFocusEffect(
+    useCallback(() => {
+      if (isFinanceRole) router.replace(`/m/admin-finance?view=jobs&ts=${Date.now()}` as never);
+    }, [isFinanceRole, router]),
+  );
+
   const rev = useReadCacheRevision();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showBeta, setShowBeta] = useState(false);
@@ -115,6 +126,8 @@ export default function JobsScreen() {
       cancelled = true;
     };
   }, [role, userId, rev]);
+
+  if (isFinanceRole) return null; // redirecting to #0012; skip the placeholder flash
 
   if (!selectedJob || !(isBetaVisible(selectedJob, showBeta) || selectedJob.source === 'job-simulator')) {
     return (

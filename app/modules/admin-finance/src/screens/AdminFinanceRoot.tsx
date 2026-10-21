@@ -26,7 +26,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
@@ -132,6 +132,13 @@ const SCREEN_NUMBER_KEY: Record<string, string> = { payroll: 'Payroll', payrollR
 export function AdminFinanceRoot() {
   const router = useRouter();
   const [subView, setSubView] = useState<SubView>('overview');
+  // Deep-link seam: the app's "Jobs" entries (module tab bar, #0009 redirect) push
+  // /m/admin-finance?view=jobs&ts=<nonce>. The nonce changes the params on every tap,
+  // so this re-fires even when the screen is already mounted. #0012 is the 'jobs' sub-view.
+  const { view, ts } = useLocalSearchParams<{ view?: string; ts?: string }>();
+  useEffect(() => {
+    if (view === 'jobs') setSubView('jobs');
+  }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const jobNumbers = useMemo<Record<string, number | null | undefined>>(() => {
