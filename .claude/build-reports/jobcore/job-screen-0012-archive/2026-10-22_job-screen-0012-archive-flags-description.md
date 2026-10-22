@@ -31,11 +31,11 @@ app/apps/mobile/app/config/test-jobs.tsx; app/apps/mobile/src/components/JobOver
 - Registry-integrity check 3 deviates from the written spec: it asserts distinct (route, subView, scopeOf(file)) triples rather than distinct (route, subView) pairs, because shared (route, subView) pairs are legitimate registry data. Accepted.
 - Cosmetic archived-terminal tweak in app/apps/mobile/app/job/[jobId].tsx was never applied; that file is the parallel session's and its only dirty hunk (onSchedulePress move) is not ours. Flagged to Jeff.
 - app/apps/mobile/app/job/[jobId].tsx and app/apps/mobile/src/components/JobPaymentRegion.tsx remain modified and unstaged: they belong to the parallel session and were deliberately left out of both commits.
-- Memory feedback-jobcore-payroll-button-style-sop.md line 19 cites `SCREEN_NUMBER_KEY` at AdminFinanceRoot.tsx:132; it is now about :150 (stale reference, not yet corrected).
+- Memory feedback-jobcore-payroll-button-style-sop.md line 19 cited `SCREEN_NUMBER_KEY` at AdminFinanceRoot.tsx:132 (stale; the map is now near :150). Corrected 2026-10-22 to a line-number-free reference (Rule 31, found by Curio at closeout).
 - Otherwise none found in this change's own output.
 
 ## Test plan:
-Pending - the Rule 43 test-plan question has been put to Jeff; no plan generated yet.
+declined by Jeff 2026-10-22 (no test plan requested)
 
 ## Delivery
 This file is committed in the project repo; delivery is by reporting its full path in chat. No Desktop copy.

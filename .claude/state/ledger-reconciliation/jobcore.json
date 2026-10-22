@@ -1,10 +1,10 @@
 {
-  "task_id": "themis-ledger-jobcore-20261012-tier-a-closeout",
+  "task_id": "themis-ledger-jobcore-20261022-tier-a-closeout",
   "project_slug": "jobcore",
   "caller": "main",
   "scanned_through": {
-    "report_path": ".claude/build-reports/jobcore/closeout-to-job-menu/2026-10-12_closeout-to-job-menu.md",
-    "report_mtime": "2026-10-12T00:00:00Z"
+    "report_path": ".claude/build-reports/jobcore/job-screen-0012-archive/2026-10-22_job-screen-0012-archive-flags-description.md",
+    "report_mtime": "2026-10-22T00:00:00Z"
   },
   "items": [
     {
@@ -12,11 +12,12 @@
       "kind": "forward_contract",
       "phase": "p6",
       "summary": "CloseOutQueueScreen (#0017) is parked, not deleted; if a cross-job queue returns it needs a host and a registry route",
-      "status": "OPEN",
+      "status": "STALE-UNACKNOWLEDGED",
       "status_confidence": "high",
       "status_evidence": null,
       "verified_on_disk": true,
-      "source_line": 41
+      "source_line": 41,
+      "phases_since": 10
     },
     {
       "item_id": ".claude/build-reports/jobcore/help-cards-context-relevant/2026-10-12_help-cards-context-relevant.md#FC1",
@@ -34,6 +35,39 @@
       "kind": "forward_contract",
       "phase": "p6",
       "summary": "Payroll-session migrations 0080-0085 are still local and unpushed",
+      "status": "RE-DEFERRED",
+      "status_confidence": "high",
+      "status_evidence": "2026-10-20 prem-closeout report line 88: 'Stale premise: they are on the remote; the payroll session owns the row'",
+      "verified_on_disk": true,
+      "source_line": 28
+    },
+    {
+      "item_id": ".claude/build-reports/jobcore/job-screen-0012-archive/2026-10-22_job-screen-0012-archive-flags-description.md#FC1",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "Migration 0095 is NOT live-pushed; Archive and Unarchive ship built but blocked until Jeff gives a separate, explicit live-push go",
+      "status": "OPEN",
+      "status_confidence": "high",
+      "status_evidence": null,
+      "verified_on_disk": true,
+      "source_line": 25
+    },
+    {
+      "item_id": ".claude/build-reports/jobcore/job-screen-0012-archive/2026-10-22_job-screen-0012-archive-flags-description.md#FC2",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "Screen #0092 af-archivedJobs is minted in the registry; UI Inventory snapshot/PDF regen (claim-box rule, 3 overflow screens open) is not done here",
+      "status": "OPEN",
+      "status_confidence": "high",
+      "status_evidence": null,
+      "verified_on_disk": true,
+      "source_line": 26
+    },
+    {
+      "item_id": ".claude/build-reports/jobcore/job-screen-0012-archive/2026-10-22_job-screen-0012-archive-flags-description.md#FC4",
+      "kind": "forward_contract",
+      "phase": "p6",
+      "summary": "Live-DB verification of archive/unarchive (non-admin 42501, archive/unarchive round trip, closed fallback, customer_has_open_job message) happens only after the 0095 push",
       "status": "OPEN",
       "status_confidence": "high",
       "status_evidence": null,
@@ -43,16 +77,24 @@
   ],
   "footprint": {
     "baseline": {"files": 53, "bytes": 374724},
-    "current": {"files": 81, "bytes": 502715},
-    "delta": {"files": 28, "bytes": 127991},
+    "current": {"files": 102, "bytes": 571962},
+    "delta": {"files": 49, "bytes": 197238},
     "grade": "C"
   },
-  "summary": {"open": 3, "addressed": 0, "re_deferred": 0, "stale_unacknowledged": 0, "needs_human_confirm": 0},
+  "summary": {
+    "open": 3,
+    "addressed": 0,
+    "re_deferred": 1,
+    "stale_unacknowledged": 1,
+    "needs_human_confirm": 0
+  },
   "memory_index_action": "none",
   "assumption_notes": [
-    "Project-repo-local scan only; admin-repo E:\Jeff\.claude\build-reports\jobcore not scanned per scope rule.",
-    "Rule 41 check declared in closeout report verified as complete; prior lineage contracts listed and honored.",
-    "Footprint C grade (larger growth) is expected over 9 active days (28 new report files, ~128 KB); not flagged as concern.",
-    "Three distinct open forward-contract items remain from recent reports; none contradicted by 2026-10-12 closeout change."
+    "Project-repo-local scan per scope rule; admin-repo E:\Jeff\.claude\build-reports\jobcore not scanned.",
+    "Rule 41 verification: closeout-to-job-menu 2026-10-12 declares all prior lineage contracts honored.",
+    "Three existing open items from 2026-10-12 baseline: one promoted to STALE-UNACKNOWLEDGED (10 days, 2+ Tier-A closures), one re-deferred (migrations 0080-0085 confirmed remote, owned by payroll session), one remains OPEN.",
+    "Four new forward contracts declared in current 2026-10-22 report (migration 0095, screen #0092, commits local, DB verification).",
+    "Footprint grade C (49 new files, +197 KB) expected over 10 days of v0.4.0 development.",
+    "No contradictions or unaddressed prior items detected in current closeout report."
   ]
 }
