@@ -42,6 +42,7 @@ import type {
   EstimateRepository,
   JobInvestigationRepository,
   JobPlanTasksRepository,
+  JobCardExtrasRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { CalculationResult, PriceSheetRate, CompensationPolicy } from '../money/types';
@@ -62,6 +63,7 @@ export type CloseOutPhotoRepository = Omit<JobPhotoRepository, 'add'> & {
 
 export interface ModulePorts {
   jobs: JobRepository;
+  jobCardExtras: JobCardExtrasRepository;
   customers: CustomerRepository;
   priceSheets: PriceSheetRepository;
   payPeriods: PayPeriodRepository;

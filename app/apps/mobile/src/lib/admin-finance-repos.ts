@@ -34,6 +34,8 @@ import { setOnlineGuard as setPaymentReviewOnlineGuard } from '../../../../modul
 import type { Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
 import type {
   JobRepository,
+  JobCardExtrasRepository,
+  JobCardFlags,
   JobRow,
   JobSchedulingPatch,
   JobDetailsPatch,
@@ -3087,6 +3089,75 @@ export function createTimeEntryRepository(): TimeEntryRepository {
  * ModulePorts aggregator
  * ------------------------------------------------------------------ */
 
+function chunk<T>(items: ReadonlyArray<T>, size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+export function createJobCardExtrasRepository(): JobCardExtrasRepository {
+  return {
+    async listCardFlags(organizationId: string, jobIds: ReadonlyArray<string>): Promise<Record<string, JobCardFlags>> {
+      if (jobIds.length === 0) return {};
+      return readCached('af.jobs.cardFlags', { organizationId, jobIds }, async () => {
+        const result: Record<string, JobCardFlags> = {};
+        const entry = (id: string): JobCardFlags =>
+          (result[id] ??= { estimateApproved: false, premCompleted: false });
+        for (const ids of chunk(jobIds, 100)) {
+          const [est, inv] = await Promise.all([
+            supabase
+              .from('job_estimates')
+              .select('job_id')
+              .eq('status', 'approved')
+              .eq('organization_id', organizationId)
+              .in('job_id', ids),
+            supabase
+              .from('job_investigations')
+              .select('job_id')
+              .not('submitted_at', 'is', null)
+              .in('job_id', ids),
+          ]);
+          if (est.error) throw new Error(`listCardFlags job_estimates failed: ${est.error.message}`);
+          if (inv.error) throw new Error(`listCardFlags job_investigations failed: ${inv.error.message}`);
+          for (const r of (est.data ?? []) as Array<{ job_id: string }>) entry(r.job_id).estimateApproved = true;
+          for (const r of (inv.data ?? []) as Array<{ job_id: string }>) entry(r.job_id).premCompleted = true;
+        }
+        return result;
+      });
+    },
+
+    async listWorkTitles(organizationId: string, jobIds: ReadonlyArray<string>): Promise<Record<string, string[]>> {
+      if (jobIds.length === 0) return {};
+      return readCached('af.jobs.workTitles', { organizationId, jobIds }, async () => {
+        const result: Record<string, string[]> = {};
+        for (const ids of chunk(jobIds, 40)) {
+          const { data, error } = await supabase
+            .from('job_plan_tasks')
+            .select('job_id,title,service_tasks(name)')
+            .in('job_id', ids)
+            .neq('status', 'deferred')
+            .order('sort_order', { ascending: true })
+            .order('created_at', { ascending: true });
+          if (error) throw new Error(`listWorkTitles job_plan_tasks failed: ${error.message}`);
+          for (const row of (data ?? []) as unknown as Array<{
+            job_id: string;
+            title: string | null;
+            service_tasks: { name: string | null } | Array<{ name: string | null }> | null;
+          }>) {
+            const st = row.service_tasks;
+            const taskName = Array.isArray(st) ? st[0]?.name : st?.name;
+            const own = typeof row.title === 'string' ? row.title.trim() : '';
+            const display = own || (taskName ?? '').trim();
+            if (!display) continue;
+            (result[row.job_id] ??= []).push(display);
+          }
+        }
+        return result;
+      });
+    },
+  };
+}
+
 let cachedPorts: ModulePorts | null = null;
 
 export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePorts {
@@ -3108,6 +3179,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
   }
   cachedPorts = {
     jobs: createJobRepository(),
+    jobCardExtras: createJobCardExtrasRepository(),
     priceSheets: createPriceSheetRepository(),
     payPeriods: createPayPeriodRepository(),
     leads: createLeadRepository(),

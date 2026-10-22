@@ -244,6 +244,33 @@ export interface JobRepository {
 }
 
 /**
+ * Read-only per-job status flags shown as green pills on the Jobs board card (Job Screen #0012).
+ * `estimateApproved`: a job_estimates row with status 'approved' exists.
+ * `premCompleted`: a job_investigations row with submitted_at set exists.
+ */
+export interface JobCardFlags {
+  estimateApproved: boolean;
+  premCompleted: boolean;
+}
+
+/**
+ * Read-only extras for the Jobs board card. Both calls are fail-soft on the caller's side:
+ * a throw must never blank the board.
+ */
+export interface JobCardExtrasRepository {
+  /** Flags keyed by job id. Jobs with neither flag may be omitted. */
+  listCardFlags(
+    organizationId: string,
+    jobIds: ReadonlyArray<string>,
+  ): Promise<Record<string, JobCardFlags>>;
+  /** Active (non-deferred) plan-task titles keyed by job id, in display order. */
+  listWorkTitles(
+    organizationId: string,
+    jobIds: ReadonlyArray<string>,
+  ): Promise<Record<string, string[]>>;
+}
+
+/**
  * Mirrors `NewLeadDraft`'s role for `LeadRepository.create`: the caller
  * supplies only these fields when creating a new price sheet. `id` is
  * server-assigned; `status` is NOT caller-supplied — the implementation

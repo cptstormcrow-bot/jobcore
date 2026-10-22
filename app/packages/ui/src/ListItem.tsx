@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View, StyleSheet, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, typography } from './tokens';
 
@@ -10,10 +10,18 @@ export interface ListItemProps {
   footer?: string;
   onPress?: () => void;
   right?: React.ReactNode;
+  center?: React.ReactNode;
+  footerLines?: number;
   style?: StyleProp<ViewStyle>;
 }
 
-export function ListItem({ title, subtitle, overline, footer, onPress, right, style }: ListItemProps) {
+const CENTER_STACK_BREAKPOINT = 480;
+
+export function ListItem({ title, subtitle, overline, footer, onPress, right, center, footerLines, style }: ListItemProps) {
+  const { width } = useWindowDimensions();
+  const hasCenter = center !== undefined && center !== null && center !== false;
+  const sideBySide = hasCenter && width >= CENTER_STACK_BREAKPOINT;
+  const stacked = hasCenter && !sideBySide;
   // A static (non-interactive) row gets no button role/label — only rows
   // with an onPress are announced as actionable, matching RN's own
   // guidance that accessibilityRole="button" implies tappability.
@@ -25,14 +33,28 @@ export function ListItem({ title, subtitle, overline, footer, onPress, right, st
     : {};
   return (
     <View style={[styles.row, style]}>
-      <Pressable onPress={onPress} {...interactiveProps} style={styles.main}>
+      <Pressable
+        onPress={onPress}
+        {...interactiveProps}
+        style={sideBySide ? [styles.main, styles.mainWithCenter] : styles.main}
+      >
         <View style={styles.content}>
           {overline ? <Text style={styles.overline}>{overline}</Text> : null}
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
-          {footer ? <Text style={styles.footer}>{footer}</Text> : null}
+          {footer ? (
+            footerLines !== undefined ? (
+              <Text style={styles.footer} numberOfLines={footerLines} ellipsizeMode="tail">
+                {footer}
+              </Text>
+            ) : (
+              <Text style={styles.footer}>{footer}</Text>
+            )
+          ) : null}
+          {stacked ? <View style={styles.centerStacked}>{center}</View> : null}
         </View>
       </Pressable>
+      {sideBySide ? <View style={styles.centerSide}>{center}</View> : null}
       {right ? <View style={styles.right}>{right}</View> : null}
     </View>
   );
@@ -48,6 +70,9 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   main: { flexShrink: 1, flexGrow: 1 },
+  mainWithCenter: { flex: 2 },
+  centerSide: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  centerStacked: { marginTop: spacing.xs, alignItems: 'flex-start' },
   content: { flexShrink: 1 },
   title: {
     color: colors.text,

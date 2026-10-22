@@ -268,3 +268,5 @@ export { allowedEstimateMoves, needsDownstreamWarning, estimateStageFlags } from
 export type { EvictionRow, OpPatchSpec } from './offline/read-cache.js';
 export { READ_CACHE_FLOOR_MS, READ_CACHE_MAX_AGE_MS, READ_CACHE_MAX_BYTES, stableStringify, buildReadCacheKey, readCacheRevision, selectEvictions, registerOpPatches, getOpPatches } from './offline/read-cache.js';
 export * as wageEngine from './wage-engine/index.js';
+export type { WorkDescriptionOptions } from './workDescription.js';
+export { summarizeWorkDescription } from './workDescription.js';

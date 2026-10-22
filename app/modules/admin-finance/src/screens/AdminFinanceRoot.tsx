@@ -27,10 +27,10 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
-import { isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
+import { summarizeWorkDescription, isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
@@ -141,6 +141,8 @@ export function AdminFinanceRoot() {
   }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const [cardExtras, setCardExtras] = useState<{ flags: Record<string, { estimateApproved: boolean; premCompleted: boolean }>; titles: Record<string, string[]> }>({ flags: {}, titles: {} });
+  const cardExtrasReq = useRef(0);
   const jobNumbers = useMemo<Record<string, number | null | undefined>>(() => {
     const map: Record<string, number | null | undefined> = {};
     for (const job of loadState.kind === 'loaded' ? loadState.jobs : []) map[job.id] = job.jobNumber;
@@ -191,12 +193,38 @@ export function AdminFinanceRoot() {
     });
   }
 
+  // Deliberately outside the loader's Promise.all so a failure here cannot blank the job list.
+  async function loadCardExtras(jobs: ReadonlyArray<Job>) {
+    if (!orgId) {
+      return;
+    }
+    const ids = jobs.filter((job) => !BOARD_HIDDEN_STATUSES.has(job.status)).map((job) => job.id);
+    cardExtrasReq.current += 1;
+    const req = cardExtrasReq.current;
+    if (ids.length === 0) {
+      setCardExtras({ flags: {}, titles: {} });
+      return;
+    }
+    try {
+      const [flags, titles] = await Promise.all([
+        ports.jobCardExtras.listCardFlags(orgId, ids),
+        ports.jobCardExtras.listWorkTitles(orgId, ids),
+      ]);
+      if (req === cardExtrasReq.current) {
+        setCardExtras({ flags, titles });
+      }
+    } catch (error: unknown) {
+      console.warn('Could not load job card extras.', error);
+    }
+  }
+
   function refreshJobs() {
     if (!orgId) {
       return;
     }
     void jobRepository.listForOrganization(orgId).then((jobs) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, jobs } : prev));
+      void loadCardExtras(jobs);
     });
     void ports.timeOffAdmin.listForOrganization(orgId).then((timeOffRequests) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, timeOffRequests } : prev));
@@ -232,6 +260,7 @@ export function AdminFinanceRoot() {
       .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests]) => {
         if (!cancelled) {
           setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests });
+          void loadCardExtras(jobs);
         }
       })
       .catch((error: unknown) => {
@@ -967,7 +996,15 @@ export function AdminFinanceRoot() {
                       ? loadState.employees.find((e) => e.id === job.assignedTechId)?.fullName ?? 'Assigned'
                       : null;
                     const jobLabel = job.jobNumber != null ? `Job #${job.jobNumber}` : null;
-                    const footer = [jobLabel, techName].filter(Boolean).join(' · ') || undefined;
+                    const workDescription = summarizeWorkDescription(cardExtras.titles[job.id] ?? [], job.description, { maxChars: 60 });
+                    const footer = [jobLabel, workDescription || null, techName].filter(Boolean).join(' · ') || undefined;
+                    const cardFlags = cardExtras.flags[job.id];
+                    const center = cardFlags?.premCompleted || cardFlags?.estimateApproved ? (
+                      <>
+                        {cardFlags?.premCompleted ? <FlagPill label="Prem done" testID={`job-flag-prem-${job.id}`} /> : null}
+                        {cardFlags?.estimateApproved ? <FlagPill label="Estimate approved" testID={`job-flag-estimate-${job.id}`} /> : null}
+                      </>
+                    ) : undefined;
                     return (
                       <ListItem
                         key={job.id}
@@ -975,6 +1012,8 @@ export function AdminFinanceRoot() {
                         subtitle={formatDate(job.scheduledStart)}
                         overline={job.customerName ?? undefined}
                         footer={footer}
+                        footerLines={2}
+                        center={center}
                         onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                         style={{ paddingVertical: spacing.xs }}
                         right={<PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />}
