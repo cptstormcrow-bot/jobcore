@@ -27,7 +27,7 @@ Tie premium-job tasks to estimate lines: a line keeps a live link to its task pl
 
 ## Forward contracts:
 - 0094 may be applied live only on Jeff's explicit go, after `supabase migration list` and a column comparison.
-- 0095 (seed 5 assembly labor items: Desk $89, Nightstand $89, Dresser $129, Bed basic $89, Bed with desk $129) is HELD and not written; alternative is Jeff keying them into the Price Sheet screen.
+- The held assembly seed (5 assembly labor items: Desk $89, Nightstand $89, Dresser $129, Bed basic $89, Bed with desk $129) was authored as 0096_assembly_labor_seed.sql (local 0095 belongs to the Job Archive & Flags session); both 0095 and 0096 were pushed and verified live on 2026-10-22 -- forward contract HONORED.
 - S7 optional unit field in PriceSheetEditorScreen: not done.
 - UI Inventory regen for the new buttons: deferred (only if Jeff says "do it").
 - Stale memory lines fixed in a companion step (P12).
@@ -37,7 +37,7 @@ Tie premium-job tasks to estimate lines: a line keeps a live link to its task pl
 2. Catalog-path Save to price sheet does overwrite-then-RPC; Refresh from task does not set taskSnapshotAt (JobEstimateScreen.tsx ~:644-723).
 3. Quick-add link: planMatch matches on serviceId and likely never matches a plan task (JobEstimateScreen.tsx ~:344-346); quick-add unit-cost prefill is not converted from row.rate; the selected toggle uses colors.primary rather than the blue-underline SOP; save-to-sheet visibility is gated on a function-existence check.
 4. Build-from-tasks split keys on serviceTaskId rather than kind==='misc'; the legacy fold line is detected by the description prefix "Hourly — billed by clock".
-5. Open question: whether assembly items also need price_sheet_rates rows (affects held 0095 and the picker).
+5. Open question: whether assembly items also need price_sheet_rates rows (affects the assembly seed, authored as 0096_assembly_labor_seed.sql and pushed and verified live on 2026-10-22 with 0095, and the picker).
 6. S6 photo UI skipped (no photo callback prop on JobTaskList); whether field-tech-repos.ts passes the five new fields at the job_estimate_line_item.add writeThrough (~:918) is unverified.
 7. A notes-only prem task edit marks a line stale (accepted risk).
 Out of scope kept: no live push, no git push, no Docker, parallel-session files untouched.
