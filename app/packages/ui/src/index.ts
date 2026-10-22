@@ -6,6 +6,7 @@ export type { EstimateStatusControlProps, EstimateStatusChoice } from './Estimat
 export * from './Card';
 export * from './ListItem';
 export * from './FlagPill';
+export * from './confirm';
 export * from './EmptyState';
 export * from './LoadingState';
 export * from './ErrorState';

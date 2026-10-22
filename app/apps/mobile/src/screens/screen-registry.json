@@ -780,5 +780,14 @@
     "title": "layout",
     "file": "apps/mobile/app/m/_layout.tsx",
     "createdAt": "2026-10-16T23:46:35-07:00"
+  },
+  {
+    "number": 92,
+    "key": "af-archivedJobs",
+    "title": "Archived Jobs",
+    "route": null,
+    "file": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+    "createdAt": "2026-10-22T16:28:57.239Z",
+    "subView": "archivedJobs"
   }
 ]

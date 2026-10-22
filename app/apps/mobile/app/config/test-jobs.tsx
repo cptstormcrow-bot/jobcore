@@ -14,8 +14,8 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet, Alert, Platform } from 'react-native';
-import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text } from '@jobcore/ui';
+import { View, StyleSheet } from 'react-native';
+import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
 
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';
@@ -96,21 +96,6 @@ export default function TestJobsScreen(): React.ReactElement {
     }
   }, [repo, organizationId, loadJobs]);
 
-  const confirmAsync = React.useCallback(
-    (title: string, message: string, confirmLabel: string): Promise<boolean> => {
-      if (Platform.OS === 'web') {
-        return Promise.resolve(window.confirm(`${title}\n\n${message}`));
-      }
-      return new Promise((resolve) => {
-        Alert.alert(title, message, [
-          { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-          { text: confirmLabel, style: 'destructive', onPress: () => resolve(true) },
-        ]);
-      });
-    },
-    [],
-  );
-
   const handleDelete = React.useCallback(
     async (jobId: string) => {
       const confirmed = await confirmAsync('Delete Test Job', 'Delete this test job?', 'Delete');
@@ -126,7 +111,7 @@ export default function TestJobsScreen(): React.ReactElement {
         setDeletingId(null);
       }
     },
-    [repo, loadJobs, confirmAsync],
+    [repo, loadJobs],
   );
 
   const handleDeleteAll = React.useCallback(async () => {
@@ -147,7 +132,7 @@ export default function TestJobsScreen(): React.ReactElement {
     } finally {
       setDeletingAll(false);
     }
-  }, [repo, organizationId, loadJobs, confirmAsync]);
+  }, [repo, organizationId, loadJobs]);
 
   const handleRunSimulator = React.useCallback(async () => {
     if (!organizationId || !actorProfile) return;
@@ -168,7 +153,7 @@ export default function TestJobsScreen(): React.ReactElement {
     } finally {
       setSimulating(false);
     }
-  }, [organizationId, actorProfile, loadJobs, confirmAsync]);
+  }, [organizationId, actorProfile, loadJobs]);
 
   let content: React.ReactElement;
   if (loading) {

@@ -134,6 +134,8 @@ function makeJobs(overrides: Partial<JobRepository> = {}): JobRepository {
     },
     async markBeta(_jobId, _isBeta) {},
     async clearInvestigator(_jobId) {},
+    async archive(_jobId) {},
+    async unarchive(_jobId) {},
     ...overrides,
   };
 }

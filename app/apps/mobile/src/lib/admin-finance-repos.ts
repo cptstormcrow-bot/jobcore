@@ -26,7 +26,7 @@ import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri } from './signed-url-cache';
-import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
+import { cachedRead, getReadCacheIdentity, buildReadCacheKey, patchReadCache } from './read-cache';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
@@ -309,6 +309,25 @@ export function createJobRepository(): JobRepository {
       if (error) {
         throw new Error(`resetTimeSegments failed: ${error.message}`);
       }
+    },
+
+    async archive(jobId: string): Promise<void> {
+      requireOnline('archive a job');
+      const { error } = await supabase.rpc('archive_job', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`archive failed: ${error.message}`);
+      }
+      await patchReadCache('job.update_status', { jobId, status: 'archived' });
+    },
+
+    async unarchive(jobId: string): Promise<void> {
+      requireOnline('unarchive a job');
+      const { data, error } = await supabase.rpc('unarchive_job', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`unarchive failed: ${error.message}`);
+      }
+      const restored = typeof data === 'string' && data ? data : 'closed';
+      await patchReadCache('job.update_status', { jobId, status: restored });
     },
 
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {

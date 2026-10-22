@@ -29,6 +29,13 @@ The standing "Payroll style" button is `PayrollButton` (`app/packages/ui/src/Pay
 - The two `SandButton` definitions (`sand.ts`, `payroll-ui/src/SandButton.tsx`) and the payroll-ui `index.ts` export were deleted 2026-10-20; `sand.ts` keeps `SAND_BG`/`SAND_TEXT` (used by `UniversalCalendar`).
 - `PayrollButton` has no `selected` prop and no children. Express a selected state through `style` with `borderBottomWidth: 2` and a blue `borderBottomColor`. `AssignmentBoardScreen` Service/Prem uses `'#2563eb'`; `AxisPicker` and the `PayrollRunScreen` format selector follow the same pattern (`AxisPicker` uses `colors.info` because of its no-raw-hex rule).
 - Source screen: #0010 (Payroll) (registry #0010 = Admin & Finance root; Payroll = #88).
+- Job Screen #0012 (the Admin & Finance Jobs board, `modules/admin-finance/src/screens/AdminFinanceRoot.tsx`) and the Archived Jobs list (#0092, `ArchivedJobsScreen.tsx`) use default-tone `PayrollButton`s, label width only: **Archive** (testID `job-archive-<id>`, immediately left of Detail, owner/admin only), **Archived** (testID `jobs-archived-btn`, beside Add Job) and **Unarchive** (testID `job-unarchive-<id>`). Archive is the only removal action; nothing is hard-deleted.
+
+## Status flags and confirm dialogs
+
+- **Green status flags:** `FlagPill` (`app/packages/ui/src/FlagPill.tsx`) renders a green pill (`colors.success`) only when its condition is true. Pass flags through `ListItem`'s `center` slot so they sit at the center of the card; below about 480pt they drop under the text. Used on the #0012 Jobs board for `Prem done` and `Estimate approved`.
+- **"Are You Sure?" prompts:** use the shared `confirmAsync(title, message, confirmLabel)` from `@jobcore/ui` (`app/packages/ui/src/confirm.ts`). It shows Cancel plus a destructive-style confirm button and resolves `true` only on confirm (Cancel or dismiss resolves `false`). Do not write a local copy.
+- **Notices:** use the shared `notifyAsync(title, message)` from `@jobcore/ui` (`app/packages/ui/src/confirm.ts`) for a single-button OK notice; it resolves when dismissed. Do not write a local copy.
 
 ## Standard picker
 

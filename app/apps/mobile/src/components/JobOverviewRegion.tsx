@@ -32,7 +32,7 @@ export type JobOverviewRegionProps = {
   onOpenJob: (jobId: string) => void;
 };
 
-const CLOSED = new Set(['completed', 'complete', 'closed', 'cancelled', 'canceled', 'invoiced', 'paid']);
+const CLOSED = new Set(['completed', 'complete', 'closed', 'cancelled', 'canceled', 'invoiced', 'paid', 'archived']);
 
 function Section({ title, children, open: initial = true }: { title?: string; children: ReactNode; open?: boolean }) {
   const [open, setOpen] = useState(initial);

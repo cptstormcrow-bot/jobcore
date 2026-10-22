@@ -27,7 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
 import { summarizeWorkDescription, isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
@@ -48,6 +48,7 @@ import { UniversalCalendar } from './UniversalCalendar';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
+import { ArchivedJobsScreen } from './ArchivedJobsScreen';
 import { PlanningScreen } from './PlanningScreen';
 import { JobEstimateScreen } from './JobEstimateScreen';
 import { PriceSheetEditorScreen } from './PriceSheetEditorScreen';
@@ -69,7 +70,7 @@ import type { TechColumnTech } from '../components/TechColumn';
 type SubView =
   | 'overview' | 'jobs'
   | 'leadInbox' | 'leadCreate' | 'qualify' | 'leadEdit'
-  | 'planning' | 'jobEstimate'
+  | 'planning' | 'jobEstimate' | 'archivedJobs'
   | 'assignmentBoard'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'reports'
@@ -82,7 +83,7 @@ type SubView =
 
 const TOP: Partial<Record<SubView, SubView>> = {
   leadCreate: 'leadInbox', qualify: 'leadInbox', leadEdit: 'leadInbox',
-  planning: 'jobs', jobEstimate: 'jobs',
+  planning: 'jobs', jobEstimate: 'jobs', archivedJobs: 'jobs',
   priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
@@ -93,7 +94,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
 
 const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
-  overview: 'af-overview', jobs: 'af-jobs', planning: 'af-jobs', jobEstimate: 'af-jobs',
+  overview: 'af-overview', jobs: 'af-jobs', planning: 'af-jobs', jobEstimate: 'af-jobs', archivedJobs: 'af-jobs',
   leadInbox: 'af-leads', leadCreate: 'af-leads', leadEdit: 'af-leads',
   qualify: 'qualify-lead',
   assignmentBoard: 'af-assignments',
@@ -124,6 +125,25 @@ function formatDate(iso: string | null): string {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return 'Unscheduled';
   return parsed.toLocaleDateString();
+}
+
+// Maps an archive/unarchive failure to a short, plain message.
+function mapArchiveError(e: unknown, verb: 'archive' | 'unarchive'): string {
+  const parts: string[] = [];
+  if (e instanceof Error) parts.push(e.message);
+  else if (typeof e === 'string') parts.push(e);
+  if (e && typeof e === 'object') {
+    const extra = e as { code?: unknown; details?: unknown; message?: unknown };
+    if (typeof extra.message === 'string') parts.push(extra.message);
+    if (extra.code != null) parts.push(String(extra.code));
+    if (extra.details != null) parts.push(String(extra.details));
+  }
+  const text = parts.join(' ').toLowerCase();
+  if (text.includes('customer_has_open_job')) return 'This customer already has an open job - close or archive it first.';
+  if (text.includes('42501') || text.includes('permission') || text.includes('not authorized')) return 'Only an owner or admin can archive or unarchive jobs.';
+  if (text.includes('online') || text.includes('connection') || text.includes('offline') || text.includes('network')) return 'Needs a connection.';
+  if (/pgrst202|could not find the function|schema cache/.test(text)) return "Archive isn't available yet - the database update hasn't been applied.";
+  return `Could not ${verb} the job. Try again.`;
 }
 
 // Registry keys are case-sensitive, so lowercase host sub-views fall back to #10 without this map.
@@ -172,6 +192,8 @@ export function AdminFinanceRoot() {
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
   const [techNames, setTechNames] = useState<Record<string, string>>({});
+  const [archiveBusyId, setArchiveBusyId] = useState<string | null>(null);
+  const [archivedMessage, setArchivedMessage] = useState<string | null>(null);
 
   const session = useModuleSession();
   const orgId = session?.org.id ?? null;
@@ -215,6 +237,36 @@ export function AdminFinanceRoot() {
       }
     } catch (error: unknown) {
       console.warn('Could not load job card extras.', error);
+    }
+  }
+
+  const canArchive = session?.role === 'owner' || session?.role === 'admin';
+
+  async function archiveJob(job: Job) {
+    const label = job.jobNumber != null ? `Job #${job.jobNumber}` : 'this job';
+    const ok = await confirmAsync('Are You Sure?', `Archive ${label}? It will be hidden from the Jobs list. You can restore it from Archived.`, 'Yes, Archive');
+    if (!ok) return;
+    setArchiveBusyId(job.id);
+    try {
+      await jobRepository.archive(job.id);
+      refreshJobs();
+    } catch (e) {
+      await notifyAsync('Archive failed', mapArchiveError(e, 'archive'));
+    } finally {
+      setArchiveBusyId(null);
+    }
+  }
+
+  async function unarchiveJob(jobId: string) {
+    setArchivedMessage(null);
+    setArchiveBusyId(jobId);
+    try {
+      await jobRepository.unarchive(jobId);
+      refreshJobs();
+    } catch (e) {
+      setArchivedMessage(mapArchiveError(e, 'unarchive'));
+    } finally {
+      setArchiveBusyId(null);
     }
   }
 
@@ -653,6 +705,10 @@ export function AdminFinanceRoot() {
         handleBackToRoster();
         return true;
       }
+      if (subView === 'archivedJobs') {
+        setSubView('jobs');
+        return true;
+      }
       if (subView === 'employee-job-detail') {
         handleBackToEmployeeDetail();
         return true;
@@ -975,7 +1031,10 @@ export function AdminFinanceRoot() {
           <ScrollView contentContainerStyle={styles.content}>
             <View style={styles.jobsTitleRow}>
               <Text style={styles.jobsTitle}>Jobs</Text>
-              <PayrollButton label="Add Job" onPress={() => router.push('/job/new')} />
+              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                <PayrollButton label="Archived" testID="jobs-archived-btn" onPress={() => { setArchivedMessage(null); setSubView('archivedJobs'); }} />
+                <PayrollButton label="Add Job" onPress={() => router.push('/job/new')} />
+              </View>
             </View>
             {(() => {
               const visibleJobs = loadState.jobs.filter(
@@ -1016,7 +1075,12 @@ export function AdminFinanceRoot() {
                         center={center}
                         onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                         style={{ paddingVertical: spacing.xs }}
-                        right={<PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />}
+                        right={(
+                          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                            {canArchive ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
+                            <PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />
+                          </View>
+                        )}
                       />
                     );
                   })}
@@ -1085,6 +1149,16 @@ export function AdminFinanceRoot() {
             <EmptyState title="Job estimate" message="No job selected." />
           </View>
         )
+      ) : subView === 'archivedJobs' ? (
+        <ArchivedJobsScreen
+          rows={(loadState.kind === 'loaded' ? loadState.jobs : [])
+            .filter((j) => j.status === 'archived')
+            .map((j) => ({ id: j.id, title: j.jobNumber != null ? `Job #${j.jobNumber}` : 'Job', subtitle: j.address ?? null }))}
+          busyJobId={archiveBusyId}
+          message={archivedMessage}
+          onUnarchive={(id) => { void unarchiveJob(id); }} onOpenJob={onOpenJob}
+          onBack={() => setSubView('jobs')}
+        />
       ) : subView === 'priceSheetList' ? (
         <PriceSheetListScreen
           priceSheets={ports.priceSheets}
@@ -1320,6 +1394,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   leadEdit: 'Edit Lead',
   planning: 'Planning',
   jobEstimate: 'Job Estimate',
+  archivedJobs: 'Archived Jobs',
   assignmentBoard: 'Assignments',
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',

@@ -1280,6 +1280,22 @@
   "notes": ""
  },
  {
+  "key": "af-archivedJobs",
+  "kind": "sub-view",
+  "module": "admin-finance",
+  "route": null,
+  "subView": "archivedJobs",
+  "parentKey": "admin-finance",
+  "file": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+  "title": "Archived Jobs",
+  "roles": [
+   "owner",
+   "admin"
+  ],
+  "mounted": true,
+  "notes": ""
+ },
+ {
   "key": "af-PayrollRun",
   "kind": "sub-view",
   "module": "admin-finance",

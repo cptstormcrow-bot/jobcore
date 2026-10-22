@@ -83,6 +83,7 @@ const JOB_STATUSES: readonly JobStatus[] = [
   'declined',
   'needs_reschedule',
   'cancelled',
+  'archived',
 ];
 
 function isJobStatus(value: string): value is JobStatus {
@@ -223,6 +224,10 @@ export interface JobRepository {
   /** Clears needs_prem_at, stage_marks, contacted_at, the investigation row and investigator assignment for one job; throws on error. */
   resetTimeline?(jobId: string): Promise<void>;
   /** Voids all time segments and zeroes total_labor_seconds (RPC reset_job_time_segments; admin-only). */ resetTimeSegments?(jobId: string): Promise<void>;
+  /** Hide a job from the Jobs board without deleting it. Online-only; owner/admin. */
+  archive(jobId: string): Promise<void>;
+  /** Restore an archived job to the status it had before. Online-only; owner/admin. */
+  unarchive(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
    * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,

@@ -4114,6 +4114,97 @@
       }
     },
     {
+      "key": "af-archivedJobs",
+      "kind": "sub-view",
+      "module": "admin-finance",
+      "route": null,
+      "subView": "archivedJobs",
+      "parentKey": "admin-finance",
+      "file": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+      "title": "Archived Jobs",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "",
+      "testIDs": [
+        "archived-jobs-back",
+        "job-unarchive-<id>"
+      ],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Back",
+        "Unarchive"
+      ],
+      "components": {
+        "EmptyState": 1,
+        "PayrollButton": 2
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "react",
+          "names": [
+            "React"
+          ]
+        },
+        {
+          "src": "react-native",
+          "names": [
+            "View",
+            "Text",
+            "ScrollView",
+            "StyleSheet"
+          ]
+        },
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "colors",
+            "spacing",
+            "typography",
+            "EmptyState",
+            "PayrollButton"
+          ]
+        }
+      ],
+      "lineCount": 72,
+      "titleInSource": "Archived Jobs",
+      "elements": [
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 22,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Unarchive",
+          "placeholder": null,
+          "variant": null,
+          "line": 35,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        }
+      ],
+      "chrome": {
+        "title": null,
+        "subtitle": null,
+        "titleBarTone": null,
+        "titleDynamic": false,
+        "subtitleDynamic": false
+      }
+    },
+    {
       "key": "af-PayrollRun",
       "kind": "sub-view",
       "module": "admin-finance",

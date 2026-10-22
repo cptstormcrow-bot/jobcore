@@ -500,6 +500,7 @@ const JOB_STATUSES: readonly JobStatus[] = [
   'declined',
   'needs_reschedule',
   'cancelled',
+  'archived',
 ];
 
 function isJobStatus(value: string): value is JobStatus {

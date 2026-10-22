@@ -31,6 +31,7 @@ export const CLOSED_JOB_STATUSES: ReadonlySet<Job['status']> = new Set([
   'closed',
   'declined',
   'cancelled',
+  'archived',
 ]);
 
 /**
