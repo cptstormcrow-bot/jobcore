@@ -24,6 +24,8 @@ import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { PayrollButton } from '@jobcore/ui';
+import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
@@ -39,6 +41,7 @@ import type {
   JobPlanTaskRow,
   PriceSheetRepository,
   ServiceArea,
+  ServiceTaskCatalogEntry,
 } from '../data/ports';
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { PriceSheetRate, CalculationResult } from '../money/types';
@@ -151,6 +154,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [editDescriptionInput, setEditDescriptionInput] = useState('');
   const [editQuantityInput, setEditQuantityInput] = useState('');
   const [editUnitCostInput, setEditUnitCostInput] = useState('');
+  const [editUnitInput, setEditUnitInput] = useState('');
+  const [editAreaInput, setEditAreaInput] = useState('');
+  const [editMaterialsInput, setEditMaterialsInput] = useState('');
 
   const [linkCopied, setLinkCopied] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
@@ -181,6 +187,49 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     };
   }, [job.id]);
   const visibleTasks = planTasks.filter((t) => t.status !== 'deferred');
+
+  const [allCatalog, setAllCatalog] = useState<ServiceTaskCatalogEntry[]>([]);
+  const [pickedServiceTaskId, setPickedServiceTaskId] = useState<string | null>(null);
+  const [saveToSheet, setSaveToSheet] = useState(true);
+  const [sheetNotice, setSheetNotice] = useState<string | null>(null);
+  const [canSaveToSheet, setCanSaveToSheet] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let repo: ReturnType<typeof getModulePorts>['jobPlanTasks'] | undefined;
+    try {
+      repo = getModulePorts().jobPlanTasks;
+    } catch {
+      repo = undefined;
+    }
+    if (!repo) {
+      setAllCatalog([]);
+      setCanSaveToSheet(false);
+      return undefined;
+    }
+    setCanSaveToSheet(typeof estimates.saveLineToPriceSheet === 'function');
+    repo
+      .listCatalogTasks(job.organizationId)
+      .then((rows) => {
+        if (!cancelled) setAllCatalog(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setAllCatalog([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [job.organizationId, estimates]);
+  const assemblyCatalog = allCatalog.filter((c) => (c.category ?? '').trim().toLowerCase() === 'assembly');
+  function handleAssemblyPick(id: string | null): void {
+    setPickedServiceTaskId(id);
+    if (!id) return;
+    const row = assemblyCatalog.find((c) => c.id === id);
+    if (!row) return;
+    setKindInput('labor');
+    setDescriptionInput(row.name);
+    setQuantityInput('1');
+    setUnitCostInput(row.rate != null ? String(row.rate) : '');
+  }
 
   const [addMode, setAddMode] = useState<'manual' | 'priceSheet'>('manual');
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
@@ -291,6 +340,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       unitCost,
       lineTotal: quantity * unitCost,
     };
+    const linkedIds = new Set(lineItems.map((i) => i.jobPlanTaskId).filter((v): v is string => !!v));
+    const planMatch = planTasks.find(
+      (t) => !linkedIds.has(t.id) && !!t.serviceTaskId && t.serviceTaskId === selectedRate.serviceId,
+    );
+    if (planMatch) draft.jobPlanTaskId = planMatch.id;
     setActionState({ kind: 'working' });
     try {
       if (!estimate) await persist({ status: 'draft' });
@@ -521,8 +575,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       quantity,
       unitCost,
       lineTotal: quantity * unitCost,
+      ...(pickedServiceTaskId ? { serviceTaskId: pickedServiceTaskId } : {}),
     };
     setActionState({ kind: 'working' });
+    setSheetNotice(null);
     try {
       if (!estimate) await persist({ status: 'draft' });
       const added = await estimates.addLineItem(job.id, draft);
@@ -530,7 +586,22 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       setDescriptionInput('');
       setQuantityInput('1');
       setUnitCostInput('');
+      setPickedServiceTaskId(null);
       setActionState({ kind: 'done', message: 'Line item added.' });
+      if (
+        saveToSheet &&
+        canSaveToSheet &&
+        !pickedServiceTaskId &&
+        unitCost !== 0 &&
+        draft.description.length >= 3 &&
+        !findCatalogDuplicate(allCatalog, draft.description)
+      ) {
+        try {
+          await estimates.saveLineToPriceSheet(added.id);
+        } catch {
+          setSheetNotice('Line added, but it could not be saved to the price sheet.');
+        }
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not add the line item.';
       setActionState({ kind: 'failed', message });
@@ -539,30 +610,34 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   async function handleBuildFromTasks(): Promise<void> {
     const linked = new Set(lineItems.map((i) => i.jobPlanTaskId).filter((v): v is string => !!v));
-    const priceSheetTasks = visibleTasks.filter((t) => t.kind !== 'misc' && !linked.has(t.id));
-    const allMisc = visibleTasks.filter((t) => t.kind === 'misc');
-    const miscAlreadyLinked = allMisc.some((t) => linked.has(t.id));
+    const priceSheetTasks = visibleTasks.filter((t) => !!t.serviceTaskId && !linked.has(t.id));
+    const miscTasks = visibleTasks.filter((t) => !t.serviceTaskId && !linked.has(t.id));
+    const hasLegacyMiscFold = lineItems.some((i) => i.description.startsWith('Hourly — billed by clock'));
     const drafts: JobEstimateLineItemDraft[] = priceSheetTasks.map((t) => {
       const unitCost = t.rate ?? 0;
-      const quantity = t.quantity > 0 ? t.quantity : 1;
+      const base = taskToLineDraft(t);
       return {
-        kind: 'labor' as const,
-        description: t.title,
-        quantity,
+        ...base,
         unitCost,
-        lineTotal: quantity * unitCost,
+        lineTotal: base.quantity * unitCost,
         jobPlanTaskId: t.id,
+        serviceTaskId: t.serviceTaskId,
       };
     });
-    if (allMisc.length > 0 && !miscAlreadyLinked) {
-      drafts.push({
-        kind: 'labor',
-        description: `Hourly — billed by clock: ${allMisc.map((t) => t.title).join(', ')}`,
-        quantity: 1,
-        unitCost: 0,
-        lineTotal: 0,
-        jobPlanTaskId: allMisc[0]?.id ?? null,
-      });
+    if (!hasLegacyMiscFold) {
+      for (const t of miscTasks) {
+        const quantity = t.quantity > 0 ? t.quantity : 1;
+        const mins = t.estimatedMinutes ? ` (${t.estimatedMinutes} min)` : '';
+        drafts.push({
+          kind: 'labor',
+          description: `${t.title}${mins}`,
+          quantity,
+          unit: t.unit ?? 'hr',
+          unitCost: 0,
+          lineTotal: 0,
+          jobPlanTaskId: t.id,
+        });
+      }
     }
     if (drafts.length === 0) {
       setActionState({ kind: 'done', message: 'Every task already has a line.' });
@@ -588,6 +663,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     setEditDescriptionInput(item.description);
     setEditQuantityInput(String(item.quantity));
     setEditUnitCostInput(String(item.unitCost));
+    setEditUnitInput(item.unit ?? '');
+    setEditAreaInput(item.area ?? '');
+    setEditMaterialsInput(item.materialsNote ?? '');
   }
 
   function cancelEdit(): void {
@@ -595,22 +673,88 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     setEditDescriptionInput('');
     setEditQuantityInput('');
     setEditUnitCostInput('');
+    setEditUnitInput('');
+    setEditAreaInput('');
+    setEditMaterialsInput('');
   }
 
-  async function handleSaveEdit(item: JobEstimateLineItem): Promise<void> {
+  function readEditDraft(): { description: string; quantity: number; unitCost: number } | null {
     const quantity = Number(editQuantityInput);
     const unitCost = Number(editUnitCostInput);
     if (!editDescriptionInput.trim() || Number.isNaN(quantity) || Number.isNaN(unitCost)) {
       setActionState({ kind: 'failed', message: 'Enter a valid description, quantity, and unit cost.' });
-      return;
+      return null;
     }
+    return { description: editDescriptionInput.trim(), quantity, unitCost };
+  }
+
+  async function handleRefreshFromTask(item: JobEstimateLineItem): Promise<void> {
+    const task = planTasks.find((t) => t.id === item.jobPlanTaskId);
+    if (!task) return;
+    const d = taskToLineDraft(task);
     setActionState({ kind: 'working' });
     try {
       const updated = await estimates.updateLineItem(item.id, {
-        description: editDescriptionInput.trim(),
+        description: d.description,
+        quantity: d.quantity,
+        lineTotal: d.quantity * item.unitCost,
+        serviceTaskId: d.serviceTaskId,
+        unit: d.unit ?? null,
+        area: d.area ?? null,
+        materialsNote: d.materialsNote ?? null,
+      });
+      setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? updated : existing)));
+      setActionState({ kind: 'done', message: 'Line item refreshed from task.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not refresh the line item.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function saveEdit(item: JobEstimateLineItem, mode: 'overwrite' | 'clone' | 'catalog'): Promise<void> {
+    const base = readEditDraft();
+    if (!base) return;
+    const { description, quantity, unitCost } = base;
+    const extra = {
+      unit: editUnitInput.trim() || null,
+      area: editAreaInput.trim() || null,
+      materialsNote: editMaterialsInput.trim() || null,
+    };
+    setActionState({ kind: 'working' });
+    try {
+      if (mode === 'catalog') {
+        await estimates.updateLineItem(item.id, { description, quantity, unitCost, lineTotal: quantity * unitCost, ...extra });
+        const res = await estimates.saveLineToPriceSheet(item.id);
+        const refreshed = await estimates.listLineItems(job.id);
+        setLineItems(refreshed);
+        cancelEdit();
+        setActionState({ kind: 'done', message: `Saved to price sheet as ${description}` });
+        void res;
+        return;
+      }
+      if (mode === 'clone') {
+        const created = await estimates.saveLineAsNew(item.id, {
+          kind: item.kind,
+          description,
+          quantity,
+          unitCost,
+          lineTotal: quantity * unitCost,
+          jobPlanTaskId: null,
+          serviceTaskId: item.serviceTaskId ?? null,
+          originLineItemId: item.id,
+          ...extra,
+        });
+        setLineItems((prev) => [...prev, created]);
+        cancelEdit();
+        setActionState({ kind: 'done', message: 'Saved as a new line.' });
+        return;
+      }
+      const updated = await estimates.updateLineItem(item.id, {
+        description,
         quantity,
         unitCost,
         lineTotal: quantity * unitCost,
+        ...extra,
       });
       setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? updated : existing)));
       cancelEdit();
@@ -1051,27 +1195,55 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     disabled={busy}
                     style={styles.field}
                   />
-                  <Button
-                    label={busy ? 'Saving...' : 'Save'}
-                    variant="primary"
-                    size="sm"
-                    onPress={() => {
-                      void handleSaveEdit(item);
-                    }}
+                  <TextField
+                    label="Unit"
+                    value={editUnitInput}
+                    onChangeText={setEditUnitInput}
                     disabled={busy}
-                    style={styles.action}
+                    style={styles.field}
                   />
-                  <Button
-                    label="Cancel"
-                    size="sm"
-                    onPress={cancelEdit}
+                  <TextField
+                    label="Area"
+                    value={editAreaInput}
+                    onChangeText={setEditAreaInput}
                     disabled={busy}
-                    style={styles.action}
+                    style={styles.field}
                   />
+                  <TextField
+                    label="Materials note"
+                    value={editMaterialsInput}
+                    onChangeText={setEditMaterialsInput}
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <View style={styles.actionRow}>
+                    <PayrollButton
+                      label={busy ? 'Saving...' : 'Save'}
+                      onPress={() => {
+                        void saveEdit(item, 'overwrite');
+                      }}
+                      disabled={busy}
+                    />
+                    <PayrollButton
+                      label="Save as new line"
+                      onPress={() => {
+                        void saveEdit(item, 'clone');
+                      }}
+                      disabled={busy}
+                    />
+                    <PayrollButton
+                      label="Save to price sheet"
+                      onPress={() => {
+                        void saveEdit(item, 'catalog');
+                      }}
+                      disabled={busy}
+                    />
+                    <PayrollButton label="Cancel" onPress={cancelEdit} disabled={busy} />
+                  </View>
                 </View>
               ) : (
+                <View key={item.id}>
                 <ListItem
-                  key={item.id}
                   title={`${KIND_LABEL[item.kind]} — ${item.description}`}
                   subtitle={`${item.quantity} x ${formatCurrency(item.unitCost)} = ${formatCurrency(item.lineTotal)}`}
                   onPress={editable ? () => beginEdit(item) : undefined}
@@ -1086,6 +1258,21 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     />
                   ) : undefined}
                 />
+                {isLineStale(item, planTasks.find((t) => t.id === item.jobPlanTaskId)) ? (
+                  <View style={styles.actionRow}>
+                    <Text style={styles.staleBadge}>Task changed</Text>
+                    {editable ? (
+                      <PayrollButton
+                        label="Refresh from task"
+                        disabled={busy}
+                        onPress={() => {
+                          void handleRefreshFromTask(item);
+                        }}
+                      />
+                    ) : null}
+                  </View>
+                ) : null}
+                </View>
               ),
             )}
             </View>
@@ -1163,6 +1350,16 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             </>
           ) : (
             <>
+              {assemblyCatalog.length > 0 ? (
+                <Select
+                  label="Assembly labor"
+                  value={pickedServiceTaskId}
+                  options={assemblyCatalog.map((c) => ({ value: c.id, label: c.name }))}
+                  onChange={(value) => handleAssemblyPick(value as string | null)}
+                  disabled={busy}
+                  style={styles.field}
+                />
+              ) : null}
               <Select
                 label="Kind"
                 value={kindInput}
@@ -1195,6 +1392,27 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
+              {!pickedServiceTaskId && canSaveToSheet ? (
+                <>
+                  <Text style={styles.label}>Save to price sheet</Text>
+                  <View style={styles.actionRow}>
+                    {([true, false] as const).map((on) => (
+                      <PayrollButton
+                        key={on ? 'on' : 'off'}
+                        label={on ? 'On' : 'Off'}
+                        onPress={() => setSaveToSheet(on)}
+                        disabled={busy}
+                        style={
+                          saveToSheet === on
+                            ? { borderBottomWidth: 2, borderBottomColor: colors.primary }
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : null}
+              {sheetNotice ? <Text style={styles.note}>{sheetNotice}</Text> : null}
               <Button
                 label={busy ? 'Adding...' : 'Add Line Item'}
                 size="sm"
@@ -1414,6 +1632,15 @@ const styles = StyleSheet.create({
   },
   editRow: {
     marginBottom: spacing.xs,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  staleBadge: {
+    color: colors.warning,
   },
   action: {
     marginBottom: spacing.xs,

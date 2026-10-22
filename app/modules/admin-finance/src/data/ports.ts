@@ -1299,6 +1299,12 @@ export interface JobEstimateLineItem {
   createdAt: string;
   createdBy: string | null;
   jobPlanTaskId?: string | null;
+  serviceTaskId: string | null;
+  originLineItemId: string | null;
+  unit: string | null;
+  area: string | null;
+  materialsNote: string | null;
+  taskSnapshotAt: string;
 }
 
 export interface JobEstimateLineItemDraft {
@@ -1308,6 +1314,11 @@ export interface JobEstimateLineItemDraft {
   unitCost: number;
   lineTotal: number;
   jobPlanTaskId?: string | null;
+  serviceTaskId?: string | null;
+  originLineItemId?: string | null;
+  unit?: string | null;
+  area?: string | null;
+  materialsNote?: string | null;
 }
 
 export interface EstimateRepository {
@@ -1317,6 +1328,10 @@ export interface EstimateRepository {
   addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem>;
   updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem>;
   removeLineItem(lineItemId: string): Promise<void>;
+  // Clones with a fresh id and originLineItemId = sourceLineId (offline-capable).
+  saveLineAsNew(sourceLineId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem>;
+  // Calls RPC save_estimate_line_to_price_sheet (online-only, never overwrites the catalog).
+  saveLineToPriceSheet(lineId: string): Promise<{ serviceTaskId: string }>;
   issueShareLink(jobId: string): Promise<{ token: string; url: string }>;
   trackShipment(trackingNumber: string): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }>;
   getFinePrintTemplate(): Promise<string | null>;
@@ -1362,6 +1377,11 @@ export interface JobPlanTaskRow {
   rate: number | null;
   category: string | null;
   active: boolean;
+  unit: string | null;
+  area: string | null;
+  materialsNote: string | null;
+  /** ISO timestamp of the last content change to this task. */
+  contentUpdatedAt: string;
 }
 
 export interface CustomerJobPlanTaskRow extends JobPlanTaskRow {
@@ -1376,6 +1396,9 @@ export interface JobPlanTaskPatch {
   estimatedMinutes?: number | null;
   sortOrder?: number;
   status?: 'planned' | 'done' | 'deferred';
+  unit?: string | null;
+  area?: string | null;
+  materialsNote?: string | null;
 }
 
 export interface ServiceTaskCatalogEntry {
@@ -1398,6 +1421,9 @@ export interface JobPlanTasksRepository {
       notes?: string | null;
       estimatedMinutes?: number | null;
       source?: JobPlanTaskRow['source'];
+      unit?: string | null;
+      area?: string | null;
+      materialsNote?: string | null;
     },
   ): Promise<JobPlanTaskRow>;
   updateTask(taskRowId: string, patch: JobPlanTaskPatch): Promise<JobPlanTaskRow>;

@@ -2268,6 +2268,12 @@ function toJobEstimateLineItem(row: {
   created_at: string;
   created_by: string | null;
   job_plan_task_id?: string | null;
+  service_task_id?: string | null;
+  origin_line_item_id?: string | null;
+  unit?: string | null;
+  area?: string | null;
+  materials_note?: string | null;
+  task_snapshot_at?: string | null;
 }): JobEstimateLineItem {
   return {
     id: row.id,
@@ -2281,7 +2287,49 @@ function toJobEstimateLineItem(row: {
     createdAt: row.created_at,
     createdBy: row.created_by,
     jobPlanTaskId: row.job_plan_task_id ?? null,
+    serviceTaskId: row.service_task_id ?? null,
+    originLineItemId: row.origin_line_item_id ?? null,
+    unit: row.unit ?? null,
+    area: row.area ?? null,
+    materialsNote: row.materials_note ?? null,
+    taskSnapshotAt: row.task_snapshot_at ?? row.created_at,
   };
+}
+
+// Shared by addLineItem and saveLineAsNew. task_snapshot_at is never sent (db default).
+async function addEstimateLineItem(
+  jobId: string,
+  draft: JobEstimateLineItemDraft,
+  organizationId: string,
+  userId: string | null,
+): Promise<JobEstimateLineItem> {
+  const occurredAt = new Date().toISOString();
+  const id = newClientId();
+  const result = await writeThrough(
+    'job_estimate_line_item.add',
+    { id, jobId, draft },
+    occurredAt,
+    {
+      id,
+      jobId,
+      organizationId,
+      kind: draft.kind,
+      description: draft.description,
+      quantity: draft.quantity,
+      unitCost: draft.unitCost,
+      lineTotal: draft.lineTotal,
+      createdAt: occurredAt,
+      createdBy: userId,
+      jobPlanTaskId: draft.jobPlanTaskId ?? null,
+      serviceTaskId: draft.serviceTaskId ?? null,
+      originLineItemId: draft.originLineItemId ?? null,
+      unit: draft.unit ?? null,
+      area: draft.area ?? null,
+      materialsNote: draft.materialsNote ?? null,
+      taskSnapshotAt: occurredAt,
+    } as never,
+  );
+  return result.data as JobEstimateLineItem;
 }
 
 export function createEstimateRepository(): EstimateRepository {
@@ -2426,27 +2474,36 @@ export function createEstimateRepository(): EstimateRepository {
 
     async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
       const { organizationId, userId } = requireModuleSession();
-      const occurredAt = new Date().toISOString();
-      const id = newClientId();
-      const result = await writeThrough(
-        'job_estimate_line_item.add',
-        { id, jobId, draft },
-        occurredAt,
-        {
-          id,
-          jobId,
-          organizationId,
-          kind: draft.kind,
-          description: draft.description,
-          quantity: draft.quantity,
-          unitCost: draft.unitCost,
-          lineTotal: draft.lineTotal,
-          createdAt: occurredAt,
-          createdBy: userId,
-          jobPlanTaskId: draft.jobPlanTaskId ?? null,
-        } as never,
+      return addEstimateLineItem(jobId, draft, organizationId, userId);
+    },
+
+    // Clone with a fresh id; origin_line_item_id points back at the source line.
+    async saveLineAsNew(sourceLineId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
+      const { organizationId, userId } = requireModuleSession();
+      // The draft carries no jobId; the clone lands on the source line's job.
+      const { data: source, error } = await supabase
+        .from('job_estimate_line_items')
+        .select('job_id')
+        .eq('id', sourceLineId)
+        .single();
+      if (error || !source) {
+        throw new Error(`saveLineAsNew failed: ${error?.message ?? 'source line not found'}`);
+      }
+      return addEstimateLineItem(
+        (source as { job_id: string }).job_id,
+        { ...draft, originLineItemId: sourceLineId },
+        organizationId,
+        userId,
       );
-      return result.data as JobEstimateLineItem;
+    },
+
+    async saveLineToPriceSheet(lineId: string): Promise<{ serviceTaskId: string }> {
+      requireOnline('save an estimate line to the price sheet');
+      const { data, error } = await supabase.rpc('save_estimate_line_to_price_sheet', { p_line_id: lineId });
+      if (error) {
+        throw new Error(`saveLineToPriceSheet failed: ${error.message}`);
+      }
+      return { serviceTaskId: data as string };
     },
 
     async updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem> {
@@ -2468,6 +2525,20 @@ export function createEstimateRepository(): EstimateRepository {
       if (patch.lineTotal !== undefined) {
         updatePatch.line_total = patch.lineTotal;
       }
+      if (patch.serviceTaskId !== undefined) {
+        updatePatch.service_task_id = patch.serviceTaskId;
+      }
+      if (patch.unit !== undefined) {
+        updatePatch.unit = patch.unit;
+      }
+      if (patch.area !== undefined) {
+        updatePatch.area = patch.area;
+      }
+      if (patch.materialsNote !== undefined) {
+        updatePatch.materials_note = patch.materialsNote;
+      }
+      // An overwrite save re-snapshots the task content.
+      updatePatch.task_snapshot_at = new Date().toISOString();
 
       const { data, error } = await supabase
         .from('job_estimate_line_items')
@@ -2714,6 +2785,10 @@ type JobPlanTaskDbRow = {
   sort_order?: number | null;
   quantity: number;
   notes: string | null;
+  unit?: string | null;
+  area?: string | null;
+  materials_note?: string | null;
+  content_updated_at?: string | null;
   // Null for techs: service_tasks is not readable under their RLS.
   service_tasks?: {
     name: string;
@@ -2748,6 +2823,10 @@ function toJobPlanTaskRow(row: JobPlanTaskDbRow): JobPlanTaskRow {
     rate: task?.rate ?? null,
     category: task?.category ?? null,
     active: task?.active ?? true,
+    unit: row.unit ?? null,
+    area: row.area ?? null,
+    materialsNote: row.materials_note ?? null,
+    contentUpdatedAt: row.content_updated_at ?? '',
   };
 }
 
@@ -2879,6 +2958,9 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         rate: null,
         category: null,
         active: true,
+        unit: input.unit ?? null,
+        area: input.area ?? null,
+        materialsNote: input.materialsNote ?? null,
       } as never as JobPlanTaskRow;
       const { data } = await writeThrough(
         'job_plan_task.create',
@@ -2892,6 +2974,9 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           notes: input.notes ?? null,
           estimatedMinutes: input.estimatedMinutes ?? null,
           source,
+          unit: input.unit ?? null,
+          area: input.area ?? null,
+          materialsNote: input.materialsNote ?? null,
         },
         occurredAt,
         optimistic,

@@ -56,10 +56,11 @@ export interface JobCustomerSavePayload { jobId: string; patch: CustomerPatch }
 export interface JobPlanTaskCreatePayload {
   id: string; organizationId: string; jobId: string; serviceTaskId: string | null; quantity?: number;
   kind?: 'misc'; title?: string; notes?: string; estimatedMinutes?: number; source?: string;
+  unit?: string | null; area?: string | null; materialsNote?: string | null;
 }
 export interface JobPlanTaskUpdatePayload {
   taskRowId: string;
-  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string };
+  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null };
   updatedAt: string;
 }
 export interface JobPlanTaskDeferPayload { taskRowId: string; updatedAt: string }
@@ -349,6 +350,9 @@ const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) =>
   if (p.notes !== undefined) row.notes = p.notes;
   if (p.estimatedMinutes !== undefined) row.estimated_minutes = p.estimatedMinutes;
   if (p.source !== undefined) row.source = p.source;
+  if (p.unit !== undefined) row.unit = p.unit;
+  if (p.area !== undefined) row.area = p.area;
+  if (p.materialsNote !== undefined) row.materials_note = p.materialsNote;
   const { error } = await ctx.supabase.from('job_plan_tasks').insert(row);
   if (error) throw error;
   return APPLIED;
@@ -362,6 +366,9 @@ const jobPlanTaskUpdate: OpHandler<JobPlanTaskUpdatePayload> = async ({ taskRowI
   if (patch.estimatedMinutes !== undefined) row.estimated_minutes = patch.estimatedMinutes;
   if (patch.sortOrder !== undefined) row.sort_order = patch.sortOrder;
   if (patch.status !== undefined) row.status = patch.status;
+  if (patch.unit !== undefined) row.unit = patch.unit;
+  if (patch.area !== undefined) row.area = patch.area;
+  if (patch.materialsNote !== undefined) row.materials_note = patch.materialsNote;
   const { error } = await ctx.supabase.from('job_plan_tasks').update(row).eq('id', taskRowId).select('id');
   if (error) throw error;
   return APPLIED;

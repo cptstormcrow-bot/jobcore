@@ -1039,16 +1039,31 @@ export function createJobPlanTaskRepository(): JobPlanTaskRepository {
         const { organizationId } = requireModuleSession();
         const { data, error } = await supabase
           .from('job_plan_tasks')
-          .select('id,title,kind,status,sort_order')
+          .select('id,title,kind,status,sort_order,unit,area,materials_note,content_updated_at')
           .eq('job_id', jobId)
           .eq('organization_id', organizationId)
           .order('sort_order', { ascending: true });
         if (error) throw new Error(`listJobPlanTasks failed: ${error.message}`);
-        return ((data ?? []) as Array<{ id: string; title: string; kind: string; status: string }>).map((r) => ({
+        return (
+          (data ?? []) as Array<{
+            id: string;
+            title: string;
+            kind: string;
+            status: string;
+            unit?: string | null;
+            area?: string | null;
+            materials_note?: string | null;
+            content_updated_at?: string | null;
+          }>
+        ).map((r) => ({
           id: r.id,
           title: r.title,
           kind: r.kind,
           status: r.status,
+          unit: r.unit ?? null,
+          area: r.area ?? null,
+          materialsNote: r.materials_note ?? null,
+          contentUpdatedAt: r.content_updated_at ?? new Date(0).toISOString(),
         }));
       });
     },
@@ -1104,6 +1119,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
     storage_path: string;
     caption: string | null;
     created_at: string;
+    job_plan_task_id?: string | null;
   };
 
   async function toPhoto(row: PhotoRow): Promise<JobPlanningPhoto> {
@@ -1117,6 +1133,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
       caption: row.caption,
       createdAt: row.created_at,
       url,
+      jobPlanTaskId: row.job_plan_task_id ?? null,
     };
   }
 
@@ -1125,7 +1142,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
       const rows = await readCached('ft.planningPhotos.list', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_planning_photos')
-          .select('id, job_id, storage_path, caption, created_at')
+          .select('id, job_id, storage_path, caption, created_at, job_plan_task_id')
           .eq('job_id', jobId)
           .order('created_at', { ascending: true });
         if (error) {
@@ -1136,7 +1153,8 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
       return Promise.all(rows.map(toPhoto));
     },
 
-    async add(jobId: string): Promise<JobPlanningPhoto | null> {
+    async add(jobId: string, opts?: { jobPlanTaskId?: string | null }): Promise<JobPlanningPhoto | null> {
+      const jobPlanTaskId = opts?.jobPlanTaskId ?? null;
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
         return null;
@@ -1175,10 +1193,11 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
         caption: null,
         createdAt: occurredAt,
         url: localUri,
+        jobPlanTaskId,
       };
       const { data } = await writeThrough(
         'job_planning_photo.add',
-        { id, jobId, storagePath, localUri, ext, contentType },
+        { id, jobId, storagePath, localUri, ext, contentType, jobPlanTaskId },
         occurredAt,
         optimistic,
       );

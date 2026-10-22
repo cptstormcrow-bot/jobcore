@@ -15,13 +15,23 @@ export type JobTaskListProps = {
   onChange?: (tasks: JobPlanTaskRow[]) => void;
 };
 
+type TaskDraft = { qty: string; notes: string; unit: string; area: string; materials: string };
+const UNIT_OPTIONS = ['ea', 'sq ft', 'lin ft', 'hr', 'set'].map((u) => ({ label: u, value: u }));
+const toDraft = (r: JobPlanTaskRow): TaskDraft => ({
+  qty: String(r.quantity),
+  notes: r.notes ?? '',
+  unit: r.unit ?? '',
+  area: r.area ?? '',
+  materials: r.materialsNote ?? '',
+});
+
 export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan', onChange }: JobTaskListProps) {
   const repo = useMemo(() => createJobPlanTasksRepository(), []);
   const session = useSession();
   const orgId = session.status === 'authenticated' ? session.organization.id : null;
   const [rows, setRows] = useState<JobPlanTaskRow[]>([]);
   const [catalog, setCatalog] = useState<ServiceTaskCatalogEntry[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, { qty: string; notes: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, TaskDraft>>({});
   const [newTitle, setNewTitle] = useState('');
   const [newMinutes, setNewMinutes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +41,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     (next: JobPlanTaskRow[]) => {
       const sorted = [...next].sort((a, b) => a.sortOrder - b.sortOrder);
       setRows(sorted);
-      setDrafts(Object.fromEntries(sorted.map((r) => [r.id, { qty: String(r.quantity), notes: r.notes ?? '' }])));
+      setDrafts(Object.fromEntries(sorted.map((r) => [r.id, toDraft(r)])));
       onChange?.(sorted);
     },
     [onChange],
@@ -116,6 +126,17 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       replaceRow(row.id, { notes: n });
     }, 'Failed to save notes.');
 
+  const saveDetail = (row: JobPlanTaskRow, over?: Partial<TaskDraft>) =>
+    run(async () => {
+      const d = { ...(drafts[row.id] ?? toDraft(row)), ...over };
+      const unit = d.unit.trim() || null;
+      const area = d.area.trim() || null;
+      const materialsNote = d.materials.trim() || null;
+      if (unit === (row.unit ?? null) && area === (row.area ?? null) && materialsNote === (row.materialsNote ?? null)) return;
+      await repo.updateTask(row.id, { unit, area, materialsNote });
+      replaceRow(row.id, { unit, area, materialsNote });
+    }, 'Failed to save task details.');
+
   const defer = (row: JobPlanTaskRow) =>
     run(async () => {
       await repo.deferTask(row.id);
@@ -132,7 +153,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const deferred = rows.filter((r) => r.status === 'deferred');
 
   const renderRow = (row: JobPlanTaskRow, dim: boolean) => {
-    const d = drafts[row.id] ?? { qty: String(row.quantity), notes: row.notes ?? '' };
+    const d = drafts[row.id] ?? toDraft(row);
+    const detail = [row.area, row.unit, row.materialsNote].filter((x) => !!x).join(' · ');
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
         <View style={styles.head}>
@@ -162,6 +184,36 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           />
         ) : row.notes ? (
           <Text style={styles.notes}>{row.notes}</Text>
+        ) : null}
+        {edit && !dim ? (
+          <>
+            <Select
+              compact
+              options={UNIT_OPTIONS}
+              value={d.unit || null}
+              placeholder="Unit"
+              onChange={(u) => {
+                setDrafts((p) => ({ ...p, [row.id]: { ...d, unit: u ?? '' } }));
+                void saveDetail(row, { unit: u ?? '' });
+              }}
+            />
+            <TextField
+              dense
+              placeholder="Area / room"
+              value={d.area}
+              onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, area: t } }))}
+              onBlur={() => void saveDetail(row)}
+            />
+            <TextField
+              dense
+              placeholder="Materials"
+              value={d.materials}
+              onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, materials: t } }))}
+              onBlur={() => void saveDetail(row)}
+            />
+          </>
+        ) : detail ? (
+          <Text style={styles.notes}>{detail}</Text>
         ) : null}
         {edit && (
           <View style={styles.actions}>

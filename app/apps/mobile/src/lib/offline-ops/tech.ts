@@ -87,6 +87,7 @@ export interface JobPlanningPhotoAddPayload {
   localUri: string;
   ext: string;
   contentType?: string;
+  jobPlanTaskId?: string | null;
 }
 export interface JobPlanningPhotoRemovePayload {
   id: string;
@@ -171,6 +172,11 @@ export interface JobEstimateLineItemAddPayload {
     unitCost: number;
     lineTotal: number;
     jobPlanTaskId?: string | null;
+    serviceTaskId?: string | null;
+    originLineItemId?: string | null;
+    unit?: string | null;
+    area?: string | null;
+    materialsNote?: string | null;
   };
 }
 export interface CalendarEventCreatePayload {
@@ -285,6 +291,7 @@ const jobPlanningPhotoAdd: OpHandler<JobPlanningPhotoAddPayload> = async (p, ctx
     organization_id: ctx.orgId,
     job_id: p.jobId,
     storage_path: p.storagePath,
+    ...(p.jobPlanTaskId !== undefined ? { job_plan_task_id: p.jobPlanTaskId } : {}),
     created_by: ctx.userId,
   });
   check(error);
@@ -449,6 +456,11 @@ const jobEstimateLineItemAdd: OpHandler<JobEstimateLineItemAddPayload> = async (
     unit_cost: p.draft.unitCost,
     line_total: p.draft.lineTotal,
     job_plan_task_id: p.draft.jobPlanTaskId ?? null,
+    service_task_id: p.draft.serviceTaskId ?? null,
+    origin_line_item_id: p.draft.originLineItemId ?? null,
+    unit: p.draft.unit ?? null,
+    area: p.draft.area ?? null,
+    materials_note: p.draft.materialsNote ?? null,
     created_by: ctx.userId,
   });
   check(error);

@@ -916,6 +916,11 @@ export interface JobPlanTaskSummary {
   title: string;
   kind: string;
   status: string;
+  unit: string | null;
+  area: string | null;
+  materialsNote: string | null;
+  /** ISO timestamp of the last content change. */
+  contentUpdatedAt: string;
 }
 
 /** Job plan task read port. Ordered by `sort_order`. */
@@ -931,6 +936,7 @@ export interface JobPlanningPhoto {
   caption: string | null;
   createdAt: string;
   url: string | null;
+  jobPlanTaskId?: string | null;
 }
 
 /**
@@ -940,6 +946,7 @@ export interface JobPlanningPhoto {
  */
 export interface JobPlanningPhotoRepo {
   list(jobId: string): Promise<JobPlanningPhoto[]>;
-  add(jobId: string): Promise<JobPlanningPhoto | null>;
+  // Tags the photo to a prem task at insert; techs have no UPDATE policy so retagging is admin-only.
+  add(jobId: string, opts?: { jobPlanTaskId?: string | null }): Promise<JobPlanningPhoto | null>;
   remove(photoId: string): Promise<void>;
 }
