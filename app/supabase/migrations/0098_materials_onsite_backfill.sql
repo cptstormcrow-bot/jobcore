@@ -1,5 +1,5 @@
 -- Jobcore - migration 0098: materials-onsite backfill
--- UNAPPLIED. Written only; Jeff applies it via the live-push playbook.
+-- APPLIED to the live DB on 2026-10-22 via the live-push playbook (post-apply check: 10 arrived=true jobs, 0 without an onsite estimate).
 --
 -- The Prelim screen's "Materials arrived" (job_investigations.materials_arrived)
 -- is retired in favour of job_estimates.materials_onsite. This one-time backfill

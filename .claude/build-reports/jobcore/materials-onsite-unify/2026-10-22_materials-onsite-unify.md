@@ -54,8 +54,10 @@ Command: `Test-Path` equivalent (`[ -e <path> ]`) per path, run from `E:\Jeff\Co
 | package.json | present |
 
 ## Forward contracts
-- 0098 live push pending Jeff's explicit go.
-- Note: `job_investigations.materials_arrived` is retained in the DB but unused by the UI.
+- Migration 0098 was APPLIED to the live DB on 2026-10-22 via the live-push playbook: 2 estimate rows inserted, 2 updated; post-check shows 10 jobs with materials_arrived=true and 0 without an onsite estimate.
+- The branch jobcore-role-landing-0.1.3 is still NOT pushed; a push needs Jeff's explicit go.
+- `job_investigations.materials_arrived` is retained in the DB but unused by the UI (no column drop).
+- The v0.4.0 snapshots still show the old label; UI Inventory regeneration is deferred.
 
 ## Deviations / Defects
 - (a) `tracking-helpers` adds a `result === null` case (message "UPS lookup failed.") that the plan table lacked; Screen D passes null when `trackShipment` throws.
