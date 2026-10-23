@@ -382,7 +382,7 @@
       "flowStage": "in_progress",
       "specStage": "Completion",
       "purpose": "Lets the field tech finish a job by confirming the checklist, adding after-photos and quality notes, then transitioning it to completed.",
-      "missing": "Exported but not mounted in any route. No navigation of its own; it only calls onDone after the job moves to completed. No visible link onward to QR payment/review.",
+      "missing": "Opened from the job menu's Complete (route /job/complete/<jobId>) for tech, admin and owner when the job is in progress. The Complete job button stays disabled until the checklist is ticked, an after-photo is attached and quality notes are typed; tapping it saves the quality note, completes the job (completed time set, status completed) and returns to the job screen. No visible link onward to QR payment/review.",
       "navTargets": []
     },
     "ft-DayList": {
