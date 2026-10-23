@@ -25,7 +25,7 @@ Files under `app\`:
 - `modules/field-tech/src/screens/tracking-helpers.ts`: NEW (67 lines): `TrackingResult`, `TrackingPatch`, `trackingResultToPatch`, `trackingStatusLine`.
 - `modules/field-tech/src/screens/__assertions__/tracking-helpers.assert.ts`: NEW (110 lines).
 - `modules/field-tech/src/screens/JobInvestigationScreen.tsx`: loads the estimate, Checkbox "Materials Onsite?", tracking TextField, Check UPS button; no `materialsArrived` left.
-- `supabase/migrations/0098_materials_onsite_backfill.sql`: NEW (15 lines), UNAPPLIED, update-only, idempotent.
+- `supabase/migrations/0098_materials_onsite_backfill.sql`: NEW (25 lines), UNAPPLIED, update plus idempotent insert (`on conflict (job_id) do nothing`).
 - `package.json`: test glob gains the new assert file.
 
 ## Behavior notes
@@ -54,8 +54,8 @@ Command: `Test-Path` equivalent (`[ -e <path> ]`) per path, run from `E:\Jeff\Co
 | package.json | present |
 
 ## Forward contracts
-- The 0098 live push is pending Jeff's explicit go. Before it, run a read-only count of jobs with `materials_arrived = true` and no `job_estimates` row, because the update-only backfill leaves those unchecked.
-- `job_investigations.materials_arrived` is retained in the DB but unused by the UI.
+- 0098 live push pending Jeff's explicit go.
+- Note: `job_investigations.materials_arrived` is retained in the DB but unused by the UI.
 
 ## Deviations / Defects
 - (a) `tracking-helpers` adds a `result === null` case (message "UPS lookup failed.") that the plan table lacked; Screen D passes null when `trackShipment` throws.
@@ -64,6 +64,7 @@ Command: `Test-Path` equivalent (`[ -e <path> ]`) per path, run from `E:\Jeff\Co
 - (d) DEFERRED: generated snapshots under `docs\snapshots\v0.4.0\` still show the old label until UI Inventory is regenerated (memory `jobcore-ui-inventory-0058-regen.md`).
 - (e) Retained plumbing for the old column: `app/apps/mobile/app/job/[jobId].tsx:603`, the investigation repo mapping and investigation types.
 - (f) Rule 41 lineage check was limited to the adjacent calendar-redux report (Schedule-screen props, unrelated to this change); no wider JobCore lineage sweep was run.
+- (g) 0098 was extended after commit e76f898 (insert of estimate rows for jobs with no estimate row) per Jeff's instruction 2026-10-22; a follow-up commit carries it.
 
 Test plan: none, declined by Jeff (Rule 43 answered "No test plan").
 
