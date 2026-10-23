@@ -149,7 +149,7 @@
       "navTargets": []
     },
     "af-jobEstimate": {
-      "summary": "Admin edits a job's estimate: line items list with inline edit (Cancel/Remove), add via Manual or From Price Sheet (rate/area pick, Select), totals, copy share link, and Print / Save as PDF. Back to Job button.",
+      "summary": "Admin edits a job's estimate across 3 tabs. Tasks (default): line items with inline edit (Cancel/Remove), manual add, Build lines from tasks, auto-picked service area shown read-only, and Payment Outlay including applied contingencies. Contingencies: toggle rows with an Applies switch, edit/delete; applied rows add to the total. Fine Print: editable template, placeholder until text is supplied. Also copy share link, Print / Save as PDF, and Back to Job button.",
       "flowStage": "qualified",
       "specStage": "Admin close-out",
       "purpose": "Lets owners/admins build, price, share and print a job's estimate from line items, manually or from the price sheet.",
