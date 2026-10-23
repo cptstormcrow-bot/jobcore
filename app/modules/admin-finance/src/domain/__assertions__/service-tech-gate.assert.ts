@@ -19,6 +19,17 @@ test('missing estimate is false', () => {
   assert.equal(canAssignServiceTech(null), false);
 });
 
+test('materials arrived on the investigation also opens the gate', () => {
+  assert.equal(canAssignServiceTech(null, { materialsArrived: true }), true);
+  assert.equal(canAssignServiceTech(undefined, { materialsArrived: true }), true);
+  assert.equal(canAssignServiceTech({ materialsOnsite: false }, { materialsArrived: true }), true);
+  assert.equal(canAssignServiceTech({ materialsOnsite: true }, { materialsArrived: false }), true);
+  assert.equal(canAssignServiceTech({ materialsOnsite: false }, { materialsArrived: false }), false);
+  assert.equal(canAssignServiceTech(null, { materialsArrived: null }), false);
+  assert.equal(canAssignServiceTech(null, null), false);
+  assert.equal(canAssignServiceTech(null, {}), false);
+});
+
 test('SERVICE_TECH_GATE_HINT is a non-empty string', () => {
   assert.equal(typeof SERVICE_TECH_GATE_HINT, 'string');
   assert.ok(SERVICE_TECH_GATE_HINT.length > 0);

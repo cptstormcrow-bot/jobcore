@@ -309,8 +309,8 @@ export default function JobDrilldownScreen() {
   const [pendingAssign, setPendingAssign] = useState<{ kind: 'prem' | 'service'; techId: string | null } | null>(null);
   useEffect(() => { setPendingAssign(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
-  const serviceGateOpen = canAssignServiceTech(estimate);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
+  const serviceGateOpen = canAssignServiceTech(estimate, investigation);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [showBlackouts, setShowBlackouts] = useState(true);
@@ -1101,7 +1101,7 @@ export default function JobDrilldownScreen() {
         await createJobRepository().updateStatus(job.id, 'in_progress');
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Arrive failed.';
+      const message = toUserMessage(err);
       setSaveError(message);
       setActionError(message);
     } finally {
