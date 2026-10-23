@@ -32,7 +32,7 @@
  * tokens — no raw color/spacing/typography literals.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, type ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
@@ -45,6 +45,7 @@ import type { CustomerJobHistoryItem } from '../data/ports';
 export interface CloseOutPhoto {
   id: string;
   uri: string;
+  storagePath?: string;
 }
 
 export interface CloseOutReviewScreenProps {
@@ -80,6 +81,8 @@ export interface CloseOutReviewScreenProps {
   onOpenCalendar?: () => void;
   /** Job activity trail, already in ascending order; read-only. */
   timeline?: JobTimelineItem[];
+  /** Optional extra content rendered under each photo's image. */
+  renderPhotoExtra?: (photo: CloseOutPhoto) => ReactNode;
 }
 
 type CloseOutTab = 'hours' | 'payouts' | 'contacts' | 'photos' | 'notes' | 'trail' | 'closeout';
@@ -112,6 +115,7 @@ export function CloseOutReviewScreen({
   embedded,
   onOpenCalendar,
   timeline,
+  renderPhotoExtra,
 }: CloseOutReviewScreenProps) {
   const [activeTab, setActiveTab] = useState<CloseOutTab>('hours');
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
@@ -252,6 +256,7 @@ export function CloseOutReviewScreen({
               {photos.map((photo) => (
                 <View key={photo.id} style={styles.photoTile}>
                   <Image source={{ uri: photo.uri }} style={styles.photoImage} />
+                  {renderPhotoExtra ? renderPhotoExtra(photo) : null}
                   <Pressable onPress={() => onRemovePhoto?.(photo.id)}>
                     <Text style={styles.photoRemove}>Remove</Text>
                   </Pressable>

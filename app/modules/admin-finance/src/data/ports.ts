@@ -901,13 +901,20 @@ export interface CloseOutFailureRepository {
 export interface CloseOutPhoto {
   id: string;
   uri: string;
+  /** Storage object path, when known. */
+  storagePath?: string;
+  /** Photo kind (e.g. a category tag), when known. */
+  kind?: string;
 }
 
 /** Read/write access to a job's close-out photos. */
 export interface JobPhotoRepository {
-  listForJob(jobId: string): Promise<CloseOutPhoto[]>;
-  add(jobId: string, uri: string): Promise<CloseOutPhoto>;
-  remove(photoId: string): Promise<void>;
+  listForJob(jobId: string, kind?: string): Promise<CloseOutPhoto[]>;
+  add(jobId: string, uri: string, meta?: { kind?: string; fileName?: string }): Promise<CloseOutPhoto>;
+  /** When `storagePath` is given, the stored object is deleted too. */
+  remove(photoId: string, storagePath?: string): Promise<void>;
+  /** Writes a description note onto a stored photo. */
+  setNote(photo: { id: string; storagePath: string }, description: string): Promise<void>;
 }
 
 /** Read/write access to a job's close-out notes. */

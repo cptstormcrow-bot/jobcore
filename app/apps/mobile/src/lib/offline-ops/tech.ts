@@ -1,6 +1,8 @@
 // Tech (field-tech) replay handlers. Pure network functions: no SQLite, no React.
 // Errors are never wrapped: the drain classifier reads .code/.status/.message.
 import { registerOpHandlers, type OpContext, type OpHandler } from './index';
+import { writeJpegDescription } from '../jpeg-description';
+import { blobToBytes } from '../photo-note';
 
 type Sb = OpContext['supabase'];
 const APPLIED = { applied: true } as const;
@@ -27,12 +29,17 @@ async function uploadLocal(
   storagePath: string,
   localUri: string,
   contentType: string,
+  upsert = false,
 ): Promise<void> {
   const blob = await (await fetch(localUri)).blob();
   const { error } = await supabase.storage
     .from(JOB_PHOTOS_BUCKET)
-    .upload(storagePath, blob, { contentType });
-  if (error && !isAlreadyExists(error)) throw error;
+    .upload(
+      storagePath,
+      blob,
+      upsert ? { contentType, upsert: true, cacheControl: '60' } : { contentType },
+    );
+  if (error && (upsert || !isAlreadyExists(error))) throw error;
 }
 
 function contentTypeFor(ext: string): string {
@@ -72,9 +79,15 @@ export interface JobPhotoCreatePayload {
   localUri: string;
   ext: string;
   contentType?: string;
+  upsert?: boolean;
   occurredAt: string;
   lat: number | null;
   lng: number | null;
+}
+export interface JobPhotoNotePayload {
+  id: string;
+  storagePath: string;
+  description: string;
 }
 export interface JobPhotoRemovePayload {
   id: string;
@@ -258,7 +271,13 @@ const checklistInstanceSubmit: OpHandler<ChecklistInstanceSubmitPayload> = async
 };
 
 const jobPhotoCreate: OpHandler<JobPhotoCreatePayload> = async (p, ctx) => {
-  await uploadLocal(ctx.supabase, p.storagePath, p.localUri, p.contentType ?? contentTypeFor(p.ext));
+  await uploadLocal(
+    ctx.supabase,
+    p.storagePath,
+    p.localUri,
+    p.contentType ?? contentTypeFor(p.ext),
+    p.upsert === true,
+  );
   const { error } = await ctx.supabase.from('job_photos').insert({
     id: p.id,
     organization_id: ctx.orgId,
@@ -269,6 +288,26 @@ const jobPhotoCreate: OpHandler<JobPhotoCreatePayload> = async (p, ctx) => {
     occurred_at: p.occurredAt,
     lat: p.lat,
     lng: p.lng,
+  });
+  check(error);
+  return APPLIED;
+};
+
+const jobPhotoNote: OpHandler<JobPhotoNotePayload> = async (p, ctx) => {
+  const bucket = ctx.supabase.storage.from(JOB_PHOTOS_BUCKET);
+  const { data, error: dlErr } = await bucket.download(p.storagePath);
+  if (dlErr) throw dlErr;
+  const bytes = await blobToBytes(data as Blob);
+  let out: Uint8Array;
+  try {
+    out = writeJpegDescription(bytes, p.description);
+  } catch {
+    return APPLIED; // not a JPEG: nothing to embed
+  }
+  const { error } = await bucket.upload(p.storagePath, new Blob([out as BlobPart], { type: 'image/jpeg' }), {
+    contentType: 'image/jpeg',
+    upsert: true,
+    cacheControl: '60',
   });
   check(error);
   return APPLIED;
@@ -555,6 +594,7 @@ export const TECH_OP_HANDLERS: Record<string, OpHandler<any>> = {
   'checklist_instance.create': checklistInstanceCreate,
   'checklist_instance.submit': checklistInstanceSubmit,
   'job_photo.create': jobPhotoCreate,
+  'job_photo.note': jobPhotoNote,
   'job_photo.remove': jobPhotoRemove,
   'job_planning_photo.add': jobPlanningPhotoAdd,
   'job_planning_photo.remove': jobPlanningPhotoRemove,

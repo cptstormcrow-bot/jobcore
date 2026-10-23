@@ -99,7 +99,7 @@ import type {
   CloseOutFailureRecord,
 } from '../../../../modules/admin-finance/src/data/ports';
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch, toCloseOutFailure } from '../../../../modules/admin-finance/src/data/ports';
-import type { ModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
+import type { ModulePorts, CloseOutPhotoRepository } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import { buildJobTimeline } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { JobTimelineItem, JobTimelineSources } from '../../../../modules/admin-finance/src/domain/job-timeline';
@@ -1281,41 +1281,59 @@ function requireModuleSession(): { organizationId: string; userId: string } {
   return { organizationId: session.org.id, userId: session.userId };
 }
 
-export function createCloseOutPhotosRepository(): JobPhotoRepository {
+export function createCloseOutPhotosRepository(): CloseOutPhotoRepository {
   return {
-    async listForJob(jobId: string): Promise<CloseOutPhoto[]> {
-      const rows = await readCached('af.closeOutPhotos.listForJob', { jobId }, async () => {
-        const { data, error } = await supabase
+    async listForJob(jobId: string, kind?: string): Promise<CloseOutPhoto[]> {
+      const rows = await readCached('af.closeOutPhotos.listForJob', { jobId, kind: kind ?? null }, async () => {
+        let query = supabase
           .from('job_photos')
-          .select('id, storage_path')
+          .select('id, storage_path, kind')
           .eq('job_id', jobId);
+        if (kind) {
+          query = query.eq('kind', kind);
+        }
+        const { data, error } = await query;
         if (error) {
           throw new Error(`listForJob failed: ${error.message}`);
         }
-        return (data ?? []) as Array<{ id: string; storage_path: string }>;
+        return (data ?? []) as Array<{ id: string; storage_path: string; kind: string }>;
       });
       // Signed-URL resolution happens after the cached read; the cache holds storage paths only.
       return Promise.all(
         rows.map(async (row) => ({
           id: row.id,
           uri: (await resolvePhotoUri(row.storage_path)) ?? row.storage_path,
+          storagePath: row.storage_path,
+          kind: row.kind,
         })),
       );
     },
 
-    async add(jobId: string, uri: string, meta?: { ext: string; contentType: string }): Promise<CloseOutPhoto> {
+    async add(
+      jobId: string,
+      uri: string,
+      meta?: { ext?: string; contentType?: string; kind?: string; fileName?: string },
+    ): Promise<CloseOutPhoto> {
       const { organizationId, userId } = requireModuleSession();
+      const fileName = meta?.fileName;
+      const photoKind = fileName ? (meta?.kind ?? 'after') : 'after';
+      if (photoKind === 'before' && !(fileName && /BEF-[1-6]\.jpg$/.test(fileName))) {
+        throw new Error('before photo requires a fileName matching BEF-1..6.jpg');
+      }
       const occurredAt = new Date().toISOString();
       const photoId = newClientId();
       const ext = meta?.ext ?? 'jpg';
       const contentType = meta?.contentType ?? 'image/jpeg';
-      const storagePath = storagePathFor(organizationId, jobId, photoId, ext);
+      // Named files use a fresh path (no upsert: storage has no UPDATE policy).
+      const storagePath = fileName
+        ? `${organizationId}/${jobId}/${fileName}`
+        : storagePathFor(organizationId, jobId, photoId, ext);
       const localUri = await copyToLocal(uri, organizationId, jobId, photoId, ext);
       const payload = {
         id: photoId,
         jobId,
         techId: userId,
-        kind: 'after',
+        kind: photoKind,
         storagePath,
         localUri,
         ext,
@@ -1325,12 +1343,17 @@ export function createCloseOutPhotosRepository(): JobPhotoRepository {
         lng: null,
       };
       await writeThrough('job_photo.create', payload, occurredAt, { id: photoId, uri: localUri } as never);
-      return { id: photoId, uri: localUri };
+      return { id: photoId, uri: localUri, storagePath, kind: photoKind };
     },
 
-    async remove(photoId: string): Promise<void> {
+    async setNote(photo: { id: string; storagePath: string }, description: string): Promise<void> {
       const occurredAt = new Date().toISOString();
-      await writeThrough('job_photo.remove', { id: photoId }, occurredAt, { id: photoId } as never);
+      await writeThrough('job_photo.note', { id: photo.id, storagePath: photo.storagePath, description }, occurredAt, { id: photo.id } as never);
+    },
+
+    async remove(photoId: string, storagePath?: string): Promise<void> {
+      const occurredAt = new Date().toISOString();
+      await writeThrough('job_photo.remove', storagePath ? { id: photoId, storagePath } : { id: photoId }, occurredAt, { id: photoId } as never);
     },
   };
 }

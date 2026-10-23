@@ -13,6 +13,7 @@ import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-o
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
 import { photoMetaFrom } from '../lib/photo-asset-meta';
+import { PhotoNoteField } from './PhotoNoteField';
 
 export type JobCloseOutRegionProps = {
   job: Job;
@@ -230,6 +231,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       job={job}
       ctx={ctx}
       photos={photos}
+      renderPhotoExtra={(p) => <PhotoNoteField photo={{ id: p.id, uri: p.uri, storagePath: p.storagePath }} />}
       notes={notes}
       onAddPhoto={() => void handleAddPhoto()}
       onRemovePhoto={handleRemovePhoto}

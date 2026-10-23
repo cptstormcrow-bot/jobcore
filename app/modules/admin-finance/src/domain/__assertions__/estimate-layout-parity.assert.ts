@@ -46,6 +46,7 @@ test('labels are pinned', () => {
     description: 'Description',
     contingencies: 'Contingencies - what if?',
     lineItems: 'Line Items',
+    tasks: 'Tasks',
     addManual: 'Add Manual',
     lookupPriceSheet: 'Lookup Price Sheet',
     finePrint: 'Fine Print',

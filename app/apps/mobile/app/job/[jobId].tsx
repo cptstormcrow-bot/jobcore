@@ -56,6 +56,7 @@ import { canAssignServiceTech } from '../../../../modules/admin-finance/src/doma
 import { extractZip, matchServiceAreaByZip, seedPlanningFromInvestigation } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 import { JobOverviewRegion } from '../../src/components/JobOverviewRegion';
 import { JobTaskList } from '../../src/components/JobTaskList';
+import { JobBeforePhotoCard } from '../../src/components/JobBeforePhotoCard';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen, type EstimateChrome } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
@@ -959,6 +960,7 @@ export default function JobDrilldownScreen() {
     lead: { id: string } | null;
   } | null>(null);
 
+  const [photoCountTick, setPhotoCountTick] = useState(0);
   // Re-derive inputs on load and on every refresh (job object changes on each setJob).
   useEffect(() => {
     if (!job?.id) return;
@@ -997,7 +999,7 @@ export default function JobDrilldownScreen() {
       });
     })();
     return () => { cancelled = true; };
-  }, [job, estimate, investigation, rev]);
+  }, [job, estimate, investigation, rev, photoCountTick]);
 
   const stageResults = useMemo(() => {
     if (!job) return null;
@@ -1053,6 +1055,12 @@ export default function JobDrilldownScreen() {
     }
   };
 
+  const [estimateFocus, setEstimateFocus] = useState<{ tab: 'tasks'; nonce: number } | undefined>(undefined);
+  const openEstimateTasks = useCallback(() => {
+    selectRegion('estimate');
+    setEstimateFocus((prev) => ({ tab: 'tasks', nonce: (prev?.nonce ?? 0) + 1 }));
+  }, [selectRegion]);
+
   const handleStagePress = (key: string) => {
     switch (key as StageKey) {
       case 'job': selectRegion('details'); break;
@@ -1072,7 +1080,7 @@ export default function JobDrilldownScreen() {
       case 'assign': selectRegion('assign'); break;
       case 'contact': setActiveStage('contact'); handleContact(); break;
       case 'startWork':
-      case 'photos':
+      case 'photos': openEstimateTasks(); break;
       case 'completeWork': void handleComplete(); break;
       case 'lead':
         if (stageExtras?.lead) router.push(`/m/admin-finance?leadId=${stageExtras.lead.id}` as never);
@@ -1091,15 +1099,18 @@ export default function JobDrilldownScreen() {
     setBusyAction('arrive');
     setActionError(null);
     try {
-      if (!job.enRouteAt) {
-        const updated = await createJobRepository().patchLifecycle(job.id, { enRouteAt: new Date().toISOString() });
+      if (!job.inProgressAt) {
+        const nowIso = new Date().toISOString();
+        const updated = await createJobRepository().patchLifecycle(job.id, {
+          enRouteAt: job.enRouteAt ?? nowIso,
+          inProgressAt: nowIso,
+        });
         setJob(updated);
-        await createJobRepository().updateStatus(job.id, 'in_progress');
-      } else if (!job.inProgressAt) {
-        const updated = await createJobRepository().patchLifecycle(job.id, { inProgressAt: new Date().toISOString() });
-        setJob(updated);
-        await createJobRepository().updateStatus(job.id, 'in_progress');
+        if (String(updated.status) !== 'in_progress') {
+          await createJobRepository().updateStatus(job.id, 'in_progress');
+        }
       }
+      openEstimateTasks();
     } catch (err) {
       const message = toUserMessage(err);
       setSaveError(message);
@@ -1486,6 +1497,14 @@ export default function JobDrilldownScreen() {
             serviceAreas={serviceAreas}
             editable={!isTechEstimate}
             onChrome={setEstimateChrome}
+            focusTab={estimateFocus}
+            beforePhotoSlot={
+              <JobBeforePhotoCard
+                jobId={currentJob.id}
+                jobNumber={currentJob.jobNumber ?? null}
+                onSaved={() => setPhotoCountTick((n) => n + 1)}
+              />
+            }
           />
         )}
         {region === 'closeout' && role && (

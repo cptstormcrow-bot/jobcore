@@ -72,6 +72,10 @@ export interface JobEstimateScreenProps {
   onChrome?: (chrome: EstimateChrome | null) => void;
   /** Optional node rendered right-aligned under the Check UPS row in the first summary cell (e.g. a tech picker). */
   techSlot?: ReactNode;
+  /** Host request to switch tabs; re-applied whenever `nonce` changes. */
+  focusTab?: { tab: EstimateTab; nonce: number };
+  /** Rendered at the top of the Tasks tab, before the first card. */
+  beforePhotoSlot?: ReactNode;
 }
 
 export type EstimateTab = 'tasks' | 'contingency' | 'finePrint';
@@ -117,8 +121,8 @@ type LoadState =
   | { kind: 'failed'; message: string };
 
 const KIND_OPTIONS: { label: string; value: EstimateLineItemKind }[] = [
-  { label: 'Material', value: 'material' },
   { label: 'Labor', value: 'labor' },
+  { label: 'Material', value: 'material' },
   { label: 'Other', value: 'other' },
 ];
 
@@ -158,7 +162,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [moving, setMoving] = useState(false);
 
-  const [kindInput, setKindInput] = useState<EstimateLineItemKind>('material');
+  const [kindInput, setKindInput] = useState<EstimateLineItemKind>('labor');
   const [descriptionInput, setDescriptionInput] = useState('');
   const [quantityInput, setQuantityInput] = useState('1');
   const [unitCostInput, setUnitCostInput] = useState('');
@@ -343,6 +347,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [editingTemplate, setEditingTemplate] = useState(false);
   const [templateInput, setTemplateInput] = useState('');
   const [activeTab, setActiveTab] = useState<EstimateTab>('tasks');
+  const focusTabNonce = props.focusTab?.nonce;
+  useEffect(() => {
+    if (props.focusTab) setActiveTab(props.focusTab.tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusTabNonce]);
   const [materialsOnsiteLocal, setMaterialsOnsiteLocal] = useState<boolean | null>(null);
   const materialsInFlight = useRef(false);
 
@@ -1040,6 +1049,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </View>
         </View>
 
+        {activeTab === 'tasks' ? props.beforePhotoSlot : null}
+
         {activeTab === 'tasks' ? (
         <Card style={styles.card}>
           {!embedded && (
@@ -1061,7 +1072,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               />
             </>
           )}
-          {job.description ? <ListItem title={ESTIMATE_LABELS.description} subtitle={job.description} /> : null}
           <Text style={styles.note} testID="estimate-service-area">
             {resolvedServiceArea
               ? `Service area: ${resolvedServiceArea.name} (auto from address)`
@@ -1069,7 +1079,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </Text>
           {visibleTasks.length > 0 ? (
             <View testID="estimate-task-list">
-              <Text style={styles.heading}>Tasks</Text>
+              <Text style={styles.heading}>Service tasks</Text>
               {visibleTasks.map((t) => (
                 <ListItem
                   key={t.id}
@@ -1167,11 +1177,39 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
         {activeTab === 'tasks' ? (
         <Card style={styles.card}>
-          <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.lineItems}</Text>
+          <View style={styles.finePrintHeader}>
+            <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.tasks}</Text>
+            <PayrollButton
+              label="Add Task"
+              testID="estimate-add-task"
+              onPress={() => {
+                void handleAddLineItem();
+              }}
+              disabled={busy}
+            />
+            {!pickedServiceTaskId && canSaveToSheet ? (
+              <View style={styles.finePrintActions}>
+                <Text style={styles.label}>Save to price sheet</Text>
+                {([true, false] as const).map((on) => (
+                  <PayrollButton
+                    key={on ? 'on' : 'off'}
+                    label={on ? 'On' : 'Off'}
+                    onPress={() => setSaveToSheet(on)}
+                    disabled={busy}
+                    style={
+                      saveToSheet === on
+                        ? { borderBottomWidth: 2, borderBottomColor: colors.primary }
+                        : undefined
+                    }
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
           {activeTab === 'tasks' ? (
           <>
           {lineItems.length === 0 ? (
-            <EmptyState title="No line items" message="Add a line item below." />
+            <EmptyState title="No tasks" message="Add a task below." />
           ) : (
             <View style={styles.itemList}>
             {lineItems.map((item) =>
@@ -1251,9 +1289,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   subtitle={`${item.quantity} x ${formatCurrency(item.unitCost)} = ${formatCurrency(item.lineTotal)}`}
                   onPress={editable ? () => beginEdit(item) : undefined}
                   right={editable ? (
-                    <Button
+                    <PayrollButton
                       label="Remove"
-                      size="sm"
                       onPress={() => {
                         void handleRemoveLineItem(item);
                       }}
@@ -1298,10 +1335,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 />
               ) : null}
               <Select
-                label="Kind"
+                label="Type"
                 value={kindInput}
                 options={KIND_OPTIONS}
-                onChange={(value) => setKindInput((value as EstimateLineItemKind) ?? 'material')}
+                onChange={(value) => setKindInput((value as EstimateLineItemKind) ?? 'labor')}
                 disabled={busy}
                 style={styles.field}
               />
@@ -1329,36 +1366,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
-              {!pickedServiceTaskId && canSaveToSheet ? (
-                <>
-                  <Text style={styles.label}>Save to price sheet</Text>
-                  <View style={styles.actionRow}>
-                    {([true, false] as const).map((on) => (
-                      <PayrollButton
-                        key={on ? 'on' : 'off'}
-                        label={on ? 'On' : 'Off'}
-                        onPress={() => setSaveToSheet(on)}
-                        disabled={busy}
-                        style={
-                          saveToSheet === on
-                            ? { borderBottomWidth: 2, borderBottomColor: colors.primary }
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </View>
-                </>
-              ) : null}
               {sheetNotice ? <Text style={styles.note}>{sheetNotice}</Text> : null}
-              <Button
-                label={busy ? 'Adding...' : 'Add Line Item'}
-                size="sm"
-                onPress={() => {
-                  void handleAddLineItem();
-                }}
-                disabled={busy}
-                style={styles.action}
-              />
             </>
           </>
           ) : null}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
@@ -8,6 +8,7 @@ import type { MenuItem } from '@jobcore/ui';
 import type { Customer } from '../../../../modules/admin-finance/src/data/ports';
 import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src/domain/job-detail-helpers';
 import { SERVICE_TECH_GATE_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
+import { liveLaborSeconds } from '../lib/live-labor';
 
 export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
 
@@ -54,9 +55,23 @@ export function JobHeader({
   onSchedulePress,
   children,
 }: JobHeaderProps) {
+  const [now, setNow] = useState<number>(() => Date.now());
+  const isLive = Boolean(job.inProgressAt && !job.completedAt);
+  useEffect(() => {
+    if (!isLive) return undefined;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [isLive]);
+  const liveSeconds = liveLaborSeconds({
+    storedSeconds: totalLaborSeconds,
+    openSegmentStartIso: job.inProgressAt,
+    completedAt: job.completedAt,
+    nowMs: now,
+  });
   const totalHoursLabel =
-    totalLaborSeconds > 0
-      ? formatElapsed(new Date(0).toISOString(), new Date(totalLaborSeconds * 1000))
+    liveSeconds > 0
+      ? formatElapsed(new Date(0).toISOString(), new Date(liveSeconds * 1000))
       : null;
   const ingressCode = job.ingressInstructions?.trim() ? job.ingressInstructions.trim() : null;
   const headerLines = formatJobHeaderLines(job.jobNumber, job.createdAt);
