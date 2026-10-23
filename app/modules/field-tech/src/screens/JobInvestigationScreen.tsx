@@ -18,9 +18,10 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { ScreenTitle, Button, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
-import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto } from '../data/ports';
+import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto, JobEstimate, JobEstimateInput } from '../data/ports';
+import { trackingResultToPatch, trackingStatusLine } from './tracking-helpers';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 
@@ -96,7 +97,12 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
   const [parkingNotes, setParkingNotes] = React.useState('');
   const [stateAssessment, setStateAssessment] = React.useState('');
   const [techInstructions, setTechInstructions] = React.useState('');
-  const [materialsArrived, setMaterialsArrived] = React.useState(false);
+  const [estimate, setEstimate] = React.useState<JobEstimate | null>(null);
+  const [materialsOnsiteLocal, setMaterialsOnsiteLocal] = React.useState<boolean | null>(null);
+  const [savingOnsite, setSavingOnsite] = React.useState(false);
+  const [trackingInput, setTrackingInput] = React.useState('');
+  const [checkingUps, setCheckingUps] = React.useState(false);
+  const [trackingMessage, setTrackingMessage] = React.useState<string | null>(null);
   const [redFlagMarginalEquipment, setRedFlagMarginalEquipment] = React.useState(false);
   const [redFlagUndocumentedSystem, setRedFlagUndocumentedSystem] = React.useState(false);
   const [redFlagSubstandardStart, setRedFlagSubstandardStart] = React.useState(false);
@@ -123,7 +129,14 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       setParkingNotes(loadedInvestigation?.parkingNotes ?? '');
       setStateAssessment(loadedInvestigation?.stateAssessment ?? '');
       setTechInstructions(loadedInvestigation?.techInstructions ?? '');
-      setMaterialsArrived(loadedInvestigation?.materialsArrived === true);
+      let loadedEstimate: JobEstimate | null = null;
+      try {
+        loadedEstimate = await ports.estimates.getForJob(jobId);
+      } catch {
+        loadedEstimate = null;
+      }
+      setEstimate(loadedEstimate);
+      setTrackingInput(loadedEstimate?.trackingNumber ?? '');
       setRedFlagMarginalEquipment(loadedInvestigation?.redFlagMarginalEquipment === true);
       setRedFlagUndocumentedSystem(loadedInvestigation?.redFlagUndocumentedSystem === true);
       setRedFlagSubstandardStart(loadedInvestigation?.redFlagSubstandardStart === true);
@@ -151,7 +164,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
           parkingNotes,
           stateAssessment,
           techInstructions,
-          materialsArrived,
           redFlagMarginalEquipment,
           redFlagUndocumentedSystem,
           redFlagSubstandardStart,
@@ -166,8 +178,70 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
         setSaving(false);
       }
     },
-    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, materialsArrived, redFlagMarginalEquipment, redFlagUndocumentedSystem, redFlagSubstandardStart, redFlagNotes, onSubmitted],
+    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, redFlagMarginalEquipment, redFlagUndocumentedSystem, redFlagSubstandardStart, redFlagNotes, onSubmitted],
   );
+
+  const persistEstimate = React.useCallback(
+    async (patch: JobEstimateInput): Promise<JobEstimate | null> => {
+      const updated = await getModulePorts().estimates.upsertForJob(jobId, patch);
+      setEstimate(updated);
+      return updated;
+    },
+    [jobId],
+  );
+
+  const handleMaterialsOnsite = React.useCallback(
+    (next: boolean) => {
+      if (savingOnsite) return;
+      setSavingOnsite(true);
+      setMaterialsOnsiteLocal(next);
+      persistEstimate({ materialsOnsite: next })
+        .then(() => setMaterialsOnsiteLocal(null))
+        .catch((err: unknown) => {
+          setMaterialsOnsiteLocal(null);
+          setError(err instanceof Error ? err.message : 'Failed to save materials status.');
+        })
+        .finally(() => setSavingOnsite(false));
+    },
+    [savingOnsite, persistEstimate],
+  );
+
+  const handleTrackingBlur = React.useCallback(() => {
+    const trimmed = trackingInput.trim();
+    if (trimmed === (estimate?.trackingNumber ?? '')) return;
+    setTrackingMessage(null);
+    const patch: JobEstimateInput = trimmed
+      ? { trackingNumber: trimmed }
+      : { trackingNumber: null, trackingStatus: null, trackingCheckedAt: null };
+    persistEstimate(patch).catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Failed to save tracking number.');
+    });
+  }, [trackingInput, estimate?.trackingNumber, persistEstimate]);
+
+  const handleCheckUps = React.useCallback(async () => {
+    const trimmed = trackingInput.trim();
+    if (!trimmed) return;
+    setCheckingUps(true);
+    try {
+      let result: Awaited<ReturnType<ReturnType<typeof getModulePorts>['estimates']['trackShipment']>> | null;
+      try {
+        result = await getModulePorts().estimates.trackShipment(trimmed);
+      } catch {
+        result = null;
+      }
+      const { patch, message } = trackingResultToPatch(trimmed, result, new Date().toISOString());
+      setTrackingMessage(message);
+      await persistEstimate(patch);
+      if (patch.materialsOnsite) setMaterialsOnsiteLocal(true);
+    } catch (err) {
+      setTrackingMessage(err instanceof Error ? err.message : 'UPS lookup failed.');
+    } finally {
+      setCheckingUps(false);
+    }
+  }, [trackingInput, persistEstimate]);
+
+  const trackingLine = trackingStatusLine(estimate, trackingMessage);
+  const hasTracking = Boolean(trackingInput.trim() || estimate?.trackingNumber);
 
   const handleSaveDraft = React.useCallback(() => {
     void handleSave({});
@@ -287,19 +361,37 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
       <View style={styles.section}>
         <PairRow>
-          <Pressable
-            style={styles.checkboxRow}
-            onPress={() => setMaterialsArrived((prev) => !prev)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: materialsArrived }}
-          >
-            <Text style={styles.checkboxBox}>{materialsArrived ? '☑' : '☐'}</Text>
-            <Text style={styles.value}>Materials arrived *</Text>
-          </Pressable>
+          <Checkbox
+            label="Materials Onsite?"
+            variant="check"
+            checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
+            disabled={savingOnsite}
+            onChange={handleMaterialsOnsite}
+          />
           <Text style={styles.status}>
             {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
           </Text>
         </PairRow>
+        <View style={styles.trackingRow}>
+          <TextField
+            label="UPS tracking number"
+            value={trackingInput}
+            onChangeText={setTrackingInput}
+            onBlur={handleTrackingBlur}
+            disabled={saving}
+            style={styles.trackingField}
+          />
+          <Button
+            label={checkingUps ? 'Checking...' : 'Check UPS'}
+            size="sm"
+            onPress={() => {
+              void handleCheckUps();
+            }}
+            disabled={saving || checkingUps || !trackingInput.trim()}
+            style={styles.trackingButton}
+          />
+        </View>
+        {hasTracking && trackingLine ? <Text style={styles.value}>{trackingLine}</Text> : null}
       </View>
 
       <View style={styles.section}>
@@ -436,6 +528,17 @@ const styles = StyleSheet.create({
   actionCell: {
     flex: 1,
   },
+  trackingRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginBottom: 8,
+  },
+  trackingField: {
+    flex: 1,
+  },
+  trackingButton: {},
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',

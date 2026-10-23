@@ -739,6 +739,10 @@ function toJobEstimate(row: {
   updated_at: string;
   created_by: string | null;
   updated_by: string | null;
+  materials_onsite?: boolean | null;
+  tracking_number?: string | null;
+  tracking_status?: string | null;
+  tracking_checked_at?: string | null;
 }): JobEstimate {
   return {
     jobId: row.job_id,
@@ -757,6 +761,10 @@ function toJobEstimate(row: {
     depositAmount: row.deposit_amount === null ? null : Number(row.deposit_amount),
     customerNotes: row.customer_notes,
     internalNotes: row.internal_notes,
+    materialsOnsite: row.materials_onsite === true,
+    trackingNumber: row.tracking_number ?? null,
+    trackingStatus: row.tracking_status ?? null,
+    trackingCheckedAt: row.tracking_checked_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     createdBy: row.created_by,
@@ -864,6 +872,18 @@ export function createEstimateRepository(): EstimateRepository {
       if (input.internalNotes !== undefined) {
         patch.internal_notes = input.internalNotes;
       }
+      if (input.materialsOnsite !== undefined) {
+        patch.materials_onsite = input.materialsOnsite;
+      }
+      if (input.trackingNumber !== undefined) {
+        patch.tracking_number = input.trackingNumber;
+      }
+      if (input.trackingStatus !== undefined) {
+        patch.tracking_status = input.trackingStatus;
+      }
+      if (input.trackingCheckedAt !== undefined) {
+        patch.tracking_checked_at = input.trackingCheckedAt;
+      }
 
       const optimistic = toJobEstimate({
         id: newClientId(),
@@ -873,12 +893,54 @@ export function createEstimateRepository(): EstimateRepository {
         other_cost: 0,
         total_cost: 0,
         deposit_amount: null,
+        materials_onsite: false,
+        tracking_number: null,
+        tracking_status: null,
+        tracking_checked_at: null,
         created_at: occurredAt,
         ...patch,
         updated_at: occurredAt,
       } as never);
       const { data } = await writeThrough('job_estimate.upsert', { jobId, input }, occurredAt, optimistic);
       return data;
+    },
+
+    async trackShipment(
+      trackingNumber: string,
+    ): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }> {
+      const fail = (error: string) => ({ ok: false, status: null, delivered: false, error });
+      try {
+        const client: {
+          functions: {
+            invoke(fn: string, opts: { body: Record<string, unknown> }): Promise<{ data: unknown; error: { message: string } | null }>;
+          };
+        } = supabase;
+        const result = await client.functions.invoke('ups-track', { body: { trackingNumber } });
+        if (result.error) {
+          return fail(result.error.message || 'ups-lookup-failed');
+        }
+        const d = result.data as Record<string, unknown> | null | undefined;
+        if (!d || typeof d !== 'object') {
+          return fail('ups-lookup-failed');
+        }
+        const ok = d.ok === true;
+        const out: { ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string } = {
+          ok,
+          status: typeof d.status === 'string' ? d.status : null,
+          delivered: d.delivered === true,
+        };
+        if (typeof d.deliveredAt === 'string') {
+          out.deliveredAt = d.deliveredAt;
+        }
+        if (typeof d.error === 'string') {
+          out.error = d.error;
+        } else if (!ok) {
+          out.error = 'ups-lookup-failed';
+        }
+        return out;
+      } catch (e) {
+        return fail(e instanceof Error && e.message ? e.message : 'ups-lookup-failed');
+      }
     },
 
     async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {

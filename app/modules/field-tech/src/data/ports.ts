@@ -772,6 +772,10 @@ export interface JobEstimate {
   updatedAt: string;
   createdBy: string | null;
   updatedBy: string | null;
+  materialsOnsite: boolean;
+  trackingNumber: string | null;
+  trackingStatus: string | null;
+  trackingCheckedAt: string | null;
 }
 
 export interface JobEstimateInput {
@@ -789,6 +793,10 @@ export interface JobEstimateInput {
   depositAmount?: number | null;
   customerNotes?: string | null;
   internalNotes?: string | null;
+  materialsOnsite?: boolean;
+  trackingNumber?: string | null;
+  trackingStatus?: string | null;
+  trackingCheckedAt?: string | null;
 }
 
 export interface JobEstimateLineItem {
@@ -820,6 +828,8 @@ export interface EstimateRepository {
   updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem>;
   removeLineItem(lineItemId: string): Promise<void>;
   issueShareLink(jobId: string): Promise<{ token: string; url: string }>;
+  /** Calls the ups-track edge function. */
+  trackShipment(trackingNumber: string): Promise<{ ok: boolean; status: string | null; delivered: boolean; deliveredAt?: string | null; error?: string }>;
 }
 
 export interface TimeEntryRow {
