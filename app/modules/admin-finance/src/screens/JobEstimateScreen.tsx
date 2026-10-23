@@ -25,6 +25,7 @@ import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-
 import * as Clipboard from 'expo-clipboard';
 import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import { PayrollButton } from '@jobcore/ui';
+import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
 import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
@@ -73,14 +74,11 @@ export interface JobEstimateScreenProps {
   techSlot?: ReactNode;
 }
 
-export type EstimateTab = 'tasks' | 'contingency' | 'manual' | 'priceSheet' | 'lineItem' | 'finePrint';
+export type EstimateTab = 'tasks' | 'contingency' | 'finePrint';
 
 export const ESTIMATE_TABS: { id: EstimateTab; label: string }[] = [
-  { id: 'tasks', label: 'Build from Tasks' },
-  { id: 'contingency', label: 'Contingency' },
-  { id: 'manual', label: 'Manual' },
-  { id: 'priceSheet', label: 'Price Sheet' },
-  { id: 'lineItem', label: 'Line Item' },
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'contingency', label: 'Contingencies' },
   { id: 'finePrint', label: 'Fine Print' },
 ];
 
@@ -138,6 +136,21 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const { job, onBack, embedded } = props;
   const editable = props.editable ?? true;
   const estimates = props.estimates ?? getModulePorts().estimates;
+
+  // Prem-investigation red flags, loaded once per job; load errors are ignored.
+  const [redFlags, setRedFlags] = useState<{ marginal: boolean; undocumented: boolean; substandard: boolean; notes: string | null } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    getModulePorts().investigations.getForJob(job.id).then((inv) => {
+      if (cancelled || !inv) return;
+      setRedFlags({ marginal: inv.redFlagMarginalEquipment, undocumented: inv.redFlagUndocumentedSystem, substandard: inv.redFlagSubstandardStart, notes: inv.redFlagNotes });
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [job.id]);
+  const redFlagLabels: string[] = [];
+  if (redFlags?.marginal) redFlagLabels.push('marginal or failing equipment');
+  if (redFlags?.undocumented) redFlagLabels.push('complicated undocumented existing system');
+  if (redFlags?.substandard) redFlagLabels.push('substandard starting point (needs up to code)');
 
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
@@ -231,17 +244,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     setUnitCostInput(row.rate != null ? String(row.rate) : '');
   }
 
-  const [addMode, setAddMode] = useState<'manual' | 'priceSheet'>('manual');
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
   const [rates, setRates] = useState<PriceSheetRate[]>([]);
-  const [ratesError, setRatesError] = useState<string | null>(null);
-  const [selectedRateId, setSelectedRateId] = useState<string | null>(null);
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null);
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
-  const [rateQuantityInput, setRateQuantityInput] = useState('1');
 
   useEffect(() => {
-    if (addMode !== 'priceSheet' || !props.priceSheets) {
+    if (!props.priceSheets) {
       return;
     }
     let cancelled = false;
@@ -250,16 +259,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       .then((sheet) => {
         if (!cancelled) setActiveSheetId(sheet ? sheet.id : null);
       })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const message = error instanceof Error ? error.message : 'Could not load the active price sheet.';
-          setRatesError(message);
-        }
+      .catch(() => {
+        // active price sheet load failure is non-fatal here
       });
     return () => {
       cancelled = true;
     };
-  }, [addMode, props.priceSheets, job.organizationId]);
+  }, [props.priceSheets, job.organizationId]);
 
   useEffect(() => {
     if (!props.priceSheetRates || !activeSheetId) {
@@ -273,15 +279,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         if (cancelled) return;
         if (result.ok) {
           setRates(result.value);
-        } else {
-          setRatesError(result.reason);
         }
       })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const message = error instanceof Error ? error.message : 'Could not load rates.';
-          setRatesError(message);
-        }
+      .catch(() => {
+        // rate load failure is non-fatal here
       });
     return () => {
       cancelled = true;
@@ -300,65 +301,15 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         if (cancelled) return;
         if (result.ok) {
           setAreaAdjustments(result.value);
-        } else {
-          setRatesError(result.reason);
         }
       })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          const message = error instanceof Error ? error.message : 'Could not load area adjustments.';
-          setRatesError(message);
-        }
+      .catch(() => {
+        // area adjustment load failure is non-fatal here
       });
     return () => {
       cancelled = true;
     };
   }, [props.priceSheetAreaAdjustments, activeSheetId, selectedAreaId]);
-
-  const selectedRate = rates.find((r) => r.id === selectedRateId) ?? null;
-  const priceSheetUnitCost = selectedRate
-    ? areaAdjustments
-        .filter((adjustment) => adjustment.serviceAreaId === selectedAreaId)
-        .reduce((value, adjustment) => applyDollarAdjustment(value, adjustment), selectedRate.amount / 100)
-    : 0;
-
-  async function handlePriceSheetQuickAdd(): Promise<void> {
-    if (!selectedRate) {
-      setActionState({ kind: 'failed', message: 'Pick a rate.' });
-      return;
-    }
-    const quantity = Number(rateQuantityInput);
-    if (Number.isNaN(quantity) || quantity <= 0) {
-      setActionState({ kind: 'failed', message: 'Quantity must be a positive number.' });
-      return;
-    }
-    const unitCost = priceSheetUnitCost;
-    const draft: JobEstimateLineItemDraft = {
-      kind: 'labor',
-      description: `${selectedRate.serviceId} — ${selectedRate.attachTiming}`,
-      quantity,
-      unitCost,
-      lineTotal: quantity * unitCost,
-    };
-    const linkedIds = new Set(lineItems.map((i) => i.jobPlanTaskId).filter((v): v is string => !!v));
-    const planMatch = planTasks.find(
-      (t) => !linkedIds.has(t.id) && !!t.serviceTaskId && t.serviceTaskId === selectedRate.serviceId,
-    );
-    if (planMatch) draft.jobPlanTaskId = planMatch.id;
-    setActionState({ kind: 'working' });
-    try {
-      if (!estimate) await persist({ status: 'draft' });
-      const added = await estimates.addLineItem(job.id, draft);
-      setLineItems((prev) => [...prev, added]);
-      setSelectedRateId(null);
-      setRateQuantityInput('1');
-      setAddMode('manual');
-      setActionState({ kind: 'done', message: 'Line item added.' });
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Could not add the line item.';
-      setActionState({ kind: 'failed', message });
-    }
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -369,9 +320,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         setEstimate(loadedEstimate);
         setTrackingInput(loadedEstimate?.trackingNumber ?? '');
         setFinePrintInput(loadedEstimate?.finePrint ?? '');
-        setContingencyRows(
-          (loadedEstimate?.contingencies ?? []).map((c) => ({ description: c.description, priceText: c.price === null ? '' : String(c.price) })),
-        );
         setLineItems(loadedLineItems);
         setLoadState({ kind: 'loaded' });
       })
@@ -390,7 +338,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const [trackingInput, setTrackingInput] = useState('');
   const [trackingMsg, setTrackingMsg] = useState<string | null>(null);
   const [checkingUps, setCheckingUps] = useState(false);
-  const [contingencyRows, setContingencyRows] = useState<ContingencyDraft[]>([]);
   const [finePrintInput, setFinePrintInput] = useState('');
   const [templateText, setTemplateText] = useState<string | null>(null);
   const [editingTemplate, setEditingTemplate] = useState(false);
@@ -487,25 +434,43 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       });
   }
 
-  function saveContingencies(rows: ContingencyDraft[]): void {
-    const next = toContingencies(rows);
+  // The list renders from the saved estimate; the form below it adds or edits one row at a time.
+  // contingencyForm.index: null = adding a new row, number = editing that saved row.
+  const [contingencyForm, setContingencyForm] = useState<{ index: number | null; description: string; priceText: string }>({ index: null, description: '', priceText: '' });
+
+  function resetContingencyForm(): void {
+    setContingencyForm({ index: null, description: '', priceText: '' });
+  }
+
+  function editContingency(index: number): void {
+    const c = (estimate?.contingencies ?? [])[index];
+    if (!c) return;
+    setContingencyForm({ index, description: c.description, priceText: c.price === null ? '' : String(c.price) });
+  }
+
+  function saveContingencyForm(): void {
     const current = estimate?.contingencies ?? [];
-    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    const [built] = toContingencies([{ description: contingencyForm.description, priceText: contingencyForm.priceText }]);
+    if (!built) return;
+    const idx = contingencyForm.index;
+    const next =
+      idx !== null && current[idx]
+        ? current.map((c, i) => (i === idx ? { ...built, applies: c.applies } : c))
+        : [...current, { ...built, applies: true }];
     void persist({ contingencies: next });
+    resetContingencyForm();
   }
 
-  function addContingency(): void {
-    setContingencyRows((prev) => [...prev, { description: '', priceText: '' }]);
-  }
-
-  function updateContingency(index: number, patch: Partial<ContingencyDraft>): void {
-    setContingencyRows((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  function toggleContingencyApplies(index: number, applies: boolean): void {
+    const current = estimate?.contingencies ?? [];
+    void persist({ contingencies: current.map((c, i) => (i === index ? { ...c, applies } : c)) });
   }
 
   function removeContingency(index: number): void {
-    const next = contingencyRows.filter((_, i) => i !== index);
-    setContingencyRows(next);
-    saveContingencies(next);
+    const current = estimate?.contingencies ?? [];
+    void persist({ contingencies: current.filter((_, i) => i !== index) });
+    if (contingencyForm.index === index) resetContingencyForm();
+    else if (contingencyForm.index !== null && contingencyForm.index > index) setContingencyForm((f) => ({ ...f, index: (f.index ?? 1) - 1 }));
   }
 
   useEffect(() => {
@@ -608,13 +573,32 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     }
   }
 
+  // Display-only: stored area first, else ZIP match on the address. Never persisted.
+  const resolvedServiceArea =
+    (props.serviceAreas ?? []).find((a) => a.id === job.service_area_id) ??
+    matchServiceAreaByZip(props.serviceAreas ?? [], extractZip(job.address), job.address);
+
   async function handleBuildFromTasks(): Promise<void> {
+    let buildAdjustments: PriceSheetAreaAdjustment[] = [];
+    if (resolvedServiceArea && props.priceSheets && props.priceSheetAreaAdjustments) {
+      try {
+        const sheet = await props.priceSheets.getActive(job.organizationId);
+        if (sheet) {
+          const adjResult = await props.priceSheetAreaAdjustments.list(sheet.id, resolvedServiceArea.id);
+          if (adjResult.ok) buildAdjustments = adjResult.value;
+        }
+      } catch {
+        buildAdjustments = [];
+      }
+    }
     const linked = new Set(lineItems.map((i) => i.jobPlanTaskId).filter((v): v is string => !!v));
     const priceSheetTasks = visibleTasks.filter((t) => !!t.serviceTaskId && !linked.has(t.id));
     const miscTasks = visibleTasks.filter((t) => !t.serviceTaskId && !linked.has(t.id));
     const hasLegacyMiscFold = lineItems.some((i) => i.description.startsWith('Hourly — billed by clock'));
     const drafts: JobEstimateLineItemDraft[] = priceSheetTasks.map((t) => {
-      const unitCost = t.rate ?? 0;
+      const unitCost = buildAdjustments
+        .filter((adjustment) => adjustment.serviceAreaId === resolvedServiceArea?.id)
+        .reduce((value, adjustment) => applyDollarAdjustment(value, adjustment), t.rate ?? 0);
       const base = taskToLineDraft(t);
       return {
         ...base,
@@ -888,7 +872,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       activeTab,
       onTabChange: (key: string) => {
         setActiveTab(key as EstimateTab);
-        if (key === 'manual' || key === 'priceSheet') setAddMode(key);
       },
     });
     return () => {
@@ -925,7 +908,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         activeId={activeTab}
         onChange={(key) => {
           setActiveTab(key as EstimateTab);
-          if (key === 'manual' || key === 'priceSheet') setAddMode(key);
         }}
         rightSlot={
           <View style={styles.totalColumn}>
@@ -1080,6 +1062,11 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             </>
           )}
           {job.description ? <ListItem title={ESTIMATE_LABELS.description} subtitle={job.description} /> : null}
+          <Text style={styles.note} testID="estimate-service-area">
+            {resolvedServiceArea
+              ? `Service area: ${resolvedServiceArea.name} (auto from address)`
+              : 'Not matched - standard pricing'}
+          </Text>
           {visibleTasks.length > 0 ? (
             <View testID="estimate-task-list">
               <Text style={styles.heading}>Tasks</Text>
@@ -1109,63 +1096,79 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         {activeTab === 'contingency' ? (
         <Card style={styles.card}>
           <Text style={styles.heading}>{ESTIMATE_LABELS.contingencies}</Text>
-          <Text style={styles.note}>Possible extras. They are not included in the total.</Text>
-          {editable ? (
-            <>
-              {contingencyRows.map((row, index) => (
-                <View key={index} style={styles.editRow}>
-                  <TextField
-                    label="Description"
-                    value={row.description}
-                    onChangeText={(text) => updateContingency(index, { description: text })}
-                    onBlur={() => saveContingencies(contingencyRows)}
-                    disabled={busy}
-                    style={styles.field}
-                  />
-                  <TextField
-                    label="Price (optional)"
-                    value={row.priceText}
-                    onChangeText={(text) => updateContingency(index, { priceText: text })}
-                    onBlur={() => saveContingencies(contingencyRows)}
-                    placeholder="0.00"
-                    disabled={busy}
-                    style={styles.field}
-                  />
-                  <Button
-                    label="Remove"
-                    size="sm"
-                    onPress={() => removeContingency(index)}
-                    disabled={busy}
-                    style={styles.action}
-                  />
-                </View>
-              ))}
-              <Button
-                label="Add contingency"
-                size="sm"
-                onPress={addContingency}
-                disabled={busy}
-                style={styles.action}
-              />
-            </>
-          ) : (estimate?.contingencies ?? []).length === 0 ? (
+          <Text style={styles.note}>Possible extras. Only rows with Applies on are included in the total.</Text>
+          {(estimate?.contingencies ?? []).length === 0 ? (
             <Text style={styles.note}>None.</Text>
           ) : (
             (estimate?.contingencies ?? []).map((c, index) => (
-              <ListItem
-                key={index}
-                title={c.description}
-                subtitle={c.price !== null ? formatMoney(c.price) : 'No price'}
-              />
+              <View key={index} style={styles.editRow}>
+                <ListItem
+                  title={c.description}
+                  subtitle={c.price !== null ? formatMoney(c.price) : 'No price'}
+                />
+                <Checkbox
+                  label="Applies"
+                  variant="check"
+                  checked={c.applies === true}
+                  disabled={!editable || busy}
+                  onChange={(next) => toggleContingencyApplies(index, next)}
+                />
+                {editable ? (
+                  <>
+                    <Button label="Edit" size="sm" onPress={() => editContingency(index)} disabled={busy} style={styles.action} />
+                    <Button label="Delete" size="sm" onPress={() => removeContingency(index)} disabled={busy} style={styles.action} />
+                  </>
+                ) : null}
+              </View>
             ))
           )}
+          {editable ? (
+            <>
+              <TextField
+                label="Description"
+                value={contingencyForm.description}
+                onChangeText={(text) => setContingencyForm((f) => ({ ...f, description: text }))}
+                disabled={busy}
+                style={styles.field}
+              />
+              <TextField
+                label="Price (optional)"
+                value={contingencyForm.priceText}
+                onChangeText={(text) => setContingencyForm((f) => ({ ...f, priceText: text }))}
+                placeholder="0.00"
+                disabled={busy}
+                style={styles.field}
+              />
+              <Button
+                label={contingencyForm.index === null ? 'Add contingency' : 'Save'}
+                size="sm"
+                onPress={saveContingencyForm}
+                disabled={busy || contingencyForm.description.trim() === ''}
+                style={styles.action}
+              />
+              {contingencyForm.index !== null ? (
+                <Button label="Cancel" size="sm" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
+              ) : (
+                <Button label="Add another" size="sm" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
+              )}
+            </>
+          ) : null}
         </Card>
         ) : null}
 
-        {activeTab === 'manual' || activeTab === 'priceSheet' || activeTab === 'lineItem' ? (
+        {activeTab === 'tasks' && redFlagLabels.length > 0 ? (
+          <Card style={styles.card}>
+            <Text style={styles.note} testID="estimate-red-flag-banner">
+              {`Prem investigation flagged: ${redFlagLabels.join(', ')}. Consider adding Contingencies.`}
+            </Text>
+            {(redFlags?.notes ?? '').trim() !== '' ? <Text style={styles.note}>{redFlags?.notes}</Text> : null}
+          </Card>
+        ) : null}
+
+        {activeTab === 'tasks' ? (
         <Card style={styles.card}>
           <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.lineItems}</Text>
-          {activeTab === 'lineItem' ? (
+          {activeTab === 'tasks' ? (
           <>
           {lineItems.length === 0 ? (
             <EmptyState title="No line items" message="Add a line item below." />
@@ -1280,75 +1283,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </>
           ) : null}
 
-          {activeTab !== 'lineItem' && editable ? (
+          {editable ? (
           <>
 
-          {activeTab === 'priceSheet' && !(props.priceSheets && props.priceSheetRates) ? (
-            <EmptyState title="No price sheet available" message="No price sheet is connected to this screen." />
-          ) : addMode === 'priceSheet' && props.priceSheets && props.priceSheetRates ? (
-            <>
-              {ratesError ? <ErrorState message={ratesError} /> : null}
-
-              {props.serviceAreas && props.serviceAreas.length > 0 && props.priceSheetAreaAdjustments ? (
-                <>
-                  <Text style={styles.label}>Service Area (optional)</Text>
-                  <View style={styles.action}>
-                    {props.serviceAreas.map((area) => (
-                      <Button
-                        key={area.id}
-                        label={area.name}
-                        variant={selectedAreaId === area.id ? 'primary' : 'outline'}
-                        size="sm"
-                        onPress={() => setSelectedAreaId(selectedAreaId === area.id ? null : area.id)}
-                        style={styles.action}
-                      />
-                    ))}
-                  </View>
-                </>
-              ) : null}
-
-              <Text style={styles.label}>Rate</Text>
-              {rates.length > 0 ? (
-                <View style={styles.action}>
-                  {rates.map((rate) => (
-                    <Button
-                      key={rate.id}
-                      label={`${rate.serviceId} — ${rate.attachTiming}`}
-                      variant={selectedRateId === rate.id ? 'primary' : 'outline'}
-                      size="sm"
-                      onPress={() => setSelectedRateId(rate.id)}
-                      style={styles.action}
-                    />
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.note}>No rates available for the active price sheet.</Text>
-              )}
-
-              <TextField
-                label="Quantity"
-                value={rateQuantityInput}
-                onChangeText={setRateQuantityInput}
-                placeholder="1"
-                disabled={busy}
-                style={styles.field}
-              />
-
-              {selectedRate ? (
-                <Text style={styles.note}>Unit cost: {formatCurrency(priceSheetUnitCost)}</Text>
-              ) : null}
-
-              <Button
-                label={busy ? 'Adding...' : 'Add Line Item'}
-                size="sm"
-                onPress={() => {
-                  void handlePriceSheetQuickAdd();
-                }}
-                disabled={busy || !selectedRateId}
-                style={styles.action}
-              />
-            </>
-          ) : (
             <>
               {assemblyCatalog.length > 0 ? (
                 <Select
@@ -1423,7 +1360,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 style={styles.action}
               />
             </>
-          )}
           </>
           ) : null}
         </Card>
@@ -1431,7 +1367,32 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
         {activeTab === 'finePrint' ? (
         <Card style={styles.card}>
-          <Text style={styles.heading}>{ESTIMATE_LABELS.finePrint}</Text>
+          <View style={styles.finePrintHeader}>
+            <Text style={styles.heading}>{ESTIMATE_LABELS.finePrint}</Text>
+            {editable && !editingTemplate ? (
+              <View style={styles.finePrintActions}>
+                <Button
+                  label="Edit Fine Print Template"
+                  size="sm"
+                  onPress={() => {
+                    setTemplateInput(templateText ?? '');
+                    setEditingTemplate(true);
+                  }}
+                  disabled={busy}
+                  style={styles.buttonFlex}
+                />
+                <Button
+                  label="Reset to default"
+                  size="sm"
+                  onPress={() => {
+                    void resetTemplate();
+                  }}
+                  disabled={busy}
+                  style={styles.buttonFlex}
+                />
+              </View>
+            ) : null}
+          </View>
           {editable ? (
             <>
               <TextField
@@ -1480,29 +1441,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     />
                   </View>
                 </>
-              ) : (
-                <>
-                <Button
-                  label="Edit Fine Print Template"
-                  size="sm"
-                  onPress={() => {
-                    setTemplateInput(templateText ?? '');
-                    setEditingTemplate(true);
-                  }}
-                  disabled={busy}
-                  style={styles.action}
-                />
-                <Button
-                  label="Reset to default"
-                  size="sm"
-                  onPress={() => {
-                    void resetTemplate();
-                  }}
-                  disabled={busy}
-                  style={styles.action}
-                />
-                </>
-              )}
+              ) : null}
             </>
           ) : (
             <Text style={styles.note}>{(estimate?.finePrint ?? '').trim() !== '' ? estimate?.finePrint : templateText ?? ''}</Text>
@@ -1510,13 +1449,18 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         </Card>
         ) : null}
 
+        {activeTab === 'tasks' && (
         <Card style={styles.card}>
           <Text style={styles.heading}>Payment Outlay</Text>
           <ListItem title="Materials" subtitle={formatCurrency(totals.materials)} />
           <ListItem title="Labor" subtitle={formatCurrency(totals.labor)} />
           <ListItem title="Other" subtitle={formatCurrency(totals.other)} />
-          <ListItem title="Total" subtitle={formatCurrency(totals.total)} />
+          {layoutTotals.contingencyTotal > 0 ? (
+            <ListItem title="Applied contingencies" subtitle={formatCurrency(layoutTotals.contingencyTotal)} />
+          ) : null}
+          <ListItem title="Total" subtitle={formatCurrency(layoutTotals.total)} />
         </Card>
+        )}
 
         {estimate?.pdfDelivery ? (
           <Button
@@ -1569,6 +1513,18 @@ const styles = StyleSheet.create({
   },
   buttonFlex: {
     flex: 1,
+  },
+  finePrintHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  finePrintActions: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   cellLabel: {
     color: colors.textMuted,

@@ -1263,6 +1263,8 @@ export type EstimateLineItemKind = 'material' | 'labor' | 'other';
 export interface EstimateContingency {
   description: string;
   price: number | null;
+  // true = row adds its price to the estimate total; absent/false = off (legacy rows).
+  applies?: boolean;
 }
 
 export interface JobEstimate {
@@ -1506,6 +1508,11 @@ export interface JobInvestigation {
   measurements: string | null;
   techInstructions: string | null;
   materialsArrived: boolean | null;
+  // Prem-technician red flags.
+  redFlagMarginalEquipment: boolean;
+  redFlagUndocumentedSystem: boolean;
+  redFlagSubstandardStart: boolean;
+  redFlagNotes: string | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;

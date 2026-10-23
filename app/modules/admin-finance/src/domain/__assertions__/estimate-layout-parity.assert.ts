@@ -66,12 +66,26 @@ test('lineItemTotal rounds to cents', () => {
   assert.equal(lineItemTotal({ quantity: 2, unitCost: 10.25 }), 20.5);
 });
 
-test('computeTotals never adds contingencies to total', () => {
-  const t = computeTotals(
-    [{ quantity: 2, unitCost: 10.25 }, { quantity: 1, unitCost: 5 }],
-    [{ description: 'a', price: 100 }, { description: 'b', price: null }],
-  );
-  assert.deepEqual(t, { subtotal: 25.5, contingencyTotal: 100, total: 25.5 });
+const totalsLines = [{ quantity: 2, unitCost: 10.25 }, { quantity: 1, unitCost: 5 }];
+
+test('computeTotals: an applied contingency adds to total', () => {
+  const t = computeTotals(totalsLines, [{ description: 'a', price: 100, applies: true }]);
+  assert.deepEqual(t, { subtotal: 25.5, contingencyTotal: 100, total: 125.5 });
+});
+
+test('computeTotals: an unapplied contingency adds nothing', () => {
+  const t = computeTotals(totalsLines, [{ description: 'a', price: 100, applies: false }]);
+  assert.deepEqual(t, { subtotal: 25.5, contingencyTotal: 0, total: 25.5 });
+});
+
+test('computeTotals: a legacy contingency with no applies field adds nothing', () => {
+  const t = computeTotals(totalsLines, [{ description: 'a', price: 100 }]);
+  assert.deepEqual(t, { subtotal: 25.5, contingencyTotal: 0, total: 25.5 });
+});
+
+test('computeTotals: an applied contingency with a null price adds 0', () => {
+  const t = computeTotals(totalsLines, [{ description: 'a', price: null, applies: true }]);
+  assert.deepEqual(t, { subtotal: 25.5, contingencyTotal: 0, total: 25.5 });
 });
 
 test('materialsOnsiteLabel', () => {

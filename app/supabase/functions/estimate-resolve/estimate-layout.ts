@@ -19,6 +19,8 @@ export interface EstimateLayoutLineItem {
 export interface ContingencyItem {
   description: string;
   price: number | null;
+  /** true = this row adds its price to the estimate total; absent/false = off (legacy rows). */
+  applies?: boolean;
 }
 
 /** Top-to-bottom section order of the estimate screen and PDF. */
@@ -52,9 +54,7 @@ export const ESTIMATE_LABELS = {
 
 /** Neutral placeholder boilerplate; not legal advice. */
 export const DEFAULT_FINE_PRINT_PLACEHOLDER =
-  'PLACEHOLDER - This estimate is a good-faith quote based on the information available today. ' +
-  'Final cost may change if the scope of work changes. ' +
-  'Replace this text with your own terms before sending.';
+  '[PLACEHOLDER - Fine Print wording not yet supplied. Replace it with your own text using Edit Fine Print Template. This is not legal advice.]';
 
 function roundCents(n: number): number {
   if (!isFinite(n)) return 0;
@@ -81,8 +81,8 @@ export function lineItemTotal(
 }
 
 /**
- * Totals for an estimate. total === subtotal; contingencies are summed only
- * into contingencyTotal and never into total.
+ * Totals for an estimate. Only contingencies with applies === true are summed
+ * into contingencyTotal, and total = subtotal + contingencyTotal.
  */
 export function computeTotals(
   lineItems: ReadonlyArray<{ quantity: number; unitCost: number }>,
@@ -95,11 +95,14 @@ export function computeTotals(
   }
   let cont = 0;
   for (let j = 0; j < contingencies.length; j++) {
-    const p = contingencies[j]?.price ?? null;
+    const c = contingencies[j];
+    if (!c || c.applies !== true) continue;
+    const p = c.price ?? null;
     if (p !== null && isFinite(p)) cont += p;
   }
   const subtotal = roundCents(sub);
-  return { subtotal, contingencyTotal: roundCents(cont), total: subtotal };
+  const contingencyTotal = roundCents(cont);
+  return { subtotal, contingencyTotal, total: roundCents(subtotal + contingencyTotal) };
 }
 
 export function materialsOnsiteLabel(b: boolean): 'Yes' | 'No' {

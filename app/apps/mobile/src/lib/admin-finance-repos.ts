@@ -2272,6 +2272,7 @@ function toJobEstimate(row: {
       ? (row.contingencies as Array<Record<string, unknown> | null>).map((c) => ({
           description: String(c?.description ?? ''),
           price: c?.price === null || c?.price === undefined ? null : Number(c.price),
+          applies: c?.applies === true,
         }))
       : [],
   };
@@ -2441,7 +2442,7 @@ export function createEstimateRepository(): EstimateRepository {
         patch.pdf_delivery = input.pdfDelivery;
       }
       if (input.contingencies !== undefined) {
-        patch.contingencies = input.contingencies;
+        patch.contingencies = input.contingencies.map((c) => ({ ...c, applies: c.applies === true }));
       }
 
       const optimistic = {
@@ -2683,6 +2684,10 @@ export interface JobInvestigation {
   measurements: string | null;
   techInstructions: string | null;
   materialsArrived: boolean | null;
+  redFlagMarginalEquipment: boolean;
+  redFlagUndocumentedSystem: boolean;
+  redFlagSubstandardStart: boolean;
+  redFlagNotes: string | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -2719,6 +2724,10 @@ function toJobInvestigation(row: {
   measurements: string | null;
   tech_instructions: string | null;
   materials_arrived: boolean | null;
+  red_flag_marginal_equipment?: boolean | null;
+  red_flag_undocumented_system?: boolean | null;
+  red_flag_substandard_start?: boolean | null;
+  red_flag_notes?: string | null;
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -2736,6 +2745,10 @@ function toJobInvestigation(row: {
     measurements: row.measurements ?? null,
     techInstructions: row.tech_instructions ?? null,
     materialsArrived: row.materials_arrived ?? null,
+    redFlagMarginalEquipment: row.red_flag_marginal_equipment === true,
+    redFlagUndocumentedSystem: row.red_flag_undocumented_system === true,
+    redFlagSubstandardStart: row.red_flag_substandard_start === true,
+    redFlagNotes: row.red_flag_notes ?? null,
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -19,6 +19,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   computeTotals,
+  DEFAULT_FINE_PRINT_PLACEHOLDER,
   ESTIMATE_LABELS,
   formatMoney,
   materialsOnsiteLabel,
@@ -278,14 +279,16 @@ async function fetchEstimatePageData(jobId: string): Promise<EstimatePageData | 
     finePrint:
       typeof estimate.fine_print === "string" && estimate.fine_print.trim() !== ""
         ? estimate.fine_print
-        : typeof settings?.fine_print_template === "string"
+        : typeof settings?.fine_print_template === "string" &&
+            settings.fine_print_template.trim() !== ""
           ? settings.fine_print_template
-          : "",
+          : DEFAULT_FINE_PRINT_PLACEHOLDER,
     pdfDelivery: estimate.pdf_delivery === true,
     contingencies: Array.isArray(estimate.contingencies)
       ? estimate.contingencies
           .filter((c: unknown) => c !== null && typeof c === "object")
-          .map((c: { description?: unknown; price?: unknown }) => ({
+          .map((c: { description?: unknown; price?: unknown; applies?: unknown }) => ({
+            applies: c.applies === true,
             description: typeof c.description === "string" ? c.description : "",
             price:
               c.price === null || c.price === undefined || !Number.isFinite(Number(c.price))
@@ -338,7 +341,7 @@ function renderEstimateHtml(data: EstimatePageData): string {
     .join("");
   const contingencySection = contingencyRows
     ? `<h2>${escapeHtml(ESTIMATE_LABELS.contingencies)}</h2>
-    <p class="muted">Possible extras - NOT included in the total.</p>
+    <p class="muted">Possible extras - only items marked as applying are included in the total.</p>
     <ul>${contingencyRows}</ul>`
     : "";
   const finePrintSection = data.finePrint.trim()
