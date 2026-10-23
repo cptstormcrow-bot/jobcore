@@ -59,7 +59,6 @@ import { JobTaskList } from '../../src/components/JobTaskList';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen, type EstimateChrome } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
-import { completionBlockedNotice } from '../../../../modules/field-tech/src/screens/completion-helpers';
 import { setModuleSession } from '@jobcore/admin-finance';
 import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import {
@@ -1074,7 +1073,7 @@ export default function JobDrilldownScreen() {
       case 'contact': setActiveStage('contact'); handleContact(); break;
       case 'startWork':
       case 'photos':
-      case 'completeWork': selectRegion('plan'); break;
+      case 'completeWork': void handleComplete(); break;
       case 'lead':
         if (stageExtras?.lead) router.push(`/m/admin-finance?leadId=${stageExtras.lead.id}` as never);
         break;
@@ -1112,8 +1111,6 @@ export default function JobDrilldownScreen() {
 
   const handleComplete = () => {
     if (!job) return;
-    const notice = completionBlockedNotice({ status: job.status, completedAt: job.completedAt });
-    if (notice) { setActionError(notice); return; }
     router.push({ pathname: '/job/complete/[jobId]', params: { jobId: job.id } } as never);
   };
 
