@@ -106,8 +106,9 @@ anything from <code>apps/mobile</code>. Tap-to-call uses a caller-supplied
 construction rule as every other screen in this module.</p>
 
 <h3 id="ch4-day-completion">Finishing Up: Completion</h3>
-<p>When the work is done, Marcus opens <strong>Completion</strong>
-(<code>screens/Completion.tsx</code>) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>.
+<p>When the work is done, Marcus taps <strong>Complete</strong> in the job menu on Job Detail
+(the job must be in progress), which opens <strong>Completion</strong>
+(<code>screens/Completion.tsx</code>, route <code>/job/complete/&lt;jobId&gt;</code>; same for admin and owner) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>.
 He checks off the completion checklist, captures at least one after-photo
 (<code>ports.photos.create</code>, kind <code>'after'</code>), and types quality notes —
 the submit button stays disabled until all three are satisfied. Ordering here is

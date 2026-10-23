@@ -1038,7 +1038,7 @@
   "key": "ft-Completion",
   "kind": "sub-view",
   "module": "field-tech",
-  "route": null,
+  "route": "/job/complete/[jobId]",
   "subView": null,
   "parentKey": "field-tech",
   "file": "modules/field-tech/src/screens/Completion.tsx",
@@ -1048,7 +1048,7 @@
    "admin",
    "tech"
   ],
-  "mounted": "exported-unmounted",
+  "mounted": true,
   "notes": ""
  },
  {

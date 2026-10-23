@@ -59,6 +59,7 @@ import { JobTaskList } from '../../src/components/JobTaskList';
 import { JobScheduleScreen } from '../../../../modules/admin-finance/src/screens/JobScheduleScreen';
 import { JobEstimateScreen, type EstimateChrome } from '../../../../modules/admin-finance/src/screens/JobEstimateScreen';
 import { JobInvestigationScreen } from '../../../../modules/field-tech/src/screens/JobInvestigationScreen';
+import { completionBlockedNotice } from '../../../../modules/field-tech/src/screens/completion-helpers';
 import { setModuleSession } from '@jobcore/admin-finance';
 import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import {
@@ -1108,21 +1109,11 @@ export default function JobDrilldownScreen() {
     }
   };
 
-  const handleComplete = async (): Promise<void> => {
-    if (!job || job.completedAt) return;
-    setBusyAction('complete');
-    setActionError(null);
-    try {
-      const updated = await createJobRepository().patchLifecycle(job.id, { completedAt: new Date().toISOString() });
-      setJob(updated);
-      await createJobRepository().updateStatus(job.id, 'completed');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Complete failed.';
-      setSaveError(message);
-      setActionError(message);
-    } finally {
-      setBusyAction(null);
-    }
+  const handleComplete = () => {
+    if (!job) return;
+    const notice = completionBlockedNotice({ status: job.status, completedAt: job.completedAt });
+    if (notice) { setActionError(notice); return; }
+    router.push({ pathname: '/job/complete/[jobId]', params: { jobId: job.id } } as never);
   };
 
   const handleToggleNeedsPrem = async (): Promise<void> => {

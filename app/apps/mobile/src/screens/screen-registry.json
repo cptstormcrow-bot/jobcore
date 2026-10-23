@@ -207,7 +207,7 @@
     "number": 24,
     "key": "ft-Completion",
     "title": "Completion",
-    "route": null,
+    "route": "/job/complete/[jobId]",
     "file": "modules/field-tech/src/screens/Completion.tsx",
     "createdAt": "2026-08-09T12:36:00-07:00"
   },

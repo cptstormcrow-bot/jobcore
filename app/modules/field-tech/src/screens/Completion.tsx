@@ -28,16 +28,17 @@
  * than importing anything from `apps/mobile`.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
-import { ScreenTitle, Button, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { newPhotoId } from '../lib/photo-id';
 import { transitionJob } from '../domain/transition';
+import { canSubmitCompletion } from './completion-helpers';
 import {
   recordAfterPhoto,
   recordQualityNotes,
@@ -61,6 +62,8 @@ export interface CompletionProps {
   job: Job;
   /** Called after the job has successfully transitioned to `completed`. */
   onDone: () => void;
+  /** Optional: persist the transitioned job (awaited before `onDone`). */
+  persistCompletion?: (job: Job) => Promise<void>;
 }
 
 /**
@@ -69,13 +72,14 @@ export interface CompletionProps {
  * and non-empty quality notes client-side before enabling submit — this is
  * a UX guard only; the real gate is the core `completed` precondition.
  */
-export function Completion({ job, onDone }: CompletionProps): JSX.Element {
+export function Completion({ job, onDone, persistCompletion }: CompletionProps): JSX.Element {
   const [checklistComplete, setChecklistComplete] = useState(false);
   const [afterPhotoCount, setAfterPhotoCount] = useState(0);
   const [qualityNotes, setQualityNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [workedMinutes, setWorkedMinutes] = useState<number | null>(null);
+  const notesSavedRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,14 +107,14 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
   }, [job.id]);
 
   const trimmedNotes = qualityNotes.trim();
-  const canSubmit =
-    checklistComplete && afterPhotoCount > 0 && trimmedNotes.length > 0 && !submitting;
+  const canSubmit = canSubmitCompletion({ checklistComplete, afterPhotoCount, notes: qualityNotes, submitting });
 
   /**
-   * Captures an after-photo. This screen only records the fact of capture
-   * against this module's ports/state — actual camera capture and storage
-   * upload wiring lives in the host app's capture flow, out of this
-   * screen's scope.
+   * Gate: `canSubmitCompletion`. Submit records the quality note, runs the
+   * state-machine transition, awaits optional `persistCompletion`, then
+   * calls `onDone`. After-photo capture only records the fact of capture
+   * against this module's ports/state — camera and storage upload wiring
+   * lives in the host app's capture flow, out of this screen's scope.
    */
   async function handleCaptureAfterPhoto(storagePath: string, extra: { id: string; localUri: string; ext: string }): Promise<void> {
     const session = getModuleSession();
@@ -164,20 +168,27 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
       // Quality notes MUST be written, and the sync probe MUST be updated,
       // before transitionJob runs — the core's `completed` precondition
       // reads ctx.hasQualityNotes(job) synchronously during the call below.
-      await ports.notes.create(job.organizationId, session.userId, {
-        jobId: job.id,
-        kind: 'quality_notes',
-        body: trimmedNotes,
-        occurredAt,
-      });
-      recordQualityNotes(job.id);
+      if (!notesSavedRef.current) {
+        await ports.notes.create(job.organizationId, session.userId, {
+          jobId: job.id,
+          kind: 'quality_notes',
+          body: trimmedNotes,
+          occurredAt,
+        });
+        recordQualityNotes(job.id);
+        notesSavedRef.current = true;
+      }
 
-      await transitionJob(job, 'completed', {
+      const transitioned = await transitionJob(job, 'completed', {
         hasAfterPhotos: (j) => readHasAfterPhotos(j),
         hasQualityNotes: (j) => readHasQualityNotes(j),
         role: session.role,
         now: () => new Date().toISOString(),
       });
+
+      if (persistCompletion) {
+        await persistCompletion(transitioned ?? job);
+      }
 
       onDone();
     } catch (e) {
@@ -201,7 +212,7 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
       />
 
       <View style={styles.section}>
-        <Button
+        <PayrollButton
           label="Capture after-photo"
           onPress={() => {
             void (async () => {
@@ -214,7 +225,6 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
             })();
           }}
           disabled={submitting}
-          style={styles.button}
         />
         <Text style={styles.body}>{afterPhotoCount} after-photo(s) recorded</Text>
       </View>
@@ -238,11 +248,10 @@ export function Completion({ job, onDone }: CompletionProps): JSX.Element {
         </Text>
       ) : null}
 
-      <Button
+      <PayrollButton
         label={submitting ? 'Completing…' : 'Complete job'}
         onPress={() => void handleSubmit()}
         disabled={!canSubmit}
-        style={styles.button}
       />
     </View>
   );

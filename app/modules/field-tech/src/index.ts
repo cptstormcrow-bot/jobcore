@@ -408,7 +408,7 @@ export const fieldTechModule: JobcoreModule = {
       id: 'complete-job',
       label: 'Complete',
       onInvoke: (job: Job) => {
-        router.push('/job/' + job.id + '?panel=completion');
+        router.push('/job/complete/' + job.id);
       },
     },
     {

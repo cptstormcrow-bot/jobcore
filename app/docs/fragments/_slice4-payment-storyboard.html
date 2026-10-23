@@ -17,8 +17,10 @@
   </p>
   <ol>
     <li>Tech finishes the job on the <strong>Completion</strong> screen
-      (<code>modules/field-tech/src/screens/Completion.tsx</code>) — after-photo + quality notes
-      required client-side, then <code>transitionJob(job, 'completed', ctx)</code> fires. Job is now
+      (<code>modules/field-tech/src/screens/Completion.tsx</code>), opened from the job menu's Complete
+      (job in progress; same for admin and owner) at <code>/job/complete/&lt;jobId&gt;</code> — checklist tick +
+      after-photo + quality notes required client-side, then
+      <code>transitionJob(job, 'completed', ctx)</code> fires and completion is persisted. Job is now
       <a href="#state-completed">state-completed</a>. <span class="jc-badge jc-badge-built-live">🟢 Built &amp; Live</span></li>
     <li>Customer is handed off via a signed, expiring, single-job-scoped QR token
       (<code>issue_handoff_token</code> RPC, <code>modules/payment-review/src/domain/handoff.ts</code>)
