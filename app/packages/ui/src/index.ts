@@ -50,6 +50,20 @@ export {
   stepEnd,
 } from './time-range';
 export type { TimeRange } from './time-range';
+export { SchedulePicker } from './SchedulePicker';
+export type { SchedulePickerProps } from './SchedulePicker';
+export { ScheduleItemPopup } from './ScheduleItemPopup';
+export type { ScheduleItemDetail, ScheduleItemPopupProps } from './ScheduleItemPopup';
+export {
+  formatSlotHeading,
+  slotsEqual,
+  slotDurationMinutes,
+  deriveEndIso,
+  isoToLocalParts,
+  localPartsToIso,
+  dateKeyOfIso,
+} from './schedule-picker';
+export type { SchedulePickerItem } from './schedule-picker';
 export * from './StepperPicker';
 export * from './telephony';
 export * from './walkthrough/walkthrough-content';

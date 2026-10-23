@@ -94,7 +94,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'job_reschedule',
     kind: 'action',
     title: 'Reschedule the Job',
-    body: 'This job needs a new date. Pick a new time and, if needed, a new tech, then the job can move forward again.',
+    body: 'This job needs a new date. Pick a new date and time on the calendar, then tap "Save" and answer "Yes" to "Reschedule?". Days with other jobs or blackouts are marked, and tapping a day lists them.',
     whereScreen: 'Job Detail',
     whereHint: 'On Job Detail, open the job menu and choose "Schedule" to set a new date and time.',
     context: { screens: ['job-detail'], jobStatuses: ['needs_reschedule'] },

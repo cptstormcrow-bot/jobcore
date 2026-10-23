@@ -314,6 +314,7 @@ export default function JobDrilldownScreen() {
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
 
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
+  const [showBlackouts, setShowBlackouts] = useState(true);
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
   const isTechEstimate = role === 'tech';
   const [estimateChrome, setEstimateChrome] = useState<EstimateChrome | null>(null);
@@ -1347,9 +1348,16 @@ export default function JobDrilldownScreen() {
         customer={customer}
         totalLaborSeconds={currentJob.totalLaborSeconds ?? 0}
         jobDetailMenuItems={isAdmin ? adminJobMenuItems : isTech ? techJobMenuItems : jobDetailMenuItems}
-        optionsItems={region === 'estimate' ? estimateChrome?.optionsItems : undefined}
+        optionsItems={
+          region === 'estimate'
+            ? estimateChrome?.optionsItems
+            : region === 'schedule'
+              ? [{ id: 'schedule-blackout-dates', label: 'Blackout Dates?', kind: 'toggle' as const, checked: showBlackouts, onToggle: setShowBlackouts }]
+              : undefined
+        }
         showBack={isAdmin || isTech ? false : undefined}
         compactMenu={isAdmin || isTech || undefined}
+        onSchedulePress={() => selectRegion('schedule')}
         fitMenu={isAdmin || isTech || undefined}
         gearItems={isAdmin || isTech ? [
           { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
@@ -1366,7 +1374,6 @@ export default function JobDrilldownScreen() {
             nextStep={stageResults.nextStep ?? ''}
             onStagePress={handleStagePress}
             disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
-        onSchedulePress={() => selectRegion('schedule')}
             testID="job-progress-bar"
           />
         ) : null}
@@ -1379,7 +1386,7 @@ export default function JobDrilldownScreen() {
       ) : null}
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
-          hideTechFields={region === 'estimate'}
+          hideTechFields={region === 'estimate' || region === 'schedule'}
           job={currentJob}
           statusError={actionError}
           serviceAreaName={currentServiceAreaName}
@@ -1496,8 +1503,8 @@ export default function JobDrilldownScreen() {
             onSaved={(updated) => setJob(updated)}
             totalTaskMinutes={totalTaskMinutes}
             standardMinutes={standardMinutes}
-            assignedTechName={serviceTechName ?? undefined}
-            premTechName={premTechName ?? undefined}
+            showBlackouts={showBlackouts}
+            onOpenJob={(id) => router.push(`/job/${id}?panel=plan` as never)}
           />
         )}
         {(region === 'details' || region === 'plan') && (
