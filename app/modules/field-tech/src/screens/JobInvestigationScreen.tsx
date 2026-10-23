@@ -97,6 +97,10 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
   const [stateAssessment, setStateAssessment] = React.useState('');
   const [techInstructions, setTechInstructions] = React.useState('');
   const [materialsArrived, setMaterialsArrived] = React.useState(false);
+  const [redFlagMarginalEquipment, setRedFlagMarginalEquipment] = React.useState(false);
+  const [redFlagUndocumentedSystem, setRedFlagUndocumentedSystem] = React.useState(false);
+  const [redFlagSubstandardStart, setRedFlagSubstandardStart] = React.useState(false);
+  const [redFlagNotes, setRedFlagNotes] = React.useState('');
   const [photos, setPhotos] = React.useState<JobPlanningPhoto[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
@@ -120,6 +124,10 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       setStateAssessment(loadedInvestigation?.stateAssessment ?? '');
       setTechInstructions(loadedInvestigation?.techInstructions ?? '');
       setMaterialsArrived(loadedInvestigation?.materialsArrived === true);
+      setRedFlagMarginalEquipment(loadedInvestigation?.redFlagMarginalEquipment === true);
+      setRedFlagUndocumentedSystem(loadedInvestigation?.redFlagUndocumentedSystem === true);
+      setRedFlagSubstandardStart(loadedInvestigation?.redFlagSubstandardStart === true);
+      setRedFlagNotes(loadedInvestigation?.redFlagNotes ?? '');
       setPhotos(loadedPhotos);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load investigation.');
@@ -144,6 +152,10 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
           stateAssessment,
           techInstructions,
           materialsArrived,
+          redFlagMarginalEquipment,
+          redFlagUndocumentedSystem,
+          redFlagSubstandardStart,
+          redFlagNotes: redFlagNotes.trim() ? redFlagNotes : null,
           ...patch,
         });
         setInvestigation(updated);
@@ -154,7 +166,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
         setSaving(false);
       }
     },
-    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, materialsArrived, onSubmitted],
+    [jobId, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, materialsArrived, redFlagMarginalEquipment, redFlagUndocumentedSystem, redFlagSubstandardStart, redFlagNotes, onSubmitted],
   );
 
   const handleSaveDraft = React.useCallback(() => {
@@ -309,6 +321,38 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
       <View style={styles.section}>
         <FieldRow label="Instructions for tech *" value={techInstructions} onChangeText={setTechInstructions} />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Red flags</Text>
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setRedFlagMarginalEquipment((prev) => !prev)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: redFlagMarginalEquipment }}
+        >
+          <Text style={styles.checkboxBox}>{redFlagMarginalEquipment ? '☑' : '☐'}</Text>
+          <Text style={styles.value}>Marginal or failing equipment</Text>
+        </Pressable>
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setRedFlagUndocumentedSystem((prev) => !prev)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: redFlagUndocumentedSystem }}
+        >
+          <Text style={styles.checkboxBox}>{redFlagUndocumentedSystem ? '☑' : '☐'}</Text>
+          <Text style={styles.value}>Complicated (but undocumented) existing system</Text>
+        </Pressable>
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => setRedFlagSubstandardStart((prev) => !prev)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: redFlagSubstandardStart }}
+        >
+          <Text style={styles.checkboxBox}>{redFlagSubstandardStart ? '☑' : '☐'}</Text>
+          <Text style={styles.value}>Substandard starting point (needs up to code)</Text>
+        </Pressable>
+        <FieldRow label="Red flag notes" value={redFlagNotes} onChangeText={setRedFlagNotes} />
       </View>
 
       <View style={styles.section}>

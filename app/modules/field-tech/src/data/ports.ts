@@ -888,6 +888,11 @@ export interface JobInvestigation {
   measurements: string | null;
   techInstructions: string | null;
   materialsArrived: boolean | null;
+  // The assigned Prem technician captures these red flags on the Prem Investigation report.
+  redFlagMarginalEquipment: boolean; // marginal or failing equipment
+  redFlagUndocumentedSystem: boolean; // complicated but undocumented existing system
+  redFlagSubstandardStart: boolean; // substandard starting point; needs to be brought up to code
+  redFlagNotes: string | null; // free-text notes
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -903,6 +908,10 @@ export interface JobInvestigationInput {
   measurements?: string | null;
   techInstructions?: string | null;
   materialsArrived?: boolean | null;
+  redFlagMarginalEquipment?: boolean;
+  redFlagUndocumentedSystem?: boolean;
+  redFlagSubstandardStart?: boolean;
+  redFlagNotes?: string | null;
   submittedAt?: string | null;
 }
 

@@ -156,6 +156,10 @@ export interface JobInvestigationUpsertPayload {
     techInstructions?: string | null;
     materialsArrived?: boolean | null;
     submittedAt?: string | null;
+    redFlagMarginalEquipment?: boolean;
+    redFlagUndocumentedSystem?: boolean;
+    redFlagSubstandardStart?: boolean;
+    redFlagNotes?: string | null;
   };
 }
 export interface JobEstimateUpsertPayload {
@@ -423,6 +427,16 @@ const jobInvestigationUpsert: OpHandler<JobInvestigationUpsertPayload> = async (
       tech_instructions: patch.techInstructions ?? null,
       materials_arrived: patch.materialsArrived ?? null,
       submitted_at: patch.submittedAt ?? null,
+      ...(patch.redFlagMarginalEquipment !== undefined && {
+        red_flag_marginal_equipment: patch.redFlagMarginalEquipment,
+      }),
+      ...(patch.redFlagUndocumentedSystem !== undefined && {
+        red_flag_undocumented_system: patch.redFlagUndocumentedSystem,
+      }),
+      ...(patch.redFlagSubstandardStart !== undefined && {
+        red_flag_substandard_start: patch.redFlagSubstandardStart,
+      }),
+      ...(patch.redFlagNotes !== undefined && { red_flag_notes: patch.redFlagNotes }),
       updated_at: p.occurredAt,
     },
     { onConflict: 'job_id' },

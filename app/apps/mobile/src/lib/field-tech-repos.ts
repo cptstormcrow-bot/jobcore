@@ -975,6 +975,10 @@ export interface JobInvestigation {
   measurements: string | null;
   techInstructions: string | null;
   materialsArrived: boolean | null;
+  redFlagMarginalEquipment: boolean;
+  redFlagUndocumentedSystem: boolean;
+  redFlagSubstandardStart: boolean;
+  redFlagNotes: string | null;
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -993,6 +997,10 @@ function toJobInvestigation(row: {
   measurements: string | null;
   tech_instructions: string | null;
   materials_arrived: boolean | null;
+  red_flag_marginal_equipment?: boolean | null;
+  red_flag_undocumented_system?: boolean | null;
+  red_flag_substandard_start?: boolean | null;
+  red_flag_notes?: string | null;
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -1010,6 +1018,10 @@ function toJobInvestigation(row: {
     measurements: row.measurements,
     techInstructions: row.tech_instructions,
     materialsArrived: row.materials_arrived,
+    redFlagMarginalEquipment: row.red_flag_marginal_equipment === true,
+    redFlagUndocumentedSystem: row.red_flag_undocumented_system === true,
+    redFlagSubstandardStart: row.red_flag_substandard_start === true,
+    redFlagNotes: row.red_flag_notes ?? null,
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -1093,6 +1105,10 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
         measurements: patch.measurements ?? null,
         tech_instructions: patch.techInstructions ?? null,
         materials_arrived: patch.materialsArrived ?? null,
+        red_flag_marginal_equipment: patch.redFlagMarginalEquipment ?? false,
+        red_flag_undocumented_system: patch.redFlagUndocumentedSystem ?? false,
+        red_flag_substandard_start: patch.redFlagSubstandardStart ?? false,
+        red_flag_notes: patch.redFlagNotes ?? null,
         submitted_at: patch.submittedAt ?? null,
         created_at: occurredAt,
         updated_at: occurredAt,
