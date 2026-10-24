@@ -45,7 +45,7 @@ import type {
   JobCardExtrasRepository,
 } from '../data/ports';
 import type { PriceSheetRepo, PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
-import type { CalculationResult, PriceSheetRate, CompensationPolicy } from '../money/types';
+import type { CalculationResult, PriceSheetRate, CompensationPolicy, CompensationPolicyInput } from '../money/types';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import type { TimeOffAdminRepo } from '../data/time-off-repo';
@@ -137,6 +137,7 @@ export interface ModulePorts {
   closeOutPhotos: CloseOutPhotoRepository;
   compensationPolicy: {
     getForOrganization(organizationId: string): Promise<CompensationPolicy | null>;
+    upsertForOrganization(organizationId: string, input: CompensationPolicyInput): Promise<CompensationPolicy>;
   };
   closeOutNotes: JobNoteRepository;
   closeOutContactLog: JobContactLogRepository;

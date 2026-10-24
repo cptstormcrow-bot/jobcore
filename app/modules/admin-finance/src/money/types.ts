@@ -43,6 +43,20 @@ export interface CompensationPolicy {
   organizationId: string;
   commissionBasisPercent: number;
   hourlyRate: Money;
+  /** Flat part of the Prem bonus (Prem bonus = flat + percent of job total). */
+  premBonusFlat?: Money;
+  /** Percent part of the Prem bonus, plain 0-100 number like commissionBasisPercent. */
+  premBonusPercent?: number;
+  /** Default flat Dev amount. */
+  devDefaultFlat?: Money;
+}
+
+export interface CompensationPolicyInput {
+  hourlyRate: Money;
+  commissionBasisPercent: number;
+  premBonusFlat: Money;
+  premBonusPercent: number;
+  devDefaultFlat: Money;
 }
 
 /**

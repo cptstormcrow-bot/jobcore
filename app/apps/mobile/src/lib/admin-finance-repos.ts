@@ -104,7 +104,7 @@ import { getModuleSession } from '../../../../modules/admin-finance/src/lib/modu
 import { buildJobTimeline } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { JobTimelineItem, JobTimelineSources } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { JobTimelineRepository } from '../../../../modules/admin-finance/src/data/ports';
-import type { PriceSheet, CompensationPolicy } from '../../../../modules/admin-finance/src/money/types';
+import type { PriceSheet, CompensationPolicy, CompensationPolicyInput } from '../../../../modules/admin-finance/src/money/types';
 import type { PayPeriod } from '../../../../modules/admin-finance/src/money/rollup';
 import type { Lead, LeadRow } from '../../../../modules/admin-finance/src/domain/lead';
 import type { LeadPatch } from '../../../../modules/admin-finance/src/data/ports';
@@ -1360,33 +1360,79 @@ export function createCloseOutPhotosRepository(): CloseOutPhotoRepository {
 
 export function createCompensationPolicyRepository(): {
   getForOrganization(organizationId: string): Promise<CompensationPolicy | null>;
+  upsertForOrganization(organizationId: string, input: CompensationPolicyInput): Promise<CompensationPolicy>;
 } {
+  const columns =
+    'id, organization_id, commission_basis_percent, hourly_rate_cents, prem_bonus_flat_cents, prem_bonus_percent, dev_default_flat_cents';
+  type PolicyRow = {
+    id: string;
+    organization_id: string;
+    commission_basis_percent: number | null;
+    hourly_rate_cents: number | null;
+    prem_bonus_flat_cents: number | null;
+    prem_bonus_percent: number | null;
+    dev_default_flat_cents: number | null;
+  };
+  const mapRow = (row: PolicyRow): CompensationPolicy => ({
+    id: row.id,
+    organizationId: row.organization_id,
+    commissionBasisPercent: Number(row.commission_basis_percent ?? 0),
+    hourlyRate: Number(row.hourly_rate_cents ?? 0) as CompensationPolicy['hourlyRate'],
+    premBonusFlat: Number(row.prem_bonus_flat_cents ?? 0) as CompensationPolicy['hourlyRate'],
+    premBonusPercent: Number(row.prem_bonus_percent ?? 0),
+    devDefaultFlat: Number(row.dev_default_flat_cents ?? 0) as CompensationPolicy['hourlyRate'],
+  });
   return {
     async getForOrganization(organizationId: string): Promise<CompensationPolicy | null> {
       const { data, error } = await supabase
         .from('compensation_policies')
-        .select('id, organization_id, commission_basis_percent, hourly_rate_cents')
+        .select(columns)
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(1);
       if (error) {
         throw new Error(`getForOrganization failed: ${error.message}`);
       }
-      const row = (data as Array<{
-        id: string;
-        organization_id: string;
-        commission_basis_percent: number | null;
-        hourly_rate_cents: number | null;
-      }> | null)?.[0];
+      const row = (data as unknown as PolicyRow[] | null)?.[0];
       if (!row) {
         return null;
       }
-      return {
-        id: row.id,
-        organizationId: row.organization_id,
-        commissionBasisPercent: Number(row.commission_basis_percent ?? 0),
-        hourlyRate: Number(row.hourly_rate_cents ?? 0) as CompensationPolicy['hourlyRate'],
+      return mapRow(row);
+    },
+    async upsertForOrganization(organizationId: string, input: CompensationPolicyInput): Promise<CompensationPolicy> {
+      const { data: existing, error: findError } = await supabase
+        .from('compensation_policies')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (findError) {
+        throw new Error(`upsertForOrganization failed: ${findError.message}`);
+      }
+      const existingId = (existing as unknown as Array<{ id: string }> | null)?.[0]?.id;
+      const values = {
+        hourly_rate_cents: input.hourlyRate as number,
+        commission_basis_percent: input.commissionBasisPercent,
+        prem_bonus_flat_cents: input.premBonusFlat as number,
+        prem_bonus_percent: input.premBonusPercent,
+        dev_default_flat_cents: input.devDefaultFlat as number,
       };
+      const { data, error } = existingId
+        ? await supabase
+            .from('compensation_policies')
+            .update({ ...values, updated_at: new Date().toISOString() })
+            .eq('id', existingId)
+            .select(columns)
+            .single()
+        : await supabase
+            .from('compensation_policies')
+            .insert({ organization_id: organizationId, name: 'Default pay policy', ...values })
+            .select(columns)
+            .single();
+      if (error) {
+        throw new Error(`upsertForOrganization failed: ${error.message}`);
+      }
+      return mapRow(data as unknown as PolicyRow);
     },
   };
 }
