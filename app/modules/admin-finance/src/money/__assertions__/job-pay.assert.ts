@@ -100,6 +100,22 @@ test('service and null role are none', () => {
   assert.equal(l.note, 'No pay role set');
 });
 
+test('null role with a personal rate is paid hourly like a Dev tech', () => {
+  const l = one(tech({ techRole: null, hourlyRateCents: 2500, hoursWorked: 9.2 }));
+  assert.equal(l.basis, 'hourly');
+  assert.equal(l.amountCents, Math.round(9.2 * 2500));
+  assert.equal(l.note, '9.20 h x $25.00/h');
+  const flat = one(tech({ techRole: null, devPayMode: 'flat', flatRateCents: 9000, hourlyRateCents: 2500, hoursWorked: 2 }));
+  assert.equal(flat.basis, 'hourly');
+  assert.equal(flat.amountCents, 5000);
+});
+
+test('null role without a positive rate is none; service with a rate is none', () => {
+  assert.equal(one(tech({ techRole: null, hourlyRateCents: 0, hoursWorked: 2 })).basis, 'none');
+  assert.equal(one(tech({ techRole: null, hourlyRateCents: null, hoursWorked: 2 })).basis, 'none');
+  assert.equal(one(tech({ techRole: 'service', hourlyRateCents: 2500, hoursWorked: 2 })).basis, 'none');
+});
+
 test('rounding and non-finite hours', () => {
   const l = one(tech({ hourlyRateCents: 3333, hoursWorked: 1.005 }));
   assert.equal(l.amountCents, Math.round(1.005 * 3333));

@@ -1026,10 +1026,10 @@ export default function JobDrilldownScreen() {
       approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected, sticky: true },
       schedule: done(!!job.scheduledStart, 'schedule'),
       assign: done(!!(job.assignedTechId), 'assign'),
-      contact: done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt),
-      startWork: done(!!job.inProgressAt, 'startWork', job.inProgressAt),
+      contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },
+      startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
       photos: done((stageExtras?.photoCount ?? 0) >= 1, 'photos'),
-      completeWork: done(!!job.completedAt, 'completeWork', job.completedAt),
+      completeWork: { ...done(!!job.completedAt, 'completeWork', job.completedAt), sticky: true },
       paid: done(job.status === 'paid' || closed, 'paid'),
       closeout: done(closed, 'closeout'),
       history: done(closed, 'history'),
@@ -1381,7 +1381,7 @@ export default function JobDrilldownScreen() {
           <JobProgressBar
             stages={stageList}
             states={stageResults.states}
-            nextStep={region === 'payment' ? '' : (stageResults.nextStep ?? '')}
+            nextStep={region === 'payment' || region === 'closeout' ? '' : (stageResults.nextStep ?? '')}
             onStagePress={handleStagePress}
             disabledKeys={stageExtras?.lead ? [] : ['lead']}
             testID="job-progress-bar"
@@ -1396,7 +1396,7 @@ export default function JobDrilldownScreen() {
       ) : null}
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
-          hideTechFields={region === 'estimate' || region === 'schedule'}
+          hideTechFields={region === 'estimate' || region === 'schedule' || region === 'closeout'}
           hidePremTech={region === 'payment'}
           hideServiceArea={region === 'payment'}
           job={currentJob}

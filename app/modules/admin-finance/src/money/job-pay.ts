@@ -85,8 +85,15 @@ export function computeJobPayLines(input: {
       techRole: tech.techRole,
     };
 
-    if (tech.techRole === 'dev') {
-      if (tech.devPayMode === 'flat') {
+    // No role but a personal hourly rate: paid hourly like a Dev tech (pay mode ignored).
+    const roleless =
+      (tech.techRole === null || tech.techRole === undefined) &&
+      tech.hourlyRateCents !== null &&
+      tech.hourlyRateCents !== undefined &&
+      tech.hourlyRateCents > 0;
+
+    if (tech.techRole === 'dev' || roleless) {
+      if (!roleless && tech.devPayMode === 'flat') {
         const personal = tech.flatRateCents;
         const usedPolicy = personal === null || personal === undefined;
         const raw = usedPolicy ? policy.devDefaultFlatCents : personal;

@@ -131,7 +131,10 @@ All money is integer cents.
     `dev_default_flat_cents`. A Dev tech with no pay mode is treated as hourly.
   - Prem tech: `prem_bonus_flat_cents + round(prem_bonus_percent/100 x
     max(job total, 0))`.
-  - Service tech or no role: no pay line.
+  - Service tech: no pay line.
+  - No role but a personal hourly rate (> 0): paid hourly like a Dev tech
+    (pay mode ignored).
+  - No role and no rate: no pay line.
 - Screen #93 (`af-compensationPolicy`, `CompensationPolicyScreen.tsx`) edits
   the org policy (hourly rate, Dev flat default, Prem flat bonus, Prem percent
   bonus). It is reached from the "Open Compensation Policy" button on Close

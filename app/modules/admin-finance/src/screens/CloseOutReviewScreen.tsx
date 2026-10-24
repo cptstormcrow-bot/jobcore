@@ -39,7 +39,6 @@ import * as Clipboard from 'expo-clipboard';
 import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 import type { JobTimelineItem } from '../domain/job-timeline';
-import type { CustomerJobHistoryItem } from '../data/ports';
 
 /** One captured close-out photo. Caller owns storage/upload; this screen only displays and removes. */
 export interface CloseOutPhoto {
@@ -77,18 +76,14 @@ export interface CloseOutReviewScreenProps {
   onChangeNotes?: (notes: string) => void;
   /** Fired when the primary close action is pressed; disabled while blockers remain. */
   onCloseOut?: (job: Job) => void;
-  /** Fired when the customer-contact "Contact" button is pressed. */
-  onContact?: (jobId: string) => void;
   /** Total hours logged to the job. */
   hoursLogged?: number;
+  /** Payment summary line: paid = settled (amount paid), else balance still owed. Null/absent hides the line. */
+  payment?: { paid: boolean; amountCents: number } | null;
   /** Tech payouts for the job. */
   techPayouts?: { techName: string; amount: number; basis: PayoutBasis; note?: string }[];
   /** Contractor payouts for the job. */
   contractorPayouts?: { contractorName: string; amount: number; basis?: PayoutBasis; note?: string }[];
-  /** Itemized customer contacts (e.g. phone/email/alt-phone). */
-  customerContacts?: { label: string; value: string }[];
-  /** The customer's other jobs, newest first as supplied; read-only. */
-  jobHistory?: ReadonlyArray<CustomerJobHistoryItem>;
   /** Hosted inside the job page: no title, no flex root, no nested scroller. */
   embedded?: boolean;
   /** Opens the calendar from the title bar's schedule link; absent means the label is plain text. */
@@ -99,16 +94,13 @@ export interface CloseOutReviewScreenProps {
   renderPhotoExtra?: (photo: CloseOutPhoto) => ReactNode;
 }
 
-type CloseOutTab = 'hours' | 'payouts' | 'contacts' | 'photos' | 'notes' | 'trail' | 'closeout';
+type CloseOutTab = 'payouts' | 'photos' | 'notes' | 'trail';
 
 const CLOSE_OUT_TABS: Array<{ id: CloseOutTab; label: string }> = [
-  { id: 'hours', label: 'Hours' },
   { id: 'payouts', label: 'Payouts' },
-  { id: 'contacts', label: 'Contacts' },
   { id: 'photos', label: 'Photos' },
   { id: 'notes', label: 'Notes' },
   { id: 'trail', label: 'Trail' },
-  { id: 'closeout', label: 'Close out' },
 ];
 
 export function CloseOutReviewScreen({
@@ -120,18 +112,16 @@ export function CloseOutReviewScreen({
   onRemovePhoto,
   onChangeNotes,
   onCloseOut,
-  onContact,
   hoursLogged,
+  payment,
   techPayouts,
   contractorPayouts,
-  customerContacts,
-  jobHistory,
   embedded,
   onOpenCalendar,
   timeline,
   renderPhotoExtra,
 }: CloseOutReviewScreenProps) {
-  const [activeTab, setActiveTab] = useState<CloseOutTab>('hours');
+  const [activeTab, setActiveTab] = useState<CloseOutTab>('payouts');
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
 
   if (!job) {
@@ -148,7 +138,7 @@ export function CloseOutReviewScreen({
 
   return (
     <View style={embedded ? undefined : styles.screen}>
-      <ScreenTitle title="Close-Out #0018" />
+      {embedded ? null : <ScreenTitle title="Close-Out #0018" />}
       {embedded ? null : (
         <View style={styles.fixedTop}>
           <View style={styles.headerCard}>
@@ -181,13 +171,9 @@ export function CloseOutReviewScreen({
       )}
       <Body {...bodyProps}>
         {embedded ? (
-          <>
-            <Text style={styles.jobStatus}>{job.status.replace(/_/g, ' ')}</Text>
-            <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
-          </>
+          <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
         ) : null}
         <View style={styles.actionRow}>
-          <Button label="Contact" onPress={() => onContact?.(job.id)} variant="secondary" size="sm" />
           <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
           <Button
             label="Close out job"
@@ -196,16 +182,23 @@ export function CloseOutReviewScreen({
             size="sm"
           />
         </View>
-        {activeTab === 'hours' ? (
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Hours logged</Text>
-          {hoursLogged ? (
-            <Text style={styles.body}>{hoursLogged.toFixed(1)} hrs</Text>
-          ) : (
-            <Text style={styles.empty}>No hours logged.</Text>
-          )}
-        </Card>
+        {blockers.map((reason, index) => (
+          <Text key={index} style={styles.blocker}>
+            {reason}
+          </Text>
+        ))}
+        {embedded ? <ScreenTitle title="Close-Out #0018" /> : null}
+        <Text style={styles.body}>
+          {[job.jobNumber != null ? `Job #${job.jobNumber}` : null, job.description?.trim() || null]
+            .filter(Boolean)
+            .join(' ') || 'Job'}
+        </Text>
+        {payment ? (
+          <Text style={styles.body}>
+            {payment.paid ? 'Job Paid' : 'Job Unpaid'}: ${(payment.amountCents / 100).toFixed(2)}
+          </Text>
         ) : null}
+        <Text style={styles.body}>Hours Logged: {(hoursLogged ?? 0).toFixed(1)} hours</Text>
         {activeTab === 'payouts' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Payouts</Text>
@@ -236,35 +229,6 @@ export function CloseOutReviewScreen({
                   {payout.basis ? ` (${payoutBasisLabel(payout.basis)})` : ''}: ${payout.amount.toFixed(2)}
                 </Text>
                 {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
-              </View>
-            ))
-          )}
-        </Card>
-        ) : null}
-        {activeTab === 'contacts' ? (
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer contacts</Text>
-          {!customerContacts || customerContacts.length === 0 ? (
-            <Text style={styles.empty}>No contacts on file.</Text>
-          ) : (
-            customerContacts.map((contact, index) => (
-              <Text key={index} style={styles.body}>
-                {contact.label}: {contact.value}
-              </Text>
-            ))
-          )}
-          <Text style={styles.subTitle}>Job history</Text>
-          {!jobHistory || jobHistory.length === 0 ? (
-            <Text style={styles.empty}>No prior jobs on file.</Text>
-          ) : (
-            jobHistory.map((item) => (
-              <View key={item.jobId} style={styles.trailRow}>
-                <Text style={styles.body}>
-                  #{item.jobNumber} {item.title ?? 'Untitled'}
-                </Text>
-                <Text style={styles.trailMeta}>
-                  {item.status} · {item.createdAt.slice(0, 10)}
-                </Text>
               </View>
             ))
           )}
@@ -325,21 +289,6 @@ export function CloseOutReviewScreen({
             })
           )}
         </Card>
-        ) : null}
-        {activeTab === 'closeout' ? (
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Close out</Text>
-          {blockers.length === 0 ? (
-            <Text style={styles.ready}>Ready to advance.</Text>
-          ) : (
-            blockers.map((reason, index) => (
-              <Text key={index} style={styles.blocker}>
-                {reason}
-              </Text>
-            ))
-          )}
-        </Card>
-
         ) : null}
       </Body>
     </View>

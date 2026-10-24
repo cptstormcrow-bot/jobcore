@@ -149,6 +149,21 @@ test('sticky complete stage stays green despite a later upstream change', () => 
   assert.equal(stateOf(premLeadBumped(done), 'premAvailable'), 'yellow');
 });
 
+test('sticky contact/startWork/completeWork stay green after a later upstream change; non-sticky photos goes yellow', () => {
+  const done = { complete: true, completedAt: '2026-01-02T00:00:00Z' };
+  const i = inputs({
+    job: { complete: true, completedAt: '2026-01-01T00:00:00Z', changedAt: '2026-01-05T00:00:00Z' },
+    contact: { ...done, sticky: true },
+    startWork: { ...done, sticky: true },
+    photos: done,
+    completeWork: { ...done, sticky: true },
+  });
+  assert.equal(stateOf(i, 'contact'), 'green');
+  assert.equal(stateOf(i, 'startWork'), 'green');
+  assert.equal(stateOf(i, 'completeWork'), 'green');
+  assert.equal(stateOf(i, 'photos'), 'yellow');
+});
+
 test('sticky does not hide missingRequired or rescue a rejected stage', () => {
   const done = { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true };
   assert.equal(stateOf(premLeadBumped({ ...done, missingRequired: true }), 'premAvailable'), 'yellow');

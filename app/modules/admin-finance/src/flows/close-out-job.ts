@@ -1,8 +1,8 @@
 /**
- * Close-out flow — `completed -> paid` transition PLUS its unconditional
- * commission write (P3h.4a + P3h.4b).
+ * Close-out flow — the `completed -> paid` / `paid -> closed` transition PLUS
+ * its unconditional commission write (P3h.4a + P3h.4b).
  *
- * Scope: this flow drives the first close-out edge (`completed -> paid`,
+ * Scope: this flow drives the next close-out edge (`completed -> paid` or `paid -> closed`,
  * `domain/closeout.ts`'s `NEXT_CLOSE_OUT_STATUS` table) and then writes
  * exactly ONE `commissions` row for the job — additive on top of P3h.4a,
  * without changing this function's exported signature. The commission write
@@ -23,9 +23,9 @@
  * / lookup-table idioms), never a raw `status === '...'` comparison.
  */
 
-import type { Ctx, Job, JobStatus } from '@jobcore/core';
+import type { Ctx, Job } from '@jobcore/core';
 import { transitionJob } from '../domain/transition';
-import { awaitingCloseOut, closeOutBlockers } from '../domain/closeout';
+import { awaitingCloseOut, closeOutBlockers, nextCloseOutStatus } from '../domain/closeout';
 import { calculateCommission } from '../money/commission';
 import type { CommissionLine, CompensationPolicy, PriceSheetRate } from '../money/types';
 import type { CalendarEventRepository, CloseOutFailureRepository, CommissionRepository, JobRepository, PriceSheetRepository } from '../data/ports';
@@ -61,26 +61,16 @@ export type CloseOutJobResult =
   | { ok: false; reason: string };
 
 /**
- * The one starting status this flow drives — restated as a runtime `Set` so
- * eligibility is tested with `.has()` rather than a `status === '...'`
- * comparison (mirrors `domain/closeout.ts`'s `AWAITING_CLOSE_OUT_STATUSES`
- * idiom). `paid` is deliberately excluded: this flow only fires the
- * `completed -> paid` edge, never `paid -> closed`.
- */
-const READY_FOR_PAID_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>(['completed']);
-
-/**
- * Advances `job` from `completed` to `paid`, then writes exactly ONE
- * `commissions` row for it (P3h.4b) — unconditionally, never contingent on
- * any review, photo, or note check. Rejects before any write if `job` is not
- * currently awaiting close-out, if it is not at the `completed` starting
- * point this flow drives, or if `closeOutBlockers` reports a precondition
- * failure for its next close-out edge — all membership/lookup checks, never
- * a `status === '...'` comparison.
+ * Advances `job` along its next close-out edge (`nextCloseOutStatus`:
+ * `completed -> paid` or `paid -> closed`). Both edges write exactly ONE
+ * `commissions` row via `closeOutWrite` (idempotent server-side).
+ * Rejects before any write if `job` is not awaiting close-out, or if
+ * `closeOutBlockers` reports a precondition failure for its next edge.
  */
 export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<CloseOutJobResult> {
-  if (!awaitingCloseOut(job) || !READY_FOR_PAID_STATUSES.has(job.status)) {
-    const reason = `Job ${job.id} is not ready for the completed -> paid transition (status "${job.status}").`;
+  const target = nextCloseOutStatus(job);
+  if (!awaitingCloseOut(job) || target === null) {
+    const reason = `Job ${job.id} is not awaiting close-out (status "${job.status}").`;
     await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'not_ready', reason);
     return { ok: false, reason };
   }
@@ -111,9 +101,9 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
   }
 
   try {
-    const transitionedJob = await transitionJob(job, 'paid', deps.ctx);
+    const transitionedJob = await transitionJob(job, target, deps.ctx);
 
-    const paidJob = await deps.jobs.closeOutWrite(
+    const updatedJob = await deps.jobs.closeOutWrite(
       transitionedJob.id,
       job.status,
       commissionResult.value,
@@ -122,7 +112,7 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
 
     await deps.closeOutFailures?.resolve(job.id, 'resolved_retry', deps.closedByUserId);
 
-    return { ok: true, job: paidJob, commission: commissionResult.value };
+    return { ok: true, job: updatedJob, commission: commissionResult.value };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'write', reason);

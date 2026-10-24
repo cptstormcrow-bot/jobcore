@@ -1,5 +1,5 @@
 /**
- * Assertions for the close-out flow (`completed -> paid` transition plus its
+ * Assertions for the close-out flow (`completed -> paid` / `paid -> closed` plus its
  * unconditional commission write) and its retry wrapper.
  *
  * Runs under `node --experimental-strip-types --test` — zero new
@@ -202,6 +202,56 @@ test('closeOutJob: not-ready hard stop records recordFailure with stage "not_rea
   assert.equal(result.ok, false);
   assert.equal(closeOutFailures.failures.length, 1);
   assert.equal(closeOutFailures.failures[0]?.stage, 'not_ready');
+});
+
+test('closeOutJob: non-awaiting status is rejected with the not-awaiting reason', async () => {
+  const result = await closeOutJob(makeJob({ status: 'new' }), makeDeps());
+
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.equal(result.reason, 'Job job-1 is not awaiting close-out (status "new").');
+});
+
+test('closeOutJob: paid -> closed calls closeOutWrite with from-status paid and returns a commission', async () => {
+  let seenFrom: string | null = null;
+  let commissionWrites = 0;
+  const deps = makeDeps({
+    jobs: makeJobs({
+      async closeOutWrite(jobId, fromStatus) {
+        commissionWrites += 1;
+        seenFrom = fromStatus;
+        return makeJob({ id: jobId, status: 'closed' });
+      },
+    }),
+  });
+
+  const result = await closeOutJob(makeJob({ status: 'paid' }), deps);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.job.status, 'closed');
+  assert.equal(seenFrom, 'paid');
+  assert.equal(commissionWrites, 1);
+  assert.ok(result.commission);
+});
+
+test('closeOutJob: completed -> paid still passes the real from-status and targets paid', async () => {
+  let seenFrom: string | null = null;
+  const deps = makeDeps({
+    jobs: makeJobs({
+      async closeOutWrite(jobId, fromStatus) {
+        seenFrom = fromStatus;
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
+
+  const result = await closeOutJob(makeJob({ status: 'completed' }), deps);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.job.status, 'paid');
+  assert.equal(seenFrom, 'completed');
 });
 
 test('closeOutJob: blocked hard stop records recordFailure with stage "blocked"', async () => {

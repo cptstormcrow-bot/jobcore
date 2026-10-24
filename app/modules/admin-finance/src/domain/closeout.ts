@@ -55,6 +55,11 @@ const NEXT_CLOSE_OUT_STATUS: Partial<Record<JobStatus, JobStatus>> = {
   paid: 'closed',
 };
 
+/** The status `job` advances to at close-out, or null when it has no next edge. */
+export function nextCloseOutStatus(job: Pick<Job, 'status'>): JobStatus | null {
+  return NEXT_CLOSE_OUT_STATUS[job.status] ?? null;
+}
+
 /**
  * Reasons `job` cannot advance to its next close-out status right now,
  * asking `canTransition` directly (P3h.1a's sole sanctioned exception to the

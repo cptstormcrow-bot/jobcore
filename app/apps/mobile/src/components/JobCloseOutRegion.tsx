@@ -7,9 +7,9 @@ import { EmptyState, PayrollButton, colors, spacing } from '@jobcore/ui';
 import { CloseOutReviewScreen } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import type { CloseOutPhoto } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/closeout';
-import { settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
+import { settledTotalCents, invoiceTotalCents, balanceCents } from '../../../../modules/admin-finance/src/domain/payments';
+import { computeTotals } from '../../../../modules/admin-finance/src/domain/estimate-layout';
 import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
-import type { CustomerContact, CustomerJobHistoryItem } from '../../../../modules/admin-finance/src/data/ports';
 import { computeJobPayLines, centsToDollars } from '../../../../modules/admin-finance/src/money/job-pay';
 import type { JobPayTech } from '../../../../modules/admin-finance/src/money/job-pay';
 import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-out-job';
@@ -33,8 +33,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const router = useRouter();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
-  const [contacts, setContacts] = useState<CustomerContact[]>([]);
-  const [jobHistory, setJobHistory] = useState<CustomerJobHistoryItem[]>([]);
+  const [payment, setPayment] = useState<{ paid: boolean; amountCents: number } | null>(null);
   type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none'; note?: string };
   type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
   const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
@@ -43,41 +42,31 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const awaiting = awaitingCloseOut(job);
 
   useEffect(() => {
-    const customerId = job.customerId;
-    if (!customerId) {
-      setContacts([]);
-      setJobHistory([]);
-      return undefined;
-    }
     let cancelled = false;
-    ports.customers
-      .listContacts(customerId)
-      .then((rows) => {
-        if (!cancelled) {
-          setContacts(rows);
+    void (async () => {
+      try {
+        const [est, rows, items] = await Promise.all([
+          ports.estimates.getForJob(job.id),
+          ports.payments.listForJob(job.id),
+          ports.estimates.listLineItems(job.id),
+        ]);
+        if (cancelled) return;
+        if (!est) {
+          setPayment(null);
+          return;
         }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setContacts([]);
-        }
-      });
-    ports.customers
-      .listJobHistory(customerId)
-      .then((rows) => {
-        if (!cancelled) {
-          setJobHistory(rows);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setJobHistory([]);
-        }
-      });
+        const invoice = items.length > 0 ? Math.round(computeTotals(items, []).total * 100) : invoiceTotalCents(est);
+        const balance = balanceCents(invoice, rows);
+        const paid = (invoice > 0 && balance <= 0) || job.status === 'paid' || job.status === 'closed';
+        setPayment({ paid, amountCents: paid ? settledTotalCents(rows) : balance });
+      } catch {
+        if (!cancelled) setPayment(null);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [job.customerId, ports.customers]);
+  }, [job.id, job.status, ports.estimates, ports.payments]);
 
   useEffect(() => {
     let cancelled = false;
@@ -328,8 +317,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       hoursLogged={job.totalLaborSeconds > 0 ? job.totalLaborSeconds / 3600 : undefined}
       techPayouts={techPayouts}
       contractorPayouts={contractorPayouts}
-      customerContacts={contacts.map((c) => ({ label: c.label ?? c.kind, value: c.value }))}
-      jobHistory={jobHistory}
+      payment={payment}
       timeline={timeline}
     />
     </>
