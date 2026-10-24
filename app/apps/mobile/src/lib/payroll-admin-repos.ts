@@ -298,6 +298,7 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
         segments: Array.isArray(r.rate_segments) ? (r.rate_segments as wageEngine.RateSegment[]) : [],
         grossCents: r.hours_amount ?? 0,
         reimbursementCents: r.reimbursement_amount ?? 0,
+        ...((r.bonus_amount ?? 0) > 0 ? { bonusCents: r.bonus_amount as number } : {}),
         totalCents: r.total_amount ?? 0,
       }));
       const exp = wageEngine.buildCanonicalExport({

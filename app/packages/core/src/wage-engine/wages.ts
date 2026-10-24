@@ -72,6 +72,8 @@ export interface BuildRunLineInput {
   days: DayAllocation[];
   rateHistory: RateChange[];
   reimbursementCents?: number;
+  /** Posted per-job pay; omitted from the line when 0/absent. */
+  bonusCents?: number;
   fallbackRateCents?: number;
 }
 
@@ -79,6 +81,8 @@ export interface BuildRunLineInput {
 export function buildRunLine(input: BuildRunLineInput): RunLine {
   const reimbursementCents = input.reimbursementCents ?? 0;
   requireNonNegInt(reimbursementCents, 'reimbursementCents');
+  const bonusCents = input.bonusCents ?? 0;
+  requireNonNegInt(bonusCents, 'bonusCents');
   const segments = segmentsFromDays(input.days, input.rateHistory, input.fallbackRateCents);
   let regularMin = 0;
   let otMin = 0;
@@ -98,6 +102,7 @@ export function buildRunLine(input: BuildRunLineInput): RunLine {
     segments,
     grossCents,
     reimbursementCents,
-    totalCents: grossCents + reimbursementCents,
+    ...(bonusCents > 0 ? { bonusCents } : {}),
+    totalCents: grossCents + bonusCents + reimbursementCents,
   };
 }

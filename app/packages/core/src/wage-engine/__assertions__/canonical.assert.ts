@@ -172,3 +172,24 @@ test('canonicalTotals on fixture', () => {
     totalCents: 179083,
   });
 });
+
+test('bonusCents is carried, validated, totalled; absent leaves hash unchanged', () => {
+  const plain = fixture();
+  const hashPlain = buildCanonicalExport({ batchId: 'b', periodStart: '2026-10-01', periodEnd: '2026-10-15', lines: plain }).sourceHash;
+  const zero = plain.map((l) => ({ ...l, bonusCents: 0 }));
+  assert.equal(
+    buildCanonicalExport({ batchId: 'b', periodStart: '2026-10-01', periodEnd: '2026-10-15', lines: zero }).sourceHash,
+    hashPlain,
+  );
+  const lines = plain.map((l, i) => (i === 0 ? { ...l, bonusCents: 500, totalCents: l.totalCents + 500 } : l));
+  const exp = buildCanonicalExport({ batchId: 'b', periodStart: '2026-10-01', periodEnd: '2026-10-15', lines });
+  assert.equal(exp.lines.filter((l) => l.bonusCents === 500).length, 1);
+  assert.equal(canonicalTotals(exp).bonusCents, 500);
+  assert.equal(canonicalTotals(exp).totalCents, lines.reduce((s, l) => s + l.totalCents, 0));
+  assert.notEqual(exp.sourceHash, hashPlain);
+  const bad = plain.map((l, i) => (i === 0 ? { ...l, bonusCents: 500 } : l));
+  assert.throws(
+    () => buildCanonicalExport({ batchId: 'b', periodStart: '2026-10-01', periodEnd: '2026-10-15', lines: bad }),
+    RangeError,
+  );
+});

@@ -72,6 +72,7 @@ function toRunLine(r: Row, name: string): wageEngine.RunLine {
     segments: segs,
     grossCents: r.hours_amount ?? 0,
     reimbursementCents: r.reimbursement_amount ?? 0,
+    ...((r.bonus_amount ?? 0) > 0 ? { bonusCents: r.bonus_amount as number } : {}),
     totalCents: r.total_amount ?? 0,
   };
 }

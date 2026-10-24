@@ -20,6 +20,7 @@ export interface CanonicalTotals {
   dtMin: number;
   grossCents: number;
   reimbursementCents: number;
+  bonusCents: number;
   totalCents: number;
 }
 
@@ -53,6 +54,7 @@ function copyLine(l: RunLine): RunLine {
     })),
     grossCents: l.grossCents,
     reimbursementCents: l.reimbursementCents,
+    ...((l.bonusCents ?? 0) > 0 ? { bonusCents: l.bonusCents } : {}),
     totalCents: l.totalCents,
   };
 }
@@ -92,6 +94,8 @@ export function canonicalSourceHash(periodStart: IsoDate, periodEnd: IsoDate, li
       l.segments.map((s) => [s.hourlyRateCents, s.regularMin, s.otMin, s.dtMin]),
       l.grossCents,
       l.reimbursementCents,
+      // appended only when present so hashes of bonus-free runs are unchanged
+      ...((l.bonusCents ?? 0) > 0 ? [l.bonusCents] : []),
       l.totalCents,
     ]),
   ]);
@@ -108,6 +112,7 @@ function validateLine(l: RunLine): void {
   assertNonNegInt(l.dtMin, `${who} dtMin`);
   assertNonNegInt(l.grossCents, `${who} grossCents`);
   assertNonNegInt(l.reimbursementCents, `${who} reimbursementCents`);
+  assertNonNegInt(l.bonusCents ?? 0, `${who} bonusCents`);
   assertNonNegInt(l.totalCents, `${who} totalCents`);
   let reg = 0;
   let ot = 0;
@@ -121,9 +126,9 @@ function validateLine(l: RunLine): void {
     ot += s.otMin;
     dt += s.dtMin;
   });
-  if (l.totalCents !== l.grossCents + l.reimbursementCents) {
+  if (l.totalCents !== l.grossCents + (l.bonusCents ?? 0) + l.reimbursementCents) {
     throw new RangeError(
-      `${who} totalCents ${l.totalCents} != grossCents ${l.grossCents} + reimbursementCents ${l.reimbursementCents}`,
+      `${who} totalCents ${l.totalCents} != grossCents ${l.grossCents} + bonusCents ${l.bonusCents ?? 0} + reimbursementCents ${l.reimbursementCents}`,
     );
   }
   if (l.regularMin !== reg) throw new RangeError(`${who} regularMin ${l.regularMin} != segment sum ${reg}`);
@@ -177,13 +182,14 @@ export function formatHours(minutes: number): string {
 }
 
 export function canonicalTotals(exp: CanonicalPayrollExport): CanonicalTotals {
-  const t: CanonicalTotals = { regularMin: 0, otMin: 0, dtMin: 0, grossCents: 0, reimbursementCents: 0, totalCents: 0 };
+  const t: CanonicalTotals = { regularMin: 0, otMin: 0, dtMin: 0, grossCents: 0, reimbursementCents: 0, bonusCents: 0, totalCents: 0 };
   for (const l of exp.lines) {
     t.regularMin += l.regularMin;
     t.otMin += l.otMin;
     t.dtMin += l.dtMin;
     t.grossCents += l.grossCents;
     t.reimbursementCents += l.reimbursementCents;
+    t.bonusCents += l.bonusCents ?? 0;
     t.totalCents += l.totalCents;
   }
   return t;

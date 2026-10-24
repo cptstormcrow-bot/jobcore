@@ -34,9 +34,11 @@ function row(fields: string[]): string {
 }
 
 export function toGenericCsv(exp: CanonicalPayrollExport): string {
-  let out = row(HEADER);
+  // 'Job Pay' column exists only when some line carries job pay, so bonus-free output is unchanged.
+  const withBonus = exp.lines.some((l) => (l.bonusCents ?? 0) > 0);
+  let out = row(withBonus ? [...HEADER.slice(0, 8), 'Job Pay', ...HEADER.slice(8)] : HEADER);
   for (const l of exp.lines) {
-    out += row([
+    const f = [
       guardFormula(l.employeeName),
       guardFormula(l.userId),
       exp.periodStart,
@@ -47,10 +49,12 @@ export function toGenericCsv(exp: CanonicalPayrollExport): string {
       formatCents(l.grossCents),
       formatCents(l.reimbursementCents),
       formatCents(l.totalCents),
-    ]);
+    ];
+    if (withBonus) f.splice(8, 0, formatCents(l.bonusCents ?? 0));
+    out += row(f);
   }
   const t = canonicalTotals(exp);
-  out += row([
+  const tf = [
     'TOTAL',
     '',
     '',
@@ -61,6 +65,8 @@ export function toGenericCsv(exp: CanonicalPayrollExport): string {
     formatCents(t.grossCents),
     formatCents(t.reimbursementCents),
     formatCents(t.totalCents),
-  ]);
+  ];
+  if (withBonus) tf.splice(8, 0, formatCents(t.bonusCents));
+  out += row(tf);
   return out;
 }

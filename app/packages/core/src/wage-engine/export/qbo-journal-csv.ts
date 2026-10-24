@@ -30,9 +30,10 @@ export function toQboJournalCsv(exp: CanonicalPayrollExport, accounts: QbAccount
   const journals: string[][] = [];
   let n = 0;
   for (const l of exp.lines) {
-    if (l.grossCents + l.reimbursementCents !== l.totalCents) {
+    const bonus = l.bonusCents ?? 0;
+    if (l.grossCents + bonus + l.reimbursementCents !== l.totalCents) {
       throw new RangeError(
-        `line ${l.userId} grossCents ${l.grossCents} + reimbursementCents ${l.reimbursementCents} != totalCents ${l.totalCents}`,
+        `line ${l.userId} grossCents ${l.grossCents} + bonusCents ${bonus} + reimbursementCents ${l.reimbursementCents} != totalCents ${l.totalCents}`,
       );
     }
     n += 1;
@@ -43,6 +44,16 @@ export function toQboJournalCsv(exp: CanonicalPayrollExport, accounts: QbAccount
     const rows: string[] = [];
     const base = `${l.employeeName} payroll ${exp.periodStart} to ${exp.periodEnd}`;
     if (l.grossCents > 0) rows.push(row(accounts.wages_expense, base, formatCents(l.grossCents), ''));
+    if (bonus > 0) {
+      rows.push(
+        row(
+          accounts.wages_expense,
+          `${l.employeeName} job pay ${exp.periodStart} to ${exp.periodEnd}`,
+          formatCents(bonus),
+          '',
+        ),
+      );
+    }
     if (l.reimbursementCents > 0) {
       rows.push(
         row(

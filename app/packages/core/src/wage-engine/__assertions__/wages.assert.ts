@@ -126,3 +126,16 @@ test('buildRunLine: negative reimbursement throws', () => {
     RangeError,
   );
 });
+
+test('buildRunLine: bonusCents adds to total, gross stays wages only', () => {
+  const days = [day('2026-10-12', 480)];
+  const base = { userId: 'u1', employeeName: 'Pat', days, rateHistory: [], fallbackRateCents: 2500 };
+  const plain = buildRunLine({ ...base, reimbursementCents: 100 });
+  const withBonus = buildRunLine({ ...base, reimbursementCents: 100, bonusCents: 7500 });
+  assert.equal(withBonus.grossCents, plain.grossCents);
+  assert.equal(withBonus.bonusCents, 7500);
+  assert.equal(withBonus.totalCents, plain.grossCents + 7500 + 100);
+  assert.equal('bonusCents' in plain, false);
+  assert.equal(plain.totalCents, plain.grossCents + 100);
+  assert.throws(() => buildRunLine({ ...base, bonusCents: -1 }), RangeError);
+});

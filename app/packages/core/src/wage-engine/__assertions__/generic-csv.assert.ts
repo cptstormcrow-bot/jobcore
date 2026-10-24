@@ -74,3 +74,20 @@ test('money under 100 cents formats as 0.05', () => {
   const csv = toGenericCsv(make([line('u1', 'Alice', 0, 0, 5, 0)]));
   assert.equal(csv.split('\r\n')[1], 'Alice,u1,2026-10-01,2026-10-15,0.00,0.00,0.00,0.05,0.00,0.05');
 });
+
+test('job pay adds a Job Pay column only when some line has bonusCents; totals tie', () => {
+  const l: RunLine = { ...line('u1', 'Alice', 60, 0, 1000, 200), bonusCents: 500, totalCents: 1700 };
+  const csv = toGenericCsv(make([l]));
+  const r = csv.split('\r\n');
+  assert.equal(
+    r[0],
+    'Employee,User ID,Period Start,Period End,Regular Hours,OT Hours,DT Hours,Gross Wages,Job Pay,Reimbursements,Total',
+  );
+  assert.equal(r[1], 'Alice,u1,2026-10-01,2026-10-15,1.00,0.00,0.00,10.00,5.00,2.00,17.00');
+  assert.equal(r[2], 'TOTAL,,,,1.00,0.00,0.00,10.00,5.00,2.00,17.00');
+});
+
+test('zero bonusCents keeps the original header and rows', () => {
+  const csv = toGenericCsv(make([{ ...line('u1', 'Alice', 0, 0, 5, 0), bonusCents: 0 }]));
+  assert.equal(csv.split('\r\n')[0], HEADER);
+});

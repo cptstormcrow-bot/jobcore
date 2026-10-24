@@ -131,3 +131,25 @@ test('names with commas are quoted; formula guard applied', () => {
   assert.ok(f!.includes('"Smith, Bob payroll 2026-10-05 to 2026-10-11"'));
   assert.ok(f!.includes("'=cmd payroll"));
 });
+
+test('job pay (bonusCents) is a separate debit line and the journal balances to totalCents', () => {
+  const l: RunLine = { ...line('u1', 'Alice', 1000, 200), bonusCents: 500, totalCents: 1700 };
+  const [f] = toQboJournalCsv(exp([l]), accounts);
+  const rows = f!.split('\r\n').filter((r) => r !== '').slice(1);
+  assert.equal(rows.length, 4);
+  assert.ok(rows[1]!.includes('job pay'));
+  assert.ok(rows[1]!.endsWith(',5.00,'));
+  assert.ok(rows[3]!.endsWith(',,17.00'));
+  const debit = rows.reduce((s, r) => s + Math.round(Number(r.split(',').slice(-2)[0] || 0) * 100), 0);
+  assert.equal(debit, 1700);
+});
+
+test('absent or zero bonusCents leaves output unchanged', () => {
+  const base = line('u1', 'Alice', 1000, 200);
+  assert.deepEqual(toQboJournalCsv(exp([{ ...base, bonusCents: 0 }]), accounts), toQboJournalCsv(exp([base]), accounts));
+});
+
+test('totalCents that omits bonusCents is rejected', () => {
+  const l: RunLine = { ...line('u1', 'Alice', 1000, 0), bonusCents: 500 };
+  assert.throws(() => toQboJournalCsv(exp([l]), accounts), RangeError);
+});

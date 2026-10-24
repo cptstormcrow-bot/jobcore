@@ -89,6 +89,9 @@ export interface RunLine {
   grossCents: number;
   /** Approved reimbursements; payout_lines.reimbursement_amount. */
   reimbursementCents: number;
+  /** Posted per-job pay (Dev flat / Prem bonus); payout_lines.bonus_amount. Absent = 0. */
+  bonusCents?: number;
+  /** grossCents + bonusCents + reimbursementCents. */
   totalCents: number;
 }
 

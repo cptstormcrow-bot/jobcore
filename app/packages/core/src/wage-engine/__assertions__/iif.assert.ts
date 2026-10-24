@@ -127,6 +127,25 @@ test('empty export is headers only (TIMEACT too)', () => {
   assert.equal(toIifGeneralJournal(doc([]), accounts), HEAD.join('\r\n') + '\r\n');
 });
 
+test('job pay is its own wages debit and the entry balances to totalCents', () => {
+  const l = line({ grossCents: 1000, bonusCents: 500, reimbursementCents: 200, totalCents: 1700 });
+  const r = rows(toIifGeneralJournal(doc([l]), accounts)).filter((c) => c[0] === 'TRNS' || c[0] === 'SPL');
+  assert.equal(r.length, 4);
+  assert.equal(r[1]![5], 'Job pay Alice');
+  assert.equal(r[1]![4], '5.00');
+  const sum = r.reduce((s, c) => s + Math.round(Number(c[4]) * 100), 0);
+  assert.equal(sum, 0);
+  assert.equal(r[3]![4], '-17.00');
+});
+
+test('absent or zero bonusCents leaves the journal unchanged', () => {
+  const base = line({ grossCents: 1000, totalCents: 1000 });
+  assert.equal(
+    toIifGeneralJournal(doc([{ ...base, bonusCents: 0 }]), accounts),
+    toIifGeneralJournal(doc([base]), accounts),
+  );
+});
+
 test('CRLF endings only', () => {
   const l = line({ regularMin: 60, grossCents: 100, totalCents: 100 });
   for (const out of [toIifGeneralJournal(doc([l]), accounts), toIifTimeact(doc([l]))]) {

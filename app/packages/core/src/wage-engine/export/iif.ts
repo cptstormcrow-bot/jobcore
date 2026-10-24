@@ -39,20 +39,22 @@ export function toIifGeneralJournal(exp: CanonicalPayrollExport, accounts: QbAcc
   const date = qbDate(exp.periodEnd);
   for (const l of exp.lines) {
     if (l.totalCents <= 0) continue;
-    if (l.grossCents + l.reimbursementCents !== l.totalCents) {
+    const bonus = l.bonusCents ?? 0;
+    if (l.grossCents + bonus + l.reimbursementCents !== l.totalCents) {
       throw new RangeError(
-        `line ${l.userId} totalCents ${l.totalCents} != grossCents ${l.grossCents} + reimbursementCents ${l.reimbursementCents}`,
+        `line ${l.userId} totalCents ${l.totalCents} != grossCents ${l.grossCents} + bonusCents ${bonus} + reimbursementCents ${l.reimbursementCents}`,
       );
     }
     const memo = memoFor(l);
     const type = 'GENERAL JOURNAL';
-    const debits: { account: string; cents: number }[] = [];
+    const debits: { account: string; cents: number; memo?: string }[] = [];
     if (l.grossCents > 0) debits.push({ account: accounts.wages_expense, cents: l.grossCents });
+    if (bonus > 0) debits.push({ account: accounts.wages_expense, cents: bonus, memo: `Job pay ${l.employeeName}` });
     if (l.reimbursementCents > 0) {
       debits.push({ account: accounts.reimbursement_expense, cents: l.reimbursementCents });
     }
     debits.forEach((d, i) => {
-      out.push(row([i === 0 ? 'TRNS' : 'SPL', type, date, d.account, formatCents(d.cents), memo]));
+      out.push(row([i === 0 ? 'TRNS' : 'SPL', type, date, d.account, formatCents(d.cents), d.memo ?? memo]));
     });
     out.push(row(['SPL', type, date, accounts.payroll_payable, formatCents(-l.totalCents), memo]));
     out.push('ENDTRNS');
