@@ -111,7 +111,7 @@ must explicitly handle the failure case before touching pay data.
 
 ## Per-job pay at Close-Out (migration 0103)
 
-Migration `supabase/migrations/0103_pay_policy.sql` (applied live 2026-10-24).
+Migration `supabase/migrations/0103_pay_policy.sql` (applied live 2026-10-23).
 All money is integer cents.
 
 - `profiles` gained `worker_type` (`employee` | `contractor`, default
