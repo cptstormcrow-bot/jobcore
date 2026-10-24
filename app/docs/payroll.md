@@ -47,7 +47,7 @@ only approved entries feed payroll.
 
 The Close-Out Payouts tab and its `contractor_payouts` rows are separate from
 `payout_batches`/`payout_lines`. Employee Close-Out flat/prem lines post to
-`job_payout_lines` (0104, not yet applied live), and `create_payout_batch`
+`job_payout_lines` (0104, applied live 2026-10-24), and `create_payout_batch`
 folds each user's pending lines into `payout_lines.bonus_amount` (see
 `compensation.md`). Exports carry it as "Job pay": a separate wages-expense
 debit in IIF and QBO journal, and a "Job Pay" column in generic CSV when any

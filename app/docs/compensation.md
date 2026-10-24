@@ -148,7 +148,7 @@ All money is integer cents.
   `contractor_payouts` (status `pending`, one row per tech per job, online
   only; close-out is not undone if the write fails).
 - Migration 0104 (`supabase/migrations/0104_job_payout_lines.sql`, written and
-  committed but NOT yet applied live) adds table `job_payout_lines` (basis
+  applied live 2026-10-24) adds table `job_payout_lines` (basis
   `dev_flat` | `prem_bonus`; status `pending` | `included` | `void`; one live
   row per job per tech) and RPC `post_job_payout_lines`.
 - At close-out, employee Dev FLAT and Prem BONUS lines with amount > 0 are
