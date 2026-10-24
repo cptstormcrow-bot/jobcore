@@ -80,10 +80,12 @@ export default function CompleteJobRoute() {
     await repo.updateStatus(job.id, 'completed');
   };
 
-  // Reopen: clear completedAt and restart the live-labor clock from now (stored seconds are kept).
+  // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment.
+  // The first segment stays in job_time_segments, so total hours keep accumulating across visits.
   const reopenJob = async (job: Job): Promise<void> => {
     const repo = createJobRepository();
-    await repo.patchLifecycle(job.id, { completedAt: null, inProgressAt: new Date().toISOString() });
+    await repo.patchLifecycle(job.id, { completedAt: null, inProgressAt: null });
+    await repo.patchLifecycle(job.id, { inProgressAt: new Date().toISOString() });
     await repo.updateStatus(job.id, 'in_progress');
     onDone();
   };
