@@ -233,12 +233,40 @@ Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are applied live
 
 Limits:
 
-- Reports "Commission Totals" still reads the legacy `commissions` table, so
-  per-tech commissions do not appear there yet.
+- Reports "Commission Totals" now also counts per-tech commission lines (see
+  "Closed-job Close-Out view and related changes" below).
 - Superseded by 0107: the picker is Hourly or Commission. On Commission the
   Base Pay box is replaced by a percent box; the hourly rate (still used by
   payroll for timesheet hours) is edited by switching the picker to Hourly.
 - The policy default hourly rate is now $25.00 (live data).
+
+### Closed-job Close-Out view and related changes
+
+- Closed job Close-Out view: when a job's status is closed, the Close-out
+  region (screen #0018) shows the review read-only instead of "Close-out opens
+  once the job is completed." Payout rows come from what close-out actually
+  posted (`job_payout_lines`: Flat rate / Prem bonus / Commission), each with
+  "posted - next payroll run" (pending) or "included in payroll" (included).
+  Stored lines are shown as posted and never recomputed. Hourly technicians
+  have no line (they are paid through timesheets); with no lines the empty
+  message is "No payouts were posted for this job. Hourly technicians are paid
+  through timesheets." Contractor rows still come from `contractor_payouts`.
+  Legacy `commissions` rows are used only as a fallback when a closed job has
+  no lines. The Add photo and Close out job buttons, the blocker text and photo
+  Remove are hidden, and notes are read-only. Statuses before completed keep
+  "Close-out opens once the job is completed."
+- Reports > Commission Totals now sums the legacy `commissions` rows PLUS each
+  technician's commission lines from `job_payout_lines` (non-void), folded per
+  job so Job Count stays one per job. Known limit: a job holding both a legacy
+  `commissions` row and per-tech lines can count both (legacy rows are 0
+  today).
+- `contractor_payouts` has a natural key (`job_id`, `tech_id`). Migration
+  `0108_contractor_payouts_unique.sql` adds a unique constraint
+  `contractor_payouts_job_tech_uniq` (it refuses to apply if duplicates exist;
+  live has none). STATUS: 0108 is written but NOT applied to the live database
+  (it waits for Jeff's explicit go naming 0108). The app treats a duplicate-key
+  error (23505) on `createForJob` as success when every wanted technician
+  already has a row, so it behaves the same before and after 0108.
 
 ## What this document does not cover
 

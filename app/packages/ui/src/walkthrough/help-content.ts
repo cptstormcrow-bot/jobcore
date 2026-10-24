@@ -69,7 +69,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_reports',
     kind: 'info',
     title: 'Reports',
-    body: 'Totals for your jobs, including slot Hit Rate and Total Commission. Tap a line to see the jobs behind the number.',
+    body: 'Totals for your jobs, including slot Hit Rate and Total Commission. Total Commission now includes each technician\'s commission lines as well as any older commission records, counted once per job. Tap a line to see the jobs behind the number.',
     context: { screens: ['af-reports'] },
   },
   {
@@ -85,7 +85,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'job_closeout',
     kind: 'action',
     title: 'Close Out the Job',
-    body: 'The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history. The job still closes if the price sheet has no commission rate. Any commission lines show in the Payouts tab next to that tech\'s pay and go out with the next payroll run once the job is closed out.',
+    body: 'The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history. The job still closes if the price sheet has no commission rate. Any commission lines show in the Payouts tab next to that tech\'s pay and go out with the next payroll run once the job is closed out. On a closed job, the Close-Out page shows what was paid out, read-only: each technician\'s flat rate, Prem bonus or commission line, and whether it is waiting for the next payroll run or already included. Hourly technicians do not appear because they are paid from their timesheets. The "Close out job" and "Add photo" buttons are hidden once the job is closed.',
     whereScreen: 'Job Detail',
     whereHint: 'On Job Detail, open the job menu and choose "Close-out" (owner/admin only).',
     context: { screens: ['job-detail'], jobStatuses: ['paid'] },
