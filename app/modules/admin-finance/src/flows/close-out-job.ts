@@ -110,6 +110,15 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
       deps.closedByUserId,
     );
 
+    // The RPC must land the job on the status we asked for. A database still on
+    // the pre-0105 function leaves a `paid` job at `paid` and still reports
+    // success, so catch that here instead of showing a false "closed".
+    if (updatedJob.status !== target) {
+      throw new Error(
+        `the database left the job at "${updatedJob.status}" instead of "${target}" - apply migration 0105 (close_out_job_write)`,
+      );
+    }
+
     await deps.closeOutFailures?.resolve(job.id, 'resolved_retry', deps.closedByUserId);
 
     return { ok: true, job: updatedJob, commission: commissionResult.value };

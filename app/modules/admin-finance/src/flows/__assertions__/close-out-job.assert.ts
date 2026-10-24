@@ -254,6 +254,27 @@ test('closeOutJob: completed -> paid still passes the real from-status and targe
   assert.equal(seenFrom, 'completed');
 });
 
+test('closeOutJob: a close-out function that leaves a paid job at "paid" is reported as a failed write', async () => {
+  const closeOutFailures = makeCloseOutFailures();
+  const deps = makeDeps({
+    closeOutFailures,
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, _commission, _closedByUserId) {
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
+
+  const result = await closeOutJob(makeJob({ status: 'paid' }), deps);
+
+  assert.equal(result.ok, false);
+  if (result.ok) return;
+  assert.match(result.reason, /apply migration 0105/);
+  assert.equal(closeOutFailures.failures.length, 1);
+  assert.equal(closeOutFailures.failures[0]?.stage, 'write');
+  assert.equal(closeOutFailures.resolutions.length, 0);
+});
+
 test('closeOutJob: blocked hard stop records recordFailure with stage "blocked"', async () => {
   const closeOutFailures = makeCloseOutFailures();
   // payer === 'customer' with no hasPaymentRecord probe trips
