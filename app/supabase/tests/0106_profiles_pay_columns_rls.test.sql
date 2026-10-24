@@ -8,6 +8,7 @@
 -- authenticated` + `request.jwt.claims`. Everything rolls back at the end.
 -- Seed users: ...101 owner, ...102 admin, ...103 tech, ...104 tech (second),
 -- all org A (prefix 00000000-0000-4000-8000-000000000NNN).
+-- T8 requires 0110 and 0111 to be applied.
 
 begin;
 
@@ -221,18 +222,23 @@ begin
   end if;
 end $$;
 
--- T8 - INFORMATIONAL (never fails): can a tech read another tech's pay columns?
+-- T8 (reworded for 0111) - tech can NOT select a colleague pay column directly; reads go through public.employee_profiles_v. Before 0111 this select succeeded (the exposure).
 do $$
-declare n integer;
+declare caught boolean := false; x numeric;
 begin
   reset role;
   set local role authenticated;
   set local request.jwt.claims = '{"sub":"00000000-0000-4000-8000-000000000103","role":"authenticated"}';
-  select count(*) into n from (
-    select commission_percent from public.profiles
-     where id = '00000000-0000-4000-8000-000000000104'
-  ) s;
-  raise notice 'T8 INFO: tech can read another tech''s pay columns: % row(s) visible (profiles_select_own_org exposure, documented, NOT a fix)', n;
+  begin
+    select commission_percent into x from public.profiles
+     where id = '00000000-0000-4000-8000-000000000104';
+  exception when insufficient_privilege then
+    caught := true;
+  end;
+  if not caught then
+    raise exception 'T8 FAILED: tech read a colleague pay column from profiles (0111 not applied?)';
+  end if;
+  raise notice 'T8 ok';
 end $$;
 
 rollback;
