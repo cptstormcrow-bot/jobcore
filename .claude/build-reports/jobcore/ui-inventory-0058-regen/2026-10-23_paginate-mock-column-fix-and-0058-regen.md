@@ -113,4 +113,4 @@ Open Item 1: regenerate the UI Inventory v0.4.0 snapshot (Schedule #0058 and all
 
 Scratchpad files `capture-log*.txt`, `e4..e8-out/err.txt`, `stepf-check-out/err.txt`, `g1..g5-out/err.txt`, `pdf-out/err.txt`, `route-b-crib.md`, `recipe-fix-crib.md`, dirs `edge-profile-af/ft/sm`. Dev server 8081 declared in `.claude/launch.json`, never stopped. Simulator rows: Jeff's Delete All (FC-E).
 
-Commit: <pending — recorded by the memory update after the scoped commit>
+Commit: 1603efb (2026-10-24)
