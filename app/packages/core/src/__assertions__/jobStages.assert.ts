@@ -34,6 +34,20 @@ test('upstream change after completion is yellow', () => {
   assert.equal(stateOf(i, 'job'), 'yellow');
 });
 
+test('sticky stages stay green after a later upstream change', () => {
+  const i = inputs({
+    job: { complete: true, completedAt: '2026-01-01T00:00:00Z', changedAt: '2026-01-05T00:00:00Z' },
+    completePrem: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
+    estimate: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
+    approval: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
+    paid: { complete: true, completedAt: '2026-01-02T00:00:00Z' },
+  });
+  assert.equal(stateOf(i, 'completePrem'), 'green');
+  assert.equal(stateOf(i, 'estimate'), 'green');
+  assert.equal(stateOf(i, 'approval'), 'green');
+  assert.equal(stateOf(i, 'paid'), 'yellow');
+});
+
 test('missingRequired is yellow', () => {
   assert.equal(stateOf(inputs({ lead: { complete: true, missingRequired: true } }), 'lead'), 'yellow');
 });
