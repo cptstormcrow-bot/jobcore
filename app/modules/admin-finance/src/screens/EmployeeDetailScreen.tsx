@@ -150,16 +150,22 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Hourly Rate" value={employee.defaultHourlyRateCents != null ? `$${(employee.defaultHourlyRateCents / 100).toFixed(2)}/hr` : 'Not set'} />
           <InfoRow label="Worker type" value={employee.workerType ?? '—'} />
           <InfoRow label="Tech role" value={employee.techRole ?? '—'} />
-          <InfoRow label="Dev pay mode" value={employee.devPayMode ?? '—'} />
-          <InfoRow label="Flat rate" value={employee.flatRateCents != null ? `$${centsToDollarsText(employee.flatRateCents)}` : '—'} />
-          <InfoRow
-            label="Commission"
-            value={
-              employee.workerType !== 'contractor' && employee.commissionEnabled === true && typeof employee.commissionPercent === 'number'
-                ? `${employee.commissionPercent}%`
-                : 'Off'
-            }
-          />
+          <InfoRow label="Dev pay mode" value={employee.devPayMode === 'commission' ? 'Commission' : employee.devPayMode === 'hourly' ? 'Hourly' : '—'} />
+          {employee.techRole === 'dev' && employee.devPayMode === 'commission' ? (
+            <InfoRow
+              label="Commission %"
+              value={typeof employee.commissionPercent === 'number' && employee.commissionPercent > 0 ? `${employee.commissionPercent}%` : 'policy default'}
+            />
+          ) : (
+            <InfoRow
+              label="Commission"
+              value={
+                employee.workerType !== 'contractor' && employee.commissionEnabled === true && typeof employee.commissionPercent === 'number'
+                  ? `${employee.commissionPercent}%`
+                  : 'Off'
+              }
+            />
+          )}
         </Card>
 
         <Text style={styles.heading}>Skills</Text>

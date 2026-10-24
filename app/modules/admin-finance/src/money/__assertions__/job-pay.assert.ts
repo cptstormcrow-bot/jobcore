@@ -14,7 +14,7 @@ const policy: JobPayPolicy = {
   hourlyRateCents: 2000,
   premBonusFlatCents: 5000,
   premBonusPercent: 10,
-  devDefaultFlatCents: 7500,
+  devDefaultCommissionPercent: 15,
 };
 
 function tech(o: Partial<JobPayTech> = {}): JobPayTech {
@@ -25,7 +25,6 @@ function tech(o: Partial<JobPayTech> = {}): JobPayTech {
     techRole: 'dev',
     devPayMode: 'hourly',
     hourlyRateCents: null,
-    flatRateCents: null,
     hoursWorked: 0,
     ...o,
   };
@@ -61,17 +60,80 @@ test('dev hourly with zero rate everywhere', () => {
   assert.equal(l.note, 'No hourly rate set');
 });
 
-test('dev flat personal', () => {
-  const l = one(tech({ devPayMode: 'flat', flatRateCents: 9000 }));
-  assert.equal(l.basis, 'flat');
-  assert.equal(l.amountCents, 9000);
-  assert.equal(l.note, 'Flat rate per assembly');
+function devComm(o: Partial<JobPayTech>, labor?: number) {
+  const l = computeJobPayLines({
+    jobTotalCents: 100000,
+    policy,
+    techs: [tech({ devPayMode: 'commission', ...o })],
+    laborTotalCents: labor,
+  });
+  return l;
+}
+
+test('dev commission personal percent of labor', () => {
+  const l = devComm({ commissionPercent: 10 }, 24000)[0];
+  assert.ok(l);
+  assert.equal(l.basis, 'commission');
+  assert.equal(l.amountCents, 2400);
+  assert.equal(l.note, '10% of labor $240.00');
 });
 
-test('dev flat policy default', () => {
-  const l = one(tech({ devPayMode: 'flat', flatRateCents: null }));
-  assert.equal(l.amountCents, 7500);
-  assert.equal(l.note, 'Policy default flat rate');
+test('dev commission policy default when personal percent null', () => {
+  const l = devComm({ commissionPercent: null }, 24000)[0];
+  assert.ok(l);
+  assert.equal(l.amountCents, 3600);
+  assert.equal(l.note, '15% of labor $240.00 (policy default)');
+});
+
+test('dev commission: two techs each get own percent of full labor', () => {
+  const lines = computeJobPayLines({
+    jobTotalCents: 100000,
+    policy,
+    laborTotalCents: 24000,
+    techs: [
+      tech({ techId: 'A', devPayMode: 'commission', commissionPercent: 10 }),
+      tech({ techId: 'B', devPayMode: 'commission', commissionPercent: 20 }),
+    ],
+  });
+  assert.deepEqual(lines.map((l) => l.amountCents), [2400, 4800]);
+});
+
+test('dev commission edges: 0, 50, clamp, zero labor', () => {
+  const zero = devComm({ commissionPercent: 0, commissionEnabled: false }, 24000)[0];
+  assert.ok(zero);
+  assert.equal(zero.basis, 'commission');
+  assert.equal(zero.amountCents, 3600); // personal 0 falls back to policy 15%
+  assert.equal(devComm({ commissionPercent: 50 }, 24000)[0]?.amountCents, 12000);
+  assert.equal(devComm({ commissionPercent: 60 }, 24000)[0]?.amountCents, 12000);
+  assert.equal(devComm({ commissionPercent: 10 }, 0)[0]?.amountCents, 0);
+  const zeroPolicy = computeJobPayLines({
+    jobTotalCents: 0,
+    policy: { ...policy, devDefaultCommissionPercent: 0 },
+    techs: [tech({ devPayMode: 'commission', commissionPercent: null })],
+    laborTotalCents: 24000,
+  })[0];
+  assert.ok(zeroPolicy);
+  assert.equal(zeroPolicy.basis, 'commission');
+  assert.equal(zeroPolicy.amountCents, 0);
+});
+
+test('dev commission with commissionEnabled gets exactly one line', () => {
+  const lines = devComm({ commissionPercent: 10, commissionEnabled: true }, 24000);
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0]?.amountCents, 2400);
+});
+
+test('non-dev employee with commissionEnabled still gets on-top line', () => {
+  const lines = withLabor([tech({ techRole: 'prem', devPayMode: null, commissionEnabled: true, commissionPercent: 10 })], 24000);
+  assert.deepEqual(lines.map((l) => l.basis), ['prem-bonus', 'commission']);
+  assert.equal(lines[1]?.amountCents, 2400);
+});
+
+test('contractor dev commission computes the same amount', () => {
+  const l = devComm({ workerType: 'contractor', commissionPercent: 10 }, 24000)[0];
+  assert.ok(l);
+  assert.equal(l.basis, 'commission');
+  assert.equal(l.amountCents, 2400);
 });
 
 test('dev null mode behaves as hourly', () => {
@@ -105,9 +167,9 @@ test('null role with a personal rate is paid hourly like a Dev tech', () => {
   assert.equal(l.basis, 'hourly');
   assert.equal(l.amountCents, Math.round(9.2 * 2500));
   assert.equal(l.note, '9.20 h x $25.00/h');
-  const flat = one(tech({ techRole: null, devPayMode: 'flat', flatRateCents: 9000, hourlyRateCents: 2500, hoursWorked: 2 }));
-  assert.equal(flat.basis, 'hourly');
-  assert.equal(flat.amountCents, 5000);
+  const comm50 = one(tech({ techRole: null, devPayMode: 'commission', commissionPercent: 10, hourlyRateCents: 2500, hoursWorked: 2 }));
+  assert.equal(comm50.basis, 'hourly');
+  assert.equal(comm50.amountCents, 5000);
 });
 
 test('null role without a positive rate is none; service with a rate is none', () => {
@@ -147,19 +209,21 @@ test('postable: hourly dropped', () => {
 });
 
 test('postable: contractor dropped', () => {
-  assert.deepEqual(postable([tech({ workerType: 'contractor', devPayMode: 'flat', flatRateCents: 9000 })]), []);
+  assert.deepEqual(postable([tech({ workerType: 'contractor', devPayMode: 'commission', commissionPercent: 10 })]), []);
   assert.deepEqual(postable([tech({ workerType: 'contractor', techRole: 'prem' })]), []);
 });
 
 test('postable: zero dropped', () => {
-  assert.deepEqual(postable([tech({ devPayMode: 'flat', flatRateCents: 0 })]), []);
+  assert.deepEqual(postable([tech({ devPayMode: 'commission', commissionPercent: 10 })]), []);
   assert.deepEqual(postable([tech({ techRole: 'service' })]), []);
 });
 
-test('postable: dev flat kept as dev_flat', () => {
-  assert.deepEqual(postable([tech({ devPayMode: 'flat', flatRateCents: 9000 })]), [
-    { techId: 't1', amountCents: 9000, basis: 'dev_flat' },
-  ]);
+test('postable: dev commission maps to commission, never dev_flat', () => {
+  const rows = postableJobPayLines(
+    withLabor([tech({ devPayMode: 'commission', commissionPercent: 10 })], 24000),
+  );
+  assert.deepEqual(rows, [{ techId: 't1', amountCents: 2400, basis: 'commission' }]);
+  assert.ok(!rows.some((r) => (r.basis as string) === 'dev_flat'));
 });
 
 test('postable: prem kept as prem_bonus', () => {
@@ -169,14 +233,19 @@ test('postable: prem kept as prem_bonus', () => {
 });
 
 test('postable: mixed list preserves order', () => {
-  const rows = postable([
-    tech({ techId: 'a', techRole: 'prem', devPayMode: null }),
-    tech({ techId: 'b', hoursWorked: 2 }),
-    tech({ techId: 'c', devPayMode: 'flat', flatRateCents: 9000 }),
-    tech({ techId: 'd', workerType: 'contractor', techRole: 'prem' }),
-  ]);
+  const rows = postableJobPayLines(
+    withLabor(
+      [
+        tech({ techId: 'a', techRole: 'prem', devPayMode: null }),
+        tech({ techId: 'b', hoursWorked: 2 }),
+        tech({ techId: 'c', devPayMode: 'commission', commissionPercent: 10 }),
+        tech({ techId: 'd', workerType: 'contractor', techRole: 'prem' }),
+      ],
+      24000,
+    ),
+  );
   assert.deepEqual(rows.map((r) => r.techId), ['a', 'c']);
-  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'dev_flat']);
+  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'commission']);
 });
 
 test('postable: empty in gives empty out', () => {
@@ -208,10 +277,9 @@ test('commission: prem employee order is prem-bonus then commission', () => {
   assert.equal(lines[1]?.amountCents, 5000);
 });
 
-test('commission: flat dev keeps flat line and adds commission', () => {
-  const lines = withLabor([tech({ devPayMode: 'flat', flatRateCents: 9000, ...comm })], 100000);
-  assert.deepEqual(lines.map((l) => l.basis), ['flat', 'commission']);
-  assert.equal(lines[0]?.amountCents, 9000);
+test('commission: hourly dev with commission gets hourly line then on-top commission', () => {
+  const lines = withLabor([tech({ hourlyRateCents: 2500, hoursWorked: 2, ...comm })], 100000);
+  assert.deepEqual(lines.map((l) => l.basis), ['hourly', 'commission']);
   assert.equal(lines[1]?.amountCents, 5000);
 });
 
@@ -255,12 +323,12 @@ test('commission: two techs keep order A, A-commission, B', () => {
   assert.deepEqual(lines.map((l) => `${l.techId}:${l.basis}`), ['A:hourly', 'A:commission', 'B:hourly']);
 });
 
-test('postable: flat plus commission pair yields dev_flat then commission', () => {
+test('postable: prem plus on-top commission pair yields prem_bonus then commission', () => {
   const rows = postableJobPayLines(
-    withLabor([tech({ devPayMode: 'flat', flatRateCents: 9000, ...comm })], 100000),
+    withLabor([tech({ techRole: 'prem', devPayMode: null, ...comm })], 100000),
   );
   assert.deepEqual(rows, [
-    { techId: 't1', amountCents: 9000, basis: 'dev_flat' },
+    { techId: 't1', amountCents: 15000, basis: 'prem_bonus' },
     { techId: 't1', amountCents: 5000, basis: 'commission' },
   ]);
 });

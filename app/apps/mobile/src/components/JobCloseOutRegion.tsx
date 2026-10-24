@@ -34,7 +34,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [payment, setPayment] = useState<{ paid: boolean; amountCents: number } | null>(null);
-  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none'; note?: string; techId?: string };
+  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'prem-bonus' | 'none'; note?: string; techId?: string };
   type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
   const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
   const [contractorPayouts, setContractorPayouts] = useState<ContractorPayoutLine[]>([]);
@@ -140,7 +140,6 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
               techRole: p?.techRole ?? null,
               devPayMode: p?.devPayMode ?? null,
               hourlyRateCents: p?.defaultHourlyRateCents ?? null,
-              flatRateCents: p?.flatRateCents ?? null,
               hoursWorked: hours[id] ?? 0,
               commissionEnabled: p?.commissionEnabled === true,
               commissionPercent: p?.commissionPercent ?? null,
@@ -152,7 +151,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
               hourlyRateCents: policy.hourlyRate ?? 0,
               premBonusFlatCents: policy.premBonusFlat ?? 0,
               premBonusPercent: policy.premBonusPercent ?? 0,
-              devDefaultFlatCents: policy.devDefaultFlat ?? 0,
+              devDefaultCommissionPercent: policy.devDefaultCommissionPercent ?? 0,
             },
             techs,
             laborTotalCents: Math.round((estimate?.laborCost ?? 0) * 100),
@@ -290,13 +289,13 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           }
           const employeePostable = postableJobPayLines(
             techPayouts
-              .filter((t) => t.techId && (t.basis === 'flat' || t.basis === 'prem-bonus' || t.basis === 'commission'))
+              .filter((t) => t.techId && (t.basis === 'prem-bonus' || t.basis === 'commission'))
               .map((t) => ({
                 techId: t.techId as string,
                 name: t.techName,
                 workerType: 'employee' as const,
                 techRole: null,
-                basis: t.basis as 'flat' | 'prem-bonus' | 'commission',
+                basis: t.basis as 'prem-bonus' | 'commission',
                 amountCents: Math.round(t.amount * 100),
                 note: t.note ?? '',
               })),

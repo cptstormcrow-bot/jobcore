@@ -47,11 +47,10 @@ export interface CloseOutPhoto {
   storagePath?: string;
 }
 
-type PayoutBasis = 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none';
+type PayoutBasis = 'hourly' | 'commission' | 'prem-bonus' | 'none';
 
 const PAYOUT_BASIS_LABELS: Record<PayoutBasis, string> = {
   hourly: 'Hourly',
-  flat: 'Flat rate',
   'prem-bonus': 'Prem bonus',
   commission: 'Commission',
   none: 'No pay set',
@@ -215,7 +214,7 @@ export function CloseOutReviewScreen({
                   {payout.techName} ({payoutBasisLabel(payout.basis)}): ${payout.amount.toFixed(2)}
                 </Text>
                 {payout.basis === 'hourly' ? <Text style={styles.trailMeta}>paid via timesheet</Text> : null}
-                {payout.basis === 'flat' || payout.basis === 'prem-bonus' || payout.basis === 'commission' ?<Text style={styles.trailMeta}>posts to next payroll run</Text> : null}
+                {payout.basis === 'prem-bonus' || payout.basis === 'commission' ?<Text style={styles.trailMeta}>posts to next payroll run</Text> : null}
                 {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
               </View>
             ))

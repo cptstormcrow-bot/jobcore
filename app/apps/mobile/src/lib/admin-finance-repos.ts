@@ -528,7 +528,6 @@ function toProfile(row: {
   worker_type?: WorkerType | null;
   tech_role?: TechRole | null;
   dev_pay_mode?: DevPayMode | null;
-  flat_rate_cents?: number | null;
   commission_enabled?: boolean | null;
   commission_percent?: number | string | null;
 }): Profile {
@@ -553,7 +552,6 @@ function toProfile(row: {
     workerType: row.worker_type ?? 'employee',
     techRole: row.tech_role ?? null,
     devPayMode: row.dev_pay_mode ?? null,
-    flatRateCents: row.flat_rate_cents ?? null,
     commissionEnabled: row.commission_enabled === true,
     commissionPercent:
       row.commission_percent != null && Number.isFinite(Number(row.commission_percent))
@@ -634,7 +632,6 @@ export function createEmployeeRepository(): EmployeeRepository {
         workerType?: WorkerType;
         techRole?: TechRole | null;
         devPayMode?: DevPayMode | null;
-        flatRateCents?: number | null;
         commissionEnabled?: boolean;
         commissionPercent?: number | null;
       },
@@ -1460,7 +1457,7 @@ export function createCompensationPolicyRepository(): {
   upsertForOrganization(organizationId: string, input: CompensationPolicyInput): Promise<CompensationPolicy>;
 } {
   const columns =
-    'id, organization_id, commission_basis_percent, hourly_rate_cents, prem_bonus_flat_cents, prem_bonus_percent, dev_default_flat_cents';
+    'id, organization_id, commission_basis_percent, hourly_rate_cents, prem_bonus_flat_cents, prem_bonus_percent, dev_default_commission_percent';
   type PolicyRow = {
     id: string;
     organization_id: string;
@@ -1468,7 +1465,7 @@ export function createCompensationPolicyRepository(): {
     hourly_rate_cents: number | null;
     prem_bonus_flat_cents: number | null;
     prem_bonus_percent: number | null;
-    dev_default_flat_cents: number | null;
+    dev_default_commission_percent: number | string | null;
   };
   const mapRow = (row: PolicyRow): CompensationPolicy => ({
     id: row.id,
@@ -1477,7 +1474,7 @@ export function createCompensationPolicyRepository(): {
     hourlyRate: Number(row.hourly_rate_cents ?? 0) as CompensationPolicy['hourlyRate'],
     premBonusFlat: Number(row.prem_bonus_flat_cents ?? 0) as CompensationPolicy['hourlyRate'],
     premBonusPercent: Number(row.prem_bonus_percent ?? 0),
-    devDefaultFlat: Number(row.dev_default_flat_cents ?? 0) as CompensationPolicy['hourlyRate'],
+    devDefaultCommissionPercent: Number(row.dev_default_commission_percent ?? 0),
   });
   return {
     async getForOrganization(organizationId: string): Promise<CompensationPolicy | null> {
@@ -1512,7 +1509,7 @@ export function createCompensationPolicyRepository(): {
         commission_basis_percent: input.commissionBasisPercent,
         prem_bonus_flat_cents: input.premBonusFlat as number,
         prem_bonus_percent: input.premBonusPercent,
-        dev_default_flat_cents: input.devDefaultFlat as number,
+        dev_default_commission_percent: input.devDefaultCommissionPercent,
       };
       const { data, error } = existingId
         ? await supabase

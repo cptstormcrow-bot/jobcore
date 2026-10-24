@@ -46,7 +46,7 @@ export type ToolStatus = 'issued' | 'not_issued' | 'needs_replacement';
 
 export type WorkerType = 'employee' | 'contractor';
 export type TechRole = 'prem' | 'dev' | 'service';
-export type DevPayMode = 'hourly' | 'flat';
+export type DevPayMode = 'hourly' | 'commission';
 
 /**
  * Mirrors the Supabase `profiles` table.
@@ -73,7 +73,6 @@ export interface Profile {
   workerType?: WorkerType;
   techRole?: TechRole | null;
   devPayMode?: DevPayMode | null;
-  flatRateCents?: number | null;
   /** Per-job commission switch and percent (0-100, employees only), paid on top of normal pay. */
   commissionEnabled?: boolean;
   commissionPercent?: number;

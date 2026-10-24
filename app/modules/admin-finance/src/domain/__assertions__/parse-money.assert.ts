@@ -34,6 +34,15 @@ test('parsePercent accepts 0-100', () => {
   assert.equal(parsePercent('100'), 100);
 });
 
+test('parsePercent with max 50', () => {
+  assert.equal(parsePercent('50', 50), 50);
+  assert.equal(parsePercent('50.01', 50), null);
+  assert.equal(parsePercent('0', 50), 0);
+  assert.equal(parsePercent('25%', 50), 25);
+  assert.equal(parsePercent('60', 50), null);
+  assert.equal(parsePercent('100'), 100);
+});
+
 test('parsePercent rejects out of range or empty', () => {
   assert.equal(parsePercent('100.01'), null);
   assert.equal(parsePercent('-1'), null);

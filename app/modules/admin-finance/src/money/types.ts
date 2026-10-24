@@ -47,8 +47,8 @@ export interface CompensationPolicy {
   premBonusFlat?: Money;
   /** Percent part of the Prem bonus, plain 0-100 number like commissionBasisPercent. */
   premBonusPercent?: number;
-  /** Default flat Dev amount. */
-  devDefaultFlat?: Money;
+  /** Default Dev commission percent of labor, plain 0-50 number (10 = 10%). */
+  devDefaultCommissionPercent?: number;
 }
 
 export interface CompensationPolicyInput {
@@ -56,7 +56,7 @@ export interface CompensationPolicyInput {
   commissionBasisPercent: number;
   premBonusFlat: Money;
   premBonusPercent: number;
-  devDefaultFlat: Money;
+  devDefaultCommissionPercent: number;
 }
 
 /**

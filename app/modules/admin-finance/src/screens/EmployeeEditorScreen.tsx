@@ -91,7 +91,7 @@ const TECH_ROLE_OPTIONS = [
 ];
 const DEV_PAY_MODE_OPTIONS = [
   { label: 'Hourly', value: 'hourly' },
-  { label: 'Flat', value: 'flat' },
+  { label: 'Commission', value: 'commission' },
 ];
 
 const EMP_TAB_ITEMS: { id: EmpTab; label: string }[] = [
@@ -165,10 +165,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [effectiveFromInput, setEffectiveFromInput] = useState(new Date().toISOString().slice(0, 10));
   const [workerTypeInput, setWorkerTypeInput] = useState<'employee' | 'contractor'>(profile?.workerType ?? 'employee');
   const [techRoleInput, setTechRoleInput] = useState<'prem' | 'dev' | 'service' | null>(profile?.techRole ?? null);
-  const [devPayModeInput, setDevPayModeInput] = useState<'hourly' | 'flat' | null>(profile?.devPayMode ?? null);
-  const [flatRateInput, setFlatRateInput] = useState(
-    profile?.flatRateCents != null ? centsToDollarsText(profile.flatRateCents) : ''
-  );
+  const [devPayModeInput, setDevPayModeInput] = useState<'hourly' | 'commission' | null>(profile?.devPayMode ?? null);
   const [commissionEnabled, setCommissionEnabled] = useState(profile?.commissionEnabled === true);
   const [commissionPercentInput, setCommissionPercentInput] = useState(
     profile?.commissionPercent != null ? String(profile.commissionPercent) : ''
@@ -213,7 +210,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     workerType: workerTypeInput,
     techRole: techRoleInput,
     devPayMode: devPayModeInput,
-    flatRate: flatRateInput,
     commissionEnabled,
     commissionPercent: commissionPercentInput,
   }));
@@ -291,19 +287,22 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   }
 
   const busy = actionState.kind === 'working';
-  const showFlatRate = techRoleInput === 'dev' && devPayModeInput === 'flat';
-  const flatRateBlank = flatRateInput.trim() === '';
-  const flatRateParsed = flatRateBlank ? null : parseMoneyToCents(flatRateInput);
-  const flatRateInvalid = showFlatRate && !flatRateBlank && flatRateParsed === null;
+  const devCommission = techRoleInput === 'dev' && devPayModeInput === 'commission';
   const commissionEligible = workerTypeInput !== 'contractor';
-  const commissionPercentValue = parsePercent(commissionPercentInput);
-  const commissionPercentOk = commissionPercentValue !== null && Number.isFinite(commissionPercentValue) && commissionPercentValue > 0 && commissionPercentValue <= 100;
-  const commissionInvalid = commissionEligible && commissionEnabled && !commissionPercentOk;
+  const commissionPercentValue = parsePercent(commissionPercentInput, 50);
+  const commissionPercentOk = commissionPercentValue !== null && Number.isFinite(commissionPercentValue) && commissionPercentValue > 0 && commissionPercentValue <= 50;
+  const commissionPercentBlank = commissionPercentInput.trim() === '';
+  // Dev commission: blank/0 means "use the policy default"; a non-empty value must be 0-50.
+  const devCommissionInvalid = devCommission && !commissionPercentBlank && (commissionPercentValue === null || !Number.isFinite(commissionPercentValue) || commissionPercentValue < 0 || commissionPercentValue > 50);
+  const devCommissionPercent = !commissionPercentBlank && commissionPercentValue !== null && commissionPercentValue > 0 ? commissionPercentValue : null;
+  const commissionInvalid = commissionEligible && !devCommission && commissionEnabled && !commissionPercentOk;
   // Send the commission columns only when the admin touched them (or a contractor's must be cleared), so a save that never mentions commission still works before migration 0106 is applied.
-  const commissionTouched = commissionEnabled !== initial.commissionEnabled || commissionPercentInput !== initial.commissionPercent || (!commissionEligible && commissionEnabled);
-  const basePayRaw = showFlatRate ? flatRateInput : hourlyRateInput;
-  const basePayNumber = basePayRaw.trim() === '' ? NaN : showFlatRate ? (flatRateParsed === null ? NaN : flatRateParsed / 100) : Number(basePayRaw);
-  const basePayText = Number.isFinite(basePayNumber) && basePayNumber >= 0 ? `Base Pay: $${basePayNumber.toFixed(2)}` : 'Base Pay: $--.--';
+  const commissionTouched = commissionEnabled !== initial.commissionEnabled || commissionPercentInput !== initial.commissionPercent || (!commissionEligible && commissionEnabled) || (devCommission && commissionEnabled);
+  const basePayRaw = hourlyRateInput;
+  const basePayNumber = basePayRaw.trim() === '' ? NaN : Number(basePayRaw);
+  const basePayText = devCommission
+    ? 'Base Pay: commission'
+    : Number.isFinite(basePayNumber) && basePayNumber >= 0 ? `Base Pay: $${basePayNumber.toFixed(2)}` : 'Base Pay: $--.--';
 
   // Dirty = FORM fields only (Detail + Email); instant-save controls are excluded.
   const privateDirty =
@@ -328,7 +327,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     workerTypeInput !== initial.workerType ||
     techRoleInput !== initial.techRole ||
     devPayModeInput !== initial.devPayMode ||
-    flatRateInput !== initial.flatRate ||
     commissionEnabled !== initial.commissionEnabled ||
     commissionPercentInput !== initial.commissionPercent ||
     privateDirty ||
@@ -385,12 +383,12 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       setActionState({ kind: 'failed', message: 'SSN: enter exactly the last 4 digits.' });
       return;
     }
-    if (flatRateInvalid) {
-      setActionState({ kind: 'failed', message: 'Flat rate: enter a dollar amount like 45.00.' });
+    if (devCommissionInvalid) {
+      setActionState({ kind: 'failed', message: 'Commission: enter a percent from 0 to 50.' });
       return;
     }
     if (commissionInvalid) {
-      setActionState({ kind: 'failed', message: 'Commission: enter a percent above 0 and up to 100.' });
+      setActionState({ kind: 'failed', message: 'Commission: enter a percent above 0 and up to 50.' });
       return;
     }
     setActionState({ kind: 'working' });
@@ -411,12 +409,16 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         workerType: workerTypeInput,
         techRole: techRoleInput,
         devPayMode: techRoleInput === 'dev' ? devPayModeInput : null,
-        flatRateCents: techRoleInput === 'dev' && devPayModeInput === 'flat' ? flatRateParsed : null,
         ...(commissionTouched
-          ? {
-              commissionEnabled: commissionEligible ? commissionEnabled : false,
-              commissionPercent: commissionEligible && commissionPercentOk ? commissionPercentValue : null,
-            }
+          ? devCommission
+            ? {
+                commissionEnabled: false,
+                commissionPercent: devCommissionPercent,
+              }
+            : {
+                commissionEnabled: commissionEligible ? commissionEnabled : false,
+                commissionPercent: commissionEligible && commissionPercentOk ? commissionPercentValue : null,
+              }
           : {}),
         ...(rateViaSetter ? {} : { defaultHourlyRateCents: newRateCents }),
       });
@@ -743,7 +745,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           <Card style={styles.card}>
             <Text style={styles.heading}>Pay</Text>
             <Text style={styles.note}>
-              Dev Tech: paid hourly or a flat rate per assembly. Prem Tech: paid the bonus set in Compensation Policy.
+              Dev Tech: paid hourly or a commission percent of the job's labor. Prem Tech: paid the bonus set in Compensation Policy.
             </Text>
             <Select
               label="Worker type"
@@ -766,22 +768,23 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 label="Dev pay mode"
                 value={devPayModeInput}
                 options={DEV_PAY_MODE_OPTIONS}
-                onChange={(v) => setDevPayModeInput(v as 'hourly' | 'flat')}
+                onChange={(v) => setDevPayModeInput(v as 'hourly' | 'commission')}
                 placeholder="Select pay mode"
               />
             ) : null}
             <Text style={{ fontWeight: typography.weight.semibold }}>{basePayText}</Text>
-            {showFlatRate ? (
+            {devCommission ? (
               <>
                 <TextInput
                   style={styles.input}
-                  placeholder="Flat rate ($ per assembly)"
-                  value={flatRateInput}
-                  onChangeText={setFlatRateInput}
+                  placeholder="Commission % of labor (0-50)"
+                  value={commissionPercentInput}
+                  onChangeText={setCommissionPercentInput}
                   keyboardType="numeric"
                 />
-                {flatRateInvalid ? (
-                  <Text style={styles.warning}>Enter a dollar amount like 45.00, or leave blank to use the policy default.</Text>
+                <Text style={styles.note}>Paid on the labor lines of the job estimate; leave 0 to use the policy default.</Text>
+                {devCommissionInvalid ? (
+                  <Text style={styles.warning}>Enter a commission percent from 0 to 50.</Text>
                 ) : null}
               </>
             ) : (
@@ -803,7 +806,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 ) : null}
               </>
             )}
-            {commissionEligible ? (
+            {commissionEligible && !devCommission ? (
               <>
                 <Toggle
                   label="Commission"
@@ -820,7 +823,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                       keyboardType="numeric"
                     />
                     {commissionInvalid ? (
-                      <Text style={styles.warning}>Enter a commission percent above 0 and up to 100.</Text>
+                      <Text style={styles.warning}>Enter a commission percent above 0 and up to 50.</Text>
                     ) : null}
                   </>
                 ) : null}

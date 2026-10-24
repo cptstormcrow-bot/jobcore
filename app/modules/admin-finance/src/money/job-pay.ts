@@ -4,19 +4,25 @@
  * No global state, no clock, no env — every input is a parameter. All money
  * is INTEGER CENTS (Math.round); no React imports.
  *
+ * A Dev tech in commission mode is paid their own percent (0-50, personal or
+ * policy default) of the job's FULL labor total; each Dev tech gets their own
+ * percent of the full labor, never a share of it. That tech gets no second
+ * on-top commission line.
+ *
  * An employee with commission enabled also gets one extra 'commission' line
  * after their normal line: commissionPercent of the job's labor total.
  */
 
 /** How a tech's pay on a job was derived. */
-export type PayBasis = 'hourly' | 'flat' | 'prem-bonus' | 'commission' | 'none';
+export type PayBasis = 'hourly' | 'prem-bonus' | 'commission' | 'none';
 
 /** Org-wide pay policy values used as fallbacks and prem-bonus inputs. */
 export interface JobPayPolicy {
   hourlyRateCents: number;
   premBonusFlatCents: number;
   premBonusPercent: number;
-  devDefaultFlatCents: number;
+  /** Plain 0-100 number (10 = 10%); Dev commission fallback when the tech has no personal percent. */
+  devDefaultCommissionPercent: number;
 }
 
 /** One tech assigned to a job, with their personal pay settings. */
@@ -25,9 +31,8 @@ export interface JobPayTech {
   name: string;
   workerType: 'employee' | 'contractor';
   techRole: 'prem' | 'dev' | 'service' | null;
-  devPayMode: 'hourly' | 'flat' | null;
+  devPayMode: 'hourly' | 'commission' | null;
   hourlyRateCents: number | null;
-  flatRateCents: number | null;
   hoursWorked: number;
   /** Employee-only commission on labor; percent is a plain 0-100 number (5 = 5%). */
   commissionEnabled?: boolean;
@@ -62,16 +67,15 @@ function dollars(c: number): string {
 export interface PostableJobPayLine {
   techId: string;
   amountCents: number;
-  basis: 'dev_flat' | 'prem_bonus' | 'commission';
+  basis: 'prem_bonus' | 'commission';
 }
 
-/** Keeps only positive EMPLOYEE flat (Dev), prem-bonus and commission lines, in input order. */
+/** Keeps only positive EMPLOYEE prem-bonus and commission lines (incl. Dev commission), in input order. */
 export function postableJobPayLines(lines: JobPayLine[]): PostableJobPayLine[] {
   const out: PostableJobPayLine[] = [];
   for (const l of lines) {
     if (l.workerType !== 'employee' || !(l.amountCents > 0)) continue;
-    if (l.basis === 'flat') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'dev_flat' });
-    else if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
+    if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
     else if (l.basis === 'commission') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'commission' });
   }
   return out;
@@ -102,15 +106,17 @@ export function computeJobPayLines(input: {
       tech.hourlyRateCents > 0;
 
     if (tech.techRole === 'dev' || roleless) {
-      if (!roleless && tech.devPayMode === 'flat') {
-        const personal = tech.flatRateCents;
-        const usedPolicy = personal === null || personal === undefined;
-        const raw = usedPolicy ? policy.devDefaultFlatCents : personal;
+      if (!roleless && tech.devPayMode === 'commission') {
+        const personal = tech.commissionPercent;
+        const usedPolicy = typeof personal !== 'number' || !Number.isFinite(personal) || !(personal > 0);
+        const rawPct = usedPolicy ? policy.devDefaultCommissionPercent : (personal as number);
+        const pct = Number.isFinite(rawPct) ? Math.min(Math.max(rawPct, 0), 50) : 0;
+        const labor = Math.max(Number.isFinite(laborTotalCents) ? laborTotalCents : 0, 0);
         return {
           ...base,
-          basis: 'flat',
-          amountCents: nonNegInt(raw),
-          note: usedPolicy ? 'Policy default flat rate' : 'Flat rate per assembly',
+          basis: 'commission',
+          amountCents: nonNegInt(Math.round((pct / 100) * labor)),
+          note: `${pct}% of labor $${dollars(labor)}${usedPolicy ? ' (policy default)' : ''}`,
         };
       }
       const personalRate = tech.hourlyRateCents;
@@ -151,6 +157,13 @@ export function computeJobPayLines(input: {
   return normalLines.flatMap((line, i): JobPayLine[] => {
     const tech = techs[i];
     if (!tech) return [line];
+    // A Dev tech already paid by the Dev commission line never gets a second one.
+    const devRoleless =
+      (tech.techRole === null || tech.techRole === undefined) &&
+      tech.hourlyRateCents !== null &&
+      tech.hourlyRateCents !== undefined &&
+      tech.hourlyRateCents > 0;
+    if (tech.techRole === 'dev' && tech.devPayMode === 'commission' && !devRoleless) return [line];
     const pct = tech.commissionPercent;
     if (
       tech.workerType !== 'employee' ||

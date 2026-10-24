@@ -454,7 +454,6 @@ export interface EmployeeRepository {
       workerType?: WorkerType;
       techRole?: TechRole | null;
       devPayMode?: DevPayMode | null;
-      flatRateCents?: number | null;
       // Commission switch and percent (0-100) for the per-job commission line; employees only.
       commissionEnabled?: boolean;
       commissionPercent?: number | null;

@@ -1,7 +1,7 @@
 // JobCore screen #0093 - af-compensationPolicy - Compensation Policy
 /**
  * Compensation policy screen (admin) — organization-wide pay defaults:
- * hourly rate, commission percent, Dev Tech default flat rate and the
+ * hourly rate, commission percent, Dev Tech default commission percent of labor and the
  * Prem Tech bonus (flat plus percent of job total).
  */
 
@@ -20,7 +20,7 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
 
   const [hourly, setHourly] = React.useState('');
   const [commission, setCommission] = React.useState('');
-  const [devFlat, setDevFlat] = React.useState('');
+  const [devCommission, setDevCommission] = React.useState('');
   const [premFlat, setPremFlat] = React.useState('');
   const [premPct, setPremPct] = React.useState('');
   const [loaded, setLoaded] = React.useState(false);
@@ -38,7 +38,9 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
         if (p) {
           setHourly(centsToDollarsText(p.hourlyRate as number));
           setCommission(String(p.commissionBasisPercent ?? ''));
-          setDevFlat(p.devDefaultFlat != null ? centsToDollarsText(p.devDefaultFlat as number) : '');
+          setDevCommission(
+            p.devDefaultCommissionPercent != null ? String(p.devDefaultCommissionPercent) : '',
+          );
           setPremFlat(p.premBonusFlat != null ? centsToDollarsText(p.premBonusFlat as number) : '');
           setPremPct(p.premBonusPercent != null ? String(p.premBonusPercent) : '');
         }
@@ -85,8 +87,10 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
     if (h === null) return setError('Hourly rate must be a dollar amount like 25.00');
     const c = parsePercent(z(commission));
     if (c === null) return setError('Commission % must be a percent like 10 or 7.5');
-    const d = parseMoneyToCents(z(devFlat));
-    if (d === null) return setError('Dev Tech default flat rate must be a dollar amount like 40.00');
+    const d = parsePercent(z(devCommission), 50);
+    if (d === null) {
+      return setError('Dev Tech default commission % of labor must be a number from 0 to 50');
+    }
     const pf = parseMoneyToCents(z(premFlat));
     if (pf === null) return setError('Prem Tech bonus flat must be a dollar amount like 50.00');
     const pp = parsePercent(z(premPct));
@@ -97,7 +101,7 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
       commissionBasisPercent: c,
       premBonusFlat: pf as Money,
       premBonusPercent: pp,
-      devDefaultFlat: d as Money,
+      devDefaultCommissionPercent: d,
     };
     return run(async () => {
       await port.upsertForOrganization(orgId, input);
@@ -112,9 +116,9 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
       </View>
       <Text>Compensation Policy</Text>
       <Text>
-        Dev Tech (assembly) pay is set per technician on the employee's Pay tab: hourly or flat
-        rate. If a Dev Tech is on flat pay with no personal flat rate, the Dev Tech default flat
-        rate above is used.
+        Dev Tech (assembly) pay is set per technician on the employee's Pay tab: hourly or
+        commission. If a Dev Tech is paid by commission with no personal percent, the Dev Tech
+        default commission % of labor below is used.
       </Text>
       <Text>Prem Tech bonus = the flat amount plus the percent of the job total.</Text>
       {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
@@ -123,10 +127,14 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
       <TextField label="Hourly rate ($/hr)" value={hourly} onChangeText={setHourly} />
       <TextField label="Commission %" value={commission} onChangeText={setCommission} />
       <TextField
-        label="Dev Tech default flat rate ($ per assembly)"
-        value={devFlat}
-        onChangeText={setDevFlat}
+        label="Dev Tech default commission % of labor (0-50)"
+        value={devCommission}
+        onChangeText={setDevCommission}
       />
+      <Text>
+        Used for Dev Tech employees paid by Commission who have no personal percent. Percent of
+        the estimate's labor lines, not materials.
+      </Text>
       <TextField label="Prem Tech bonus: flat ($)" value={premFlat} onChangeText={setPremFlat} />
       <TextField
         label="Prem Tech bonus: % of job total"

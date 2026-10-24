@@ -34,7 +34,6 @@ export interface EmployeeUpdates {
   workerType?: WorkerType;
   techRole?: TechRole | null;
   devPayMode?: DevPayMode | null;
-  flatRateCents?: number | null;
   commissionEnabled?: boolean;
   commissionPercent?: number | null;
 }
@@ -75,7 +74,6 @@ const employeeUpdate: OpHandler<EmployeeUpdatePayload> = async ({ profileId, upd
   if (updates.workerType !== undefined) patch.worker_type = updates.workerType;
   if (updates.techRole !== undefined) patch.tech_role = updates.techRole;
   if (updates.devPayMode !== undefined) patch.dev_pay_mode = updates.devPayMode;
-  if (updates.flatRateCents !== undefined) patch.flat_rate_cents = updates.flatRateCents;
   if (updates.commissionEnabled !== undefined) patch.commission_enabled = updates.commissionEnabled;
   if (updates.commissionPercent !== undefined) patch.commission_percent = updates.commissionPercent;
   const { error } = await supabase.from('profiles').update(patch).eq('id', profileId).select('id');
