@@ -17,7 +17,7 @@ Prior contracts carried (Rule 41, evaluated 2026-10-24 against `E:\Jeff\.claude\
 - FC3 rates $0: PARTLY HONORED (policy hourly now 2500; Dev commission default `dev_default_commission_percent` is 0 until Jeff sets it).
 - FC4 browser verification: HONORED 2026-10-24: Jeff ran the test plan, 16 of 16 pass.
 - FC5 UI Inventory regen: STILL OPEN, another session owns the snapshots.
-- FC6 RLS/guard tests for the 0103 and 0106 pay columns: ADDRESSED 2026-10-24 by report jobcore-open-items-sweep: SQL tests written (one local file plus 12 single-case hosted files), NOT yet run live (waits for Jeff's explicit go). See Deviation 12.
+- FC6 RLS/guard tests for the 0103 and 0106 pay columns: ADDRESSED 2026-10-24 by report jobcore-open-items-sweep: SQL tests written (one local file plus 12 single-case hosted files). CLOSED 2026-10-24: the 12 hosted pay-column cases (app\supabase\tests\0106_hosted_cases\) were run live on Jeff's go, one file at a time, 12 of 12 as expected; Dev Tech d59e3bc7 confirmed unchanged (commission_enabled true, commission_percent 2.00, dev_pay_mode hourly, tech_role dev). The one-file local variant 0106_profiles_pay_columns_rls.test.sql is still unrun (no local Postgres). Details: the open-items-sweep build report, section Live SQL test run. See Deviation 12.
 - FC7 `contractor_payouts` unique constraint: CLOSED 2026-10-24 by report jobcore-open-items-sweep: migration 0108 applied live on Jeff's go naming 0108; constraint contractor_payouts_job_tech_uniq verified as UNIQUE (job_id, tech_id).
 - Payout-lines report FC2 live smoke test of posting: PARTLY honored; job #107 closed with zero posted lines.
 
