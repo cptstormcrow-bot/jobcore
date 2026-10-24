@@ -48,6 +48,20 @@ export interface CloseOutPhoto {
   storagePath?: string;
 }
 
+type PayoutBasis = 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none';
+
+const PAYOUT_BASIS_LABELS: Record<PayoutBasis, string> = {
+  hourly: 'Hourly',
+  flat: 'Flat rate',
+  'prem-bonus': 'Prem bonus',
+  commission: 'Commission',
+  none: 'No pay set',
+};
+
+function payoutBasisLabel(basis: PayoutBasis): string {
+  return PAYOUT_BASIS_LABELS[basis];
+}
+
 export interface CloseOutReviewScreenProps {
   job: Job | null;
   ctx: Ctx;
@@ -68,9 +82,9 @@ export interface CloseOutReviewScreenProps {
   /** Total hours logged to the job. */
   hoursLogged?: number;
   /** Tech payouts for the job. */
-  techPayouts?: { techName: string; amount: number; basis: 'hourly' | 'commission' }[];
+  techPayouts?: { techName: string; amount: number; basis: PayoutBasis; note?: string }[];
   /** Contractor payouts for the job. */
-  contractorPayouts?: { contractorName: string; amount: number }[];
+  contractorPayouts?: { contractorName: string; amount: number; basis?: PayoutBasis; note?: string }[];
   /** Itemized customer contacts (e.g. phone/email/alt-phone). */
   customerContacts?: { label: string; value: string }[];
   /** The customer's other jobs, newest first as supplied; read-only. */
@@ -195,14 +209,20 @@ export function CloseOutReviewScreen({
         {activeTab === 'payouts' ? (
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Payouts</Text>
+          {(!techPayouts || techPayouts.length === 0) && (!contractorPayouts || contractorPayouts.length === 0) ? (
+            <Text style={styles.empty}>No payouts for this job yet.</Text>
+          ) : null}
           <Text style={styles.subTitle}>Tech payouts</Text>
           {!techPayouts || techPayouts.length === 0 ? (
             <Text style={styles.empty}>None</Text>
           ) : (
             techPayouts.map((payout, index) => (
-              <Text key={index} style={styles.body}>
-                {payout.techName} ({payout.basis}): ${payout.amount.toFixed(2)}
-              </Text>
+              <View key={index} style={styles.trailRow}>
+                <Text style={payout.basis === 'none' ? styles.empty : styles.body}>
+                  {payout.techName} ({payoutBasisLabel(payout.basis)}): ${payout.amount.toFixed(2)}
+                </Text>
+                {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
+              </View>
             ))
           )}
           <Text style={styles.subTitle}>Contractor payouts</Text>
@@ -210,9 +230,13 @@ export function CloseOutReviewScreen({
             <Text style={styles.empty}>None</Text>
           ) : (
             contractorPayouts.map((payout, index) => (
-              <Text key={index} style={styles.body}>
-                {payout.contractorName}: ${payout.amount.toFixed(2)}
-              </Text>
+              <View key={index} style={styles.trailRow}>
+                <Text style={payout.basis === 'none' ? styles.empty : styles.body}>
+                  {payout.contractorName}
+                  {payout.basis ? ` (${payoutBasisLabel(payout.basis)})` : ''}: ${payout.amount.toFixed(2)}
+                </Text>
+                {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
+              </View>
             ))
           )}
         </Card>

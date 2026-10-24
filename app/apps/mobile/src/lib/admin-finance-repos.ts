@@ -44,6 +44,7 @@ import type {
   PayPeriodRepository,
   LeadRepository,
   JobAssignmentDraft,
+  ContractorPayoutRepository,
   JobAssignmentRepository,
   CommissionRepository,
   AuditLogRow,
@@ -835,6 +836,55 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
         new Date().toISOString(),
         { jobId, kind } as never,
       );
+    },
+
+    async listForJob(jobId: string): Promise<Array<{ techId: string; kind: string }>> {
+      return readCached('af.assignments.listForJob', { jobId }, async () => {
+        const { data, error } = await supabase.from('job_assignments').select('tech_id, kind').eq('job_id', jobId);
+        if (error) throw new Error(`list job assignments failed: ${error.message}`);
+        return ((data ?? []) as Array<{ tech_id: string; kind: string }>).map((r) => ({ techId: r.tech_id, kind: r.kind }));
+      });
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * ContractorPayoutRepository
+ * ------------------------------------------------------------------ */
+
+export function createContractorPayoutRepository(): ContractorPayoutRepository {
+  async function listRows(jobId: string): Promise<Array<{ techId: string; amountCents: number; status: string }>> {
+    const { data, error } = await supabase
+      .from('contractor_payouts')
+      .select('tech_id, amount_cents, status')
+      .eq('job_id', jobId);
+    if (error) throw new Error(`list contractor payouts failed: ${error.message}`);
+    return ((data ?? []) as Array<{ tech_id: string; amount_cents: number; status: string }>).map((r) => ({
+      techId: r.tech_id,
+      amountCents: r.amount_cents,
+      status: r.status,
+    }));
+  }
+  return {
+    listForJob: listRows,
+
+    async createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number> {
+      requireOnline('record contractor payouts');
+      if (rows.length === 0) return 0;
+      const existing = new Set((await listRows(jobId)).map((r) => r.techId));
+      const fresh = rows.filter((r, i) => !existing.has(r.techId) && rows.findIndex((x) => x.techId === r.techId) === i);
+      if (fresh.length === 0) return 0;
+      const { data: job, error: jobError } = await supabase.from('jobs').select('organization_id').eq('id', jobId).maybeSingle();
+      if (jobError || !job) throw new Error(`create contractor payouts failed: ${jobError?.message ?? 'job not found'}`);
+      const organizationId = (job as { organization_id: string }).organization_id;
+      const { error } = await supabase.from('contractor_payouts').insert(
+        fresh.map((r) => ({ organization_id: organizationId, job_id: jobId, tech_id: r.techId, amount_cents: r.amountCents, status: 'pending' })),
+      );
+      if (error) {
+        logSyncFailure('admin-finance-repos.createContractorPayouts', error.message, { jobId, rows: fresh });
+        throw new Error(`create contractor payouts failed: ${error.message}`);
+      }
+      return fresh.length;
     },
   };
 }
@@ -3195,6 +3245,24 @@ export function createTimeEntryRepository(): TimeEntryRepository {
         return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
       });
     },
+
+    async hoursByTechForJob(jobId: string): Promise<Record<string, number>> {
+      return readCached('af.timeEntries.hoursByTechForJob', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_time_segments')
+          .select('tech_id, started_at, ended_at')
+          .eq('job_id', jobId)
+          .eq('reason_code', 'job_labor')
+          .not('ended_at', 'is', null);
+        if (error) throw new Error(`hoursByTechForJob failed: ${error.message}`);
+        const out: Record<string, number> = {};
+        for (const r of (data ?? []) as Array<{ tech_id: string; started_at: string; ended_at: string }>) {
+          const ms = Date.parse(r.ended_at) - Date.parse(r.started_at);
+          if (Number.isFinite(ms) && ms > 0) out[r.tech_id] = (out[r.tech_id] ?? 0) + ms / 3600000;
+        }
+        return out;
+      });
+    },
   };
 }
 
@@ -3345,6 +3413,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     investigations: createJobInvestigationRepository(),
     jobPlanTasks: createJobPlanTasksRepository(),
     timeEntries: createTimeEntryRepository(),
+    contractorPayouts: createContractorPayoutRepository(),
     paymentReview: {
       ReconciliationView,
       client: supabase as unknown as PaymentReviewClient,

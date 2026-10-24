@@ -10,6 +10,8 @@ import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/c
 import { settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
 import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { CustomerContact, CustomerJobHistoryItem } from '../../../../modules/admin-finance/src/data/ports';
+import { computeJobPayLines, centsToDollars } from '../../../../modules/admin-finance/src/money/job-pay';
+import type { JobPayTech } from '../../../../modules/admin-finance/src/money/job-pay';
 import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-out-job';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
@@ -33,7 +35,11 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
   const [jobHistory, setJobHistory] = useState<CustomerJobHistoryItem[]>([]);
-  const [techPayouts, setTechPayouts] = useState<{ techName: string; amount: number; basis: 'hourly' | 'commission' }[]>([]);
+  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none'; note?: string };
+  type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
+  const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
+  const [contractorPayouts, setContractorPayouts] = useState<ContractorPayoutLine[]>([]);
+  const [contractorStored, setContractorStored] = useState(false);
   const awaiting = awaitingCloseOut(job);
 
   useEffect(() => {
@@ -95,29 +101,94 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   useEffect(() => {
     if (session.status !== 'authenticated') {
       setTechPayouts([]);
+      setContractorPayouts([]);
       return undefined;
     }
     let cancelled = false;
-    ports.commissions
-      .listForOrganization(session.organization.id)
-      .then((rows) => {
-        if (!cancelled) {
-          setTechPayouts(
-            rows
-              .filter((row) => row.jobId === job.id)
-              .map((row) => ({ techName: 'Technician', amount: row.amount / 100, basis: 'commission' as const })),
-          );
+    const orgId = session.organization.id;
+    const isClosed = job.status === 'closed';
+    void (async () => {
+      try {
+        const [policy, assignments, hours, profiles, estimate, commissions, stored] = await Promise.all([
+          ports.compensationPolicy.getForOrganization(orgId),
+          ports.jobAssignments.listForJob(job.id),
+          ports.timeEntries.hoursByTechForJob(job.id),
+          ports.employees.listEmployees(orgId),
+          ports.estimates.getForJob(job.id),
+          isClosed ? ports.commissions.listForOrganization(orgId) : Promise.resolve([]),
+          isClosed ? ports.contractorPayouts.listForJob(job.id) : Promise.resolve([]),
+        ]);
+        if (cancelled) return;
+        const byId = new Map(profiles.map((p) => [p.id, p]));
+        const nameOf = (id: string) => byId.get(id)?.fullName || 'Technician';
+        const commissionRows = commissions.filter((row) => row.jobId === job.id);
+        const hasStored = isClosed && stored.length > 0;
+        setContractorStored(hasStored);
+        let employeeLines: TechPayoutLine[] = [];
+        let contractorLines: ContractorPayoutLine[] = [];
+        if (isClosed && commissionRows.length > 0) {
+          employeeLines = commissionRows.map((row) => ({
+            techName: nameOf((row as { userId?: string }).userId ?? ''),
+            amount: row.amount / 100,
+            basis: 'commission' as const,
+          }));
         }
-      })
-      .catch(() => {
+        if (hasStored) {
+          contractorLines = stored.map((row) => ({
+            contractorName: nameOf(row.techId),
+            amount: centsToDollars(row.amountCents),
+            techId: row.techId,
+          }));
+        }
+        if (policy && !(isClosed && commissionRows.length > 0 && hasStored)) {
+          const techIds = Array.from(new Set(assignments.map((a) => a.techId)));
+          const techs: JobPayTech[] = techIds.map((id) => {
+            const p = byId.get(id);
+            return {
+              techId: id,
+              name: p?.fullName || 'Technician',
+              workerType: p?.workerType ?? 'employee',
+              techRole: p?.techRole ?? null,
+              devPayMode: p?.devPayMode ?? null,
+              hourlyRateCents: p?.defaultHourlyRateCents ?? null,
+              flatRateCents: p?.flatRateCents ?? null,
+              hoursWorked: hours[id] ?? 0,
+            };
+          });
+          const lines = computeJobPayLines({
+            jobTotalCents: Math.round((estimate?.totalCost ?? 0) * 100),
+            policy: {
+              hourlyRateCents: policy.hourlyRate ?? 0,
+              premBonusFlatCents: policy.premBonusFlat ?? 0,
+              premBonusPercent: policy.premBonusPercent ?? 0,
+              devDefaultFlatCents: policy.devDefaultFlat ?? 0,
+            },
+            techs,
+          });
+          if (!(isClosed && commissionRows.length > 0)) {
+            employeeLines = lines
+              .filter((l) => l.workerType === 'employee')
+              .map((l) => ({ techName: l.name, amount: centsToDollars(l.amountCents), basis: l.basis, note: l.note }));
+          }
+          if (!hasStored) {
+            contractorLines = lines
+              .filter((l) => l.workerType === 'contractor')
+              .map((l) => ({ contractorName: l.name, amount: centsToDollars(l.amountCents), basis: l.basis, note: l.note, techId: l.techId }));
+          }
+        }
+        setTechPayouts(employeeLines);
+        setContractorPayouts(contractorLines);
+      } catch {
         if (!cancelled) {
           setTechPayouts([]);
+          setContractorPayouts([]);
         }
-      });
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, [job.id, ports.commissions, session]);
+  }, [job.id, job.status, ports, session]);
 
   useEffect(() => {
     if (!awaiting) {
@@ -198,25 +269,39 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           }
           const paymentRows = await ports.payments.listForJob(target.id);
           const settled = settledTotalCents(paymentRows) > 0;
+          const sheet = await ports.priceSheets.getActive(session.organization.id);
+          const rates = sheet ? await ports.priceSheetRates.list(sheet.id) : [];
           const result = await closeOutJob(target, {
             ctx: { ...ctx, hasPaymentRecord: () => settled },
             jobs: ports.jobs,
             calendarEvents: ports.calendarEvents,
             priceSheetRepository: ports.priceSheets,
             compensationPolicy: policy,
-            rates: [],
+            rates,
             commissionRepository: ports.commissions,
             closedByUserId: session.profile.id,
           });
-          if (result.ok) {
-            onClosed(result.job);
+          if (!result.ok) {
+            setPhotoError(`Could not close out: ${result.reason}`);
+            return;
           }
+          const payRows = contractorPayouts
+            .filter((c) => c.techId && Math.round(c.amount * 100) > 0)
+            .map((c) => ({ techId: c.techId as string, amountCents: Math.round(c.amount * 100) }));
+          if (payRows.length > 0 && !contractorStored) {
+            try {
+              await ports.contractorPayouts.createForJob(target.id, payRows);
+            } catch (err) {
+              setPhotoError(`Job closed, but contractor payouts could not be saved: ${err instanceof Error ? err.message : String(err)}`);
+            }
+          }
+          onClosed(result.job);
         } catch (err) {
           setPhotoError(`Could not close out: ${err instanceof Error ? err.message : String(err)}`);
         }
       })();
     },
-    [session, ctx, ports, onClosed],
+    [session, ctx, ports, onClosed, contractorPayouts, contractorStored],
   );
 
   // After every hook: closeOutBlockers is empty for a non-awaiting job, so the
@@ -242,8 +327,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       onCloseOut={handleCloseOut}
       hoursLogged={job.totalLaborSeconds > 0 ? job.totalLaborSeconds / 3600 : undefined}
       techPayouts={techPayouts}
-      // No job-scoped contractor payout source exists yet.
-      contractorPayouts={undefined}
+      contractorPayouts={contractorPayouts}
       customerContacts={contacts.map((c) => ({ label: c.label ?? c.kind, value: c.value }))}
       jobHistory={jobHistory}
       timeline={timeline}
