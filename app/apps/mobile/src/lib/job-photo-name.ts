@@ -34,3 +34,36 @@ export function nextFreeBeforeSlot(namesOrPaths: string[]): number | null {
   }
   return null;
 }
+
+export const MAX_AFTER_PHOTOS = 6;
+
+export function afterPhotoFileName(
+  jobNumber: number | string | null | undefined,
+  jobId: string,
+  index: number,
+): string {
+  if (!Number.isInteger(index) || index < 1 || index > MAX_AFTER_PHOTOS) {
+    throw new RangeError(`after-photo index must be an integer 1..${MAX_AFTER_PHOTOS}`);
+  }
+  const hasNumber = jobNumber !== null && jobNumber !== undefined && String(jobNumber).trim() !== '';
+  const n = hasNumber ? clean(String(jobNumber)) : clean(jobId.slice(0, 8));
+  return `${n}AFT-${index}.jpg`;
+}
+
+export function afterPhotoSlot(nameOrPath: string): number | null {
+  const last = (nameOrPath ?? '').split(/[/\\]/).pop() ?? '';
+  const m = /AFT-([1-6])\.jpe?g$/i.exec(last);
+  return m ? Number(m[1]) : null;
+}
+
+export function nextFreeAfterSlot(namesOrPaths: string[]): number | null {
+  const used = new Set<number>();
+  for (const p of namesOrPaths) {
+    const s = afterPhotoSlot(p);
+    if (s !== null) used.add(s);
+  }
+  for (let i = 1; i <= MAX_AFTER_PHOTOS; i++) {
+    if (!used.has(i)) return i;
+  }
+  return null;
+}

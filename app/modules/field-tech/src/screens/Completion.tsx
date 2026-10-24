@@ -2,60 +2,59 @@
 /**
  * Completion screen for the field-tech module (P4 Wave 3 slice S3.5).
  *
- * Completion checklist + at least one after-photo + quality notes, then
+ * 7-item Job Checklist + after-photos + quality notes, then
  * `transitionJob(job, 'completed', ctx)` — this module's sole call site for
  * status transitions (see `domain/transition.ts`; never import
  * `applyTransition` directly from `@jobcore/core`, enforced by the
  * field-tech `.eslintrc.cjs` override).
  *
- * `ctx.hasAfterPhotos`/`ctx.hasQualityNotes` passed to `transitionJob` are
- * plain synchronous closures over this screen's own local state, read fresh
- * (`lib/active-job-workflow-state.ts`, S1.4) are called BEFORE
- * `transitionJob(...)` so that `ctx.hasAfterPhotos`/`ctx.hasQualityNotes`
- * read synchronously true when `canTransition`/`applyTransition` evaluate
- * the `completed` precondition in `packages/core/src/state-machine.ts`. The
- * quality-notes `job_notes` row (kind='quality_notes') is written first,
- * then `recordQualityNotes`/`recordAfterPhoto` update the in-memory probe
- * store, then `transitionJob` runs.
+ * After-photos arrive through the `renderAfterPhotos` slot (the host route
+ * passes its photo card), which reports its count back via `onCountChange`.
+ * The first count >= 1 calls `recordAfterPhoto` so the synchronous probe
+ * (`lib/active-job-workflow-state.ts`, S1.4) reads true. `ctx.hasAfterPhotos`/
+ * `ctx.hasQualityNotes` passed to `transitionJob` are plain synchronous
+ * closures over that probe store; the quality-notes `job_notes` row
+ * (kind='quality_notes') is written and `recordQualityNotes` called BEFORE
+ * `transitionJob(...)`, so the `completed` precondition in
+ * `packages/core/src/state-machine.ts` reads true.
  *
  * Ties to spec AC3, AC5, VS2.
  *
- * ZERO financial fields — this screen never renders anything sourced from
- * `price_sheets`, commissions, or payout data.
+ * The screen's only financial effect is one fixed-fee Estimate line ($20
+ * 'Materials not moved upstairs fee') when 'Materials moved upstairs' is
+ * unticked. It still never renders anything sourced from `price_sheets`,
+ * commissions, or payout data.
  *
  * Field-tech isolation: this screen reads session/ports via
  * `lib/module-session.ts` (S1.2) and `lib/module-ports.ts` (S1.3) rather
  * than importing anything from `apps/mobile`.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { makeIdempotencyKey } from '@jobcore/core';
 import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { newPhotoId } from '../lib/photo-id';
 import { transitionJob } from '../domain/transition';
-import { canSubmitCompletion } from './completion-helpers';
+import {
+  COMPLETION_CHECKLIST_ITEMS,
+  UPSTAIRS_FEE,
+  UPSTAIRS_FEE_DESCRIPTION,
+  buildCompletionNoteBody,
+  canSubmitCompletion,
+  formatTimeSpent,
+  upstairsFeeApplies,
+} from './completion-helpers';
+import type { CompletionItemKey } from './completion-helpers';
 import {
   recordAfterPhoto,
   recordQualityNotes,
   hasAfterPhotos as readHasAfterPhotos,
   hasQualityNotes as readHasQualityNotes,
 } from '../lib/active-job-workflow-state';
-
-/** Builds a nonce for `makeIdempotencyKey` without depending on a uuid library. */
-function makeNonce(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
-function formatWorkedTime(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${hours}h ${minutes}m worked`;
-}
 
 export interface CompletionProps {
   /** The job being completed. */
@@ -64,88 +63,87 @@ export interface CompletionProps {
   onDone: () => void;
   /** Optional: persist the transitioned job (awaited before `onDone`). */
   persistCompletion?: (job: Job) => Promise<void>;
+  /** Total time spent on the job, computed once by the route (time stops at completion). */
+  timeSpentSeconds?: number | null;
+  /** Host-provided after-photo UI; call `onCountChange` with the current photo count. */
+  renderAfterPhotos?: (api: { onCountChange: (n: number) => void; disabled: boolean }) => ReactNode;
 }
 
 /**
- * Completion screen: checklist + after-photo + quality notes, then
- * transitions the job to `completed`. Requires at least one after-photo
- * and non-empty quality notes client-side before enabling submit — this is
- * a UX guard only; the real gate is the core `completed` precondition.
+ * Completion screen: Job Checklist + after-photos + quality notes, then
+ * transitions the job to `completed`. Client-side gate is `canSubmitCompletion`
+ * — a UX guard only; the real gate is the core `completed` precondition.
  */
-export function Completion({ job, onDone, persistCompletion }: CompletionProps): JSX.Element {
-  const [checklistComplete, setChecklistComplete] = useState(false);
+export function Completion({
+  job,
+  onDone,
+  persistCompletion,
+  timeSpentSeconds = null,
+  renderAfterPhotos,
+}: CompletionProps): JSX.Element {
+  const [materialsOnsite, setMaterialsOnsite] = useState(false);
+  const [movedUpstairs, setMovedUpstairs] = useState(false);
+  const [damageChecked, setDamageChecked] = useState(false);
+  const [damageText, setDamageText] = useState('');
+  const [scopeChecked, setScopeChecked] = useState(false);
+  const [scopeText, setScopeText] = useState('');
+  const [buildsFinished, setBuildsFinished] = useState(false);
+  const [debrisCleared, setDebrisCleared] = useState(false);
   const [afterPhotoCount, setAfterPhotoCount] = useState(0);
   const [qualityNotes, setQualityNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [workedMinutes, setWorkedMinutes] = useState<number | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const photoYRef = useRef(0);
+  const photoRecordedRef = useRef(false);
   const notesSavedRef = useRef(false);
+  const checklistSavedRef = useRef(false);
+  const feeSavedRef = useRef(false);
+  const feeAppliedRef = useRef(false);
 
+  // Prefill "Materials onsite" from the job's estimate; best-effort, never written back.
   useEffect(() => {
     let cancelled = false;
-    async function loadWorkedTime(): Promise<void> {
+    async function loadMaterialsOnsite(): Promise<void> {
       try {
-        const ports = getModulePorts();
-        const entries = await ports.timeEntries.listForJob(job.id);
-        let totalMs = 0;
-        for (const e of entries) {
-          if (e.clockOutAt !== null) {
-            totalMs += new Date(e.clockOutAt).getTime() - new Date(e.clockInAt).getTime();
-          }
-        }
-        if (!cancelled) {
-          setWorkedMinutes(Math.max(0, Math.round(totalMs / 60000)));
+        const estimate = await getModulePorts().estimates.getForJob(job.id);
+        if (!cancelled && estimate !== null) {
+          setMaterialsOnsite(estimate.materialsOnsite === true);
         }
       } catch {
-        // worked-time lookup is best-effort; leave the field untouched on failure
+        // prefill is best-effort; the tech can still tick the box by hand
       }
     }
-    void loadWorkedTime();
+    void loadMaterialsOnsite();
     return () => {
       cancelled = true;
     };
   }, [job.id]);
 
+  // Stable: the photo card calls this from an effect.
+  const handleCountChange = useCallback(
+    (n: number) => {
+      setAfterPhotoCount(n);
+      if (n >= 1 && !photoRecordedRef.current) {
+        photoRecordedRef.current = true;
+        recordAfterPhoto(job.id);
+      }
+    },
+    [job.id],
+  );
+
   const trimmedNotes = qualityNotes.trim();
-  const canSubmit = canSubmitCompletion({ checklistComplete, afterPhotoCount, notes: qualityNotes, submitting });
-
-  /**
-   * Gate: `canSubmitCompletion`. Submit records the quality note, runs the
-   * state-machine transition, awaits optional `persistCompletion`, then
-   * calls `onDone`. After-photo capture only records the fact of capture
-   * against this module's ports/state — camera and storage upload wiring
-   * lives in the host app's capture flow, out of this screen's scope.
-   */
-  async function handleCaptureAfterPhoto(storagePath: string, extra: { id: string; localUri: string; ext: string }): Promise<void> {
-    const session = getModuleSession();
-    if (session === null) {
-      setError('No active session — cannot record photo.');
-      return;
-    }
-
-    try {
-      const ports = getModulePorts();
-      const occurredAt = new Date().toISOString();
-      const idempotencyKey = makeIdempotencyKey('job_photo.create', occurredAt, makeNonce());
-
-      await ports.photos.create(job.organizationId, {
-        jobId: job.id,
-        techId: session.userId,
-        kind: 'after',
-        storagePath,
-        occurredAt,
-        lat: null,
-        lng: null,
-        idempotencyKey,
-        ...extra,
-      } as never);
-
-      recordAfterPhoto(job.id);
-      setAfterPhotoCount((count) => count + 1);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to record after-photo.');
-    }
-  }
+  const canSubmit = canSubmitCompletion({
+    buildsFinished,
+    debrisCleared,
+    afterPhotoCount,
+    notes: qualityNotes,
+    submitting,
+    damageChecked,
+    damageText,
+    scopeChecked,
+    scopeText,
+  });
 
   async function handleSubmit(): Promise<void> {
     if (!canSubmit) {
@@ -165,7 +163,7 @@ export function Completion({ job, onDone, persistCompletion }: CompletionProps):
       const ports = getModulePorts();
       const occurredAt = new Date().toISOString();
 
-      // Quality notes MUST be written, and the sync probe MUST be updated,
+      // (a) Quality notes MUST be written, and the sync probe MUST be updated,
       // before transitionJob runs — the core's `completed` precondition
       // reads ctx.hasQualityNotes(job) synchronously during the call below.
       if (!notesSavedRef.current) {
@@ -179,6 +177,53 @@ export function Completion({ job, onDone, persistCompletion }: CompletionProps):
         notesSavedRef.current = true;
       }
 
+      // The fee only applies when the job has an estimate to carry the line.
+      const feeWanted = upstairsFeeApplies(movedUpstairs);
+      let estimateExists = false;
+      if (!checklistSavedRef.current || (feeWanted && !feeSavedRef.current)) {
+        estimateExists = (await ports.estimates.getForJob(job.id)) !== null;
+      }
+
+      // (b) Checklist note.
+      if (!checklistSavedRef.current) {
+        feeAppliedRef.current = feeWanted && estimateExists;
+        await ports.notes.create(job.organizationId, session.userId, {
+          jobId: job.id,
+          kind: 'completion_checklist',
+          body: buildCompletionNoteBody({
+            materialsOnsite,
+            movedUpstairs,
+            damageChecked,
+            damageText,
+            scopeChecked,
+            scopeText,
+            buildsFinished,
+            debrisCleared,
+            afterPhotoCount,
+            timeSpentSeconds,
+            feeApplied: feeAppliedRef.current,
+          }),
+          occurredAt,
+        });
+        checklistSavedRef.current = true;
+      }
+
+      // (c) Upstairs fee line (skipped when already present or no estimate).
+      if (feeWanted && estimateExists && !feeSavedRef.current) {
+        const existing = await ports.estimates.listLineItems(job.id);
+        if (!existing.some((line) => line.description === UPSTAIRS_FEE_DESCRIPTION)) {
+          await ports.estimates.addLineItem(job.id, {
+            kind: 'other',
+            description: UPSTAIRS_FEE_DESCRIPTION,
+            quantity: 1,
+            unitCost: UPSTAIRS_FEE,
+            lineTotal: UPSTAIRS_FEE,
+          });
+        }
+        feeSavedRef.current = true;
+      }
+
+      // (d) State-machine transition.
       const transitioned = await transitionJob(job, 'completed', {
         hasAfterPhotos: (j) => readHasAfterPhotos(j),
         hasQualityNotes: (j) => readHasQualityNotes(j),
@@ -186,6 +231,7 @@ export function Completion({ job, onDone, persistCompletion }: CompletionProps):
         now: () => new Date().toISOString(),
       });
 
+      // (e) Persist, then (f) hand control back.
       if (persistCompletion) {
         await persistCompletion(transitioned ?? job);
       }
@@ -198,35 +244,117 @@ export function Completion({ job, onDone, persistCompletion }: CompletionProps):
     }
   }
 
+  function renderItem(key: CompletionItemKey, label: string, hint: string | undefined): JSX.Element {
+    let checked = false;
+    let onChange: () => void = () => undefined;
+    let detail: ReactNode = null;
+    let hintText = hint;
+
+    switch (key) {
+      case 'materialsOnsite':
+        checked = materialsOnsite;
+        onChange = () => setMaterialsOnsite((prev) => !prev);
+        break;
+      case 'movedUpstairs':
+        checked = movedUpstairs;
+        onChange = () => setMovedUpstairs((prev) => !prev);
+        if (!movedUpstairs) {
+          detail = <Text style={styles.hint}>{`A $${UPSTAIRS_FEE} fee will be added to the Estimate.`}</Text>;
+        }
+        break;
+      case 'damage':
+        checked = damageChecked;
+        onChange = () => setDamageChecked((prev) => !prev);
+        if (damageChecked) {
+          detail = (
+            <TextField
+              value={damageText}
+              onChangeText={setDamageText}
+              placeholder="Describe the damage"
+              disabled={submitting}
+              multiline
+              style={styles.field}
+            />
+          );
+        }
+        break;
+      case 'extraScope':
+        checked = scopeChecked;
+        onChange = () => setScopeChecked((prev) => !prev);
+        if (scopeChecked) {
+          detail = (
+            <TextField
+              value={scopeText}
+              onChangeText={setScopeText}
+              placeholder="List each item added to the scope"
+              disabled={submitting}
+              multiline
+              style={styles.field}
+            />
+          );
+        }
+        break;
+      case 'buildsFinished':
+        checked = buildsFinished;
+        onChange = () => setBuildsFinished((prev) => !prev);
+        if (buildsFinished) {
+          detail = <Text style={styles.hint}>{`Total time elapsed: ${formatTimeSpent(timeSpentSeconds)}`}</Text>;
+        }
+        break;
+      case 'debrisCleared':
+        checked = debrisCleared;
+        onChange = () => setDebrisCleared((prev) => !prev);
+        break;
+      case 'photosTaken':
+        checked = afterPhotoCount >= 1;
+        hintText = `${afterPhotoCount} photo(s) - up to 6, each can carry a comment`;
+        break;
+    }
+
+    return (
+      <View key={key} style={styles.checkItem}>
+        <Checkbox variant="tick" label={label} checked={checked} onChange={onChange} disabled={submitting} />
+        {hintText ? <Text style={styles.hint}>{hintText}</Text> : null}
+        {detail}
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <ScreenTitle title="Complete Job" />
-      <Text style={styles.body}>Complete this job.</Text>
+    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
+      <View style={styles.headerRow}>
+        <ScreenTitle title="Complete Job" />
+        <Text style={styles.timeSpent}>{`Time Spent: ${formatTimeSpent(timeSpentSeconds)}`}</Text>
+      </View>
 
-      <Checkbox
-        label="Completion checklist done"
-        checked={checklistComplete}
-        onChange={() => setChecklistComplete((prev) => !prev)}
-        disabled={submitting}
-        style={styles.checkboxRow}
-      />
-
-      <View style={styles.section}>
+      <View style={styles.buttonRow}>
         <PayrollButton
-          label="Capture after-photo"
-          onPress={() => {
-            void (async () => {
-              const ports = getModulePorts();
-              const photoId = newPhotoId();
-              const captured = await ports.camera.capturePhoto('after', { jobId: job.id, photoId });
-              if (captured) {
-                await handleCaptureAfterPhoto(captured.storagePath, { id: photoId, localUri: captured.localUri, ext: captured.ext });
-              }
-            })();
-          }}
-          disabled={submitting}
+          label={submitting ? 'Completing…' : 'Complete Job'}
+          onPress={() => void handleSubmit()}
+          disabled={!canSubmit}
         />
-        <Text style={styles.body}>{afterPhotoCount} after-photo(s) recorded</Text>
+        <PayrollButton
+          label="Completion Photos"
+          onPress={() => scrollRef.current?.scrollTo({ y: photoYRef.current, animated: true })}
+        />
+      </View>
+
+      {error !== null ? (
+        <Text accessibilityRole="alert" style={styles.errorText}>
+          {error}
+        </Text>
+      ) : null}
+
+      <Text style={styles.heading}>Job Checklist</Text>
+      {COMPLETION_CHECKLIST_ITEMS.map((item) => renderItem(item.key, item.label, item.hint))}
+
+      <View
+        style={styles.section}
+        onLayout={(e) => {
+          photoYRef.current = e.nativeEvent.layout.y;
+        }}
+      >
+        {renderAfterPhotos ? renderAfterPhotos({ onCountChange: handleCountChange, disabled: submitting }) : null}
       </View>
 
       <TextField
@@ -237,23 +365,7 @@ export function Completion({ job, onDone, persistCompletion }: CompletionProps):
         multiline
         style={styles.field}
       />
-
-      <Text style={styles.body}>
-        {workedMinutes !== null ? formatWorkedTime(workedMinutes) : 'Loading time worked…'}
-      </Text>
-
-      {error !== null ? (
-        <Text accessibilityRole="alert" style={styles.errorText}>
-          {error}
-        </Text>
-      ) : null}
-
-      <PayrollButton
-        label={submitting ? 'Completing…' : 'Complete job'}
-        onPress={() => void handleSubmit()}
-        disabled={!canSubmit}
-      />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -261,12 +373,38 @@ const styles = StyleSheet.create({
   container: {
     padding: spacing.md,
   },
-  section: {
+  headerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
     marginBottom: spacing.sm,
   },
-  body: {
+  timeSpent: {
     fontSize: typography.size.body,
     color: colors.text,
+    marginLeft: spacing.md,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  heading: {
+    fontSize: typography.size.body,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  checkItem: {
+    marginBottom: spacing.sm,
+  },
+  hint: {
+    fontSize: typography.size.label,
+    color: colors.textLight,
+    marginLeft: spacing.lg,
+  },
+  section: {
     marginBottom: spacing.sm,
   },
   field: {
@@ -275,12 +413,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: typography.size.label,
     color: colors.danger,
-    marginBottom: spacing.sm,
-  },
-  button: {
-    marginBottom: spacing.sm,
-  },
-  checkboxRow: {
     marginBottom: spacing.sm,
   },
 });

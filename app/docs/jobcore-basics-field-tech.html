@@ -109,9 +109,15 @@ construction rule as every other screen in this module.</p>
 <p>When the work is done, Marcus taps <strong>Complete</strong> in the job menu on Job Detail
 (the job must be in progress), which opens <strong>Completion</strong>
 (<code>screens/Completion.tsx</code>, route <code>/job/complete/&lt;jobId&gt;</code>; same for admin and owner) <span class="jc-badge jc-badge--built-live">🟢 Built &amp; Live</span>.
-He checks off the completion checklist, captures at least one after-photo
-(<code>ports.photos.create</code>, kind <code>'after'</code>), and types quality notes —
-the submit button stays disabled until all three are satisfied. Ordering here is
+He works through the seven-item <strong>Job Checklist</strong> (materials onsite, materials moved
+upstairs, apparent damage, scope added after arrival, builds finished, debris cleared, photos taken),
+captures at least one after-photo through the host app's photo card (up to six, named like
+<code>10AFT-1.jpg</code>, each with an optional comment stored in the photo's metadata), and types
+quality notes — the submit button stays disabled until builds-finished, debris-cleared, one
+after-photo and the quality notes are all satisfied (a ticked damage or scope item also needs its
+text). The answers are saved as one <code>completion_checklist</code> <code>job_notes</code> row, and
+leaving "materials moved upstairs" unticked adds a $20 line to the Estimate (the database keeps the
+Estimate total in step). Ordering here is
 load-bearing: the quality-notes <code>job_notes</code> row is written and the in-memory
 sync probe updated <em>before</em> <code>transitionJob(job, 'completed', ctx)</code>
 runs, so <code>ctx.hasAfterPhotos</code>/<code>ctx.hasQualityNotes</code> read

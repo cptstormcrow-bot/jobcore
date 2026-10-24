@@ -12,12 +12,13 @@ export interface CheckboxProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   boxStyle?: StyleProp<ViewStyle>;
-  /** 'box' (default) = filled box with dot; 'check' = bordered box with a bold checkmark glyph. */
-  variant?: 'box' | 'check';
+  /** 'box' (default) = filled box with dot; 'check' = bordered box with a bold checkmark glyph; 'tick' = checklist look (black 2px border always, green bold checkmark). */
+  variant?: 'box' | 'check' | 'tick';
 }
 
 export function Checkbox({ label, accessibilityLabel, checked, onChange, disabled = false, style, boxStyle, variant = 'box' }: CheckboxProps) {
   const isCheck = variant === 'check';
+  const isTick = variant === 'tick';
   return (
     <Pressable
       onPress={() => onChange?.(!checked)}
@@ -28,8 +29,21 @@ export function Checkbox({ label, accessibilityLabel, checked, onChange, disable
       hitSlop={8}
       style={[styles.base, disabled && styles.disabled, style]}
     >
-      <View style={[styles.box, boxStyle, checked && (isCheck ? styles.boxCheckedOutline : styles.boxChecked)]}>
-        {checked && (isCheck ? <Text style={styles.checkGlyph}>✓</Text> : <View style={styles.checkMark} />)}
+      <View
+        style={
+          isTick
+            ? [styles.box, styles.boxTick, boxStyle]
+            : [styles.box, boxStyle, checked && (isCheck ? styles.boxCheckedOutline : styles.boxChecked)]
+        }
+      >
+        {checked &&
+          (isTick ? (
+            <Text style={styles.tickGlyph}>✓</Text>
+          ) : isCheck ? (
+            <Text style={styles.checkGlyph}>✓</Text>
+          ) : (
+            <View style={styles.checkMark} />
+          ))}
       </View>
       <Text style={styles.label}>{label}</Text>
     </Pressable>
@@ -55,6 +69,16 @@ const styles = StyleSheet.create({
   },
   boxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
   boxCheckedOutline: { borderColor: colors.primary },
+  // NOTE: 'tick' is the checklist look - black 2px border in both states, green check.
+  boxTick: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.black },
+  tickGlyph: {
+    color: colors.success,
+    fontSize: 16,
+    fontWeight: '900',
+    lineHeight: 18,
+    textAlign: 'center',
+    includeFontPadding: false,
+  },
   checkGlyph: {
     color: colors.primary,
     fontSize: 16,

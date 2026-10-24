@@ -401,15 +401,22 @@ export interface TimeOffRepository {
 /**
  * The full `JobNoteKind` union, restated as a runtime tuple so
  * `toJobNote` can validate an untrusted row's `kind` string against it.
- * Mirrors `job_notes_kind_check` in the migration.
+ * Mirrors `job_notes_kind_check` in the migration; `completion_checklist` is
+ * added to that constraint by migration 0101_completion_checklist_note_kind.sql.
  */
-export type JobNoteKind = 'decline_reason' | 'quality_notes' | 'dispute' | 'admin_correction';
+export type JobNoteKind =
+  | 'decline_reason'
+  | 'quality_notes'
+  | 'dispute'
+  | 'admin_correction'
+  | 'completion_checklist';
 
 const JOB_NOTE_KINDS: readonly JobNoteKind[] = [
   'decline_reason',
   'quality_notes',
   'dispute',
   'admin_correction',
+  'completion_checklist',
 ];
 
 function isJobNoteKind(value: string): value is JobNoteKind {

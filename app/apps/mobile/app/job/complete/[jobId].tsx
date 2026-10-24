@@ -14,6 +14,8 @@ import { useSession } from '../../../src/lib/session';
 import { buildFieldTechPorts } from '../../../src/lib/field-tech-repos';
 import { createJobRepository } from '../../../src/lib/admin-finance-repos';
 import { ErrorBoundary } from '../../../src/components/ErrorBoundary';
+import { JobAfterPhotoCard } from '../../../src/components/JobAfterPhotoCard';
+import { liveLaborSeconds } from '../../../src/lib/live-labor';
 
 type Loaded =
   | { kind: 'loading' }
@@ -80,7 +82,30 @@ export default function CompleteJobRoute() {
   } else if (loaded.kind === 'blocked') {
     body = <EmptyState title="Cannot complete this job" message={loaded.notice} />;
   } else {
-    body = <Completion job={loaded.job} onDone={onDone} persistCompletion={persistCompletion} />;
+    // Time Spent: same helper/inputs as the job header's Total Hours; computed once (no timer).
+    const timeSpentSeconds = liveLaborSeconds({
+      storedSeconds: loaded.job.totalLaborSeconds,
+      openSegmentStartIso: loaded.job.inProgressAt,
+      completedAt: loaded.job.completedAt,
+      nowMs: Date.now(),
+    });
+    const readyJob = loaded.job;
+    body = (
+      <Completion
+        job={readyJob}
+        onDone={onDone}
+        persistCompletion={persistCompletion}
+        timeSpentSeconds={timeSpentSeconds}
+        renderAfterPhotos={({ onCountChange, disabled }) => (
+          <JobAfterPhotoCard
+            jobId={readyJob.id}
+            jobNumber={readyJob.jobNumber ?? null}
+            onCountChange={onCountChange}
+            disabled={disabled}
+          />
+        )}
+      />
+    );
   }
 
   return (

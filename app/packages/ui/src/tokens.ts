@@ -22,6 +22,7 @@ export const colors = {
   textMutedDark: '#78818A',
   gold: '#E1AF80',
   border: '#E9ECEF',
+  black: '#000000', // pure black for high-contrast outlines (checklist tick Checkbox)
   sand: '#D9C7A0',
   sandInactive: '#E8E0CD',
   estimateApprovedBar: '#E0A800',
