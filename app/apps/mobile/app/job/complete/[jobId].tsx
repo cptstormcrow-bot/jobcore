@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { AppChrome, EmptyState, LoadingState, colors } from '@jobcore/ui';
+import { estimateStageFlags } from '@jobcore/core';
+import { AppChrome, EmptyState, JobProgressBar, LoadingState, colors, spacing } from '@jobcore/ui';
+import type { MenuItem } from '@jobcore/ui';
 import {
   setModuleSession as setAdminFinanceSourceModuleSession,
 } from '../../../../../modules/admin-finance/src/lib/module-session';
@@ -11,9 +13,12 @@ import { setModulePorts as setFieldTechModulePorts } from '../../../../../module
 import { Completion } from '../../../../../modules/field-tech/src/screens/Completion';
 import { CompletedReview } from '../../../../../modules/field-tech/src/screens/CompletedReview';
 import { completionBlockedNotice, isAlreadyComplete } from '../../../../../modules/field-tech/src/screens/completion-helpers';
-import { useSession } from '../../../src/lib/session';
+import { useSession, signOut } from '../../../src/lib/session';
+import { JobHeader } from '../../../src/components/JobHeader';
+import { useJobStageTimeline } from '../../../src/lib/useJobStageTimeline';
 import { buildFieldTechPorts } from '../../../src/lib/field-tech-repos';
-import { createJobRepository } from '../../../src/lib/admin-finance-repos';
+import type { Customer } from '../../../../../modules/admin-finance/src/data/ports';
+import { createJobRepository, createCustomerRepository } from '../../../src/lib/admin-finance-repos';
 import { ErrorBoundary } from '../../../src/components/ErrorBoundary';
 import { JobAfterPhotoCard } from '../../../src/components/JobAfterPhotoCard';
 import { liveLaborSeconds } from '../../../src/lib/live-labor';
@@ -21,7 +26,7 @@ import { liveLaborSeconds } from '../../../src/lib/live-labor';
 type Loaded =
   | { kind: 'loading' }
   | { kind: 'missing' }
-  | { kind: 'blocked'; notice: string }
+  | { kind: 'blocked'; notice: string; job: Job }
   | { kind: 'completed'; job: Job }
   | { kind: 'ready'; job: Job };
 
@@ -38,6 +43,36 @@ export default function CompleteJobRoute() {
     setFieldTechModulePorts(buildFieldTechPorts({ orgId: state.organization.id, userId: state.profile.id }));
   }
   const ready = state.status === 'authenticated';
+  const role = state.status === 'authenticated' ? state.profile.role : undefined;
+  const isAdmin = role === 'admin';
+  const isTech = role === 'tech';
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const headerJob = loaded.kind === 'loading' || loaded.kind === 'missing' ? null : loaded.job;
+  const { stageResults, stageList, estimate } =useJobStageTimeline(headerJob, ready && !!headerJob);
+
+  useEffect(() => {
+    const customerId = headerJob?.customerId;
+    if (!ready || !customerId) {
+      setCustomer(null);
+      return undefined;
+    }
+    let cancelled = false;
+    createCustomerRepository()
+      .getById(customerId)
+      .then((c) => {
+        if (!cancelled) setCustomer(c);
+      })
+      .catch(() => {
+        if (!cancelled) setCustomer(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, headerJob?.customerId]);
+
+  const go = (panel: string) => {
+    if (headerJob) router.replace(`/job/${headerJob.id}?panel=${panel}` as never);
+  };
 
   useEffect(() => {
     if (!ready || !jobId) return undefined;
@@ -55,7 +90,7 @@ export default function CompleteJobRoute() {
           return;
         }
         const notice = completionBlockedNotice(job);
-        setLoaded(notice ? { kind: 'blocked', notice } : { kind: 'ready', job });
+        setLoaded(notice ? { kind: 'blocked', notice, job } : { kind: 'ready', job });
       })
       .catch(() => {
         if (!cancelled) setLoaded({ kind: 'missing' });
@@ -148,14 +183,99 @@ export default function CompleteJobRoute() {
     );
   }
 
+  const menuItems: MenuItem[] = [
+    { id: 'plan', label: 'Job', onPress: () => go('plan') },
+    { id: 'evisit', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
+    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => go('jobEstimate') },
+    ...(isAdmin ? ([{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => go('assign') }] as MenuItem[]) : []),
+    ...(role !== 'tech' && !isAdmin ? [{ id: 'needs-prem', label: 'Needs Prem', onPress: () => go('plan') }] : []),
+    { id: 'schedule', label: 'Schedule', onPress: () => go('schedule') },
+    { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => go('plan') },
+    { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => go('plan'), disabled: !headerJob?.assignedTechId },
+    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => {}, isActive: true },
+    ...(role === 'owner' || role === 'admin'
+      ? ([{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => go('payment') }] as MenuItem[])
+      : []),
+    ...(role === 'owner' || role === 'admin'
+      ? ([{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => go('closeout') }] as MenuItem[])
+      : []),
+    ...(isAdmin || isTech
+      ? []
+      : ([
+          { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
+          {
+            id: 'configuration',
+            label: 'Configuration',
+            onPress: () => {},
+            submenu: [{ id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') }],
+          },
+        ] as MenuItem[])),
+  ];
+
+  const handleStagePress = (key: string) => {
+    switch (key) {
+      case 'job': go('plan'); break;
+      case 'premAvailable':
+      case 'completePrem': go('jobInvestigation'); break;
+      case 'estimate':
+      case 'approval':
+      case 'startWork':
+      case 'photos': go('jobEstimate'); break;
+      case 'schedule': go('schedule'); break;
+      case 'assign': go('assign'); break;
+      case 'history': go('history'); break;
+      default: break;
+    }
+  };
+
   return (
     <View style={styles.screen}>
-      <AppChrome breadcrumbSegments={[{ label: 'Complete Job' }]} menuItems={[]} titleBar={{ title: 'Complete Job' }} />
-      <ErrorBoundary>{body}</ErrorBoundary>
+      {headerJob ? (
+        <>
+          <JobHeader
+            job={headerJob}
+            customer={customer}
+            totalLaborSeconds={headerJob.totalLaborSeconds ?? 0}
+            jobDetailMenuItems={menuItems}
+            optionsItems={[]}
+            showBack={isAdmin || isTech ? false : undefined}
+            compactMenu={isAdmin || isTech || undefined}
+            fitMenu={isAdmin || isTech || undefined}
+            onSchedulePress={() => go('schedule')}
+            gearItems={isAdmin || isTech ? [
+              { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
+              { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+              { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+              { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
+            ] : undefined}
+            gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
+            onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
+          >
+            {stageResults ? (
+              <JobProgressBar
+                stages={stageList}
+                states={stageResults.states}
+                nextStep={stageResults.nextStep ?? ''}
+                onStagePress={handleStagePress}
+                disabledKeys={['lead']}
+                testID="job-progress-bar"
+              />
+            ) : null}
+          </JobHeader>
+          <View style={[styles.rule, { backgroundColor: headerJob?.status === 'paid' || headerJob?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
+        </>
+      ) : (
+        <AppChrome breadcrumbSegments={[{ label: 'Complete Job' }]} menuItems={[]} titleBar={{ title: 'Complete Job' }} />
+      )}
+      <View style={styles.body}>
+        <ErrorBoundary>{body}</ErrorBoundary>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
+  body: { flex: 1 },
+  rule: { height: 3, backgroundColor: colors.text, width: '100%', marginTop: Math.round(spacing.sm * 0.67) },
 });

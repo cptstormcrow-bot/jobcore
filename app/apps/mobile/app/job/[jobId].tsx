@@ -13,8 +13,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { deriveStageStates, deriveNextStep, estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
-import type { StageInputs, StageKey } from '@jobcore/core';
+import { estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
+import type { StageKey } from '@jobcore/core';
+import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
 import { AppChrome, Breadcrumb, Button, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
@@ -180,7 +181,7 @@ const JOB_ROW_COLUMNS =
 // Deep-link `?panel=` -> unified `JobRegion`. `start-checklist`/`completion`
 // have no dedicated region in the unified screen (those flows are reached
 // from `details`), so they map back to `details`.
-const DEEP_LINK_PANELS = ['plan', 'schedule', 'jobEstimate', 'jobInvestigation', 'start-checklist', 'completion', 'closeout'] as const;
+const DEEP_LINK_PANELS = ['plan', 'schedule', 'jobEstimate', 'jobInvestigation', 'start-checklist', 'completion', 'closeout', 'assign', 'payment', 'history'] as const;
 type DeepLinkPanel = (typeof DEEP_LINK_PANELS)[number];
 function isDeepLinkPanel(v: string | undefined): v is DeepLinkPanel {
   return (DEEP_LINK_PANELS as readonly string[]).includes(v ?? '');
@@ -191,6 +192,12 @@ function regionFromPanel(panel: string | undefined): JobRegion {
   switch (panel) {
     case 'closeout':
       return 'closeout';
+    case 'assign':
+      return 'assign';
+    case 'payment':
+      return 'payment';
+    case 'history':
+      return 'history';
     case 'plan':
       return 'plan';
     case 'jobEstimate':
@@ -952,14 +959,7 @@ export default function JobDrilldownScreen() {
     setSaved(false);
   };
 
-  const [stageExtras, setStageExtras] = useState<{
-    contactedAt: string | null;
-    stageMarks: Record<string, string>;
-    upstreamChangedAt: string | null;
-    createdAt: string | null;
-    photoCount: number;
-    lead: { id: string } | null;
-  } | null>(null);
+  const [stageExtras, setStageExtras] = useState<JobStageExtras | null>(null);
 
   const [photoCountTick, setPhotoCountTick] = useState(0);
   // Re-derive inputs on load and on every refresh (job object changes on each setJob).
@@ -1002,45 +1002,10 @@ export default function JobDrilldownScreen() {
     return () => { cancelled = true; };
   }, [job, estimate, investigation, rev, photoCountTick]);
 
-  const stageResults = useMemo(() => {
-    if (!job) return null;
-    const marks = stageExtras?.stageMarks ?? {};
-    const done = (complete: boolean, key: StageKey, fallback?: string | null) => ({
-      complete,
-      completedAt: complete ? marks[key] ?? fallback ?? null : null,
-    });
-    const closed = job.status === 'closed';
-    const flags = estimateStageFlags(estimate?.status ?? null);
-    const inputs: StageInputs = {
-      lead: done(true, 'lead'),
-      job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
-      premAvailable: {
-        complete: !!investigation?.submittedAt,
-        completedAt: investigation?.submittedAt ?? null,
-        inProgress: (!!job.needsPremAt || !!investigatorTechId) && !investigation?.submittedAt,
-        notRequired: !job.needsPremAt && !investigatorTechId,
-        sticky: true,
-      },
-      completePrem: { ...done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt), sticky: true },
-      estimate: { ...done(flags.approvalComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: estimate?.status === 'submitted', sticky: true },
-      approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected, sticky: true },
-      schedule: done(!!job.scheduledStart, 'schedule'),
-      assign: done(!!(job.assignedTechId), 'assign'),
-      contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },
-      startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
-      photos: done((stageExtras?.photoCount ?? 0) >= 1, 'photos'),
-      completeWork: { ...done(!!job.completedAt, 'completeWork', job.completedAt), sticky: true },
-      paid: done(job.status === 'paid' || closed, 'paid'),
-      closeout: done(closed, 'closeout'),
-      history: done(closed, 'history'),
-    };
-    const derived = deriveStageStates(inputs);
-    // Draft/none stays gray (Jeff: gray draft, yellow submitted, green approved).
-    const states = (estimate?.status ?? 'draft') === 'draft'
-      ? derived.map((s) => (s.key === 'estimate' ? { ...s, state: 'gray' as const } : s))
-      : derived;
-    return { states, nextStep: deriveNextStep(states) };
-  }, [job, estimate, investigation, investigatorTechId, stageExtras]);
+  const stageResults = useMemo(
+    () => buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras }),
+    [job, estimate, investigation, investigatorTechId, stageExtras],
+  );
 
   const handleContact = () => {
     if (!customer?.phone) return;
