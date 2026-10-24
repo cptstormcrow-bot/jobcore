@@ -147,8 +147,25 @@ All money is integer cents.
 - At close-out, contractor lines with amount > 0 are written to
   `contractor_payouts` (status `pending`, one row per tech per job, online
   only; close-out is not undone if the write fails).
-- Employee lines are a display preview only: nothing posts them to payroll or
-  commissions yet.
+- Migration 0104 (`supabase/migrations/0104_job_payout_lines.sql`, written and
+  committed but NOT yet applied live) adds table `job_payout_lines` (basis
+  `dev_flat` | `prem_bonus`; status `pending` | `included` | `void`; one live
+  row per job per tech) and RPC `post_job_payout_lines`.
+- At close-out, employee Dev FLAT and Prem BONUS lines with amount > 0 are
+  posted to `job_payout_lines` (online only; close-out is not undone if the
+  post fails; re-posting is idempotent).
+- Dev HOURLY lines are never posted: payroll already pays those hours from
+  approved timesheets, so posting would double-pay. The Payouts tab labels them
+  "paid via timesheet"; flat/prem rows say "posts to next payroll run".
+- `create_payout_batch` (replaced in 0104) adds each user's pending lines dated
+  on or before the period end to that user's `bonus_amount`, recomputes the
+  total, and stamps the lines `included` with the batch id; a user with only
+  job pay still gets a payout line.
+- Wage engine: `RunLine.bonusCents` (optional) shows as "Job pay": a separate
+  debit line in the IIF and QBO journal (to wages expense), and a "Job Pay"
+  column in the generic CSV when any line has it.
+- Contractor lines are unchanged (`contractor_payouts`). Not backfilled for
+  already-closed jobs.
 - Pay math for already-closed jobs is unchanged.
 
 ## What this document does not cover

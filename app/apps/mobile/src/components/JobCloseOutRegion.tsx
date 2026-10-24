@@ -10,7 +10,7 @@ import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/c
 import { settledTotalCents, invoiceTotalCents, balanceCents } from '../../../../modules/admin-finance/src/domain/payments';
 import { computeTotals } from '../../../../modules/admin-finance/src/domain/estimate-layout';
 import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
-import { computeJobPayLines, centsToDollars } from '../../../../modules/admin-finance/src/money/job-pay';
+import { computeJobPayLines, centsToDollars, postableJobPayLines } from '../../../../modules/admin-finance/src/money/job-pay';
 import type { JobPayTech } from '../../../../modules/admin-finance/src/money/job-pay';
 import { closeOutJob } from '../../../../modules/admin-finance/src/flows/close-out-job';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
@@ -34,7 +34,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [payment, setPayment] = useState<{ paid: boolean; amountCents: number } | null>(null);
-  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none'; note?: string };
+  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'flat' | 'prem-bonus' | 'none'; note?: string; techId?: string };
   type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
   const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
   const [contractorPayouts, setContractorPayouts] = useState<ContractorPayoutLine[]>([]);
@@ -157,7 +157,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           if (!(isClosed && commissionRows.length > 0)) {
             employeeLines = lines
               .filter((l) => l.workerType === 'employee')
-              .map((l) => ({ techName: l.name, amount: centsToDollars(l.amountCents), basis: l.basis, note: l.note }));
+              .map((l) => ({ techName: l.name, amount: centsToDollars(l.amountCents), basis: l.basis, note: l.note, techId: l.techId }));
           }
           if (!hasStored) {
             contractorLines = lines
@@ -277,20 +277,42 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           const payRows = contractorPayouts
             .filter((c) => c.techId && Math.round(c.amount * 100) > 0)
             .map((c) => ({ techId: c.techId as string, amountCents: Math.round(c.amount * 100) }));
+          const failures: string[] = [];
           if (payRows.length > 0 && !contractorStored) {
             try {
               await ports.contractorPayouts.createForJob(target.id, payRows);
             } catch (err) {
-              setPhotoError(`Job closed, but contractor payouts could not be saved: ${err instanceof Error ? err.message : String(err)}`);
+              failures.push(`Job closed, but contractor payouts could not be saved: ${err instanceof Error ? err.message : String(err)}`);
             }
           }
+          const employeePostable = postableJobPayLines(
+            techPayouts
+              .filter((t) => t.techId && (t.basis === 'flat' || t.basis === 'prem-bonus'))
+              .map((t) => ({
+                techId: t.techId as string,
+                name: t.techName,
+                workerType: 'employee' as const,
+                techRole: null,
+                basis: t.basis as 'flat' | 'prem-bonus',
+                amountCents: Math.round(t.amount * 100),
+                note: t.note ?? '',
+              })),
+          );
+          if (employeePostable.length > 0) {
+            try {
+              await ports.jobPayoutLines.postForJob(target.id, employeePostable);
+            } catch {
+              failures.push('Job closed, but employee pay lines were not saved.');
+            }
+          }
+          if (failures.length > 0) setPhotoError(failures.join(' '));
           onClosed(result.job);
         } catch (err) {
           setPhotoError(`Could not close out: ${err instanceof Error ? err.message : String(err)}`);
         }
       })();
     },
-    [session, ctx, ports, onClosed, contractorPayouts, contractorStored],
+    [session, ctx, ports, onClosed, contractorPayouts, contractorStored, techPayouts],
   );
 
   // After every hook: closeOutBlockers is empty for a non-awaiting job, so the
