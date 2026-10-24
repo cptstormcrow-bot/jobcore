@@ -129,7 +129,7 @@ All money is integer cents.
   total is the estimate `totalCost` converted to cents.
   - Dev tech, hourly: `round(hours x rate)`, where rate is the tech's hourly
     rate if > 0, else the policy hourly rate.
-  - Dev tech, flat: the tech's `flat_rate_cents`, falling back to the policy
+  - Dev tech, flat (0103; replaced by commission in 0107, see below): the tech's `flat_rate_cents`, falling back to the policy
     `dev_default_flat_cents`. A Dev tech with no pay mode is treated as hourly.
   - Prem tech: `prem_bonus_flat_cents + round(prem_bonus_percent/100 x
     max(job total, 0))`.
@@ -138,7 +138,8 @@ All money is integer cents.
     (pay mode ignored).
   - No role and no rate: no pay line.
 - Screen #93 (`af-compensationPolicy`, `CompensationPolicyScreen.tsx`) edits
-  the org policy (hourly rate, Dev flat default, Prem flat bonus, Prem percent
+  the org policy (hourly rate, Dev default commission percent since 0107
+  (was Dev flat default), Prem flat bonus, Prem percent
   bonus). It is reached from the "Open Compensation Policy" button on Close
   Out, which replaced the red "No compensation policy is configured" dead end.
   Per-tech role, worker type, Dev pay mode, Base Pay (hourly or flat rate) and
@@ -154,8 +155,8 @@ All money is integer cents.
   applied live 2026-10-24) adds table `job_payout_lines` (basis
   `dev_flat` | `prem_bonus`, plus `commission` from 0106; status `pending` | `included` | `void`;
   one live row per job per tech, per basis from 0106) and RPC `post_job_payout_lines`.
-- At close-out, employee Dev FLAT and Prem BONUS lines with amount > 0 are
-  posted to `job_payout_lines` (online only; close-out is not undone if the
+- At close-out, employee Dev FLAT (until 0107; now Dev commission, see below)
+  and Prem BONUS lines with amount > 0 are posted to `job_payout_lines` (online only; close-out is not undone if the
   post fails; re-posting is idempotent).
 - Dev HOURLY lines are never posted: payroll already pays those hours from
   approved timesheets, so posting would double-pay. The Payouts tab labels them
@@ -192,6 +193,35 @@ Migration `supabase/migrations/0106_tech_commission.sql`.
   with basis `commission`. One live line per (job, user, basis), so a tech can
   hold a base line and a commission line on the same job. Posted lines are
   immutable: later estimate or percent changes do not alter them.
+
+### Dev Tech commission replaces flat rate (migration 0107)
+
+Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are NOT applied live
+yet; 0107 must follow 0106.
+
+- The Dev Tech "flat rate" ($ per assembly) is replaced by Commission: a
+  percent (0 to 50) of the estimate's LABOR charged (`job_estimates.labor_cost`;
+  labor lines only, not materials, the $20 upstairs fee or contingencies).
+- `profiles.dev_pay_mode` is now `hourly` | `commission`; 0107 maps old `flat`
+  to `commission`. A Dev Tech's personal percent reuses
+  `profiles.commission_percent`. 0107 caps `commission_percent` at 0..50 for
+  everyone (0106 allowed 0..100) and refuses to apply if any profile is over 50.
+- `compensation_policies.dev_default_commission_percent numeric(5,2)` (default
+  0, check 0..50) is the fallback when the Dev tech has no personal percent.
+  `flat_rate_cents` and `dev_default_flat_cents` stay in the database,
+  DEPRECATED and unused.
+- Pay rule: each Dev commission tech gets THEIR OWN percent of the FULL labor
+  total (no split). Labor $240: tech A at 10% = $24, tech B at 20% = $48. The
+  line has basis `commission`, posts to `job_payout_lines` (employees only;
+  contractors still go to `contractor_payouts`) and folds into
+  `payout_lines.bonus_amount` at the next payroll batch.
+- A Dev commission tech gets NO second on-top commission line; the per-employee
+  Commission switch is hidden for them.
+- The `dev_flat` basis stays valid in `job_payout_lines` for history but is no
+  longer posted.
+- After 0107, any tech who was on flat must have a percent re-entered (the
+  dollar flat amount cannot convert) or they fall back to the policy default
+  (0 until set).
 - `create_payout_batch` sums all pending lines per user into the bonus amount
   with no basis filter, so payroll needed no change: commission lands on the
   next payroll run. Hourly pay is still paid through approved timesheets and
@@ -204,9 +234,9 @@ Limits:
 
 - Reports "Commission Totals" still reads the legacy `commissions` table, so
   per-tech commissions do not appear there yet.
-- With the picker on Flat, the Base Pay box edits the flat rate; the hourly
-  rate (still used by payroll for timesheet hours) is edited by switching the
-  picker to Hourly.
+- Superseded by 0107: the picker is Hourly or Commission. On Commission the
+  Base Pay box is replaced by a percent box; the hourly rate (still used by
+  payroll for timesheet hours) is edited by switching the picker to Hourly.
 - The policy default hourly rate is now $25.00 (live data).
 
 ## What this document does not cover
