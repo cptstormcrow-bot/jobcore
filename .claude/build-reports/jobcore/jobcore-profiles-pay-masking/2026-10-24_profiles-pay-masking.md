@@ -5,7 +5,7 @@ Project: jobcore
 Slug: jobcore-profiles-pay-masking
 Date: 2026-10-24
 Branch: jobcore-role-landing-0.1.3 (not pushed)
-Commits: recorded in a follow-up docs commit
+Commits: 37512a5 (feat), b878405 (test), 1aad91e (docs); not pushed
 Status: COMPLETE for the written scope. Migrations 0110 and 0111 are written and NOT applied live; Jeff's order was to write only and wait for his go.
 Test plan: none - Jeff answered "No test plan" to the Rule 43 question on 2026-10-24 (nothing is applied live, so there is nothing visible to click).
 Plan: E:\Jeff\.claude\plans\ok-next-on-screen-pure-boole.md
