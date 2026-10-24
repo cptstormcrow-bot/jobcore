@@ -119,9 +119,9 @@ All money is integer cents.
 - `profiles` gained `worker_type` (`employee` | `contractor`, default
   `employee`), `tech_role` (`prem` | `dev` | `service`, nullable),
   `dev_pay_mode` (`hourly` | `flat`, nullable) and `flat_rate_cents`
-  (nullable). Hourly pay still uses the existing `profiles.hourly_rate_cents`.
+  (nullable; deprecated by 0107, dropped by 0109, written, not yet applied live). Hourly pay still uses the existing `profiles.hourly_rate_cents`.
 - `compensation_policies` gained `prem_bonus_flat_cents`,
-  `prem_bonus_percent` and `dev_default_flat_cents`. 0103 seeds one
+  `prem_bonus_percent` and `dev_default_flat_cents` (deprecated by 0107, dropped by 0109, written, not yet applied live). 0103 seeds one
   "Default pay policy" row per org; all rates start at 0 until an admin sets
   them.
 - Math lives in `modules/admin-finance/src/money/job-pay.ts`
@@ -129,7 +129,7 @@ All money is integer cents.
   total is the estimate `totalCost` converted to cents.
   - Dev tech, hourly: `round(hours x rate)`, where rate is the tech's hourly
     rate if > 0, else the policy hourly rate.
-  - Dev tech, flat (0103; replaced by commission in 0107, see below): the tech's `flat_rate_cents`, falling back to the policy
+  - Dev tech, flat (0103; replaced by commission in 0107, columns dropped by 0109; see below): the tech's `flat_rate_cents`, falling back to the policy
     `dev_default_flat_cents`. A Dev tech with no pay mode is treated as hourly.
   - Prem tech: `prem_bonus_flat_cents + round(prem_bonus_percent/100 x
     max(job total, 0))`.
@@ -208,8 +208,11 @@ Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are applied live
   everyone (0106 allowed 0..100) and refuses to apply if any profile is over 50.
 - `compensation_policies.dev_default_commission_percent numeric(5,2)` (default
   0, check 0..50) is the fallback when the Dev tech has no personal percent.
-  `flat_rate_cents` and `dev_default_flat_cents` stay in the database,
-  DEPRECATED and unused.
+  `flat_rate_cents` and `dev_default_flat_cents` (added in 0103) were left in
+  the database by 0107 as DEPRECATED and unused; 0109 drops them (see 0109 below).
+- 0109 (`0109_drop_dev_flat_columns.sql`): drops `profiles.flat_rate_cents` and
+  `compensation_policies.dev_default_flat_cents`. Written, not yet applied live;
+  apply is pending Jeff's separate push approval.
 - Pay rule: each Dev commission tech gets THEIR OWN percent of the FULL labor
   total (no split). Labor $240: tech A at 10% = $24, tech B at 20% = $48. The
   line has basis `commission`, posts to `job_payout_lines` (employees only;
@@ -263,10 +266,11 @@ Limits:
 - `contractor_payouts` has a natural key (`job_id`, `tech_id`). Migration
   `0108_contractor_payouts_unique.sql` adds a unique constraint
   `contractor_payouts_job_tech_uniq` (it refuses to apply if duplicates exist;
-  live has none). STATUS: 0108 is written but NOT applied to the live database
-  (it waits for Jeff's explicit go naming 0108). The app treats a duplicate-key
-  error (23505) on `createForJob` as success when every wanted technician
-  already has a row, so it behaves the same before and after 0108.
+  live has none). STATUS: 0108 was applied to the live database on 2026-10-24 (Jeff's go
+  named 0108; the constraint is verified live as `UNIQUE (job_id, tech_id)`).
+  The app still treats a duplicate-key error (23505) on `createForJob` as
+  success when every wanted technician already has a row; the database
+  constraint now backs that check-then-insert.
 
 ## What this document does not cover
 

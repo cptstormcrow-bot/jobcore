@@ -106,11 +106,11 @@ begin
 
   caught := false;
   begin
-    update public.profiles set flat_rate_cents = 1
+    update public.profiles set commission_percent = 1
      where id = '00000000-0000-4000-8000-000000000103';
   exception when insufficient_privilege then caught := true;
   end;
-  if not caught then raise exception 'T4 FAILED: (e) tech changed flat_rate_cents'; end if;
+  if not caught then raise exception 'T4 FAILED: (e) tech changed commission_percent'; end if;
 
   caught := false;
   begin
