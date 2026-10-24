@@ -196,8 +196,8 @@ Migration `supabase/migrations/0106_tech_commission.sql`.
 
 ### Dev Tech commission replaces flat rate (migration 0107)
 
-Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are NOT applied live
-yet; 0107 must follow 0106.
+Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are applied live
+(2026-10-24), pushed together.
 
 - The Dev Tech "flat rate" ($ per assembly) is replaced by Commission: a
   percent (0 to 50) of the estimate's LABOR charged (`job_estimates.labor_cost`;
@@ -219,9 +219,10 @@ yet; 0107 must follow 0106.
   Commission switch is hidden for them.
 - The `dev_flat` basis stays valid in `job_payout_lines` for history but is no
   longer posted.
-- After 0107, any tech who was on flat must have a percent re-entered (the
-  dollar flat amount cannot convert) or they fall back to the policy default
-  (0 until set).
+- Because 0107 already ran, every tech who was on flat is now in Commission
+  mode with no personal percent (the dollar flat amount cannot convert), so
+  they are paid the policy default percent (0 until set) until an admin enters
+  a percent on the employee's Pay tab.
 - `create_payout_batch` sums all pending lines per user into the bonus amount
   with no basis filter, so payroll needed no change: commission lands on the
   next payroll run. Hourly pay is still paid through approved timesheets and

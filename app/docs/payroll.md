@@ -34,8 +34,10 @@ and an anchor date; period boundaries derive from those two values.
 - 0107: `dev_pay_mode` is `hourly` | `commission` (old `flat` mapped to
   `commission`); `flat_rate_cents` is deprecated and unused. A Dev commission
   tech's percent is `commission_percent`; the policy fallback is
-  `compensation_policies.dev_default_commission_percent`. 0106 and 0107 are not
-  applied live yet.
+  `compensation_policies.dev_default_commission_percent`. 0106 and 0107 are
+  applied live (2026-10-24). Techs who were on flat are now in Commission mode
+  with no personal percent, so they get the policy default (0 until set) until
+  an admin enters a percent on the Pay tab.
 
 ## Hours: payroll_time_entries (0081)
 
