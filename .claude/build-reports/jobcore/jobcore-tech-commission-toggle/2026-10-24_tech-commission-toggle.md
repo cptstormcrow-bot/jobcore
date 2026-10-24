@@ -18,7 +18,7 @@ Prior contracts carried (Rule 41, evaluated 2026-10-24 against `E:\Jeff\.claude\
 - FC4 browser verification: HONORED 2026-10-24: Jeff ran the test plan, 16 of 16 pass.
 - FC5 UI Inventory regen: STILL OPEN, another session owns the snapshots.
 - FC6 RLS/guard tests for the 0103 and 0106 pay columns: ADDRESSED 2026-10-24 by report jobcore-open-items-sweep: SQL tests written (one local file plus 12 single-case hosted files), NOT yet run live (waits for Jeff's explicit go). See Deviation 12.
-- FC7 `contractor_payouts` unique constraint: ADDRESSED IN PART 2026-10-24 by report jobcore-open-items-sweep: migration 0108 written and the app insert made race-safe, but 0108 is NOT pushed (Jeff's go must name 0108).
+- FC7 `contractor_payouts` unique constraint: CLOSED 2026-10-24 by report jobcore-open-items-sweep: migration 0108 applied live on Jeff's go naming 0108; constraint contractor_payouts_job_tech_uniq verified as UNIQUE (job_id, tech_id).
 - Payout-lines report FC2 live smoke test of posting: PARTLY honored; job #107 closed with zero posted lines.
 
 New contracts made by this change (owner in brackets):
