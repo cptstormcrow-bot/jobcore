@@ -12,7 +12,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { commissionTotals, commissionsFromPayoutLines, type CommissionAmountSource } from '../revenue';
+import { commissionTotals, commissionsFromPayoutLines, mergeCommissionRecords, type CommissionAmountSource } from '../revenue';
 
 test('AC: commissionTotals sums present amount fields into totalCommission/knownCount', () => {
   const records: CommissionAmountSource[] = [
@@ -95,23 +95,101 @@ test('AC: commissionsFromPayoutLines of no lines is an empty list and totals to 
   assert.equal(totals.jobCount, 0);
 });
 
-test('AC: a legacy commissions row and per-technician lines concatenate and both count toward totalCommission', () => {
+test('AC: a job with both a legacy commissions row and payout lines is counted once, the lines winning', () => {
   const legacy: CommissionAmountSource[] = [{ jobId: 'job-1', amount: 2000 }];
 
-  const combined = [
-    ...legacy,
-    ...commissionsFromPayoutLines([
-      { jobId: 'job-1', amountCents: 1500 },
-      { jobId: 'job-2', amountCents: 250 },
-    ]),
-  ];
+  const merged = mergeCommissionRecords(legacy, [
+    { jobId: 'job-1', amountCents: 1500 },
+    { jobId: 'job-2', amountCents: 250 },
+  ]);
 
-  const totals = commissionTotals(combined);
+  const totals = commissionTotals(merged);
 
-  // The two payouts of job-1 are separate records - a documented limit.
-  assert.equal(totals.totalCommission, 3750);
-  assert.equal(totals.knownCount, 3);
-  assert.equal(totals.jobCount, 3);
+  assert.equal(totals.totalCommission, 1750);
+  assert.equal(totals.knownCount, 2);
+  assert.equal(totals.unknownCount, 0);
+  assert.equal(totals.jobCount, 2);
+});
+
+test('AC: a legacy-only job with no payout lines is kept', () => {
+  const merged = mergeCommissionRecords([{ jobId: 'job-9', amount: 800 }], []);
+
+  assert.deepEqual(merged, [{ jobId: 'job-9', amount: 800 }]);
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.totalCommission, 800);
+  assert.equal(totals.jobCount, 1);
+});
+
+test('AC: merged records list the kept legacy rows first, then the folded payout lines', () => {
+  const merged = mergeCommissionRecords(
+    [
+      { jobId: 'job-1', amount: 2000 },
+      { jobId: 'job-9', amount: 800 },
+    ],
+    [{ jobId: 'job-1', amountCents: 1500 }],
+  );
+
+  assert.deepEqual(
+    merged.map((r) => r.jobId),
+    ['job-9', 'job-1'],
+  );
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.totalCommission, 2300);
+  assert.equal(totals.jobCount, 2);
+});
+
+test('AC: a legacy row with a null amount is dropped when the job has payout lines', () => {
+  const merged = mergeCommissionRecords([{ jobId: 'job-1', amount: null }], [{ jobId: 'job-1', amountCents: 500 }]);
+
+  assert.deepEqual(merged, [{ jobId: 'job-1', amount: 500 }]);
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.knownCount, 1);
+  assert.equal(totals.unknownCount, 0);
+});
+
+test('AC: a zero-cent payout line beats a legacy amount', () => {
+  const merged = mergeCommissionRecords([{ jobId: 'job-1', amount: 2000 }], [{ jobId: 'job-1', amountCents: 0 }]);
+
+  assert.deepEqual(merged, [{ jobId: 'job-1', amount: 0 }]);
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.totalCommission, 0);
+  assert.equal(totals.knownCount, 1);
+  assert.equal(totals.jobCount, 1);
+});
+
+test('AC: two technician lines plus a legacy row on one job fold into one record', () => {
+  const merged = mergeCommissionRecords(
+    [{ jobId: 'job-1', amount: 2000 }],
+    [
+      { jobId: 'job-1', amountCents: 1000 },
+      { jobId: 'job-1', amountCents: 500 },
+    ],
+  );
+
+  assert.deepEqual(merged, [{ jobId: 'job-1', amount: 1500 }]);
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.jobCount, 1);
+});
+
+test('AC: merging empty inputs is an empty list and totals to zero', () => {
+  const merged = mergeCommissionRecords([], []);
+
+  assert.deepEqual(merged, []);
+
+  const totals = commissionTotals(merged);
+
+  assert.equal(totals.totalCommission, 0);
+  assert.equal(totals.jobCount, 0);
 });
 
 test('AC: commissionsFromPayoutLines keeps first-appearance job order and treats a zero-cent line as a known zero', () => {

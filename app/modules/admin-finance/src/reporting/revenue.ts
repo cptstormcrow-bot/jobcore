@@ -115,3 +115,19 @@ export function commissionsFromPayoutLines(
   }
   return Array.from(byJob, ([jobId, amount]) => ({ jobId, amount }));
 }
+
+/**
+ * Merges legacy `commissions` rows with per-technician payout lines. The payout
+ * lines are the source of truth: a legacy row is kept only for a job that has
+ * no payout line, so a job that has both is counted once and
+ * `commissionTotals().jobCount` stays one per job. A zero-cent line still
+ * covers its job (a known zero wins over a legacy amount).
+ */
+export function mergeCommissionRecords(
+  legacy: CommissionAmountSource[],
+  lines: readonly CommissionPayoutLine[],
+): CommissionAmountSource[] {
+  const folded = commissionsFromPayoutLines(lines);
+  const covered = new Set(folded.map((r) => r.jobId));
+  return [...legacy.filter((r) => !covered.has(r.jobId)), ...folded];
+}

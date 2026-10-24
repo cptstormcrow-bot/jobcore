@@ -38,7 +38,7 @@ import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
 import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
-import { commissionsFromPayoutLines, type CommissionAmountSource } from '../reporting/revenue';
+import { mergeCommissionRecords, type CommissionAmountSource } from '../reporting/revenue';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
@@ -317,7 +317,7 @@ export function AdminFinanceRoot() {
     ])
       .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests, commissionLines]) => {
         if (!cancelled) {
-          setLoadState({ kind: 'loaded', jobs, employees, commissions: [...commissions, ...commissionsFromPayoutLines(commissionLines)], techServiceAreas, serviceAreas, techSkills, timeOffRequests });
+          setLoadState({ kind: 'loaded', jobs, employees, commissions: mergeCommissionRecords(commissions, commissionLines), techServiceAreas, serviceAreas, techSkills, timeOffRequests });
           void loadCardExtras(jobs);
         }
       })

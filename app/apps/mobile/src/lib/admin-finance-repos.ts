@@ -982,7 +982,8 @@ export function createCommissionRepository(): CommissionRepository {
         const { data, error } = await supabase
           .from('commissions')
           .select('job_id, amount_cents')
-          .eq('organization_id', organizationId);
+          .eq('organization_id', organizationId)
+          .is('voided_at', null);
         if (error) {
           throw new Error(`listForOrganization failed: ${error.message}`);
         }

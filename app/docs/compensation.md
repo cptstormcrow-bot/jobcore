@@ -258,11 +258,11 @@ Limits:
   no lines. The Add photo and Close out job buttons, the blocker text and photo
   Remove are hidden, and notes are read-only. Statuses before completed keep
   "Close-out opens once the job is completed."
-- Reports > Commission Totals now sums the legacy `commissions` rows PLUS each
-  technician's commission lines from `job_payout_lines` (non-void), folded per
-  job so Job Count stays one per job. Known limit: a job holding both a legacy
-  `commissions` row and per-tech lines can count both (legacy rows are 0
-  today).
+- Reports > Commission Totals treats each technician's commission lines from
+  `job_payout_lines` (non-void) as the source of truth, folded per job so a job
+  is counted once in the total and in Job Count. A legacy `commissions` row
+  counts only for a job that has no commission payout line (a zero-cent line
+  still covers its job). Voided legacy rows are excluded.
 - `contractor_payouts` has a natural key (`job_id`, `tech_id`). Migration
   `0108_contractor_payouts_unique.sql` adds a unique constraint
   `contractor_payouts_job_tech_uniq` (it refuses to apply if duplicates exist;
