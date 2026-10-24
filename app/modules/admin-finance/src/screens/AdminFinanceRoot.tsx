@@ -972,6 +972,7 @@ export function AdminFinanceRoot() {
           { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
           { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
           { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+          { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
         ]}
         logoMenuItems={[
           {

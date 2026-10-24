@@ -89,3 +89,4 @@ export const adminFinanceModule: JobcoreModule = {
 };
 
 export default adminFinanceModule;
+export { ADMIN_FINANCE_VIEWS, buildAdminFinanceMenuItems, isAdminFinanceView, type AdminFinanceView } from './menu';

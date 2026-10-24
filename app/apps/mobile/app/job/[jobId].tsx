@@ -1373,6 +1373,7 @@ export default function JobDrilldownScreen() {
           { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
           { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
           { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+          { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
         ] : undefined}
         gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
         onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}
