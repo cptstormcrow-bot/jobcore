@@ -15,6 +15,7 @@ import {
   buildCompletionNoteBody,
   canSubmitCompletion,
   completionBlockedNotice,
+  isAlreadyComplete,
   formatTimeSpent,
   upstairsFeeApplies,
 } from '../completion-helpers';
@@ -202,4 +203,17 @@ test('completionBlockedNotice says already complete when completedAt is set', ()
   const completedAt = '2026-01-02T03:04:05Z';
   assert.equal(completionBlockedNotice({ status: 'in_progress', completedAt }), ALREADY);
   assert.equal(completionBlockedNotice({ status: 'scheduled', completedAt }), ALREADY);
+});
+
+test('isAlreadyComplete is true for completed/paid/closed/archived and when completedAt is set', () => {
+  for (const status of ['completed', 'paid', 'closed', 'archived']) {
+    assert.equal(isAlreadyComplete({ status }), true, status);
+  }
+  assert.equal(isAlreadyComplete({ status: 'in_progress', completedAt: '2026-01-02T03:04:05Z' }), true);
+});
+
+test('isAlreadyComplete is false for in_progress without completedAt and for scheduled', () => {
+  assert.equal(isAlreadyComplete({ status: 'in_progress' }), false);
+  assert.equal(isAlreadyComplete({ status: 'in_progress', completedAt: null }), false);
+  assert.equal(isAlreadyComplete({ status: 'scheduled' }), false);
 });

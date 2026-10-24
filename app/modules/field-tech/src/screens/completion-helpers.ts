@@ -132,10 +132,15 @@ const MSG_ALREADY_COMPLETE = 'This job is already complete.';
 const MSG_CANCELLED = 'This job was cancelled, so it cannot be completed.';
 const MSG_NOT_STARTED = 'Start the job first, then you can complete it.';
 
+/** true when the job is already complete (completedAt set, or status at/after completed). */
+export function isAlreadyComplete(job: CompletionBlockInput): boolean {
+  const completedSet = job.completedAt !== undefined && job.completedAt !== null && job.completedAt !== '';
+  return completedSet || PAST_COMPLETION.includes(job.status);
+}
+
 /** Plain-language reason a job cannot be completed, or null when it can. */
 export function completionBlockedNotice(job: CompletionBlockInput): string | null {
-  const completedSet = job.completedAt !== undefined && job.completedAt !== null && job.completedAt !== '';
-  if (completedSet || PAST_COMPLETION.includes(job.status)) return MSG_ALREADY_COMPLETE;
+  if (isAlreadyComplete(job)) return MSG_ALREADY_COMPLETE;
   if (job.status === 'cancelled') return MSG_CANCELLED;
   if (job.status !== 'in_progress') return MSG_NOT_STARTED;
   return null;

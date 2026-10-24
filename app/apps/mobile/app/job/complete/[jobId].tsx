@@ -9,7 +9,8 @@ import {
 import { setModuleSession as setFieldTechModuleSession } from '../../../../../modules/field-tech/src/lib/module-session';
 import { setModulePorts as setFieldTechModulePorts } from '../../../../../modules/field-tech/src/lib/module-ports';
 import { Completion } from '../../../../../modules/field-tech/src/screens/Completion';
-import { completionBlockedNotice } from '../../../../../modules/field-tech/src/screens/completion-helpers';
+import { CompletedReview } from '../../../../../modules/field-tech/src/screens/CompletedReview';
+import { completionBlockedNotice, isAlreadyComplete } from '../../../../../modules/field-tech/src/screens/completion-helpers';
 import { useSession } from '../../../src/lib/session';
 import { buildFieldTechPorts } from '../../../src/lib/field-tech-repos';
 import { createJobRepository } from '../../../src/lib/admin-finance-repos';
@@ -21,6 +22,7 @@ type Loaded =
   | { kind: 'loading' }
   | { kind: 'missing' }
   | { kind: 'blocked'; notice: string }
+  | { kind: 'completed'; job: Job }
   | { kind: 'ready'; job: Job };
 
 export default function CompleteJobRoute() {
@@ -46,6 +48,10 @@ export default function CompleteJobRoute() {
         if (cancelled) return;
         if (!job) {
           setLoaded({ kind: 'missing' });
+          return;
+        }
+        if (isAlreadyComplete(job)) {
+          setLoaded({ kind: 'completed', job });
           return;
         }
         const notice = completionBlockedNotice(job);
@@ -74,6 +80,14 @@ export default function CompleteJobRoute() {
     await repo.updateStatus(job.id, 'completed');
   };
 
+  // Reopen: clear completedAt and restart the live-labor clock from now (stored seconds are kept).
+  const reopenJob = async (job: Job): Promise<void> => {
+    const repo = createJobRepository();
+    await repo.patchLifecycle(job.id, { completedAt: null, inProgressAt: new Date().toISOString() });
+    await repo.updateStatus(job.id, 'in_progress');
+    onDone();
+  };
+
   let body: React.ReactNode;
   if (!ready || loaded.kind === 'loading') {
     body = <LoadingState />;
@@ -81,6 +95,30 @@ export default function CompleteJobRoute() {
     body = <EmptyState title="Job not found" message="This job could not be loaded." />;
   } else if (loaded.kind === 'blocked') {
     body = <EmptyState title="Cannot complete this job" message={loaded.notice} />;
+  } else if (loaded.kind === 'completed') {
+    const doneJob = loaded.job;
+    const doneSeconds = liveLaborSeconds({
+      storedSeconds: doneJob.totalLaborSeconds,
+      openSegmentStartIso: doneJob.inProgressAt,
+      completedAt: doneJob.completedAt,
+      nowMs: Date.now(),
+    });
+    body = (
+      <CompletedReview
+        job={doneJob}
+        timeSpentSeconds={doneSeconds}
+        canReopen={doneJob.status === 'completed'}
+        onReopen={() => reopenJob(doneJob)}
+        renderAfterPhotos={({ onCountChange, disabled }) => (
+          <JobAfterPhotoCard
+            jobId={doneJob.id}
+            jobNumber={doneJob.jobNumber ?? null}
+            onCountChange={onCountChange}
+            disabled={disabled}
+          />
+        )}
+      />
+    );
   } else {
     // Time Spent: same helper/inputs as the job header's Total Hours; computed once (no timer).
     const timeSpentSeconds = liveLaborSeconds({
