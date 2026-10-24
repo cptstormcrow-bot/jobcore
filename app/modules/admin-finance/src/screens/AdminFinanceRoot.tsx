@@ -44,6 +44,7 @@ import { PaymentsHubScreen } from './PaymentsHubScreen';
 import { AssignmentBoardScreen } from './AssignmentBoardScreen';
 import { ReportsScreen } from './ReportsScreen';
 import { PayrollScreen } from './PayrollScreen';
+import { CompensationPolicyScreen } from './CompensationPolicyScreen';
 import { UniversalCalendar } from './UniversalCalendar';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
@@ -78,7 +79,7 @@ type SubView =
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
   | 'blackout-editor'
-  | 'payroll' | 'payrollRun' | 'payrollSettings'
+  | 'payroll' | 'payrollRun' | 'payrollSettings' | 'compensationPolicy'
   | 'calendar';
 
 const TOP: Partial<Record<SubView, SubView>> = {
@@ -88,7 +89,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
   'blackout-editor': 'calendar',
-  payrollRun: 'payroll', payrollSettings: 'payroll',
+  payrollRun: 'payroll', payrollSettings: 'payroll', compensationPolicy: 'payroll',
 };
 
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
@@ -105,7 +106,7 @@ const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
   'employee-roster': 'af-employees', 'employee-detail': 'af-employees', 'employee-editor': 'af-employees',
   'employee-job-detail': 'af-employees', 'employee-invitations': 'af-employees',
   calendar: 'af-calendar',
-  payroll: 'af-payments', payrollRun: 'af-payments', payrollSettings: 'af-payments',
+  payroll: 'af-payments', payrollRun: 'af-payments', payrollSettings: 'af-payments', compensationPolicy: 'af-payments',
 };
 
 type LoadState =
@@ -147,7 +148,7 @@ function mapArchiveError(e: unknown, verb: 'archive' | 'unarchive'): string {
 }
 
 // Registry keys are case-sensitive, so lowercase host sub-views fall back to #10 without this map.
-const SCREEN_NUMBER_KEY: Record<string, string> = { payroll: 'Payroll', payrollRun: 'PayrollRun', payrollSettings: 'PayrollSettings' };
+const SCREEN_NUMBER_KEY: Record<string, string> = { payroll: 'Payroll', payrollRun: 'PayrollRun', payrollSettings: 'PayrollSettings', compensationPolicy: 'compensationPolicy' };
 
 export function AdminFinanceRoot() {
   const router = useRouter();
@@ -158,6 +159,7 @@ export function AdminFinanceRoot() {
   const { view, ts } = useLocalSearchParams<{ view?: string; ts?: string }>();
   useEffect(() => {
     if (view === 'jobs') setSubView('jobs');
+    if (view === 'compensationPolicy') setSubView('compensationPolicy');
   }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
@@ -1243,9 +1245,11 @@ export function AdminFinanceRoot() {
           </>
         )
       ) : subView === 'payroll' ? (
-        <PayrollScreen onBack={() => goTop('overview')} />
+        <PayrollScreen onBack={() => goTop('overview')} onOpenCompensationPolicy={() => setSubView('compensationPolicy')} />
       ) : subView === 'payrollRun' || subView === 'payrollSettings' ? (
-        <PayrollScreen onBack={() => goTop('overview')} initialTab={subView === 'payrollRun' ? 'run' : 'settings'} />
+        <PayrollScreen onBack={() => goTop('overview')} initialTab={subView === 'payrollRun' ? 'run' : 'settings'} onOpenCompensationPolicy={() => setSubView('compensationPolicy')} />
+      ) : subView === 'compensationPolicy' ? (
+        <CompensationPolicyScreen onBack={() => setSubView('payrollSettings')} />
       ) : subView === 'reports' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />
@@ -1410,6 +1414,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   payroll: 'Payroll',
   payrollRun: 'Payroll Run',
   payrollSettings: 'Payroll Settings',
+  compensationPolicy: 'Compensation Policy',
 };
 
 export default AdminFinanceRoot;

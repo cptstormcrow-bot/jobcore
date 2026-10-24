@@ -17,6 +17,7 @@ import { useModuleSession } from '../lib/module-session';
 
 export interface PayrollSettingsScreenProps {
   onBack?: () => void;
+  onOpenCompensationPolicy?: () => void;
 }
 
 type QbKey = 'wages_expense' | 'reimbursement_expense' | 'payroll_payable';
@@ -98,6 +99,9 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
     <ScrollView style={{ flex: 1 }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {onBack ? <PayrollButton label="Back" onPress={onBack} /> : null}
+        {props.onOpenCompensationPolicy ? (
+          <PayrollButton label="Compensation Policy" onPress={props.onOpenCompensationPolicy} />
+        ) : null}
         {canSaveSettings && settings ? (
           <PayrollButton
             label="Save settings"

@@ -789,5 +789,14 @@
     "file": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
     "createdAt": "2026-10-22T16:28:57.239Z",
     "subView": "archivedJobs"
+  },
+  {
+    "number": 93,
+    "key": "af-compensationPolicy",
+    "title": "Compensation Policy",
+    "route": null,
+    "file": "modules/admin-finance/src/screens/CompensationPolicyScreen.tsx",
+    "createdAt": "2026-10-23T12:00:00.000Z",
+    "subView": "compensationPolicy"
   }
 ]

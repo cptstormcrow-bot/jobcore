@@ -28,6 +28,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Card, ScreenTitle, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
+import { centsToDollarsText } from '../domain/parse-money';
 import type { ProfilePrivate } from '../data/ports';
 
 export interface EmployeeDetailScreenProps {
@@ -147,6 +148,10 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
             }
           />
           <InfoRow label="Hourly Rate" value={employee.defaultHourlyRateCents != null ? `$${(employee.defaultHourlyRateCents / 100).toFixed(2)}/hr` : 'Not set'} />
+          <InfoRow label="Worker type" value={employee.workerType ?? '—'} />
+          <InfoRow label="Tech role" value={employee.techRole ?? '—'} />
+          <InfoRow label="Dev pay mode" value={employee.devPayMode ?? '—'} />
+          <InfoRow label="Flat rate" value={employee.flatRateCents != null ? `$${centsToDollarsText(employee.flatRateCents)}` : '—'} />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>

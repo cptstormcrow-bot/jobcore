@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState, colors, spacing } from '@jobcore/ui';
+import { useRouter } from 'expo-router';
+import { EmptyState, PayrollButton, colors, spacing } from '@jobcore/ui';
 import { CloseOutReviewScreen } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import type { CloseOutPhoto } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/closeout';
@@ -27,6 +28,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const ctx = useMemo<Ctx>(() => ({ role, now: () => new Date().toISOString() }), [role]);
   const [photos, setPhotos] = useState<CloseOutPhoto[]>([]);
   const [notes, setNotes] = useState('');
+  const router = useRouter();
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [contacts, setContacts] = useState<CustomerContact[]>([]);
@@ -226,6 +228,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   return (
     <>
     {photoError ? <Text style={{ color: colors.danger, padding: spacing.sm }}>{photoError}</Text> : null}
+    {photoError?.startsWith('No compensation policy') ? <PayrollButton label="Open Compensation Policy" onPress={() => router.push(`/m/admin-finance?view=compensationPolicy&ts=${Date.now()}` as never)} /> : null}
     <CloseOutReviewScreen
       embedded
       job={job}

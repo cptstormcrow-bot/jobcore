@@ -44,6 +44,10 @@ export interface Organization {
 export type VehicleStatus = 'assigned' | 'unassigned' | 'in_maintenance';
 export type ToolStatus = 'issued' | 'not_issued' | 'needs_replacement';
 
+export type WorkerType = 'employee' | 'contractor';
+export type TechRole = 'prem' | 'dev' | 'service';
+export type DevPayMode = 'hourly' | 'flat';
+
 /**
  * Mirrors the Supabase `profiles` table.
  * `organizationId` ↔ `organization_id`, `fullName` ↔ `full_name`, `createdAt` ↔ `created_at`.
@@ -66,6 +70,10 @@ export interface Profile {
   paidTravelPolicyMessage: string | null;
   defaultHourlyRateCents?: number;
   testJobsOnly?: boolean;
+  workerType?: WorkerType;
+  techRole?: TechRole | null;
+  devPayMode?: DevPayMode | null;
+  flatRateCents?: number | null;
 }
 export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
   'Paid travel time is allowable if a vehicle is assigned to tech.';

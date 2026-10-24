@@ -31,7 +31,7 @@ import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
 import { setOnlineGuard as setPaymentReviewOnlineGuard } from '../../../../modules/payment-review/src/lib/online';
-import type { Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
+import type { Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus, WorkerType, TechRole, DevPayMode } from '@jobcore/core';
 import type {
   JobRepository,
   JobCardExtrasRepository,
@@ -521,6 +521,10 @@ function toProfile(row: {
   paid_travel_policy_message: string | null;
   hourly_rate_cents: number | null;
   test_jobs_only: boolean;
+  worker_type?: WorkerType | null;
+  tech_role?: TechRole | null;
+  dev_pay_mode?: DevPayMode | null;
+  flat_rate_cents?: number | null;
 }): Profile {
   return {
     id: row.id,
@@ -540,6 +544,10 @@ function toProfile(row: {
     paidTravelPolicyMessage: row.paid_travel_policy_message,
     defaultHourlyRateCents: row.hourly_rate_cents ?? undefined,
     testJobsOnly: row.test_jobs_only === true,
+    workerType: row.worker_type ?? 'employee',
+    techRole: row.tech_role ?? null,
+    devPayMode: row.dev_pay_mode ?? null,
+    flatRateCents: row.flat_rate_cents ?? null,
   };
 }
 
@@ -612,6 +620,10 @@ export function createEmployeeRepository(): EmployeeRepository {
         paidTravelPolicyMessage?: string | null;
         defaultHourlyRateCents?: number;
         testJobsOnly?: boolean;
+        workerType?: WorkerType;
+        techRole?: TechRole | null;
+        devPayMode?: DevPayMode | null;
+        flatRateCents?: number | null;
       },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();

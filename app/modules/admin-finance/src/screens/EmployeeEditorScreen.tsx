@@ -47,6 +47,7 @@ import type {
 import { isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { numberAreas } from './employee-editor-logic';
+import { parseMoneyToCents, centsToDollarsText } from '../domain/parse-money';
 
 export interface EmployeeEditorScreenProps {
   employees?: EmployeeRepository;
@@ -75,11 +76,27 @@ const ROLE_OPTIONS = [
   { label: 'sales', value: 'sales' },
 ];
 
-type EmpTab = 'email' | 'detail' | 'role' | 'areas' | 'skills';
+type EmpTab = 'email' | 'detail' | 'pay' | 'role' | 'areas' | 'skills';
+
+const WORKER_TYPE_OPTIONS = [
+  { label: 'Employee', value: 'employee' },
+  { label: 'Contractor', value: 'contractor' },
+];
+const TECH_ROLE_OPTIONS = [
+  { label: 'None', value: 'none' },
+  { label: 'Prem Tech', value: 'prem' },
+  { label: 'Dev Tech', value: 'dev' },
+  { label: 'Service Tech', value: 'service' },
+];
+const DEV_PAY_MODE_OPTIONS = [
+  { label: 'Hourly', value: 'hourly' },
+  { label: 'Flat', value: 'flat' },
+];
 
 const EMP_TAB_ITEMS: { id: EmpTab; label: string }[] = [
   { id: 'email', label: 'Email' },
   { id: 'detail', label: 'Detail' },
+  { id: 'pay', label: 'Pay' },
   { id: 'role', label: 'Role' },
   { id: 'areas', label: 'Service Areas' },
   { id: 'skills', label: 'Skills' },
@@ -145,6 +162,12 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     (((profile as unknown as { defaultHourlyRateCents?: number })?.defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS) / 100).toFixed(2)
   );
   const [effectiveFromInput, setEffectiveFromInput] = useState(new Date().toISOString().slice(0, 10));
+  const [workerTypeInput, setWorkerTypeInput] = useState<'employee' | 'contractor'>(profile?.workerType ?? 'employee');
+  const [techRoleInput, setTechRoleInput] = useState<'prem' | 'dev' | 'service' | null>(profile?.techRole ?? null);
+  const [devPayModeInput, setDevPayModeInput] = useState<'hourly' | 'flat' | null>(profile?.devPayMode ?? null);
+  const [flatRateInput, setFlatRateInput] = useState(
+    profile?.flatRateCents != null ? centsToDollarsText(profile.flatRateCents) : ''
+  );
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
@@ -182,6 +205,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     isTest: isTestInput,
     paidTravel: paidTravelInput,
     ptpm: ptpmInput,
+    workerType: workerTypeInput,
+    techRole: techRoleInput,
+    devPayMode: devPayModeInput,
+    flatRate: flatRateInput,
   }));
   const [privateInitial, setPrivateInitial] = useState({ ssn: '', ecName: '', ecPhone: '' });
 
@@ -257,6 +284,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   }
 
   const busy = actionState.kind === 'working';
+  const showFlatRate = techRoleInput === 'dev' && devPayModeInput === 'flat';
+  const flatRateBlank = flatRateInput.trim() === '';
+  const flatRateParsed = flatRateBlank ? null : parseMoneyToCents(flatRateInput);
+  const flatRateInvalid = showFlatRate && !flatRateBlank && flatRateParsed === null;
 
   // Dirty = FORM fields only (Detail + Email); instant-save controls are excluded.
   const privateDirty =
@@ -278,6 +309,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     isTestInput !== initial.isTest ||
     paidTravelInput !== initial.paidTravel ||
     ptpmInput !== initial.ptpm ||
+    workerTypeInput !== initial.workerType ||
+    techRoleInput !== initial.techRole ||
+    devPayModeInput !== initial.devPayMode ||
+    flatRateInput !== initial.flatRate ||
     privateDirty ||
     emailDirty;
 
@@ -332,6 +367,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       setActionState({ kind: 'failed', message: 'SSN: enter exactly the last 4 digits.' });
       return;
     }
+    if (flatRateInvalid) {
+      setActionState({ kind: 'failed', message: 'Flat rate: enter a dollar amount like 45.00.' });
+      return;
+    }
     setActionState({ kind: 'working' });
     try {
       const initialRateCents = (profile as unknown as { defaultHourlyRateCents?: number }).defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS;
@@ -347,6 +386,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         toolStatus: toolStatusInput && isToolStatus(toolStatusInput) ? toolStatusInput : null,
         paidTravel: paidTravelInput,
         paidTravelPolicyMessage: ptpmInput || null,
+        workerType: workerTypeInput,
+        techRole: techRoleInput,
+        devPayMode: techRoleInput === 'dev' ? devPayModeInput : null,
+        flatRateCents: techRoleInput === 'dev' && devPayModeInput === 'flat' ? flatRateParsed : null,
         ...(rateViaSetter ? {} : { defaultHourlyRateCents: newRateCents }),
       });
       if (rateViaSetter && onSetRate) {
@@ -674,6 +717,64 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             </>
           ) : null}
         </Card>
+        ) : null}
+
+        {activeTab === 'pay' && !isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Pay</Text>
+            <Text style={styles.note}>Set after the employee accepts the invitation.</Text>
+          </Card>
+        ) : null}
+
+        {activeTab === 'pay' && isEditMode ? (
+          <Card style={styles.card}>
+            <Text style={styles.heading}>Pay</Text>
+            <Text style={styles.note}>
+              Dev Tech: paid hourly or a flat rate per assembly. Prem Tech: paid the bonus set in Compensation Policy.
+            </Text>
+            <Select
+              label="Worker type"
+              value={workerTypeInput}
+              options={WORKER_TYPE_OPTIONS}
+              onChange={(v) => setWorkerTypeInput(v as 'employee' | 'contractor')}
+            />
+            <Select
+              label="Tech role"
+              value={techRoleInput ?? 'none'}
+              options={TECH_ROLE_OPTIONS}
+              onChange={(v) => {
+                const next = v === 'none' ? null : (v as 'prem' | 'dev' | 'service');
+                setTechRoleInput(next);
+                if (next !== 'dev') setDevPayModeInput(null);
+              }}
+            />
+            {techRoleInput === 'dev' ? (
+              <Select
+                label="Dev pay mode"
+                value={devPayModeInput}
+                options={DEV_PAY_MODE_OPTIONS}
+                onChange={(v) => setDevPayModeInput(v as 'hourly' | 'flat')}
+                placeholder="Select pay mode"
+              />
+            ) : null}
+            {showFlatRate ? (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Flat rate ($ per assembly)"
+                  value={flatRateInput}
+                  onChangeText={setFlatRateInput}
+                  keyboardType="numeric"
+                />
+                {flatRateInvalid ? (
+                  <Text style={styles.warning}>Enter a dollar amount like 45.00, or leave blank to use the policy default.</Text>
+                ) : (
+                  <Text style={styles.note}>Leave blank to use the policy default.</Text>
+                )}
+              </>
+            ) : null}
+            <Text style={styles.note}>The hourly rate is on the Detail tab.</Text>
+          </Card>
         ) : null}
 
         {activeTab === 'role' ? (

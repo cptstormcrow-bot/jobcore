@@ -19,6 +19,7 @@ import { PayrollSettingsScreen } from './PayrollSettingsScreen';
 export interface PayrollScreenProps {
   onBack?: () => void;
   initialTab?: 'run' | 'settings';
+  onOpenCompensationPolicy?: () => void;
 }
 
 export function PayrollScreen(props: PayrollScreenProps = {}) {
@@ -42,7 +43,7 @@ export function PayrollScreen(props: PayrollScreenProps = {}) {
         userId={session.userId}
         initialTab={initialTab}
         renderRun={() => <PayrollRunScreen />}
-        renderSettings={() => <PayrollSettingsScreen />}
+        renderSettings={() => <PayrollSettingsScreen onOpenCompensationPolicy={props.onOpenCompensationPolicy} />}
       />
     </View>
   );

@@ -12,7 +12,7 @@
  * NOT queued (online-only): admin_set_employee_role RPC, any profile_private write.
  */
 
-import type { Role, VehicleStatus, ToolStatus } from '@jobcore/core';
+import type { Role, VehicleStatus, ToolStatus, WorkerType, TechRole, DevPayMode } from '@jobcore/core';
 import { registerOpHandlers, type OpHandler } from './index';
 
 const APPLIED = { applied: true } as const;
@@ -31,6 +31,10 @@ export interface EmployeeUpdates {
   paidTravelPolicyMessage?: string | null;
   defaultHourlyRateCents?: number;
   testJobsOnly?: boolean;
+  workerType?: WorkerType;
+  techRole?: TechRole | null;
+  devPayMode?: DevPayMode | null;
+  flatRateCents?: number | null;
 }
 export interface EmployeeUpdatePayload { profileId: string; updates: EmployeeUpdates }
 export interface EmployeeDeactivatePayload { profileId: string }
@@ -66,6 +70,10 @@ const employeeUpdate: OpHandler<EmployeeUpdatePayload> = async ({ profileId, upd
   if (updates.paidTravelPolicyMessage !== undefined) patch.paid_travel_policy_message = updates.paidTravelPolicyMessage;
   if (updates.defaultHourlyRateCents !== undefined) patch.hourly_rate_cents = updates.defaultHourlyRateCents;
   if (updates.testJobsOnly !== undefined) patch.test_jobs_only = updates.testJobsOnly;
+  if (updates.workerType !== undefined) patch.worker_type = updates.workerType;
+  if (updates.techRole !== undefined) patch.tech_role = updates.techRole;
+  if (updates.devPayMode !== undefined) patch.dev_pay_mode = updates.devPayMode;
+  if (updates.flatRateCents !== undefined) patch.flat_rate_cents = updates.flatRateCents;
   const { error } = await supabase.from('profiles').update(patch).eq('id', profileId).select('id');
   if (error) throw error;
   return APPLIED;

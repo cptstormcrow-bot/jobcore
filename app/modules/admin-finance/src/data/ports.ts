@@ -8,7 +8,7 @@
  * No sqlite, no fetch, no fixtures, no React live here.
  */
 
-import type { Job, JobStatus, Commission, Profile, Role, VehicleStatus, ToolStatus } from '@jobcore/core';
+import type { Job, JobStatus, Commission, Profile, Role, VehicleStatus, ToolStatus, WorkerType, TechRole, DevPayMode } from '@jobcore/core';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PayPeriod } from '../money/rollup';
 import type { Lead } from '../domain/lead';
@@ -448,6 +448,10 @@ export interface EmployeeRepository {
       paidTravelPolicyMessage?: string | null;
       defaultHourlyRateCents?: number;
       testJobsOnly?: boolean;
+      workerType?: WorkerType;
+      techRole?: TechRole | null;
+      devPayMode?: DevPayMode | null;
+      flatRateCents?: number | null;
     }
   ): Promise<void>;
   /** Admin-only, online-only: calls edge fn admin-update-email. Throws when offline or rejected. */
