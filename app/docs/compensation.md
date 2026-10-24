@@ -272,6 +272,41 @@ Limits:
   success when every wanted technician already has a row; the database
   constraint now backs that check-then-insert.
 
+### Who can read pay columns (migrations 0110 and 0111, written, NOT applied)
+
+- Problem (found 2026-10-24, live SQL case 12): RLS on `public.profiles` is per
+  row, so under `profiles_select_own_org` every member of an organization could
+  read every colleague's six pay columns: `hourly_rate_cents`, `worker_type`,
+  `tech_role`, `dev_pay_mode`, `commission_enabled`, `commission_percent`.
+- Fix, written but NOT applied (each migration waits for a separate go from Jeff
+  that names it). 0110 adds the view `public.employee_profiles_v`: the 16
+  non-pay columns as-is, the 6 pay columns shown only to org admins and to the
+  row's own owner, NULL for everyone else, scoped to the caller's organization.
+  0111 then revokes table-wide SELECT on `profiles` and grants SELECT on the 16
+  non-pay columns only, so pay columns are readable only through the view. 0111
+  must be applied after 0110 and after the app build that reads the view.
+- App behaviour: the employee list/detail reads (`listEmployees`, `getEmployee`
+  in `apps/mobile/src/lib/admin-finance-repos.ts`) and the payroll rate fallback
+  (`apps/mobile/src/lib/payroll-repos.ts`) go through `readEmployeeProfiles` in
+  `apps/mobile/src/lib/employee-profiles-source.ts`. It reads the view and
+  quietly falls back to `profiles` while 0110 is not applied, so the app works
+  before 0110, between 0110 and 0111, and after 0111. A technician sees their
+  own pay; a colleague's pay shows as missing (the mapper tolerates NULL pay).
+- Pay writes are unchanged: they still go to `profiles` (the 0071 guard trigger
+  still limits who may change what), and `.update(...).select('id')` still works
+  because `id` stays readable.
+- Known limits: `address`, `drivers_license_number`, `email` and `phone` stay
+  readable by every member of the organization (out of scope by Jeff's
+  decision; masking them later is one line per column in the view plus moving
+  the session's own-row read to the view). A column added to `profiles` later is
+  locked for SELECT until a migration grants it and adds it to the view (0111's
+  preflight and the canary tests force that decision). The view is
+  `SECURITY DEFINER` on purpose (an invoker view could not read the locked
+  columns) and will draw the Supabase `security_definer_view` advisor lint.
+- Tests: `supabase/tests/0110_employee_profiles_view_rls.test.sql` (local, not
+  runnable here: no local Postgres) and `supabase/tests/0110_hosted_cases/`
+  (8 cases, written, not run).
+
 ## What this document does not cover
 
 - A concrete period-bonus formula — none exists in this codebase by design;
