@@ -33,7 +33,7 @@
 -- migration back, if the view's columns differ from profiles' columns or if the
 -- grants are wrong.
 --
--- NOT APPLIED. Written 2026-10-24 on Jeff's order; apply only when Jeff says go.
+-- APPLIED LIVE 2026-10-24 on Jeff's go naming 0110 (dry-run listed only this migration; verified with migration list, the catalog and hosted cases 01-03).
 --
 -- Idempotent: create or replace view, revoke/grant, comment on. Re-running changes
 -- nothing. When profiles gains a column later, add it to this view in the same
