@@ -13,8 +13,8 @@
 --
 -- Must be applied AFTER 0107.
 --
--- Not applied live until Jeff approves a push. Note: 0108 is another
--- session's pending migration; a push applies it too.
+-- Not applied live until Jeff approves a push. A dry-run on 2026-10-24 listed
+-- only this migration (0108 was already live by then).
 --
 -- Idempotent: drop constraint if exists, drop column if exists. Re-running
 -- changes nothing.
