@@ -47,11 +47,12 @@ export interface CloseOutPhoto {
   storagePath?: string;
 }
 
-type PayoutBasis = 'hourly' | 'commission' | 'prem-bonus' | 'none';
+type PayoutBasis = 'hourly' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none';
 
 const PAYOUT_BASIS_LABELS: Record<PayoutBasis, string> = {
   hourly: 'Hourly',
   'prem-bonus': 'Prem bonus',
+  'dev-flat': 'Flat rate',
   commission: 'Commission',
   none: 'No pay set',
 };
@@ -80,7 +81,7 @@ export interface CloseOutReviewScreenProps {
   /** Payment summary line: paid = settled (amount paid), else balance still owed. Null/absent hides the line. */
   payment?: { paid: boolean; amountCents: number } | null;
   /** Tech payouts for the job. */
-  techPayouts?: { techName: string; amount: number; basis: PayoutBasis; note?: string }[];
+  techPayouts?: { techName: string; amount: number; basis: PayoutBasis; note?: string; status?: 'pending' | 'included' }[];
   /** Contractor payouts for the job. */
   contractorPayouts?: { contractorName: string; amount: number; basis?: PayoutBasis; note?: string }[];
   /** Hosted inside the job page: no title, no flex root, no nested scroller. */
@@ -89,6 +90,8 @@ export interface CloseOutReviewScreenProps {
   onOpenCalendar?: () => void;
   /** Job activity trail, already in ascending order; read-only. */
   timeline?: JobTimelineItem[];
+  /** Closed job: show what was posted, hide the add/close controls, and make photos and notes read-only. */
+  readOnly?: boolean;
   /** Optional extra content rendered under each photo's image. */
   renderPhotoExtra?: (photo: CloseOutPhoto) => ReactNode;
 }
@@ -119,6 +122,7 @@ export function CloseOutReviewScreen({
   onOpenCalendar,
   timeline,
   renderPhotoExtra,
+  readOnly,
 }: CloseOutReviewScreenProps) {
   const [activeTab, setActiveTab] = useState<CloseOutTab>('payouts');
   const blockers = useMemo(() => (job ? closeOutBlockers(job, ctx) : []), [job, ctx]);
@@ -172,20 +176,25 @@ export function CloseOutReviewScreen({
         {embedded ? (
           <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
         ) : null}
-        <View style={styles.actionRow}>
-          <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
-          <Button
-            label="Close out job"
-            onPress={() => onCloseOut?.(job)}
-            disabled={blockers.length > 0}
-            size="sm"
-          />
-        </View>
-        {blockers.map((reason, index) => (
-          <Text key={index} style={styles.blocker}>
-            {reason}
-          </Text>
-        ))}
+        {readOnly ? <Text style={styles.body}>Closed</Text> : null}
+        {!readOnly ? (
+          <View style={styles.actionRow}>
+            <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
+            <Button
+              label="Close out job"
+              onPress={() => onCloseOut?.(job)}
+              disabled={blockers.length > 0}
+              size="sm"
+            />
+          </View>
+        ) : null}
+        {!readOnly
+          ? blockers.map((reason, index) => (
+              <Text key={index} style={styles.blocker}>
+                {reason}
+              </Text>
+            ))
+          : null}
         {embedded ? <ScreenTitle title="Close-Out" /> : null}
         <Text style={styles.body}>
           {[job.jobNumber != null ? `Job #${job.jobNumber}` : null, job.description?.trim() || null]
@@ -202,7 +211,7 @@ export function CloseOutReviewScreen({
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Payouts</Text>
           {(!techPayouts || techPayouts.length === 0) && (!contractorPayouts || contractorPayouts.length === 0) ? (
-            <Text style={styles.empty}>No payouts for this job yet.</Text>
+            <Text style={styles.empty}>{readOnly ? 'No payouts were posted for this job. Hourly technicians are paid through timesheets.' : 'No payouts for this job yet.'}</Text>
           ) : null}
           <Text style={styles.subTitle}>Tech payouts</Text>
           {!techPayouts || techPayouts.length === 0 ? (
@@ -214,7 +223,11 @@ export function CloseOutReviewScreen({
                   {payout.techName} ({payoutBasisLabel(payout.basis)}): ${payout.amount.toFixed(2)}
                 </Text>
                 {payout.basis === 'hourly' ? <Text style={styles.trailMeta}>paid via timesheet</Text> : null}
-                {payout.basis === 'prem-bonus' || payout.basis === 'commission' ?<Text style={styles.trailMeta}>posts to next payroll run</Text> : null}
+                {payout.basis === 'prem-bonus' || payout.basis === 'commission' || payout.basis === 'dev-flat' ? (
+                  <Text style={styles.trailMeta}>
+                    {readOnly ? (payout.status === 'included' ? 'included in payroll' : 'posted - next payroll run') : 'posts to next payroll run'}
+                  </Text>
+                ) : null}
                 {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
               </View>
             ))
@@ -246,9 +259,11 @@ export function CloseOutReviewScreen({
                 <View key={photo.id} style={styles.photoTile}>
                   <Image source={{ uri: photo.uri }} style={styles.photoImage} />
                   {renderPhotoExtra ? renderPhotoExtra(photo) : null}
-                  <Pressable onPress={() => onRemovePhoto?.(photo.id)}>
-                    <Text style={styles.photoRemove}>Remove</Text>
-                  </Pressable>
+                  {!readOnly ? (
+                    <Pressable onPress={() => onRemovePhoto?.(photo.id)}>
+                      <Text style={styles.photoRemove}>Remove</Text>
+                    </Pressable>
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -265,6 +280,7 @@ export function CloseOutReviewScreen({
             placeholder="Describe the completed work, any issues, or follow-up needed..."
             placeholderTextColor={colors.textLight}
             multiline
+            editable={!readOnly}
             textAlignVertical="top"
           />
         </Card>

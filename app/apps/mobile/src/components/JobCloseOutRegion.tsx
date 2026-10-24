@@ -34,12 +34,13 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [payment, setPayment] = useState<{ paid: boolean; amountCents: number } | null>(null);
-  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'prem-bonus' | 'none'; note?: string; techId?: string };
+  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none'; note?: string; techId?: string; status?: 'pending' | 'included' };
   type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
   const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
   const [contractorPayouts, setContractorPayouts] = useState<ContractorPayoutLine[]>([]);
   const [contractorStored, setContractorStored] = useState(false);
   const awaiting = awaitingCloseOut(job);
+  const isClosedJob = job.status === 'closed';
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +99,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
     const isClosed = job.status === 'closed';
     void (async () => {
       try {
-        const [policy, assignments, hours, profiles, estimate, commissions, stored] = await Promise.all([
+        const [policy, assignments, hours, profiles, estimate, commissions, stored, storedLines] = await Promise.all([
           ports.compensationPolicy.getForOrganization(orgId),
           ports.jobAssignments.listForJob(job.id),
           ports.timeEntries.hoursByTechForJob(job.id),
@@ -106,6 +107,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           ports.estimates.getForJob(job.id),
           isClosed ? ports.commissions.listForOrganization(orgId) : Promise.resolve([]),
           isClosed ? ports.contractorPayouts.listForJob(job.id) : Promise.resolve([]),
+          isClosed ? ports.jobPayoutLines.listForJob(job.id) : Promise.resolve([]),
         ]);
         if (cancelled) return;
         const byId = new Map(profiles.map((p) => [p.id, p]));
@@ -115,7 +117,17 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
         setContractorStored(hasStored);
         let employeeLines: TechPayoutLine[] = [];
         let contractorLines: ContractorPayoutLine[] = [];
-        if (isClosed && commissionRows.length > 0) {
+        if (isClosed && storedLines.length > 0) {
+          // What close-out actually posted (job_payout_lines): shown as stored, never recomputed.
+          const basisOf = { dev_flat: 'dev-flat', prem_bonus: 'prem-bonus', commission: 'commission' } as const;
+          employeeLines = storedLines.map((row) => ({
+            techName: nameOf(row.techId),
+            amount: centsToDollars(row.amountCents),
+            basis: basisOf[row.basis],
+            techId: row.techId,
+            status: row.status,
+          }));
+        } else if (isClosed && commissionRows.length > 0) {
           employeeLines = commissionRows.map((row) => ({
             techName: nameOf((row as { userId?: string }).userId ?? ''),
             amount: row.amount / 100,
@@ -129,7 +141,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
             techId: row.techId,
           }));
         }
-        if (policy && !(isClosed && commissionRows.length > 0 && hasStored)) {
+        if (policy && (!isClosed || !hasStored)) {
           const techIds = Array.from(new Set(assignments.map((a) => a.techId)));
           const techs: JobPayTech[] = techIds.map((id) => {
             const p = byId.get(id);
@@ -156,7 +168,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
             techs,
             laborTotalCents: Math.round((estimate?.laborCost ?? 0) * 100),
           });
-          if (!(isClosed && commissionRows.length > 0)) {
+          if (!isClosed) {
             employeeLines = lines
               .filter((l) => l.workerType === 'employee')
               .map((l) => ({ techName: l.name, amount: centsToDollars(l.amountCents), basis: l.basis, note: l.note, techId: l.techId }));
@@ -319,7 +331,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
 
   // After every hook: closeOutBlockers is empty for a non-awaiting job, so the
   // screen would otherwise offer an enabled close button.
-  if (!awaiting) {
+  if (!awaiting && !isClosedJob) {
     return <EmptyState title="Close-out" message="Close-out opens once the job is completed." />;
   }
 
@@ -329,6 +341,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
     {photoError?.startsWith('No compensation policy') ? <PayrollButton label="Open Compensation Policy" onPress={() => router.push(`/m/admin-finance?view=compensationPolicy&ts=${Date.now()}` as never)} /> : null}
     <CloseOutReviewScreen
       embedded
+      readOnly={isClosedJob}
       job={job}
       ctx={ctx}
       photos={photos}

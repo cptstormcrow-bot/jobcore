@@ -92,3 +92,26 @@ export function commissionTotals(
     jobCount: records.length,
   };
 }
+
+/** One stored per-technician commission line (job_payout_lines, basis commission). Amount is INTEGER CENTS. */
+export interface CommissionPayoutLine {
+  jobId: string;
+  amountCents: number;
+}
+
+/**
+ * Folds per-technician commission payout lines into one record per job, so
+ * `commissionTotals().jobCount` stays one per job (a job with two commissioned
+ * technicians is one job, not two). Order follows the first appearance of each
+ * job. A zero-cent line is a known zero, never an unknown. Void lines are
+ * filtered out by the repository before they reach this helper.
+ */
+export function commissionsFromPayoutLines(
+  lines: readonly CommissionPayoutLine[],
+): CommissionAmountSource[] {
+  const byJob = new Map<string, number>();
+  for (const line of lines) {
+    byJob.set(line.jobId, (byJob.get(line.jobId) ?? 0) + line.amountCents);
+  }
+  return Array.from(byJob, ([jobId, amount]) => ({ jobId, amount }));
+}

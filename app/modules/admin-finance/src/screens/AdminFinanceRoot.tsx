@@ -29,7 +29,7 @@ import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Press
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
-import type { Commission, Job, JobStatus, Profile } from '@jobcore/core';
+import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { summarizeWorkDescription, isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
@@ -38,6 +38,7 @@ import { useModuleSession } from '../lib/module-session';
 import { awaitingCloseOut } from '../domain/closeout';
 import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
+import { commissionsFromPayoutLines, type CommissionAmountSource } from '../reporting/revenue';
 import { LeadInboxScreen } from './LeadInboxScreen';
 import { PriceSheetListScreen } from './PriceSheetListScreen';
 import { PaymentsHubScreen } from './PaymentsHubScreen';
@@ -112,7 +113,7 @@ const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: Commission[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[]; timeOffRequests: TimeOffRequestAdmin[] }
+  | { kind: 'loaded'; jobs: Job[]; employees: Profile[]; commissions: CommissionAmountSource[]; techServiceAreas: TechServiceArea[]; serviceAreas: ServiceArea[]; techSkills: TechSkill[]; timeOffRequests: TimeOffRequestAdmin[] }
   | { kind: 'failed'; message: string };
 
 const BOARD_HIDDEN_STATUSES = new Set<JobStatus>(['closed', 'cancelled', 'archived']);
@@ -311,10 +312,12 @@ export function AdminFinanceRoot() {
       ports.serviceAreas.listForOrganization(orgId),
       ports.techSkills.listForOrganization(orgId),
       ports.timeOffAdmin.listForOrganization(orgId),
+      // Per-technician commission lines feed Reports > Commission Totals; a failed read must never block the job list.
+      ports.jobPayoutLines.listCommissionLinesForOrganization(orgId).catch(() => []),
     ])
-      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests]) => {
+      .then(([jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests, commissionLines]) => {
         if (!cancelled) {
-          setLoadState({ kind: 'loaded', jobs, employees, commissions, techServiceAreas, serviceAreas, techSkills, timeOffRequests });
+          setLoadState({ kind: 'loaded', jobs, employees, commissions: [...commissions, ...commissionsFromPayoutLines(commissionLines)], techServiceAreas, serviceAreas, techSkills, timeOffRequests });
           void loadCardExtras(jobs);
         }
       })

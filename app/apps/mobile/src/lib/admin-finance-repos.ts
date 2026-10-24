@@ -890,6 +890,11 @@ export function createContractorPayoutRepository(): ContractorPayoutRepository {
         fresh.map((r) => ({ organization_id: organizationId, job_id: jobId, tech_id: r.techId, amount_cents: r.amountCents, status: 'pending' })),
       );
       if (error) {
+        // 23505 = the (job_id, tech_id) unique key from migration 0108: a concurrent close-out already wrote the row. That is success once every wanted tech has a row.
+        if (error.code === '23505') {
+          const now = new Set((await listRows(jobId)).map((r) => r.techId));
+          if (fresh.every((r) => now.has(r.techId))) return 0;
+        }
         logSyncFailure('admin-finance-repos.createContractorPayouts', error.message, { jobId, rows: fresh });
         throw new Error(`create contractor payouts failed: ${error.message}`);
       }
@@ -917,6 +922,36 @@ export function createJobPayoutLineRepository(): JobPayoutLineRepository {
         throw new Error(`post job payout lines failed: ${error.message}`);
       }
       return Number(data ?? 0);
+    },
+
+    async listForJob(jobId) {
+      const { data, error } = await supabase
+        .from('job_payout_lines')
+        .select('user_id, amount_cents, basis, status')
+        .eq('job_id', jobId)
+        .neq('status', 'void');
+      if (error) throw new Error(`list job payout lines failed: ${error.message}`);
+      return ((data ?? []) as Array<{ user_id: string; amount_cents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission'; status: 'pending' | 'included' }>).map((r) => ({
+        techId: r.user_id,
+        amountCents: r.amount_cents,
+        basis: r.basis,
+        status: r.status,
+      }));
+    },
+
+    async listCommissionLinesForOrganization(organizationId) {
+      const { data, error } = await supabase
+        .from('job_payout_lines')
+        .select('job_id, user_id, amount_cents')
+        .eq('organization_id', organizationId)
+        .eq('basis', 'commission')
+        .neq('status', 'void');
+      if (error) throw new Error(`list commission payout lines failed: ${error.message}`);
+      return ((data ?? []) as Array<{ job_id: string; user_id: string; amount_cents: number }>).map((r) => ({
+        jobId: r.job_id,
+        techId: r.user_id,
+        amountCents: r.amount_cents,
+      }));
     },
   };
 }

@@ -683,14 +683,18 @@ export interface JobAssignmentRepository {
 /** Read + idempotent insert access to public.contractor_payouts (migration 0054). */
 export interface ContractorPayoutRepository {
   listForJob(jobId: string): Promise<Array<{ techId: string; amountCents: number; status: string }>>;
-  /** Check-then-insert: skips techIds already holding a row for the job. Returns rows inserted. */
+  /** Check-then-insert: skips techIds already holding a row for the job. A duplicate-key race (the (job_id, tech_id) unique key from migration 0108) counts as success once every wanted tech has a row. Returns rows inserted. */
   createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number>;
 }
 
-/** Posts employee flat/prem/commission pay lines via the post_job_payout_lines RPC (0104, widened by 0106). */
+/** Posts employee flat/prem/commission pay lines via the post_job_payout_lines RPC (0104, widened by 0106) and reads the stored lines back. */
 export interface JobPayoutLineRepository {
   /** Returns the number the RPC reports as posted. */
   postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' }[]): Promise<number>;
+  /** Stored, non-void lines of the job (what close-out posted). Uncached so a just-closed job reads fresh. */
+  listForJob(jobId: string): Promise<Array<{ techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission'; status: 'pending' | 'included' }>>;
+  /** Non-void commission lines of the organization (feeds the Reports Commission Totals). Uncached. */
+  listCommissionLinesForOrganization(organizationId: string): Promise<Array<{ jobId: string; techId: string; amountCents: number }>>;
 }
 
 /* ------------------------------------------------------------------ *
