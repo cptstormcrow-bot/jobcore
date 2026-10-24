@@ -138,7 +138,7 @@ export function CloseOutReviewScreen({
 
   return (
     <View style={embedded ? undefined : styles.screen}>
-      {embedded ? null : <ScreenTitle title="Close-Out #0018" />}
+      {embedded ? null : <ScreenTitle title="Close-Out" />}
       {embedded ? null : (
         <View style={styles.fixedTop}>
           <View style={styles.headerCard}>
@@ -187,7 +187,7 @@ export function CloseOutReviewScreen({
             {reason}
           </Text>
         ))}
-        {embedded ? <ScreenTitle title="Close-Out #0018" /> : null}
+        {embedded ? <ScreenTitle title="Close-Out" /> : null}
         <Text style={styles.body}>
           {[job.jobNumber != null ? `Job #${job.jobNumber}` : null, job.description?.trim() || null]
             .filter(Boolean)
