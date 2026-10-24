@@ -15,6 +15,7 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import { readEmployeeProfiles } from './employee-profiles-source';
 import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { buildPayrollAdminMembers } from './payroll-admin-repos';
 import { ReconciliationView } from '@jobcore/payment-review';
@@ -564,11 +565,13 @@ export function createEmployeeRepository(): EmployeeRepository {
   return {
     async listEmployees(organizationId: string): Promise<Profile[]> {
       return readCached('af.employees.listEmployees', { organizationId }, async () => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('organization_id', organizationId)
-          .order('full_name');
+        const { data, error } = await readEmployeeProfiles((source) =>
+          supabase
+            .from(source)
+            .select('*')
+            .eq('organization_id', organizationId)
+            .order('full_name'),
+        );
         if (error) {
           throw new Error(`listEmployees failed: ${error.message}`);
         }
@@ -578,11 +581,9 @@ export function createEmployeeRepository(): EmployeeRepository {
 
     async getEmployee(profileId: string): Promise<Profile | null> {
       return readCached('af.employees.getEmployee', { profileId }, async () => {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', profileId)
-          .maybeSingle();
+        const { data, error } = await readEmployeeProfiles((source) =>
+          supabase.from(source).select('*').eq('id', profileId).maybeSingle(),
+        );
         if (error) {
           throw new Error(`getEmployee failed: ${error.message}`);
         }

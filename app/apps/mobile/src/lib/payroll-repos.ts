@@ -12,6 +12,7 @@ import type {
 } from '../../../../packages/payroll-ui/src/port';
 import { writeThrough } from './offline-mutations';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
+import { readEmployeeProfiles } from './employee-profiles-source';
 
 type Row = Record<string, any>;
 
@@ -157,12 +158,11 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           hourlyRateCents: r.hourly_rate_cents as number,
         }));
         if (rows.length > 0) return rows;
-        // Fallback: roster column profiles.hourly_rate_cents (Employee editor).
-        const { data: prof, error: profErr } = await supabase
-          .from('profiles')
-          .select('hourly_rate_cents')
-          .eq('id', uid)
-          .maybeSingle();
+        // Fallback: roster column profiles.hourly_rate_cents (Employee editor), read through
+        // employee_profiles_v so it survives the 0111 pay-column lock on the table.
+        const { data: prof, error: profErr } = await readEmployeeProfiles((source) =>
+          supabase.from(source).select('hourly_rate_cents').eq('id', uid).maybeSingle(),
+        );
         if (profErr) return rows;
         const cents = (prof as Row | null)?.hourly_rate_cents;
         if (typeof cents === 'number' && cents > 0) {
