@@ -272,7 +272,7 @@ Limits:
   success when every wanted technician already has a row; the database
   constraint now backs that check-then-insert.
 
-### Who can read pay columns (0110 applied live 2026-10-24; 0111 written, NOT applied)
+### Who can read pay columns (0110 and 0111 applied live 2026-10-24)
 
 - Problem (found 2026-10-24, live SQL case 12): RLS on `public.profiles` is per
   row, so under `profiles_select_own_org` every member of an organization could
@@ -283,12 +283,15 @@ Limits:
   shown only to org admins and to the row's own owner, NULL for everyone else,
   scoped to the caller's organization. Verified live: pay columns come back
   NULL to a technician for colleagues, own pay is visible, admin sees all pay.
-  0111 (the column lock on `public.profiles`) is still written but NOT applied
-  and waits for a separate go from Jeff that names it. It revokes table-wide
-  SELECT on `profiles` and grants SELECT on the 16 non-pay columns only. Until
-  0111 is applied the exposure is still open: any org member can still read
-  colleagues' pay by querying the profiles table directly; the app now reads
-  through the view. 0111 must be applied after the app build that reads the view.
+  0111 (the column lock on `public.profiles`) is also APPLIED LIVE (2026-10-24,
+  on Jeff's go naming 0111, after 0110). It revokes table-wide SELECT on
+  `profiles` and grants SELECT on the 16 non-pay columns only. Verified live:
+  `authenticated` has SELECT on none of the 6 pay columns but keeps UPDATE on
+  all 6; 16 of 22 `profiles` columns stay readable; no table-wide SELECT; `anon`
+  reads no column. The exposure is CLOSED: pay columns are readable only through
+  `public.employee_profiles_v` (admins: everyone's pay; everyone else: own pay
+  only). Any `select('*')` on `profiles`, or any select naming a pay column,
+  now fails with 42501.
 - App behaviour: the employee list/detail reads (`listEmployees`, `getEmployee`
   in `apps/mobile/src/lib/admin-finance-repos.ts`) and the payroll rate fallback
   (`apps/mobile/src/lib/payroll-repos.ts`) go through `readEmployeeProfiles` in
@@ -297,6 +300,8 @@ Limits:
   for older builds or environments without 0110, so the app works before 0110,
   between 0110 and 0111, and after 0111. A technician sees their
   own pay; a colleague's pay shows as missing (the mapper tolerates NULL pay).
+  Older installed APKs, or a dev server on an old build, that still read
+  `profiles` directly now get 42501 on employee reads.
 - Pay writes are unchanged: they still go to `profiles` (the 0071 guard trigger
   still limits who may change what), and `.update(...).select('id')` still works
   because `id` stays readable.
@@ -310,8 +315,11 @@ Limits:
   columns) and will draw the Supabase `security_definer_view` advisor lint.
 - Tests: `supabase/tests/0110_employee_profiles_view_rls.test.sql` (local, not
   runnable here: no local Postgres) and `supabase/tests/0110_hosted_cases/`
-  (8 cases). Hosted cases 01-03 were run live 2026-10-24 against 0110 alone
-  and passed 3 of 3; cases 04-08 still need 0111.
+  (8 cases). Hosted cases 01-08 were all run live 2026-10-24 and passed 8 of 8;
+  the reworded 0106 case 12 was also run live and a technician reading another
+  tech's `commission_percent` straight from `profiles` is denied with 42501.
+  The one-file local variants (the 0110 local test file, 0106 T8) are still
+  unrun (no local Postgres).
 
 ## What this document does not cover
 

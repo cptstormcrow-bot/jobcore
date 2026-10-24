@@ -33,8 +33,8 @@
 -- to authenticated) and adds it to employee_profiles_v. That default is intended:
 -- new columns start locked.
 --
--- NOT APPLIED. Written 2026-10-24 on Jeff's order; apply only when Jeff says go,
--- and only after 0110.
+-- APPLIED LIVE 2026-10-24 on Jeff's go naming 0111, after 0110 (verified: migration list,
+-- the catalog, hosted cases 04-08 and 0106 case 12). The pay-column read exposure is closed.
 --
 -- Idempotent: revoke-then-grant leaves the same end state however often it runs
 -- (revoking table-level SELECT also clears column-level grants first).
