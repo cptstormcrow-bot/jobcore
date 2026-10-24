@@ -25,6 +25,8 @@ and an anchor date; period boundaries derive from those two values.
 - Changes go through the `set_employee_rate` RPC.
 - `profiles.hourly_rate_cents` is a mirror of the current rate, kept in sync
   by the RPC; it is not the source of truth.
+- `profiles` also carries `worker_type`, `tech_role`, `dev_pay_mode` and
+  `flat_rate_cents` (0103), used by Close-Out job pay; see `compensation.md`.
 
 ## Hours: payroll_time_entries (0081)
 
@@ -42,6 +44,10 @@ only approved entries feed payroll.
 ## Payouts
 
 `payout_batches` and `payout_lines` are reused, with additive columns (0084).
+
+The Close-Out Payouts tab and its `contractor_payouts` rows are separate from
+`payout_batches`/`payout_lines`; employee Close-Out lines are not yet posted
+to payroll (see `compensation.md`).
 
 ## Export log and QuickBooks (0085)
 

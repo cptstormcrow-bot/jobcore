@@ -65,7 +65,9 @@ derivation logic.
 zero-amount bonus.** It exists as an explicit seam for a future bonus
 policy — percentage, threshold, tier table, per-job kicker, or anything
 else — but no such formula has been specified or implemented, and none is
-in scope for this change.
+in scope for this change. (Per-job Dev/Prem pay at Close-Out is a separate
+mechanism and is specified in "Per-job pay at Close-Out (migration 0103)"
+below.)
 
 Plugging in a real bonus formula requires Jeff's explicit sign-off; it is
 not something to implement speculatively. Anyone extending this code should
@@ -107,10 +109,50 @@ etc.) return a `CalculationResult<T>` — a discriminated success/failure
 result type — rather than throwing or returning a sentinel value, so callers
 must explicitly handle the failure case before touching pay data.
 
+## Per-job pay at Close-Out (migration 0103)
+
+Migration `supabase/migrations/0103_pay_policy.sql` (applied live 2026-10-24).
+All money is integer cents.
+
+- `profiles` gained `worker_type` (`employee` | `contractor`, default
+  `employee`), `tech_role` (`prem` | `dev` | `service`, nullable),
+  `dev_pay_mode` (`hourly` | `flat`, nullable) and `flat_rate_cents`
+  (nullable). Hourly pay still uses the existing `profiles.hourly_rate_cents`.
+- `compensation_policies` gained `prem_bonus_flat_cents`,
+  `prem_bonus_percent` and `dev_default_flat_cents`. 0103 seeds one
+  "Default pay policy" row per org; all rates start at 0 until an admin sets
+  them.
+- Math lives in `modules/admin-finance/src/money/job-pay.ts`
+  (`computeJobPayLines`). Hours come from time entries for that job; job
+  total is the estimate `totalCost` converted to cents.
+  - Dev tech, hourly: `round(hours x rate)`, where rate is the tech's hourly
+    rate if > 0, else the policy hourly rate.
+  - Dev tech, flat: the tech's `flat_rate_cents`, falling back to the policy
+    `dev_default_flat_cents`. A Dev tech with no pay mode is treated as hourly.
+  - Prem tech: `prem_bonus_flat_cents + round(prem_bonus_percent/100 x
+    max(job total, 0))`.
+  - Service tech or no role: no pay line.
+- Screen #93 (`af-compensationPolicy`, `CompensationPolicyScreen.tsx`) edits
+  the org policy (hourly rate, Dev flat default, Prem flat bonus, Prem percent
+  bonus). It is reached from the "Open Compensation Policy" button on Close
+  Out, which replaced the red "No compensation policy is configured" dead end.
+  Per-tech role, worker type, Dev pay mode and flat rate are edited on the
+  employee editor screen.
+- The Close Out Payouts tab (`CloseOutReviewScreen.tsx`,
+  `JobCloseOutRegion.tsx`) shows employee lines and contractor lines
+  separately, each with a basis label (hourly, flat, prem bonus).
+- At close-out, contractor lines with amount > 0 are written to
+  `contractor_payouts` (status `pending`, one row per tech per job, online
+  only; close-out is not undone if the write fails).
+- Employee lines are a display preview only: nothing posts them to payroll or
+  commissions yet.
+- Pay math for already-closed jobs is unchanged.
+
 ## What this document does not cover
 
-- A concrete bonus formula — none exists in this codebase by design; see
-  the `NullBonusRule` section above.
+- A concrete period-bonus formula — none exists in this codebase by design;
+  see the `NullBonusRule` section above. Per-job Dev/Prem pay at Close-Out is
+  specified in the section above and is separate from that rule.
 - Payroll disbursement, tax withholding, or any payment processing — out of
   scope for this app (see the Do-Not-Build list in the project plan: no card
   handling, no bonus-formula changes).
