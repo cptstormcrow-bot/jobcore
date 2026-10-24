@@ -26,13 +26,13 @@ and an anchor date; period boundaries derive from those two values.
 - `profiles.hourly_rate_cents` is a mirror of the current rate, kept in sync
   by the RPC; it is not the source of truth.
 - `profiles` also carries `worker_type`, `tech_role`, `dev_pay_mode` and
-  `flat_rate_cents` (0103; dropped by 0109, written, not yet applied live), used by Close-Out job pay; see `compensation.md`.
+  `flat_rate_cents` (0103; dropped by 0109, applied live 2026-10-24), used by Close-Out job pay; see `compensation.md`.
 - `profiles` also carries `commission_enabled boolean not null default false`
   and `commission_percent numeric(5,2)` (0106). Checks: percent is null or
   0..100 (0..50 from 0107), and enabled requires percent > 0. An admin sets
   them on the Employee editor's Pay tab (Base Pay + Commission switch).
 - 0107: `dev_pay_mode` is `hourly` | `commission` (old `flat` mapped to
-  `commission`); `flat_rate_cents` is deprecated and unused (dropped by 0109, written, not yet applied live). A Dev commission
+  `commission`); `flat_rate_cents` was dropped by 0109 (live 2026-10-24). A Dev commission
   tech's percent is `commission_percent`; the policy fallback is
   `compensation_policies.dev_default_commission_percent`. 0106 and 0107 are
   applied live (2026-10-24). Techs who were on flat are now in Commission mode

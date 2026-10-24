@@ -119,9 +119,9 @@ All money is integer cents.
 - `profiles` gained `worker_type` (`employee` | `contractor`, default
   `employee`), `tech_role` (`prem` | `dev` | `service`, nullable),
   `dev_pay_mode` (`hourly` | `flat`, nullable) and `flat_rate_cents`
-  (nullable; deprecated by 0107, dropped by 0109, written, not yet applied live). Hourly pay still uses the existing `profiles.hourly_rate_cents`.
+  (nullable; deprecated by 0107, dropped by 0109, applied live 2026-10-24). Hourly pay still uses the existing `profiles.hourly_rate_cents`.
 - `compensation_policies` gained `prem_bonus_flat_cents`,
-  `prem_bonus_percent` and `dev_default_flat_cents` (deprecated by 0107, dropped by 0109, written, not yet applied live). 0103 seeds one
+  `prem_bonus_percent` and `dev_default_flat_cents` (deprecated by 0107, dropped by 0109, applied live 2026-10-24). 0103 seeds one
   "Default pay policy" row per org; all rates start at 0 until an admin sets
   them.
 - Math lives in `modules/admin-finance/src/money/job-pay.ts`
@@ -209,10 +209,10 @@ Migration `0107` (Jeff order 2026-10-24). 0106 and 0107 are applied live
 - `compensation_policies.dev_default_commission_percent numeric(5,2)` (default
   0, check 0..50) is the fallback when the Dev tech has no personal percent.
   `flat_rate_cents` and `dev_default_flat_cents` (added in 0103) were left in
-  the database by 0107 as DEPRECATED and unused; 0109 drops them (see 0109 below).
+  the database by 0107 as DEPRECATED and unused; they were dropped by 0109 (live 2026-10-24, see 0109 below).
 - 0109 (`0109_drop_dev_flat_columns.sql`): drops `profiles.flat_rate_cents` and
-  `compensation_policies.dev_default_flat_cents`. Written, not yet applied live;
-  apply is pending Jeff's separate push approval.
+  `compensation_policies.dev_default_flat_cents`. Applied live 2026-10-24
+  (verified with migration list and information_schema).
 - Pay rule: each Dev commission tech gets THEIR OWN percent of the FULL labor
   total (no split). Labor $240: tech A at 10% = $24, tech B at 20% = $48. The
   line has basis `commission`, posts to `job_payout_lines` (employees only;
