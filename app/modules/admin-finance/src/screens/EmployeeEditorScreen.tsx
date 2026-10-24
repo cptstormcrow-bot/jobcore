@@ -299,6 +299,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const commissionPercentValue = parsePercent(commissionPercentInput);
   const commissionPercentOk = commissionPercentValue !== null && Number.isFinite(commissionPercentValue) && commissionPercentValue > 0 && commissionPercentValue <= 100;
   const commissionInvalid = commissionEligible && commissionEnabled && !commissionPercentOk;
+  // Send the commission columns only when the admin touched them (or a contractor's must be cleared), so a save that never mentions commission still works before migration 0106 is applied.
+  const commissionTouched = commissionEnabled !== initial.commissionEnabled || commissionPercentInput !== initial.commissionPercent || (!commissionEligible && commissionEnabled);
   const basePayRaw = showFlatRate ? flatRateInput : hourlyRateInput;
   const basePayNumber = basePayRaw.trim() === '' ? NaN : showFlatRate ? (flatRateParsed === null ? NaN : flatRateParsed / 100) : Number(basePayRaw);
   const basePayText = Number.isFinite(basePayNumber) && basePayNumber >= 0 ? `Base Pay: $${basePayNumber.toFixed(2)}` : 'Base Pay: $--.--';
@@ -410,8 +412,12 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         techRole: techRoleInput,
         devPayMode: techRoleInput === 'dev' ? devPayModeInput : null,
         flatRateCents: techRoleInput === 'dev' && devPayModeInput === 'flat' ? flatRateParsed : null,
-        commissionEnabled: commissionEligible ? commissionEnabled : false,
-        commissionPercent: commissionEligible && commissionPercentOk ? commissionPercentValue : null,
+        ...(commissionTouched
+          ? {
+              commissionEnabled: commissionEligible ? commissionEnabled : false,
+              commissionPercent: commissionEligible && commissionPercentOk ? commissionPercentValue : null,
+            }
+          : {}),
         ...(rateViaSetter ? {} : { defaultHourlyRateCents: newRateCents }),
       });
       if (rateViaSetter && onSetRate) {
