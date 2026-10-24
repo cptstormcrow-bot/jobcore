@@ -215,7 +215,7 @@ export function CloseOutReviewScreen({
                   {payout.techName} ({payoutBasisLabel(payout.basis)}): ${payout.amount.toFixed(2)}
                 </Text>
                 {payout.basis === 'hourly' ? <Text style={styles.trailMeta}>paid via timesheet</Text> : null}
-                {payout.basis === 'flat' || payout.basis === 'prem-bonus' ? <Text style={styles.trailMeta}>posts to next payroll run</Text> : null}
+                {payout.basis === 'flat' || payout.basis === 'prem-bonus' || payout.basis === 'commission' ?<Text style={styles.trailMeta}>posts to next payroll run</Text> : null}
                 {payout.note ? <Text style={styles.trailMeta}>{payout.note}</Text> : null}
               </View>
             ))

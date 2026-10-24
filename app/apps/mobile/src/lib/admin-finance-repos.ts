@@ -192,21 +192,23 @@ export async function writeAudit(draft: AuditLogDraft): Promise<void> {
  * `approveReimbursementViaRpc` shape: takes the Supabase RPC client as a
  * parameter, maps an `error` to `{ ok: false, reason }`, and maps the
  * returned row back to the domain type via `toJob`.
+ * `commission` null = no price-sheet commission: the database then skips the
+ * legacy commissions row but still moves the job.
  */
 export async function closeOutJobWriteViaRpc(
   client: Pick<typeof supabase, 'rpc'>,
   jobId: string,
   fromStatus: JobStatus,
-  commission: CommissionLine,
+  commission: CommissionLine | null,
   closedByUserId: string,
 ): Promise<{ ok: true; value: Job } | { ok: false; reason: string }> {
   requireOnline('close out the job');
   const { data, error } = await client.rpc('close_out_job_write', {
     p_job_id: jobId,
     p_from_status: fromStatus,
-    p_price_sheet_id: commission.priceSheetId,
-    p_compensation_policy_id: commission.compensationPolicyId,
-    p_commission_amount_cents: commission.amount,
+    p_price_sheet_id: commission ? commission.priceSheetId : null,
+    p_compensation_policy_id: commission ? commission.compensationPolicyId : null,
+    p_commission_amount_cents: commission ? commission.amount : null,
     p_closed_by_user_id: closedByUserId,
   });
   if (error) {
@@ -357,7 +359,7 @@ export function createJobRepository(): JobRepository {
     async closeOutWrite(
       jobId: string,
       fromStatus: JobStatus,
-      commission: CommissionLine,
+      commission: CommissionLine | null,
       closedByUserId: string,
     ): Promise<Job> {
       // Online-only (W0): no queue entry; closeOutJobWriteViaRpc calls requireOnline.
@@ -527,6 +529,8 @@ function toProfile(row: {
   tech_role?: TechRole | null;
   dev_pay_mode?: DevPayMode | null;
   flat_rate_cents?: number | null;
+  commission_enabled?: boolean | null;
+  commission_percent?: number | string | null;
 }): Profile {
   return {
     id: row.id,
@@ -550,6 +554,11 @@ function toProfile(row: {
     techRole: row.tech_role ?? null,
     devPayMode: row.dev_pay_mode ?? null,
     flatRateCents: row.flat_rate_cents ?? null,
+    commissionEnabled: row.commission_enabled === true,
+    commissionPercent:
+      row.commission_percent != null && Number.isFinite(Number(row.commission_percent))
+        ? Number(row.commission_percent)
+        : undefined,
   };
 }
 
@@ -626,6 +635,8 @@ export function createEmployeeRepository(): EmployeeRepository {
         techRole?: TechRole | null;
         devPayMode?: DevPayMode | null;
         flatRateCents?: number | null;
+        commissionEnabled?: boolean;
+        commissionPercent?: number | null;
       },
     ): Promise<void> {
       const occurredAt = new Date().toISOString();
@@ -899,7 +910,7 @@ export function createJobPayoutLineRepository(): JobPayoutLineRepository {
     async postForJob(jobId, rows) {
       requireOnline('record employee pay');
       if (rows.length === 0) return 0;
-      const unique = rows.filter((r, i) => rows.findIndex((x) => x.techId === r.techId) === i);
+      const unique = rows.filter((r, i) => rows.findIndex((x) => x.techId === r.techId && x.basis === r.basis) === i);
       const { data, error } = await supabase.rpc('post_job_payout_lines', {
         p_job_id: jobId,
         p_lines: unique.map((r) => ({ user_id: r.techId, amount_cents: r.amountCents, basis: r.basis })),

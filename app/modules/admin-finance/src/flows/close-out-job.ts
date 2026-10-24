@@ -1,6 +1,11 @@
 /**
  * Close-out flow — the `completed -> paid` / `paid -> closed` transition PLUS
- * its unconditional commission write (P3h.4a + P3h.4b).
+ * its best-effort price-sheet commission write (P3h.4a + P3h.4b).
+ *
+ * Price-sheet commission is BEST EFFORT: it is null when there is no active
+ * price sheet or no matching rate, and neither case blocks the close-out.
+ * Per-technician commission is a separate mechanism (the employee commission
+ * switch), posted from the Close-Out region, not by this flow.
  *
  * Scope: this flow drives the next close-out edge (`completed -> paid` or `paid -> closed`,
  * `domain/closeout.ts`'s `NEXT_CLOSE_OUT_STATUS` table) and then writes
@@ -57,13 +62,14 @@ export interface CloseOutJobDeps {
 }
 
 export type CloseOutJobResult =
-  | { ok: true; job: Job; commission: CommissionLine }
+  | { ok: true; job: Job; commission: CommissionLine | null }
   | { ok: false; reason: string };
 
 /**
  * Advances `job` along its next close-out edge (`nextCloseOutStatus`:
- * `completed -> paid` or `paid -> closed`). Both edges write exactly ONE
- * `commissions` row via `closeOutWrite` (idempotent server-side).
+ * `completed -> paid` or `paid -> closed`). Both edges write at most ONE
+ * `commissions` row via `closeOutWrite`, and only when a commission was
+ * calculated (idempotent server-side).
  * Rejects before any write if `job` is not awaiting close-out, or if
  * `closeOutBlockers` reports a precondition failure for its next edge.
  */
@@ -82,22 +88,20 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
     return { ok: false, reason: firstBlocker };
   }
 
+  // Price-sheet commission is best effort: no active sheet, or no matching
+  // rate, leaves it null and the close-out continues.
+  let commission: CommissionLine | null = null;
   const activePriceSheet = await deps.priceSheetRepository.getActive(job.organizationId);
-  if (!activePriceSheet) {
-    const reason = `No active price sheet for organization ${job.organizationId}; cannot write the commission for job ${job.id}.`;
-    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'no_price_sheet', reason);
-    return { ok: false, reason };
-  }
-
-  const commissionResult = calculateCommission(
-    job,
-    activePriceSheet,
-    deps.compensationPolicy,
-    deps.rates,
-  );
-  if (!commissionResult.ok) {
-    await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'commission_calc', commissionResult.reason);
-    return { ok: false, reason: commissionResult.reason };
+  if (activePriceSheet) {
+    const commissionResult = calculateCommission(
+      job,
+      activePriceSheet,
+      deps.compensationPolicy,
+      deps.rates,
+    );
+    if (commissionResult.ok) {
+      commission = commissionResult.value;
+    }
   }
 
   try {
@@ -106,7 +110,7 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
     const updatedJob = await deps.jobs.closeOutWrite(
       transitionedJob.id,
       job.status,
-      commissionResult.value,
+      commission,
       deps.closedByUserId,
     );
 
@@ -121,7 +125,7 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
 
     await deps.closeOutFailures?.resolve(job.id, 'resolved_retry', deps.closedByUserId);
 
-    return { ok: true, job: updatedJob, commission: commissionResult.value };
+    return { ok: true, job: updatedJob, commission };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     await deps.closeOutFailures?.recordFailure(job.organizationId, job.id, 'write', reason);

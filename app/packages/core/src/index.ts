@@ -74,6 +74,9 @@ export interface Profile {
   techRole?: TechRole | null;
   devPayMode?: DevPayMode | null;
   flatRateCents?: number | null;
+  /** Per-job commission switch and percent (0-100, employees only), paid on top of normal pay. */
+  commissionEnabled?: boolean;
+  commissionPercent?: number;
 }
 export const DEFAULT_PAID_TRAVEL_POLICY_MESSAGE =
   'Paid travel time is allowable if a vehicle is assigned to tech.';

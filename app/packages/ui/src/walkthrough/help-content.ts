@@ -76,7 +76,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_employees',
     kind: 'action',
     title: 'Employees',
-    body: 'Your Employee Roster. Tap "Add Employee" to add someone, or "Pending Invitations" to see invites not yet accepted.',
+    body: 'Your Employee Roster. Tap "Add Employee" to add someone, or "Pending Invitations" to see invites not yet accepted. Pay is set on an employee\'s Pay tab: "Base Pay" is one box that follows the Hourly/Flat picker. Employees also get a "Commission" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job\'s labor cost. Contractors do not get the switch.',
     context: { screens: ['af-employees'] },
   },
 
@@ -85,7 +85,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'job_closeout',
     kind: 'action',
     title: 'Close Out the Job',
-    body: 'The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history.',
+    body: 'The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history. The job still closes if the price sheet has no commission rate. Any commission lines show in the Payouts tab next to that tech\'s pay and go out with the next payroll run once the job is closed out.',
     whereScreen: 'Job Detail',
     whereHint: 'On Job Detail, open the job menu and choose "Close-out" (owner/admin only).',
     context: { screens: ['job-detail'], jobStatuses: ['paid'] },

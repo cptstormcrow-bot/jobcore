@@ -239,11 +239,14 @@ export interface JobRepository {
    * commissions.create). Called only from the close-out flow, after its own
    * precondition checks have already run — the RPC re-validates the status
    * guard server-side regardless.
+   *
+   * `commission` null means no price-sheet commission was calculated, so the
+   * database skips the legacy `commissions` row but still moves the job status.
    */
   closeOutWrite(
     jobId: string,
     fromStatus: JobStatus,
-    commission: CommissionLine,
+    commission: CommissionLine | null,
     closedByUserId: string,
   ): Promise<Job>;
 }
@@ -452,6 +455,9 @@ export interface EmployeeRepository {
       techRole?: TechRole | null;
       devPayMode?: DevPayMode | null;
       flatRateCents?: number | null;
+      // Commission switch and percent (0-100) for the per-job commission line; employees only.
+      commissionEnabled?: boolean;
+      commissionPercent?: number | null;
     }
   ): Promise<void>;
   /** Admin-only, online-only: calls edge fn admin-update-email. Throws when offline or rejected. */
@@ -682,10 +688,10 @@ export interface ContractorPayoutRepository {
   createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number>;
 }
 
-/** Posts employee flat/prem pay lines via the post_job_payout_lines RPC (migration 0104). */
+/** Posts employee flat/prem/commission pay lines via the post_job_payout_lines RPC (0104, widened by 0106). */
 export interface JobPayoutLineRepository {
   /** Returns the number the RPC reports as posted. */
-  postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' }[]): Promise<number>;
+  postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' }[]): Promise<number>;
 }
 
 /* ------------------------------------------------------------------ *

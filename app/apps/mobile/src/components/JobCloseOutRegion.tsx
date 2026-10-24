@@ -142,6 +142,8 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
               hourlyRateCents: p?.defaultHourlyRateCents ?? null,
               flatRateCents: p?.flatRateCents ?? null,
               hoursWorked: hours[id] ?? 0,
+              commissionEnabled: p?.commissionEnabled === true,
+              commissionPercent: p?.commissionPercent ?? null,
             };
           });
           const lines = computeJobPayLines({
@@ -153,6 +155,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
               devDefaultFlatCents: policy.devDefaultFlat ?? 0,
             },
             techs,
+            laborTotalCents: Math.round((estimate?.laborCost ?? 0) * 100),
           });
           if (!(isClosed && commissionRows.length > 0)) {
             employeeLines = lines
@@ -287,13 +290,13 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           }
           const employeePostable = postableJobPayLines(
             techPayouts
-              .filter((t) => t.techId && (t.basis === 'flat' || t.basis === 'prem-bonus'))
+              .filter((t) => t.techId && (t.basis === 'flat' || t.basis === 'prem-bonus' || t.basis === 'commission'))
               .map((t) => ({
                 techId: t.techId as string,
                 name: t.techName,
                 workerType: 'employee' as const,
                 techRole: null,
-                basis: t.basis as 'flat' | 'prem-bonus',
+                basis: t.basis as 'flat' | 'prem-bonus' | 'commission',
                 amountCents: Math.round(t.amount * 100),
                 note: t.note ?? '',
               })),

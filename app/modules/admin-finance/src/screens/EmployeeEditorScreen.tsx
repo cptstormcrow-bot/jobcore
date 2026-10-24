@@ -11,8 +11,9 @@
  * values, and an `is_test` toggle. Submits via
  * `InvitationRepository.createInvitation(organizationId, email, role, fullName?)`.
  *
- * EDIT mode (`profile` prop present): full name, phone, `is_test`, and hourly
- * rate are directly editable and saved via
+ * EDIT mode (`profile` prop present): full name, phone and `is_test` are
+ * directly editable (the pay rate now lives on the Pay tab as Base Pay, along
+ * with the per-employee Commission switch and percent) and saved via
  * `EmployeeRepository.updateEmployee(profileId, { fullName, phone, isTest })`,
  * with the rate persisting to `profiles.hourly_rate_cents` (migration 0066).
  * Role is a separate, immediate action —
@@ -47,7 +48,7 @@ import type {
 import { isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { numberAreas } from './employee-editor-logic';
-import { parseMoneyToCents, centsToDollarsText } from '../domain/parse-money';
+import { parseMoneyToCents, centsToDollarsText, parsePercent } from '../domain/parse-money';
 
 export interface EmployeeEditorScreenProps {
   employees?: EmployeeRepository;
@@ -168,6 +169,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [flatRateInput, setFlatRateInput] = useState(
     profile?.flatRateCents != null ? centsToDollarsText(profile.flatRateCents) : ''
   );
+  const [commissionEnabled, setCommissionEnabled] = useState(profile?.commissionEnabled === true);
+  const [commissionPercentInput, setCommissionPercentInput] = useState(
+    profile?.commissionPercent != null ? String(profile.commissionPercent) : ''
+  );
 
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [roleActionState, setRoleActionState] = useState<ActionState>({ kind: 'idle' });
@@ -209,6 +214,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     techRole: techRoleInput,
     devPayMode: devPayModeInput,
     flatRate: flatRateInput,
+    commissionEnabled,
+    commissionPercent: commissionPercentInput,
   }));
   const [privateInitial, setPrivateInitial] = useState({ ssn: '', ecName: '', ecPhone: '' });
 
@@ -288,6 +295,13 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const flatRateBlank = flatRateInput.trim() === '';
   const flatRateParsed = flatRateBlank ? null : parseMoneyToCents(flatRateInput);
   const flatRateInvalid = showFlatRate && !flatRateBlank && flatRateParsed === null;
+  const commissionEligible = workerTypeInput !== 'contractor';
+  const commissionPercentValue = parsePercent(commissionPercentInput);
+  const commissionPercentOk = commissionPercentValue !== null && Number.isFinite(commissionPercentValue) && commissionPercentValue > 0 && commissionPercentValue <= 100;
+  const commissionInvalid = commissionEligible && commissionEnabled && !commissionPercentOk;
+  const basePayRaw = showFlatRate ? flatRateInput : hourlyRateInput;
+  const basePayNumber = basePayRaw.trim() === '' ? NaN : showFlatRate ? (flatRateParsed === null ? NaN : flatRateParsed / 100) : Number(basePayRaw);
+  const basePayText = Number.isFinite(basePayNumber) && basePayNumber >= 0 ? `Base Pay: $${basePayNumber.toFixed(2)}` : 'Base Pay: $--.--';
 
   // Dirty = FORM fields only (Detail + Email); instant-save controls are excluded.
   const privateDirty =
@@ -313,6 +327,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     techRoleInput !== initial.techRole ||
     devPayModeInput !== initial.devPayMode ||
     flatRateInput !== initial.flatRate ||
+    commissionEnabled !== initial.commissionEnabled ||
+    commissionPercentInput !== initial.commissionPercent ||
     privateDirty ||
     emailDirty;
 
@@ -371,6 +387,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       setActionState({ kind: 'failed', message: 'Flat rate: enter a dollar amount like 45.00.' });
       return;
     }
+    if (commissionInvalid) {
+      setActionState({ kind: 'failed', message: 'Commission: enter a percent above 0 and up to 100.' });
+      return;
+    }
     setActionState({ kind: 'working' });
     try {
       const initialRateCents = (profile as unknown as { defaultHourlyRateCents?: number }).defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS;
@@ -390,6 +410,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         techRole: techRoleInput,
         devPayMode: techRoleInput === 'dev' ? devPayModeInput : null,
         flatRateCents: techRoleInput === 'dev' && devPayModeInput === 'flat' ? flatRateParsed : null,
+        commissionEnabled: commissionEligible ? commissionEnabled : false,
+        commissionPercent: commissionEligible && commissionPercentOk ? commissionPercentValue : null,
         ...(rateViaSetter ? {} : { defaultHourlyRateCents: newRateCents }),
       });
       if (rateViaSetter && onSetRate) {
@@ -672,21 +694,6 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 onChangeText={setEcPhoneInput}
                 keyboardType="phone-pad"
               />
-              <TextInput
-                style={styles.input}
-                placeholder="Hourly Rate"
-                value={hourlyRateInput}
-                onChangeText={setHourlyRateInput}
-                keyboardType="numeric"
-              />
-              {onSetRate ? (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Rate effective from (YYYY-MM-DD)"
-                  value={effectiveFromInput}
-                  onChangeText={setEffectiveFromInput}
-                />
-              ) : null}
               <Select
                 label="Vehicle Status"
                 value={vehicleStatusInput}
@@ -757,6 +764,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 placeholder="Select pay mode"
               />
             ) : null}
+            <Text style={{ fontWeight: typography.weight.semibold }}>{basePayText}</Text>
             {showFlatRate ? (
               <>
                 <TextInput
@@ -768,12 +776,50 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 />
                 {flatRateInvalid ? (
                   <Text style={styles.warning}>Enter a dollar amount like 45.00, or leave blank to use the policy default.</Text>
-                ) : (
-                  <Text style={styles.note}>Leave blank to use the policy default.</Text>
-                )}
+                ) : null}
+              </>
+            ) : (
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Hourly Rate"
+                  value={hourlyRateInput}
+                  onChangeText={setHourlyRateInput}
+                  keyboardType="numeric"
+                />
+                {onSetRate ? (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Rate effective from (YYYY-MM-DD)"
+                    value={effectiveFromInput}
+                    onChangeText={setEffectiveFromInput}
+                  />
+                ) : null}
+              </>
+            )}
+            {commissionEligible ? (
+              <>
+                <Toggle
+                  label="Commission"
+                  value={commissionEnabled}
+                  onChange={setCommissionEnabled}
+                />
+                {commissionEnabled ? (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Commission % of job labor"
+                      value={commissionPercentInput}
+                      onChangeText={setCommissionPercentInput}
+                      keyboardType="numeric"
+                    />
+                    {commissionInvalid ? (
+                      <Text style={styles.warning}>Enter a commission percent above 0 and up to 100.</Text>
+                    ) : null}
+                  </>
+                ) : null}
               </>
             ) : null}
-            <Text style={styles.note}>The hourly rate is on the Detail tab.</Text>
           </Card>
         ) : null}
 

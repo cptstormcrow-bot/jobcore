@@ -152,6 +152,14 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Tech role" value={employee.techRole ?? '—'} />
           <InfoRow label="Dev pay mode" value={employee.devPayMode ?? '—'} />
           <InfoRow label="Flat rate" value={employee.flatRateCents != null ? `$${centsToDollarsText(employee.flatRateCents)}` : '—'} />
+          <InfoRow
+            label="Commission"
+            value={
+              employee.workerType !== 'contractor' && employee.commissionEnabled === true && typeof employee.commissionPercent === 'number'
+                ? `${employee.commissionPercent}%`
+                : 'Off'
+            }
+          />
         </Card>
 
         <Text style={styles.heading}>Skills</Text>

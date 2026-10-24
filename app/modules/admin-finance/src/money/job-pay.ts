@@ -3,10 +3,13 @@
  *
  * No global state, no clock, no env — every input is a parameter. All money
  * is INTEGER CENTS (Math.round); no React imports.
+ *
+ * An employee with commission enabled also gets one extra 'commission' line
+ * after their normal line: commissionPercent of the job's labor total.
  */
 
 /** How a tech's pay on a job was derived. */
-export type PayBasis = 'hourly' | 'flat' | 'prem-bonus' | 'none';
+export type PayBasis = 'hourly' | 'flat' | 'prem-bonus' | 'commission' | 'none';
 
 /** Org-wide pay policy values used as fallbacks and prem-bonus inputs. */
 export interface JobPayPolicy {
@@ -26,6 +29,9 @@ export interface JobPayTech {
   hourlyRateCents: number | null;
   flatRateCents: number | null;
   hoursWorked: number;
+  /** Employee-only commission on labor; percent is a plain 0-100 number (5 = 5%). */
+  commissionEnabled?: boolean;
+  commissionPercent?: number | null;
 }
 
 /** Computed pay for one tech on one job. */
@@ -56,28 +62,31 @@ function dollars(c: number): string {
 export interface PostableJobPayLine {
   techId: string;
   amountCents: number;
-  basis: 'dev_flat' | 'prem_bonus';
+  basis: 'dev_flat' | 'prem_bonus' | 'commission';
 }
 
-/** Keeps only positive EMPLOYEE flat (Dev) and prem-bonus lines, in input order. */
+/** Keeps only positive EMPLOYEE flat (Dev), prem-bonus and commission lines, in input order. */
 export function postableJobPayLines(lines: JobPayLine[]): PostableJobPayLine[] {
   const out: PostableJobPayLine[] = [];
   for (const l of lines) {
     if (l.workerType !== 'employee' || !(l.amountCents > 0)) continue;
     if (l.basis === 'flat') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'dev_flat' });
     else if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
+    else if (l.basis === 'commission') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'commission' });
   }
   return out;
 }
 
-/** Computes one pay line per tech (same order as input) for a job. */
+/** Computes each tech's pay line (input order), plus a commission line right after theirs when it applies. */
 export function computeJobPayLines(input: {
   jobTotalCents: number;
   policy: JobPayPolicy;
   techs: JobPayTech[];
+  laborTotalCents?: number;
 }): JobPayLine[] {
   const { jobTotalCents, policy, techs } = input;
-  return techs.map((tech): JobPayLine => {
+  const laborTotalCents = input.laborTotalCents ?? 0;
+  const normalLines = techs.map((tech): JobPayLine => {
     const base = {
       techId: tech.techId,
       name: tech.name,
@@ -135,5 +144,34 @@ export function computeJobPayLines(input: {
     }
 
     return { ...base, basis: 'none', amountCents: 0, note: 'No pay role set' };
+  });
+
+  // Commission rides ON TOP of the normal line: one extra employee-only line after it.
+  const laborCents = Math.max(Number.isFinite(laborTotalCents) ? laborTotalCents : 0, 0);
+  return normalLines.flatMap((line, i): JobPayLine[] => {
+    const tech = techs[i];
+    if (!tech) return [line];
+    const pct = tech.commissionPercent;
+    if (
+      tech.workerType !== 'employee' ||
+      tech.commissionEnabled !== true ||
+      typeof pct !== 'number' ||
+      !Number.isFinite(pct) ||
+      !(pct > 0)
+    ) {
+      return [line];
+    }
+    return [
+      line,
+      {
+        techId: tech.techId,
+        name: tech.name,
+        workerType: tech.workerType,
+        techRole: tech.techRole,
+        basis: 'commission',
+        amountCents: nonNegInt(Math.round((pct / 100) * laborCents)),
+        note: `${pct}% of labor $${dollars(laborCents)}`,
+      },
+    ];
   });
 }

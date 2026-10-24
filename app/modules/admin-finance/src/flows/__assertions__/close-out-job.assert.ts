@@ -1,6 +1,6 @@
 /**
  * Assertions for the close-out flow (`completed -> paid` / `paid -> closed` plus its
- * unconditional commission write) and its retry wrapper.
+ * best-effort price-sheet commission write, null when no sheet or rate applies) and its retry wrapper.
  *
  * Runs under `node --experimental-strip-types --test` — zero new
  * dependencies, zero setup: no DB, no network, no env vars, no faked clock.
@@ -289,9 +289,11 @@ test('closeOutJob: blocked hard stop records recordFailure with stage "blocked"'
   assert.equal(closeOutFailures.failures[0]?.stage, 'blocked');
 });
 
-test('closeOutJob: no active price sheet records recordFailure with stage "no_price_sheet"', async () => {
+test('closeOutJob: no active price sheet is best effort - closes with a null commission and records no failure', async () => {
   const closeOutFailures = makeCloseOutFailures();
   const job = makeJob();
+  let writes = 0;
+  let seenCommission: unknown = 'unset';
   const deps = makeDeps({
     closeOutFailures,
     priceSheetRepository: makePriceSheetRepository({
@@ -299,27 +301,77 @@ test('closeOutJob: no active price sheet records recordFailure with stage "no_pr
         return null;
       },
     }),
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, commission, _closedByUserId) {
+        writes += 1;
+        seenCommission = commission;
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
   });
 
   const result = await closeOutJob(job, deps);
 
-  assert.equal(result.ok, false);
-  assert.equal(closeOutFailures.failures.length, 1);
-  assert.equal(closeOutFailures.failures[0]?.stage, 'no_price_sheet');
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.job.status, 'paid');
+  assert.equal(result.commission, null);
+  assert.equal(writes, 1);
+  assert.equal(seenCommission, null);
+  assert.equal(closeOutFailures.failures.length, 0);
 });
 
-test('closeOutJob: commission-calc failure records recordFailure with stage "commission_calc"', async () => {
+test('closeOutJob: no matching rate row is best effort - closes with a null commission and records no failure', async () => {
   const closeOutFailures = makeCloseOutFailures();
   const job = makeJob();
+  let writes = 0;
+  let seenCommission: unknown = 'unset';
   // No rate row matches this job's serviceId/attachTiming, so
   // calculateCommission returns { ok: false } via findMatchingRate.
-  const deps = makeDeps({ closeOutFailures, rates: [] });
+  const deps = makeDeps({
+    closeOutFailures,
+    rates: [],
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, commission, _closedByUserId) {
+        writes += 1;
+        seenCommission = commission;
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
 
   const result = await closeOutJob(job, deps);
 
-  assert.equal(result.ok, false);
-  assert.equal(closeOutFailures.failures.length, 1);
-  assert.equal(closeOutFailures.failures[0]?.stage, 'commission_calc');
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.job.status, 'paid');
+  assert.equal(result.commission, null);
+  assert.equal(writes, 1);
+  assert.equal(seenCommission, null);
+  assert.equal(closeOutFailures.failures.length, 0);
+});
+
+test('closeOutJob: a matching rate row yields a non-null commission that is passed to closeOutWrite', async () => {
+  const closeOutFailures = makeCloseOutFailures();
+  let seenCommission: unknown = 'unset';
+  const deps = makeDeps({
+    closeOutFailures,
+    jobs: makeJobs({
+      async closeOutWrite(jobId, _fromStatus, commission, _closedByUserId) {
+        seenCommission = commission;
+        return makeJob({ id: jobId, status: 'paid' });
+      },
+    }),
+  });
+
+  const result = await closeOutJob(makeJob(), deps);
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.ok(result.commission);
+  assert.notEqual(seenCommission, null);
+  assert.deepEqual(seenCommission, result.commission);
+  assert.equal(closeOutFailures.failures.length, 0);
 });
 
 test('closeOutJob: happy path calls closeOutFailures.resolve with "resolved_retry"', async () => {

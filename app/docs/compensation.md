@@ -24,8 +24,10 @@ A `PriceSheet` holds `PriceSheetRate`s used to calculate commission for
 completed jobs. A price sheet is usable only when its `status` is
 `'published'` — any other status (draft, archived, etc.) causes commission
 calculation to fail closed rather than silently fall back to a default rate
-or zero. This means a tech's commission calculation will hard-fail, not
-under-pay silently, if the org has not published a rate sheet.
+or zero. Close-Out no longer hard-fails on this: the price-sheet commission
+(`commissions` table) is best effort, written only when an active price sheet
+has a matching rate row. Otherwise it is skipped and the close-out still
+succeeds (job moves completed->paid or paid->closed).
 
 `CommissionLine` records never carry reimbursement fields (see AC-9 in the
 codebase) — reimbursements are a separate line item in the final result, not
@@ -139,18 +141,19 @@ All money is integer cents.
   the org policy (hourly rate, Dev flat default, Prem flat bonus, Prem percent
   bonus). It is reached from the "Open Compensation Policy" button on Close
   Out, which replaced the red "No compensation policy is configured" dead end.
-  Per-tech role, worker type, Dev pay mode and flat rate are edited on the
-  employee editor screen.
+  Per-tech role, worker type, Dev pay mode, Base Pay (hourly or flat rate) and
+  commission are edited on the PAY tab of the employee editor screen; the
+  hourly rate no longer lives on the Detail tab.
 - The Close Out Payouts tab (`CloseOutReviewScreen.tsx`,
   `JobCloseOutRegion.tsx`) shows employee lines and contractor lines
-  separately, each with a basis label (hourly, flat, prem bonus).
+  separately, each with a basis label (hourly, flat, prem bonus, commission).
 - At close-out, contractor lines with amount > 0 are written to
   `contractor_payouts` (status `pending`, one row per tech per job, online
   only; close-out is not undone if the write fails).
 - Migration 0104 (`supabase/migrations/0104_job_payout_lines.sql`, written and
   applied live 2026-10-24) adds table `job_payout_lines` (basis
-  `dev_flat` | `prem_bonus`; status `pending` | `included` | `void`; one live
-  row per job per tech) and RPC `post_job_payout_lines`.
+  `dev_flat` | `prem_bonus`, plus `commission` from 0106; status `pending` | `included` | `void`;
+  one live row per job per tech, per basis from 0106) and RPC `post_job_payout_lines`.
 - At close-out, employee Dev FLAT and Prem BONUS lines with amount > 0 are
   posted to `job_payout_lines` (online only; close-out is not undone if the
   post fails; re-posting is idempotent).
@@ -167,6 +170,44 @@ All money is integer cents.
 - Contractor lines are unchanged (`contractor_payouts`). Not backfilled for
   already-closed jobs.
 - Pay math for already-closed jobs is unchanged.
+
+### Commission (per-employee switch)
+
+Migration `supabase/migrations/0106_tech_commission.sql`.
+
+- On the Employee editor's PAY tab an admin sets "Base Pay: $xx.xx" and a
+  Commission switch with a percent box. Base Pay is one field that follows the
+  Hourly/Flat picker: Hourly mode edits the hourly rate (with its "Rate
+  effective from" date); Flat mode (Dev role only) edits the flat rate.
+- Switch OFF = base pay only. Switch ON (percent > 0 and <= 100; employees
+  only, never contractors) adds an EXTRA commission pay line on top of base
+  pay: `round(percent/100 x the job's labor cost)`, where labor cost is the
+  estimate's labor total (not materials or other). It rides on top of hourly,
+  flat or prem-bonus pay; a Prem Tech with commission on gets two lines for
+  the job.
+- Profile columns: `commission_enabled boolean not null default false` and
+  `commission_percent numeric(5,2)`, with checks (percent null or 0..100;
+  enabled requires percent > 0).
+- Posting: at Close-Out the commission line is posted to `job_payout_lines`
+  with basis `commission`. One live line per (job, user, basis), so a tech can
+  hold a base line and a commission line on the same job. Posted lines are
+  immutable: later estimate or percent changes do not alter them.
+- `create_payout_batch` sums all pending lines per user into the bonus amount
+  with no basis filter, so payroll needed no change: commission lands on the
+  next payroll run. Hourly pay is still paid through approved timesheets and
+  is never posted.
+- 0106 also widens the `job_payout_lines` basis check and unique index, and
+  makes `close_out_job_write` insert into `commissions` only when all three
+  commission arguments are supplied.
+
+Limits:
+
+- Reports "Commission Totals" still reads the legacy `commissions` table, so
+  per-tech commissions do not appear there yet.
+- With the picker on Flat, the Base Pay box edits the flat rate; the hourly
+  rate (still used by payroll for timesheet hours) is edited by switching the
+  picker to Hourly.
+- The policy default hourly rate is now $25.00 (live data).
 
 ## What this document does not cover
 
