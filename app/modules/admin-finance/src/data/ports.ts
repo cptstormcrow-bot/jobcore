@@ -682,6 +682,12 @@ export interface ContractorPayoutRepository {
   createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number>;
 }
 
+/** Posts employee flat/prem pay lines via the post_job_payout_lines RPC (migration 0104). */
+export interface JobPayoutLineRepository {
+  /** Returns the number the RPC reports as posted. */
+  postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' }[]): Promise<number>;
+}
+
 /* ------------------------------------------------------------------ *
  * Customer row (snake_case) → domain type (camelCase)
  * ------------------------------------------------------------------ */

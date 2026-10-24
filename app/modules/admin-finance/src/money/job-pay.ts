@@ -52,6 +52,24 @@ function dollars(c: number): string {
   return centsToDollars(c).toFixed(2);
 }
 
+/** A pay line shaped for the post_job_payout_lines RPC (employee flat/prem pay only). */
+export interface PostableJobPayLine {
+  techId: string;
+  amountCents: number;
+  basis: 'dev_flat' | 'prem_bonus';
+}
+
+/** Keeps only positive EMPLOYEE flat (Dev) and prem-bonus lines, in input order. */
+export function postableJobPayLines(lines: JobPayLine[]): PostableJobPayLine[] {
+  const out: PostableJobPayLine[] = [];
+  for (const l of lines) {
+    if (l.workerType !== 'employee' || !(l.amountCents > 0)) continue;
+    if (l.basis === 'flat') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'dev_flat' });
+    else if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
+  }
+  return out;
+}
+
 /** Computes one pay line per tech (same order as input) for a job. */
 export function computeJobPayLines(input: {
   jobTotalCents: number;

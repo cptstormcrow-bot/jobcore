@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { computeJobPayLines, type JobPayPolicy, type JobPayTech } from '../job-pay';
+import { computeJobPayLines, postableJobPayLines, type JobPayPolicy, type JobPayTech } from '../job-pay';
 
 const policy: JobPayPolicy = {
   hourlyRateCents: 2000,
@@ -120,4 +120,49 @@ test('order preserved and contractor passes through', () => {
   const first = lines[0];
   assert.ok(first);
   assert.equal(first.workerType, 'contractor');
+});
+
+function postable(techs: JobPayTech[], jobTotalCents = 100000) {
+  return postableJobPayLines(computeJobPayLines({ jobTotalCents, policy, techs }));
+}
+
+test('postable: hourly dropped', () => {
+  assert.deepEqual(postable([tech({ hourlyRateCents: 2500, hoursWorked: 2 })]), []);
+});
+
+test('postable: contractor dropped', () => {
+  assert.deepEqual(postable([tech({ workerType: 'contractor', devPayMode: 'flat', flatRateCents: 9000 })]), []);
+  assert.deepEqual(postable([tech({ workerType: 'contractor', techRole: 'prem' })]), []);
+});
+
+test('postable: zero dropped', () => {
+  assert.deepEqual(postable([tech({ devPayMode: 'flat', flatRateCents: 0 })]), []);
+  assert.deepEqual(postable([tech({ techRole: 'service' })]), []);
+});
+
+test('postable: dev flat kept as dev_flat', () => {
+  assert.deepEqual(postable([tech({ devPayMode: 'flat', flatRateCents: 9000 })]), [
+    { techId: 't1', amountCents: 9000, basis: 'dev_flat' },
+  ]);
+});
+
+test('postable: prem kept as prem_bonus', () => {
+  assert.deepEqual(postable([tech({ techRole: 'prem', devPayMode: null })]), [
+    { techId: 't1', amountCents: 15000, basis: 'prem_bonus' },
+  ]);
+});
+
+test('postable: mixed list preserves order', () => {
+  const rows = postable([
+    tech({ techId: 'a', techRole: 'prem', devPayMode: null }),
+    tech({ techId: 'b', hoursWorked: 2 }),
+    tech({ techId: 'c', devPayMode: 'flat', flatRateCents: 9000 }),
+    tech({ techId: 'd', workerType: 'contractor', techRole: 'prem' }),
+  ]);
+  assert.deepEqual(rows.map((r) => r.techId), ['a', 'c']);
+  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'dev_flat']);
+});
+
+test('postable: empty in gives empty out', () => {
+  assert.deepEqual(postableJobPayLines([]), []);
 });

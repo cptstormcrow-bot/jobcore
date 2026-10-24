@@ -22,6 +22,7 @@ import type {
   EmployeeRepository,
   InvitationRepository,
   ContractorPayoutRepository,
+  JobPayoutLineRepository,
   JobAssignmentRepository,
   CommissionRepository,
   AuditLogRepository,
@@ -155,6 +156,7 @@ export interface ModulePorts {
   jobPlanTasks: JobPlanTasksRepository;
   timeEntries: TimeEntryRepository;
   contractorPayouts: ContractorPayoutRepository;
+  jobPayoutLines: JobPayoutLineRepository;
   /** payment-review's read-only ReconciliationView plus the host-supplied Supabase client to pass as its `client` prop. */
   paymentReview: {
     ReconciliationView: ComponentType<ReconciliationViewProps>;

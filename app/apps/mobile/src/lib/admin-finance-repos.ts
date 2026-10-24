@@ -45,6 +45,7 @@ import type {
   LeadRepository,
   JobAssignmentDraft,
   ContractorPayoutRepository,
+  JobPayoutLineRepository,
   JobAssignmentRepository,
   CommissionRepository,
   AuditLogRow,
@@ -885,6 +886,29 @@ export function createContractorPayoutRepository(): ContractorPayoutRepository {
         throw new Error(`create contractor payouts failed: ${error.message}`);
       }
       return fresh.length;
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * JobPayoutLineRepository
+ * ------------------------------------------------------------------ */
+
+export function createJobPayoutLineRepository(): JobPayoutLineRepository {
+  return {
+    async postForJob(jobId, rows) {
+      requireOnline('record employee pay');
+      if (rows.length === 0) return 0;
+      const unique = rows.filter((r, i) => rows.findIndex((x) => x.techId === r.techId) === i);
+      const { data, error } = await supabase.rpc('post_job_payout_lines', {
+        p_job_id: jobId,
+        p_lines: unique.map((r) => ({ user_id: r.techId, amount_cents: r.amountCents, basis: r.basis })),
+      });
+      if (error) {
+        logSyncFailure('admin-finance-repos.postJobPayoutLines', error.message, { jobId, rows: unique });
+        throw new Error(`post job payout lines failed: ${error.message}`);
+      }
+      return Number(data ?? 0);
     },
   };
 }
@@ -3414,6 +3438,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     jobPlanTasks: createJobPlanTasksRepository(),
     timeEntries: createTimeEntryRepository(),
     contractorPayouts: createContractorPayoutRepository(),
+    jobPayoutLines: createJobPayoutLineRepository(),
     paymentReview: {
       ReconciliationView,
       client: supabase as unknown as PaymentReviewClient,
