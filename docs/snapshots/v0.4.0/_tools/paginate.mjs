@@ -17,7 +17,9 @@ const PAGE_W_MM = 277;
 const CONT_HEADER_MM = 14;
 // Print card/cont padding (8px top + 8px bottom).
 const PAD_PX = 16;
-// Slack for rounding and borders.
+// Card border (1px top + 1px bottom), excluded from PAD_PX.
+const BORDER_PX = 2;
+// Slack for rounding.
 const SAFETY_PX = 14;
 const EDGE_TIMEOUT_MS = 120000;
 
@@ -27,7 +29,7 @@ const LAYOUT_CSS =
   'body{width:' + PAGE_W_PX + 'px !important;margin:0 !important}' +
   '.screen-card{display:flex;box-sizing:border-box;padding:8px;gap:12px}' +
   '.screen-card,.cont{width:' + PAGE_W_PX + 'px !important;height:auto !important;overflow:visible !important}' +
-  '.mock .jc-device{zoom:1.05;margin:0}main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}';
+  '.mock .jc-device{zoom:1;margin:0}main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}';
 
 const EDGES = [
   'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
@@ -60,12 +62,16 @@ const measure = `(${function (cfg) {
       .sort((a, b) => Number(a.dataset.u) - Number(b.dataset.u));
     const heights = units.map(h);
     const isH3 = units.map((u) => u.tagName === 'H3');
-    let header = 0;
+    // header = non-unit content above the first unit; trailing = non-unit content below the last unit.
+    // Both print on the card regardless of where the breaks fall, so both come out of the budget.
+    let header = 0, trailing = 0;
     if (units.length) {
-      header = Math.max(0, units[0].getBoundingClientRect().top - info.getBoundingClientRect().top);
+      const infoRect = info.getBoundingClientRect();
+      header = Math.max(0, units[0].getBoundingClientRect().top - infoRect.top);
+      trailing = Math.max(0, infoRect.bottom - units[units.length - 1].getBoundingClientRect().bottom);
     }
-    const first = Math.max(1, cfg.pageH - cfg.padSafety - header);
-    const cont = Math.max(1, cfg.pageH - cfg.padSafety - cfg.contHeader);
+    const first = Math.max(1, cfg.pageH - cfg.padSafety - header - trailing);
+    const cont = Math.max(1, cfg.pageH - cfg.padSafety - cfg.contHeader - trailing);
     const breaks = [];
     let budget = first, used = 0, start = 0;
     for (let i = 0; i < units.length; i++) {
@@ -89,7 +95,7 @@ const measure = `(${function (cfg) {
   layoutCss: LAYOUT_CSS,
   pageH: Math.round(PAGE_H_MM * MM),
   contHeader: Math.round(CONT_HEADER_MM * MM),
-  padSafety: PAD_PX + SAFETY_PX,
+  padSafety: PAD_PX + BORDER_PX + SAFETY_PX,
 })});`;
 
 // Check mode: measure actual overflow of the baked cards and .cont sections.
@@ -106,6 +112,8 @@ const measureCheck = `(function(){
     const k = c.id.replace(/^screen-/, '');
     pages[k] = 1;
     if (c.getBoundingClientRect().height > PH + 1) res.over.push(k);
+    const dev = c.querySelector('.mock .jc-device') || c.querySelector('.mock');
+    if (dev && dev.getBoundingClientRect().height > PH - ${PAD_PX}) res.over.push(k + ' (mock)');
   });
   document.querySelectorAll('[data-cont-of]').forEach((c) => {
     const k = c.getAttribute('data-cont-of');
@@ -140,7 +148,7 @@ const runEdge = (url) =>
 let tmp;
 try {
   const html = fs.readFileSync(htmlPath, 'utf8');
-  const script = '<script>window.addEventListener("load",function(){' + (check ? measureCheck : measure) + '});</script>';
+  const script = '<script>window.addEventListener("load",function(){document.fonts.ready.then(function(){' + (check ? measureCheck : measure) + '});});</script>';
   const injected = html.includes('</body>') ? html.replace('</body>', () => script + '</body>') : html + script;
   tmp = path.join(os.tmpdir(), 'jobcore-paginate-' + process.pid + '.html');
   fs.writeFileSync(tmp, injected, 'utf8');

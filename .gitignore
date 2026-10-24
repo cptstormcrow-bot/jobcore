@@ -3,3 +3,4 @@ app/**/src/**/*.js
 app/**/src/**/*.d.ts
 app/**/src/**/*.d.ts.map
 .claude/scratch/
+docs/snapshots/v0.4.0/_tools/node_modules/

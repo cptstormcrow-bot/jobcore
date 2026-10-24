@@ -154,11 +154,22 @@ missing.forEach((m, i) => { m.id = 'M' + (i + 1); });
 for (let i = missing.length - 1; i >= 0; i--) if (refutedSet.has(missing[i].id)) { missing.splice(i, 1); refutedDropped++; }
 
 // ---------- data model ----------
+const capturesDir = path.resolve(here, '..', 'captures');
+let captureManifest = {};
+try { captureManifest = JSON.parse(fs.readFileSync(path.join(capturesDir, '_manifest.json'), 'utf8')); } catch { captureManifest = {}; }
+function mockFor(s) {
+  const png = path.join(capturesDir, s.key + '.png');
+  if (fs.existsSync(png)) {
+    return `<div class="jc-device" data-device-frame="1"><img class="capture" src="data:image/png;base64,${fs.readFileSync(png).toString('base64')}" width="312" height="675" alt="${esc(s.title)}"></div>`;
+  }
+  return renderMockup(s);
+}
 const screensOut = merged.map((s) => {
   const { _descNav, ...rest } = s;
   return {
     ...rest,
     flowRank: rankOf.get(s.key),
+    captureStatus: (captureManifest[s.key] && captureManifest[s.key].status) || 'none',
     anchor: 'screen-' + s.key,
     identifiers: { file: s.file, route: s.route, subView: s.subView, title: s.title, titleInSource: s.titleInSource, testIDs: s.testIDs, accessibilityLabels: s.accessibilityLabels, buttonLabels: s.buttonLabels },
   };
@@ -244,13 +255,19 @@ function card(s) {
   const unm = s.mounted === false || s.mounted === 'exported-unmounted';
   const outs = edges.filter((e) => e.from === s.key);
   const navLis = outs.length
-    ? outs.map((e) => (e.resolved ? `<li><a href="#screen-${esc(e.to)}">${esc(e.to)}</a> <span class="muted">(${esc(e.kind)})</span></li>` : `<li>${esc(e.to)} <span class="muted">(${esc(e.kind)}, unresolved)</span></li>`))
+    ? outs.map((e) => (e.resolved ? `<li><a href="#screen-${esc(e.to)}">${esc(e.to)}</a> <span class="muted">(${esc(e.kind)})</span><span class="kind">${esc(e.kind)}</span></li>` : `<li>${esc(e.to)} <span class="muted">(${esc(e.kind)}, unresolved)</span><span class="kind">${esc(e.kind)}</span></li>`))
     : ['<li class="muted">none</li>'];
+  const ins = edges.filter((e) => e.to === s.key);
+  const inLis = ins.map((e) => {
+    const src = merged.find((m) => m.key === e.from);
+    const label = esc((src && src.title) || e.from);
+    return e.resolved ? `<li><a href="#screen-${esc(e.from)}">${label}</a> <span class="kind">${esc(e.kind)}</span></li>` : `<li>${label} <span class="muted">(unresolved)</span><span class="kind">${esc(e.kind)}</span></li>`;
+  });
   const fs_ = s.flowStage;
   const kv = (k, v) => `<tr><th>${k}</th><td>${v}</td></tr>`;
   // atomic units after the header block; g groups consecutive rows/items for wrapper rebuilds on continuation pages
   const units = [
-    { g: 'h', h: claimBox ? `<div class="head-row"><h3>How to identify when editing</h3>${claimBox}</div>` : '<h3>How to identify when editing</h3>' },
+    { g: 'h', h: `<p>${esc(s.summary)}</p>` }, { g: 'h', h: '<h3>How to identify when editing</h3>' }, ...(claimBox ? [{ g: 'h', h: claimBox }] : []),
     ...[`file: <code>${esc(s.file)}</code>`, `route: <code>${esc(s.route ?? 'none')}</code>`, `key: <code>${esc(s.key)}</code>`, `anchor: <code>#${esc(s.anchor)}</code>`,
       `identifiers: testIDs ${list(s.testIDs)}; accessibilityLabels ${list(s.accessibilityLabels)}; buttonLabels ${list(s.buttonLabels)}`].map((h) => ({ g: 'id', h: `<div>${h}</div>` })),
     { g: 'h', h: '<h3>Titles / tags / endpoints</h3>' },
@@ -259,6 +276,7 @@ function card(s) {
       kv('menus', list(s.menus)), kv('components (top 8)', compsHtml), kv('tables', list(s.tables)), kv('rpcs', list(s.rpcs)), kv('repoMethods', list(s.repoMethods))].map((h) => ({ g: 'tr', h: `<tr>${h.slice(4, -5)}</tr>` })),
     { g: 'h', h: '<h3>Navigation targets</h3>' },
     ...navLis.map((h) => ({ g: 'li', h })),
+    ...(inLis.length ? [{ g: 'h', h: '<h3>Reached from</h3>' }, ...inLis.map((h) => ({ g: 'li', h }))] : []),
   ];
   const WRAP = { tr: ['<table><tbody>', '</tbody></table>'], id: ['<div class="ident">', '</div>'], li: ['<ul>', '</ul>'] };
   // render units [from,to) as wrapped runs; mark(i) adds the data-u attribute (and pbrk class when hidden in print)
@@ -282,13 +300,12 @@ ${runs(from, i + 1 < brks.length ? brks[i + 1] : units.length)}
 </section>`).join('\n');
   return `<!-- screen:${s.key} -->
 <article class="screen-card" id="screen-${esc(s.key)}" ${dataAttrs(s)} data-screen-num="${numOf(s) ?? ''}" data-search="${esc(searchText(s))}">
-<div class="mock">${renderMockup(s)}</div>
+<div class="mock">${mockFor(s)}</div>
 <div class="info">
 <div class="num-strip"><span class="num-big">${numLabel(s)}</span><span class="num-key">${esc(s.key)}</span></div>
 <h2>${esc(s.title || s.key)}</h2>
 <div>${roles}</div>
 <div><span class="chip">${esc(s.kind)}</span><span class="chip">${esc(s.module ?? 'no module')}</span><span class="chip">mounted: ${esc(s.mounted)}</span>${unm ? '<span class="chip bad">NOT MOUNTED</span>' : ''}<span class="chip" style="background:${statusColor(fs_)};color:#fff;border-color:${statusColor(fs_)}">${esc(String(fs_).replace(/_/g, ' '))}</span><span class="chip">${esc(s.specStage)}</span></div>
-<p>${esc(s.summary)}</p>
 ${s.purpose ? `<p class="muted">${esc(s.purpose)}</p>` : ''}
 ${body}
 </div>
@@ -298,7 +315,7 @@ ${body}
 const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(720px,1fr));gap:var(--sp-3);margin-top:var(--sp-3)}
 .screen-card{display:flex;gap:var(--sp-3);background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-lg);padding:var(--sp-3);scroll-margin-top:70px}
 .screen-card.hide{display:none}.screen-card:target{border-color:var(--c-secondary);box-shadow:0 0 0 2px var(--c-secondary)}
-.mock{flex:0 0 300px}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
+.mock{flex:0 0 300px}.mock img.capture{display:block;width:312px;height:675px;border-radius:18px}.kind{font-size:9px;opacity:.65;margin-left:4px;text-transform:uppercase}.info{flex:1;min-width:0}.info h3{margin-top:var(--sp-2);font-size:14px;color:var(--c-primary)}
 .info table{width:100%;word-break:break-word}.ident{background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);font-size:13px}
 .num-strip{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:4px}.num-big{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}.num-key{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--c-textMuted)}.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
 .head-row{display:block}.head-row>h3{margin-top:var(--sp-2)}.info h3+table{width:auto;min-width:0}
@@ -314,7 +331,7 @@ main{padding:0}.sums{display:none}.grid{display:block;margin:0}
 .screen-card.hide{display:none}
 .screen-card:not(.hide) ~ .screen-card:not(.hide){break-before:page;page-break-before:always}
 .mock{flex:0 0 auto;width:auto;height:auto}
-.mock .jc-device{zoom:1.05;margin:0}
+.mock .jc-device{zoom:1;margin:0}
 main[data-device="pad"] .mock .jc-device{zoom:.78;margin:0}
 .info .pbrk{display:none}
 .info tr,.info li,.info .ident>div,.info h2,.info>div{break-inside:avoid;page-break-inside:avoid}.info h3{break-after:avoid;page-break-after:avoid}
