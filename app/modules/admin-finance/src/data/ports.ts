@@ -1581,3 +1581,6 @@ export interface TimeSegmentCorrectionAdminRepository {
   approve(correctionId: string): Promise<TimeSegmentCorrection>;
   reject(correctionId: string, reason: string): Promise<TimeSegmentCorrection>;
 }
+
+/** Org Company Info (migration 0100). */
+export type CompanyInfo = { name: string; address: string; licenseNumber: string; phone: string };

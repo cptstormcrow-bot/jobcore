@@ -5,8 +5,9 @@ import { balanceCents, canRecordPayment, invoiceTotalCents } from '../domain/pay
 
 /**
  * recordJobPayment: admin/owner records a payment against an approved estimate.
- * Money is integer cents internally; dollars only at the port call. Deliberately
- * does NOT call transitionJob() — the job status is left untouched.
+ * Money is integer cents internally; dollars only at the port call. Does NOT call
+ * transitionJob() itself — the caller (JobPaymentRegion) moves the job to 'paid'
+ * when the returned balanceCents <= 0.
  */
 export interface RecordJobPaymentDeps {
   payments: PaymentsRepository;
@@ -15,6 +16,8 @@ export interface RecordJobPaymentDeps {
 export interface RecordJobPaymentInput {
   amountDollars: number;
   method: PaymentMethod;
+  /** Work total in cents (sum of estimate line items); defaults to the estimate's totalCost. */
+  workTotalCents?: number;
 }
 
 export type RecordJobPaymentResult =
@@ -46,7 +49,7 @@ export async function recordJobPayment(
   if (amountCents <= 0) {
     return { ok: false, reason: 'recordJobPayment: amount must be at least one cent' };
   }
-  const balanceBefore = balanceCents(invoiceTotalCents(estimate), payments);
+  const balanceBefore = balanceCents(input.workTotalCents ?? invoiceTotalCents(estimate), payments);
   if (amountCents > balanceBefore) {
     return { ok: false, reason: `recordJobPayment: amount ${amountCents} cents exceeds remaining balance ${balanceBefore} cents` };
   }

@@ -169,6 +169,11 @@ export interface ModulePorts {
   };
   /** Payroll data seam: self-service members plus admin members (approve, set rate, runs, export). */
   payroll?: PayrollPort;
+  /** Org Company Info (name, address, license, phone). */
+  companyInfo: {
+    get(orgId: string): Promise<import('../data/ports').CompanyInfo | null>;
+    save(orgId: string, info: import('../data/ports').CompanyInfo): Promise<void>;
+  };
 }
 
 let current: ModulePorts | null = null;

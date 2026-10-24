@@ -3213,6 +3213,24 @@ export function createJobCardExtrasRepository(): JobCardExtrasRepository {
   };
 }
 
+function createCompanyInfoPort(): NonNullable<ModulePorts['companyInfo']> {
+  return {
+    async get(orgId) {
+      const { data, error } = await supabase.from('company_info').select('name, address, license_number, phone').eq('organization_id', orgId).maybeSingle();
+      if (error) throw new Error(`load company info failed: ${error.message}`);
+      if (!data) return null;
+      return { name: data.name ?? '', address: data.address ?? '', licenseNumber: data.license_number ?? '', phone: data.phone ?? '' };
+    },
+    async save(orgId, info) {
+      const { error } = await supabase.from('company_info').upsert(
+        { organization_id: orgId, name: info.name, address: info.address, license_number: info.licenseNumber, phone: info.phone, updated_at: new Date().toISOString() },
+        { onConflict: 'organization_id' },
+      );
+      if (error) throw new Error(`save company info failed: ${error.message}`);
+    },
+  };
+}
+
 let cachedPorts: ModulePorts | null = null;
 
 export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePorts {
@@ -3256,6 +3274,7 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     closeOutContactLog: createCloseOutContactLogRepository(),
     jobTimeline: createJobTimelineRepository(),
     payments: createPaymentsRepository(),
+    companyInfo: createCompanyInfoPort(),
     calendarEvents: createCalendarEventRepository(),
     timeOffAdmin: createTimeOffAdminRepository(),
     techServiceAreas: createTechServiceAreaRepository(),

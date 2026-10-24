@@ -151,6 +151,8 @@ export type JobSummaryRestProps = {
   statusError?: string | null;
   serviceGateOpen?: boolean;
   hideTechFields?: boolean;
+  hidePremTech?: boolean;
+  hideServiceArea?: boolean;
   /** Whether the job is flagged "Prem Needed". */
   needsPrem?: boolean;
   /** Disables the Prem Needed checkbox (e.g. while saving). */
@@ -225,6 +227,8 @@ export type JobTechFieldsProps = Pick<
   | 'needsPrem'
   | 'needsPremDisabled'
   | 'onToggleNeedsPrem'
+  | 'hidePremTech'
+  | 'hideServiceArea'
 >;
 
 export function JobTechFields({
@@ -243,10 +247,12 @@ export function JobTechFields({
   needsPrem,
   needsPremDisabled,
   onToggleNeedsPrem,
+  hidePremTech = false,
+  hideServiceArea = false,
 }: JobTechFieldsProps) {
   return (
     <>
-      <TechRow
+      {hidePremTech ? null : <TechRow
         label="Prem Tech"
         techId={premTechId}
         techName={premTechName}
@@ -265,7 +271,7 @@ export function JobTechFields({
             style={styles.premNeededCheckbox}
           />
         ) : undefined}
-      />
+      />}
       <TechRow
         label="Service Tech"
         techId={serviceTechId}
@@ -276,13 +282,13 @@ export function JobTechFields({
         disabledWhenUnassigned={!serviceGateOpen}
         blockedMessage={SERVICE_TECH_GATE_HINT}
       />
-      <View style={styles.techRow}>
+      {hideServiceArea ? null : <View style={styles.techRow}>
         {serviceAreaName ? (
           <Text style={[styles.summaryLine, styles.serviceAreaText]}>Service Area: {serviceAreaName}</Text>
         ) : (
           <Text style={[styles.summaryLine, styles.serviceAreaText, styles.serviceAreaUnassigned]}>Service Area: Unassigned</Text>
         )}
-      </View>
+      </View>}
     </>
   );
 }
@@ -302,6 +308,8 @@ export function JobSummaryRest({
   statusError = null,
   serviceGateOpen = false,
   hideTechFields = false,
+  hidePremTech = false,
+  hideServiceArea = false,
   needsPrem,
   needsPremDisabled,
   onToggleNeedsPrem,
@@ -327,6 +335,8 @@ export function JobSummaryRest({
             needsPrem={needsPrem}
             needsPremDisabled={needsPremDisabled}
             onToggleNeedsPrem={onToggleNeedsPrem}
+            hidePremTech={hidePremTech}
+            hideServiceArea={hideServiceArea}
           />
         )}
       </View>

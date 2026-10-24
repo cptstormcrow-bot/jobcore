@@ -1379,7 +1379,7 @@ export default function JobDrilldownScreen() {
           <JobProgressBar
             stages={stageList}
             states={stageResults.states}
-            nextStep={stageResults.nextStep ?? ''}
+            nextStep={region === 'payment' ? '' : (stageResults.nextStep ?? '')}
             onStagePress={handleStagePress}
             disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
             testID="job-progress-bar"
@@ -1395,6 +1395,8 @@ export default function JobDrilldownScreen() {
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         <JobSummaryRest
           hideTechFields={region === 'estimate' || region === 'schedule'}
+          hidePremTech={region === 'payment'}
+          hideServiceArea={region === 'payment'}
           job={currentJob}
           statusError={actionError}
           serviceAreaName={currentServiceAreaName}
@@ -1510,7 +1512,7 @@ export default function JobDrilldownScreen() {
         {region === 'closeout' && role && (
           <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
-        {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} />}
+        {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} onJobUpdated={(j) => setJob(j)} />}
         {region === 'schedule' && (
           <JobScheduleScreen
             job={currentJob}

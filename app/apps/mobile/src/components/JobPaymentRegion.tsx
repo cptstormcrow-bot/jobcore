@@ -1,23 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
-import type { Job } from '@jobcore/core';
+import { Text, TextInput, View } from 'react-native';
+import type { Ctx, Job } from '@jobcore/core';
 import { Button, EmptyState, colors } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
 import { balanceCents, canRecordPayment, invoiceTotalCents, settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
+import { computeTotals } from '../../../../modules/admin-finance/src/domain/estimate-layout';
+import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
 import { recordJobPayment } from '../../../../modules/admin-finance/src/flows/record-job-payment';
-import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
+import { buildAdminFinancePorts, createJobRepository } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
 
 export type JobPaymentRegionProps = {
   job: Job;
   role: string;
+  /** Called with the updated job after it moves to 'paid' so the parent refreshes. */
+  onJobUpdated?: (job: Job) => void;
 };
+
+type CompanyInfo = { name?: string | null; address?: string | null; licenseNumber?: string | null; phone?: string | null };
+const BARCODE_METHODS: readonly PaymentMethod[] = ['zelle', 'paypal', 'venmo'];
 
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
-export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
+// Cash is deliberately last, right of Credit card, and always rendered.
+const METHOD_CHIP_ORDER: readonly PaymentMethod[] = [...PAYMENT_METHOD_PICK_ORDER.filter((m) => m !== 'cash'), 'cash'];
+
+// Parses a typed cash amount into cents; blank or invalid input returns null.
+function parseCashCents(raw: string): number | null {
+  const s = raw.trim().replace(/^\$/, '').replace(/[,\s]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(s) && !/^\.\d{1,2}$/.test(s)) {
+    return null;
+  }
+  const cents = Math.round(Number(s) * 100);
+  return cents > 0 ? cents : null;
+}
+
+export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionProps) {
   const session = useSession();
   const ports = useMemo(() => buildAdminFinancePorts(), []);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
@@ -26,12 +46,24 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('zelle');
   const [busy, setBusy] = useState(false);
+  const [cashReceived, setCashReceived] = useState('');
+  const [workTotal, setWorkTotal] = useState<number | null>(null);
+  const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardLast4, setCardLast4] = useState('');
+  const [cardRef, setCardRef] = useState('');
+  const [, setTick] = useState(0);
   const canConfirm = role === 'admin' || role === 'owner';
 
   const load = useCallback(async () => {
     try {
-      const [est, rows] = await Promise.all([ports.estimates.getForJob(job.id), ports.payments.listForJob(job.id)]);
+      const [est, rows, items] = await Promise.all([
+        ports.estimates.getForJob(job.id),
+        ports.payments.listForJob(job.id),
+        ports.estimates.listLineItems(job.id),
+      ]);
       setEstimate(est);
+      setWorkTotal(items.length > 0 ? Math.round(computeTotals(items, []).total * 100) : null);
       setPayments(rows);
       setError(null);
     } catch (err) {
@@ -45,11 +77,38 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
     void load();
   }, [load]);
 
+  // Re-render Time on site while the job is in progress.
+  useEffect(() => {
+    if (job.status !== 'in_progress') {
+      return undefined;
+    }
+    const id = setInterval(() => setTick((n) => n + 1), 30000);
+    return () => clearInterval(id);
+  }, [job.status]);
+
+  const orgId = session.status === 'authenticated' ? session.organization.id : null;
+  useEffect(() => {
+    if (!orgId) {
+      return;
+    }
+    void ports.companyInfo.get(orgId).then(setCompany).catch(() => setCompany(null));
+  }, [ports, orgId]);
+
   const record = useCallback((useMethod: PaymentMethod) => {
     if (session.status !== 'authenticated' || !estimate) {
       return;
     }
-    const balanceNow = balanceCents(invoiceTotalCents(estimate), payments);
+    const workCents = workTotal ?? invoiceTotalCents(estimate);
+    const balanceNow = balanceCents(workCents, payments);
+    let amountCents = balanceNow;
+    if (cashReceived.trim() !== '') {
+      const cents = parseCashCents(cashReceived);
+      if (cents === null || cents > balanceNow) {
+        setError('Enter a paid amount between $0.01 and the balance.');
+        return;
+      }
+      amountCents = cents;
+    }
     setError(null);
     setBusy(true);
     void (async () => {
@@ -60,40 +119,52 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
           job,
           estimate,
           payments,
-          { amountDollars: balanceNow / 100, method: useMethod },
+          { amountDollars: amountCents / 100, method: useMethod, workTotalCents: workCents },
           { payments: ports.payments },
         );
         if (!result.ok) {
           setError(result.reason);
           return;
         }
+        if (result.balanceCents <= 0) {
+          const ctx: Ctx = { role: role as Ctx['role'], now: () => new Date().toISOString(), hasPaymentRecord: () => true };
+          const updated = await transitionJob(job, 'paid', ctx);
+          await createJobRepository().updateStatus(job.id, 'paid');
+          onJobUpdated?.({ ...updated, status: 'paid' as Job['status'] });
+        }
         await load();
+        setCashReceived('');
+        setCardHolder('');
+        setCardLast4('');
+        setCardRef('');
       } catch (err) {
         setError(`Could not record payment: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setBusy(false);
       }
     })();
-  }, [session, estimate, role, job, payments, ports.payments, load]);
+  }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated]);
 
   if (loading) {
     return <EmptyState title="Payments" message="Loading..." />;
   }
   if (!estimate) {
-    return <EmptyState title="Payments" message="No estimate yet. Payments open once an estimate is approved." />;
+    return <EmptyState title="Payments" message={error ?? 'No estimate yet. Payments open once an estimate is approved.'} />;
   }
 
-  const invoice = invoiceTotalCents(estimate);
+  const invoice = workTotal ?? invoiceTotalCents(estimate);
   const paid = settledTotalCents(payments);
   const balance = balanceCents(invoice, payments);
   const allowed = canRecordPayment(job, estimate);
   const summary = estimate.summary?.trim() || job.description?.trim() || null;
   const enabled = canConfirm && allowed && !busy;
+  const cashCents = parseCashCents(cashReceived);
+  const cashInvalid = cashReceived.trim() !== '' && (cashCents === null || cashCents > balance);
 
   return (
     <View style={{ padding: 12, gap: 8 }}>
       <Text style={{ fontWeight: '700', fontSize: 18 }}>Payments</Text>
-      {summary ? <Text>{summary}</Text> : null}
+      {summary ? <Text style={{ fontSize: 20, fontWeight: '700' }}>{summary}</Text> : null}
       <Text>Time on site: {formatWorkDuration(workDurationMs(job))}</Text>
       <Text>Work total: {money(invoice)}</Text>
       <Text>Paid so far: {money(paid)}</Text>
@@ -109,36 +180,84 @@ export function JobPaymentRegion({ job, role }: JobPaymentRegionProps) {
 
       {!allowed ? (
         <Text>Payments cannot be recorded: the estimate must be approved and the job must not be cancelled.</Text>
-      ) : (
-        <View style={{ gap: 8 }}>
-          <Button
-            label="Take cash"
-            variant="primary"
-            size="lg"
-            fullWidth
-            disabled={!enabled || balance <= 0}
-            onPress={() => record('cash')}
-          />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {PAYMENT_METHOD_PICK_ORDER.filter((m) => m !== 'cash').map((m) => (
-              <Button
-                key={m}
-                label={PAYMENT_METHOD_LABELS[m]}
-                size="sm"
-                variant={method === m ? 'primary' : 'outline'}
-                onPress={() => setMethod(m)}
+      ) : null}
+      <View style={{ gap: 8 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {METHOD_CHIP_ORDER.map((m) => (
+            <Button
+              key={m}
+              label={PAYMENT_METHOD_LABELS[m]}
+              size="sm"
+              variant={method === m ? 'primary' : 'outline'}
+              onPress={() => setMethod(m)}
+            />
+          ))}
+        </View>
+        {BARCODE_METHODS.includes(method) ? (
+          <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, gap: 4 }}>
+            <Text style={{ fontWeight: '700' }}>Company Info</Text>
+            <Text>{company?.name ?? ''}</Text>
+            <Text>{company?.address ?? ''}</Text>
+            <Text>License #: {company?.licenseNumber ?? ''}</Text>
+            <Text>Phone: {company?.phone ?? ''}</Text>
+            <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, height: 120, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.textMuted }}>{PAYMENT_METHOD_LABELS[method]} barcode</Text>
+            </View>
+          </View>
+        ) : null}
+        {method === 'check' || method === 'cash' ? (
+          <Text style={{ fontSize: 12, color: colors.textMuted }}>Tech manages {method}</Text>
+        ) : null}
+        {method === 'debit' || method === 'credit' ? (
+          <View style={{ gap: 4 }}>
+            <Text style={{ fontWeight: '700' }}>Enter card details</Text>
+            {([['Cardholder', cardHolder, setCardHolder], ['Last 4 digits', cardLast4, setCardLast4], ['Reference', cardRef, setCardRef]] as const).map(([label, val, set]) => (
+              <TextInput
+                key={label}
+                value={val}
+                onChangeText={(t) => set(label === 'Last 4 digits' ? t.replace(/\D/g, '').slice(0, 4) : t)}
+                placeholder={label}
+                placeholderTextColor={colors.textMuted}
+                accessibilityLabel={label}
+                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: colors.text, backgroundColor: colors.surface }}
               />
             ))}
           </View>
+        ) : null}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>Total Paid (for anything selected above)</Text>
+            <TextInput
+              value={cashReceived}
+              onChangeText={setCashReceived}
+              keyboardType="decimal-pad"
+              placeholder={(balance / 100).toFixed(2)}
+              placeholderTextColor={colors.textMuted}
+              editable={enabled}
+              accessibilityLabel="Total Paid"
+              style={{
+                borderWidth: 1,
+                borderColor: cashInvalid ? colors.danger : colors.border,
+                borderRadius: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                fontSize: 16,
+                color: colors.text,
+                backgroundColor: colors.surface,
+                opacity: enabled ? 1 : 0.5,
+              }}
+            />
+          </View>
           <Button
-            label={`Confirm ${PAYMENT_METHOD_LABELS[method]} ${money(balance)}`}
+            label={`Confirm Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
             variant="primary"
-            disabled={!enabled || balance <= 0 || method === 'cash'}
+            disabled={!enabled || balance <= 0 || cashInvalid}
             onPress={() => record(method)}
           />
-          {!canConfirm ? <Text>Admin/owner only</Text> : null}
         </View>
-      )}
+        {cashInvalid ? <Text style={{ color: colors.danger }}>Enter an amount between $0.01 and the balance.</Text> : null}
+        {!canConfirm ? <Text>Admin/owner only</Text> : null}
+      </View>
     </View>
   );
 }
