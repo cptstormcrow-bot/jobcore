@@ -21,6 +21,7 @@ import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
+import JobHistoryRegion from '../../src/components/JobHistoryRegion';
 import JobPaymentRegion from '../../src/components/JobPaymentRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
@@ -1078,6 +1079,7 @@ export default function JobDrilldownScreen() {
       case 'approval': selectRegion('estimate'); break;
       case 'schedule': selectRegion('schedule'); break;
       case 'assign': selectRegion('assign'); break;
+      case 'history': selectRegion('history'); break;
       case 'contact': setActiveStage('contact'); handleContact(); break;
       case 'startWork':
       case 'photos': openEstimateTasks(); break;
@@ -1381,7 +1383,7 @@ export default function JobDrilldownScreen() {
             states={stageResults.states}
             nextStep={region === 'payment' ? '' : (stageResults.nextStep ?? '')}
             onStagePress={handleStagePress}
-            disabledKeys={['history', ...(stageExtras?.lead ? [] : ['lead'])]}
+            disabledKeys={stageExtras?.lead ? [] : ['lead']}
             testID="job-progress-bar"
           />
         ) : null}
@@ -1512,6 +1514,7 @@ export default function JobDrilldownScreen() {
         {region === 'closeout' && role && (
           <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
+        {region === 'history' && role && <JobHistoryRegion job={currentJob} role={role} />}
         {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} onJobUpdated={(j) => setJob(j)} />}
         {region === 'schedule' && (
           <JobScheduleScreen

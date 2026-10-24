@@ -160,6 +160,7 @@ export function AdminFinanceRoot() {
   useEffect(() => {
     if (view === 'jobs') setSubView('jobs');
     if (view === 'compensationPolicy') setSubView('compensationPolicy');
+    if (view === 'archivedJobs') setSubView('archivedJobs');
   }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });

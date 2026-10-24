@@ -10,7 +10,7 @@ import { formatElapsed, abbreviate } from '../../../../modules/admin-finance/src
 import { SERVICE_TECH_GATE_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 import { liveLaborSeconds } from '../lib/live-labor';
 
-export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment';
+export type JobRegion = 'details' | 'plan' | 'evisit' | 'estimate' | 'assign' | 'schedule' | 'closeout' | 'payment' | 'history';
 
 export type JobHeaderProps = {
   job: Job;
