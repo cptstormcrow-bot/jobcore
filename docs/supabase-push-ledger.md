@@ -16,18 +16,19 @@ Live project: `vogkxkcceahtwyovpxsg`. Seeded 2026-10-24 from `npx supabase migra
 - Never push without Jeff's explicit per-push approval that names the migration numbers.
 - A plain `db push` applies ALL pending migrations, so list the pending ones first (`npx supabase migration list`, then `db push --dry-run`).
 
-Past pushes: OK 10 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
+Past pushes: OK 11 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 ## Future (planned / pending push)
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| 0114_sync_time_segments_recomplete.sql | Close the tech's open segment when completed_at is re-set after a restart (trigger fix) | Written 2026-10-24, NOT applied. Jeff must approve naming 0114 and pushing | 2026-10-24 |
+_None pending._
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-10-24 | 0114_sync_time_segments_recomplete.sql | OK | This JobCore session, on Jeff's explicit go ('push 114') | `supabase db push` applied only 0114 (pre-checked: `migration list --linked` showed only Local 0114 pending); output 'Applying migration 0114... Finished supabase db push.'; migration list afterwards shows local=0114 remote=0114. |
 | 2026-10-24 | 0113_open_time_segment_closes_prior.sql | OK | This JobCore session, on Jeff's explicit go ('Push 0113') | `supabase db push` applied only 0113 (pre-checked: `migration list --linked` showed 0113 Local-only, Remote empty, nothing else pending); output 'Applying migration 0113_open_time_segment_closes_prior.sql... Finished supabase db push.'; migration list afterwards shows 0113 in Local and Remote. |
 | 2026-10-24 | 0112_tech_cash_payment_insert.sql | OK | This JobCore session, on Jeff's explicit go ('push it') | `supabase db push` applied only 0112 (pre-checked: it was the only Local-only migration); output 'Applying migration 0112... Finished supabase db push'; migration list afterwards shows 0112 in Local and Remote. Policy behavior (tech cash insert) not yet tested live. |
 | 2026-10-23 | 0100, 0101, 0102 | UNKNOWN | Another session (not the one that wrote 0100) | Found applied on Remote (Local+Remote in migration list). Push time and output were not observed; table existence not independently verified. 0100_company_info rode along on a `db push` per playbook. |
