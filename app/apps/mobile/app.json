@@ -4,19 +4,19 @@
     "slug": "jobcore",
     "scheme": "jobcore",
     "owner": "wolfgaard-studio",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "icon": "./assets/icon-1024.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.sdassemblypros.jobcore",
-      "buildNumber": "5",
+      "buildNumber": "6",
       "supportsTablet": true
     },
     "android": {
       "package": "com.sdassemblypros.jobcore.v2",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground-1024.png",
         "backgroundColor": "#1B2A41"
