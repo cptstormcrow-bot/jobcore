@@ -2,7 +2,7 @@
 import React, { useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { Button, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import { Button, PayrollButton, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -265,11 +265,11 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           />
         ) : null}
         <View testID="calendar-blackouts-toggle">
-          <Button variant="primary" label={pickDays ? 'Cancel' : 'Blackouts'} onPress={handleTogglePick} />
+          <PayrollButton label={pickDays ? 'Cancel' : 'Blackouts'} onPress={handleTogglePick} />
         </View>
         {props.onSubmitTimeOff ? (
           <View testID="calendar-timeoff-toggle">
-            <Button variant="primary" label={requesting ? 'Cancel' : 'Request time off'} onPress={handleToggleRequest} />
+            <PayrollButton label={requesting ? 'Cancel' : 'Request time off'} onPress={handleToggleRequest} />
           </View>
         ) : null}
       </View>
