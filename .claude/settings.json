@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"E:/Jeff/Codespace/SDAssemblyPros/Jobcore/app/scripts/check-pending-migrations.ps1\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
