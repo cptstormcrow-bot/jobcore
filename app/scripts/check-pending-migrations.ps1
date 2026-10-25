@@ -4,6 +4,9 @@
 # (docs\supabase-push-ledger.md). Never pushes, repairs, resets, or writes anything.
 # ALWAYS exits 0; 20s soft timeout (child process is killed). Prints nothing when clean.
 # Windows PowerShell 5.1 compatible.
+# CLI output formats: v2 (2.x) prints a stderr 'Warning' line then ONE JSON line on stdout
+# ({"migrations":[{"local":..,"remote":..}]}), used with --linked; v1 (1.x) prints a
+# box/pipe table, parsed as a fallback when no JSON line is found.
 
 $ErrorActionPreference = 'Continue'
 $app = Split-Path -Parent $PSScriptRoot
@@ -26,7 +29,7 @@ $tmpOut = [IO.Path]::GetTempFileName()
 $tmpErr = [IO.Path]::GetTempFileName()
 $proc = $null
 try {
-    $argLine = '/c ""' + $cli + '" migration list --workdir "' + $app + '""'
+    $argLine = '/c ""' + $cli + '" migration list --linked --workdir "' + $app + '""'
     $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $argLine -NoNewWindow -PassThru `
         -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
     if (-not $proc.WaitForExit(20000)) {
@@ -51,7 +54,22 @@ $raw = [regex]::Replace($raw, $ansi, '')
 $errTxt = [regex]::Replace($errTxt, $ansi, '')
 
 $local = @(); $remote = @(); $rows = 0
-foreach ($line in ($raw -split "`r?`n")) {
+$lines = @($raw -split "`r?`n")
+$jsonLine = $lines | Where-Object { $_.TrimStart().StartsWith('{') } | Select-Object -First 1
+if ($jsonLine) {
+    try {
+        $obj = $jsonLine | ConvertFrom-Json
+        foreach ($it in @($obj.migrations)) {
+            if ($null -eq $it) { continue }
+            $l = [string]$it.local; $r = [string]$it.remote
+            $rows++
+            if ($l.Trim()) { $local += $l.Trim() }
+            if ($r.Trim()) { $remote += $r.Trim() }
+        }
+    } catch { $rows = 0; $local = @(); $remote = @() }
+}
+if ($rows -eq 0) {
+foreach ($line in $lines) {
     $bar = '[|' + [char]0x2502 + ']'
     $m = [regex]::Match($line, '^\s*(\d*)\s*' + $bar + '\s*(\d*)\s*' + $bar)
     if ($m.Success -and ($m.Groups[1].Value -or $m.Groups[2].Value)) {
@@ -60,9 +78,10 @@ foreach ($line in ($raw -split "`r?`n")) {
         if ($m.Groups[2].Value) { $remote += $m.Groups[2].Value }
     }
 }
+}
 
 if ($rows -eq 0) {
-    $reason = ($errTxt.Trim() -split "`r?`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+    $reason = ($errTxt.Trim() -split "`r?`n" | Where-Object { $_.Trim() -and $_ -notmatch '^\s*Warning' } | Select-Object -First 1)
     if (-not $reason) { $reason = 'no migration rows returned' }
     if ($reason.Length -gt 120) { $reason = $reason.Substring(0, 120) }
     $out += 'migration check skipped: ' + $reason
