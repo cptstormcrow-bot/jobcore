@@ -103,11 +103,14 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
     let amountCents = balanceNow;
     if (cashReceived.trim() !== '') {
       const cents = parseCashCents(cashReceived);
-      if (cents === null || cents > balanceNow) {
-        setError('Enter a paid amount between $0.01 and the balance.');
+      if (cents === null || cents <= 0 || (useMethod !== 'cash' && cents > balanceNow)) {
+        setError(useMethod === 'cash' ? 'Enter the cash amount.' : 'Enter a paid amount between $0.01 and the balance.');
         return;
       }
       amountCents = cents;
+    } else if (amountCents <= 0) {
+      setError('Enter the cash amount');
+      return;
     }
     setError(null);
     setBusy(true);
@@ -158,9 +161,13 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const balance = balanceCents(invoice, payments);
   const allowed = canRecordPayment(job, estimate);
   const summary = estimate.summary?.trim() || job.description?.trim() || null;
-  const enabled = canConfirm && allowed && !busy;
+  const isCash = method === 'cash';
+  const cancelled = job.status === 'cancelled';
+  const enabled = isCash ? !cancelled && !busy : canConfirm && allowed && !busy;
   const cashCents = parseCashCents(cashReceived);
-  const cashInvalid = cashReceived.trim() !== '' && (cashCents === null || cashCents > balance);
+  const cashInvalid =
+    cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || (!isCash && cashCents > balance));
+  const needsCashAmount = isCash && cashReceived.trim() === '' && balance <= 0;
 
   return (
     <View style={{ padding: 12, gap: 8 }}>
@@ -179,7 +186,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         </Text>
       ))}
 
-      {!allowed ? (
+      {!allowed && !isCash ? (
         <Text>Payments cannot be recorded: the estimate must be approved and the job must not be cancelled.</Text>
       ) : null}
       <View style={{ gap: 8 }}>
@@ -252,12 +259,17 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           <Button
             label={`Confirm Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
             variant="primary"
-            disabled={!enabled || balance <= 0 || cashInvalid}
+            disabled={!enabled || (balance <= 0 && !(isCash && cashReceived.trim() !== '')) || cashInvalid}
             onPress={() => record(method)}
           />
         </View>
-        {cashInvalid ? <Text style={{ color: colors.danger }}>Enter an amount between $0.01 and the balance.</Text> : null}
-        {!canConfirm ? <Text>Admin/owner only</Text> : null}
+        {cashInvalid ? (
+          <Text style={{ color: colors.danger }}>
+            {isCash ? 'Enter the cash amount.' : 'Enter an amount between $0.01 and the balance.'}
+          </Text>
+        ) : null}
+        {needsCashAmount ? <Text>Enter the cash amount</Text> : null}
+        {!canConfirm && !isCash ? <Text>Admin/owner only</Text> : null}
       </View>
     </View>
   );

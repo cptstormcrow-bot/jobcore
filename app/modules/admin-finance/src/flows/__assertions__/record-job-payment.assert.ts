@@ -47,16 +47,37 @@ test('balance reflects new payment', async () => {
   assert.equal(r.ok && r.balanceCents, 3975);
 });
 
-test('one-cent overpay is blocked', async () => {
+test('non-cash one-cent overpay is blocked', async () => {
   const { calls, deps } = stub();
-  const r = await recordJobPayment('admin', 'o', job(), est(100), [], { amountDollars: 100.01, method: 'cash' }, deps);
+  const r = await recordJobPayment('admin', 'o', job(), est(100), [], { amountDollars: 100.01, method: 'check' }, deps);
   assert.equal(r.ok, false);
   assert.equal(calls.length, 0);
 });
 
-test('large overpay against partial balance is blocked', async () => {
+test('cash over balance is accepted', async () => {
   const { calls, deps } = stub();
   const r = await recordJobPayment('admin', 'o', job(), est(100), [pay(40)], { amountDollars: 60.01, method: 'cash' }, deps);
+  assert.equal(r.ok, true);
+  assert.equal(calls.length, 1);
+});
+
+test('cash by tech is accepted', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('tech', 'o', job(), est(100), [], { amountDollars: 10, method: 'cash' }, deps);
+  assert.equal(r.ok, true);
+  assert.equal(calls.length, 1);
+});
+
+test('cash on unapproved estimate is accepted', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('tech', 'o', job(), est(100, 'draft'), [], { amountDollars: 10, method: 'cash' }, deps);
+  assert.equal(r.ok, true);
+  assert.equal(calls.length, 1);
+});
+
+test('cash on cancelled job is refused', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('admin', 'o', job('cancelled'), est(100), [], { amountDollars: 10, method: 'cash' }, deps);
   assert.equal(r.ok, false);
   assert.equal(calls.length, 0);
 });
@@ -72,7 +93,7 @@ test('exact payment equal to balance succeeds with balance 0', async () => {
 for (const role of ['field_tech', 'manager', 'investigator', 'tech', '']) {
   test(`role '${role}' is refused`, async () => {
     const { calls, deps } = stub();
-    const r = await recordJobPayment(role, 'o', job(), est(100), [], { amountDollars: 10, method: 'cash' }, deps);
+    const r = await recordJobPayment(role, 'o', job(), est(100), [], { amountDollars: 10, method: 'check' }, deps);
     assert.equal(r.ok, false);
     assert.equal(calls.length, 0);
   });
@@ -80,7 +101,7 @@ for (const role of ['field_tech', 'manager', 'investigator', 'tech', '']) {
 
 test('unapproved estimate is refused', async () => {
   const { calls, deps } = stub();
-  const r = await recordJobPayment('admin', 'o', job(), est(100, 'draft'), [], { amountDollars: 10, method: 'cash' }, deps);
+  const r = await recordJobPayment('admin', 'o', job(), est(100, 'draft'), [], { amountDollars: 10, method: 'check' }, deps);
   assert.equal(r.ok, false);
   assert.equal(calls.length, 0);
 });
