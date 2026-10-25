@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Button, EmptyState, colors } from '@jobcore/ui';
+import { Button, EmptyState, PayrollButton, colors } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
@@ -22,6 +22,7 @@ export type JobPaymentRegionProps = {
 type CompanyInfo = { name?: string | null; address?: string | null; licenseNumber?: string | null; phone?: string | null };
 const BARCODE_METHODS: readonly PaymentMethod[] = ['zelle', 'paypal', 'venmo'];
 
+const OVER_BALANCE_MSG = 'Amount is more than the balance. Use Adjust price to add an item or fee.';
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
 // Cash is deliberately last, right of Credit card, and always rendered.
@@ -52,6 +53,9 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [cardHolder, setCardHolder] = useState('');
   const [cardLast4, setCardLast4] = useState('');
   const [cardRef, setCardRef] = useState('');
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjDesc, setAdjDesc] = useState('');
+  const [adjAmount, setAdjAmount] = useState('');
   const [, setTick] = useState(0);
   const canConfirm = role === 'admin' || role === 'owner';
 
@@ -63,8 +67,12 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         ports.estimates.listLineItems(job.id),
       ]);
       setEstimate(est);
-      setWorkTotal(items.length > 0 ? Math.round(computeTotals(items, []).total * 100) : null);
+      const loadedWork = items.length > 0 ? Math.round(computeTotals(items, []).total * 100) : null;
+      setWorkTotal(loadedWork);
       setPayments(rows);
+      // Smart-fill: Total Paid defaults to the balance after every load/adjustment.
+      const loadedBalance = est ? balanceCents(loadedWork ?? invoiceTotalCents(est), rows) : 0;
+      setCashReceived(loadedBalance > 0 ? (loadedBalance / 100).toFixed(2) : '');
       setError(null);
     } catch (err) {
       setError(`Could not load payments: ${err instanceof Error ? err.message : String(err)}`);
@@ -103,8 +111,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
     let amountCents = balanceNow;
     if (cashReceived.trim() !== '') {
       const cents = parseCashCents(cashReceived);
-      if (cents === null || cents <= 0 || (useMethod !== 'cash' && cents > balanceNow)) {
-        setError(useMethod === 'cash' ? 'Enter the cash amount.' : 'Enter a paid amount between $0.01 and the balance.');
+      if (cents === null || cents <= 0 || cents > balanceNow) {
+        setError(cents !== null && cents > balanceNow ? OVER_BALANCE_MSG : 'Enter a paid amount between $0.01 and the balance.');
         return;
       }
       amountCents = cents;
@@ -137,7 +145,6 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           onJobUpdated?.({ ...updated, status: 'paid' as Job['status'] });
         }
         await load();
-        setCashReceived('');
         setCardHolder('');
         setCardLast4('');
         setCardRef('');
@@ -148,6 +155,36 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       }
     })();
   }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated]);
+
+  const saveAdjustment = () => {
+    const amt = parseCashCents(adjAmount);
+    if (adjDesc.trim() === '' || amt === null) {
+      setError('Enter a description and an amount greater than $0.');
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    void (async () => {
+      try {
+        const dollars = amt / 100;
+        await ports.estimates.addLineItem(job.id, {
+          kind: 'other',
+          description: adjDesc.trim(),
+          quantity: 1,
+          unitCost: dollars,
+          lineTotal: dollars,
+        });
+        setAdjDesc('');
+        setAdjAmount('');
+        setAdjustOpen(false);
+        await load();
+      } catch (err) {
+        setError(`Could not adjust price: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setBusy(false);
+      }
+    })();
+  };
 
   if (loading) {
     return <EmptyState title="Payments" message="Loading..." />;
@@ -166,8 +203,9 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const enabled = isCash ? !cancelled && !busy : canConfirm && allowed && !busy;
   const cashCents = parseCashCents(cashReceived);
   const cashInvalid =
-    cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || (!isCash && cashCents > balance));
-  const needsCashAmount = isCash && cashReceived.trim() === '' && balance <= 0;
+    cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
+  const isPaidState = balance <= 0 && settledTotalCents(payments) > 0;
+  const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: colors.text, backgroundColor: colors.surface } as const;
 
   return (
     <View style={{ padding: 12, gap: 8 }}>
@@ -256,19 +294,55 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
               }}
             />
           </View>
-          <Button
-            label={`Confirm Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
-            variant="primary"
-            disabled={!enabled || (balance <= 0 && !(isCash && cashReceived.trim() !== '')) || cashInvalid}
-            onPress={() => record(method)}
-          />
+          {isPaidState ? (
+            <View
+              accessibilityRole="text"
+              accessibilityLabel="Paid"
+              style={{ height: 32, paddingHorizontal: 14, borderRadius: 6, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'✓ Paid'}</Text>
+            </View>
+          ) : (
+            <Button
+              label={`Confirm Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
+              variant="primary"
+              disabled={!enabled || balance <= 0 || cashInvalid}
+              onPress={() => record(method)}
+            />
+          )}
         </View>
         {cashInvalid ? (
           <Text style={{ color: colors.danger }}>
-            {isCash ? 'Enter the cash amount.' : 'Enter an amount between $0.01 and the balance.'}
+            {cashCents !== null && cashCents > balance ? OVER_BALANCE_MSG : 'Enter an amount between $0.01 and the balance.'}
           </Text>
         ) : null}
-        {needsCashAmount ? <Text>Enter the cash amount</Text> : null}
+        {!cancelled ? (
+          <View style={{ gap: 6 }}>
+            <PayrollButton label="Adjust price" disabled={busy} onPress={() => setAdjustOpen((o) => !o)} />
+            {adjustOpen ? (
+              <View style={{ gap: 4 }}>
+                <TextInput
+                  value={adjDesc}
+                  onChangeText={setAdjDesc}
+                  placeholder="Description"
+                  placeholderTextColor={colors.textMuted}
+                  accessibilityLabel="Description"
+                  style={inputStyle}
+                />
+                <TextInput
+                  value={adjAmount}
+                  onChangeText={setAdjAmount}
+                  keyboardType="decimal-pad"
+                  placeholder="Amount ($)"
+                  placeholderTextColor={colors.textMuted}
+                  accessibilityLabel="Amount"
+                  style={inputStyle}
+                />
+                <PayrollButton label="Save" disabled={busy} onPress={saveAdjustment} />
+              </View>
+            ) : null}
+          </View>
+        ) : null}
         {!canConfirm && !isCash ? <Text>Admin/owner only</Text> : null}
       </View>
     </View>

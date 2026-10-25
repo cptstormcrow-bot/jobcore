@@ -54,7 +54,7 @@ export async function recordJobPayment(
     return { ok: false, reason: 'recordJobPayment: amount must be at least one cent' };
   }
   const balanceBefore = balanceCents(input.workTotalCents ?? invoiceTotalCents(estimate), payments);
-  if (!isCash && amountCents > balanceBefore) {
+  if (amountCents > balanceBefore) {
     return { ok: false, reason: `recordJobPayment: amount ${amountCents} cents exceeds remaining balance ${balanceBefore} cents` };
   }
   const payment = await deps.payments.recordPayment(orgId, job.id, { amount: amountCents / 100, method: input.method });

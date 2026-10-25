@@ -54,10 +54,33 @@ test('non-cash one-cent overpay is blocked', async () => {
   assert.equal(calls.length, 0);
 });
 
-test('cash over balance is accepted', async () => {
+test('cash over balance is blocked', async () => {
   const { calls, deps } = stub();
   const r = await recordJobPayment('admin', 'o', job(), est(100), [pay(40)], { amountDollars: 60.01, method: 'cash' }, deps);
+  assert.equal(r.ok, false);
+  assert.equal(calls.length, 0);
+});
+
+test('cash one-cent overpay is blocked', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('admin', 'o', job(), est(100), [], { amountDollars: 100.01, method: 'cash' }, deps);
+  assert.equal(r.ok, false);
+  assert.equal(calls.length, 0);
+});
+
+test('cash exact-balance payment is allowed', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('admin', 'o', job(), est(100), [pay(40)], { amountDollars: 60, method: 'cash' }, deps);
   assert.equal(r.ok, true);
+  assert.equal(r.ok && r.balanceCents, 0);
+  assert.equal(calls.length, 1);
+});
+
+test('cash partial payment is allowed', async () => {
+  const { calls, deps } = stub();
+  const r = await recordJobPayment('admin', 'o', job(), est(100), [], { amountDollars: 99.99, method: 'cash' }, deps);
+  assert.equal(r.ok, true);
+  assert.equal(r.ok && r.balanceCents, 1);
   assert.equal(calls.length, 1);
 });
 
