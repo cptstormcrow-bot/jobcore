@@ -13,32 +13,36 @@ export type ArchivedJobsScreenProps = {
   onUnarchive: (jobId: string) => void;
   onOpenJob: (jobId: string) => void;
   onBack: () => void;
+  variant?: 'archived' | 'closed';
 };
 
 export function ArchivedJobsScreen(props: ArchivedJobsScreenProps) {
-  const { rows, busyJobId, message, onUnarchive, onOpenJob, onBack } = props;
+  const { rows, busyJobId, message, onUnarchive, onOpenJob, onBack, variant = 'archived' } = props;
+  const isClosed = variant === 'closed';
   return (
     <View style={styles.screen}>
       <View style={styles.backRow}>
-        <PayrollButton label="Back" onPress={onBack} testID="archived-jobs-back" />
+        <PayrollButton label="Back" onPress={onBack} testID={isClosed ? 'closed-jobs-back' : 'archived-jobs-back'} />
       </View>
       {message !== null ? <Text style={styles.message}>{message}</Text> : null}
       {rows.length === 0 ? (
-        <EmptyState title="No archived jobs." />
+        <EmptyState title={isClosed ? 'No closed jobs.' : 'No archived jobs.'} />
       ) : (
         <ScrollView style={styles.list} contentContainerStyle={styles.content}>
           {rows.map((row) => (
             <View key={row.id} style={styles.row}>
-              <Pressable testID={`archived-job-open-${row.id}`} onPress={() => onOpenJob(row.id)} style={styles.rowText}>
+              <Pressable testID={`${isClosed ? 'closed' : 'archived'}-job-open-${row.id}`} onPress={() => onOpenJob(row.id)} style={styles.rowText}>
                 <Text style={styles.title}>{row.title}</Text>
                 {row.subtitle !== null ? <Text style={styles.subtitle}>{row.subtitle}</Text> : null}
               </Pressable>
-              <PayrollButton
-                label={busyJobId === row.id ? 'Unarchiving...' : 'Unarchive'}
-                testID={`job-unarchive-${row.id}`}
-                disabled={busyJobId !== null}
-                onPress={() => onUnarchive(row.id)}
-              />
+              {isClosed ? null : (
+                <PayrollButton
+                  label={busyJobId === row.id ? 'Unarchiving...' : 'Unarchive'}
+                  testID={`job-unarchive-${row.id}`}
+                  disabled={busyJobId !== null}
+                  onPress={() => onUnarchive(row.id)}
+                />
+              )}
             </View>
           ))}
         </ScrollView>

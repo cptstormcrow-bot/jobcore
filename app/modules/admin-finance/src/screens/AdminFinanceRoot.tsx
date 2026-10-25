@@ -72,7 +72,7 @@ import type { TechColumnTech } from '../components/TechColumn';
 type SubView =
   | 'overview' | 'jobs'
   | 'leadInbox' | 'leadCreate' | 'qualify' | 'leadEdit'
-  | 'planning' | 'jobEstimate' | 'archivedJobs'
+  | 'planning' | 'jobEstimate' | 'archivedJobs' | 'closedJobs'
   | 'assignmentBoard'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'reports'
@@ -85,7 +85,7 @@ type SubView =
 
 const TOP: Partial<Record<SubView, SubView>> = {
   leadCreate: 'leadInbox', qualify: 'leadInbox', leadEdit: 'leadInbox',
-  planning: 'jobs', jobEstimate: 'jobs', archivedJobs: 'jobs',
+  planning: 'jobs', jobEstimate: 'jobs', archivedJobs: 'jobs', closedJobs: 'jobs',
   priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
   'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
@@ -96,7 +96,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
 
 const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
-  overview: 'af-overview', jobs: 'af-jobs', planning: 'af-jobs', jobEstimate: 'af-jobs', archivedJobs: 'af-jobs',
+  overview: 'af-overview', jobs: 'af-jobs', planning: 'af-jobs', jobEstimate: 'af-jobs', archivedJobs: 'af-jobs', closedJobs: 'af-jobs',
   leadInbox: 'af-leads', leadCreate: 'af-leads', leadEdit: 'af-leads',
   qualify: 'qualify-lead',
   assignmentBoard: 'af-assignments',
@@ -162,6 +162,7 @@ export function AdminFinanceRoot() {
     if (view === 'jobs') setSubView('jobs');
     if (view === 'compensationPolicy') setSubView('compensationPolicy');
     if (view === 'archivedJobs') setSubView('archivedJobs');
+    if (view === 'closedJobs') setSubView('closedJobs');
   }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
@@ -711,7 +712,7 @@ export function AdminFinanceRoot() {
         handleBackToRoster();
         return true;
       }
-      if (subView === 'archivedJobs') {
+      if (subView === 'archivedJobs' || subView === 'closedJobs') {
         setSubView('jobs');
         return true;
       }
@@ -1039,6 +1040,7 @@ export function AdminFinanceRoot() {
             <View style={styles.jobsTitleRow}>
               <Text style={styles.jobsTitle}>Jobs</Text>
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                <PayrollButton label="Closed" testID="jobs-closed-btn" onPress={() => setSubView('closedJobs')} />
                 <PayrollButton label="Archived" testID="jobs-archived-btn" onPress={() => { setArchivedMessage(null); setSubView('archivedJobs'); }} />
                 <PayrollButton label="Add Job" onPress={() => router.push('/job/new')} />
               </View>
@@ -1164,6 +1166,17 @@ export function AdminFinanceRoot() {
           busyJobId={archiveBusyId}
           message={archivedMessage}
           onUnarchive={(id) => { void unarchiveJob(id); }} onOpenJob={onOpenJob}
+          onBack={() => setSubView('jobs')}
+        />
+      ) : subView === 'closedJobs' ? (
+        <ArchivedJobsScreen
+          variant="closed"
+          rows={(loadState.kind === 'loaded' ? loadState.jobs : [])
+            .filter((j) => j.status === 'closed')
+            .map((j) => ({ id: j.id, title: j.jobNumber != null ? `Job #${j.jobNumber}` : 'Job', subtitle: j.address ?? null }))}
+          busyJobId={null}
+          message={null}
+          onUnarchive={() => {}} onOpenJob={onOpenJob}
           onBack={() => setSubView('jobs')}
         />
       ) : subView === 'priceSheetList' ? (
@@ -1404,6 +1417,7 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   planning: 'Planning',
   jobEstimate: 'Job Estimate',
   archivedJobs: 'Archived Jobs',
+  closedJobs: 'Closed Jobs',
   assignmentBoard: 'Assignments',
   priceSheetList: 'Price Sheets',
   priceSheetEditor: 'Price Sheet Editor',
