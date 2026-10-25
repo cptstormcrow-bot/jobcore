@@ -132,10 +132,12 @@
       "mounted": true,
       "notes": "",
       "testIDs": [
+        "jobs-closed-btn",
         "jobs-archived-btn"
       ],
       "accessibilityLabels": [],
       "buttonLabels": [
+        "Closed",
         "Archived",
         "Add Job",
         "Archive",
@@ -174,6 +176,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -182,15 +188,19 @@
         },
         {
           "kind": "subView",
-          "target": "jobs"
-        },
-        {
-          "kind": "subView",
           "target": "compensationPolicy"
         },
         {
           "kind": "subView",
           "target": "archivedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "closedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
         },
         {
           "kind": "subView",
@@ -278,6 +288,13 @@
           ]
         },
         {
+          "src": "../menu",
+          "names": [
+            "buildAdminFinanceMenuItems",
+            "isAdminFinanceView"
+          ]
+        },
+        {
           "src": "@jobcore/core",
           "names": [
             "summarizeWorkDescription",
@@ -319,7 +336,7 @@
         {
           "src": "../reporting/revenue",
           "names": [
-            "commissionsFromPayoutLines",
+            "mergeCommissionRecords",
             "type CommissionAmountSource"
           ]
         },
@@ -481,7 +498,7 @@
           ]
         }
       ],
-      "lineCount": 1457,
+      "lineCount": 1465,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -489,7 +506,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -498,7 +515,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -507,7 +524,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1023,
+          "line": 1018,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -516,7 +533,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1031,
+          "line": 1026,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -525,7 +542,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 1032,
+          "line": 1027,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -534,7 +551,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1039,
+          "line": 1034,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Closed",
+          "placeholder": null,
+          "variant": null,
+          "line": 1036,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -543,7 +569,7 @@
           "label": "Archived",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1037,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -552,7 +578,7 @@
           "label": "Add Job",
           "placeholder": null,
           "variant": null,
-          "line": 1042,
+          "line": 1038,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -561,7 +587,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -570,7 +596,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -579,7 +605,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -588,7 +614,7 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -597,7 +623,7 @@
           "label": "Archive",
           "placeholder": null,
           "variant": null,
-          "line": 1086,
+          "line": 1082,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -606,7 +632,7 @@
           "label": "Detail",
           "placeholder": null,
           "variant": null,
-          "line": 1087,
+          "line": 1083,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -957,7 +983,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1124,
+          "line": 1120,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1056,7 +1082,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1065,7 +1091,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1866,7 +1892,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1875,7 +1901,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -1884,25 +1910,25 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 23,
+          "line": 25,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No archived jobs.",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
           "placeholder": null,
           "variant": null,
-          "line": 27,
+          "line": 29,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 32,
+          "line": 34,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -1911,7 +1937,7 @@
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 33,
+          "line": 35,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -1920,7 +1946,7 @@
           "label": "{row.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 34,
+          "line": 36,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -1929,7 +1955,61 @@
           "label": "Unarchive",
           "placeholder": null,
           "variant": null,
+          "line": 39,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 25,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "empty",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
+          "placeholder": null,
+          "variant": null,
+          "line": 29,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 34,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 35,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.subtitle}",
+          "placeholder": null,
+          "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Unarchive",
+          "placeholder": null,
+          "variant": null,
+          "line": 39,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
@@ -3360,7 +3440,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3369,7 +3449,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3918,7 +3998,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -3927,7 +4007,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -4017,7 +4097,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -4026,7 +4106,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -5229,9 +5309,7 @@
       ],
       "mounted": true,
       "notes": "",
-      "testIDs": [
-        "archived-jobs-back"
-      ],
+      "testIDs": [],
       "accessibilityLabels": [],
       "buttonLabels": [
         "Back"
@@ -5260,33 +5338,33 @@
           ]
         }
       ],
-      "lineCount": 74,
-      "titleInSource": "No archived jobs.",
+      "lineCount": 78,
+      "titleInSource": null,
       "elements": [
         {
           "type": "button",
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 23,
+          "line": 25,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No archived jobs.",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
           "placeholder": null,
           "variant": null,
-          "line": 27,
+          "line": 29,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 32,
+          "line": 34,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -5295,7 +5373,7 @@
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 33,
+          "line": 35,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -5304,7 +5382,7 @@
           "label": "{row.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 34,
+          "line": 36,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -5313,7 +5391,7 @@
           "label": "Unarchive",
           "placeholder": null,
           "variant": null,
-          "line": 36,
+          "line": 39,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         }
@@ -5909,10 +5987,12 @@
       "mounted": true,
       "notes": "inline",
       "testIDs": [
+        "jobs-closed-btn",
         "jobs-archived-btn"
       ],
       "accessibilityLabels": [],
       "buttonLabels": [
+        "Closed",
         "Archived",
         "Add Job",
         "Archive",
@@ -5951,6 +6031,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -5959,15 +6043,19 @@
         },
         {
           "kind": "subView",
-          "target": "jobs"
-        },
-        {
-          "kind": "subView",
           "target": "compensationPolicy"
         },
         {
           "kind": "subView",
           "target": "archivedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "closedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
         },
         {
           "kind": "subView",
@@ -6055,6 +6143,13 @@
           ]
         },
         {
+          "src": "../menu",
+          "names": [
+            "buildAdminFinanceMenuItems",
+            "isAdminFinanceView"
+          ]
+        },
+        {
           "src": "@jobcore/core",
           "names": [
             "summarizeWorkDescription",
@@ -6096,7 +6191,7 @@
         {
           "src": "../reporting/revenue",
           "names": [
-            "commissionsFromPayoutLines",
+            "mergeCommissionRecords",
             "type CommissionAmountSource"
           ]
         },
@@ -6258,7 +6353,7 @@
           ]
         }
       ],
-      "lineCount": 1457,
+      "lineCount": 1465,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -6266,7 +6361,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6275,7 +6370,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6284,7 +6379,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1023,
+          "line": 1018,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -6293,7 +6388,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1031,
+          "line": 1026,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -6302,7 +6397,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 1032,
+          "line": 1027,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -6311,7 +6406,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1039,
+          "line": 1034,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Closed",
+          "placeholder": null,
+          "variant": null,
+          "line": 1036,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6320,7 +6424,7 @@
           "label": "Archived",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1037,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6329,7 +6433,7 @@
           "label": "Add Job",
           "placeholder": null,
           "variant": null,
-          "line": 1042,
+          "line": 1038,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6338,7 +6442,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6347,7 +6451,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6356,7 +6460,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -6365,7 +6469,7 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -6374,7 +6478,7 @@
           "label": "Archive",
           "placeholder": null,
           "variant": null,
-          "line": 1086,
+          "line": 1082,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6383,7 +6487,7 @@
           "label": "Detail",
           "placeholder": null,
           "variant": null,
-          "line": 1087,
+          "line": 1083,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6734,7 +6838,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1124,
+          "line": 1120,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6833,7 +6937,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -6842,7 +6946,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -7643,7 +7747,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -7652,7 +7756,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -7661,25 +7765,25 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 23,
+          "line": 25,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No archived jobs.",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
           "placeholder": null,
           "variant": null,
-          "line": 27,
+          "line": 29,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 32,
+          "line": 34,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -7688,7 +7792,7 @@
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 33,
+          "line": 35,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -7697,7 +7801,7 @@
           "label": "{row.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 34,
+          "line": 36,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -7706,7 +7810,61 @@
           "label": "Unarchive",
           "placeholder": null,
           "variant": null,
+          "line": 39,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 25,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "empty",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
+          "placeholder": null,
+          "variant": null,
+          "line": 29,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 34,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 35,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.subtitle}",
+          "placeholder": null,
+          "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Unarchive",
+          "placeholder": null,
+          "variant": null,
+          "line": 39,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
@@ -9137,7 +9295,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -9146,7 +9304,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -9695,7 +9853,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -9704,7 +9862,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -9794,7 +9952,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -9803,7 +9961,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -12271,10 +12429,12 @@
       "mounted": true,
       "notes": "inline",
       "testIDs": [
+        "jobs-closed-btn",
         "jobs-archived-btn"
       ],
       "accessibilityLabels": [],
       "buttonLabels": [
+        "Closed",
         "Archived",
         "Add Job",
         "Archive",
@@ -12313,6 +12473,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -12321,15 +12485,19 @@
         },
         {
           "kind": "subView",
-          "target": "jobs"
-        },
-        {
-          "kind": "subView",
           "target": "compensationPolicy"
         },
         {
           "kind": "subView",
           "target": "archivedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "closedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
         },
         {
           "kind": "subView",
@@ -12417,6 +12585,13 @@
           ]
         },
         {
+          "src": "../menu",
+          "names": [
+            "buildAdminFinanceMenuItems",
+            "isAdminFinanceView"
+          ]
+        },
+        {
           "src": "@jobcore/core",
           "names": [
             "summarizeWorkDescription",
@@ -12458,7 +12633,7 @@
         {
           "src": "../reporting/revenue",
           "names": [
-            "commissionsFromPayoutLines",
+            "mergeCommissionRecords",
             "type CommissionAmountSource"
           ]
         },
@@ -12620,7 +12795,7 @@
           ]
         }
       ],
-      "lineCount": 1457,
+      "lineCount": 1465,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -12628,7 +12803,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12637,7 +12812,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12646,7 +12821,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1023,
+          "line": 1018,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -12655,7 +12830,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1031,
+          "line": 1026,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -12664,7 +12839,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 1032,
+          "line": 1027,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -12673,7 +12848,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1039,
+          "line": 1034,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Closed",
+          "placeholder": null,
+          "variant": null,
+          "line": 1036,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12682,7 +12866,7 @@
           "label": "Archived",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1037,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12691,7 +12875,7 @@
           "label": "Add Job",
           "placeholder": null,
           "variant": null,
-          "line": 1042,
+          "line": 1038,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12700,7 +12884,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12709,7 +12893,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12718,7 +12902,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -12727,7 +12911,7 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -12736,7 +12920,7 @@
           "label": "Archive",
           "placeholder": null,
           "variant": null,
-          "line": 1086,
+          "line": 1082,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -12745,7 +12929,7 @@
           "label": "Detail",
           "placeholder": null,
           "variant": null,
-          "line": 1087,
+          "line": 1083,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -13096,7 +13280,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1124,
+          "line": 1120,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -13195,7 +13379,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -13204,7 +13388,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14005,7 +14189,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14014,7 +14198,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -14023,25 +14207,25 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 23,
+          "line": 25,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No archived jobs.",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
           "placeholder": null,
           "variant": null,
-          "line": 27,
+          "line": 29,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 32,
+          "line": 34,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -14050,7 +14234,7 @@
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 33,
+          "line": 35,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -14059,7 +14243,7 @@
           "label": "{row.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 34,
+          "line": 36,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -14068,7 +14252,61 @@
           "label": "Unarchive",
           "placeholder": null,
           "variant": null,
+          "line": 39,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 25,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "empty",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
+          "placeholder": null,
+          "variant": null,
+          "line": 29,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 34,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 35,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.subtitle}",
+          "placeholder": null,
+          "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Unarchive",
+          "placeholder": null,
+          "variant": null,
+          "line": 39,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
@@ -15499,7 +15737,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -15508,7 +15746,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16057,7 +16295,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16066,7 +16304,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16156,7 +16394,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -16165,7 +16403,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -16813,10 +17051,12 @@
       "mounted": true,
       "notes": "inline",
       "testIDs": [
+        "jobs-closed-btn",
         "jobs-archived-btn"
       ],
       "accessibilityLabels": [],
       "buttonLabels": [
+        "Closed",
         "Archived",
         "Add Job",
         "Archive",
@@ -16855,6 +17095,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -16863,15 +17107,19 @@
         },
         {
           "kind": "subView",
-          "target": "jobs"
-        },
-        {
-          "kind": "subView",
           "target": "compensationPolicy"
         },
         {
           "kind": "subView",
           "target": "archivedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "closedJobs"
+        },
+        {
+          "kind": "subView",
+          "target": "jobs"
         },
         {
           "kind": "subView",
@@ -16959,6 +17207,13 @@
           ]
         },
         {
+          "src": "../menu",
+          "names": [
+            "buildAdminFinanceMenuItems",
+            "isAdminFinanceView"
+          ]
+        },
+        {
           "src": "@jobcore/core",
           "names": [
             "summarizeWorkDescription",
@@ -17000,7 +17255,7 @@
         {
           "src": "../reporting/revenue",
           "names": [
-            "commissionsFromPayoutLines",
+            "mergeCommissionRecords",
             "type CommissionAmountSource"
           ]
         },
@@ -17162,7 +17417,7 @@
           ]
         }
       ],
-      "lineCount": 1457,
+      "lineCount": 1465,
       "titleInSource": "Admin & Finance",
       "elements": [
         {
@@ -17170,7 +17425,7 @@
           "label": "Admin & Finance",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17179,7 +17434,7 @@
           "label": "Sign in to view this organization's jobs, price sheets, and pay periods.",
           "placeholder": null,
           "variant": null,
-          "line": 947,
+          "line": 949,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17188,7 +17443,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1023,
+          "line": 1018,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -17197,7 +17452,7 @@
           "label": "{card.title}",
           "placeholder": null,
           "variant": null,
-          "line": 1031,
+          "line": 1026,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -17206,7 +17461,7 @@
           "label": "{card.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 1032,
+          "line": 1027,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -17215,7 +17470,16 @@
           "label": "Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1039,
+          "line": 1034,
+          "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Closed",
+          "placeholder": null,
+          "variant": null,
+          "line": 1036,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17224,7 +17488,7 @@
           "label": "Archived",
           "placeholder": null,
           "variant": null,
-          "line": 1041,
+          "line": 1037,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17233,7 +17497,7 @@
           "label": "Add Job",
           "placeholder": null,
           "variant": null,
-          "line": 1042,
+          "line": 1038,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17242,7 +17506,7 @@
           "label": "No jobs",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17251,7 +17515,7 @@
           "label": "This organization has no jobs on file.",
           "placeholder": null,
           "variant": null,
-          "line": 1050,
+          "line": 1046,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17260,7 +17524,7 @@
           "label": "{job.address ?? job.description ?? job.id}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -17269,7 +17533,7 @@
           "label": "{formatDate(job.scheduledStart)}",
           "placeholder": null,
           "variant": null,
-          "line": 1074,
+          "line": 1070,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": true
         },
@@ -17278,7 +17542,7 @@
           "label": "Archive",
           "placeholder": null,
           "variant": null,
-          "line": 1086,
+          "line": 1082,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17287,7 +17551,7 @@
           "label": "Detail",
           "placeholder": null,
           "variant": null,
-          "line": 1087,
+          "line": 1083,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17638,7 +17902,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1124,
+          "line": 1120,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17737,7 +18001,7 @@
           "label": "Qualify lead",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -17746,7 +18010,7 @@
           "label": "No lead selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1140,
+          "line": 1136,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18547,7 +18811,7 @@
           "label": "Job estimate",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18556,7 +18820,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1155,
+          "line": 1151,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -18565,25 +18829,25 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 23,
+          "line": 25,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
         {
           "type": "empty",
-          "label": "No archived jobs.",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
           "placeholder": null,
           "variant": null,
-          "line": 27,
+          "line": 29,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
-          "dynamic": false
+          "dynamic": true
         },
         {
           "type": "button",
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 32,
+          "line": 34,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -18592,7 +18856,7 @@
           "label": "{row.title}",
           "placeholder": null,
           "variant": null,
-          "line": 33,
+          "line": 35,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -18601,7 +18865,7 @@
           "label": "{row.subtitle}",
           "placeholder": null,
           "variant": null,
-          "line": 34,
+          "line": 36,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": true
         },
@@ -18610,7 +18874,61 @@
           "label": "Unarchive",
           "placeholder": null,
           "variant": null,
+          "line": 39,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Back",
+          "placeholder": null,
+          "variant": null,
+          "line": 25,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "empty",
+          "label": "{isClosed ? 'No closed jobs.' : 'No archi}",
+          "placeholder": null,
+          "variant": null,
+          "line": 29,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 34,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.title}",
+          "placeholder": null,
+          "variant": null,
+          "line": 35,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "section",
+          "label": "{row.subtitle}",
+          "placeholder": null,
+          "variant": null,
           "line": 36,
+          "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Unarchive",
+          "placeholder": null,
+          "variant": null,
+          "line": 39,
           "via": "modules/admin-finance/src/screens/ArchivedJobsScreen.tsx",
           "dynamic": false
         },
@@ -20041,7 +20359,7 @@
           "label": "Employee",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -20050,7 +20368,7 @@
           "label": "No employee selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1304,
+          "line": 1311,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -20599,7 +20917,7 @@
           "label": "Job",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -20608,7 +20926,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 1355,
+          "line": 1362,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -20698,7 +21016,7 @@
           "label": "Coming soon",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         },
@@ -20707,7 +21025,7 @@
           "label": "This tab is not wired up yet.",
           "placeholder": null,
           "variant": null,
-          "line": 1389,
+          "line": 1396,
           "via": "modules/admin-finance/src/screens/AdminFinanceRoot.tsx",
           "dynamic": false
         }
@@ -24921,6 +25239,112 @@
       }
     },
     {
+      "key": "completed-review",
+      "kind": "sub-view",
+      "mounted": "unknown",
+      "notes": "uncovered by routes.json",
+      "module": "field-tech",
+      "file": "modules/field-tech/src/screens/CompletedReview.tsx",
+      "roles": [],
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [
+        "Completion Photos"
+      ],
+      "components": {
+        "Text": 7,
+        "ScreenTitle": 1,
+        "ScrollView": 2
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "ScreenTitle",
+            "PayrollButton",
+            "colors",
+            "spacing",
+            "typography",
+            "Text"
+          ]
+        },
+        {
+          "src": "../lib/module-ports",
+          "names": [
+            "getModulePorts"
+          ]
+        },
+        {
+          "src": "./completion-helpers",
+          "names": [
+            "formatTimeSpent"
+          ]
+        }
+      ],
+      "lineCount": 185,
+      "titleInSource": "Complete Job",
+      "elements": [
+        {
+          "type": "header",
+          "label": "Complete Job",
+          "placeholder": null,
+          "variant": null,
+          "line": 86,
+          "via": "modules/field-tech/src/screens/CompletedReview.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "{reopening ? 'Reopening…' : 'Not Complete}",
+          "placeholder": null,
+          "variant": null,
+          "line": 92,
+          "via": "modules/field-tech/src/screens/CompletedReview.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "Completion Photos",
+          "placeholder": null,
+          "variant": null,
+          "line": 98,
+          "via": "modules/field-tech/src/screens/CompletedReview.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "section",
+          "label": "Job Checklist",
+          "placeholder": null,
+          "variant": null,
+          "line": 116,
+          "via": "modules/field-tech/src/screens/CompletedReview.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "section",
+          "label": "Quality notes",
+          "placeholder": null,
+          "variant": null,
+          "line": 132,
+          "via": "modules/field-tech/src/screens/CompletedReview.tsx",
+          "dynamic": false
+        }
+      ],
+      "chrome": {
+        "title": null,
+        "subtitle": null,
+        "titleBarTone": null,
+        "titleDynamic": false,
+        "subtitleDynamic": false
+      }
+    },
+    {
       "key": "config-settings",
       "kind": "route",
       "module": null,
@@ -25077,17 +25501,22 @@
       ],
       "mounted": true,
       "notes": "",
-      "testIDs": [],
-      "accessibilityLabels": [],
+      "testIDs": [
+        "show-screen-numbers-switch"
+      ],
+      "accessibilityLabels": [
+        "Show screen numbers"
+      ],
       "buttonLabels": [
         "Dismiss"
       ],
       "components": {
         "Button": 6,
-        "Text": 9,
+        "Text": 10,
         "AppChrome": 1,
         "EmptyState": 1,
-        "LoadingState": 1
+        "LoadingState": 1,
+        "Switch": 1
       },
       "pickers": [],
       "menus": [
@@ -25096,11 +25525,34 @@
         "settings",
         "switcher"
       ],
-      "navTargets": [],
+      "navTargets": [
+        {
+          "kind": "route",
+          "target": "/account"
+        },
+        {
+          "kind": "route",
+          "target": "/config/settings"
+        },
+        {
+          "kind": "route",
+          "target": "/profile"
+        },
+        {
+          "kind": "route",
+          "target": "/config/test-jobs"
+        }
+      ],
       "tables": [],
       "rpcs": [],
       "repoMethods": [],
       "imports": [
+        {
+          "src": "@jobcore/admin-finance",
+          "names": [
+            "buildAdminFinanceMenuItems"
+          ]
+        },
         {
           "src": "@jobcore/ui",
           "names": [
@@ -25113,7 +25565,8 @@
             "spacing",
             "typography",
             "Text",
-            "confirmAsync"
+            "confirmAsync",
+            "useScreenNumber"
           ]
         },
         {
@@ -25142,7 +25595,7 @@
           ]
         }
       ],
-      "lineCount": 348,
+      "lineCount": 383,
       "titleInSource": "No Test Jobs",
       "elements": [
         {
@@ -25150,7 +25603,7 @@
           "label": "No Test Jobs",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 166,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -25159,7 +25612,7 @@
           "label": "Spawn test jobs to see them here.",
           "placeholder": null,
           "variant": null,
-          "line": 162,
+          "line": 166,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -25168,16 +25621,25 @@
           "label": "{deletingId === job.id ? 'Deleting…' : 'D}",
           "placeholder": null,
           "variant": "outline",
-          "line": 174,
+          "line": 178,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
+        },
+        {
+          "type": "toggle",
+          "label": "Show screen numbers",
+          "placeholder": null,
+          "variant": null,
+          "line": 209,
+          "via": "apps/mobile/app/config/test-jobs.tsx",
+          "dynamic": false
         },
         {
           "type": "button",
           "label": "{spawning ? 'Spawning…' : 'Spawn Test Job}",
           "placeholder": null,
           "variant": "outline",
-          "line": 197,
+          "line": 219,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -25186,7 +25648,7 @@
           "label": "{deletingAll ? 'Deleting all…' : 'Delete }",
           "placeholder": null,
           "variant": "outline",
-          "line": 204,
+          "line": 226,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -25195,7 +25657,7 @@
           "label": "{simulating ? 'Running…' : 'Run Job Simul}",
           "placeholder": null,
           "variant": "outline",
-          "line": 211,
+          "line": 233,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         },
@@ -25204,7 +25666,7 @@
           "label": "Dismiss",
           "placeholder": null,
           "variant": "primary",
-          "line": 222,
+          "line": 244,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": false
         },
@@ -25213,7 +25675,7 @@
           "label": "{simulating ? 'Running…' : 'Run Again'}",
           "placeholder": null,
           "variant": "primary",
-          "line": 228,
+          "line": 250,
           "via": "apps/mobile/app/config/test-jobs.tsx",
           "dynamic": true
         }
@@ -27064,292 +27526,6 @@
       }
     },
     {
-      "key": "job-id",
-      "kind": "sub-view",
-      "module": "field-tech",
-      "route": "/job/complete/[jobId]",
-      "subView": null,
-      "parentKey": "field-tech",
-      "file": "apps/mobile/app/job/complete/[jobId].tsx",
-      "title": "Completion",
-      "roles": [
-        "owner",
-        "admin",
-        "tech"
-      ],
-      "mounted": true,
-      "notes": "Expo file route wrapping the field-tech Completion screen (alias of ft-Completion); reached via the Complete job action. Mounted.",
-      "testIDs": [],
-      "accessibilityLabels": [],
-      "buttonLabels": [],
-      "components": {
-        "AppChrome": 1,
-        "EmptyState": 2,
-        "LoadingState": 1
-      },
-      "pickers": [],
-      "menus": [
-        "drawer",
-        "options",
-        "settings",
-        "switcher"
-      ],
-      "navTargets": [],
-      "tables": [],
-      "rpcs": [],
-      "repoMethods": [],
-      "imports": [
-        {
-          "src": "@jobcore/ui",
-          "names": [
-            "AppChrome",
-            "EmptyState",
-            "LoadingState",
-            "colors"
-          ]
-        },
-        {
-          "src": "../../../../../modules/admin-finance/src/lib/module-session",
-          "names": [
-            "setModuleSession as setAdminFinanceSourceModuleSession"
-          ]
-        },
-        {
-          "src": "../../../../../modules/field-tech/src/lib/module-session",
-          "names": [
-            "setModuleSession as setFieldTechModuleSession"
-          ]
-        },
-        {
-          "src": "../../../../../modules/field-tech/src/lib/module-ports",
-          "names": [
-            "setModulePorts as setFieldTechModulePorts"
-          ]
-        },
-        {
-          "src": "../../../../../modules/field-tech/src/screens/Completion",
-          "names": [
-            "Completion"
-          ]
-        },
-        {
-          "src": "../../../../../modules/field-tech/src/screens/completion-helpers",
-          "names": [
-            "completionBlockedNotice"
-          ]
-        },
-        {
-          "src": "../../../src/lib/session",
-          "names": [
-            "useSession"
-          ]
-        },
-        {
-          "src": "../../../src/lib/field-tech-repos",
-          "names": [
-            "buildFieldTechPorts"
-          ]
-        },
-        {
-          "src": "../../../src/lib/admin-finance-repos",
-          "names": [
-            "createJobRepository"
-          ]
-        },
-        {
-          "src": "../../../src/components/ErrorBoundary",
-          "names": [
-            "ErrorBoundary"
-          ]
-        },
-        {
-          "src": "../../../src/components/JobAfterPhotoCard",
-          "names": [
-            "JobAfterPhotoCard"
-          ]
-        },
-        {
-          "src": "../../../src/lib/live-labor",
-          "names": [
-            "liveLaborSeconds"
-          ]
-        }
-      ],
-      "lineCount": 122,
-      "titleInSource": "Job not found",
-      "elements": [
-        {
-          "type": "empty",
-          "label": "Job not found",
-          "placeholder": null,
-          "variant": null,
-          "line": 81,
-          "via": "apps/mobile/app/job/complete/[jobId].tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "This job could not be loaded.",
-          "placeholder": null,
-          "variant": null,
-          "line": 81,
-          "via": "apps/mobile/app/job/complete/[jobId].tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Cannot complete this job",
-          "placeholder": null,
-          "variant": null,
-          "line": 83,
-          "via": "apps/mobile/app/job/complete/[jobId].tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "{loaded.notice}",
-          "placeholder": null,
-          "variant": null,
-          "line": 83,
-          "via": "apps/mobile/app/job/complete/[jobId].tsx",
-          "dynamic": true
-        },
-        {
-          "type": "field",
-          "label": null,
-          "placeholder": "Describe the damage",
-          "variant": null,
-          "line": 270,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "field",
-          "label": null,
-          "placeholder": "List each item added to the scope",
-          "variant": null,
-          "line": 286,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "toggle",
-          "label": "{label}",
-          "placeholder": null,
-          "variant": null,
-          "line": 316,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": true
-        },
-        {
-          "type": "header",
-          "label": "Complete Job",
-          "placeholder": null,
-          "variant": null,
-          "line": 326,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Complete Job",
-          "placeholder": null,
-          "variant": null,
-          "line": 331,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Completion Photos",
-          "placeholder": null,
-          "variant": null,
-          "line": 336,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Job Checklist",
-          "placeholder": null,
-          "variant": null,
-          "line": 348,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "field",
-          "label": null,
-          "placeholder": "Quality notes",
-          "variant": null,
-          "line": 360,
-          "via": "modules/field-tech/src/screens/Completion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Retake",
-          "placeholder": null,
-          "variant": null,
-          "line": 123,
-          "via": "apps/mobile/src/components/JobAfterPhotoCard.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Remove",
-          "placeholder": null,
-          "variant": null,
-          "line": 124,
-          "via": "apps/mobile/src/components/JobAfterPhotoCard.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Capture After-photo",
-          "placeholder": null,
-          "variant": null,
-          "line": 130,
-          "via": "apps/mobile/src/components/JobAfterPhotoCard.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Choose Photo",
-          "placeholder": null,
-          "variant": null,
-          "line": 131,
-          "via": "apps/mobile/src/components/JobAfterPhotoCard.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "section",
-          "label": "Something went wrong",
-          "placeholder": null,
-          "variant": null,
-          "line": 43,
-          "via": "apps/mobile/src/components/ErrorBoundary.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "button",
-          "label": "Go back",
-          "placeholder": null,
-          "variant": null,
-          "line": 45,
-          "via": "apps/mobile/src/components/ErrorBoundary.tsx",
-          "dynamic": false
-        }
-      ],
-      "chrome": {
-        "title": null,
-        "subtitle": null,
-        "titleBarTone": null,
-        "titleDynamic": false,
-        "subtitleDynamic": false
-      }
-    },
-    {
       "key": "job-region-arrive",
       "kind": "region",
       "module": null,
@@ -27420,6 +27596,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -27442,11 +27622,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -27663,7 +27848,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -27671,7 +27856,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -27680,7 +27865,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -27878,7 +28063,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -27887,7 +28072,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28913,7 +29098,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -28922,7 +29107,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -28931,7 +29116,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -28940,7 +29125,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -28949,7 +29134,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -28958,7 +29143,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -28967,7 +29152,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -28976,7 +29161,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -29276,6 +29461,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -29298,11 +29487,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -29519,7 +29713,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -29527,7 +29721,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29536,7 +29730,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29734,7 +29928,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -29743,7 +29937,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30769,7 +30963,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30778,7 +30972,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30787,7 +30981,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30796,7 +30990,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30805,7 +30999,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30814,7 +31008,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30823,7 +31017,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30832,7 +31026,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -31132,6 +31326,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -31154,11 +31352,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -31375,7 +31578,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -31383,7 +31586,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31392,7 +31595,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31590,7 +31793,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -31599,7 +31802,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32625,7 +32828,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32634,7 +32837,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32643,7 +32846,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32652,7 +32855,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32661,7 +32864,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32670,7 +32873,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32679,7 +32882,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32688,7 +32891,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32988,6 +33191,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -33010,11 +33217,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -33231,7 +33443,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -33239,7 +33451,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -33248,7 +33460,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -33446,7 +33658,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -33455,7 +33667,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -34481,7 +34693,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34490,7 +34702,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34499,7 +34711,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34508,7 +34720,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34517,7 +34729,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34526,7 +34738,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34535,7 +34747,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34544,7 +34756,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -35101,6 +35313,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -35123,11 +35339,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -35344,7 +35565,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -35352,7 +35573,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -35361,7 +35582,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -35559,7 +35780,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -35568,7 +35789,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -36594,7 +36815,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36603,7 +36824,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36612,7 +36833,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36621,7 +36842,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36630,7 +36851,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36639,7 +36860,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36648,7 +36869,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36657,7 +36878,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36957,6 +37178,10 @@
         },
         {
           "kind": "route",
+          "target": "/config/test-jobs"
+        },
+        {
+          "kind": "route",
           "target": "/m/admin-finance"
         },
         {
@@ -36979,11 +37204,16 @@
         {
           "src": "@jobcore/core",
           "names": [
-            "deriveStageStates",
-            "deriveNextStep",
             "estimateStageFlags",
             "STAGE_KEYS",
             "STAGE_LABELS"
+          ]
+        },
+        {
+          "src": "../../src/lib/job-stage-results",
+          "names": [
+            "buildJobStageResults",
+            "type JobStageExtras"
           ]
         },
         {
@@ -37200,7 +37430,7 @@
           ]
         }
       ],
-      "lineCount": 1589,
+      "lineCount": 1555,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -37208,7 +37438,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37217,7 +37447,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1262,
+          "line": 1227,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37415,7 +37645,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": "outline",
-          "line": 1289,
+          "line": 1254,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37424,7 +37654,7 @@
           "label": "Create",
           "placeholder": null,
           "variant": null,
-          "line": 1290,
+          "line": 1255,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -38450,7 +38680,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38459,7 +38689,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 149,
+          "line": 153,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38468,7 +38698,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38477,7 +38707,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 152,
+          "line": 156,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38486,7 +38716,7 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": "{method === m ? 'primary' : 'outline'}",
-          "line": 187,
+          "line": 195,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38495,7 +38725,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 215,
+          "line": 223,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38504,7 +38734,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 230,
+          "line": 238,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38513,7 +38743,7 @@
           "label": "{`Confirm Paid ${money(cashReceived.trim(}",
           "placeholder": null,
           "variant": "primary",
-          "line": 251,
+          "line": 259,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -41729,5 +41959,7 @@
       }
     }
   ],
-  "uncoveredFiles": []
+  "uncoveredFiles": [
+    "modules/field-tech/src/screens/CompletedReview.tsx"
+  ]
 }

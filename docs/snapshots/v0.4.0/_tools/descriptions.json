@@ -46,7 +46,7 @@
       "flowStage": "none",
       "specStage": "Admin close-out",
       "purpose": "Lets owners and admins inspect a single job's details, commission total and audit history from the reports module without any edit actions.",
-      "missing": "Not mounted (no route or sub-view); receives job via props with no inbound navigation found. No job actions or links to the tech or customer.",
+      "missing": "No route or sub-view found by the extractor; receives job via props with no inbound navigation found. No job actions or links to the tech or customer.",
       "navTargets": []
     },
     "af-addTaskDialog": {
@@ -448,7 +448,7 @@
       "flowStage": "none",
       "specStage": "Ancillary",
       "purpose": "Lets field techs request expense reimbursement and track the status of their own prior requests.",
-      "missing": "Not mounted (no route or sub-view). Receipt photo capture deferred. Amount entered in raw cents. Job ID is free text, not a job picker. No approve/deny here (admin-side elsewhere).",
+      "missing": "No route or sub-view found by the extractor. Receipt photo capture deferred. Amount entered in raw cents. Job ID is free text, not a job picker. No approve/deny here (admin-side elsewhere).",
       "navTargets": []
     },
     "ft-Reviews": {

@@ -64,7 +64,7 @@ export function mint() {
 export function check() {
   const reg = loadRegistry();
   if (!reg) { console.log('registry missing'); return 1; }
-  const probs = checkRegistry(reg, loadScreens().map((s) => s.key));
+  const probs = checkRegistry(reg, loadScreens().filter((s) => s.mounted !== 'unknown').map((s) => s.key));
   if (probs.length) { probs.forEach((p) => console.log(p)); return 1; }
   const a = reg.filter((e) => !e.retiredAt).length;
   console.log(`OK ${a} active, ${reg.length - a} retired`);

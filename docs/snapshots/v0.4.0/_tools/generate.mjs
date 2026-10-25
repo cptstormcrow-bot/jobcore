@@ -114,8 +114,8 @@ const addR = (kind, key, claim, evidence) => redundant.push({ id: '', kind, key,
 const isUnm = (s) => s.mounted === false || s.mounted === 'exported-unmounted' || s.mounted === 'unknown';
 for (const s of merged) {
   if (isUnm(s)) {
-    const why = s.mounted === 'unknown' ? 'mount status could not be determined' : s.mounted === 'exported-unmounted' ? 'exported but never mounted in the app' : 'not mounted in the app';
-    addR('unmounted', s.key, `Screen "${s.title || s.key}" is ${why}.`, `${s.key} · ${s.file} · mounted=${s.mounted}`);
+    const why = s.mounted === 'unknown' ? 'the extractor could not determine its mount status (source file not covered by routes.json)' : s.mounted === 'exported-unmounted' ? 'exported, but the extractor found no mount point for it' : 'the extractor found no route or sub-view mounting it';
+    addR('unmounted', s.key, `Screen "${s.title || s.key}": ${why}.`, `${s.key} · ${s.file} · mounted=${s.mounted}`);
   }
 }
 const pr = merged.find((s) => s.module === 'payment-review' && s.kind === 'module-root');
@@ -125,12 +125,12 @@ if (jd) addR('undeclared-route', jd.key, 'The /job/[jobId] route file is not dec
 const scrKinds = ['sub-view', 'drill-in', 'route'];
 for (const s of merged) {
   if (s.mounted !== true || !scrKinds.includes(s.kind)) continue;
-  if (!outCount.get(s.key)) addR('dead-end', s.key, `Screen "${s.title || s.key}" is a dead end: no outgoing navigation was resolved.`, `${s.key} · ${s.file} · 0 resolved outgoing edges`);
+  if (!outCount.get(s.key)) addR('dead-end', s.key, `Screen "${s.title || s.key}" had no outgoing navigation edge found in the capture run.`, `${s.key} · ${s.file} · 0 resolved outgoing edges`);
 }
 for (const s of merged) {
   if (s.mounted !== true || !scrKinds.includes(s.kind)) continue;
   const exempt = s.route === '/' || s.route === '/sign-in' || s.route === '/sign-up' || String(s.route || '').includes('(tabs)') || (s.menus || []).includes('tabs') && s.kind === 'route';
-  if (!inCount.get(s.key) && !exempt) addR('not-navigable', s.key, `Screen "${s.title || s.key}" is not navigable: nothing links to it.`, `${s.key} · ${s.file} · 0 resolved inbound edges`);
+  if (!inCount.get(s.key) && !exempt) addR('not-navigable', s.key, `Screen "${s.title || s.key}" had no inbound navigation edge found in the capture run (no in-app link recorded).`, `${s.key} · ${s.file} · 0 resolved inbound edges`);
 }
 redundant.forEach((r, i) => { r.id = 'R' + (i + 1); });
 const refutedIds = JSON.parse(fs.readFileSync(path.join(here, 'refuted.json'), 'utf8'));
@@ -305,7 +305,7 @@ ${runs(from, i + 1 < brks.length ? brks[i + 1] : units.length)}
 <div class="num-strip"><span class="num-big">${numLabel(s)}</span><span class="num-key">${esc(s.key)}</span></div>
 <h2>${esc(s.title || s.key)}</h2>
 <div>${roles}</div>
-<div><span class="chip">${esc(s.kind)}</span><span class="chip">${esc(s.module ?? 'no module')}</span><span class="chip">mounted: ${esc(s.mounted)}</span>${unm ? '<span class="chip bad">NOT MOUNTED</span>' : ''}<span class="chip" style="background:${statusColor(fs_)};color:#fff;border-color:${statusColor(fs_)}">${esc(String(fs_).replace(/_/g, ' '))}</span><span class="chip">${esc(s.specStage)}</span></div>
+<div><span class="chip">${esc(s.kind)}</span><span class="chip">${esc(s.module ?? 'no module')}</span><span class="chip">mounted: ${esc(s.mounted)}</span>${unm ? '<span class="chip bad">NO MOUNT FOUND IN CAPTURE</span>' : ''}<span class="chip" style="background:${statusColor(fs_)};color:#fff;border-color:${statusColor(fs_)}">${esc(String(fs_).replace(/_/g, ' '))}</span><span class="chip">${esc(s.specStage)}</span></div>
 ${s.purpose ? `<p class="muted">${esc(s.purpose)}</p>` : ''}
 ${body}
 </div>

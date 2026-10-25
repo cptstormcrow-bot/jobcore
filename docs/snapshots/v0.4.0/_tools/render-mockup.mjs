@@ -344,7 +344,7 @@ export function renderMockup(screen) {
   h += '</div>';
   if (menus.includes('tabs')) h += '<div class="m-tabs"><span class="a">Jobs</span><span>Calendar</span></div>';
   h += '</div>';
-  if (s.mounted === false || s.mounted === 'exported-unmounted') h += '<div class="m-ribbon">NOT MOUNTED</div>';
+  if (s.mounted === false || s.mounted === 'exported-unmounted') h += '<div class="m-ribbon">NO MOUNT FOUND</div>';
   h += '</div></div>';
   return h;
 }
@@ -374,5 +374,5 @@ export const FRAME_CSS = [
 export function renderMiniNode(screen) {
   const s = screen || {};
   const unm = s.mounted === false || s.mounted === 'exported-unmounted';
-  return `<div class="mini"><div class="stripe" style="background:${moduleColor(s.module)}"></div><div class="t">${esc(s.title || s.route || 'Screen')}</div><div class="s">${esc(s.module || '')}</div><div class="mk" style="color:${unm ? C.danger : C.success}">${unm ? '✕ not mounted' : '● mounted'}</div></div>`;
+  return `<div class="mini"><div class="stripe" style="background:${moduleColor(s.module)}"></div><div class="t">${esc(s.title || s.route || 'Screen')}</div><div class="s">${esc(s.module || '')}</div><div class="mk" style="color:${unm ? C.danger : C.success}">${unm ? '✕ no mount found' : '● mounted'}</div></div>`;
 }

@@ -291,6 +291,27 @@ for (const f of uncoveredFiles) {
   entries.push({ key: kebab, kind: 'sub-view', mounted: 'unknown', notes: 'uncovered by routes.json', module: mm ? mm[1] : (f.startsWith('apps/mobile/') ? 'mobile-app' : 'unknown'), file: f, roles: [] });
 }
 
+// Fold route-file entries into the registry key that already owns the same route (e.g. job-id -> ft-Completion).
+const normRoute = (r) => String(r || '').toLowerCase().replace(/\/+$/, '').replace(/:([A-Za-z0-9_]+)/g, '[$1]');
+const regFile = path.resolve(here, '..', '..', '..', '..', 'app', 'apps', 'mobile', 'src', 'screens', 'screen-registry.json');
+const regRoutes = new Map();
+const regKeys = new Set();
+if (fs.existsSync(regFile)) {
+  const raw = JSON.parse(fs.readFileSync(regFile, 'utf8'));
+  for (const r of (Array.isArray(raw) ? raw : (raw.entries || raw.screens || []))) {
+    if (r.retiredAt) continue;
+    regKeys.add(r.key);
+    if (r.route) { const n = normRoute(r.route); regRoutes.set(n, [...(regRoutes.get(n) || []), r.key]); }
+  }
+}
+const entryKeys = new Set(entries.map(e => e.key));
+for (let i = entries.length - 1; i >= 0; i--) {
+  if (regKeys.has(entries[i].key)) continue;
+  const cands = entries[i].route ? (regRoutes.get(normRoute(entries[i].route)) || []) : [];
+  if (cands.length !== 1) continue;
+  const rk = cands[0];
+  if (entryKeys.has(rk)) entries.splice(i, 1); else entries[i] = { ...entries[i], key: rk };
+}
 const used = new Set();
 const screens = entries.map(e => {
   let key = e.key, n = 2;
