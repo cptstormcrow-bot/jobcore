@@ -29,6 +29,7 @@ import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Press
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
+import { buildAdminFinanceMenuItems, isAdminFinanceView } from '../menu';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { summarizeWorkDescription, isBetaVisible, isTestVisible, wageEngine } from '@jobcore/core';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
@@ -159,7 +160,7 @@ export function AdminFinanceRoot() {
   // so this re-fires even when the screen is already mounted. #0012 is the 'jobs' sub-view.
   const { view, ts } = useLocalSearchParams<{ view?: string; ts?: string }>();
   useEffect(() => {
-    if (view === 'jobs') setSubView('jobs');
+    if (isAdminFinanceView(view)) setSubView(view);
     if (view === 'compensationPolicy') setSubView('compensationPolicy');
     if (view === 'archivedJobs') setSubView('archivedJobs');
     if (view === 'closedJobs') setSubView('closedJobs');
@@ -993,19 +994,11 @@ export function AdminFinanceRoot() {
         helpContext={{ screenKey: HELP_SCREEN_KEY[subView] ?? 'admin-finance' }}
         breadcrumbSegments={[{ label: 'Admin & Finance' }]}
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
-        menuItems={[
-          { id: 'overview', label: 'Overview', onPress: () => goTop('overview'), isActive: (TOP[subView] ?? subView) === 'overview' },
-          { id: 'leadInbox', helpId: 'create', label: 'Leads', onPress: () => goTop('leadInbox'), isActive: (TOP[subView] ?? subView) === 'leadInbox' },
-          { id: 'jobs', label: 'Jobs', onPress: () => goTop('jobs'), isActive: (TOP[subView] ?? subView) === 'jobs' },
-          { id: 'assignmentBoard', label: 'Assignments', onPress: () => goTop('assignmentBoard'), isActive: (TOP[subView] ?? subView) === 'assignmentBoard' },
-          { id: 'priceSheetList', label: 'Price Sheets', onPress: () => goTop('priceSheetList'), isActive: (TOP[subView] ?? subView) === 'priceSheetList' },
-          { id: 'payments', helpId: 'payroll_rollup', label: 'Payments', onPress: () => goTop('payments'), isActive: (TOP[subView] ?? subView) === 'payments' },
-          { id: 'paymentReview', label: 'Review', onPress: () => goTop('paymentReview'), isActive: (TOP[subView] ?? subView) === 'paymentReview' },
-          { id: 'calendar', label: 'Calendar', onPress: () => goTop('calendar'), isActive: (TOP[subView] ?? subView) === 'calendar' },
-          { id: 'payroll', label: 'Payroll', onPress: () => goTop('payroll'), isActive: (TOP[subView] ?? subView) === 'payroll' },
-          { id: 'reports', label: 'Reports', onPress: () => goTop('reports'), isActive: (TOP[subView] ?? subView) === 'reports' },
-          { id: 'employee-roster', label: 'Employees', onPress: () => goTop('employee-roster'), isActive: (TOP[subView] ?? subView) === 'employee-roster' },
-        ]}
+        menuItems={buildAdminFinanceMenuItems((v) => goTop(v)).map((item) => ({
+          ...item,
+          ...(item.id === 'leadInbox' ? { helpId: 'create' } : item.id === 'payments' ? { helpId: 'payroll_rollup' } : {}),
+          isActive: (TOP[subView] ?? subView) === item.id,
+        }))}
       />
 
       {subView === 'overview' || subView === 'jobs' ? (
