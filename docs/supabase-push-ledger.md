@@ -22,8 +22,7 @@ Past pushes: OK 10 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-
-_None pending._
+| 0114_sync_time_segments_recomplete.sql | Close the tech's open segment when completed_at is re-set after a restart (trigger fix) | Written 2026-10-24, NOT applied. Jeff must approve naming 0114 and pushing | 2026-10-24 |
 
 ## Past (pushes and attempts)
 
