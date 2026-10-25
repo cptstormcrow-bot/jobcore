@@ -23,7 +23,7 @@ Past pushes: OK 9 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
 
-_None pending._
+| 0113_open_time_segment_closes_prior.sql | Close the tech's open job_time_segments row before opening a new one (fix for duplicate key job_time_segments_one_open_per_tech; live evidence 2026-10-24: one open job_labor segment on job ...603 whose completed_at was never cleared on restart) | Written 2026-10-24, NOT applied. Jeff said do not push until he says; Jeff must approve naming 0113 | 2026-10-24 |
 
 ## Past (pushes and attempts)
 
