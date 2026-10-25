@@ -14,8 +14,10 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync } from '@jobcore/ui';
+import { View, Switch, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { buildAdminFinanceMenuItems } from '@jobcore/admin-finance';
+import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
 
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';
@@ -44,6 +46,8 @@ function statusColor(status: string): string {
 
 export default function TestJobsScreen(): React.ReactElement {
   const session = useSession();
+  const router = useRouter();
+  const { enabled, setEnabled } = useScreenNumber();
   // Inject the admin-finance source-copy module session synchronously in render (not in an
   // effect): the job simulator's estimate/payment repos call requireModuleSession() and throw
   // when nothing was injected. The setter is an idempotent module-scope write.
@@ -188,11 +192,22 @@ export default function TestJobsScreen(): React.ReactElement {
     <View style={styles.screen}>
       <AppChrome
         breadcrumbSegments={[{ label: 'Configuration' }, { label: 'Test Jobs' }]}
-        menuItems={[]}
+        menuItems={buildAdminFinanceMenuItems((view) => router.push({ pathname: '/m/admin-finance', params: { view } }))}
         optionsItems={[]}
         titleBar={{ title: 'Test Jobs', subtitle: 'Configuration' }}
         helpContext={{ screenKey: 'test-jobs' }}
       />
+      <View style={styles.screenNumRow}>
+        <Text style={styles.screenNumLabel}>Show screen numbers</Text>
+        <Switch
+          testID="show-screen-numbers-switch"
+          accessibilityLabel="Show screen numbers"
+          value={enabled}
+          onValueChange={setEnabled}
+          trackColor={{ false: colors.border, true: colors.primary }}
+          thumbColor={colors.white}
+        />
+      </View>
       <View style={styles.actions}>
         <Button
           label={spawning ? 'Spawning…' : 'Spawn Test Jobs'}
@@ -270,6 +285,19 @@ export default function TestJobsScreen(): React.ReactElement {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  screenNumRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 48,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: 12,
+  },
+  screenNumLabel: {
+    fontFamily: typography.fontFamily.body,
+    fontSize: typography.size.body,
+    color: colors.text,
+  },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
