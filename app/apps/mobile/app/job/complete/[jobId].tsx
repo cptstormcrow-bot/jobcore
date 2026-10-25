@@ -22,6 +22,7 @@ import { createJobRepository, createCustomerRepository } from '../../../src/lib/
 import { ErrorBoundary } from '../../../src/components/ErrorBoundary';
 import { JobAfterPhotoCard } from '../../../src/components/JobAfterPhotoCard';
 import { liveLaborSeconds } from '../../../src/lib/live-labor';
+import { markPaidIfSettled } from '../../../src/lib/settle-on-completion';
 
 type Loaded =
   | { kind: 'loading' }
@@ -113,6 +114,7 @@ export default function CompleteJobRoute() {
     await repo.getById(job.id);
     await repo.patchLifecycle(job.id, { completedAt: new Date().toISOString() });
     await repo.updateStatus(job.id, 'completed');
+    await markPaidIfSettled(role ?? '', { ...job, status: 'completed' });
   };
 
   // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment.
