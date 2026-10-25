@@ -126,7 +126,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           setError(result.reason);
           return;
         }
-        if (result.balanceCents <= 0) {
+        // Payments are allowed while in progress; the job only moves to Paid once it is completed (paid-in-full jobs are flipped when completed).
+        if (result.balanceCents <= 0 && job.status === 'completed') {
           const ctx: Ctx = { role: role as Ctx['role'], now: () => new Date().toISOString(), hasPaymentRecord: () => true };
           const updated = await transitionJob(job, 'paid', ctx);
           await createJobRepository().updateStatus(job.id, 'paid');
