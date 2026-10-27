@@ -1,10 +1,10 @@
 /**
  * Estimate status change rules.
- * A tech never touches Approved.
+ * Admin and sales may move between all three states (mirrors migration 0093's role gate); a tech never touches Approved.
  * Leaving Approved warns because the Estimate/Approval stages go red once schedule/assign are done.
  */
 export type EstimateStatusValue = 'draft' | 'submitted' | 'approved';
-export type EstimateEditorRole = 'admin' | 'tech';
+export type EstimateEditorRole = 'admin' | 'sales' | 'tech';
 
 const ADMIN: Record<EstimateStatusValue, EstimateStatusValue[]> = {
   draft: ['submitted', 'approved'],
@@ -21,7 +21,7 @@ export function allowedEstimateMoves(
   role: EstimateEditorRole,
   from: EstimateStatusValue,
 ): EstimateStatusValue[] {
-  return [...(role === 'admin' ? ADMIN : TECH)[from]];
+  return [...(role === 'tech' ? TECH : ADMIN)[from]];
 }
 
 export function needsDownstreamWarning(from: EstimateStatusValue, to: EstimateStatusValue): boolean {

@@ -12,11 +12,16 @@ const EXPECT: Record<EstimateEditorRole, Record<EstimateStatusValue, EstimateSta
     submitted: ['draft', 'approved'],
     approved: ['draft', 'submitted'],
   },
+  sales: {
+    draft: ['submitted', 'approved'],
+    submitted: ['draft', 'approved'],
+    approved: ['draft', 'submitted'],
+  },
   tech: { draft: ['submitted'], submitted: ['draft'], approved: [] },
 };
 
 test('allowedEstimateMoves full matrix', () => {
-  for (const role of ['admin', 'tech'] as const) {
+  for (const role of ['admin', 'sales', 'tech'] as const) {
     for (const from of ALL) {
       const r = allowedEstimateMoves(role, from);
       assert.deepEqual(r, EXPECT[role][from], `${role}/${from}`);

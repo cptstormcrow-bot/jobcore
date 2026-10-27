@@ -4,7 +4,7 @@ Date: 2026-10-24
 Tier: A
 Plan: Open Item 2 (Jeff order 2026-10-24: "convert the legacy Blackouts and Request time off buttons in the universal calendar to the payroll button style"); plan mode skipped by declaration (trivial single-file restyle)
 Branch/repo: E:\Jeff\Codespace\SDAssemblyPros\Jobcore, jobcore-role-landing-0.1.3
-Test plan: pending Jeff (asked at closeout)
+Test plan: none (Jeff: no test plan for Item 2, 2026-10-25)
 Forward contracts: none
 
 ## Goal
