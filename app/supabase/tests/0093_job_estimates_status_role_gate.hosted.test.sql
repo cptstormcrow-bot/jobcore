@@ -133,6 +133,7 @@ begin
   if affected <> 1 then
     raise exception 'AC-93.7 FAILED: service-role approve affected % rows, expected 1', affected;
   end if;
+  delete from public.job_estimates where job_id = '00000000-0000-4000-8000-000000000604';
   insert into public.job_estimates (job_id, organization_id, status)
   values ('00000000-0000-4000-8000-000000000604', '00000000-0000-4000-8000-000000000001', 'approved');
 end $$;
