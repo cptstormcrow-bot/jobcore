@@ -33,23 +33,6 @@ export * from './Breadcrumb';
 export * from './AppChrome';
 export * from './DefaultTabBar';
 export * from './PayrollButton';
-export { TimeRangePopup } from './TimeRangePopup';
-export type { TimeRangePopupProps } from './TimeRangePopup';
-export {
-  TIME_STEP_MIN,
-  FIRST_TIME,
-  LAST_TIME,
-  toMinutes,
-  fromMinutes,
-  format12h,
-  stepTime,
-  defaultEnd,
-  clampRange,
-  isValidRange,
-  stepStart,
-  stepEnd,
-} from './time-range';
-export type { TimeRange } from './time-range';
 export { SchedulePicker } from './SchedulePicker';
 export type { SchedulePickerProps } from './SchedulePicker';
 export { ScheduleItemPopup } from './ScheduleItemPopup';

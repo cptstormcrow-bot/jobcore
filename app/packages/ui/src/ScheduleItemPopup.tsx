@@ -1,7 +1,7 @@
 /**
  * ScheduleItemPopup - presentational drill-down popup for one calendar item (a scheduled job or a
  * blackout). Shows when / name / address / phone / description. No fetching, no navigation: the
- * screen supplies the detail and handles onOpenJob. Pattern: TimeRangePopup.
+ * screen supplies the detail and handles onOpenJob.
  */
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
