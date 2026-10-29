@@ -22,7 +22,7 @@ Past pushes: OK 11 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-_None pending._
+| 0115_time_segments_use_event_time.sql | Job time segments start/close at the phone-time en_route_at / in_progress_at (clamped: null, future, or >7 days old falls back to now()); restores 0059 null-tech guard in open_time_segment; close helpers never write ended_at < started_at. No new column; no client change needed. Test: app/supabase/tests/0115_time_segments_use_event_time.hosted.test.sql | Written, NOT applied. Needs Jeff's explicit per-push approval naming 0115. | 2026-10-29 |
 
 ## Past (pushes and attempts)
 
