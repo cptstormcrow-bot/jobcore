@@ -21,6 +21,7 @@ import type { QueueRow, QueueStatus } from './offline-db.types';
 import { getOpHandler, UnknownOpError } from './offline-ops';
 import type { OpContext } from './offline-ops';
 import { emitDrainComplete, isOnlineNow } from './sync-events';
+import { makeAuthRetrySend } from './auth-retry';
 
 export type { QueueRow, QueueStatus };
 
@@ -275,8 +276,18 @@ export function drainOfflineQueue(): Promise<DrainResult> {
         attempts: r.attempts,
         next_attempt_at: r.next_attempt_at,
       }));
-      const result = await drainQueue(rows, {
+      // Auth/401/JWT-expired: refresh the session once per pass and retry that row
+      // once before it counts as an attempt (replay.ts then classifies any repeat as 'auth').
+      const sendWithAuthRetry = makeAuthRetrySend<Pick<QueueRow, 'op' | 'payload'>>({
         send,
+        isAuthError: (e) => classify(e) === 'auth',
+        refresh: async () => {
+          const { data, error } = await supabase.auth.refreshSession();
+          return !error && !!data.session;
+        },
+      });
+      const result = await drainQueue(rows, {
+        send: sendWithAuthRetry,
         markInflight,
         markDone,
         markRetry,

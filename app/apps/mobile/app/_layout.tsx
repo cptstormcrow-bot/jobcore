@@ -18,6 +18,7 @@ import { SyncStatusProvider } from '../src/lib/sync-status';
 import { ReadCacheProvider } from '../src/lib/read-cache';
 import { SyncIndicator } from '../src/components/SyncIndicator';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
+import '../src/lib/background-sync'; // native-only task definition + registration (no-op on web)
 
 // Side-effect import: registers every compiled-in module exactly once, before any
 // screen calls getEnabledModules(). This is the only import of this file in the app.

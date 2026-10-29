@@ -29,6 +29,7 @@
       "expo-asset",
       "expo-font",
       "expo-media-library",
+      "expo-background-fetch",
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
