@@ -24,17 +24,20 @@ import type {
 import { toLeadRowPatch } from '../../../../../modules/admin-finance/src/data/ports';
 import type { JobDraft } from '../../../../../modules/admin-finance/src/domain/qualify';
 import type { NewLeadDraft } from '../../../../../modules/admin-finance/src/domain/intake-normalize';
+import type { JobEditBase } from '@jobcore/core';
 import { registerOpHandlers, type OpHandler } from './index';
+import { updateJobGuarded } from './job-edit-guard';
 
 const APPLIED = { applied: true } as const;
 
 /* ---------------------------- payload types ---------------------------- */
 
 export interface JobCreatePayload { id: string; draft: JobDraft & { serviceAreaId?: string } }
-export interface JobPatchSchedulingPayload { jobId: string; patch: JobSchedulingPatch }
+/** `base` (optional): row version + seen values captured at enqueue; absent on rows queued before the stale-write guard. */
+export interface JobPatchSchedulingPayload { jobId: string; patch: JobSchedulingPatch; base?: JobEditBase }
 export interface JobPatchLifecyclePayload { jobId: string; patch: JobLifecyclePatch }
-export interface JobUpdateDetailsPayload { jobId: string; patch: JobDetailsPatch }
-export interface JobUpdateStatusPayload { jobId: string; status: string }
+export interface JobUpdateDetailsPayload { jobId: string; patch: JobDetailsPatch; base?: JobEditBase }
+export interface JobUpdateStatusPayload { jobId: string; status: string; base?: JobEditBase }
 export interface JobMarkBetaPayload { jobId: string; isBeta: boolean }
 export interface JobSetNeedsPremPayload { jobId: string; at: string | null }
 export interface JobMarkContactedPayload { jobId: string; contactedAt: string }
@@ -123,18 +126,18 @@ const jobCreate: OpHandler<JobCreatePayload> = async ({ id, draft }, ctx) => {
   return APPLIED;
 };
 
-const jobPatchScheduling: OpHandler<JobPatchSchedulingPayload> = async ({ jobId, patch }, ctx) => {
-  const { error } = await ctx.supabase
-    .from('jobs')
-    .update({
+const jobPatchScheduling: OpHandler<JobPatchSchedulingPayload> = async ({ jobId, patch, base }, ctx) => {
+  await updateJobGuarded(
+    ctx,
+    jobId,
+    {
       assigned_tech_id: patch.assignedTechId,
       scheduled_start: patch.scheduledStart,
       scheduled_end: patch.scheduledEnd,
       requested_window: patch.requestedWindow,
-    })
-    .eq('id', jobId)
-    .select('id');
-  if (error) throw error;
+    },
+    base
+  );
   return APPLIED;
 };
 
@@ -148,7 +151,7 @@ const jobPatchLifecycle: OpHandler<JobPatchLifecyclePayload> = async ({ jobId, p
   return APPLIED;
 };
 
-const jobUpdateDetails: OpHandler<JobUpdateDetailsPayload> = async ({ jobId, patch }, ctx) => {
+const jobUpdateDetails: OpHandler<JobUpdateDetailsPayload> = async ({ jobId, patch, base }, ctx) => {
   const update: Record<string, unknown> = {
     address: patch.address,
     description: patch.description,
@@ -164,14 +167,13 @@ const jobUpdateDetails: OpHandler<JobUpdateDetailsPayload> = async ({ jobId, pat
     considerations: patch.considerations,
   };
   if (patch.customerId !== undefined) update.customer_id = patch.customerId;
-  const { error } = await ctx.supabase.from('jobs').update(update).eq('id', jobId).select('id');
-  if (error) throw error;
+  for (const k of Object.keys(update)) if (update[k] === undefined) delete update[k];
+  await updateJobGuarded(ctx, jobId, update, base);
   return APPLIED;
 };
 
-const jobUpdateStatus: OpHandler<JobUpdateStatusPayload> = async ({ jobId, status }, ctx) => {
-  const { error } = await ctx.supabase.from('jobs').update({ status }).eq('id', jobId).select('id');
-  if (error) throw error;
+const jobUpdateStatus: OpHandler<JobUpdateStatusPayload> = async ({ jobId, status, base }, ctx) => {
+  await updateJobGuarded(ctx, jobId, { status }, base);
   return APPLIED;
 };
 

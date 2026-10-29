@@ -61,6 +61,7 @@ export interface JobRow {
   service_area_id: string | null;
   total_labor_seconds: number | null;
   needs_prem_at?: string | null;
+  updated_at?: string | null;
   customers?: { name: string | null } | null;
 }
 
@@ -132,6 +133,7 @@ export function toJob(row: JobRow): Job {
     service_area_id: row.service_area_id,
     totalLaborSeconds: row.total_labor_seconds ?? 0,
     needsPremAt: row.needs_prem_at ?? null,
+    ...(row.updated_at ? { updatedAt: row.updated_at } : {}),
   };
 }
 

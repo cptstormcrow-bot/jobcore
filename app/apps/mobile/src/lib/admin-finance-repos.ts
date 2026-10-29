@@ -32,6 +32,7 @@ import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
 import { setOnlineGuard as setPaymentReviewOnlineGuard } from '../../../../modules/payment-review/src/lib/online';
+import { captureJobEditBase } from '@jobcore/core';
 import type { Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus, WorkerType, TechRole, DevPayMode } from '@jobcore/core';
 import type {
   JobRepository,
@@ -248,6 +249,12 @@ function rememberLead(lead: Lead): Lead {
   return lead;
 }
 
+const SCHEDULING_COLS = ['assigned_tech_id', 'scheduled_start', 'scheduled_end', 'requested_window'];
+const DETAILS_COLS = [
+  'address', 'description', 'house_age_years', 'ingress_instructions', 'scheduled_start', 'scheduled_end',
+  'service_area_id', 'permit_status', 'parking_available', 'rooms', 'panel_info', 'considerations', 'customer_id',
+];
+
 export function createJobRepository(): JobRepository {
   return {
     async listForOrganization(organizationId: string): Promise<Job[]> {
@@ -280,7 +287,7 @@ export function createJobRepository(): JobRepository {
     async patchScheduling(jobId: string, patch: JobSchedulingPatch): Promise<Job> {
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), ...patch } as never as Job;
-      const res = await writeThrough('job.patch_scheduling', { jobId, patch }, occurredAt, optimistic);
+      const res = await writeThrough('job.patch_scheduling', { jobId, patch, base: captureJobEditBase(knownJobs.get(jobId), SCHEDULING_COLS) }, occurredAt, optimistic);
       return rememberJob(res.data);
     },
 
@@ -338,7 +345,7 @@ export function createJobRepository(): JobRepository {
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), ...patch } as never as Job;
-      const res = await writeThrough('job.update_details', { jobId, patch }, occurredAt, optimistic);
+      const res = await writeThrough('job.update_details', { jobId, patch, base: captureJobEditBase(knownJobs.get(jobId), DETAILS_COLS) }, occurredAt, optimistic);
       return rememberJob(res.data);
     },
 
@@ -353,7 +360,7 @@ export function createJobRepository(): JobRepository {
     async updateStatus(jobId: string, status: JobStatus): Promise<Job> {
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), status } as never as Job;
-      const res = await writeThrough('job.update_status', { jobId, status }, occurredAt, optimistic);
+      const res = await writeThrough('job.update_status', { jobId, status, base: captureJobEditBase(knownJobs.get(jobId), ['status']) }, occurredAt, optimistic);
       return rememberJob(res.data);
     },
 

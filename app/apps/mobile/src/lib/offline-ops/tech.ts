@@ -1,6 +1,8 @@
 // Tech (field-tech) replay handlers. Pure network functions: no SQLite, no React.
 // Errors are never wrapped: the drain classifier reads .code/.status/.message.
+import type { JobEditBase } from '@jobcore/core';
 import { registerOpHandlers, type OpContext, type OpHandler } from './index';
+import { updateJobGuarded } from './job-edit-guard';
 import { writeJpegDescription } from '../jpeg-description';
 import { blobToBytes } from '../photo-note';
 
@@ -147,6 +149,8 @@ export interface JobAssignmentClaimPayload {
 export interface JobUpdateStatusAsTechPayload {
   jobId: string;
   status: string;
+  /** Row version + seen status captured at enqueue; absent on rows queued before the stale-write guard. */
+  base?: JobEditBase;
 }
 export interface JobPatchLifecyclePayload {
   jobId: string;
@@ -430,8 +434,7 @@ const jobAssignmentClaim: OpHandler<JobAssignmentClaimPayload> = async (p, ctx) 
 };
 
 const jobUpdateStatusAsTech: OpHandler<JobUpdateStatusAsTechPayload> = async (p, ctx) => {
-  const { error } = await ctx.supabase.from('jobs').update({ status: p.status }).eq('id', p.jobId);
-  check(error);
+  await updateJobGuarded(ctx, p.jobId, { status: p.status }, p.base);
   return APPLIED;
 };
 

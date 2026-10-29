@@ -11,6 +11,7 @@ export type { OptimisticApplyOptions, OptimisticApplyResult } from './offline/ap
 export { applyOptimistic } from './offline/apply.js';
 // P2d.2c: re-export the replay + conflict-resolution helpers.
 export type { ReplayOptions, ReplayResult } from './offline/replay.js';
+export { captureJobEditBase, decideJobEdit, describeJobEditConflict, sameJobValue, JOB_COLUMN_TO_FIELD, type JobEditBase, type JobEditDecision } from './offline/job-edit-guard.js';
 export { SERVER_WINS_FIELDS, DEVICE_WINS_FIELDS, resolveConflict, replayQueue, drainQueue, classifyReplayError, computeBackoffMs, UNKNOWN_MAX_ATTEMPTS } from './offline/replay.js';
 export type { ReplayErrorClass, DrainRow, DrainOptions, DrainResult } from './offline/replay.js';
 // P3f.1: re-export the state-machine surface. Previously `state-machine.ts`
@@ -149,6 +150,8 @@ export interface Job {
   ingressInstructions?: string | null;
   totalLaborSeconds: number;
   needsPremAt?: string | null;
+  /** `jobs.updated_at` as last read; base for the offline stale-write guard. */
+  updatedAt?: string | null;
 }
 
 /**

@@ -14,6 +14,7 @@
  */
 
 import * as ImagePicker from 'expo-image-picker';
+import { captureJobEditBase } from '@jobcore/core';
 import { supabase, supabaseUrl } from './supabase';
 import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
@@ -605,7 +606,7 @@ export function createTechJobRepository(): TechJobRepository {
             assigned_tech_id: techId,
             created_at: occurredAt,
           } as never);
-      const { data } = await writeThrough('job.updateStatusAsTech', { jobId, status }, occurredAt, optimistic);
+      const { data } = await writeThrough('job.updateStatusAsTech', { jobId, status, base: captureJobEditBase(known, ['status']) }, occurredAt, optimistic);
       knownJobs.set(jobId, data);
       return data;
     },
