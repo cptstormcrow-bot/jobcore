@@ -19,6 +19,7 @@ import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
 import { writeThrough, requireOnline } from './offline-mutations';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
+import { shrinkPhoto } from './photo-resize';
 import { copyToLocal, localPhotoPath, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri, setSignedUrlResolver } from './signed-url-cache';
 import type {
@@ -681,8 +682,9 @@ export function createCameraRepository(): CameraRepository {
         return null;
       }
       const { organizationId } = requireModuleSession();
-      const ext = fileExt(asset.uri, 'jpg');
-      const localUri = await copyToLocal(asset.uri, organizationId, target.jobId, target.photoId, ext);
+      const small = await shrinkPhoto(asset.uri, asset.width, asset.height);
+      const ext = small.shrunk ? 'jpg' : fileExt(asset.uri, 'jpg');
+      const localUri = await copyToLocal(small.uri, organizationId, target.jobId, target.photoId, ext);
       const storagePath = storagePathFor(organizationId, target.jobId, target.photoId, ext);
       return { storagePath, localUri, ext };
     },
@@ -1251,7 +1253,8 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
       }
 
       const { organizationId } = requireModuleSession();
-      const contentType = asset.mimeType || 'image/jpeg';
+      const small = await shrinkPhoto(asset.uri, asset.width, asset.height);
+      const contentType = small.shrunk ? 'image/jpeg' : asset.mimeType || 'image/jpeg';
       const subtype = contentType.split('/')[1]?.toLowerCase() ?? '';
       const ext =
         subtype === 'jpeg' || subtype === 'jpg'
@@ -1261,7 +1264,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
             : 'jpg';
       const id = newClientId();
       const occurredAt = new Date().toISOString();
-      const localUri = await copyToLocal(asset.uri, organizationId, jobId, id, ext);
+      const localUri = await copyToLocal(small.uri, organizationId, jobId, id, ext);
       const storagePath = planningStoragePathFor(organizationId, jobId, id, ext);
       planningPathById.set(id, storagePath);
       const optimistic: JobPlanningPhoto = {

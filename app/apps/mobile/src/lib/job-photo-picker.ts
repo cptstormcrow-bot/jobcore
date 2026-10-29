@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { photoMetaFrom } from './photo-asset-meta';
+import { shrinkPhoto } from './photo-resize';
 
 export interface PickedJobPhoto {
   uri: string;
@@ -8,8 +9,8 @@ export interface PickedJobPhoto {
   fileSize?: number;
 }
 
-// expo-image-manipulator is not a dependency, so there is no re-encode here. An image/jpeg asset is
-// returned as-is; any other mime is returned with its real mimeType and the caller decides what to do.
+// The picked image is downscaled (long edge <= 1600) and re-encoded as JPEG via shrinkPhoto; if that fails the
+// original asset is returned with its real mimeType.
 // Returns null on cancel or denied permission.
 export async function pickJobPhoto(source: 'camera' | 'library'): Promise<PickedJobPhoto | null> {
   if (source === 'camera') {
@@ -31,6 +32,10 @@ export async function pickJobPhoto(source: 'camera' | 'library'): Promise<Picked
   const asset = result.canceled ? undefined : result.assets[0];
   if (!asset?.uri) {
     return null;
+  }
+  const small = await shrinkPhoto(asset.uri, asset.width, asset.height);
+  if (small.shrunk) {
+    return { uri: small.uri, mimeType: 'image/jpeg' };
   }
   const mimeType = asset.mimeType?.trim().toLowerCase() || photoMetaFrom(asset).contentType;
   return asset.fileSize === undefined
