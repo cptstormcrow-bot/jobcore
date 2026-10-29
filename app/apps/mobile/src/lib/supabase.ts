@@ -3,7 +3,7 @@
 // the WHATWG URL API, which Hermes does not ship.
 import 'react-native-url-polyfill/auto';
 
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
@@ -112,3 +112,18 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     detectSessionInUrl: false,
   },
 });
+
+// Supabase-recommended RN pattern: only run the token auto-refresh timer while the
+// app is foregrounded, and kick a refresh immediately on resume so a token that went
+// stale during a long background/offline stint is renewed before queued sync drains.
+if (Platform.OS !== 'web') {
+  const syncAutoRefresh = (state: string): void => {
+    if (state === 'active') {
+      void supabase.auth.startAutoRefresh();
+    } else {
+      void supabase.auth.stopAutoRefresh();
+    }
+  };
+  AppState.addEventListener('change', syncAutoRefresh);
+  syncAutoRefresh(AppState.currentState);
+}
