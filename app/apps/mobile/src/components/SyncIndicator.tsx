@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography, Text } from '@jobcore/ui';
@@ -15,10 +16,11 @@ export interface SyncIndicatorProps {
 }
 
 export function SyncIndicator({ style }: SyncIndicatorProps) {
-  const { isOnline, pendingCount, isSyncing, lastError, refresh } = useSyncStatus();
+  const { isOnline, pendingCount, failedCount, isSyncing, lastError, refresh } = useSyncStatus();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const failed = !!lastError && isOnline && !isSyncing;
+  const failed = (failedCount > 0 || !!lastError) && isOnline && !isSyncing;
   if (isOnline && !isSyncing && pendingCount === 0 && !failed) return null;
 
   let label: string;
@@ -32,7 +34,7 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
     label = 'Syncing…';
     tappable = false;
   } else if (failed) {
-    label = `${Math.max(pendingCount, 1)} failed`;
+    label = `${Math.max(failedCount, 1)} failed`;
     labelColor = colors.danger;
   } else {
     label = `${pendingCount} to sync`;
@@ -42,7 +44,7 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
   return (
     <Pressable
       disabled={!tappable}
-      onPress={refresh}
+      onPress={failed && failedCount > 0 ? () => router.push('/sync-issues' as never) : refresh}
       style={[styles.container, { bottom: spacing.sm + insets.bottom }, style]}
     >
       <Text style={[styles.label, { color: labelColor }]}>{label}</Text>

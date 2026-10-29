@@ -36,6 +36,26 @@ export async function listFailed(_limit: number = 50): Promise<QueueRow[]> {
   return [];
 }
 
+export async function countFailed(): Promise<number> {
+  return 0;
+}
+
+export async function listAllFailed(): Promise<QueueRow[]> {
+  return [];
+}
+
+export async function retryFailed(_id: string): Promise<void> {
+  // No-op on web.
+}
+
+export async function retryAllFailed(): Promise<void> {
+  // No-op on web.
+}
+
+export async function discardFailed(_id: string): Promise<void> {
+  // No-op on web.
+}
+
 export async function markInflight(_id: string): Promise<void> {
   // No-op on web.
 }

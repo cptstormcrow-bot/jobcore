@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import { useSession } from './session';
-import { countPending, drainOfflineQueue, listFailed } from './offline-db';
+import { countFailed, countPending, drainOfflineQueue, listFailed } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
 import type { SyncStatus } from './offline-db.types';
 
@@ -22,6 +22,7 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
 
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [failedCount, setFailedCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastDrainAt, setLastDrainAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -38,6 +39,8 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     try {
       const n = await countPending();
       if (aliveRef.current) setPendingCount(n);
+      const f = await countFailed();
+      if (aliveRef.current) setFailedCount(f);
     } catch {
       // keep last-known count
     }
@@ -125,7 +128,7 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     trigger();
   }, [recount, trigger]);
 
-  const value: SyncStatus = { isOnline, pendingCount, isSyncing, lastDrainAt, lastError, refresh };
+  const value: SyncStatus = { isOnline, pendingCount, failedCount, isSyncing, lastDrainAt, lastError, refresh };
   return <SyncStatusContext.Provider value={value}>{children}</SyncStatusContext.Provider>;
 }
 

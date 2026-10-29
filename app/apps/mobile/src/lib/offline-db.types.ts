@@ -17,6 +17,8 @@ export interface QueueRow {
 export interface SyncStatus {
   isOnline: boolean;
   pendingCount: number;
+  /** Rows that failed permanently and need attention (Sync issues screen). */
+  failedCount: number;
   isSyncing: boolean;
   lastDrainAt: string | null;
   lastError: string | null;

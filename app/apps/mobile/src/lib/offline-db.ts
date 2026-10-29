@@ -124,6 +124,48 @@ export async function listFailed(limit: number = 50): Promise<QueueRow[]> {
   );
 }
 
+export async function countFailed(): Promise<number> {
+  const db = await getOfflineDb();
+  const row = await db.getFirstAsync<{ n: number }>(
+    `select count(*) as n from ${OFFLINE_QUEUE_TABLE} where status = 'failed'`
+  );
+  return row?.n ?? 0;
+}
+
+/** Every permanently failed row, oldest first (no limit) — feeds the Sync issues screen. */
+export async function listAllFailed(): Promise<QueueRow[]> {
+  const db = await getOfflineDb();
+  return db.getAllAsync<QueueRow>(
+    `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status = 'failed' order by occurred_at asc, rowid asc`
+  );
+}
+
+/** Reset one failed row to pending with no backoff so the next drain sends it now. */
+export async function retryFailed(id: string): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(
+    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null where id = ? and status = 'failed'`,
+    id
+  );
+}
+
+/** Reset every failed row to pending (see retryFailed). */
+export async function retryAllFailed(): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(
+    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null where status = 'failed'`
+  );
+}
+
+/**
+ * Delete one failed row. The optimistic read-cache patch has no inverse, so the
+ * caller refreshes the read cache (refetchAll) to drop the local-only change.
+ */
+export async function discardFailed(id: string): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(`delete from ${OFFLINE_QUEUE_TABLE} where id = ? and status = 'failed'`, id);
+}
+
 export async function markInflight(id: string): Promise<void> {
   const db = await getOfflineDb();
   await db.runAsync(

@@ -30,7 +30,7 @@ const APP_VERSION = getAppVersion();
 SplashScreen.preventAutoHideAsync();
 
 // Sales-role users may only be on these paths (plus /m/sales-marketing itself). New Sales routes must be added here.
-const SALES_ALLOWED = ['/account', '/config/settings', '/profile'];
+const SALES_ALLOWED = ['/account', '/config/settings', '/profile', '/sync-issues'];
 function isSalesAllowed(p: string): boolean {
   return p === '/m/sales-marketing' || p.startsWith('/m/sales-marketing/') || SALES_ALLOWED.includes(p);
 }
