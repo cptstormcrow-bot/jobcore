@@ -155,7 +155,12 @@ export function classifyReplayError(e: unknown): ReplayErrorClass {
     return 'auth';
   }
   if (code === '42501' || status === 403) return 'permission';
-  if (code === '23505') return /_pkey/.test(message) ? 'duplicate' : 'permanent';
+  // Replay-dedup collisions mean the write already saved: primary keys, the
+  // idempotency_key partial unique indexes (0009: audit_log, job_photos) and the
+  // job_contact_log client_id index (0079). Other unique violations stay permanent.
+  if (code === '23505') {
+    return /_pkey|idempotency|job_contact_log_client_id_key/i.test(message) ? 'duplicate' : 'permanent';
+  }
   if (
     status === 400 ||
     status === 404 ||

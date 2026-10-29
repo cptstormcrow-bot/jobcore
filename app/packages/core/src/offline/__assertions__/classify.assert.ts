@@ -36,6 +36,15 @@ test('classify: 23505 pkey is duplicate, otherwise permanent', () => {
   );
 });
 
+test('classify: 23505 on idempotency / client_id replay indexes is duplicate', () => {
+  for (const idx of ['job_photos_idempotency_key_idx', 'audit_log_idempotency_key_idx', 'job_contact_log_client_id_key']) {
+    assert.equal(
+      classifyReplayError({ code: '23505', message: `duplicate key value violates unique constraint "${idx}"` }),
+      'duplicate'
+    );
+  }
+});
+
 test('classify: permanent branches', () => {
   assert.equal(classifyReplayError({ status: 400 }), 'permanent');
   assert.equal(classifyReplayError({ status: 404 }), 'permanent');
