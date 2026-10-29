@@ -17,7 +17,7 @@
 
 import { supabase } from './supabase';
 import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
-import { requireOnline } from './offline-mutations';
+import { requireOnline, writeThrough } from './offline-mutations';
 import type {
   ReviewLibraryRepository,
   ReviewLibraryFilter,
@@ -649,29 +649,24 @@ export function createCallbackTaskRepository(): CallbackTaskRepository {
       calledBackBy: string,
       calledBackAt: string,
     ): Promise<CallbackTask> {
-      requireOnline('mark this callback done');
-      const { error: upsertError } = await supabase.from('sales_callback_status').upsert(
-        {
-          job_id: jobId,
-          organization_id: organizationId,
-          called_back_at: calledBackAt,
-          called_back_by: calledBackBy,
-        },
-        { onConflict: 'job_id' },
+      // Queued (or sent) via the outbox; the screen only drops the task from its list, so the result is a minimal task.
+      await writeThrough(
+        'sales_callback.mark_called_back',
+        { jobId, organizationId, calledBackBy, calledBackAt },
+        calledBackAt,
+        undefined,
       );
-      if (upsertError) {
-        throw new Error(`markCalledBack upsert failed: ${upsertError.message}`);
-      }
-
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('id, organization_id, address, completed_at, is_beta, customer_id, customers(name, phone), sales_callback_status(called_back_at, called_back_by)')
-        .eq('id', jobId)
-        .single();
-      if (error) {
-        throw new Error(`markCalledBack refetch failed: ${error.message}`);
-      }
-      return toCallbackTask(toCallbackTaskRow(data as unknown as CallbackTaskFetchRow));
+      return {
+        jobId,
+        organizationId,
+        customerName: null,
+        customerPhone: null,
+        address: null,
+        completedAt: null,
+        isBeta: false,
+        calledBackAt,
+        calledBackBy,
+      };
     },
   };
 }

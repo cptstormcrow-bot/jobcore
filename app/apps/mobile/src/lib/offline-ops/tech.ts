@@ -1,6 +1,6 @@
 // Tech (field-tech) replay handlers. Pure network functions: no SQLite, no React.
 // Errors are never wrapped: the drain classifier reads .code/.status/.message.
-import type { JobEditBase } from '@jobcore/core';
+import { estimateLinePatchToRow, type EstimateLinePatchInput, type JobEditBase } from '@jobcore/core';
 import { registerOpHandlers, type OpContext, type OpHandler } from './index';
 import { updateJobGuarded } from './job-edit-guard';
 import { writeJpegDescription } from '../jpeg-description';
@@ -182,6 +182,14 @@ export interface JobInvestigationUpsertPayload {
 export interface JobEstimateUpsertPayload {
   jobId: string;
   input: Record<string, unknown>;
+}
+export interface JobEstimateLineItemUpdatePayload {
+  lineItemId: string;
+  patch: EstimateLinePatchInput;
+  snapshotAt: string;
+}
+export interface JobEstimateLineItemRemovePayload {
+  lineItemId: string;
 }
 export interface JobEstimateLineItemAddPayload {
   id: string;
@@ -593,6 +601,23 @@ const auditLogWrite: OpHandler<AuditLogWritePayload> = async (p, ctx) => {
   return APPLIED;
 };
 
+// Update by primary key: replaying twice writes the same values (idempotent). The snapshot stamp rides the payload.
+const jobEstimateLineItemUpdate: OpHandler<JobEstimateLineItemUpdatePayload> = async (p, ctx) => {
+  const { error } = await ctx.supabase
+    .from('job_estimate_line_items')
+    .update(estimateLinePatchToRow(p.patch, p.snapshotAt))
+    .eq('id', p.lineItemId);
+  check(error);
+  return APPLIED;
+};
+
+// Delete by primary key: a row that is already gone deletes zero rows and is not an error.
+const jobEstimateLineItemRemove: OpHandler<JobEstimateLineItemRemovePayload> = async (p, ctx) => {
+  const { error } = await ctx.supabase.from('job_estimate_line_items').delete().eq('id', p.lineItemId);
+  check(error);
+  return APPLIED;
+};
+
 export const TECH_OP_HANDLERS: Record<string, OpHandler<any>> = {
   'checklist_instance.create': checklistInstanceCreate,
   'checklist_instance.submit': checklistInstanceSubmit,
@@ -614,6 +639,8 @@ export const TECH_OP_HANDLERS: Record<string, OpHandler<any>> = {
   'job_investigation.upsert': jobInvestigationUpsert,
   'job_estimate.upsert': jobEstimateUpsert,
   'job_estimate_line_item.add': jobEstimateLineItemAdd,
+  'job_estimate_line_item.update': jobEstimateLineItemUpdate,
+  'job_estimate_line_item.remove': jobEstimateLineItemRemove,
   'calendar_event.create': calendarEventCreate,
   'reimbursement.create': reimbursementCreate,
   'audit_log.write': auditLogWrite,

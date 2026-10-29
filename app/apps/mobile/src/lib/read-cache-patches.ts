@@ -1,3 +1,5 @@
+import { applyEstimateLinePatch, type EstimateLinePatchInput } from '@jobcore/core';
+
 // Optimistic read-cache patches: each queued op patches the cached query rows it affects (pure functions).
 // `queries` are exact cached query names (3rd key segment), as used by readCached(...) in the repo files.
 export type OpPatchSpec = { op: string; queries: string[]; patch: (payload: Record<string, unknown>, rows: unknown, params?: Record<string, unknown>) => unknown };
@@ -186,6 +188,21 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
       };
       return mapRows(rows, inWeek, (r) => ({ ...r, status: 'draft' }));
     },
+  },
+  {
+    op: 'job_estimate_line_item.update',
+    queries: ['af.estimates.listLineItems'],
+    patch: (p, rows) => {
+      const id = str(p.lineItemId);
+      const snapshotAt = str(p.snapshotAt);
+      if (!id || !snapshotAt || !isObj(p.patch)) return rows;
+      return mapRows(rows, idIs(id), (r) => applyEstimateLinePatch(r, p.patch as EstimateLinePatchInput, snapshotAt));
+    },
+  },
+  {
+    op: 'job_estimate_line_item.remove',
+    queries: ['af.estimates.listLineItems'],
+    patch: (p, rows) => dropWhere(rows, idIs(str(p.lineItemId))),
   },
 ];
 

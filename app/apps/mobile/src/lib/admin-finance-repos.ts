@@ -22,7 +22,8 @@ import { ReconciliationView } from '@jobcore/payment-review';
 import type { SupabaseSelectClient as PaymentReviewClient } from '@jobcore/payment-review';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
-import { writeThrough, requireOnline } from './offline-mutations';
+import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
+import { countPending } from './offline-db';
 import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
@@ -2728,6 +2729,8 @@ export function createEstimateRepository(): EstimateRepository {
 
     async saveLineToPriceSheet(lineId: string): Promise<{ serviceTaskId: string }> {
       requireOnline('save an estimate line to the price sheet');
+      // The RPC reads the line on the server: queued edits to it must land first.
+      if ((await countPending()) > 0) throw new OfflineError('Wait for saved changes to sync, then save this line to the price sheet.');
       const { data, error } = await supabase.rpc('save_estimate_line_to_price_sheet', { p_line_id: lineId });
       if (error) {
         throw new Error(`saveLineToPriceSheet failed: ${error.message}`);
@@ -2736,58 +2739,20 @@ export function createEstimateRepository(): EstimateRepository {
     },
 
     async updateLineItem(lineItemId: string, patch: Partial<JobEstimateLineItemDraft>): Promise<JobEstimateLineItem> {
-      requireOnline('edit an estimate line item');
-
-      const updatePatch: Record<string, unknown> = {};
-      if (patch.kind !== undefined) {
-        updatePatch.kind = patch.kind;
-      }
-      if (patch.description !== undefined) {
-        updatePatch.description = patch.description;
-      }
-      if (patch.quantity !== undefined) {
-        updatePatch.quantity = patch.quantity;
-      }
-      if (patch.unitCost !== undefined) {
-        updatePatch.unit_cost = patch.unitCost;
-      }
-      if (patch.lineTotal !== undefined) {
-        updatePatch.line_total = patch.lineTotal;
-      }
-      if (patch.serviceTaskId !== undefined) {
-        updatePatch.service_task_id = patch.serviceTaskId;
-      }
-      if (patch.unit !== undefined) {
-        updatePatch.unit = patch.unit;
-      }
-      if (patch.area !== undefined) {
-        updatePatch.area = patch.area;
-      }
-      if (patch.materialsNote !== undefined) {
-        updatePatch.materials_note = patch.materialsNote;
-      }
       // An overwrite save re-snapshots the task content.
-      updatePatch.task_snapshot_at = new Date().toISOString();
-
-      const { data, error } = await supabase
-        .from('job_estimate_line_items')
-        .update(updatePatch)
-        .eq('id', lineItemId)
-        .select('*')
-        .single();
-      if (error) {
-        throw new Error(`updateLineItem failed: ${error.message}`);
-      }
-      return toJobEstimateLineItem(data as Parameters<typeof toJobEstimateLineItem>[0]);
+      const snapshotAt = new Date().toISOString();
+      // The optimistic result is a PARTIAL item (id + changed fields); JobEstimateScreen merges it over the row it already holds.
+      const result = await writeThrough(
+        'job_estimate_line_item.update',
+        { lineItemId, patch, snapshotAt },
+        snapshotAt,
+        { ...patch, id: lineItemId, taskSnapshotAt: snapshotAt } as never,
+      );
+      return result.data as JobEstimateLineItem;
     },
 
     async removeLineItem(lineItemId: string): Promise<void> {
-      requireOnline('remove an estimate line item');
-
-      const { error } = await supabase.from('job_estimate_line_items').delete().eq('id', lineItemId);
-      if (error) {
-        throw new Error(`removeLineItem failed: ${error.message}`);
-      }
+      await writeThrough('job_estimate_line_item.remove', { lineItemId }, new Date().toISOString(), undefined);
     },
 
     async issueShareLink(jobId: string): Promise<{ token: string; url: string }> {

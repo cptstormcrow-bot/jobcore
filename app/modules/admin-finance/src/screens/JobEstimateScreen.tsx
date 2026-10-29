@@ -696,7 +696,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         area: d.area ?? null,
         materialsNote: d.materialsNote ?? null,
       });
-      setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? updated : existing)));
+      setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? { ...existing, ...updated } : existing)));
       setActionState({ kind: 'done', message: 'Line item refreshed from task.' });
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not refresh the line item.';
@@ -749,7 +749,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         lineTotal: quantity * unitCost,
         ...extra,
       });
-      setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? updated : existing)));
+      setLineItems((prev) => prev.map((existing) => (existing.id === updated.id ? { ...existing, ...updated } : existing)));
       cancelEdit();
       setActionState({ kind: 'done', message: 'Line item updated.' });
     } catch (error: unknown) {
