@@ -8,6 +8,7 @@ import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { AppChrome, Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
+import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
@@ -155,6 +156,7 @@ export default function JobsScreen() {
         optionsItems={[]}
         titleBar={{ title: 'Jobs' }}
       />
+      <StaleDataHint queries={['app.jobs.']} />
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
       <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
       <JobDetail job={selectedJob} />

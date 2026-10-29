@@ -27,6 +27,7 @@ import JobPaymentRegion from '../../src/components/JobPaymentRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
+import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 import { QUEUED_COPY, toUserMessage, writeThrough } from '../../src/lib/offline-mutations';
 import { getEnabledModules } from '@jobcore/module-sdk';
@@ -1355,6 +1356,7 @@ export default function JobDrilldownScreen() {
         ) : null}
       </JobHeader>
       <View style={[styles.rule, { backgroundColor: job?.status === 'paid' || job?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
+      <StaleDataHint queries={['app.jobs.byId', 'app.jobs.stageExtras']} />
       {region === 'estimate' && estimateChrome?.tabs ? (
         <View testID="estimate-tab-bar" style={styles.tabBarWrap}>
           <DefaultTabBar tabs={estimateChrome.tabs} activeId={estimateChrome.activeTab} onChange={estimateChrome.onTabChange} />

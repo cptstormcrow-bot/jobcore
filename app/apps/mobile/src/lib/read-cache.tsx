@@ -1,8 +1,9 @@
 // Read-cache layer: cache-first reads, revision-bumping invalidation, op patches.
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 import { buildReadCacheKey, getOpPatches, registerOpPatches, readCacheRevision, READ_CACHE_FLOOR_MS } from '@jobcore/core';
 import { OP_PATCH_SPECS } from './read-cache-patches';
+import { summarizeStale, type StaleEntry, type StaleSummary } from './stale-hint';
 registerOpPatches(OP_PATCH_SPECS as never);
 import { useSession } from './session';
 import { isOnlineNow, subscribeDrainComplete } from './sync-events';
@@ -25,7 +26,33 @@ export function useReadCacheRevision(): number {
   return useSyncExternalStore(readCacheRevision.subscribe, readCacheRevision.get, readCacheRevision.get);
 }
 
-export interface CachedReadResult<T> { data: T; servingStale: boolean; fromCache: boolean }
+export interface CachedReadResult<T> { data: T; servingStale: boolean; fromCache: boolean; /** epoch ms the served copy was fetched; null when read live */ cachedAt: number | null }
+
+// Stale-serving registry: which cached keys were last served without a confirmed refresh.
+const staleByKey = new Map<string, StaleEntry>();
+let staleVersion = 0;
+const staleListeners = new Set<() => void>();
+function setStale(key: string, entry: StaleEntry | null): void {
+  const prev = staleByKey.get(key);
+  if (entry === null ? !prev : prev && prev.servingStale === entry.servingStale && prev.cachedAt === entry.cachedAt) return;
+  if (entry === null) staleByKey.delete(key); else staleByKey.set(key, entry);
+  staleVersion += 1;
+  staleListeners.forEach((l) => l());
+}
+function subscribeStale(cb: () => void): () => void { staleListeners.add(cb); return () => { staleListeners.delete(cb); }; }
+
+/**
+ * Hint state for a screen: stale=true while any matching cached read (query-name prefixes; none = all)
+ * is being served without a confirmed refresh, or the device is offline with cached data in use.
+ */
+export function useStaleDataSummary(prefixes?: readonly string[]): StaleSummary {
+  useSyncExternalStore(subscribeStale, () => staleVersion, () => staleVersion);
+  const [, tick] = useState(0);
+  useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 5000); return () => clearInterval(t); }, []);
+  const offline = !isOnlineNow();
+  const entries = Array.from(staleByKey.values()).map((e) => (offline ? { ...e, servingStale: true } : e));
+  return summarizeStale(entries, prefixes);
+}
 
 function fetchAndStore<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   const running = inflight.get(key);
@@ -52,19 +79,23 @@ export async function cachedRead<T>(
   const floor = opts?.ttlFloorMs ?? READ_CACHE_FLOOR_MS;
   const cached = await getCached(key);
   const userId = key.split(':')[1] ?? '';
+  const query = key.split(':')[2] ?? '';
   const stale = cached ? cached.fetchedAt <= staleEpoch || isStaleFor(userId) : false;
   if (cached) {
     const recent = Date.now() - (lastFetchAt.get(key) ?? 0) < floor;
     if (isOnlineNow() && (!recent || stale)) {
       fetchAndStore(key, fetcher).then(
-        (fresh) => { if (JSON.stringify(fresh ?? null) !== cached.payload) readCacheRevision.bump(); },
-        () => { failedKeys.add(key); },
+        (fresh) => { setStale(key, null); if (JSON.stringify(fresh ?? null) !== cached.payload) readCacheRevision.bump(); },
+        () => { failedKeys.add(key); setStale(key, { query, servingStale: true, cachedAt: cached.fetchedAt }); },
       );
     }
-    return { data: JSON.parse(cached.payload) as T, servingStale: !isOnlineNow() || stale || failedKeys.has(key), fromCache: true };
+    const servingStale = !isOnlineNow() || stale || failedKeys.has(key);
+    setStale(key, { query, servingStale, cachedAt: cached.fetchedAt });
+    return { data: JSON.parse(cached.payload) as T, servingStale, fromCache: true, cachedAt: cached.fetchedAt };
   }
   const data = await fetchAndStore(key, fetcher); // rethrows when no cache + failure
-  return { data, servingStale: false, fromCache: false };
+  setStale(key, null);
+  return { data, servingStale: false, fromCache: false, cachedAt: null };
 }
 
 export function markStale(prefix?: string): void {

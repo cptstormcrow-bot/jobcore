@@ -28,6 +28,7 @@ import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 import { buildSalesMarketingPorts } from '../../src/lib/sales-marketing-repos';
 import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
+import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { JobTaskList } from '../../src/components/JobTaskList';
 
 /**
@@ -178,6 +179,7 @@ export default function ModuleScreen() {
 
   return (
     <ErrorBoundary>
+      {module?.id === 'field-tech' ? <StaleDataHint queries={['ft.jobs.', 'ft.timeOff.', 'ft.premQueue.']} /> : null}
       <Screen />
     </ErrorBoundary>
   );

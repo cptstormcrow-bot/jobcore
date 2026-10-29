@@ -13,6 +13,7 @@ import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
 import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
+import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 
 /** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
@@ -272,6 +273,7 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.screen}>
+      <StaleDataHint queries={['app.jobs.calendar']} />
       <UniversalCalendar
         role={role && role !== 'tech' ? 'admin' : 'tech'}
         viewerId={viewerId}
