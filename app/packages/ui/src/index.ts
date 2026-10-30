@@ -56,6 +56,7 @@ export * from './walkthrough/WalkthroughHelpCallout';
 export { HelpCircle } from './HelpCircle';
 export { HELP_CARDS } from './walkthrough/help-content';
 export * from './AppVersionContext';
+export * from './GlobalOptionsContext';
 export * from './screen-numbers/ScreenNumberBadge';
 export { ScreenNumberProvider, useScreenNumber, SHOW_SCREEN_NUMBERS_KEY } from './screen-numbers/ScreenNumberContext';
 export type { ScreenNumberContextValue } from './screen-numbers/ScreenNumberContext';

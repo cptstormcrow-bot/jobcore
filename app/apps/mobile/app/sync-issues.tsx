@@ -3,14 +3,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { AppChrome, Card, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
-import { discardFailed, listAllFailed, retryAllFailed, retryFailed } from '../src/lib/offline-db';
+import { discardFailed, listAllFailed, retryFailed } from '../src/lib/offline-db';
 import type { QueueRow } from '../src/lib/offline-db.types';
 import { refetchAll } from '../src/lib/read-cache';
 import { failureMessage, opLabel, savedAtLabel } from '../src/lib/sync-issues';
 import { useSyncStatus } from '../src/lib/sync-status';
 
 export default function SyncIssuesScreen() {
-  const { refresh, failedCount } = useSyncStatus();
+  const { refresh, retryAll, failedCount, isSyncing, isOnline, lastError } = useSyncStatus();
   const [rows, setRows] = useState<QueueRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export default function SyncIssuesScreen() {
 
   useEffect(() => {
     void load();
-  }, [load, failedCount]);
+  }, [load, failedCount, isSyncing]);
 
   const run = useCallback(
     async (action: () => Promise<void>, afterCacheRefresh = false) => {
@@ -65,7 +65,19 @@ export default function SyncIssuesScreen() {
       />
       <ScrollView contentContainerStyle={styles.content}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {rows !== null && list.length === 0 ? (
+        {!isOnline ? (
+          <Text style={styles.meta}>You're offline. These will send when you reconnect.</Text>
+        ) : null}
+        {rows !== null && list.length === 0 && lastError && isOnline && !isSyncing ? (
+          <Card style={styles.card}>
+            <Text style={styles.emptyTitle}>Sync is paused</Text>
+            <Text style={styles.errorText}>{failureMessage(lastError)}</Text>
+            <View style={styles.actions}>
+              <PayrollButton label="Try again" onPress={() => void run(retryAll)} />
+            </View>
+          </Card>
+        ) : null}
+        {rows !== null && list.length === 0 && !(lastError && isOnline && !isSyncing) ? (
           <Card>
             <Text style={styles.emptyTitle}>All caught up</Text>
             <Text style={styles.meta}>Nothing is waiting on a fix. Every change saved on this device has been sent.</Text>
@@ -76,7 +88,7 @@ export default function SyncIssuesScreen() {
             <Text style={styles.meta}>
               {list.length} {list.length === 1 ? 'change' : 'changes'} could not be sent.
             </Text>
-            <PayrollButton label="Retry all" onPress={() => void run(retryAllFailed)} />
+            <PayrollButton label="Retry all" onPress={() => void run(retryAll)} />
           </View>
         ) : null}
         {list.map((row) => (

@@ -17,6 +17,7 @@ import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
 import { ReadCacheProvider } from '../src/lib/read-cache';
 import { SyncIndicator } from '../src/components/SyncIndicator';
+import { SyncOptionsProvider } from '../src/components/SyncOptionsProvider';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
 import '../src/lib/background-sync'; // native-only task definition + registration (no-op on web)
 
@@ -211,10 +212,12 @@ export default function RootLayout() {
           <SessionProvider>
             {/* Mount order: Session -> SyncStatus -> ReadCache -> AuthGate. */}
             <SyncStatusProvider>
-              <ReadCacheProvider>
-                <StatusBar style="auto" />
-                <AuthGate />
-              </ReadCacheProvider>
+              <SyncOptionsProvider>
+                <ReadCacheProvider>
+                  <StatusBar style="auto" />
+                  <AuthGate />
+                </ReadCacheProvider>
+              </SyncOptionsProvider>
             </SyncStatusProvider>
           </SessionProvider>
         </SafeAreaProvider>

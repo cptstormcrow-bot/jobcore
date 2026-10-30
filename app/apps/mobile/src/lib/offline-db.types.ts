@@ -23,4 +23,6 @@ export interface SyncStatus {
   lastDrainAt: string | null;
   lastError: string | null;
   refresh(): void;
+  /** Put every failed row back to pending, clear the error, and drain. */
+  retryAll(): Promise<void>;
 }

@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import { useSession } from './session';
-import { countFailed, countPending, drainOfflineQueue, listFailed } from './offline-db';
+import { countFailed, countPending, drainOfflineQueue, listFailed, retryAllFailed } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
 import type { SyncStatus } from './offline-db.types';
 
@@ -12,6 +12,8 @@ import type { SyncStatus } from './offline-db.types';
  * Triggers: NetInfo change, AppState 'active', session authenticated,
  * refresh(), and requestDrain() from other modules. All funnel into one
  * debounced (500 ms) trigger that runs only when online && authenticated.
+ * Failed rows are put back to pending automatically on each reconnect
+ * (offline -> online edge, first reading, sign-in), at most once per 30 s.
  * ------------------------------------------------------------------ */
 
 const SyncStatusContext = createContext<SyncStatus | null>(null);
@@ -32,6 +34,9 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
   const runningRef = useRef(false);
   const aliveRef = useRef(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryOnNextRef = useRef(false);
+  const seenNetRef = useRef(false);
+  const lastAutoRetryRef = useRef(0);
 
   authRef.current = authenticated;
 
@@ -52,6 +57,14 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     runningRef.current = true;
     setIsSyncing(true);
     try {
+      if (retryOnNextRef.current) {
+        retryOnNextRef.current = false;
+        try {
+          await retryAllFailed();
+        } catch {
+          // a failed reset just leaves the rows failed until the next connect
+        }
+      }
       const result = await drainOfflineQueue();
       if (!aliveRef.current) return;
       let err: string | null = result.aborted ? `Sync paused (${result.aborted})` : null;
@@ -67,6 +80,8 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       runningRef.current = false;
       if (aliveRef.current) setIsSyncing(false);
       await recount();
+      // A reconnect that landed mid-drain still owes its retry pass.
+      if (retryOnNextRef.current && aliveRef.current) triggerRef.current?.();
     }
   }, [recount]);
 
@@ -77,6 +92,15 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       void runDrain();
     }, 500);
   }, [runDrain]);
+  const triggerRef = useRef<(() => void) | null>(null);
+  triggerRef.current = trigger;
+
+  const armAutoRetry = useCallback(() => {
+    const now = Date.now();
+    if (now - lastAutoRetryRef.current < 30_000) return;
+    lastAutoRetryRef.current = now;
+    retryOnNextRef.current = true;
+  }, []);
 
   // Register so other modules can call requestDrain().
   useEffect(() => {
@@ -102,13 +126,16 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     }
     const unsub = NetInfo.addEventListener((s) => {
       const online = !!s.isConnected && s.isInternetReachable !== false;
+      const wasOnline = onlineRef.current;
+      if (online && (!seenNetRef.current || !wasOnline)) armAutoRetry();
+      seenNetRef.current = true;
       onlineRef.current = online;
       setOnlineNow(online);
       setIsOnline(online);
       if (online) trigger();
     });
     return unsub;
-  }, [trigger]);
+  }, [trigger, armAutoRetry]);
 
   // Foreground.
   useEffect(() => {
@@ -120,15 +147,29 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
 
   // Session: drain when authenticated; otherwise no drain, queue kept.
   useEffect(() => {
-    if (authenticated) trigger();
-  }, [authenticated, trigger]);
+    if (authenticated) {
+      armAutoRetry();
+      trigger();
+    }
+  }, [authenticated, trigger, armAutoRetry]);
 
   const refresh = useCallback(() => {
     void recount();
     trigger();
   }, [recount, trigger]);
 
-  const value: SyncStatus = { isOnline, pendingCount, failedCount, isSyncing, lastDrainAt, lastError, refresh };
+  const retryAll = useCallback(async () => {
+    try {
+      await retryAllFailed();
+    } catch {
+      // keep rows as they are; the next connect retries again
+    }
+    if (aliveRef.current) setLastError(null);
+    await recount();
+    trigger();
+  }, [recount, trigger]);
+
+  const value: SyncStatus = { isOnline, pendingCount, failedCount, isSyncing, lastDrainAt, lastError, refresh, retryAll };
   return <SyncStatusContext.Provider value={value}>{children}</SyncStatusContext.Provider>;
 }
 

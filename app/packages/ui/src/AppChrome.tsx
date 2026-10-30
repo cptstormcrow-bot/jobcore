@@ -9,6 +9,7 @@ import type { JobStatus } from '@jobcore/core';
 import { getHelpStep, type ScreenKey, type WalkthroughStepId } from './walkthrough/walkthrough-content';
 import { useWalkthrough } from './walkthrough/WalkthroughProvider';
 import { useAppVersion } from './AppVersionContext';
+import { useGlobalOptionsItems } from './GlobalOptionsContext';
 import { formatVersionLabel } from './formatVersionLabel';
 import { NavDrawer } from './NavDrawer';
 import { MenuGlyph } from './MenuGlyph';
@@ -25,6 +26,8 @@ export type MenuActionItem = {
   submenu?: MenuItem[];
   helpId?: WalkthroughStepId;
   section?: string;
+  /** 'danger' renders the label bold red (e.g. Synch while writes are failing). */
+  tone?: 'danger';
 };
 export type MenuToggleItem = {
   id: string;
@@ -132,6 +135,7 @@ function MenuRow({
               drawer && styles.rowTextDrawer,
               item.isActive && styles.rowTextActive,
               item.disabled && styles.rowTextDisabled,
+              item.kind !== 'toggle' && item.tone === 'danger' && styles.rowTextDanger,
             ]}
           >
             {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
@@ -219,9 +223,11 @@ export function AppChrome({
     setOMenuOpen(false);
     setTimeout(() => showHelp(id), 300);
   };
+  const globalOptionsItems = useGlobalOptionsItems();
   const resolvedOptionsItems = [
     { id: 'help', label: 'Help', onPress: () => { setOMenuOpen(false); setTimeout(() => showHelp(helpId), 300); } },
     ...(optionsItems ?? []),
+    ...globalOptionsItems,
   ];
 
   const handleLeafPress = (item: MenuItem) => {
@@ -597,6 +603,11 @@ const styles = StyleSheet.create({
   },
   rowTextDisabled: {
     color: colors.textMuted,
+  },
+  rowTextDanger: {
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: '700',
+    color: colors.danger,
   },
   rowDrawer: {
     minHeight: DRAWER_ROW_HEIGHT,
