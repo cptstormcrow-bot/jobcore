@@ -29,7 +29,7 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
 
   if (!isOnline) {
     label = `Offline · ${pendingCount} saved`;
-    tappable = false;
+    tappable = failedCount > 0;
   } else if (isSyncing) {
     label = 'Syncing…';
     tappable = false;
@@ -44,7 +44,7 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
   return (
     <Pressable
       disabled={!tappable}
-      onPress={failed && failedCount > 0 ? () => router.push('/sync-issues' as never) : refresh}
+      onPress={failedCount > 0 && !isSyncing ? () => router.push('/sync-issues' as never) : refresh}
       style={[styles.container, { bottom: spacing.sm + insets.bottom }, style]}
     >
       <Text style={[styles.label, { color: labelColor }]}>{label}</Text>

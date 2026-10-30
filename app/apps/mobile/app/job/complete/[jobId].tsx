@@ -26,7 +26,7 @@ import { markPaidIfSettled } from '../../../src/lib/settle-on-completion';
 
 type Loaded =
   | { kind: 'loading' }
-  | { kind: 'missing' }
+  | { kind: 'missing'; reason?: string }
   | { kind: 'blocked'; notice: string; job: Job }
   | { kind: 'completed'; job: Job }
   | { kind: 'ready'; job: Job };
@@ -93,8 +93,9 @@ export default function CompleteJobRoute() {
         const notice = completionBlockedNotice(job);
         setLoaded(notice ? { kind: 'blocked', notice, job } : { kind: 'ready', job });
       })
-      .catch(() => {
-        if (!cancelled) setLoaded({ kind: 'missing' });
+      .catch((err: unknown) => {
+        // Keep the real cause on screen so a failed load is not mistaken for a deleted job.
+        if (!cancelled) setLoaded({ kind: 'missing', reason: err instanceof Error ? err.message : String(err) });
       });
     return () => {
       cancelled = true;
@@ -131,7 +132,14 @@ export default function CompleteJobRoute() {
   if (!ready || loaded.kind === 'loading') {
     body = <LoadingState />;
   } else if (loaded.kind === 'missing') {
-    body = <EmptyState title="Job not found" message="This job could not be loaded." />;
+    body = (
+      <EmptyState
+        title="Job not found"
+        message={loaded.reason ? `This job could not be loaded.
+
+${loaded.reason}` : 'This job could not be loaded.'}
+      />
+    );
   } else if (loaded.kind === 'blocked') {
     body = <EmptyState title="Cannot complete this job" message={loaded.notice} />;
   } else if (loaded.kind === 'completed') {

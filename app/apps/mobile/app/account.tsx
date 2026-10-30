@@ -7,10 +7,12 @@ import { AppChrome, Card, Button, LoadingState, colors, spacing, typography, Tex
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { useSession, signOut } from '../src/lib/session';
 import { landingRouteFor } from '../src/lib/landing';
+import { useSyncStatus } from '../src/lib/sync-status';
 
 export default function AccountScreen() {
   const router = useRouter();
   const state = useSession();
+  const { failedCount } = useSyncStatus();
 
   if (state.status !== 'authenticated') {
     return (
@@ -82,6 +84,13 @@ export default function AccountScreen() {
           <View style={styles.actions}>
             <Button label="Sign out" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSignOut} />
             <Button label="Sign in as someone else" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSwitchUser} />
+            <Button
+              label={failedCount > 0 ? `Sync issues (${failedCount})` : 'Sync issues'}
+              variant="accent"
+              size="tab"
+              style={styles.actionBtn}
+              onPress={() => router.push('/sync-issues' as never)}
+            />
           </View>
           <Text style={styles.note}>
             Each device signs in separately — signing out here does not affect other devices.

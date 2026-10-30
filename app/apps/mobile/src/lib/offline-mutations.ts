@@ -53,7 +53,9 @@ export async function writeThrough<T>(
     return { status: 'applied', data: optimistic };
   }
 
-  const id = payload.id ?? newClientId();
+  // Queue row id is always fresh: payload.id is the record id, and two writes
+  // to one record (create then note, or two edits) must not collide.
+  const id = newClientId();
   const wasEmpty = (await countPending()) === 0;
   await enqueue({ id, op, payload: JSON.stringify(payload), occurredAt });
 
