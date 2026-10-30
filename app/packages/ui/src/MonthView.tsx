@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    padding: 2,
+    padding: 0,
   },
   cellSelected: {
     backgroundColor: colors.primary,
@@ -284,13 +284,13 @@ const styles = StyleSheet.create({
   listItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 1,
   },
   listItemDot: {
     width: 8,
     height: 8,
     borderRadius: 2,
-    marginRight: 4,
+    marginRight: 2,
   },
   listItemText: {
     fontSize: 10,

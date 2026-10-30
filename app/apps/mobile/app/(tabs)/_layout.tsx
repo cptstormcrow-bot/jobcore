@@ -11,6 +11,8 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         sceneStyle: { backgroundColor: colors.offWhite },
+        // Calendar/Jobs bottom tabs removed (Jeff 2026-10-30); routes kept for deep links.
+        tabBarStyle: { display: 'none' },
       }}
     >
       <Tabs.Screen name="calendar" options={{

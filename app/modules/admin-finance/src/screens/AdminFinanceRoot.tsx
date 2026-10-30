@@ -1370,7 +1370,7 @@ export function AdminFinanceRoot() {
         ) : (
         <UniversalCalendar
           role="admin"
-          viewerId={null}
+          viewerId={session.userId ?? null}
           jobs={loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs))}
           employees={loadState.employees}
           timeOffRequests={loadState.timeOffRequests}

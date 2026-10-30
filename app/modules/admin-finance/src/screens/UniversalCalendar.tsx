@@ -1,5 +1,5 @@
 // JobCore shared Universal Calendar (admin + tech) - month/week/day with blackout day-picking and time-off requests (replaces #0031).
-import React, { useState, type ReactNode } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { Button, PayrollButton, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
@@ -108,6 +108,14 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
+  const autoPicked = useRef(false);
+  useEffect(() => {
+    if (autoPicked.current) return;
+    if (role !== 'tech' && !defaultFilters?.techId && viewerId && techs.some((t) => t.id === viewerId)) {
+      autoPicked.current = true;
+      setTechFilter(viewerId);
+    }
+  });
   const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
 
   const calendarJobs = jobs
@@ -245,22 +253,23 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           <Text style={styles.returnText}>{`‹ ${returnLabel}`}</Text>
         </Pressable>
       ) : null}
-      <CalendarHeader
-        mode={mode}
-        onModeChange={setMode}
-        label={label}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        onToday={handleToday}
-      />
       <View style={styles.actionRow}>
         {role === 'admin' ? (
           <TechSelect
-            label="Technicians"
+            label="Technician"
             value={techFilter}
             onChange={(v) => setTechFilter(v === '' ? null : v)}
             placeholder="All Techs"
             options={[{ label: 'All Techs', value: '' }, ...techs.map((t) => ({ label: t.fullName, value: t.id }))]}
+            style={styles.techSelect}
+          />
+        ) : null}
+        {role === 'tech' ? (
+          <TechSelect
+            label="Technician"
+            value={viewerId}
+            onChange={() => {}}
+            options={techs.filter((t) => t.id === viewerId).map((t) => ({ label: t.fullName, value: t.id }))}
             style={styles.techSelect}
           />
         ) : null}
@@ -336,6 +345,15 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           ))}
         </View>
       ) : null}
+      <CalendarHeader
+        mode={mode}
+        onModeChange={setMode}
+        label={label}
+        labelPosition="above"
+        onPrev={handlePrev}
+        onNext={handleNext}
+        onToday={handleToday}
+      />
       {mode === 'month' ? (
         <MonthView
           variant="list"
@@ -377,7 +395,7 @@ const styles = StyleSheet.create({
   returnLink: { paddingVertical: spacing.xs },
   returnText: { color: colors.primary },
   actionRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
-  techSelect: { width: 150 },
+  techSelect: { minWidth: 240 },
   pickBar: {
     flexDirection: 'row',
     alignItems: 'center',

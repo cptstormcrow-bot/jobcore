@@ -28,6 +28,7 @@ export interface WeekViewProps {
   onDayPress?: (date: Date) => void;
 }
 
+const MAX_CARDS = 6;
 
 export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onSelectTimeOff, onSelectDay, onDayPress }: WeekViewProps) {
   const weekStart = startOfWeek(anchorDay, { weekStartsOn: 0 });
@@ -76,7 +77,7 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                   </Text>
                 </Pressable>
               ))}
-              {dayJobs.slice(0, 3).map((job) => (
+              {dayJobs.slice(0, MAX_CARDS).map((job) => (
                 <Pressable
                   key={job.id}
                   onPress={() => onSelectJob?.(job)}
@@ -86,16 +87,16 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
                   <Text style={styles.cardAddress} numberOfLines={2} ellipsizeMode="tail">{job.address ?? 'No address'}</Text>
                 </Pressable>
               ))}
-              {dayJobs.length > 3 && (
+              {dayJobs.length > MAX_CARDS && (
                 onDayPress ? (
                   <Pressable onPress={() => onDayPress(day)}>
                     <Text style={styles.moreLabel} numberOfLines={1}>
-                      +{dayJobs.length - 3} more
+                      +{dayJobs.length - MAX_CARDS} more
                     </Text>
                   </Pressable>
                 ) : (
                   <Text style={styles.moreLabel} numberOfLines={1}>
-                    +{dayJobs.length - 3} more
+                    +{dayJobs.length - MAX_CARDS} more
                   </Text>
                 )
               )}
@@ -117,11 +118,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   column: {
-    width: 112,
-    marginRight: spacing.xs,
+    width: 150,
+    minHeight: 260,
     borderRightColor: colors.border,
     borderRightWidth: 1,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: 2,
   },
   headerPressable: {
     alignItems: 'center',
@@ -151,8 +152,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
-    padding: spacing.xs,
-    marginTop: spacing.xs,
+    padding: 2,
+    marginTop: 2,
   },
   cardTime: {
     fontSize: typography.size.small,
@@ -168,6 +169,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.small,
     lineHeight: typography.size.small * typography.lineHeight.body,
     color: colors.textMuted,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
 });

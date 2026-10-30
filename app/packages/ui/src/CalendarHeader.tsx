@@ -12,6 +12,7 @@ export interface CalendarHeaderProps {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
+  labelPosition?: 'above' | 'below';
 }
 
 const MODES: { key: CalendarMode; title: string }[] = [
@@ -30,9 +31,16 @@ export function CalendarHeader({
   onPrev,
   onNext,
   onToday,
+  labelPosition = 'below',
 }: CalendarHeaderProps): JSX.Element {
+  const labelNode = (
+    <Text style={styles.label} numberOfLines={1}>
+      {label}
+    </Text>
+  );
   return (
     <View style={styles.container}>
+      {labelPosition === 'above' ? labelNode : null}
       <View style={styles.row}>
         <View style={styles.segmentedControl}>
           {MODES.map((m) => {
@@ -84,9 +92,7 @@ export function CalendarHeader({
           </Pressable>
         </View>
       </View>
-      <Text style={styles.label} numberOfLines={1}>
-        {label}
-      </Text>
+      {labelPosition === 'below' ? labelNode : null}
     </View>
   );
 }
@@ -94,7 +100,7 @@ export function CalendarHeader({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
+    paddingVertical: 2,
     gap: 2,
   },
   row: {
