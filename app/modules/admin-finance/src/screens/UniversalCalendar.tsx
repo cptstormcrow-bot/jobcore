@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { Button, PayrollButton, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import { PayrollButton, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -287,8 +287,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           <Text style={styles.pickText}>Tap days to black out</Text>
           {role === 'admin' && !effectiveTechId ? <Text style={styles.hint}>Pick a technician first</Text> : null}
           <View testID="calendar-blackouts-save">
-            <Button
-              variant="primary"
+            <PayrollButton
               label={`Save ${picked.length} day(s)`}
               disabled={picked.length === 0 || saving || !effectiveTechId}
               onPress={() => {
@@ -311,8 +310,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
             <TextField dense label="Reason (optional)" labelStyle={styles.fieldLabel} value={reqReason} onChangeText={setReqReason} />
           </View>
           <View testID="calendar-timeoff-submit">
-            <Button
-              variant="primary"
+            <PayrollButton
               label="Submit request"
               disabled={!isValidTimeOffRange(reqStart, reqEnd) || !effectiveTechId || reqSaving}
               onPress={() => {
@@ -332,8 +330,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
                 {`${format(parseCalendarDate(r.startDate), 'MMM d')} – ${format(parseCalendarDate(r.endDate), 'MMM d')}`}
               </Text>
               <View testID={`calendar-timeoff-cancel-${r.id}`}>
-                <Button
-                  variant="primary"
+                <PayrollButton
                   label="Cancel"
                   disabled={cancellingId === r.id}
                   onPress={() => {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from './Text';
+import { TruncatedText } from './TruncatedText';
 import { colors, spacing, typography } from './tokens';
 
 export interface BreadcrumbSegment {
@@ -22,7 +23,7 @@ export function Breadcrumb({ segments }: BreadcrumbProps) {
         return (
           <View key={`${segment.label}-${index}`} style={styles.segmentGroup}>
             {isLast || !segment.onPress ? (
-              <Text style={[styles.text, isLast && styles.current]}>{segment.label}</Text>
+              <TruncatedText style={[styles.text, isLast && styles.current]}>{segment.label}</TruncatedText>
             ) : (
               <Pressable
                 onPress={segment.onPress}

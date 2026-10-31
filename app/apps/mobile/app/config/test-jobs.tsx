@@ -17,7 +17,7 @@ import * as React from 'react';
 import { View, Switch, StyleSheet } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { buildAdminFinanceMenuItems } from '@jobcore/admin-finance';
-import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, PayrollButton, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
 
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';
@@ -178,10 +178,8 @@ export default function TestJobsScreen(): React.ReactElement {
                 {statusLabel(job.status)}
               </Text>
             </View>
-            <Button
+            <PayrollButton
               label={deletingId === job.id ? 'Deleting…' : 'Delete'}
-              size="sm"
-              variant="outline"
               disabled={deletingId === job.id || deletingAll}
               onPress={() => handleDelete(job.id)}
             />
@@ -219,24 +217,18 @@ export default function TestJobsScreen(): React.ReactElement {
         />
       </View>
       <View style={styles.actions}>
-        <Button
+        <PayrollButton
           label={spawning ? 'Spawning…' : 'Spawn Test Jobs'}
-          variant="outline"
-          size="sm"
           disabled={spawning}
           onPress={handleSpawn}
         />
-        <Button
+        <PayrollButton
           label={deletingAll ? 'Deleting all…' : 'Delete All'}
-          variant="outline"
-          size="sm"
           disabled={deletingAll || jobs.length === 0}
           onPress={handleDeleteAll}
         />
-        <Button
+        <PayrollButton
           label={simulating ? 'Running…' : 'Run Job Simulator'}
-          variant="outline"
-          size="sm"
           disabled={simulating || !organizationId || !actorProfile}
           onPress={handleRunSimulator}
         />
@@ -244,16 +236,12 @@ export default function TestJobsScreen(): React.ReactElement {
       {simulatorReport ? (
         <View style={styles.simulatorPanel}>
           <View style={styles.simulatorActions}>
-            <Button
+            <PayrollButton
               label="Dismiss"
-              size="sm"
-              variant="primary"
               onPress={() => setSimulatorReport(null)}
             />
-            <Button
+            <PayrollButton
               label={simulating ? 'Running…' : 'Run Again'}
-              size="sm"
-              variant="primary"
               disabled={simulating}
               onPress={handleRunSimulator}
             />

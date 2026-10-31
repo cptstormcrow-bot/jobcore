@@ -21,7 +21,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { Button, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { PayrollButton, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -221,18 +221,14 @@ export function FieldJobDetail({ jobId, customerPhone, onOpenCalendar }: FieldJo
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Contact & location</Text>
-        <Button
+        <PayrollButton
           label={resolvedPhone ? `Call ${resolvedPhone}` : 'No phone on file'}
           onPress={handleCall}
-          variant="primary"
-          size="sm"
           disabled={!resolvedPhone}
         />
-        <Button
+        <PayrollButton
           label={job.address ?? 'No address on file'}
           onPress={handleMap}
-          variant="primary"
-          size="sm"
           disabled={!job.address}
         />
       </View>

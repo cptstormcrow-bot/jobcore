@@ -18,7 +18,7 @@
 
 import React from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
-import { Button, Card, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { AssignmentWarning } from '../domain/assignment-warnings';
 
 export interface WarningSheetProps {
@@ -59,18 +59,13 @@ export function WarningSheet({
             ))
           )}
           <View style={styles.actions}>
-            <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.actionButton} />
+            <PayrollButton label="Cancel" onPress={onCancel} />
             {/*
               No `disabled` prop here, by design: warnings are advisory only
               (03-P3-admin-finance.md §4), never a hard block, so confirm
               stays enabled no matter what `warnings` contains.
             */}
-            <Button
-              label="Confirm assignment"
-              variant="primary"
-              onPress={onConfirm}
-              style={styles.actionButton}
-            />
+            <PayrollButton label="Confirm assignment" onPress={onConfirm} />
           </View>
         </Card>
       </View>

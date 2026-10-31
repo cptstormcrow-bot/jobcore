@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   cellPicked: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
   },
   dayText: {
     fontSize: 12,

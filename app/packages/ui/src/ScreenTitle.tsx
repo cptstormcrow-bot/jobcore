@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { Text } from './Text';
+import { TruncatedText } from './TruncatedText';
 import { colors, spacing, typography } from './tokens';
 
 export interface ScreenTitleProps {
@@ -13,9 +13,9 @@ export interface ScreenTitleProps {
 export function ScreenTitle({ eyebrow, title, subtitle, style }: ScreenTitleProps) {
   return (
     <View style={style}>
-      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
-      <Text style={styles.title}>{title}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      {eyebrow ? <TruncatedText style={styles.eyebrow}>{eyebrow}</TruncatedText> : null}
+      <TruncatedText style={styles.title}>{title}</TruncatedText>
+      {subtitle ? <TruncatedText style={styles.subtitle}>{subtitle}</TruncatedText> : null}
     </View>
   );
 }

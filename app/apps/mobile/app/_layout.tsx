@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
-import { LoadingState, ErrorState, EmptyState, Button, colors, spacing, WalkthroughProvider, WalkthroughOverlay, WalkthroughHelpCallout, AppVersionProvider, ScreenNumberProvider, ScreenNumberBadge } from '@jobcore/ui';
+import { LoadingState, ErrorState, EmptyState, PayrollButton, colors, spacing, WalkthroughProvider, WalkthroughOverlay, WalkthroughHelpCallout, AppVersionProvider, ScreenNumberProvider, ScreenNumberBadge } from '@jobcore/ui';
 import screenRegistry from '../src/screens/screen-registry.json';
 import { getAppVersion } from '../src/lib/appVersion';
 import { landingRouteFor } from '../src/lib/landing';
@@ -126,7 +126,7 @@ function AuthGate() {
           title="Account deactivated"
           message="Your account has been deactivated. Contact your admin for help."
         />
-        <Button label="Sign out" variant="outline" onPress={() => void signOut()} style={styles.signOut} />
+        <PayrollButton label="Sign out" onPress={() => void signOut()} style={styles.signOut} />
       </View>
     );
   } else if (state.status === 'unprovisioned') {
@@ -137,9 +137,8 @@ function AuthGate() {
           title="Account not set up"
           message={`Signed in as ${email}.\n\nYour sign-in worked, but no profile has been created for you yet. Ask your admin to finish setting up your account. Ask your admin to invite this exact email address.`}
         />
-        <Button
+        <PayrollButton
           label={checkingAgain ? 'Checking…' : 'Check again'}
-          variant="outline"
           disabled={checkingAgain}
           onPress={() => {
             setCheckingAgain(true);
@@ -147,9 +146,8 @@ function AuthGate() {
           }}
           style={styles.signOut}
         />
-        <Button
-          label="Sign in as someone else"
-          variant="outline"
+        <PayrollButton
+          label="Switch user"
           onPress={() => {
             void (async () => {
               await signOut();

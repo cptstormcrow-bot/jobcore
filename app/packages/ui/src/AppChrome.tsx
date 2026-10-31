@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
 import { Text } from './Text';
+import { TruncatedText } from './TruncatedText';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, radius, typography } from './tokens';
@@ -268,19 +269,17 @@ export function AppChrome({
         {(titleBar || titleContent) && wrapTitle(
           <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }]}>
             {titleContent ? titleContent : titleBar ? (<>
-            <Text
+            <TruncatedText
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
-              numberOfLines={1}
             >
               {titleBar.title}
-            </Text>
+            </TruncatedText>
             {titleBar.subtitle ? (
-              <Text
+              <TruncatedText
                 style={[styles.titleBarSubtitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
-                numberOfLines={1}
               >
                 {titleBar.subtitle}
-              </Text>
+              </TruncatedText>
             ) : null}
             </>) : null}
           </View>,
@@ -343,7 +342,7 @@ export function AppChrome({
               <View style={styles.divider} />
             ) : null}
             {item.section !== undefined && item.section !== drawerItems[i - 1]?.section ? (
-              <Text style={styles.sectionHeader}>{item.section}</Text>
+              <TruncatedText style={styles.sectionHeader}>{item.section}</TruncatedText>
             ) : null}
             <MenuRow item={item} onLeafPress={handleLeafPress} variant="drawer" onHelp={handleHelpPress} />
           </React.Fragment>
@@ -378,7 +377,7 @@ export function AppChrome({
                     <View style={styles.wordmarkRow}>
                       {wrapTitle(
                       <View style={styles.wordmarkChip}>
-                        <Text style={styles.wordmarkText}>{gearTitle ?? 'Configuration'}</Text>
+                        <TruncatedText style={styles.wordmarkText}>{gearTitle ?? 'Configuration'}</TruncatedText>
                       </View>
                       )}
                     </View>
@@ -433,16 +432,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
     marginHorizontal: 0,
     alignItems: 'center',
   },
   titleBarTitle: {
     fontFamily: typography.fontFamily.headingBold,
-    fontSize: 15,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
     color: colors.white,
     textShadowColor: '#000000',
     textShadowOffset: { width: 0, height: 0 },
@@ -450,8 +449,8 @@ const styles = StyleSheet.create({
   },
   titleBarSubtitle: {
     fontFamily: typography.fontFamily.body,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 10,
+    lineHeight: 14,
     fontWeight: '400',
     color: colors.white,
   },

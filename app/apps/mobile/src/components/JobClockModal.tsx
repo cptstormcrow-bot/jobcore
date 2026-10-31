@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
-import { Button, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 
 export type JobClockModalMode = 'choice' | 'reason' | 'confirm-next-day' | 'reset-confirm';
 
@@ -71,20 +71,10 @@ export function JobClockModal({
             <>
               <Text style={styles.title}>Clock Actions</Text>
               <View style={styles.buttonColumn}>
-                <Button label="Continue" onPress={handleClose} variant="primary" fullWidth />
-                <Button
-                  label="Stop clock"
-                  onPress={() => setMode('reason')}
-                  variant="secondary"
-                  fullWidth
-                />
+                <PayrollButton label="Continue" onPress={handleClose} />
+                <PayrollButton label="Stop clock" onPress={() => setMode('reason')} />
                 {isAdmin ? (
-                  <Button
-                    label="Reset"
-                    onPress={() => setMode('reset-confirm')}
-                    variant="outline"
-                    fullWidth
-                  />
+                  <PayrollButton label="Reset" onPress={() => setMode('reset-confirm')} />
                 ) : null}
               </View>
             </>
@@ -94,25 +84,19 @@ export function JobClockModal({
             <>
               <Text style={styles.title}>Why are you stopping?</Text>
               <View style={styles.buttonColumn}>
-                <Button
+                <PayrollButton
                   label="Lunch break"
                   onPress={() => handleStopForReason('lunch')}
-                  variant="primary"
-                  fullWidth
                   disabled={busy}
                 />
-                <Button
+                <PayrollButton
                   label="Materials"
                   onPress={() => handleStopForReason('materials')}
-                  variant="primary"
-                  fullWidth
                   disabled={busy}
                 />
-                <Button
+                <PayrollButton
                   label="Back the next day"
                   onPress={() => setMode('confirm-next-day')}
-                  variant="secondary"
-                  fullWidth
                   disabled={busy}
                 />
               </View>
@@ -126,18 +110,14 @@ export function JobClockModal({
                 {`This ends today's session. Total labor time so far: ${elapsedLabel}. Arriving again will resume the clock from this total.`}
               </Text>
               <View style={styles.buttonColumn}>
-                <Button
+                <PayrollButton
                   label="Confirm"
                   onPress={handleEndForToday}
-                  variant="primary"
-                  fullWidth
                   disabled={busy}
                 />
-                <Button
+                <PayrollButton
                   label="Cancel"
                   onPress={() => setMode('reason')}
-                  variant="outline"
-                  fullWidth
                   disabled={busy}
                 />
               </View>
@@ -149,18 +129,14 @@ export function JobClockModal({
               <Text style={styles.title}>Reset Clock?</Text>
               <Text style={styles.body}>This will reset the clock for this job.</Text>
               <View style={styles.buttonColumn}>
-                <Button
+                <PayrollButton
                   label="Confirm"
                   onPress={handleReset}
-                  variant="primary"
-                  fullWidth
                   disabled={busy}
                 />
-                <Button
+                <PayrollButton
                   label="Cancel"
                   onPress={() => setMode('choice')}
-                  variant="outline"
-                  fullWidth
                   disabled={busy}
                 />
               </View>

@@ -2,7 +2,7 @@
 // Mutations go through createJobPlanTasksRepository(), which already routes via writeThrough (offline queue).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
+import { PayrollButton, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
 import type { JobPlanTaskRow, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanTasksRepository } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
@@ -217,9 +217,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         ) : null}
         {edit && (
           <View style={styles.actions}>
-            {!dim && <Button label="Defer" size="sm" variant="outline" onPress={() => void defer(row)} />}
-            <Button label="Remove" size="sm" variant="outline" onPress={() => void remove(row)} />
-            <Button label="Add" size="sm" variant="primary" onPress={() => void addMisc()} />
+            {!dim && <PayrollButton label="Defer" onPress={() => void defer(row)} />}
+            <PayrollButton label="Remove" onPress={() => void remove(row)} />
+            <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
           </View>
         )}
       </View>
@@ -253,7 +253,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           <View style={styles.flex}>
             <TextField dense placeholder="New task title" value={newTitle} onChangeText={setNewTitle} />
           </View>
-          <Button label="Add" size="sm" variant="primary" onPress={() => void addMisc()} />
+          <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
         </View>
       )}
     </View>

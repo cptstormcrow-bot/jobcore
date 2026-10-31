@@ -31,7 +31,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, ListItem, Button, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository, JobInvestigation, JobPlanTasksRepository, JobPlanTaskRow, ServiceTaskCatalogEntry } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
@@ -181,7 +181,7 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
               onChangeText={(text) => setQuantityDrafts((prev) => ({ ...prev, [row.id]: text }))}
               onBlur={() => void handleQuantityBlur(row.id)}
             />
-            <Button label="Remove" onPress={() => void handleRemove(row.id)} />
+            <PayrollButton label="Remove" onPress={() => void handleRemove(row.id)} />
           </View>
         ))
       )}
@@ -364,7 +364,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
       <Root {...rootProps}>
         {!embedded && (
           <View style={styles.backRow}>
-            <Button label={onBack ? 'Back to Job' : 'Back to job list'} variant="outline" size="sm" onPress={onBack ?? (() => setSelectedJobId(null))} />
+            <PayrollButton label={onBack ? 'Back to Job' : 'Back to job list'} onPress={onBack ?? (() => setSelectedJobId(null))} />
           </View>
         )}
 
@@ -472,7 +472,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
               {saveError && <Text style={styles.errorText}>{saveError}</Text>}
 
               <View style={styles.actions}>
-                <Button
+                <PayrollButton
                   label={saving ? 'Saving...' : 'Save'}
                   onPress={() => {
                     void handleSave();
@@ -505,9 +505,8 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             ))
           )}
           <View style={styles.actions}>
-            <Button
+            <PayrollButton
               label={addingPhoto ? 'Adding...' : 'Add Photo'}
-              variant="outline"
               onPress={() => {
                 void handleAddPhoto();
               }}

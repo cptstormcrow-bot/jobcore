@@ -16,7 +16,7 @@ import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
-import { AppChrome, Breadcrumb, Button, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
@@ -1252,11 +1252,10 @@ export default function JobDrilldownScreen() {
           />
         </ScrollView>
         <View style={styles.footer}>
-          <Button label="Cancel" variant="outline" style={styles.footerButton} onPress={goBackOrLanding} />
-          <Button
+          <PayrollButton label="Cancel" onPress={goBackOrLanding} />
+          <PayrollButton
             label={saving ? 'Creating…' : 'Create'}
             disabled={saving}
-            style={styles.footerButton}
             onPress={() => void handleSaveCreate()}
           />
         </View>

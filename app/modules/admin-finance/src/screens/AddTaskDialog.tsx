@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
-  Button,
+  PayrollButton,
   Text,
   TextField,
   Toggle,
@@ -174,11 +174,10 @@ export function AddTaskDialog({ visible, serviceName, onCancel, onCreate, onCrea
 
             <View style={styles.actions}>
               <Pressable onPress={handleCancel} disabled={pending}>
-                <Button label="Cancel" variant="outline" onPress={handleCancel} disabled={pending} />
+                <PayrollButton label="Cancel" onPress={handleCancel} disabled={pending} />
               </Pressable>
-              <Button
+              <PayrollButton
                 label={pending ? 'Saving…' : 'Add Task'}
-                variant="primary"
                 onPress={handleCreate}
                 disabled={createDisabled}
                 style={styles.createButton}

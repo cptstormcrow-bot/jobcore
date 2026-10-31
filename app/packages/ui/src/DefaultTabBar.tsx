@@ -43,7 +43,7 @@ export function DefaultTabBar<T extends string>({
               },
             ]}
           >
-            <Text style={[{ color: colors.text, fontWeight: selected ? '700' : '400' }, labelStyle]}>
+            <Text numberOfLines={1} style={[{ color: colors.text, fontSize: 13, fontWeight: selected ? '700' : '400' }, labelStyle]}>
               {tab.label}
             </Text>
           </Pressable>
@@ -56,7 +56,7 @@ export function DefaultTabBar<T extends string>({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  tab: { paddingVertical: 4, paddingHorizontal: 12, borderBottomWidth: 2 },
+  tab: { paddingVertical: 1, paddingHorizontal: 9, borderBottomWidth: 2 },
   right: { marginLeft: 'auto' },
 });
 

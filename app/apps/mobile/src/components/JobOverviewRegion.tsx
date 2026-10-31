@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Button, colors, spacing, Text, TextField, typography } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, Text, TextField, typography } from '@jobcore/ui';
 import type { CustomerJobPlanTaskRow, JobPlanningPhoto } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanningPhotoRepository, createJobPlanTasksRepository } from '../lib/admin-finance-repos';
 import { JobDetailsForm, type JobFormValues } from './JobDetailsForm';
@@ -157,13 +157,13 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
         ))}
         <TextField dense label="Project title" value={title} onChangeText={setTitle} />
         {msg ? <Text style={styles.hint}>{msg}</Text> : null}
-        {blockedJob ? <Button size="sm" variant="outline" label={`Open Job #${blockedJob.number ?? ''}`} onPress={() => onOpenJob(blockedJob.id)} /> : null}
-        <Button size="sm" variant="outline" label={busy ? 'Starting...' : 'Start project'} disabled={busy} onPress={() => void startProject()} />
+        {blockedJob ? <PayrollButton label={`Open Job #${blockedJob.number ?? ''}`} onPress={() => onOpenJob(blockedJob.id)} /> : null}
+        <PayrollButton label={busy ? 'Starting...' : 'Start project'} disabled={busy} onPress={() => void startProject()} />
       </Section>
       <View style={styles.actions}>
-        <Button size="sm" variant="outline" label="Cancel" onPress={props.onCancel} disabled={props.saving} />
-        <Button size="sm" label={props.saving ? 'Saving...' : 'Save'} onPress={props.onSave} disabled={props.saving} />
-        {isAdmin && props.onReset ? <Button size="sm" variant="secondary" label="Reset" onPress={props.onReset} /> : null}
+        <PayrollButton label="Cancel" onPress={props.onCancel} disabled={props.saving} />
+        <PayrollButton label={props.saving ? 'Saving...' : 'Save'} onPress={props.onSave} disabled={props.saving} />
+        {isAdmin && props.onReset ? <PayrollButton label="Reset" onPress={props.onReset} /> : null}
       </View>
     </View>
   );

@@ -37,7 +37,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
-import { Button, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult, PriceSheetRate } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
@@ -340,11 +340,10 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
           placeholder="Select a service"
           onChange={setAddServiceId}
         />
-        <Button
+        <PayrollButton
           label="+ Add Task"
           onPress={() => setAddDialogVisible(true)}
           disabled={!addServiceId}
-          size="sm"
         />
       </View>
 
@@ -651,7 +650,7 @@ function RateRowsCard({
       />
       {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
       {serviceIdInput && taskOptions.length === 0 && !taskLoadError ? (
-        <Button label="+ Add Task" variant="outline" size="sm" onPress={() => setAddTaskDialogVisible(true)} />
+        <PayrollButton label="+ Add Task" onPress={() => setAddTaskDialogVisible(true)} />
       ) : null}
       <Select
         label="Timing"
@@ -675,11 +674,10 @@ function RateRowsCard({
         onChangeText={setMinutesInput}
       />
       <View style={styles.actionRow}>
-        <Button
+        <PayrollButton
           label={actionState.kind === 'loading' ? 'Saving...' : 'Save Rate'}
           onPress={() => void handleSave()}
           disabled={actionState.kind === 'loading'}
-          size="sm"
         />
       </View>
 
@@ -1124,14 +1122,12 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 
         {sheet.status === 'draft' ? (
           <View style={styles.actionRow}>
-            <Button
+            <PayrollButton
               label={busy ? 'Publishing...' : 'Publish'}
-              variant="secondary"
               onPress={() => {
                 void handlePublish(sheet);
               }}
               disabled={!publishRepo || busy}
-              size="sm"
             />
           </View>
         ) : null}
@@ -1159,11 +1155,10 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
             </Text>
             <TextInput style={styles.input} placeholder="Standard minutes" value={standardMinutesInput} onChangeText={setStandardMinutesInput} keyboardType="numeric" />
             <View style={styles.actionRow}>
-              <Button
+              <PayrollButton
                 label={standardDurationState.kind === 'working' ? 'Saving...' : 'Save Standard Duration'}
                 onPress={() => { const value = Number(standardMinutesInput); if (Number.isNaN(value) || value <= 0) return; void handleSaveStandardDuration(value); }}
                 disabled={standardDurationState.kind === 'working'}
-                size="sm"
               />
             </View>
             {standardDurationState.kind === 'failed' ? <ErrorState message={standardDurationState.message} /> : null}
@@ -1278,7 +1273,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               />
             </View>
             <View style={styles.actionRow}>
-              <Button
+              <PayrollButton
                 label={areaAdjustmentState.kind === 'working' ? 'Saving...' : 'Save'}
                 onPress={() => {
                   const pct = parseAdjustmentPercent(adjustmentValueInput);
@@ -1294,7 +1289,6 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                   void handleSaveAreaAdjustments(areaIds, adjustmentTypeInput, signedValue);
                 }}
                 disabled={areaAdjustmentState.kind === 'working'}
-                size="sm"
               />
             </View>
 

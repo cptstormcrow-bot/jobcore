@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Text } from '@jobcore/ui';
+import { PayrollButton, Text } from '@jobcore/ui';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -42,7 +42,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         <View style={styles.center}>
           <Text style={styles.title}>Something went wrong</Text>
           <Text style={styles.message}>{this.state.error.message}</Text>
-          <Button label="Go back" onPress={this.handleGoBack} />
+          <PayrollButton label="Go back" onPress={this.handleGoBack} />
         </View>
       );
     }

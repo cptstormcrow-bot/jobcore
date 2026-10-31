@@ -26,7 +26,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, Linking } from 'react-native';
-import { Card, Button, EmptyState, ScreenTitle, colors, spacing, typography, telUrl, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, typography, telUrl, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { validateQualify } from '../domain/qualify';
 import type { ServiceArea } from '../data/ports';
@@ -145,13 +145,11 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel, dis
               <Text style={styles.axisLabel}>Service Area</Text>
               <View style={styles.axisRow}>
                 {serviceAreas.map((area) => (
-                  <Button
+                  <PayrollButton
                     key={area.id}
                     label={area.name}
-                    variant={serviceAreaId === area.id ? 'primary' : 'outline'}
                     onPress={() => setServiceAreaId(area.id)}
-                    size="sm"
-                    style={styles.action}
+                    style={serviceAreaId === area.id ? styles.actionSelected : styles.action}
                   />
                 ))}
               </View>
@@ -169,8 +167,8 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel, dis
           )}
 
           <View style={styles.actions}>
-            {onCancel && <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.action} />}
-            <Button label="Qualify" onPress={handleSubmit} disabled={!canSubmit || disabled} style={styles.action} />
+            {onCancel && <PayrollButton label="Cancel" onPress={onCancel} style={styles.action} />}
+            <PayrollButton label="Qualify" onPress={handleSubmit} disabled={!canSubmit || disabled} style={styles.action} />
           </View>
         </Card>
       </ScrollView>
@@ -261,5 +259,10 @@ const styles = StyleSheet.create({
   },
   action: {
     marginLeft: spacing.sm,
+  },
+  actionSelected: {
+    marginLeft: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: '#2563eb',
   },
 });

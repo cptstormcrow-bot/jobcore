@@ -4,7 +4,7 @@ import { View, FlatList, ActivityIndicator, StyleSheet, RefreshControl, Platform
 import { router, useFocusEffect } from 'expo-router';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { ScreenTitle, colors, typography, spacing, Text, Button } from '@jobcore/ui';
+import { ScreenTitle, colors, typography, spacing, Text, PayrollButton } from '@jobcore/ui';
 import type { PremQueueItem } from '../data/ports';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { premCardAction, premReportRoute, formatNeedsPremSince } from './prem-jobs-helpers';
@@ -163,7 +163,7 @@ export function PremJobs(): React.ReactElement {
               <Text style={styles.service}>{(item.taskTitles ?? []).join(', ')}</Text>
               {since ? <Text style={styles.since}>Needs Prem since {since}</Text> : null}
             </View>
-            <Button
+            <PayrollButton
               label={premCardAction(item.claimedByMe)}
               disabled={claimingId === item.job.id}
               onPress={() => item.claimedByMe ? router.push(premReportRoute(item.job.id)) : handleClaim(item)}

@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { resetPassword } from '../src/lib/session';
 
@@ -52,7 +52,7 @@ export default function ForgotPasswordScreen() {
         nativeID="email"
         onSubmitEditing={submit}
       />
-      <Button
+      <PayrollButton
         label={busy ? 'Sending…' : 'Send reset link'}
         disabled={!canSubmit}
         onPress={submit}
@@ -76,7 +76,7 @@ export default function ForgotPasswordScreen() {
               <Text style={styles.label}>
                 If an account exists for {email.trim()}, a reset link is on its way.
               </Text>
-              <Button label="Back to sign in" onPress={() => router.replace('/sign-in')} style={styles.submit} />
+              <PayrollButton label="Back to sign in" onPress={() => router.replace('/sign-in')} style={styles.submit} />
             </>
           ) : Platform.OS === 'web' ? (
             <form
@@ -96,7 +96,7 @@ export default function ForgotPasswordScreen() {
 
         {!sent ? (
           <View style={styles.link}>
-            <Button variant="outline" size="sm" label="Back to sign in" onPress={() => router.replace('/sign-in')} />
+            <PayrollButton label="Back to sign in" onPress={() => router.replace('/sign-in')} />
           </View>
         ) : null}
 

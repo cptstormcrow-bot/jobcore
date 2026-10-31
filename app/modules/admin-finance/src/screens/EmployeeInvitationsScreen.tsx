@@ -19,7 +19,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, colors, spacing, typography } from '@jobcore/ui';
+import { PayrollButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, colors, spacing, typography } from '@jobcore/ui';
 import type { Invitation, InvitationRepository } from '../data/ports';
 import { DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -176,7 +176,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
         autoCapitalize="none"
         autoCorrect={false}
       />
-      <Button
+      <PayrollButton
         label={sending ? 'Sending...' : 'Send'}
         onPress={() => void handleSend()}
         disabled={sending}
@@ -211,10 +211,8 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
                 title={invitation.email}
                 subtitle={invitation.role}
                 right={
-                  <Button
+                  <PayrollButton
                     label="Revoke"
-                    variant="outline"
-                    size="sm"
                     onPress={() => {
                       void handleRevoke(invitation.id);
                     }}

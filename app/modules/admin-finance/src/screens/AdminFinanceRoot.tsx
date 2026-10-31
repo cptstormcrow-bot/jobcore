@@ -1477,7 +1477,7 @@ const styles = StyleSheet.create({
   flagDot: { width: 12, height: 12, borderRadius: 6 },
   overviewContent: { paddingTop: spacing.xs },
   overviewCard: {
-    minHeight: 48,
+    minHeight: 32,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
@@ -1487,6 +1487,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     justifyContent: 'center',
   },
-  overviewCardTitle: { fontSize: 15, lineHeight: 18, fontWeight: '600', color: colors.text },
+  overviewCardTitle: { fontSize: typography.size.label, lineHeight: 18, fontWeight: '600', color: colors.text },
   overviewCardSubtitle: { fontSize: 12, lineHeight: 14, color: colors.textMuted },
 });

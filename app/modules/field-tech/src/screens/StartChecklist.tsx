@@ -40,7 +40,7 @@ import { View, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
 import type { NewQueuedMutation } from '@jobcore/core';
-import { ScreenTitle, Button, Checkbox, colors, spacing, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, Checkbox, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -231,11 +231,11 @@ export function StartChecklist({ job, onDone }: StartChecklistProps): JSX.Elemen
       ) : null}
 
       {!enRoute ? (
-        <Button label="On my way" onPress={handleOnMyWay} style={styles.button} />
+        <PayrollButton label="On my way" onPress={handleOnMyWay} style={styles.button} />
       ) : null}
 
       {enRoute && instance === null ? (
-        <Button label="Start" onPress={handleStart} style={styles.button} />
+        <PayrollButton label="Start" onPress={handleStart} style={styles.button} />
       ) : null}
 
       {instance !== null ? (
@@ -246,7 +246,7 @@ export function StartChecklist({ job, onDone }: StartChecklistProps): JSX.Elemen
 
           <View style={styles.section}>
             <Text style={styles.body}>Before photos captured: {beforePhotoCount}</Text>
-            <Button
+            <PayrollButton
               label="Capture before-photo"
               onPress={() => {
                 void (async () => {
@@ -274,7 +274,7 @@ export function StartChecklist({ job, onDone }: StartChecklistProps): JSX.Elemen
             ))}
           </View>
 
-          <Button
+          <PayrollButton
             label={submitting ? 'Submitting…' : 'Submit'}
             disabled={submitting}
             onPress={handleSubmit}

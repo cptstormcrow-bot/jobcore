@@ -18,7 +18,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobDraft } from '../domain/qualify';
 import { getModuleSession } from '../lib/module-session';
@@ -121,8 +121,8 @@ export function JobCreateScreen({ onCreated, onCancel }: JobCreateScreenProps) {
           {submitError && <Text style={styles.errorText}>{submitError}</Text>}
 
           <View style={styles.actions}>
-            {onCancel && <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.action} />}
-            <Button
+            {onCancel && <PayrollButton label="Cancel" onPress={onCancel} style={styles.action} />}
+            <PayrollButton
               label={submitting ? 'Creating...' : 'Create job'}
               onPress={() => {
                 void handleSubmit();

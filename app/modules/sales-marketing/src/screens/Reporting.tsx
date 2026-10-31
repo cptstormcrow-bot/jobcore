@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   notice: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.sand,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.primary,
     borderRadius: 8,

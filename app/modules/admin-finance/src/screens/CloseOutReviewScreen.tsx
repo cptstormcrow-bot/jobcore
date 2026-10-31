@@ -36,7 +36,7 @@ import React, { useMemo, useState, type ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, Button, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 import type { JobTimelineItem } from '../domain/job-timeline';
 
@@ -179,12 +179,11 @@ export function CloseOutReviewScreen({
         {readOnly ? <Text style={styles.body}>Closed</Text> : null}
         {!readOnly ? (
           <View style={styles.actionRow}>
-            <Button label="Add photo" onPress={() => onAddPhoto?.()} variant="secondary" size="sm" />
-            <Button
+            <PayrollButton label="Add photo" onPress={() => onAddPhoto?.()} />
+            <PayrollButton
               label="Close out job"
               onPress={() => onCloseOut?.(job)}
               disabled={blockers.length > 0}
-              size="sm"
             />
           </View>
         ) : null}

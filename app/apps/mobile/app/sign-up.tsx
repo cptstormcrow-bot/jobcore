@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { signUp } from '../src/lib/session';
 
@@ -80,7 +80,7 @@ export default function SignUpScreen() {
             </Pressable>
           </View>
 
-          <Button
+          <PayrollButton
             label={busy ? 'Signing up…' : 'Sign up'}
             disabled={!canSubmit}
             onPress={() => void handleSubmit()}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
 import { Text } from '../Text';
-import { Button, colors, spacing, typography } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, typography } from '@jobcore/ui';
 
 import { useWalkthrough } from './WalkthroughProvider';
 import { WALKTHROUGH_STEPS } from './walkthrough-content';
@@ -35,15 +35,15 @@ export function WalkthroughOverlay() {
           )}
 
           <View style={styles.buttonRow}>
-            <Button label="Skip" variant="outline" onPress={skip} />
+            <PayrollButton label="Skip" onPress={skip} />
             <View style={styles.buttonRowRight}>
               {!isInfo && !isFirst && (
-                <Button label="Back" variant="outline" onPress={prev} />
+                <PayrollButton label="Back" onPress={prev} />
               )}
               {isInfo || isLast ? (
-                <Button label="Finish" variant="primary" onPress={finish} />
+                <PayrollButton label="Finish" onPress={finish} />
               ) : (
-                <Button label="Next" variant="primary" onPress={next} />
+                <PayrollButton label="Next" onPress={next} />
               )}
             </View>
           </View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View, StyleSheet, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { Text } from './Text';
+import { TruncatedText } from './TruncatedText';
 import { colors, spacing, typography } from './tokens';
 
 export interface ListItemProps {
@@ -39,9 +40,9 @@ export function ListItem({ title, subtitle, overline, footer, onPress, right, ce
         style={sideBySide ? [styles.main, styles.mainWithCenter] : styles.main}
       >
         <View style={styles.content}>
-          {overline ? <Text style={styles.overline}>{overline}</Text> : null}
-          <Text style={styles.title}>{title}</Text>
-          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          {overline ? <TruncatedText style={styles.overline}>{overline}</TruncatedText> : null}
+          <TruncatedText style={styles.title}>{title}</TruncatedText>
+          {subtitle ? <TruncatedText style={styles.subtitle}>{subtitle}</TruncatedText> : null}
           {footer ? (
             footerLines !== undefined ? (
               <Text style={styles.footer} numberOfLines={footerLines} ellipsizeMode="tail">
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.md,
-    minHeight: 44,
+    minHeight: 32,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
   content: { flexShrink: 1 },
   title: {
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
   },

@@ -20,7 +20,7 @@
 import * as React from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { ScreenTitle, Toggle, Button, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, Toggle, PayrollButton, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
@@ -141,7 +141,7 @@ export function CallbackTasks(): React.ReactElement {
                   Open job{item.openJobNumber != null ? ` #${item.openJobNumber}` : ''} in progress
                 </Text>
               ) : (
-              <Button
+              <PayrollButton
                 label={markingIds.has(item.jobId) ? 'Marking…' : 'Mark Called Back'}
                 disabled={markingIds.has(item.jobId)}
                 onPress={() => handleMarkCalledBack(item)}
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   customerName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
   meta: {

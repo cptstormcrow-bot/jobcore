@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import type { NewLeadDraft } from '../domain/intake-normalize';
 import { DEFAULT_AXIS_VALUES } from '../domain/intake-normalize';
@@ -180,8 +180,8 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
           {submitError && <Text style={styles.errorText}>{submitError}</Text>}
 
           <View style={styles.actions}>
-            {onCancel && <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.action} />}
-            <Button
+            {onCancel && <PayrollButton label="Cancel" onPress={onCancel} style={styles.action} />}
+            <PayrollButton
               label={submitting ? 'Creating...' : 'Create lead'}
               onPress={() => {
                 void handleSubmit();

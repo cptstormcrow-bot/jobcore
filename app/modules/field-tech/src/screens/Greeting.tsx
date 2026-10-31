@@ -24,7 +24,7 @@
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -111,22 +111,19 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
           </Text>
         ) : null}
         <View style={styles.buttonRow}>
-          <Button
+          <PayrollButton
             label="Back"
-            variant="outline"
             disabled={submitting}
             onPress={() => {
               setShowDeclineForm(false);
               setReason('');
               setError(null);
             }}
-            style={styles.button}
           />
-          <Button
+          <PayrollButton
             label={submitting ? 'Submitting…' : 'Submit decline'}
             disabled={!canSubmitDecline}
             onPress={handleDeclineSubmit}
-            style={styles.button}
           />
         </View>
       </View>
@@ -138,8 +135,8 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
       <ScreenTitle title="New Job Assigned" />
       <Text style={styles.body}>You&apos;ve been assigned a new job.</Text>
       <View style={styles.buttonRow}>
-        <Button label="Accept" onPress={handleAccept} style={styles.button} />
-        <Button label="Decline" variant="outline" onPress={() => setShowDeclineForm(true)} style={styles.button} />
+        <PayrollButton label="Accept" onPress={handleAccept} />
+        <PayrollButton label="Decline" onPress={() => setShowDeclineForm(true)} />
       </View>
     </View>
   );

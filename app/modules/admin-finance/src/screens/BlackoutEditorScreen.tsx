@@ -24,7 +24,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { addDays, addMonths, format } from 'date-fns';
-import { Button, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing } from '@jobcore/ui';
+import { PayrollButton, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing } from '@jobcore/ui';
 import type { TimeOffEvent } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffAdminRepo, TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -240,7 +240,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
           {cancelError ? <ErrorState message={cancelError} /> : null}
         </View>
 
-        <Button
+        <PayrollButton
           label="Done"
           onPress={() => (savedThisVisit ? onSaved?.() : onCancel?.())}
           style={styles.action}

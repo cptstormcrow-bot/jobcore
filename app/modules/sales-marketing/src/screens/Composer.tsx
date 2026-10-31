@@ -49,7 +49,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
-import { ScreenTitle, colors, Text, Button } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, PayrollButton } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -408,7 +408,7 @@ export function Composer({
       {error !== null ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {!approved ? (
-        <Button
+        <PayrollButton
           label={busy ? 'Approving…' : 'Approve draft'}
           onPress={() => void handleApprove()}
           disabled={busy || draftId === null}
@@ -420,8 +420,8 @@ export function Composer({
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Manual export (always available)</Text>
-        <Button
-          label={busy ? 'Exporting…' : 'Export images, copy caption, share'}
+        <PayrollButton
+          label={busy ? 'Exporting…' : 'Export & share'}
           onPress={() => void handleManualExport()}
           disabled={!approved || busy}
         />
@@ -432,8 +432,8 @@ export function Composer({
         <Text style={styles.sectionTitle}>Direct post</Text>
         {metaEnabled ? (
           <>
-            <Button
-              label={busy ? 'Posting…' : 'Post directly via Meta'}
+            <PayrollButton
+              label={busy ? 'Posting…' : 'Post to Meta'}
               onPress={() => void handleDirectPost()}
               disabled={!approved || busy}
             />

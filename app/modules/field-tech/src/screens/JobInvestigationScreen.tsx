@@ -18,7 +18,7 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, Button, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto, JobEstimate, JobEstimateInput } from '../data/ports';
 import { trackingResultToPatch, trackingStatusLine } from './tracking-helpers';
@@ -315,7 +315,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
   return (
     <View style={styles.container}>
-      {!embedded && onBack ? <Button label="Back to Job" onPress={onBack} variant="primary" size="sm" /> : null}
+      {!embedded && onBack ? <PayrollButton label="Back to Job" onPress={onBack} /> : null}
       {!embedded && <ScreenTitle title="Prelim #0061" />}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       {!embedded && (
@@ -343,17 +343,15 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       )}
       <View style={styles.cardActions}>
         <View style={styles.actionCell}>
-          <Button label="Add photo" onPress={() => void handleAddPhoto()} variant="primary" size="sm" />
+          <PayrollButton label="Add photo" onPress={() => void handleAddPhoto()} />
         </View>
         <View style={styles.actionCell}>
-          <Button label="Save Draft" onPress={handleSaveDraft} variant="primary" size="sm" disabled={saving} />
+          <PayrollButton label="Save Draft" onPress={handleSaveDraft} disabled={saving} />
         </View>
         <View style={styles.actionCell}>
-          <Button
+          <PayrollButton
             label="Submit"
             onPress={handleSubmit}
-            variant="primary"
-            size="sm"
             disabled={saving || Boolean(investigation?.submittedAt)}
           />
         </View>
@@ -381,9 +379,8 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
             disabled={saving}
             style={styles.trackingField}
           />
-          <Button
+          <PayrollButton
             label={checkingUps ? 'Checking...' : 'Check UPS'}
-            size="sm"
             onPress={() => {
               void handleCheckUps();
             }}
@@ -452,7 +449,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
         <Text style={styles.label}>Before photos are recommended.</Text>
         {photos.map((photo) => (
           <View key={photo.id} style={styles.card}>
-            <Button label="Delete" onPress={() => void handleRemovePhoto(photo.id)} variant="primary" size="sm" />
+            <PayrollButton label="Delete" onPress={() => void handleRemovePhoto(photo.id)} />
             {photo.url ? <Image source={{ uri: photo.url }} style={styles.thumb} /> : <Text style={styles.value}>Photo unavailable</Text>}
           </View>
         ))}

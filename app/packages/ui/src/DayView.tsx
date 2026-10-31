@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
     marginBottom: 2,
   },
-  highlight: { borderWidth: 2, borderColor: colors.gold },
+  highlight: { borderWidth: 2, borderColor: colors.sand },
   cardTime: { fontWeight: '600' },
   cardAddress: { color: colors.textMuted },
 });

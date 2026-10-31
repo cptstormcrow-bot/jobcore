@@ -19,7 +19,7 @@ import { View, TextInput, FlatList, StyleSheet } from 'react-native';
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { Button, colors, Text } from '@jobcore/ui';
+import { PayrollButton, colors, Text } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -165,11 +165,10 @@ export function Reimbursements(): React.ReactElement {
           editable={!submitting}
         />
         {submitError !== null ? <Text style={styles.errorText}>{submitError}</Text> : null}
-        <Button
+        <PayrollButton
           label={submitting ? 'Submitting…' : 'Submit request'}
           disabled={!canSubmit}
           onPress={handleSubmit}
-          fullWidth
           style={styles.submitButton}
         />
       </View>

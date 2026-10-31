@@ -29,7 +29,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, Button, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
@@ -278,7 +278,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                         <Text style={styles.modalTimeOffText}>{event.description ?? 'Day off'}</Text>
                       </View>
                     ))}
-                  <Button label="Close" style={styles.modalCloseButton} onPress={() => setSelectedDay(null)} />
+                  <PayrollButton label="Close" style={styles.modalCloseButton} onPress={() => setSelectedDay(null)} />
                 </>
               ) : null}
             </ScrollView>
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   address: {
-    fontSize: 16,
+    fontSize: typography.size.label,
     fontWeight: '600',
   },
   window: {

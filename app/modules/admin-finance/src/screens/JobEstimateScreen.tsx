@@ -23,7 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import { PayrollButton } from '@jobcore/ui';
 import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
 import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
@@ -936,9 +936,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       {!embedded ? tabBar : null}
       <Root {...rootProps}>
         {!embedded && (
-          <Button
+          <PayrollButton
             label={onBack ? 'Back to Job' : 'Estimate'}
-            size="sm"
             onPress={() => onBack?.()}
             disabled={!onBack}
             style={styles.action}
@@ -1012,9 +1011,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               />
             ) : null}
             {editable ? (
-              <Button
+              <PayrollButton
                 label={checkingUps ? 'Checking...' : 'Check UPS'}
-                size="sm"
                 onPress={() => {
                   void runTrackingLookup(trackingInput);
                 }}
@@ -1088,9 +1086,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 />
               ))}
               {editable ? (
-                <Button
-                  label={busy ? 'Building...' : 'Build lines from tasks'}
-                  size="sm"
+                <PayrollButton
+                  label={busy ? 'Building...' : 'Build from tasks'}
                   onPress={() => {
                     void handleBuildFromTasks();
                   }}
@@ -1125,8 +1122,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 />
                 {editable ? (
                   <>
-                    <Button label="Edit" size="sm" onPress={() => editContingency(index)} disabled={busy} style={styles.action} />
-                    <Button label="Delete" size="sm" onPress={() => removeContingency(index)} disabled={busy} style={styles.action} />
+                    <PayrollButton label="Edit" onPress={() => editContingency(index)} disabled={busy} style={styles.action} />
+                    <PayrollButton label="Delete" onPress={() => removeContingency(index)} disabled={busy} style={styles.action} />
                   </>
                 ) : null}
               </View>
@@ -1149,17 +1146,16 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
-              <Button
+              <PayrollButton
                 label={contingencyForm.index === null ? 'Add contingency' : 'Save'}
-                size="sm"
                 onPress={saveContingencyForm}
                 disabled={busy || contingencyForm.description.trim() === ''}
                 style={styles.action}
               />
               {contingencyForm.index !== null ? (
-                <Button label="Cancel" size="sm" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
+                <PayrollButton label="Cancel" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
               ) : (
-                <Button label="Add another" size="sm" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
+                <PayrollButton label="Add another" onPress={resetContingencyForm} disabled={busy} style={styles.action} />
               )}
             </>
           ) : null}
@@ -1273,7 +1269,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                       disabled={busy}
                     />
                     <PayrollButton
-                      label="Save to price sheet"
+                      label="Save to sheet"
                       onPress={() => {
                         void saveEdit(item, 'catalog');
                       }}
@@ -1379,24 +1375,20 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             <Text style={styles.heading}>{ESTIMATE_LABELS.finePrint}</Text>
             {editable && !editingTemplate ? (
               <View style={styles.finePrintActions}>
-                <Button
-                  label="Edit Fine Print Template"
-                  size="sm"
+                <PayrollButton
+                  label="Edit Template"
                   onPress={() => {
                     setTemplateInput(templateText ?? '');
                     setEditingTemplate(true);
                   }}
                   disabled={busy}
-                  style={styles.buttonFlex}
                 />
-                <Button
+                <PayrollButton
                   label="Reset to default"
-                  size="sm"
                   onPress={() => {
                     void resetTemplate();
                   }}
                   disabled={busy}
-                  style={styles.buttonFlex}
                 />
               </View>
             ) : null}
@@ -1430,22 +1422,17 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                     style={styles.field}
                   />
                   <View style={styles.buttonRow}>
-                    <Button
+                    <PayrollButton
                       label="Save template"
-                      variant="primary"
-                      size="sm"
                       onPress={() => {
                         void saveTemplate();
                       }}
                       disabled={busy}
-                      style={styles.buttonFlex}
                     />
-                    <Button
+                    <PayrollButton
                       label="Cancel"
-                      size="sm"
                       onPress={() => setEditingTemplate(false)}
                       disabled={busy}
-                      style={styles.buttonFlex}
                     />
                   </View>
                 </>
@@ -1471,9 +1458,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         )}
 
         {estimate?.pdfDelivery ? (
-          <Button
-            label="Print / Save as PDF"
-            size="sm"
+          <PayrollButton
+            label="Print / PDF"
             onPress={handlePrint}
             disabled={Platform.OS !== 'web'}
             style={styles.action}

@@ -36,7 +36,7 @@
 
 import * as React from 'react';
 import { View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { Button, ScreenTitle, colors, Text } from '@jobcore/ui';
+import { PayrollButton, ScreenTitle, colors, Text } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
@@ -242,8 +242,8 @@ export function ReviewLibrary(): React.ReactElement {
                 <Text style={styles.meta}>
                   {item.platform} · job {item.jobId} · {item.submittedAt}
                 </Text>
-                <Button
-                  label={curatedIds.has(item.id) ? 'Curated as testimonial' : 'Curate as testimonial'}
+                <PayrollButton
+                  label={curatedIds.has(item.id) ? 'Curated' : 'Curate'}
                   disabled={curatedIds.has(item.id)}
                   onPress={() => handleCurate(item)}
                   style={styles.curateButton}

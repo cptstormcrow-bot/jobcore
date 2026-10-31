@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, Button, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheetDraft } from '../data/ports';
 import type { PriceSheet } from '../money/types';
 import { getModuleSession } from '../lib/module-session';
@@ -87,8 +87,8 @@ export function PriceSheetCreateScreen({ onCreated, onCancel }: PriceSheetCreate
           {submitError && <Text style={styles.errorText}>{submitError}</Text>}
 
           <View style={styles.actions}>
-            {onCancel && <Button label="Cancel" variant="outline" onPress={onCancel} style={styles.action} />}
-            <Button
+            {onCancel && <PayrollButton label="Cancel" onPress={onCancel} style={styles.action} />}
+            <PayrollButton
               label={submitting ? 'Creating...' : 'Create price sheet'}
               onPress={() => {
                 void handleSubmit();

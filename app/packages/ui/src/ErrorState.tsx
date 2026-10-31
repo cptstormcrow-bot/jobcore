@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, typography } from './tokens';
-import { Button } from './Button';
+import { PayrollButton } from './PayrollButton';
 
 export interface ErrorStateProps {
   title?: string;
@@ -37,9 +37,8 @@ export function ErrorState({ title = 'Something went wrong', message, onRetry, s
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.message}>{message}</Text> : null}
       {onRetry ? (
-        <Button
+        <PayrollButton
           label={retrying ? 'Retrying…' : 'Try again'}
-          variant="secondary"
           onPress={handleRetry}
           disabled={retrying}
           style={styles.retry}

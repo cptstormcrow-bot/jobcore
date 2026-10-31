@@ -338,7 +338,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   return (
     <>
     {photoError ? <Text style={{ color: colors.danger, padding: spacing.sm }}>{photoError}</Text> : null}
-    {photoError?.startsWith('No compensation policy') ? <PayrollButton label="Open Compensation Policy" onPress={() => router.push(`/m/admin-finance?view=compensationPolicy&ts=${Date.now()}` as never)} /> : null}
+    {photoError?.startsWith('No compensation policy') ? <PayrollButton label="Compensation Policy" onPress={() => router.push(`/m/admin-finance?view=compensationPolicy&ts=${Date.now()}` as never)} /> : null}
     <CloseOutReviewScreen
       embedded
       readOnly={isClosedJob}

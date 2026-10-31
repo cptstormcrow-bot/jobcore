@@ -32,7 +32,7 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       testID={testID}
       style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, style]}
     >
-      <Text style={[styles.text, textStyle]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.text, tone === 'danger' ? { color: colors.white } : null, textStyle]}>{label}</Text>
     </Pressable>
   );
 }
@@ -43,16 +43,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 32,
-    paddingHorizontal: 14,
+    height: 28,
+    paddingHorizontal: 10,
     borderRadius: 6,
     backgroundColor: colors.sand,
   },
-  disabled: { backgroundColor: colors.sandInactive },
+  disabled: { backgroundColor: colors.sandDisabled },
   text: {
     color: '#000',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 16,
     fontWeight: '700',
     textAlign: 'center',
     includeFontPadding: false,

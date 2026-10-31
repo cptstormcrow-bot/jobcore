@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
-import { Button, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
 export interface PaymentSimulationNoticeProps {
   visible: boolean;
@@ -55,15 +55,15 @@ export function PaymentSimulationNotice({
           </Text>
 
           <View style={styles.buttonRow}>
-            <Button
+            <PayrollButton
               label="Cancel"
-              variant="outline"
+              textStyle={{ fontWeight: '700' }}
               onPress={onCancel}
               disabled={acknowledging}
             />
-            <Button
-              label={acknowledging ? 'Acknowledging…' : 'Acknowledge & Mark Paid'}
-              variant="primary"
+            <PayrollButton
+              label={acknowledging ? 'Acknowledging…' : 'Acknowledge'}
+              textStyle={{ fontWeight: '700' }}
               onPress={handleAcknowledge}
               disabled={acknowledging}
             />

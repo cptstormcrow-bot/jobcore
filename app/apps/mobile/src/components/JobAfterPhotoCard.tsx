@@ -157,7 +157,7 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
       ))}
       {full ? <Text>Maximum of {MAX_AFTER_PHOTOS} after photos reached.</Text> : null}
       <View style={styles.row}>
-        <PayrollButton label="Capture After-photo" onPress={() => addNew('camera')} disabled={locked || full} />
+        <PayrollButton label="Take Photo" onPress={() => addNew('camera')} disabled={locked || full} />
         <PayrollButton label="Choose Photo" onPress={() => addNew('library')} disabled={locked || full} />
       </View>
     </Card>

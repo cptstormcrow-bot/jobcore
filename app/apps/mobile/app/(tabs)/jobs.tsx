@@ -7,7 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { AppChrome, Button, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
+import { AppChrome, PayrollButton, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { JobDetail } from '../../src/components/JobDetail';
 import { useSession } from '../../src/lib/session';
@@ -141,7 +141,7 @@ export default function JobsScreen() {
           titleBar={{ title: 'Jobs' }}
         />
         <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-        <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
+        <PayrollButton label="New job" onPress={() => router.push('/job/new')} />
         <EmptyState title="Jobs" message="No job selected. The job list lands in a later slice." />
       </View>
     );
@@ -158,7 +158,7 @@ export default function JobsScreen() {
       />
       <StaleDataHint queries={['app.jobs.']} />
       <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-      <Button label="New job" size="sm" onPress={() => router.push('/job/new')} />
+      <PayrollButton label="New job" onPress={() => router.push('/job/new')} />
       <JobDetail job={selectedJob} />
     </View>
   );

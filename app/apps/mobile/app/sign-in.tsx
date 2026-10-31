@@ -4,7 +4,7 @@ import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { Button, Card, ErrorState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { signIn } from '../src/lib/session';
 
@@ -171,7 +171,7 @@ export default function SignInScreen() {
         <Text style={styles.passwordToggleText}>Forgot password?</Text>
       </Pressable>
 
-      <Button
+      <PayrollButton
         label={busy ? 'Signing in…' : 'Sign in'}
         disabled={!canSubmit}
         onPress={submit}
@@ -206,9 +206,7 @@ export default function SignInScreen() {
         </Card>
 
         <View style={styles.signUpLink}>
-          <Button
-            variant="outline"
-            size="sm"
+          <PayrollButton
             label="Create an account"
             onPress={() => router.push('/sign-up')}
           />

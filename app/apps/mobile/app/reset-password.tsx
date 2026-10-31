@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Button, Card, ErrorState, LoadingState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { Card, ErrorState, PayrollButton, LoadingState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
 
 import { supabase } from '../src/lib/supabase';
 
@@ -103,7 +103,7 @@ export default function ResetPasswordScreen() {
       />
       {mismatch ? <Text style={styles.hint}>Passwords do not match.</Text> : null}
 
-      <Button
+      <PayrollButton
         label={busy ? 'Saving…' : 'Set new password'}
         disabled={!canSubmit}
         onPress={submit}
@@ -140,7 +140,7 @@ export default function ResetPasswordScreen() {
         ) : expired ? (
           <Card style={styles.card}>
             <Text style={styles.label}>This reset link is invalid or expired</Text>
-            <Button
+            <PayrollButton
               label="Request a new link"
               onPress={() => router.replace('/forgot-password')}
               style={styles.submit}

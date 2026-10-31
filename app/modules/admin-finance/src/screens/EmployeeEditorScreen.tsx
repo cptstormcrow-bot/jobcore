@@ -34,7 +34,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, PayrollButton, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, PayrollButton, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -580,9 +580,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       <ScreenTitle title={isEditMode ? 'Edit Employee' : 'Add Employee'} />
       <View style={styles.topBar}>
         <View style={styles.topRow}>
-          <Button
+          <PayrollButton
             label={busy ? 'Saving...' : 'Save'}
-            variant="primary"
             onPress={() => {
               if (isEditMode) {
                 void handleUpdate();
@@ -591,17 +590,14 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               }
             }}
             disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository) || privateState === 'loading'}
-            style={styles.topButton}
           />
           {activeTab === 'skills' && isEditMode ? (
             <PayrollButton label="Add Skills" onPress={() => setShowAddSkill((v) => !v)} style={styles.addSkillBtn} />
           ) : null}
-          <Button
+          <PayrollButton
             label="Cancel"
-            variant="outline"
             onPress={handleCancel}
             disabled={!onCancel}
-            style={styles.topButton}
           />
         </View>
         {showAddSkill && activeTab === 'skills' && isEditMode ? (
@@ -620,29 +616,24 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           <View style={styles.confirmRow}>
             <Text style={styles.heading}>Discard changes?</Text>
             <View style={styles.topRow}>
-              <Button
+              <PayrollButton
                 label="Keep editing"
-                variant="outline"
                 onPress={() => setConfirmDiscard(false)}
-                style={styles.topButton}
               />
-              <Button
+              <PayrollButton
                 label="Discard"
-                variant="primary"
                 onPress={() => {
                   setConfirmDiscard(false);
                   onCancel?.();
                 }}
-                style={styles.topButton}
               />
             </View>
           </View>
         ) : null}
         {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
         {actionState.kind === 'failed' && duplicateConflict ? (
-          <Button
-            label="Revoke pending invitation & resend"
-            variant="outline"
+          <PayrollButton
+            label="Revoke & resend"
             onPress={() => {
               void handleRevokeAndResend();
             }}
@@ -667,7 +658,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               autoCapitalize="none"
               autoCorrect={false}
             />
-            <Button
+            <PayrollButton
               label={emailActionState.kind === 'working' ? 'Changing...' : 'Change email'}
               onPress={() => {
                 void handleEmailChange();

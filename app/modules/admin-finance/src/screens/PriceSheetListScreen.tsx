@@ -28,7 +28,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus } from '../money/types';
 import type { PriceSheetRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -131,7 +131,7 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
       <View style={styles.screen}>
         <EmptyState title="Price Sheets" message="This organization has no price sheets on file." />
         {onCreateNew && (
-          <Button label="Create price sheet" onPress={onCreateNew} style={styles.createButton} />
+          <PayrollButton label="Create price sheet" onPress={onCreateNew} style={styles.createButton} />
         )}
       </View>
     );
@@ -149,7 +149,7 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
         <ScreenTitle title="Price Sheets" />
         {onCreateNew && (
           <View style={styles.toolbar}>
-            <Button label="Create price sheet" onPress={onCreateNew} />
+            <PayrollButton label="Create price sheet" onPress={onCreateNew} />
           </View>
         )}
         {groups.map(({ status, label }) => {

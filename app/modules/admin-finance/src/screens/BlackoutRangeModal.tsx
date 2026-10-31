@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { Button, DateRangeCalendar, TechSelect, TextField, colors } from '@jobcore/ui';
+import { PayrollButton, DateRangeCalendar, TechSelect, TextField, colors } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 
@@ -91,12 +91,11 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
               />
               {error !== null ? <Text style={styles.error}>{error}</Text> : null}
               <View style={styles.buttons}>
-                <Button label="Cancel" variant="outline" onPress={onCancel} disabled={busy} style={styles.button} />
-                <Button
+                <PayrollButton label="Cancel" onPress={onCancel} disabled={busy} />
+                <PayrollButton
                   label={busy ? 'Saving…' : 'Save'}
                   disabled={!canSave}
                   onPress={() => onSave(techId, { startDate, endDate, reason })}
-                  style={styles.button}
                 />
               </View>
             </ScrollView>

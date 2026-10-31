@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, StyleSheet, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { AppChrome, Card, Button, LoadingState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { AppChrome, Card, PayrollButton, LoadingState, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { useSession, signOut } from '../src/lib/session';
@@ -47,7 +47,7 @@ export default function AccountScreen() {
       await signOut();
       router.replace('/sign-in');
     };
-    const title = 'Sign in as someone else';
+    const title = 'Switch user';
     const body = 'This will sign you out and return to the sign-in screen.';
 
     if (Platform.OS === 'web') {
@@ -82,13 +82,10 @@ export default function AccountScreen() {
             {profile.fullName} · {profile.role}
           </Text>
           <View style={styles.actions}>
-            <Button label="Sign out" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSignOut} />
-            <Button label="Sign in as someone else" variant="accent" size="tab" style={styles.actionBtn} onPress={confirmSwitchUser} />
-            <Button
+            <PayrollButton label="Sign out" onPress={confirmSignOut} />
+            <PayrollButton label="Switch user" onPress={confirmSwitchUser} />
+            <PayrollButton
               label={failedCount > 0 ? `Sync issues (${failedCount})` : 'Sync issues'}
-              variant="accent"
-              size="tab"
-              style={styles.actionBtn}
               onPress={() => router.push('/sync-issues' as never)}
             />
           </View>

@@ -9,7 +9,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Button, Text, colors, spacing, typography, radius } from '@jobcore/ui';
+import { PayrollButton, Text, colors, spacing, typography, radius } from '@jobcore/ui';
 
 export type AccordionEditRowProps = {
   title: string;
@@ -135,21 +135,17 @@ export function AccordionEditRow({
 
           <View style={styles.actions}>
             {onDelete ? (
-              <Button
+              <PayrollButton
                 label={busy ? busyLabel : confirmDelete ? 'Confirm delete' : 'Delete'}
                 onPress={handleDeletePress}
-                variant="outline"
-                size="sm"
                 disabled={busy}
-                style={confirmDelete ? styles.dangerOutline : undefined}
+                tone={confirmDelete ? 'danger' : 'default'}
               />
             ) : null}
-            <Button label="Cancel" onPress={handleCancel} variant="secondary" size="sm" disabled={busy} />
-            <Button
+            <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} />
+            <PayrollButton
               label={pending === 'save' ? busyLabel : 'Save'}
               onPress={handleSave}
-              variant="primary"
-              size="sm"
               disabled={busy || saveDisabled}
             />
           </View>

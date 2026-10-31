@@ -1,5 +1,6 @@
 export * from './tokens';
 export * from './Text';
+export * from './TruncatedText';
 export * from './Button';
 export { EstimateStatusControl } from './EstimateStatusControl';
 export type { EstimateStatusControlProps, EstimateStatusChoice } from './EstimateStatusControl';

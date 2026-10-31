@@ -2,7 +2,7 @@
 // JobCore #0056 - Add Blackout time-off list (presentational)
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Button, Card, ListItem, colors, spacing } from '@jobcore/ui';
+import { PayrollButton, Card, ListItem, colors, spacing } from '@jobcore/ui';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 
 export type BlackoutTimeOffListProps = {
@@ -25,7 +25,7 @@ export function BlackoutTimeOffList({ rows, techNameById, cancellingId, highligh
           <View key={row.id} style={[styles.row, highlightId === row.id ? styles.highlight : null]}>
             <ListItem title={techNameById[row.techId] ?? 'Unknown tech'} subtitle={subtitle} />
             {cancellable ? (
-              <Button
+              <PayrollButton
                 label={cancelling ? 'Cancelling...' : 'Cancel'}
                 onPress={() => onCancel(row.id)}
                 disabled={cancelling}

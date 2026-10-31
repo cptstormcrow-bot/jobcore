@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { Button, EmptyState, PayrollButton, colors } from '@jobcore/ui';
+import { EmptyState, PayrollButton, colors } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
@@ -234,12 +234,11 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {METHOD_CHIP_ORDER.map((m) => (
-            <Button
+            <PayrollButton
               key={m}
               label={PAYMENT_METHOD_LABELS[m]}
-              size="sm"
-              variant={method === m ? 'primary' : 'outline'}
               onPress={() => setMethod(m)}
+              style={method === m ? { borderBottomWidth: 2, borderBottomColor: '#2563eb' } : undefined}
             />
           ))}
         </View>
@@ -307,10 +306,10 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
               <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'✓ Paid'}</Text>
             </View>
           ) : (
-            <Button
-              label={`Confirm Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
-              variant="primary"
+            <PayrollButton
+              label={`Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
               disabled={!enabled || balance <= 0 || cashInvalid}
+              textStyle={{ fontWeight: '700' }}
               onPress={() => record(method)}
             />
           )}

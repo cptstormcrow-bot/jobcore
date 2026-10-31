@@ -12,7 +12,7 @@ import {
 import {
   AppChrome,
   Card,
-  Button,
+  PayrollButton,
   ErrorState,
   LoadingState,
   colors,
@@ -156,7 +156,7 @@ export default function ProfileScreen() {
           <Text style={[styles.value, styles.role]}>{role}</Text>
           <Text style={styles.note}>Only an admin can change roles.</Text>
 
-          <Button
+          <PayrollButton
             label={detailsBusy ? 'Saving…' : 'Save details'}
             disabled={detailsBusy}
             onPress={() => void handleSaveDetails()}
@@ -218,7 +218,7 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          <Button
+          <PayrollButton
             label={busy ? 'Updating…' : 'Update password'}
             disabled={busy}
             onPress={() => void handleSubmit()}

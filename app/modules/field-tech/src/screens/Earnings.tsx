@@ -35,7 +35,7 @@
 import { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import type { Job, PayPeriod, BonusRule, Commission, Reimbursement, CloseOut, DerivedHours } from '@jobcore/core';
-import { ScreenTitle, Button, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -225,7 +225,7 @@ export function Earnings({
           </Text>
         ) : null}
         {submitted ? <Text style={styles.body}>Dispute recorded.</Text> : null}
-        <Button
+        <PayrollButton
           label={submitting ? 'Submitting…' : 'Submit dispute'}
           onPress={() => void handleSubmitDispute()}
           disabled={!canSubmitDispute}

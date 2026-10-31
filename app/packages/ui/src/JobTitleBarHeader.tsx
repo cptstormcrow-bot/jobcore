@@ -7,6 +7,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View, StyleSheet } from 'react-native';
 import { Text } from './Text';
+import { TruncatedText } from './TruncatedText';
 import { colors, radius, spacing, typography } from './tokens';
 
 export type JobTitleBarHeaderProps = {
@@ -83,9 +84,9 @@ export function JobTitleBarHeader({
   const content = (
     <View style={styles.root}>
       <View style={styles.nameRow}>
-        <Text style={styles.name} numberOfLines={2}>
+        <TruncatedText style={styles.name}>
           {customerName ?? 'Unknown Customer'}
-        </Text>
+        </TruncatedText>
         {code ? (
           <Pressable
             accessibilityRole="button"
@@ -131,13 +132,13 @@ export function JobTitleBarHeader({
   const body = threePart ? (
     <View style={styles.threeRow}>
       <View style={styles.leftCol}>
-        <Text style={styles.jobLine} numberOfLines={1}>
+        <TruncatedText style={styles.jobLine}>
           {jobLine}
-        </Text>
+        </TruncatedText>
         {dateLine ? (
-          <Text style={styles.sideText} numberOfLines={1}>
+          <TruncatedText style={styles.sideText}>
             {dateLine}
-          </Text>
+          </TruncatedText>
         ) : null}
       </View>
       <View style={styles.centreCol}>{content}</View>
@@ -187,22 +188,22 @@ const styles = StyleSheet.create({
   centreCol: { flexShrink: 0, maxWidth: '60%', alignItems: 'center' },
   rightCol: { flex: 1, alignItems: 'center' },
   jobLine: {
-    fontSize: typography.size.small,
+    fontSize: 11,
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
     color: colors.text,
   },
-  sideText: { fontSize: typography.size.small, color: colors.text },
+  sideText: { fontSize: 11, color: colors.text },
   rightText: { textAlign: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   name: {
-    fontSize: typography.size.h4,
+    fontSize: 18,
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
     color: colors.text,
     flexShrink: 1,
   },
-  link: { fontSize: typography.size.h6, color: colors.text },
+  link: { fontSize: 14, color: colors.text },
   underline: { textDecorationLine: 'underline' },
   ingress: { marginLeft: spacing.sm },
   line: { marginTop: spacing.xs },

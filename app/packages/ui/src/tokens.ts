@@ -24,7 +24,8 @@ export const colors = {
   border: '#ADB5BD', // darkened for input visibility (Jeff 2026-10-30)
   black: '#000000', // pure black for high-contrast outlines (checklist tick Checkbox)
   sand: '#D9C7A0',
-  sandInactive: '#E8E0CD',
+  sandInactive: '#F0EBDC',
+  sandDisabled: '#F7F4EB',
   estimateApprovedBar: '#E0A800',
   paidBar: '#2E7D32',
   overlay: 'rgba(27, 42, 74, 0.85)',
@@ -34,7 +35,7 @@ export const colors = {
   success: '#2E7D32', // harmonized green
   danger: '#C62828',  // harmonized red
   warning: '#FACC15', // yellow — lighter/yellower; distinct from danger red and brand orange
-  info: '#1976D2',    // blue — distinct from primary/primaryLight (navy)
+  info: '#4A9BE8',    // blue (lightened, Jeff 2026-10-31) — distinct from primary/primaryLight (navy)
 } as const;
 
 export const typography = {
@@ -61,9 +62,8 @@ export const typography = {
   letterSpacing: { tight: 0, normal: 0.3, wide: 0.5 },
 } as const;
 
-// Source spacing was ad-hoc rem literals (no --space-* tokens); this named scale
-// is derived from the recurring values (base 16px: 0.25rem=4 … 3rem=48).
-export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32, xxl: 48 } as const;
+// Named spacing scale — set by Jeff 2026-10-31 (replaces the earlier rem-derived scale).
+export const spacing = { xs: 4, sm: 6, md: 10, lg: 15, xl: 20, xxl: 28 } as const;
 
 export const radius = { sm: 6, md: 10, lg: 16, xl: 24, pill: 999 } as const;
 

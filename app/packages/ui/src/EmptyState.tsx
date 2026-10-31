@@ -21,11 +21,11 @@ export function EmptyState({ title, message, icon, style }: EmptyStateProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  container: { alignItems: 'center', justifyContent: 'center', padding: 12 },
   icon: { marginBottom: spacing.md },
   title: {
     color: colors.text,
-    fontSize: typography.size.h4,
+    fontSize: typography.size.h6,
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
   },
