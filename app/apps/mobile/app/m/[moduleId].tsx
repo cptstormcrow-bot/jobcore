@@ -26,6 +26,14 @@ import { useSession } from '../../src/lib/session';
 import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 import { buildSalesMarketingPorts } from '../../src/lib/sales-marketing-repos';
+
+// One ports object per module+org+user, so its identity stays stable across host renders
+// (screens key load effects on ports; a fresh object each render refetched endlessly).
+const portsCache = new Map<string, unknown>();
+function cachedPorts<T>(key: string, build: () => T): T {
+  if (!portsCache.has(key)) portsCache.set(key, build());
+  return portsCache.get(key) as T;
+}
 import { supabase } from '../../src/lib/supabase';
 import { ErrorBoundary } from '../../src/components/ErrorBoundary';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
@@ -80,7 +88,7 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setAdminFinanceModulePorts(buildAdminFinancePorts({ orgId: state.organization.id, userId: state.profile.id }));
+    setAdminFinanceModulePorts(cachedPorts(`af|${state.organization.id}|${state.profile.id}`, () => buildAdminFinancePorts({ orgId: state.organization.id, userId: state.profile.id })));
   }
   useEffect(() => {
     if (module?.id !== 'admin-finance') return undefined;
@@ -104,10 +112,10 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setFieldTechModulePorts({
+    setFieldTechModulePorts(cachedPorts(`ft|${state.organization.id}|${state.profile.id}`, () => ({
       ...buildFieldTechPorts({ orgId: state.organization.id, userId: state.profile.id }),
       renderTaskList: (p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} />,
-    });
+    })));
   }
   useEffect(() => {
     if (module?.id !== 'field-tech') return undefined;
@@ -127,7 +135,7 @@ export default function ModuleScreen() {
       role: state.profile.role,
       userId: state.profile.id,
     });
-    setSalesMarketingModulePorts(buildSalesMarketingPorts({ orgId: state.organization.id, userId: state.profile.id }));
+    setSalesMarketingModulePorts(cachedPorts(`sm|${state.organization.id}|${state.profile.id}`, () => buildSalesMarketingPorts({ orgId: state.organization.id, userId: state.profile.id })));
   }
   useEffect(() => {
     if (module?.id !== 'sales-marketing') return undefined;

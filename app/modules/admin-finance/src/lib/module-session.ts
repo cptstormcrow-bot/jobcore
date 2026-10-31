@@ -67,11 +67,10 @@ function sessionsEqual(a: ModuleSession | null, b: ModuleSession | null): boolea
  * (e.g. on sign-out). This is the ONLY function that may write `current`.
  */
 export function setModuleSession(session: ModuleSession | null): void {
-  const changed = !sessionsEqual(current, session);
+  // Keep the cached object when unchanged: useSyncExternalStore treats a new identity as a change.
+  if (sessionsEqual(current, session)) return;
   current = session;
-  if (changed) {
-    notify();
-  }
+  notify();
 }
 
 /**

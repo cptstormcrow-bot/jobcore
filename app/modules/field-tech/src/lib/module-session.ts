@@ -45,6 +45,8 @@ function notify(): void {
  * (e.g. on sign-out). This is the ONLY function that may write `current`.
  */
 export function setModuleSession(session: ModuleSession | null): void {
+  // Skip unchanged sessions: the host calls this on every render, and notifying during render loops.
+  if (current === session || (current && session && current.org.id === session.org.id && current.role === session.role && current.userId === session.userId)) return;
   current = session;
   notify();
 }
