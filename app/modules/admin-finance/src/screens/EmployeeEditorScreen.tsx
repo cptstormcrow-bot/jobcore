@@ -201,6 +201,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [addedSkills, setAddedSkills] = useState<string[]>([]);
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [newSkill, setNewSkill] = useState('');
+  const [editSkill, setEditSkill] = useState<string | null>(null);
+  const [editSkillText, setEditSkillText] = useState('');
 
   const [activeTab, setActiveTab] = useState<EmpTab>('detail');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -552,6 +554,25 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     setNewSkill('');
     setShowAddSkill(false);
     void handleSkillToggle(id, true);
+  };
+
+  // Tap a chosen skill: rename it (assign new name, drop old) or delete it from this employee.
+  const handleRenameSkill = async () => {
+    const old = editSkill;
+    const id = editSkillText.trim().toLowerCase().replace(/\s+/g, '_');
+    setEditSkill(null);
+    if (!old || !id || id === old) return;
+    setAddedSkills((prev) => [...prev.filter((s) => s !== old && s !== id), id]);
+    await handleSkillToggle(id, true);
+    await handleSkillToggle(old, false);
+  };
+
+  const handleDeleteSkill = async () => {
+    const old = editSkill;
+    setEditSkill(null);
+    if (!old) return;
+    setAddedSkills((prev) => prev.filter((s) => s !== old));
+    await handleSkillToggle(old, false);
   };
 
   return (
@@ -933,7 +954,22 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               selectedIds={assignedSkillIds}
               onToggle={(id, v) => { void handleSkillToggle(id, v); }}
               disabledIds={new Set(Object.keys(skillActionState).filter((k) => skillActionState[k]?.kind === 'working'))}
+              onItemPress={(id) => { setEditSkill(id); setEditSkillText(prettySkill(id)); }}
             />
+            {editSkill ? (
+              <View style={styles.addSkillRow}>
+                <TextInput
+                  value={editSkillText}
+                  onChangeText={setEditSkillText}
+                  placeholder="Skill name"
+                  style={[styles.input, styles.addSkillInput]}
+                  onSubmitEditing={() => { void handleRenameSkill(); }}
+                />
+                <PayrollButton label="Save" onPress={() => { void handleRenameSkill(); }} />
+                <PayrollButton label="Delete" onPress={() => { void handleDeleteSkill(); }} />
+                <PayrollButton label="Close" onPress={() => setEditSkill(null)} />
+              </View>
+            ) : null}
             {Object.entries(skillActionState).map(([k, st]) =>
               st.kind === 'failed' ? <ErrorState key={k} message={st.message} /> : null,
             )}

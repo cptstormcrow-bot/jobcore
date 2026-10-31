@@ -15,9 +15,11 @@ export interface MultiPickBoxProps {
   noun: string;
   onToggle: (id: string, next: boolean) => void;
   disabledIds?: Set<string>;
+  /** Tap a chosen bullet below the box (e.g. to rename or delete it). */
+  onItemPress?: (id: string) => void;
 }
 
-export function MultiPickBox({ items, selectedIds, noun, onToggle, disabledIds }: MultiPickBoxProps) {
+export function MultiPickBox({ items, selectedIds, noun, onToggle, disabledIds, onItemPress }: MultiPickBoxProps) {
   const [open, setOpen] = useState(false);
   const chosen = items.filter((i) => selectedIds.has(i.id));
   const allOn = items.length > 0 && chosen.length === items.length;
@@ -34,7 +36,13 @@ export function MultiPickBox({ items, selectedIds, noun, onToggle, disabledIds }
       </Pressable>
       <View style={styles.list}>
         {chosen.map((i) => (
-          <Text key={i.id} style={styles.bullet}>{`• ${i.label}`}</Text>
+          onItemPress ? (
+            <Pressable key={i.id} accessibilityRole="button" onPress={() => onItemPress(i.id)} style={styles.bulletCell}>
+              <Text style={styles.bulletText}>{`• ${i.label}`}</Text>
+            </Pressable>
+          ) : (
+            <Text key={i.id} style={styles.bullet}>{`• ${i.label}`}</Text>
+          )
         ))}
       </View>
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -74,6 +82,8 @@ const styles = StyleSheet.create({
   caret: { fontSize: typography.size.label, color: colors.textLight },
   list: { flexDirection: 'row', flexWrap: 'wrap', marginTop: spacing.xs },
   bullet: { width: '50%', fontSize: typography.size.small, lineHeight: 18, color: colors.text },
+  bulletCell: { width: '50%' },
+  bulletText: { fontSize: typography.size.small, lineHeight: 18, color: colors.text, textDecorationLine: 'underline' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   sheet: { width: '80%', maxWidth: 320, maxHeight: '80%', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.sm },
   scroll: { flexGrow: 0 },
