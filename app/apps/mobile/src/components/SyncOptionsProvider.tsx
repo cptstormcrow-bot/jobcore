@@ -7,7 +7,7 @@ import { useSession } from '../lib/session';
 import { useSyncStatus } from '../lib/sync-status';
 
 /*
- * Adds "Synch" to every screen's ⋮ menu (native, signed in only). The label is
+ * Adds "Sync" to every screen's ⋮ menu (native, signed in only). The label is
  * bold red while any queued write has failed, plain text otherwise.
  */
 export function SyncOptionsProvider({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export function SyncOptionsProvider({ children }: { children: React.ReactNode })
         ? [
             {
               id: 'sync',
-              label: 'Synch',
+              label: 'Sync',
               tone: failedCount > 0 ? 'danger' : undefined,
               onPress: () => router.push('/sync-issues' as never),
             },

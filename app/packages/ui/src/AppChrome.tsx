@@ -26,7 +26,7 @@ export type MenuActionItem = {
   submenu?: MenuItem[];
   helpId?: WalkthroughStepId;
   section?: string;
-  /** 'danger' renders the label bold red (e.g. Synch while writes are failing). */
+  /** 'danger' renders the label bold red (e.g. Sync while writes are failing). */
   tone?: 'danger';
 };
 export type MenuToggleItem = {
