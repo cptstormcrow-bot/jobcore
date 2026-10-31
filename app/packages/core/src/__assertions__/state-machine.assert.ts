@@ -75,27 +75,21 @@ test('canTransition: allows in_progress once the start-checklist probe is satisf
   assert.deepEqual(result, { ok: true });
 });
 
-test('canTransition: rejects completed missing after-photos or quality notes', () => {
+test('canTransition: completed allowed without after-photos or quality notes', () => {
   const job = makeJob({ status: 'in_progress' });
-  const missingPhotos = canTransition(
+  const noPhotos = canTransition(
     job,
     'completed',
     makeCtx({ role: 'tech', hasAfterPhotos: () => false, hasQualityNotes: () => true })
   );
-  assert.equal(missingPhotos.ok, false);
-  if (!missingPhotos.ok) {
-    assert.match(missingPhotos.reason, /after-photo/);
-  }
+  assert.equal(noPhotos.ok, true);
 
-  const missingNotes = canTransition(
+  const noNotes = canTransition(
     job,
     'completed',
     makeCtx({ role: 'tech', hasAfterPhotos: () => true, hasQualityNotes: () => false })
   );
-  assert.equal(missingNotes.ok, false);
-  if (!missingNotes.ok) {
-    assert.match(missingNotes.reason, /quality notes/);
-  }
+  assert.equal(noNotes.ok, true);
 });
 
 test('canTransition: paid requires a payment record only when payer is customer', () => {

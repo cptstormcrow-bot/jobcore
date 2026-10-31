@@ -34,7 +34,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -90,6 +90,7 @@ export function Completion({
   const [buildsFinished, setBuildsFinished] = useState(false);
   const [debrisCleared, setDebrisCleared] = useState(false);
   const [afterPhotoCount, setAfterPhotoCount] = useState(0);
+  const [photosTaken, setPhotosTaken] = useState(false);
   const [qualityNotes, setQualityNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +137,7 @@ export function Completion({
   const canSubmit = canSubmitCompletion({
     buildsFinished,
     debrisCleared,
-    afterPhotoCount,
+    afterPhotoCount: photosTaken ? Math.max(1, afterPhotoCount) : afterPhotoCount,
     notes: qualityNotes,
     submitting,
     damageChecked,
@@ -199,7 +200,7 @@ export function Completion({
             scopeText,
             buildsFinished,
             debrisCleared,
-            afterPhotoCount,
+            afterPhotoCount: photosTaken ? Math.max(1, afterPhotoCount) : afterPhotoCount,
             timeSpentSeconds,
             feeApplied: feeAppliedRef.current,
           }),
@@ -306,7 +307,8 @@ export function Completion({
         onChange = () => setDebrisCleared((prev) => !prev);
         break;
       case 'photosTaken':
-        checked = afterPhotoCount >= 1;
+        checked = photosTaken || afterPhotoCount >= 1;
+        onChange = () => setPhotosTaken((p) => !p);
         hintText = `${afterPhotoCount} photo(s) - up to 6, each can carry a comment`;
         break;
     }
@@ -323,7 +325,6 @@ export function Completion({
   return (
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <View style={styles.headerRow}>
-        <ScreenTitle title="Complete Job" />
         <Text style={styles.timeSpent}>{`Time Spent: ${formatTimeSpent(timeSpentSeconds)}`}</Text>
       </View>
 
@@ -377,7 +378,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   timeSpent: {
     fontSize: typography.size.body,
@@ -387,17 +388,17 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
   },
   heading: {
     fontSize: typography.size.body,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   checkItem: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   hint: {
     fontSize: typography.size.label,
@@ -405,14 +406,14 @@ const styles = StyleSheet.create({
     marginLeft: spacing.lg,
   },
   section: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   field: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   errorText: {
     fontSize: typography.size.label,
     color: colors.danger,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
 });

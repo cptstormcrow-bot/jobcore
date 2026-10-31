@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Image, StyleSheet, View } from 'react-native';
 import { Card, PayrollButton, Text, radius, spacing } from '@jobcore/ui';
 import { createCloseOutPhotosRepository as createNarrowPhotosRepository } from '../lib/admin-finance-repos';
@@ -30,10 +30,21 @@ interface AfterPhoto {
 export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, disabled }: JobAfterPhotoCardProps) {
   const [photos, setPhotos] = useState<AfterPhoto[]>([]);
   const [busy, setBusy] = useState(false);
+  const localIds = useRef(new Set<string>());
+  const removedIds = useRef(new Set<string>());
 
   const reload = useCallback(async () => {
     const list = await createCloseOutPhotosRepository().listForJob(jobId, 'after');
-    setPhotos(list.map((p) => ({ id: p.id, uri: p.uri, storagePath: p.storagePath })));
+    const fresh = list.map((p) => ({ id: p.id, uri: p.uri, storagePath: p.storagePath }));
+    // Merge: keep locally added photos a stale cached list does not know about yet, and prefer the local uri.
+    setPhotos((prev) => {
+      const local = new Map(prev.filter((x) => localIds.current.has(x.id)).map((x) => [x.id, x]));
+      const merged: AfterPhoto[] = fresh
+        .filter((f) => !removedIds.current.has(f.id))
+        .map((f) => (local.has(f.id) ? { ...f, uri: local.get(f.id)!.uri } : f));
+      for (const l of local.values()) if (!merged.some((m) => m.id === l.id)) merged.push(l);
+      return merged;
+    });
   }, [jobId]);
 
   useEffect(() => {
@@ -66,13 +77,29 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
     }
   };
 
+  const appendLocal = (added: { id: string; uri: string; storagePath?: string }) => {
+    localIds.current.add(added.id);
+    removedIds.current.delete(added.id);
+    setPhotos((prev) => [
+      ...prev.filter((x) => x.id !== added.id),
+      { id: added.id, uri: added.uri, storagePath: added.storagePath },
+    ]);
+  };
+
+  const dropLocal = (id: string) => {
+    localIds.current.delete(id);
+    removedIds.current.add(id);
+    setPhotos((prev) => prev.filter((x) => x.id !== id));
+  };
+
   const addInSlot = async (source: 'camera' | 'library', slot: number) => {
     const asset = await pickJobPhoto(source);
     if (!asset) return false;
-    await createCloseOutPhotosRepository().add(jobId, asset.uri, {
+    const added = await createCloseOutPhotosRepository().add(jobId, asset.uri, {
       kind: 'after',
       fileName: afterPhotoFileName(jobNumber, jobId, slot),
     });
+    appendLocal(added);
     return true;
   };
 
@@ -87,6 +114,7 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
   const remove = (p: AfterPhoto) =>
     void run(async () => {
       await createCloseOutPhotosRepository().remove(p.id, p.storagePath);
+      dropLocal(p.id);
     });
 
   const retake = (p: AfterPhoto) => {
@@ -101,7 +129,9 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
       if (!asset) return;
       const repo = createCloseOutPhotosRepository();
       await repo.remove(p.id, p.storagePath);
-      await repo.add(jobId, asset.uri, { kind: 'after', fileName: afterPhotoFileName(jobNumber, jobId, slot) });
+      dropLocal(p.id);
+      const added = await repo.add(jobId, asset.uri, { kind: 'after', fileName: afterPhotoFileName(jobNumber, jobId, slot) });
+      appendLocal(added);
     });
   };
 

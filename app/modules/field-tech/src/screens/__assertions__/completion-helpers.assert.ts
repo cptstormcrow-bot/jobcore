@@ -159,13 +159,13 @@ test('buildCompletionNoteBody is deterministic', () => {
   assert.equal(buildCompletionNoteBody(NOTE_ALL), buildCompletionNoteBody({ ...NOTE_ALL }));
 });
 
-test('canSubmitCompletion is false with zero photos', () => {
-  assert.equal(canSubmitCompletion({ ...OK, afterPhotoCount: 0 }), false);
+test('canSubmitCompletion is true with zero photos (photos optional)', () => {
+  assert.equal(canSubmitCompletion({ ...OK, afterPhotoCount: 0 }), true);
 });
 
-test('canSubmitCompletion is false with empty or whitespace-only notes', () => {
-  assert.equal(canSubmitCompletion({ ...OK, notes: '' }), false);
-  assert.equal(canSubmitCompletion({ ...OK, notes: '   \n\t ' }), false);
+test('canSubmitCompletion is true with empty or whitespace-only notes (notes optional)', () => {
+  assert.equal(canSubmitCompletion({ ...OK, notes: '' }), true);
+  assert.equal(canSubmitCompletion({ ...OK, notes: '   \n\t ' }), true);
 });
 
 test('canSubmitCompletion is false while submitting', () => {

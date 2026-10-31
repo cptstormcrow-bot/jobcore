@@ -82,13 +82,8 @@ function requireStartChecklist(job: Job, ctx: Ctx): PreconditionResult {
   return { ok: true };
 }
 
-function requireCompletionEvidence(job: Job, ctx: Ctx): PreconditionResult {
-  if (!readSyncProbe(ctx.hasAfterPhotos, job)) {
-    return { ok: false, reason: 'completed requires at least one after-photo' };
-  }
-  if (!readSyncProbe(ctx.hasQualityNotes, job)) {
-    return { ok: false, reason: 'completed requires quality notes' };
-  }
+function requireCompletionEvidence(_job: Job, _ctx: Ctx): PreconditionResult {
+  // After-photos and quality notes are optional (Jeff 2026-10-30); probes stay in Ctx but no longer block.
   return { ok: true };
 }
 

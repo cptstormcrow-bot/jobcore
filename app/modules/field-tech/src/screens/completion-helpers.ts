@@ -50,15 +50,13 @@ export interface CompletionGateInput {
   scopeText?: string; // item 4: when ticked, text is required
 }
 
-/** Submit gate: builds finished, debris cleared, 1+ after-photo, non-blank notes, not submitting, ticked detail items have text. */
+/** Submit gate: builds finished, debris cleared, not submitting, ticked detail items have text. After-photos and quality notes are optional. */
 export function canSubmitCompletion(input: CompletionGateInput): boolean {
   const damageOk = !input.damageChecked || (input.damageText ?? '').trim() !== '';
   const scopeOk = !input.scopeChecked || (input.scopeText ?? '').trim() !== '';
   return (
     input.buildsFinished &&
     input.debrisCleared &&
-    input.afterPhotoCount >= 1 &&
-    input.notes.trim() !== '' &&
     !input.submitting &&
     damageOk &&
     scopeOk
