@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
+import { colors } from '@jobcore/ui';
 import type { PayrollSelfPort, PayrollSettings, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
 
@@ -81,7 +82,7 @@ export function HoursTallyPanel({ port, userId, refreshKey, range = 'week' }: Ho
   return (
     <View style={{ paddingHorizontal: 16 }}>
       {error ? (
-        <Text style={{ color: '#b91c1c' }}>{`Couldn't load your hours: ${error}`}</Text>
+        <Text style={{ color: colors.danger }}>{`Couldn't load your hours: ${error}`}</Text>
       ) : entries === null ? (
         <ActivityIndicator />
       ) : (
@@ -99,7 +100,7 @@ export function HoursTallyPanel({ port, userId, refreshKey, range = 'week' }: Ho
                   <Text style={{ marginRight: 8, color: '#b45309' }}>{`OT ${formatHm(r.otMin)}`}</Text>
                 ) : null}
                 {r.dtMin > 0 ? (
-                  <Text style={{ marginRight: 8, color: '#b91c1c' }}>{`DT ${formatHm(r.dtMin)}`}</Text>
+                  <Text style={{ marginRight: 8, color: colors.danger }}>{`DT ${formatHm(r.dtMin)}`}</Text>
                 ) : null}
                 <Text style={{ fontWeight: '700' }}>{formatHm(r.totalMin)}</Text>
               </View>

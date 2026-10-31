@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Text, TextInput, View } from 'react-native';
-import { PayrollButton } from '@jobcore/ui';
+import { PayrollButton, colors } from '@jobcore/ui';
 import type {
   AdminReimbursement,
   PayrollAdminPort,
@@ -184,13 +184,13 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
         style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 8 }}
       />
       <ReceiptCapture uri={receiptUri} onChange={setReceiptUri} disabled={submitting} />
-      {formError ? <Text style={{ color: '#b00020' }}>{formError}</Text> : null}
+      {formError ? <Text style={{ color: colors.danger }}>{formError}</Text> : null}
       {onRegisterActions ? null : (
         <PayrollButton label="Submit" onPress={() => void onSubmit()} disabled={!canSubmit} />
       )}
 
       <Text style={{ fontWeight: '600', marginTop: 12 }}>My reimbursements</Text>
-      {loadError ? <Text style={{ color: '#b00020' }}>{loadError}</Text> : null}
+      {loadError ? <Text style={{ color: colors.danger }}>{loadError}</Text> : null}
       {history === null && !loadError ? <ActivityIndicator /> : null}
       {history !== null && history.length === 0 ? <Text>No reimbursements yet.</Text> : null}
       {(history ?? []).map((r) => (
@@ -203,7 +203,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
           </Text>
           <Text>{r.description}</Text>
           {r.status === 'rejected' && r.rejectionReason ? (
-            <Text style={{ color: '#b00020' }}>Rejected: {r.rejectionReason}</Text>
+            <Text style={{ color: colors.danger }}>Rejected: {r.rejectionReason}</Text>
           ) : null}
         </View>
       ))}
@@ -211,8 +211,8 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
       {isAdmin ? (
         <>
           <Text style={{ fontWeight: '600', marginTop: 12 }}>All reimbursements</Text>
-          {allError ? <Text style={{ color: '#b00020' }}>{allError}</Text> : null}
-          {receiptError ? <Text style={{ color: '#b00020' }}>{receiptError}</Text> : null}
+          {allError ? <Text style={{ color: colors.danger }}>{allError}</Text> : null}
+          {receiptError ? <Text style={{ color: colors.danger }}>{receiptError}</Text> : null}
           {allList === null && !allError ? <ActivityIndicator /> : null}
           {allList !== null && allList.length === 0 ? <Text>No reimbursements yet.</Text> : null}
           {(allList ?? []).map((r) => (

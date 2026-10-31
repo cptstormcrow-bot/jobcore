@@ -305,7 +305,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     <View>
       {error !== '' ? (
         <View style={{ alignItems: 'center', marginVertical: 2 }}>
-          <Text style={{ color: '#b00020', textAlign: 'center' }}>{error}</Text>
+          <Text style={{ color: colors.danger, textAlign: 'center' }}>{error}</Text>
         </View>
       ) : null}
       {onRegisterActions ? null : (
@@ -374,7 +374,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
               </View>
             ))}
             {locked ? (
-              <Text style={{ color: '#666666', fontSize: 12 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
                 {dayManual.some((e) => e.status === 'submitted')
                   ? 'Submitted for approval. Tap Withdraw to change it.'
                   : 'Approved. Tap Withdraw to reopen it, then submit again after your changes.'}

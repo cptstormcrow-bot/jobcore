@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { StepperPicker } from '@jobcore/ui';
+import { StepperPicker, colors } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
   PayrollSelfPort,
@@ -64,10 +64,10 @@ function formatRange(start: string, end: string): string {
 }
 
 const STATUS_COLOR: Record<PayrollEntryStatus, string> = {
-  draft: '#6b7280',
+  draft: colors.textMuted,
   submitted: '#1d4ed8',
-  approved: '#15803d',
-  rejected: '#b91c1c',
+  approved: colors.success,
+  rejected: colors.danger,
 };
 
 export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps) {
@@ -144,7 +144,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
 
   let body;
   if (error) {
-    body = <Text style={{ color: '#b91c1c' }}>{`Couldn't load your pay period: ${error}`}</Text>;
+    body = <Text style={{ color: colors.danger }}>{`Couldn't load your pay period: ${error}`}</Text>;
   } else if (!data) {
     body = <ActivityIndicator />;
   } else if (data.entries.length === 0) {
@@ -169,7 +169,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
               <Text>{formatHm(calc.totals.otMin)}</Text>
             </View>
             <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
-              <Text style={{ flex: 1, color: '#b91c1c' }}>Your DT</Text>
+              <Text style={{ flex: 1, color: colors.danger }}>Your DT</Text>
               <Text>{formatHm(calc.totals.dtMin)}</Text>
             </View>
             <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
