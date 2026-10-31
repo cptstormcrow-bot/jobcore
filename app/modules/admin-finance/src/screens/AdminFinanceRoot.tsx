@@ -27,7 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, FlagPill, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { buildAdminFinanceMenuItems, isAdminFinanceView } from '../menu';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
@@ -1029,7 +1029,7 @@ export function AdminFinanceRoot() {
             ))}
           </ScrollView>
         ) : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView contentContainerStyle={styles.jobsContent}>
             <View style={styles.jobsTitleRow}>
               <Text style={styles.jobsTitle}>Jobs</Text>
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
@@ -1051,7 +1051,7 @@ export function AdminFinanceRoot() {
                 ...visibleJobs.filter((job) => !!job.assignedTechId),
               ];
               return (
-                <Card style={styles.card}>
+                <Card style={[styles.card, styles.jobsCard]}>
                   {orderedJobs.map((job) => {
                     const techName = job.assignedTechId
                       ? loadState.employees.find((e) => e.id === job.assignedTechId)?.fullName ?? 'Assigned'
@@ -1060,10 +1060,10 @@ export function AdminFinanceRoot() {
                     const workDescription = summarizeWorkDescription(cardExtras.titles[job.id] ?? [], job.description, { maxChars: 60 });
                     const footer = [jobLabel, workDescription || null, techName].filter(Boolean).join(' · ') || undefined;
                     const cardFlags = cardExtras.flags[job.id];
-                    const center = cardFlags?.premCompleted || cardFlags?.estimateApproved ? (
+                    const dots = cardFlags?.premCompleted || cardFlags?.estimateApproved ? (
                       <>
-                        {cardFlags?.premCompleted ? <FlagPill label="Prem done" testID={`job-flag-prem-${job.id}`} /> : null}
-                        {cardFlags?.estimateApproved ? <FlagPill label="Estimate approved" testID={`job-flag-estimate-${job.id}`} /> : null}
+                        {cardFlags?.premCompleted ? <View style={[styles.flagDot, { backgroundColor: colors.warning }]} accessibilityLabel="Prem done" testID={`job-flag-prem-${job.id}`} /> : null}
+                        {cardFlags?.estimateApproved ? <View style={[styles.flagDot, { backgroundColor: colors.success }]} accessibilityLabel="Estimate approved" testID={`job-flag-estimate-${job.id}`} /> : null}
                       </>
                     ) : undefined;
                     return (
@@ -1074,11 +1074,11 @@ export function AdminFinanceRoot() {
                         overline={job.customerName ?? undefined}
                         footer={footer}
                         footerLines={2}
-                        center={center}
                         onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
                         style={{ paddingVertical: spacing.xs }}
                         right={(
-                          <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+                            {dots}
                             {canArchive ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
                             <PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />
                           </View>
@@ -1447,6 +1447,10 @@ const styles = StyleSheet.create({
     fontSize: typography.size.h4,
     fontFamily: typography.fontFamily.headingBold,
   },
+  // #0012 Jobs: tight spacing + flag dots (Jeff 2026-10-30).
+  jobsContent: { paddingHorizontal: spacing.xs, paddingTop: 2 },
+  jobsCard: { paddingHorizontal: spacing.xs, paddingVertical: 0 },
+  flagDot: { width: 12, height: 12, borderRadius: 6 },
   overviewContent: { paddingTop: spacing.xs },
   overviewCard: {
     minHeight: 48,
