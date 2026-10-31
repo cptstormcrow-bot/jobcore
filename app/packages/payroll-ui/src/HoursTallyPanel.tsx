@@ -9,7 +9,7 @@ export interface HoursTallyPanelProps {
   userId: string;
   /** Bump to force the tally to reload. */
   refreshKey?: number;
-  /** Range to tally; chosen by the parent. Defaults to 'day'. */
+  /** Range to tally; chosen by the parent. Defaults to 'week'. */
   range?: HoursRange;
 }
 
@@ -18,7 +18,7 @@ export type HoursRange = 'day' | 'week' | 'month' | 'year';
 const HISTORY_DAYS = 400;
 
 interface TallyItem {
-  kind: 'parent' | 'child' | 'total';
+  kind: 'parent';
   row: { key: string; regularMin: number; otMin: number; dtMin: number; totalMin: number };
 }
 
@@ -29,7 +29,7 @@ function formatHm(min: number): string {
   return `${h}:${m < 10 ? '0' : ''}${m}`;
 }
 
-export function HoursTallyPanel({ port, userId, refreshKey, range = 'day' }: HoursTallyPanelProps) {
+export function HoursTallyPanel({ port, userId, refreshKey, range = 'week' }: HoursTallyPanelProps) {
   const tab: wageEngine.RollupGranularity = range;
   const [entries, setEntries] = useState<PayrollTimeEntry[] | null>(null);
   const [settings, setSettings] = useState<PayrollSettings | null>(null);
@@ -58,44 +58,25 @@ export function HoursTallyPanel({ port, userId, refreshKey, range = 'day' }: Hou
     };
   }, [port, userId, refreshKey]);
 
-  const rows = useMemo(() => {
-    if (!entries || !settings) return [];
-    const days: wageEngine.WorkedDay[] = wageEngine.workedDaysFromEntries(entries);
+  const { rows, currentMin } = useMemo(() => {
+    if (!entries || !settings) return { rows: [] as TallyItem[], currentMin: 0 };
+    // Submitted hours only: drafts and rejected entries do not count.
+    const counted = entries.filter((e) => e.status === 'submitted' || e.status === 'approved');
+    const days: wageEngine.WorkedDay[] = wageEngine.workedDaysFromEntries(counted);
     try {
       const { overtime, payWeek } = settings;
-      const childGran: wageEngine.RollupGranularity | null =
-        tab === 'week' ? 'day' : tab === 'month' ? 'week' : tab === 'year' ? 'month' : null;
       const parents = wageEngine.rollup(days, tab, overtime, payWeek);
-      const children = childGran ? wageEngine.rollup(days, childGran, overtime, payWeek) : [];
-      // A week straddling a month boundary is listed under the month of its start date.
-      const parentKeyOf = (childKey: string): string =>
-        tab === 'week'
-          ? wageEngine.rollupKey(childKey, 'week', payWeek)
-          : tab === 'month'
-            ? childKey.slice(0, 7)
-            : childKey.slice(0, 4);
-      const items: TallyItem[] = [];
-      for (const p of [...parents].reverse()) {
-        items.push({ kind: 'parent', row: p });
-        if (!childGran) continue;
-        const kids = children.filter((c) => parentKeyOf(c.key) === p.key).reverse();
-        for (const c of kids) items.push({ kind: 'child', row: c });
-      }
-      if (items.length > 0) {
-        const total = { key: 'Total', regularMin: 0, otMin: 0, dtMin: 0, totalMin: 0 };
-        for (const p of parents) {
-          total.regularMin += p.regularMin;
-          total.otMin += p.otMin;
-          total.dtMin += p.dtMin;
-          total.totalMin += p.totalMin;
-        }
-        items.push({ kind: 'total', row: total });
-      }
-      return items;
+      const todayKey = wageEngine.rollupKey(wageEngine.formatIsoDate(new Date().getTime()), tab, payWeek);
+      const cur = parents.find((p) => p.key === todayKey);
+      // Newest first; the current period (if it has hours) is the first row.
+      const items: TallyItem[] = [...parents].reverse().map((p) => ({ kind: 'parent' as const, row: p }));
+      return { rows: items, currentMin: cur ? cur.totalMin : 0 };
     } catch {
-      return [] as TallyItem[];
+      return { rows: [] as TallyItem[], currentMin: 0 };
     }
   }, [entries, settings, tab]);
+
+  const periodName = tab === 'year' ? 'year' : tab === 'month' ? 'month' : tab === 'day' ? 'day' : 'week';
 
   return (
     <View style={{ paddingHorizontal: 16 }}>
@@ -103,31 +84,28 @@ export function HoursTallyPanel({ port, userId, refreshKey, range = 'day' }: Hou
         <Text style={{ color: '#b91c1c' }}>{`Couldn't load your hours: ${error}`}</Text>
       ) : entries === null ? (
         <ActivityIndicator />
-      ) : rows.length === 0 ? (
-        <Text>No hours recorded.</Text>
       ) : (
-        rows.map(({ kind, row: r }) => (
-          <View
-            key={`${kind}:${r.key}`}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingVertical: 6,
-              paddingLeft: kind === 'child' ? 20 : 0,
-              opacity: kind === 'child' ? 0.75 : 1,
-              ...(kind === 'total' ? { borderTopWidth: 1, borderTopColor: '#9ca3af', marginTop: 4 } : null),
-            }}
-          >
-            <Text style={{ flex: 1, fontWeight: kind === 'child' ? '400' : '700' }}>{r.key}</Text>
-            {r.otMin > 0 ? (
-              <Text style={{ marginRight: 8, color: '#b45309' }}>{`OT ${formatHm(r.otMin)}`}</Text>
-            ) : null}
-            {r.dtMin > 0 ? (
-              <Text style={{ marginRight: 8, color: '#b91c1c' }}>{`DT ${formatHm(r.dtMin)}`}</Text>
-            ) : null}
-            <Text style={{ fontWeight: kind === 'child' ? '400' : '700' }}>{formatHm(r.totalMin)}</Text>
-          </View>
-        ))
+        <>
+          <Text style={{ fontSize: 20, fontWeight: '700', paddingVertical: 8 }}>
+            {`This ${periodName}: ${formatHm(currentMin)}`}
+          </Text>
+          {rows.length === 0 ? (
+            <Text>No submitted hours recorded.</Text>
+          ) : (
+            rows.map(({ row: r }) => (
+              <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
+                <Text style={{ flex: 1, fontWeight: '700' }}>{r.key}</Text>
+                {r.otMin > 0 ? (
+                  <Text style={{ marginRight: 8, color: '#b45309' }}>{`OT ${formatHm(r.otMin)}`}</Text>
+                ) : null}
+                {r.dtMin > 0 ? (
+                  <Text style={{ marginRight: 8, color: '#b91c1c' }}>{`DT ${formatHm(r.dtMin)}`}</Text>
+                ) : null}
+                <Text style={{ fontWeight: '700' }}>{formatHm(r.totalMin)}</Text>
+              </View>
+            ))
+          )}
+        </>
       )}
     </View>
   );

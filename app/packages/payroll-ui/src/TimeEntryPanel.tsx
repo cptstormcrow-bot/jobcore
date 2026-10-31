@@ -2,9 +2,9 @@
  * TimeEntryPanel — current-week time entry for the signed-in worker.
  * Talks only to the injected PayrollSelfPort.
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { Card, DefaultTabBar, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
+import { Card, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -41,19 +41,15 @@ function toIso(ms: number): Iso {
   return (d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate())) as Iso;
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const FULL_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-/** "Mon 10/12" from an ISO date (computed in UTC from the date parts, no TZ shift). */
+/** "Monday, Oct 26" from an ISO date (computed in UTC from the date parts, no TZ shift). */
 function dayLabel(iso: string): string {
   const y = parseInt(iso.slice(0, 4), 10);
   const m = parseInt(iso.slice(5, 7), 10);
   const d = parseInt(iso.slice(8, 10), 10);
   const wd = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
-  return WEEKDAYS[wd] + ' ' + m + '/' + d;
-}
-
-function weekdayOnly(iso: string): string {
-  return dayLabel(iso).split(' ')[0]!;
+  return FULL_WEEKDAYS[wd] + ', ' + monthDay(iso);
 }
 
 /** The 7 days of the week containing today, shifted by `weekOffset` whole weeks. */
@@ -100,28 +96,26 @@ function monthDay(iso: string): string {
   return MONTHS[parseInt(iso.slice(5, 7), 10) - 1] + ' ' + parseInt(iso.slice(8, 10), 10);
 }
 
-type WeekOffset = -1 | 0 | 1;
-type WeekTab = 'last' | 'this' | 'next';
-const WEEK_TABS: Array<{ id: WeekTab; label: string }> = [
-  { id: 'last', label: 'Last week' },
-  { id: 'this', label: 'This week' },
-  { id: 'next', label: 'Next week' },
-];
-const TAB_OFFSET: Record<WeekTab, WeekOffset> = { last: -1, this: 0, next: 1 };
-
-const cellStyle = { flex: 1, textAlign: 'center' as const, fontSize: 11, paddingVertical: 2, paddingHorizontal: 1 };
+function weekLabel(n: number): string {
+  if (n === 0) return 'This Week';
+  if (n === -1) return 'Last Week';
+  if (n === 1) return 'Next Week';
+  return n < -1 ? `${-n} weeks ago` : `In ${n} weeks`;
+}
 
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const { port, userId, weekStartDow, onRegisterActions, onChanged } = props;
-  const [weekTab, setWeekTab] = useState<WeekTab>('this');
-  const weekOffset = TAB_OFFSET[weekTab];
+  const [weekOffset, setWeekOffset] = useState(0);
   const days = useMemo(() => weekDays(weekStartDow, weekOffset), [weekStartDow, weekOffset]);
   const range = useMemo(() => ({ from: days[0]!, to: days[6]! }), [days]);
-  // Submitted-hours table: the current week plus the 3 before it, newest first.
-  const tableWeeks = useMemo(() => [0, -1, -2, -3].map((o) => weekDays(weekStartDow, o)), [weekStartDow]);
-  const tableRange = useMemo(() => ({ from: tableWeeks[3]![0]!, to: tableWeeks[0]![6]! }), [tableWeeks]);
   const [entries, setEntries] = useState<PayrollTimeEntry[]>([]);
-  const [tableEntries, setTableEntries] = useState<PayrollTimeEntry[]>([]);
+  // Entries written by the most recent Save; merged into reload so a stale list cannot undo them.
+  const lastSaved = useRef<Map<string, PayrollTimeEntry>>(new Map());
+  const lastDeleted = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    lastSaved.current = new Map();
+    lastDeleted.current = new Set();
+  }, [weekOffset]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [error, setError] = useState<string>('');
@@ -129,13 +123,21 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   const reload = useCallback(async () => {
     try {
-      const [sel, tbl] = await Promise.all([port.listEntries(range), port.listEntries(tableRange)]);
-      setEntries(sel);
-      setTableEntries(tbl);
+      const sel = await port.listEntries(range);
+      const saved = lastSaved.current;
+      const deleted = lastDeleted.current;
+      const merged = sel.filter((e) => !deleted.has(e.id));
+      for (const s of saved.values()) {
+        if (s.workDate < range.from || s.workDate > range.to) continue;
+        const i = merged.findIndex((e) => e.id === s.id);
+        if (i < 0) merged.push(s);
+        else if (merged[i]!.minutes !== s.minutes || merged[i]!.status !== s.status) merged[i] = s;
+      }
+      setEntries(merged);
     } catch (e) {
       setError("Couldn't load your time entries: " + errorText(e, 'Could not load time entries.'));
     }
-  }, [port, range, tableRange]);
+  }, [port, range]);
 
   useEffect(() => {
     void reload();
@@ -144,6 +146,8 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const run = useCallback(
     async (fn: () => Promise<void>) => {
       setError('');
+      lastSaved.current = new Map();
+      lastDeleted.current = new Set();
       try {
         await fn();
         await reload();
@@ -193,6 +197,27 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     if (dirtyDays.length === 0) return;
     setError('');
     setSaveState('saving');
+    const savedNow = new Map<string, PayrollTimeEntry>();
+    const deletedNow = new Set<string>();
+    const applyLocal = () => {
+      for (const [id, s] of savedNow) {
+        lastSaved.current.set(id, s);
+        lastDeleted.current.delete(id);
+      }
+      for (const id of deletedNow) {
+        lastSaved.current.delete(id);
+        lastDeleted.current.add(id);
+      }
+      setEntries((prev) => {
+        const next = prev.slice();
+        for (const [id, s] of savedNow) {
+          const i = next.findIndex((e) => e.id === id);
+          if (i >= 0) next[i] = s;
+          else next.push(s);
+        }
+        return next.filter((e) => !deletedNow.has(e.id));
+      });
+    };
     try {
       for (const day of dirtyDays) {
         const mins = parseMinutes(inputs[day] ?? '');
@@ -229,15 +254,22 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
               rejectionReason: null,
             };
         await port.upsertEntry(entry);
-        for (const extra of editables.slice(1)) await port.deleteEntry(extra.id);
+        savedNow.set(entry.id, entry);
+        for (const extra of editables.slice(1)) {
+          if (extra.id === entry.id) continue;
+          await port.deleteEntry(extra.id);
+          deletedNow.add(extra.id);
+        }
         setNotes((p) => ({ ...p, [day]: '' }));
       }
+      applyLocal();
       await reload();
       setSaveState('saved');
       if (onChanged) onChanged();
     } catch (e) {
       setError(errorText(e, 'Could not save.'));
       setSaveState('idle');
+      applyLocal();
       await reload();
     }
   }, [saveState, dirtyDays, inputs, notes, entries, port, userId, reload, onChanged]);
@@ -285,10 +317,23 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           />
         </View>
       )}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <Card style={{ flexGrow: 1, flexBasis: 320, padding: 6 }}>
-      <DefaultTabBar tabs={WEEK_TABS} activeId={weekTab} onChange={setWeekTab} />
-      <Text style={{ textAlign: 'center', marginVertical: 4 }}>{monthDay(days[0]!) + ' - ' + monthDay(days[6]!)}</Text>
+      <Card style={{ padding: 6 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <PayrollButton
+          label="<"
+          onPress={() => setWeekOffset((o) => o - 1)}
+          accessibilityLabel="Previous week"
+          style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+        />
+        <Text style={{ fontWeight: '700', textAlign: 'center', minWidth: 110 }}>{weekLabel(weekOffset)}</Text>
+        <PayrollButton
+          label=">"
+          onPress={() => setWeekOffset((o) => o + 1)}
+          accessibilityLabel="Next week"
+          style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+        />
+        <Text style={{ marginLeft: 'auto' }}>{monthDay(days[0]!) + ' - ' + monthDay(days[6]!)}</Text>
+      </View>
       {entries.length > 0 && !canSubmit ? (
         <Text style={{ color: colors.textMutedDark, fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw to change it.</Text>
       ) : null}
@@ -299,8 +344,21 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
         const dayManual = dayEntries.filter((e) => e.source === 'manual');
         const locked = dayManual.length > 0 && !dayManual.some(editable);
         return (
-          <Card key={day} style={{ marginVertical: 2, padding: 4 }}>
-            <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
+          <Card key={day} style={{ marginVertical: 1, padding: 3 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
+              <TextField
+                value={inputs[day] ?? ''}
+                onChangeText={(v) => {
+                  setSaveState('idle');
+                  setInputs((p) => ({ ...p, [day]: v }));
+                }}
+                placeholder="1.5 or 1:30"
+                disabled={locked}
+                dense
+                style={{ width: 90 }}
+              />
+            </View>
             {dayEntries.map((e) => (
               <View key={e.id} style={{ marginVertical: 0, flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={{ flex: 1 }}>
@@ -315,16 +373,6 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
                 ) : null}
               </View>
             ))}
-            <TextField
-              label={'Hours worked on ' + weekdayOnly(day) + ' (1.5 or 1:30)'}
-              value={inputs[day] ?? ''}
-              onChangeText={(v) => {
-                setSaveState('idle');
-                setInputs((p) => ({ ...p, [day]: v }));
-              }}
-              disabled={locked}
-              dense
-            />
             {locked ? (
               <Text style={{ color: '#666666', fontSize: 12 }}>
                 {dayManual.some((e) => e.status === 'submitted')
@@ -344,33 +392,6 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
         );
       })}
       </Card>
-      <Card style={{ flexGrow: 1, flexBasis: 320, padding: 6 }}>
-        <Text style={{ textAlign: 'center', fontWeight: '700', marginBottom: 4 }}>Submitted hours</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={[cellStyle, { flex: 1.4, fontWeight: '700' }]}>Week</Text>
-          {tableWeeks[0]!.map((d) => (
-            <Text key={d} style={[cellStyle, { fontWeight: '700' }]}>{weekdayOnly(d)}</Text>
-          ))}
-          <Text style={[cellStyle, { fontWeight: '700' }]}>Total</Text>
-        </View>
-        {tableWeeks.map((wk) => {
-          let weekTotal = 0;
-          return (
-            <View key={wk[0]} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border }}>
-              <Text style={[cellStyle, { flex: 1.4 }]}>{monthDay(wk[0]!)}</Text>
-              {wk.map((d) => {
-                const mins = tableEntries
-                  .filter((e) => e.workDate === d && (e.status === 'submitted' || e.status === 'approved'))
-                  .reduce((s, e) => s + e.minutes, 0);
-                weekTotal += mins;
-                return <Text key={d} style={cellStyle}>{mins > 0 ? fmt(mins) : '-'}</Text>;
-              })}
-              <Text style={[cellStyle, { fontWeight: '700' }]}>{weekTotal > 0 ? fmt(weekTotal) : '-'}</Text>
-            </View>
-          );
-        })}
-      </Card>
-      </View>
     </View>
   );
 }

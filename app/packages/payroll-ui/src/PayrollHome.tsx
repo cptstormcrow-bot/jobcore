@@ -34,7 +34,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
   const [reimbActions, setReimbActions] = useState<ReimbursementPanelActions | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [hoursRange, setHoursRange] = useState<HoursRange>('day');
+  const [hoursRange, setHoursRange] = useState<HoursRange>('week');
   const onChanged = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
@@ -137,18 +137,6 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
   return (
     <View style={{ flex: 1 }}>
       <DefaultTabBar tabs={tabs} activeId={active} onChange={(id) => setActive(id as TabId)} rightSlot={rightSlot} />
-      {active === 'hours' ? (
-        <DefaultTabBar
-          tabs={[
-            { id: 'day', label: 'Day' },
-            { id: 'week', label: 'Week' },
-            { id: 'month', label: 'Month' },
-            { id: 'year', label: 'Year' },
-          ]}
-          activeId={hoursRange}
-          onChange={(id) => setHoursRange(id as HoursRange)}
-        />
-      ) : null}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
         {active === 'time' ? (
           <TimeEntryPanel
@@ -160,7 +148,18 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
           />
         ) : null}
         {active === 'hours' ? (
-          <HoursTallyPanel port={port} userId={userId} refreshKey={refreshKey} range={hoursRange} />
+          <View>
+            <DefaultTabBar
+              tabs={[
+                { id: 'week', label: 'Week' },
+                { id: 'month', label: 'Month' },
+                { id: 'year', label: 'Year' },
+              ]}
+              activeId={hoursRange}
+              onChange={(id) => setHoursRange(id as HoursRange)}
+            />
+            <HoursTallyPanel port={port} userId={userId} refreshKey={refreshKey} range={hoursRange} />
+          </View>
         ) : null}
         {active === 'period' ? (
           <PayPeriodPanel port={port} userId={userId} refreshKey={refreshKey} />
