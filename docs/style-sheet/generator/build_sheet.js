@@ -14,13 +14,13 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
 
   const kids = [
     new D.Paragraph({ style: 'Title', children: [new D.TextRun('JobCore Style Sheet')] }),
-    new D.Paragraph({ style: 'Subtitle', children: [new D.TextRun('v0.2 DRAFT, for Jeff to mark up with Word comments and tracked changes')] }),
+    new D.Paragraph({ style: 'Subtitle', children: [new D.TextRun('v0.3, Jeff rulings of 2026-10-31 applied; mark up with Word comments and tracked changes')] }),
     L.howToBox([
       ['HowToBox', '`How to read this sheet`'],
       ['HowToBox', '`SET` means Jeff already ruled; the source is cited under the word. `PROPOSED` means read from the code as it is today, with no ruling yet. `OPEN` is a known loose end.'],
       ['HowToBox', 'Mark up by adding a Word comment (or tracked change) on any row. Every PROPOSED row and each open question already carries a comment to reply to.'],
       ['HowToBox', 'Pictures are drawn at true proportion and printed at 100%: 1 app pixel = 1 point. Callouts show padding, alignment and how a part resizes. Values come from `app/packages/ui/src/tokens.ts`.'],
-      ['HowToBox', 'Spacing scale: xs 4, sm 8, md 16, lg 24, xl 32, xxl 48. Radius: sm 6, md 10, lg 16.'],
+      ['HowToBox', 'Spacing scale: xs 4, sm 6, md 10, lg 15, xl 20, xxl 28. Radius: sm 6, md 10, lg 16.'],
     ]),
     gap(),
 
@@ -30,18 +30,18 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
       { rule: 'No NEW on-screen Back buttons; existing ones Jeff asked for stay', status: 'SET', source: 'feedback-android-back-not-buttons', measures: 'Navigation back is the Android `<` button.' },
       { rule: 'Android `<` follows actual visit history, never a fixed parent', status: 'SET', source: 'same as above', measures: 'History order, not the screen hierarchy.' },
       { rule: 'Every screen shows its screen-number badge', status: 'SET', source: 'jobcore-screen-number-working-rules', measures: 'Badge is part of the screen chrome.' },
-      { rule: 'Tight vertical padding', status: 'SET', measures: 'Row padding 8 max (see section 2).' },
+      { rule: 'Tight vertical padding', status: 'SET', measures: 'Row padding 6 max (see section 2).' },
       { rule: 'Never inline-style a one-off; use the shared component', status: 'SET', measures: 'Change the shared component so every screen follows.' },
     ]),
 
     H1('2. Spacing'),
-    P('Scale: xs 4, sm 8, md 16, lg 24, xl 32, xxl 48.', 'Spec'),
+    P('Scale: xs 4, sm 6, md 10, lg 15, xl 20, xxl 28.', 'Spec'),
     ...tbl([
-      { rule: 'Gap between related items (label/value, icon/text)', status: 'PROPOSED', comment: PC, measures: 'xs to sm (4 to 8). Items align on their text baseline vertically; left-aligned horizontally.' },
-      { rule: 'Gap between rows / cards', status: 'PROPOSED', comment: PC, measures: 'sm (8).' },
-      { rule: 'Screen side gutter', status: 'PROPOSED', comment: PC, measures: 'md (16) left and right of the body.' },
-      { rule: 'Section gap', status: 'PROPOSED', comment: PC, measures: 'md to lg (16 to 24) between sections.' },
-      { rule: 'Vertical padding inside rows', status: 'SET', source: 'tight vertical', measures: 'sm (8) maximum, top and bottom.' },
+      { rule: 'Gap between related items (label/value, icon/text)', status: 'SET', source: 'Jeff 2026-10-31', measures: 'xs to sm (4 to 6), keep. Items align on their text baseline vertically; left-aligned horizontally.' },
+      { rule: 'Gap between rows / cards', status: 'SET', source: 'Jeff 2026-10-31', measures: 'sm (6).' },
+      { rule: 'Screen side gutter', status: 'SET', source: 'Jeff 2026-10-31', measures: 'md (10) left and right of the body.' },
+      { rule: 'Section gap', status: 'SET', source: 'Jeff 2026-10-31', measures: 'md to lg (10 to 15) between sections.' },
+      { rule: 'Vertical padding inside rows', status: 'SET', source: 'Jeff 2026-10-31', measures: 'sm (6) maximum, top and bottom.' },
       { figure: 'spacing.png', caption: 'The spacing scale at true size.', alt: 'Spacing scale xs 4 to xxl 48' },
     ]),
 
@@ -49,18 +49,19 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
     ...tbl([
       { rule: 'Every screen uses the Admin & Finance header (`AppChrome`)', status: 'SET', measures: 'Hamburger at left, options menu at right, title bar between.' },
       { rule: 'Blue title bar fills the row between the hamburger and the options menu', status: 'SET', measures: 'Resizing: the bar stretches to the space between the two menus; the menus never move.' },
-      { rule: 'Equal 14 px blue above and below the title text (balanced vertically)', status: 'SET', measures: 'Padding: 14 above, 14 below. Vertical alignment: centred. Title text is centred horizontally.' },
-      { rule: 'Title names the screen it is on ("Field Tech-Assigned Jobs")', status: 'SET', measures: 'Long titles wrap inside the bar; the 14 px bands stay equal.' },
-      { rule: 'JOB screens only: title bar inset 5 px each side so the menus are visible', status: 'SET', source: 'Round 5', measures: 'Padding: 5 left, 5 right, on JOB screens only. Other screens use the full row.' },
+      { rule: 'Equal 10 px blue above and below the title text (was 14); side padding 20; both screens match sizing with the menu/options', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Padding: 10 above, 10 below, 20 left and right. Vertical alignment: centred. Title text is centred horizontally.' },
+      { rule: 'Title names the screen it is on ("Field Tech-Assigned Jobs")', status: 'SET', measures: 'Long titles wrap inside the bar; the 10 px bands stay equal.' },
+      { rule: 'JOB screens only: title bar inset 10 px each side (was 5), the gap between title box and menus', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Inset: 10 left, 10 right, on JOB screens only. Other screens use the full row.' },
+      { rule: 'BUG: tech login title bar clips text at the bottom', status: 'OPEN', measures: 'To fix.' },
       { rule: 'Job title bar = left "Job #N"+date, centre customer block, right schedule link', status: 'SET', measures: 'Left block left-aligned, centre block centred, right link right-aligned.' },
-      { figure: 'titlebar.png', caption: 'Blue title bar: 14 px bands, 16 px side padding and the 5 px job inset.', alt: 'Title bar with padding callouts' },
+      { figure: 'titlebar.png', caption: 'Blue title bar: 10 px bands, 20 px side padding and the 10 px job inset.', alt: 'Title bar with padding callouts' },
     ]),
 
     H1('4. Tabs'),
     ...tbl([
       { rule: 'Use `DefaultTabBar`, never inline a tab bar', status: 'SET', measures: 'One shared component for every tab strip.' },
       { rule: 'Anchored directly under the header, full width, outside the scrolling body', status: 'SET', measures: 'Resizing: tabs share the full width; the bar does not scroll with the page.' },
-      { rule: 'Active tab: bold + sand background + 2 px #2563eb underline', status: 'SET', measures: 'Label bold, centred both axes. Underline 2 px along the bottom edge.' },
+      { rule: 'Tab font 13, padding top/bottom reduced by 3 px. Active tab: bold + sand background + 2 px #2563eb underline', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Label 13 bold, centred both axes. Underline 2 px along the bottom edge.' },
       { rule: 'Inactive tab: weight 400, sandInactive background', status: 'SET', measures: 'Label weight 400, same padding as active so tabs do not shift.' },
       { figure: 'tabbar.png', caption: 'Active versus inactive tab with padding callouts.', alt: 'Tab bar active and inactive' },
     ]),
@@ -68,11 +69,11 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
     H1('5. Buttons'),
     ...tbl([
       { rule: '`PayrollButton` is THE button; `Button`/`SandButton` are legacy', status: 'SET', measures: 'Use `PayrollButton` for every new button.' },
-      { rule: '32 pt tall, 14 px side padding, radius 6, label 14/700 black centred both axes', status: 'SET', measures: 'Height 32. Padding 14 left and right. Radius 6. Label centred horizontally and vertically.' },
+      { rule: '28 pt tall, 10 px side padding, radius 6, label 13/700 black centred both axes', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Height 28. Padding 10 left and right. Radius 6. Label centred horizontally and vertically.' },
       { rule: 'Width = label + padding only; never stretch, never pass width/flex', status: 'SET', source: '2026-10-20', measures: 'Resizing: width grows with the label, never stretches to fill.' },
-      { rule: 'Default tone sand; `danger` tone only when Jeff asks', status: 'SET', measures: 'Sand fill by default; danger red is opt-in.' },
+      { rule: 'Default tone sand; disabled = one shade lighter than sandInactive (#F7F4EB); `danger` tone has white text, used only when Jeff asks', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Sand fill by default; danger red is opt-in.' },
       { rule: 'Selected state = 2 px blue bottom border', status: 'SET', measures: 'Border 2 px along the bottom edge, #2563eb.' },
-      { rule: '~50 files still use legacy `Button`; convert when touched', status: 'OPEN', measures: 'Convert on touch; no sweep planned.' },
+      { rule: '~50 files still use legacy `Button`; converted FIRST as part of this effort', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Conversion sweep comes first.' },
       { figure: 'btn_states.png', caption: 'PayrollButton default, disabled, danger and selected.', alt: 'PayrollButton states' },
       { figure: 'btn_resize.png', caption: 'Resize flow: width grows with the label, never stretches.', alt: 'PayrollButton resize flow' },
     ]),
@@ -86,30 +87,31 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
 
     H1('7. Lists (rows)'),
     ...tbl([
-      { rule: 'Row min height 48 for tappable rows; thin divider line between rows', status: 'PROPOSED', source: 'matches picker', comment: PC, measures: 'Min height 48. Divider 1 px #CED4DA. Row grows taller if the text wraps.' },
+      { rule: 'Row min height 32 for tappable rows; thin divider line between rows', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Min height 32. Divider 1 px #CED4DA. Row grows taller if the text wraps.' },
       { rule: 'Never show raw UUIDs; show "Job #N" and drill into the job', status: 'SET', source: 'Payments', measures: 'The "Job #N" text is the tap target.' },
-      { rule: 'Primary text 16 body; secondary 13 to 14 in textLight/textMuted', status: 'PROPOSED', comment: PC, measures: 'Primary above secondary, both left-aligned, gap xs (4).' },
+      { rule: 'Primary text 14; secondary 13 (unchanged) in textLight/textMuted', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Primary above secondary, both left-aligned, gap xs (4).' },
     ]),
 
     H1('8. Empty states'),
     ...tbl([
-      { rule: 'Use `EmptyState`: centred, bold 20 title (text colour), 16 muted message, 24 padding', status: 'PROPOSED', source: 'component as built', comment: PC, measures: 'Padding 24 all round. Centred horizontally; centred vertically in the list area.' },
-      { rule: 'Message says what to do next, in plain words', status: 'PROPOSED', comment: PC, measures: 'One or two short sentences.' },
+      { rule: 'Use `EmptyState`: centred, bold 16 title (text colour), 16 muted message, 12 padding', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Padding 12 all round. Centred horizontally; centred vertically in the list area.' },
+      { rule: 'Message says what to do next, in plain words', status: 'SET', source: 'Jeff 2026-10-31', measures: 'One or two short sentences.' },
       { figure: 'list_empty.png', caption: 'List rows (section 7) and the empty state (section 8).', alt: 'List rows and empty state' },
     ]),
 
     H1('9. Color and type'),
     ...tbl([
-      { rule: 'Brand navy #1B2A4A, gold/accent #E1AF80, sand #D9C7A0', status: 'SET', source: 'tokens', measures: 'See the swatches below.' },
+      { rule: 'Brand navy #1B2A4A; sand #D9C7A0 replaces accent #E1AF80 in app screens only (accent token stays for website match); sandInactive becomes #F0EBDC', status: 'SET', source: 'Jeff 2026-10-31', measures: 'See the swatches below.' },
       { rule: 'Status: success #2E7D32, danger #C62828, warning #FACC15, info #1976D2', status: 'SET', source: 'tokens', measures: 'See the swatches below.' },
       { rule: 'Headings Poppins, body Inter; sizes h4 20, body 16, label 14, small 13', status: 'SET', source: 'tokens', measures: 'This document uses the same families.' },
       { rule: 'No raw hex in new code (use tokens); known exception: #2563eb tab/selected blue', status: 'SET', measures: 'The blue is the only allowed raw value.' },
     ]),
     L.swatchTable([
       ['primary', '#1B2A4A', 'Brand navy: header, text on sand'],
-      ['accent', '#E1AF80', 'Gold accent'],
+      ['accent', '#E1AF80', 'Gold accent (website match only; not used in app screens)'],
       ['sand', '#D9C7A0', 'Buttons and the active tab'],
-      ['sandInactive', '#E8E0CD', 'Inactive tab'],
+      ['sandInactive', '#F0EBDC', 'Inactive tab'],
+      ['disabled', '#F7F4EB', 'Disabled button (one shade lighter than sandInactive)'],
       ['success', '#2E7D32', 'Status: success'],
       ['danger', '#C62828', 'Status: danger'],
       ['warning', '#FACC15', 'Status: warning'],
@@ -119,25 +121,18 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
     ]),
     gap(),
 
-    H1('Open questions for Jeff'),
+    H1('Rulings'),
   ];
 
-  const q = (n, text, comment) => {
-    const id = c.add(comment);
-    return new D.Paragraph({ spacing: { after: 100 }, children: [
-      new D.CommentRangeStart(id), new D.TextRun({ text: n + '. ', bold: true }), new D.TextRun(text),
-      new D.CommentRangeEnd(id), new D.TextRun({ children: [new D.CommentReference(id)] })] });
-  };
   kids.push(
-    q(1, 'Are the PROPOSED rows right, or should I tighten any (especially list rows and empty states)?', 'Open question 1: answer here.'),
-    q(2, 'Should the 5 px job-header inset become the default for all screens?', 'Open question 2: answer here.'),
-    q(3, 'Anything missing: forms/inputs, cards, dialogs, badges, toasts?', 'Open question 3: answer here.'),
+    P('Tighten top/bottom spacing and remove unneeded text wraps everywhere.', 'Spec'),
+    P('Question 3 is still open: forms, inputs, cards, dialogs, badges and toasts.', 'Spec'),
   );
 
   const doc = new D.Document({
-    creator: 'JobCore', title: 'JobCore Style Sheet v0.2',
+    creator: 'JobCore', title: 'JobCore Style Sheet v0.3',
     styles: L.styles(), comments: c.config,
-    sections: [{ properties: L.sectionProps(), footers: { default: L.footer('JobCore Style Sheet v0.2 DRAFT') }, children: kids }],
+    sections: [{ properties: L.sectionProps(), footers: { default: L.footer('JobCore Style Sheet v0.3') }, children: kids }],
   });
-  await L.emit(doc, path.join(L.ROOT, 'JobCore-Style-Sheet-v0.2.docx'), false);
+  await L.emit(doc, path.join(L.ROOT, 'JobCore-Style-Sheet-v0.3.docx'), false);
 })().catch((e) => { console.error(e); process.exit(1); });
