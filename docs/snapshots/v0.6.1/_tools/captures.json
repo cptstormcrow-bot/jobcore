@@ -75,6 +75,12 @@
         },
         {
           "click": "Payroll Settings"
+        },
+        {
+          "click": "Compensation Policy"
+        },
+        {
+          "click": "Back"
         }
       ],
       "waitFor": "Payroll Settings"
@@ -116,29 +122,17 @@
     },
     "af-blackout-editor": {
       "role": "af",
-      "url": "/m/admin-finance",
+      "url": "/calendar",
       "steps": [
-        {
-          "click": "Menu"
-        },
-        {
-          "click": "Calendar"
-        },
         {
           "click": "Add Blackout"
         }
-      ],
-      "waitFor": "Add Blackout"
+      ]
     },
     "af-calendar": {
       "role": "af",
-      "url": "/m/admin-finance",
-      "steps": [
-        {
-          "click": "Calendar"
-        }
-      ],
-      "waitFor": "Calendar"
+      "url": "/m/admin-finance?view=calendar",
+      "steps": []
     },
     "af-closeOutQueue": {
       "role": "af",
@@ -162,13 +156,12 @@
     },
     "af-employee-detail": {
       "role": "af",
-      "url": "/m/admin-finance",
+      "url": "/m/admin-finance?view=employee-roster",
       "steps": [
         {
-          "click": "Employee Detail"
+          "click": "^Dev Tech"
         }
-      ],
-      "waitFor": "Employee Detail"
+      ]
     },
     "af-employee-editor": {
       "role": "af",
@@ -227,23 +220,17 @@
     },
     "af-jobEstimate": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=jobEstimate",
       "steps": [
         {
           "pickFirstJob": true
         }
-      ],
-      "waitFor": "Job Estimate"
+      ]
     },
     "af-jobs": {
       "role": "af",
-      "url": "/m/admin-finance",
-      "steps": [
-        {
-          "click": "Jobs"
-        }
-      ],
-      "waitFor": "Jobs"
+      "url": "/m/admin-finance?view=jobs",
+      "steps": []
     },
     "af-leadCreate": {
       "role": "af",
@@ -263,13 +250,12 @@
     },
     "af-leadEdit": {
       "role": "af",
-      "url": "/m/admin-finance",
+      "url": "/m/admin-finance?view=leadInbox",
       "steps": [
         {
-          "click": "Edit Lead"
+          "click": "^Lotta Hooey"
         }
-      ],
-      "waitFor": "Edit Lead"
+      ]
     },
     "af-leadInbox": {
       "role": "af",
@@ -350,13 +336,12 @@
     },
     "af-priceSheetEditor": {
       "role": "af",
-      "url": "/m/admin-finance",
+      "url": "/m/admin-finance?view=priceSheetList",
       "steps": [
         {
-          "click": "Price Sheet Editor"
+          "click": "^Version 2"
         }
-      ],
-      "waitFor": "Price Sheet Editor"
+      ]
     },
     "af-priceSheetList": {
       "role": "af",
@@ -373,13 +358,15 @@
     },
     "af-qualify": {
       "role": "af",
-      "url": "/m/admin-finance",
+      "url": "/m/admin-finance?view=leadInbox",
       "steps": [
         {
-          "click": "Qualify Lead"
+          "click": "^Lotta Hooey"
+        },
+        {
+          "click": "Create job"
         }
-      ],
-      "waitFor": "Qualify Lead"
+      ]
     },
     "af-reports": {
       "role": "af",
@@ -561,16 +548,12 @@
     },
     "job-region-assign": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=assign",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Assign"
         }
-      ],
-      "waitFor": "Assign"
+      ]
     },
     "job-region-complete": {
       "role": "af",
@@ -606,7 +589,10 @@
           "pickFirstJob": true
         },
         {
-          "scrollTo": "Prelim (Prem)"
+          "click": "Menu"
+        },
+        {
+          "click": "^Prelim"
         }
       ],
       "waitFor": "Prelim (Prem)"
@@ -619,36 +605,30 @@
           "pickFirstJob": true
         },
         {
-          "scrollTo": "Paid"
+          "click": "Menu"
+        },
+        {
+          "click": "Paid"
         }
-      ],
-      "waitFor": "Paid"
+      ]
     },
     "job-region-plan": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=plan",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Plan"
         }
-      ],
-      "waitFor": "Plan"
+      ]
     },
     "job-region-schedule": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=schedule",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Schedule"
         }
-      ],
-      "waitFor": "Schedule"
+      ]
     },
     "jobs": {
       "role": "af",

@@ -6237,7 +6237,7 @@
       "purpose": "Lets owners/admins block out a technician's dates so they cannot be scheduled, creating a time-off blackout.",
       "missing": "Nothing notable; create-only (no edit/delete of existing blackouts). Navigation is by onSaved/onCancel callbacks, no routes. Tech preselect only via initialTechId from Calendar.",
       "flowRank": 57,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-af-blackout-editor",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/BlackoutEditorScreen.tsx",
@@ -11009,7 +11009,7 @@
       "purpose": "Read-heavy drilldown of a single roster employee so owners/admins can review details and trigger edit or deactivate/reactivate.",
       "missing": "Prop-driven only; no own navigation or fetching. Deactivate/Reactivate have no local confirm or loading/error state; the caller must handle them.",
       "flowRank": 59,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-af-employee-detail",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/EmployeeDetailScreen.tsx",
@@ -17437,7 +17437,7 @@
       "purpose": "Lets owners/admins correct a lead's details and check readiness before saving or converting it into a job.",
       "missing": "No direct router navigation; Back, saved and Create-job transitions are delegated to parent callbacks (onBack, onSaved, onCreateJob). Not a dead end if the parent wires them.",
       "flowRank": 3,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-af-leadEdit",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/LeadEditScreen.tsx",
@@ -24560,7 +24560,7 @@
       "purpose": "Lets owners/admins configure and publish the organization's price sheet (duration, area adjustments, tasks, rates) that drives job estimates.",
       "missing": "No router navigation; it only shows an Add Task dialog. Publish exposes an onPublished callback for the host to navigate. No standalone route (sub-view only).",
       "flowRank": 68,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-af-priceSheetEditor",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/PriceSheetEditorScreen.tsx",
@@ -24962,7 +24962,7 @@
       "purpose": "Lets owner/admin confirm a lead's source, payer and attach-timing axes so the lead can be qualified into a job.",
       "missing": "No direct navigation; it is props-in/callbacks-out (onSubmit/onCancel), so routing and the qualify flow live in the caller. Only a phone link opens externally.",
       "flowRank": 8,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-af-qualify",
       "identifiers": {
         "file": "modules/admin-finance/src/screens/QualifyScreen.tsx",
@@ -36408,7 +36408,7 @@
       "purpose": "Lets an assigned investigator record preliminary site findings on a job before work, as one evolving record per job until submitted.",
       "missing": "No router navigation; only an onBack callback. Reached from the tech's job detail once an investigator assignment exists, and can be embedded there. No link onward after Submit.",
       "flowRank": 9,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-job-region-evisit",
       "identifiers": {
         "file": "modules/field-tech/src/screens/JobInvestigationScreen.tsx",
@@ -40269,7 +40269,7 @@
       "purpose": "Lets owner, admin and tech plan the work for a job (tasks, photos, planned minutes) before scheduling.",
       "missing": "Flow stage inferred (planning precedes scheduling); PlanningScreen internals not read. No explicit link to the Schedule tab from here.",
       "flowRank": 5,
-      "captureStatus": "failed",
+      "captureStatus": "ok",
       "anchor": "screen-job-region-plan",
       "identifiers": {
         "file": "apps/mobile/app/job/[jobId].tsx",

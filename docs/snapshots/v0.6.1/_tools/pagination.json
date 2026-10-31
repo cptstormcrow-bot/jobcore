@@ -32,16 +32,16 @@
     18
   ],
   "af-assignmentBoard": [
-    11,
-    31
+    12
   ],
   "af-blackout-editor": [
     7,
     24
   ],
   "af-calendar": [
-    10,
-    30
+    8,
+    24,
+    51
   ],
   "af-closeOutQueue": [
     10
@@ -54,8 +54,8 @@
     13
   ],
   "af-employee-detail": [
-    10,
-    31
+    8,
+    26
   ],
   "af-employee-editor": [
     13
@@ -69,8 +69,8 @@
     30
   ],
   "af-employee-roster": [
-    10,
-    30
+    8,
+    26
   ],
   "af-jobEstimate": [
     1,
@@ -78,9 +78,9 @@
     29
   ],
   "af-jobs": [
-    10,
-    30,
-    57
+    8,
+    26,
+    53
   ],
   "af-leadCreate": [
     8,
@@ -121,15 +121,16 @@
     8
   ],
   "af-priceSheetCreate": [
-    10
+    8,
+    24
   ],
   "af-priceSheetEditor": [
-    8,
-    23
+    10,
+    26
   ],
   "af-priceSheetList": [
-    10,
-    30
+    8,
+    24
   ],
   "af-qualify": [
     8,
@@ -140,11 +141,11 @@
     29
   ],
   "af-review": [
-    10
+    8,
+    26
   ],
   "blackout-range-modal": [
-    8,
-    24
+    10
   ],
   "blackout-time-off-list": [
     13
@@ -168,8 +169,7 @@
     15
   ],
   "ft-Completion": [
-    1,
-    8
+    5
   ],
   "ft-DayList": [
     10,
@@ -212,8 +212,8 @@
     16
   ],
   "job-region-assign": [
-    11,
-    31
+    8,
+    24
   ],
   "job-region-complete": [
     16
@@ -222,14 +222,14 @@
     16
   ],
   "job-region-evisit": [
-    10
+    8
   ],
   "job-region-paid": [
     17
   ],
   "job-region-plan": [
-    11,
-    31
+    8,
+    24
   ],
   "job-region-schedule": [
     1,
@@ -251,11 +251,11 @@
     8
   ],
   "profile": [
-    8,
-    26
+    10,
+    30
   ],
   "reset-password": [
-    12
+    13
   ],
   "root-layout": [
     11,
@@ -301,8 +301,8 @@
     22
   ],
   "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
-    1,
-    8
+    4,
+    24
   ],
   "sync-issues": [
     18

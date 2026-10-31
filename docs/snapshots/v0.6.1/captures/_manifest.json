@@ -125,8 +125,7 @@
     "status": "ok"
   },
   "af-blackout-editor": {
-    "status": "failed",
-    "reason": "click target not found: Add Blackout"
+    "status": "ok"
   },
   "af-calendar": {
     "status": "ok"
@@ -140,8 +139,7 @@
     "reason": "click target not found: Close-Out Review"
   },
   "af-employee-detail": {
-    "status": "failed",
-    "reason": "click target not found: Employee Detail"
+    "status": "ok"
   },
   "af-employee-editor": {
     "status": "ok"
@@ -166,8 +164,7 @@
     "status": "ok"
   },
   "af-leadEdit": {
-    "status": "failed",
-    "reason": "click target not found: Edit Lead"
+    "status": "ok"
   },
   "af-leadInbox": {
     "status": "ok"
@@ -186,15 +183,13 @@
     "status": "ok"
   },
   "af-priceSheetEditor": {
-    "status": "failed",
-    "reason": "click target not found: Price Sheet Editor"
+    "status": "ok"
   },
   "af-priceSheetList": {
     "status": "ok"
   },
   "af-qualify": {
-    "status": "failed",
-    "reason": "click target not found: Qualify Lead"
+    "status": "ok"
   },
   "af-reports": {
     "status": "ok"
@@ -227,15 +222,13 @@
     "status": "ok"
   },
   "job-region-evisit": {
-    "status": "failed",
-    "reason": "scrollTo target not found: Prelim (Prem)"
+    "status": "ok"
   },
   "job-region-paid": {
     "status": "ok"
   },
   "job-region-plan": {
-    "status": "failed",
-    "reason": "scrollTo target not found: Plan"
+    "status": "ok"
   },
   "job-region-schedule": {
     "status": "ok"

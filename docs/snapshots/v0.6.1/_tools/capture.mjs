@@ -4,6 +4,7 @@
 // in headed Edge using the same --user-data-dir (<profilesDir>/<role.profile>). This script then
 // reuses that profile headlessly. A page that lands on /sign-in means the profile has no session.
 //
+// Step {click:'^Text'} matches a label prefix (list rows carry long aria-labels).
 // Flags: --only k1,k2   --role af   --log <path>   --profiles <dir>
 // stdout: only the final summary line. Exit 0 (even with failures), 2 on config/launch errors.
 import fs from 'fs';
@@ -49,12 +50,13 @@ async function clickText(page, text) {
   while (!ok) {
     ok = await page.evaluate((t) => {
       const norm = (s) => (s || '').replace(/[?▸▾\s]+$/, '').replace(/\s+/g, ' ').trim().toLowerCase();
-      const want = norm(t);
+      const pre = t.startsWith('^'); const want = norm(pre ? t.slice(1) : t);
+      const eq = (v) => (pre ? norm(v).startsWith(want) : norm(v) === want);
       const els = [...document.querySelectorAll('[role="button"],[role="tab"],[role="link"],[role="switch"],button,a,div[role],[aria-label],[data-testid]')]
         .filter((e) => e.getClientRects().length);
       const el = els.find((e) => e.getAttribute('data-testid') === t)
-        || els.find((e) => norm(e.getAttribute('aria-label')) === want)
-        || els.find((e) => norm(e.textContent) === want);
+        || els.find((e) => eq(e.getAttribute('aria-label')))
+        || els.find((e) => eq(e.textContent));
       if (!el) return false;
       el.scrollIntoView(); el.click(); return true;
     }, text);
@@ -154,6 +156,7 @@ for (const [roleName, items] of Object.entries(groups)) {
   } catch (e) { die(`launch ${roleName}: ` + ((e && e.message) ? e.message : String(e)) + '\n' + ((e && e.stack) ? e.stack : '')); }
   for (const [key, scr] of items) {
     const page = await browser.newPage();
+    await page.evaluateOnNewDocument(() => localStorage.setItem('app.settings.show-screen-numbers', 'true'));
     try {
       await captureOne(page, key, scr, role);
       manifest[key] = { status: 'ok' };
