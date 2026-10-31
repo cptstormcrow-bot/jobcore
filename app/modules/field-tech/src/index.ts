@@ -73,7 +73,8 @@ const DEFAULT_MONTH_KEY = 'field-tech.jobs.default-month-view';
 function FieldTechRoot(): React.ReactElement {
   const router = useRouter();
   const [subView, setSubView] = React.useState<SubView>('overview');
-  useScreenNumber({ subView });
+  // #0084's registry subView is 'Payroll'; the other tabs match as-is.
+  useScreenNumber({ subView: subView === 'payroll' ? 'Payroll' : subView });
   const { showHelp } = useWalkthrough();
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [showTestJobs, setShowTestJobs] = React.useState(false);

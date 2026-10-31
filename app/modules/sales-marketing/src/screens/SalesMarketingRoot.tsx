@@ -58,7 +58,8 @@ export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
   const session = useModuleSession();
   const [subView, setSubView] = React.useState<SubView>('overview');
-  useScreenNumber({ subView });
+  // Registry subView keys are PascalCase (sm-Composer → 'Composer').
+  useScreenNumber({ subView: subView.charAt(0).toUpperCase() + subView.slice(1) });
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
   // No service/service-area picker exists yet anywhere in this module —
   // these stay null until one lands; Composer already treats both as

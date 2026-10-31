@@ -96,6 +96,18 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
   },
   { op: 'job_photo.remove', queries: ['ft.photos.listForJob'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
   {
+    // Without this the cached job payments stay stale after a record, so the balance never drops and a 2nd tap records again.
+    op: 'payment.record_manual',
+    queries: ['af.payments.listForJob'],
+    patch: (p, rows, params) =>
+      (params?.jobId !== undefined && params.jobId !== p.jobId) || (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id))
+        ? rows
+        : prepend(rows, {
+            id: p.id, jobId: p.jobId, providerId: 'manual', amount: p.amount, status: 'manual_confirmed', externalRef: null,
+            confirmedAt: p.confirmedAt, confirmedBy: null, createdAt: p.confirmedAt, method: p.method ?? null,
+          }),
+  },
+  {
     op: 'time_off_request.create',
     queries: ['ft.timeOff.listForTech', 'ft.timeOff.listForOrg'],
     patch: (p, rows) => prepend(rows, { id: p.id, tech_id: p.techId, techId: p.techId, start_date: p.startDate, startDate: p.startDate, end_date: p.endDate, endDate: p.endDate, reason: p.reason ?? null, status: 'pending' }),

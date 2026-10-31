@@ -45,7 +45,7 @@ export default function CompleteJobRoute() {
   }
   const ready = state.status === 'authenticated';
   const role = state.status === 'authenticated' ? state.profile.role : undefined;
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'admin' || role === 'owner';
   const isTech = role === 'tech';
   const [customer, setCustomer] = useState<Customer | null>(null);
   const headerJob = loaded.kind === 'loading' || loaded.kind === 'missing' ? null : loaded.job;

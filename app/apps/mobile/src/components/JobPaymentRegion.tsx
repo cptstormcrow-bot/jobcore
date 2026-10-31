@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import { Button, EmptyState, PayrollButton, colors } from '@jobcore/ui';
@@ -47,6 +47,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('zelle');
   const [busy, setBusy] = useState(false);
+  // Sync guard: a fast double-tap fires twice before `busy` re-renders.
+  const recordingRef = useRef(false);
   const [cashReceived, setCashReceived] = useState('');
   const [workTotal, setWorkTotal] = useState<number | null>(null);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
@@ -103,7 +105,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   }, [ports, orgId]);
 
   const record = useCallback((useMethod: PaymentMethod) => {
-    if (session.status !== 'authenticated' || !estimate) {
+    if (session.status !== 'authenticated' || !estimate || recordingRef.current) {
       return;
     }
     const workCents = workTotal ?? invoiceTotalCents(estimate);
@@ -121,6 +123,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       return;
     }
     setError(null);
+    recordingRef.current = true;
     setBusy(true);
     void (async () => {
       try {
@@ -151,6 +154,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       } catch (err) {
         setError(`Could not record payment: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
+        recordingRef.current = false;
         setBusy(false);
       }
     })();

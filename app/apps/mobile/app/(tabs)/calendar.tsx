@@ -224,7 +224,7 @@ export default function CalendarScreen() {
     setTimeOffRev((n) => n + 1);
   };
 
-  const isAdminRole = Boolean(role && role !== 'tech');
+  const isAdminRole = role === 'owner' || role === 'admin';
 
   const onSubmitTimeOff = async (
     draft: { startDate: string; endDate: string; reason: string | null },
@@ -244,7 +244,7 @@ export default function CalendarScreen() {
 
   const calendarNode = (
     <UniversalCalendar
-        role={role && role !== 'tech' ? 'admin' : 'tech'}
+        role={isAdminRole ? 'admin' : 'tech'}
         viewerId={viewerId}
         jobs={jobs}
         employees={employees}
@@ -275,7 +275,7 @@ export default function CalendarScreen() {
     <View style={styles.screen}>
       <StaleDataHint queries={['app.jobs.calendar']} />
       <UniversalCalendar
-        role={role && role !== 'tech' ? 'admin' : 'tech'}
+        role={isAdminRole ? 'admin' : 'tech'}
         viewerId={viewerId}
         jobs={jobs}
         employees={employees}

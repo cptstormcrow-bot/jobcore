@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { View, Switch, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { buildAdminFinanceMenuItems } from '@jobcore/admin-finance';
 import { AppChrome, Button, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
@@ -160,6 +160,9 @@ export default function TestJobsScreen(): React.ReactElement {
   }, [organizationId, actorProfile, loadJobs]);
 
   let content: React.ReactElement;
+  // Test-job tools are owner/admin only; a tech or sales login lands on its own home.
+  if (session.status === 'authenticated' && session.profile.role !== 'owner' && session.profile.role !== 'admin') return <Redirect href="/" />;
+
   if (loading) {
     content = <LoadingState label="Loading test jobs…" />;
   } else if (jobs.length === 0) {
