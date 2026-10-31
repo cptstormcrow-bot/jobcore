@@ -36,7 +36,6 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
 
   return (
     <ScrollView style={styles.verticalRoot}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={styles.root}>
         {days.map((day) => {
           const dayJobs = jobs
@@ -104,7 +103,6 @@ export function WeekView({ jobs, anchorDay, timeOffEvents = [], onSelectJob, onS
           );
         })}
       </View>
-      </ScrollView>
     </ScrollView>
   );
 }
@@ -115,17 +113,19 @@ const styles = StyleSheet.create({
   },
   root: {
     backgroundColor: colors.offWhite,
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
+  // Days stacked full-width (Jeff 2026-10-30).
   column: {
-    width: 150,
-    minHeight: 260,
-    borderRightColor: colors.border,
-    borderRightWidth: 1,
+    width: '100%',
+    minHeight: 180,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
     paddingHorizontal: 2,
   },
   headerPressable: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
   },
   headerText: {
     fontSize: typography.size.small,
