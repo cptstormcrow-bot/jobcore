@@ -40,6 +40,8 @@ export interface ReportsScreenProps {
   showTestJobs?: boolean;
   /** Bubbles a job selection up to the parent (level 2 — `ReportsJobDetailScreen.tsx` is wired by AdminFinanceRoot.tsx, not built here). */
   onSelectJob?: (job: Job) => void;
+  /** Android back from the top level (no drill open). */
+  onBack?: () => void;
 }
 
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
@@ -93,7 +95,7 @@ function JobListDrillDown(props: {
 }
 
 export function ReportsScreen(props: ReportsScreenProps = {}) {
-  const { jobs, commissions, showTestJobs = false, onSelectJob } = props;
+  const { jobs, commissions, showTestJobs = false, onSelectJob, onBack } = props;
   const [drill, setDrill] = useState<DrillState>(null);
   const [activeTab, setActiveTab] = useState<'status' | 'slots' | 'commission'>('status');
 
@@ -104,10 +106,14 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
         setDrill(null);
         return true;
       }
+      if (onBack) {
+        onBack();
+        return true;
+      }
       return false;
     });
     return () => subscription.remove();
-  }, [drill]);
+  }, [drill, onBack]);
 
   const session = getModuleSession();
 
@@ -166,10 +172,9 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
 
   const backProps = { showTestJobs, onSelectJob };
 
-  /** Back button plus a small heading naming what is drilled into; shown at the top of any drilled view. */
+  /** Small heading naming what is drilled into; shown at the top of any drilled view. */
   const drillHeader = (heading: string) => (
     <View style={styles.drillHeader}>
-      <PayrollButton label="Back" onPress={() => setDrill(null)} textStyle={{ fontWeight: '400' }} />
       <Text style={styles.groupHeading}>{heading}</Text>
     </View>
   );
