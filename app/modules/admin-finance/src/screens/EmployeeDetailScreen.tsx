@@ -10,7 +10,8 @@
  * PayrollButtons, same style as #0010), the employee name header with a tap-to-copy
  * icon right beside the name (copies the phone number to the clipboard), a detail
  * card (one label/value row per field, including Phone), the Skills card
- * (wrapped chips), and the Service Areas card.
+ * (wrapped chips), the Service Areas card, and a compact Jobs section
+ * (one tappable row per assigned job: status, address, scheduled date).
  *
  * Navigation is caller-supplied callback props only (no router, no Modal,
  * in this module) — `onEdit`, `onBack`, `onDeactivate`, `onReactivate`,
@@ -26,7 +27,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Card, ScreenTitle, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
-import type { Profile } from '@jobcore/core';
+import type { Job, Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
 import { centsToDollarsText } from '../domain/parse-money';
 import type { ProfilePrivate } from '../data/ports';
@@ -38,6 +39,9 @@ export interface EmployeeDetailScreenProps {
   /** This employee's service areas (names), supplied by the caller. */
   serviceAreas?: string[];
   hoursWorked?: { week: number; month: number; year: number };
+  /** Jobs assigned to this employee, newest first, supplied by the caller. */
+  jobs?: Job[];
+  onSelectJob?: (job: Job) => void;
   onEdit: () => void;
   onBack: () => void;
   onDeactivate: () => void;
@@ -68,7 +72,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
-  const { employee, skills, serviceAreas, hoursWorked, onEdit, onBack, onDeactivate, onReactivate } = props;
+  const { employee, skills, serviceAreas, hoursWorked, jobs, onSelectJob, onEdit, onBack, onDeactivate, onReactivate } = props;
   const [priv, setPriv] = useState<ProfilePrivate | null>(null);
   const [privFailed, setPrivFailed] = useState(false);
   useEffect(() => {
@@ -191,6 +195,26 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
             <Text style={styles.note}>No service areas on file for this employee.</Text>
           )}
         </Card>
+
+        <Text style={styles.heading}>Jobs</Text>
+        <Card style={styles.card}>
+          {jobs && jobs.length > 0 ? (
+            jobs.map((job) => (
+              <Pressable
+                key={job.id}
+                onPress={() => onSelectJob?.(job)}
+                accessibilityRole="button"
+                style={styles.jobRow}
+              >
+                <Text style={styles.jobRowText} numberOfLines={1}>
+                  {`${job.status} · ${job.address ?? 'No address'} · ${job.scheduledStart ? new Date(job.scheduledStart).toLocaleDateString() : 'Not scheduled'}`}
+                </Text>
+              </Pressable>
+            ))
+          ) : (
+            <Text style={styles.note}>No jobs assigned.</Text>
+          )}
+        </Card>
       </ScrollView>
     </View>
   );
@@ -225,6 +249,14 @@ const styles = StyleSheet.create({
   actionInline: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  jobRow: {
+    paddingVertical: spacing.xs,
+  },
+  jobRowText: {
+    color: colors.text,
+    fontSize: typography.size.small,
+    fontFamily: typography.fontFamily.body,
   },
   infoRow: {
     flexDirection: 'row',

@@ -89,7 +89,7 @@ const TOP: Partial<Record<SubView, SubView>> = {
   planning: 'jobs', jobEstimate: 'jobs', archivedJobs: 'jobs', closedJobs: 'jobs',
   priceSheetEditor: 'priceSheetList', priceSheetCreate: 'priceSheetList',
   'employee-detail': 'employee-roster', 'employee-editor': 'employee-roster',
-  'employee-job-detail': 'employee-roster', 'employee-invitations': 'employee-roster',
+  'employee-job-detail': 'employee-detail', 'employee-invitations': 'employee-roster',
   'blackout-editor': 'calendar',
   payrollRun: 'payroll', payrollSettings: 'payroll', compensationPolicy: 'payroll',
 };
@@ -1317,6 +1317,14 @@ export function AdminFinanceRoot() {
                 : []
             }
             hoursWorked={employeeHoursWorked ?? undefined}
+            jobs={
+              loadState.kind === 'loaded'
+                ? loadState.jobs
+                    .filter((j) => j.assignedTechId === selectedEmployee.id)
+                    .sort((a, b) => (b.scheduledStart ?? '').localeCompare(a.scheduledStart ?? ''))
+                : []
+            }
+            onSelectJob={handleSelectEmployeeJob}
             onEdit={handleEditEmployee}
             onBack={handleBackToRoster}
             onDeactivate={handleDeactivateEmployee}
