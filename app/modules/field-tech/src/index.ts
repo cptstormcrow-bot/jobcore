@@ -221,7 +221,7 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {
-        onSelectJob: (job: Job) => setSelectedJobId(job.id),
+        onSelectJob: (job: Job) => router.push(('/job/' + job.id) as never),
         onOpenTimeOff: () => router.push('/calendar' as never),
         showTestJobs,
         defaultViewMode: defaultMonthView ? 'month' : 'week',
@@ -230,7 +230,7 @@ function FieldTechRoot(): React.ReactElement {
     case 'overview':
     default:
       content = React.createElement<OverviewProps>(Overview, {
-        onOpenJob: (jobId: string) => setSelectedJobId(jobId),
+        onOpenJob: (jobId: string) => router.push(('/job/' + jobId) as never),
         onOpenTimeOff: () => router.push('/calendar' as never),
         onDrillChange: setDrillLabel,
         onOpenJobs: () => setSubView('jobs'),
