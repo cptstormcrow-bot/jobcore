@@ -13,6 +13,7 @@ import type {
 import { OfflineError, writeThrough } from './offline-mutations';
 import { isOnlineNow } from './sync-events';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
+import { getCached, listMeta } from './read-cache-store';
 import { readEmployeeProfiles } from './employee-profiles-source';
 
 type Row = Record<string, any>;
@@ -34,6 +35,27 @@ export async function readCached<T>(queryName: string, params: Record<string, un
     if (!isOnlineNow()) throw new OfflineError('Not saved on this device yet. Open this once while online.');
     throw e;
   }
+}
+
+// Offline miss on a new date range (Hours keys on today, so its key changes daily):
+// rebuild the range from every saved pr.time range instead of showing an error.
+async function savedTimeRows(range: PayrollDateRange): Promise<PayrollTimeEntry[] | null> {
+  const id = getReadCacheIdentity();
+  if (!id) return null;
+  const byId = new Map<string, PayrollTimeEntry>();
+  for (const m of await listMeta(id.userId)) {
+    if (m.query !== 'pr.time') continue;
+    const row = await getCached(m.key);
+    if (!row || row.orgId !== id.orgId) continue;
+    let rows: unknown;
+    try { rows = JSON.parse(row.payload); } catch { continue; }
+    if (!Array.isArray(rows)) continue;
+    for (const e of rows as PayrollTimeEntry[]) {
+      if (e && e.id && e.workDate >= range.from && e.workDate <= range.to) byId.set(e.id, e);
+    }
+  }
+  if (byId.size === 0) return null;
+  return [...byId.values()].sort((a, b) => a.workDate.localeCompare(b.workDate));
 }
 
 function check(error: { message?: string } | null): void {
@@ -107,6 +129,10 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           .order('work_date', { ascending: true });
         check(error);
         return ((data ?? []) as Row[]).map(toPayrollTimeEntry);
+      }).catch(async (e) => {
+        const saved = e instanceof OfflineError ? await savedTimeRows(range) : null;
+        if (saved) return saved;
+        throw e;
       });
     },
 
