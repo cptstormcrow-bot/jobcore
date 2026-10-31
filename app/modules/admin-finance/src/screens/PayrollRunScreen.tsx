@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { EmptyState, PayrollButton, Text, TextField } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField, selectedStyle } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -110,7 +110,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
           <PayrollButton
             key={f.key}
             label={f.label}
-            style={format === f.key ? { borderBottomWidth: 2, borderBottomColor: '#2563eb' } : undefined}
+            style={selectedStyle(format === f.key)}
             onPress={() => setFormat(f.key)}
           />
         ))}

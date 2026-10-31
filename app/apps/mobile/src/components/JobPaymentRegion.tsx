@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState, PayrollButton, colors, radius, spacing, typography } from '@jobcore/ui';
+import { EmptyState, PayrollButton, colors, radius, selectedStyle, spacing, typography } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
@@ -238,7 +238,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
               key={m}
               label={PAYMENT_METHOD_LABELS[m]}
               onPress={() => setMethod(m)}
-              style={method === m ? { borderBottomWidth: 2, borderBottomColor: '#2563eb' } : undefined}
+              style={selectedStyle(method === m)}
             />
           ))}
         </View>

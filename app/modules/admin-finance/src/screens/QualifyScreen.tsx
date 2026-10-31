@@ -263,6 +263,6 @@ const styles = StyleSheet.create({
   actionSelected: {
     marginLeft: spacing.sm,
     borderBottomWidth: 2,
-    borderBottomColor: '#2563eb',
+    borderBottomColor: colors.selected,
   },
 });

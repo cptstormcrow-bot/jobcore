@@ -40,7 +40,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, PayrollButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text, selectedStyle } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -417,7 +417,7 @@ export function AssignmentBoardScreen({
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
                 onPress={() => setCategory(cat)}
                 textStyle={styles.unbold}
-                style={{ borderBottomWidth: 2, borderBottomColor: category === cat ? '#2563eb' : 'transparent' }}
+                style={selectedStyle(category === cat, true)}
               />
             ))}
           </View>
@@ -468,10 +468,10 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <PayrollButton label="Service" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Service" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={selectedStyle(kind === 'service', true)} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <PayrollButton label="Prem" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Prem" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={selectedStyle(kind === 'prem', true)} />
                       </View>
                       {/* Own Pressable (via PayrollButton/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's

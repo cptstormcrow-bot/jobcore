@@ -39,7 +39,7 @@ export function DefaultTabBar<T extends string>({
               styles.tab,
               {
                 backgroundColor: selected ? colors.sand : colors.sandInactive,
-                borderBottomColor: selected ? '#2563eb' : 'transparent',
+                borderBottomColor: selected ? colors.selected : 'transparent',
               },
             ]}
           >

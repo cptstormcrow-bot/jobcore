@@ -23,6 +23,7 @@ export const colors = {
   gold: '#E1AF80',
   border: '#ADB5BD', // darkened for input visibility (Jeff 2026-10-30)
   black: '#000000', // pure black for high-contrast outlines (checklist tick Checkbox)
+  selected: '#2563eb', // selected-item underline (style sheet v0.4)
   sand: '#D9C7A0',
   sandInactive: '#F0EBDC',
   sandDisabled: '#F7F4EB',
@@ -74,6 +75,17 @@ export const shadow = {
   lg: { shadowColor: '#000000', shadowOffset: { width: 0, height: 8 },  shadowOpacity: 0.12, shadowRadius: 30, elevation: 6 },
   xl: { shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.15, shadowRadius: 40, elevation: 10 },
 } as const;
+
+/**
+ * Shared selected-item look: a 2 px bottom border in `colors.selected`.
+ * `keepSpace` reserves the border (transparent) when unselected so layout doesn't jump.
+ */
+export const selectedStyle = (selected: boolean, keepSpace = false) =>
+  selected
+    ? ({ borderBottomWidth: 2, borderBottomColor: colors.selected } as const)
+    : keepSpace
+      ? ({ borderBottomWidth: 2, borderBottomColor: 'transparent' } as const)
+      : undefined;
 
 export const tokens = { colors, typography, spacing, radius, shadow } as const;
 export type Tokens = typeof tokens;
