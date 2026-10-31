@@ -169,7 +169,7 @@ function AuthGate() {
         <Stack.Screen name="sign-up" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="reset-password" />
-        <Stack.Screen name="m/[moduleId]" />
+        <Stack.Screen name="m" />
       </Stack>
       {overlay && !isRedirect ? (
         <View pointerEvents="auto" style={StyleSheet.absoluteFill}>
