@@ -1,7 +1,7 @@
 // JobCore screen #0001 - root-layout - Root Layout
 import React, { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Redirect, Stack, useRootNavigationState, useRouter, useSegments, usePathname } from 'expo-router';
+import { Redirect, Stack, useNavigationContainerRef, useRouter, useSegments, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -52,8 +52,18 @@ function AuthGate() {
   const pathname = usePathname();
   const onSignIn = segments[0] === 'sign-in' || segments[0] === 'sign-up';
   const onRecovery = segments[0] === 'forgot-password' || segments[0] === 'reset-password';
-  const rootNavigationState = useRootNavigationState();
-  const navigationReady = !!rootNavigationState?.key;
+  // Readiness flag only: subscribing to the whole root navigation state re-rendered AuthGate on every
+  // state change and fed the Firefox web update loop after sign-in.
+  const navRef = useNavigationContainerRef();
+  const [navigationReady, setNavigationReady] = useState(() => navRef.isReady());
+  useEffect(() => {
+    if (navigationReady) return;
+    if (navRef.isReady()) {
+      setNavigationReady(true);
+      return;
+    }
+    return navRef.addListener('state', () => setNavigationReady(true));
+  }, [navRef, navigationReady]);
   const router = useRouter();
   const [checkingAgain, setCheckingAgain] = useState(false);
   const salesBlocked =
