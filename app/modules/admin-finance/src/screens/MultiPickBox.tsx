@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
   sheet: { width: '80%', maxWidth: 320, maxHeight: '80%', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.sm },
   scroll: { flexGrow: 0 },
-  row: { minHeight: 36, borderBottomWidth: 1, borderBottomColor: '#CED4DA' },
+  row: { minHeight: 36, borderBottomWidth: 1, borderBottomColor: colors.divider },
   doneRow: { alignItems: 'center', marginTop: spacing.sm },
 });
 

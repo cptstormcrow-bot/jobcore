@@ -65,7 +65,7 @@ function formatRange(start: string, end: string): string {
 
 const STATUS_COLOR: Record<PayrollEntryStatus, string> = {
   draft: colors.textMuted,
-  submitted: '#1d4ed8',
+  submitted: colors.selected,
   approved: colors.success,
   rejected: colors.danger,
 };

@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     color: colors.text,
     borderBottomWidth: 1,
-    borderBottomColor: '#CED4DA',
+    borderBottomColor: colors.divider,
   },
   row: {
     minHeight: 48,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   // colors.border (#E9ECEF) is too faint against the white sheet
   rowDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#CED4DA',
+    borderBottomColor: colors.divider,
   },
   rowText: {
     fontFamily: typography.fontFamily.body,

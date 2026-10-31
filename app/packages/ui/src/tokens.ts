@@ -22,6 +22,7 @@ export const colors = {
   textMutedDark: '#78818A',
   gold: '#E1AF80',
   border: '#ADB5BD', // darkened for input visibility (Jeff 2026-10-30)
+  divider: '#CED4DA', // light row/list separator, softer than border
   black: '#000000', // pure black for high-contrast outlines (checklist tick Checkbox)
   selected: '#2563eb', // selected-item underline (style sheet v0.4)
   sand: '#D9C7A0',
