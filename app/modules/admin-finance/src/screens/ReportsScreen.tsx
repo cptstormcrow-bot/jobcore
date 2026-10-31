@@ -41,7 +41,7 @@ export interface ReportsScreenProps {
   /** Bubbles a job selection up to the parent (level 2 — `ReportsJobDetailScreen.tsx` is wired by AdminFinanceRoot.tsx, not built here). */
   onSelectJob?: (job: Job) => void;
   /** Android back from the top level (no drill open). */
-  onBack?: () => void;
+  onBack?: () => boolean;
 }
 
 /** Which of the 5 sections, if any, is currently drilled into, plus the selected group/bucket key within it. */
@@ -106,11 +106,8 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
         setDrill(null);
         return true;
       }
-      if (onBack) {
-        onBack();
-        return true;
-      }
-      return false;
+      // Root returns false when there is no earlier screen, so the router can leave the module.
+      return onBack ? onBack() : false;
     });
     return () => subscription.remove();
   }, [drill, onBack]);

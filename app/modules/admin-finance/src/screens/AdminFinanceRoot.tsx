@@ -166,6 +166,10 @@ export function AdminFinanceRoot() {
     if (view === 'closedJobs') setSubView('closedJobs');
   }, [view, ts]);
   useScreenNumber({ subView: SCREEN_NUMBER_KEY[subView] ?? subView });
+  // Android back returns to the view you came from; every view change is recorded here.
+  const viewHistory = useRef<SubView[]>([]);
+  const prevView = useRef<SubView>(subView);
+  const poppingBack = useRef(false);
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [cardExtras, setCardExtras] = useState<{ flags: Record<string, { estimateApproved: boolean; premCompleted: boolean }>; titles: Record<string, string[]> }>({ flags: {}, titles: {} });
   const cardExtrasReq = useRef(0);
@@ -705,23 +709,35 @@ export function AdminFinanceRoot() {
     };
   }, [subView, selectedEmployee]);
 
-  // Android hardware back steps out of employee detail screens instead of leaving the module.
+  useEffect(() => {
+    const prev = prevView.current;
+    prevView.current = subView;
+    if (prev === subView) return;
+    if (poppingBack.current) {
+      poppingBack.current = false;
+      return;
+    }
+    const stack = viewHistory.current;
+    // An in-app return to the previous view counts as going back, so it doesn't loop.
+    if (stack[stack.length - 1] === subView) stack.pop();
+    else stack.push(prev);
+  }, [subView]);
+
+  /** Steps back to the previous view; false when there is nowhere left to go in this module. */
+  function goBack(): boolean {
+    const prev = viewHistory.current.pop();
+    if (!prev) return false;
+    poppingBack.current = true;
+    setSubView(prev);
+    return true;
+  }
+
+  // Android hardware back returns to wherever you came from; Reports owns its own handler (drill first).
   useEffect(() => {
     if (Platform.OS !== 'android') return undefined;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (subView === 'employee-detail') {
-        handleBackToRoster();
-        return true;
-      }
-      if (subView === 'archivedJobs' || subView === 'closedJobs') {
-        setSubView('jobs');
-        return true;
-      }
-      if (subView === 'employee-job-detail') {
-        handleBackToEmployeeDetail();
-        return true;
-      }
-      return false;
+      if (subView === 'reports') return false;
+      return goBack();
     });
     return () => subscription.remove();
   }, [subView]);
@@ -1267,7 +1283,7 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => { router.setParams({ view: 'reports' }); router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } }); }} onBack={() => goTop('overview')} />
+          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => { router.setParams({ view: 'reports' }); router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } }); }} onBack={goBack} />
         )
       ) : subView === 'employee-roster' ? (
         <EmployeeRosterScreen
