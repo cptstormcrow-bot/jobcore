@@ -2,14 +2,13 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
 
 import { WALKTHROUGH_STEPS, WalkthroughStep, WalkthroughStepId } from './walkthrough-content';
 import { HELP_CARDS } from './help-content';
-import { getBoolPref, setBoolPref } from '../lib/local-prefs';
+import { setBoolPref } from '../lib/local-prefs';
 
 const WALKTHROUGH_COMPLETED_KEY = 'walkthrough_v1_completed';
 
@@ -36,19 +35,7 @@ export function WalkthroughProvider({ children }: { children: React.ReactNode })
   const [currentIndex, setCurrentIndex] = useState(0);
   const [standaloneStep, setStandaloneStep] = useState<WalkthroughStep | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    Promise.resolve(getBoolPref(WALKTHROUGH_COMPLETED_KEY, false)).then((completed) => {
-      if (cancelled) return;
-      if (!completed) {
-        setCurrentIndex(0);
-        setIsOpen(true);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // No auto-open at launch: the tour opens only from Options > Help (Jeff 2026-10-30).
 
   const open = useCallback(() => {
     setCurrentIndex(0);
