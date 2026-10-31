@@ -1,5 +1,5 @@
 // JobCore screen #0001 - root-layout - Root Layout
-import React, { useEffect, useState, type ComponentProps } from 'react';
+import React, { useEffect, useRef, useState, type ComponentProps } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Redirect, Stack, useRootNavigationState, useRouter, useSegments, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -69,8 +69,15 @@ function AuthGate() {
       : null;
   const needsLanding =
     navigationReady && landingTarget !== null && (onSignIn || pathname === '/') && pathname !== landingTarget;
+  // Land at most once per sign-in: a repeated replace to the same target looped on Firefox web.
+  const landedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (needsLanding && landingTarget && !salesBlocked) router.replace(landingTarget as never);
+    if (state.status !== 'authenticated') landedRef.current = null;
+  }, [state.status]);
+  useEffect(() => {
+    if (!needsLanding || !landingTarget || salesBlocked || landedRef.current === landingTarget) return;
+    landedRef.current = landingTarget;
+    router.replace(landingTarget as never);
   }, [needsLanding, landingTarget, salesBlocked, router]);
 
   // The Stack must always mount unconditionally — expo-router's root navigation
@@ -147,7 +154,7 @@ function AuthGate() {
     overlay = <Redirect href="/sign-in" />;
   } else if (salesBlocked) {
     overlay = <Redirect href="/m/sales-marketing" />;
-  } else if (needsLanding) {
+  } else if (needsLanding && landedRef.current !== landingTarget) {
     overlay = (
       <View style={styles.center}>
         <LoadingState label="Loading…" />
