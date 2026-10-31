@@ -34,7 +34,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Button, Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Button, Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, PayrollButton, Select, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -48,6 +48,7 @@ import type {
 import { isVehicleStatus, isToolStatus, DuplicateInvitationError } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { numberAreas } from './employee-editor-logic';
+import { MultiPickBox } from './MultiPickBox';
 import { parseMoneyToCents, centsToDollarsText, parsePercent } from '../domain/parse-money';
 
 export interface EmployeeEditorScreenProps {
@@ -111,6 +112,11 @@ const SKILLS = [
   'estimating',
   'customer_service',
 ] as const;
+
+const prettySkill = (s: string) => {
+  const t = s.replace(/_/g, ' ');
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 const VEHICLE_STATUS_OPTIONS = [
   { label: 'Assigned', value: 'assigned' },
@@ -192,6 +198,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
   const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
+  const [addedSkills, setAddedSkills] = useState<string[]>([]);
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
 
   const [activeTab, setActiveTab] = useState<EmpTab>('detail');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
@@ -536,6 +545,15 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     }
   }
 
+  const handleAddSkill = () => {
+    const id = newSkill.trim().toLowerCase().replace(/\s+/g, '_');
+    if (!id) return;
+    setAddedSkills((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setNewSkill('');
+    setShowAddSkill(false);
+    void handleSkillToggle(id, true);
+  };
+
   return (
     <View style={styles.screen}>
       <ScreenTitle title={isEditMode ? 'Edit Employee' : 'Add Employee'} />
@@ -554,6 +572,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             disabled={busy || (isEditMode ? !employeeRepository : !invitationRepository) || privateState === 'loading'}
             style={styles.topButton}
           />
+          {activeTab === 'skills' && isEditMode ? (
+            <PayrollButton label="Add Skills" onPress={() => setShowAddSkill((v) => !v)} style={styles.addSkillBtn} />
+          ) : null}
           <Button
             label="Cancel"
             variant="outline"
@@ -562,6 +583,18 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             style={styles.topButton}
           />
         </View>
+        {showAddSkill && activeTab === 'skills' && isEditMode ? (
+          <View style={styles.addSkillRow}>
+            <TextInput
+              value={newSkill}
+              onChangeText={setNewSkill}
+              placeholder="New skill name"
+              style={[styles.input, styles.addSkillInput]}
+              onSubmitEditing={handleAddSkill}
+            />
+            <PayrollButton label="Add" onPress={handleAddSkill} />
+          </View>
+        ) : null}
         {confirmDiscard ? (
           <View style={styles.confirmRow}>
             <Text style={styles.heading}>Discard changes?</Text>
@@ -861,66 +894,49 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
         {activeTab === 'areas' && !isEditMode ? (
           <Card style={styles.card}>
-            <Text style={styles.heading}>Service Areas</Text>
             <Text style={styles.note}>Set after the employee accepts the invitation.</Text>
           </Card>
         ) : null}
 
         {activeTab === 'areas' && isEditMode ? (
           <Card style={styles.card}>
-            <Text style={styles.heading}>Service Areas</Text>
             {serviceAreaList.length === 0 ? (
               <Text style={styles.note}>No service areas are configured.</Text>
             ) : (
-              numberAreas(serviceAreaList).map((numbered) => {
-                const area = { id: numbered.id, name: `${numbered.n}. ${numbered.name}` };
-                const rowState = serviceAreaActionState[area.id] ?? { kind: 'idle' };
-                return (
-                  <View key={area.id}>
-                    <Toggle
-                      label={area.name}
-                      value={assignedServiceAreaIds.has(area.id)}
-                      onChange={(newValue) => {
-                        void handleServiceAreaToggle(area.id, newValue);
-                      }}
-                      disabled={rowState.kind === 'working'}
-                      style={styles.action}
-                    />
-                    {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
-                  </View>
-                );
-              })
+              <>
+                <MultiPickBox
+                  noun="service areas"
+                  items={numberAreas(serviceAreaList).map((n) => ({ id: n.id, label: `${n.n}. ${n.name}` }))}
+                  selectedIds={assignedServiceAreaIds}
+                  onToggle={(id, v) => { void handleServiceAreaToggle(id, v); }}
+                  disabledIds={new Set(Object.keys(serviceAreaActionState).filter((k) => serviceAreaActionState[k]?.kind === 'working'))}
+                />
+                {Object.entries(serviceAreaActionState).map(([k, st]) =>
+                  st.kind === 'failed' ? <ErrorState key={k} message={st.message} /> : null,
+                )}
+              </>
             )}
           </Card>
         ) : null}
 
         {activeTab === 'skills' && !isEditMode ? (
           <Card style={styles.card}>
-            <Text style={styles.heading}>Skills</Text>
             <Text style={styles.note}>Set after the employee accepts the invitation.</Text>
           </Card>
         ) : null}
 
         {activeTab === 'skills' && isEditMode ? (
           <Card style={styles.card}>
-            <Text style={styles.heading}>Skills</Text>
-            {SKILLS.map((skill) => {
-              const rowState = skillActionState[skill] ?? { kind: 'idle' };
-              return (
-                <View key={skill}>
-                  <Toggle
-                    label={skill}
-                    value={assignedSkillIds.has(skill)}
-                    onChange={(newValue) => {
-                      void handleSkillToggle(skill, newValue);
-                    }}
-                    disabled={rowState.kind === 'working'}
-                    style={styles.action}
-                  />
-                  {rowState.kind === 'failed' ? <ErrorState message={rowState.message} /> : null}
-                </View>
-              );
-            })}
+            <MultiPickBox
+              noun="skills"
+              items={Array.from(new Set<string>([...SKILLS, ...assignedSkillIds, ...addedSkills])).map((s) => ({ id: s, label: prettySkill(s) }))}
+              selectedIds={assignedSkillIds}
+              onToggle={(id, v) => { void handleSkillToggle(id, v); }}
+              disabledIds={new Set(Object.keys(skillActionState).filter((k) => skillActionState[k]?.kind === 'working'))}
+            />
+            {Object.entries(skillActionState).map(([k, st]) =>
+              st.kind === 'failed' ? <ErrorState key={k} message={st.message} /> : null,
+            )}
           </Card>
         ) : null}
 
@@ -932,6 +948,9 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 export default EmployeeEditorScreen;
 
 const styles = StyleSheet.create({
+  addSkillBtn: { marginBottom: spacing.sm },
+  addSkillRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
+  addSkillInput: { flex: 1, marginBottom: 0 },
   screen: {
     flex: 1,
     backgroundColor: colors.offWhite,

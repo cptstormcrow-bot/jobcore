@@ -22,6 +22,7 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
+| 0116_tech_skills_free_text.sql | Lets Add Skills (#0043) save custom skill names by dropping the six-value check on tech_skills.skill | Pending: needs Jeff's go to push | 2026-10-30 |
 
 ## Past (pushes and attempts)
 
