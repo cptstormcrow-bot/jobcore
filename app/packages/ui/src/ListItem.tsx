@@ -20,6 +20,8 @@ const CENTER_STACK_BREAKPOINT = 480;
 
 export function ListItem({ title, subtitle, overline, footer, onPress, right, center, footerLines, style }: ListItemProps) {
   const { width } = useWindowDimensions();
+  // On a pressable row a tap runs onPress; a long press opens the full-title popup instead.
+  const [titleOpen, setTitleOpen] = React.useState(false);
   const hasCenter = center !== undefined && center !== null && center !== false;
   const sideBySide = hasCenter && width >= CENTER_STACK_BREAKPOINT;
   const stacked = hasCenter && !sideBySide;
@@ -36,12 +38,13 @@ export function ListItem({ title, subtitle, overline, footer, onPress, right, ce
     <View style={[styles.row, style]}>
       <Pressable
         onPress={onPress}
+        onLongPress={onPress ? () => setTitleOpen(true) : undefined}
         {...interactiveProps}
         style={sideBySide ? [styles.main, styles.mainWithCenter] : styles.main}
       >
         <View style={styles.content}>
           {overline ? <TruncatedText style={styles.overline}>{overline}</TruncatedText> : null}
-          <TruncatedText style={styles.title}>{title}</TruncatedText>
+          <TruncatedText style={styles.title} tappable={!onPress} open={titleOpen} onClose={() => setTitleOpen(false)}>{title}</TruncatedText>
           {subtitle ? <TruncatedText style={styles.subtitle}>{subtitle}</TruncatedText> : null}
           {footer ? (
             footerLines !== undefined ? (

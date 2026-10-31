@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   titleBarTitle: {
     fontFamily: typography.fontFamily.headingBold,
     fontSize: 13,
-    lineHeight: 16,
+    lineHeight: 20,
     color: colors.white,
     textShadowColor: '#000000',
     textShadowOffset: { width: 0, height: 0 },

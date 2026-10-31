@@ -13,12 +13,21 @@ export type TruncatedTextProps = Omit<TextProps, 'numberOfLines' | 'ellipsizeMod
   children: string;
   style?: StyleProp<TextStyle>;
   popupTitle?: string;
+  /** Set false inside a pressable parent so a tap reaches the parent; the parent then drives the popup via open/onClose. */
+  tappable?: boolean;
+  open?: boolean;
+  onClose?: () => void;
 };
 
-export function TruncatedText({ children, style, popupTitle, ...rest }: TruncatedTextProps) {
+export function TruncatedText({ children, style, popupTitle, tappable = true, open: openProp, onClose, ...rest }: TruncatedTextProps) {
   const [visibleHeight, setVisibleHeight] = React.useState(0);
   const [hiddenHeight, setHiddenHeight] = React.useState(0);
-  const [open, setOpen] = React.useState(false);
+  const [openState, setOpenState] = React.useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (v: boolean) => {
+    setOpenState(v);
+    if (!v) onClose?.();
+  };
 
   const truncated = visibleHeight > 0 && hiddenHeight > 0 && hiddenHeight > visibleHeight + 1;
 
@@ -36,7 +45,7 @@ export function TruncatedText({ children, style, popupTitle, ...rest }: Truncate
 
   return (
     <View style={styles.container}>
-      {truncated ? (
+      {truncated && tappable ? (
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={children}
