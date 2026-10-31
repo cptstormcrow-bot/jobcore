@@ -1,0 +1,300 @@
+{
+  "forgot-password": {
+    "status": "ok"
+  },
+  "reset-password": {
+    "status": "ok"
+  },
+  "sign-in": {
+    "status": "ok"
+  },
+  "sign-up": {
+    "status": "ok"
+  },
+  "af-JobCreateScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "af-ReportsJobDetailScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "af-addTaskDialog": {
+    "status": "skipped",
+    "reason": "no route or subView hook (dialog), not derivable"
+  },
+  "af-payments-PaymentsScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (drill-in), not derivable"
+  },
+  "af-payments-PayoutBatchDetailScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (drill-in), not derivable"
+  },
+  "af-payments-PayoutBatchScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (drill-in), not derivable"
+  },
+  "af-payments-ReimbursementQueueScreen": {
+    "status": "skipped",
+    "reason": "no route or subView hook (drill-in), not derivable"
+  },
+  "blackout-range-modal": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "blackout-time-off-list": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "ft-Earnings": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "ft-FieldJobDetail": {
+    "status": "skipped",
+    "reason": "no route or subView hook (drill-in), not derivable"
+  },
+  "ft-Greeting": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "ft-Reimbursements": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "ft-StartChecklist": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "layout": {
+    "status": "skipped",
+    "reason": "module shell, no own screen"
+  },
+  "module-host": {
+    "status": "skipped",
+    "reason": "dynamic/group route /m/[moduleId], no concrete url"
+  },
+  "not-found": {
+    "status": "skipped",
+    "reason": "no route or subView hook (route), not derivable"
+  },
+  "root-layout": {
+    "status": "skipped",
+    "reason": "no route or subView hook (route), not derivable"
+  },
+  "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "tabs-layout": {
+    "status": "skipped",
+    "reason": "dynamic/group route /(tabs), no concrete url"
+  },
+  "time-off-tech-calendar": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "universal-calendar": {
+    "status": "skipped",
+    "reason": "no route or subView hook (sub-view), not derivable"
+  },
+  "account": {
+    "status": "ok"
+  },
+  "admin-finance": {
+    "status": "ok"
+  },
+  "af-Payroll": {
+    "status": "ok"
+  },
+  "af-PayrollRun": {
+    "status": "ok"
+  },
+  "af-PayrollSettings": {
+    "status": "ok"
+  },
+  "af-archivedJobs": {
+    "status": "ok"
+  },
+  "af-assignmentBoard": {
+    "status": "ok"
+  },
+  "af-blackout-editor": {
+    "status": "failed",
+    "reason": "click target not found: Add Blackout"
+  },
+  "af-calendar": {
+    "status": "ok"
+  },
+  "af-closeOutQueue": {
+    "status": "failed",
+    "reason": "click target not found: Close-Outs"
+  },
+  "af-closeOutReview": {
+    "status": "failed",
+    "reason": "click target not found: Close-Out Review"
+  },
+  "af-employee-detail": {
+    "status": "failed",
+    "reason": "click target not found: Employee Detail"
+  },
+  "af-employee-editor": {
+    "status": "ok"
+  },
+  "af-employee-invitations": {
+    "status": "ok"
+  },
+  "af-employee-job-detail": {
+    "status": "failed",
+    "reason": "click target not found: Employee Job Detail"
+  },
+  "af-employee-roster": {
+    "status": "ok"
+  },
+  "af-jobEstimate": {
+    "status": "ok"
+  },
+  "af-jobs": {
+    "status": "ok"
+  },
+  "af-leadCreate": {
+    "status": "ok"
+  },
+  "af-leadEdit": {
+    "status": "failed",
+    "reason": "click target not found: Edit Lead"
+  },
+  "af-leadInbox": {
+    "status": "ok"
+  },
+  "af-overview": {
+    "status": "ok"
+  },
+  "af-payments": {
+    "status": "ok"
+  },
+  "af-planning": {
+    "status": "failed",
+    "reason": "click target not found: Planning"
+  },
+  "af-priceSheetCreate": {
+    "status": "ok"
+  },
+  "af-priceSheetEditor": {
+    "status": "failed",
+    "reason": "click target not found: Price Sheet Editor"
+  },
+  "af-priceSheetList": {
+    "status": "ok"
+  },
+  "af-qualify": {
+    "status": "failed",
+    "reason": "click target not found: Qualify Lead"
+  },
+  "af-reports": {
+    "status": "ok"
+  },
+  "af-review": {
+    "status": "ok"
+  },
+  "calendar": {
+    "status": "ok"
+  },
+  "config-settings": {
+    "status": "ok"
+  },
+  "config-test-jobs": {
+    "status": "ok"
+  },
+  "index": {
+    "status": "ok"
+  },
+  "job-region-arrive": {
+    "status": "ok"
+  },
+  "job-region-assign": {
+    "status": "ok"
+  },
+  "job-region-complete": {
+    "status": "ok"
+  },
+  "job-region-contact": {
+    "status": "ok"
+  },
+  "job-region-evisit": {
+    "status": "failed",
+    "reason": "scrollTo target not found: Prelim (Prem)"
+  },
+  "job-region-paid": {
+    "status": "ok"
+  },
+  "job-region-plan": {
+    "status": "failed",
+    "reason": "scrollTo target not found: Plan"
+  },
+  "job-region-schedule": {
+    "status": "ok"
+  },
+  "jobs": {
+    "status": "ok"
+  },
+  "payment-review": {
+    "status": "ok"
+  },
+  "profile": {
+    "status": "ok"
+  },
+  "field-tech": {
+    "status": "ok"
+  },
+  "ft-Completion": {
+    "status": "ok"
+  },
+  "ft-DayList": {
+    "status": "ok"
+  },
+  "ft-Overview": {
+    "status": "ok"
+  },
+  "ft-Payroll": {
+    "status": "ok"
+  },
+  "ft-PremJobs": {
+    "status": "ok"
+  },
+  "ft-Reviews": {
+    "status": "ok"
+  },
+  "job-id": {
+    "status": "ok"
+  },
+  "sales-marketing": {
+    "status": "ok"
+  },
+  "sm-CallbackTasks": {
+    "status": "ok"
+  },
+  "sm-Composer": {
+    "status": "ok"
+  },
+  "sm-Overview": {
+    "status": "ok"
+  },
+  "sm-Payroll": {
+    "status": "ok"
+  },
+  "sm-PitchPicker": {
+    "status": "ok"
+  },
+  "sm-Reporting": {
+    "status": "ok"
+  },
+  "sm-ReviewLibrary": {
+    "status": "ok"
+  }
+}
