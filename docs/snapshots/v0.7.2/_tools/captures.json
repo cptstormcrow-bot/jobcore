@@ -1,0 +1,794 @@
+{
+  "base": "http://localhost:8081",
+  "roles": {
+    "af": {
+      "profile": "edge-profile-af",
+      "home": "/m/admin-finance"
+    },
+    "ft": {
+      "profile": "edge-profile-ft",
+      "home": "/m/field-tech"
+    },
+    "sm": {
+      "profile": "edge-profile-sm",
+      "home": "/m/sales-marketing"
+    },
+    "anon": {
+      "profile": "edge-profile-anon",
+      "home": "/sign-in"
+    }
+  },
+  "screens": {
+    "account": {
+      "role": "af",
+      "url": "/account",
+      "steps": [],
+      "waitFor": "Account"
+    },
+    "admin-finance": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [],
+      "waitFor": "Admin & Finance"
+    },
+    "af-JobCreateScreen": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "af-Payroll": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payroll"
+        }
+      ],
+      "waitFor": "Payroll"
+    },
+    "af-PayrollRun": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payroll"
+        },
+        {
+          "click": "Payroll Run"
+        }
+      ],
+      "waitFor": "Payroll Run"
+    },
+    "af-PayrollSettings": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payroll"
+        },
+        {
+          "click": "Payroll Settings"
+        },
+        {
+          "click": "Compensation Policy"
+        },
+        {
+          "click": "Back"
+        }
+      ],
+      "waitFor": "Payroll Settings"
+    },
+    "af-ReportsJobDetailScreen": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "af-addTaskDialog": {
+      "skip": "no route or subView hook (dialog), not derivable"
+    },
+    "af-archivedJobs": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Jobs"
+        },
+        {
+          "click": "Archived"
+        }
+      ],
+      "waitFor": "Archived Jobs"
+    },
+    "af-assignmentBoard": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Assignments"
+        }
+      ],
+      "waitFor": "Assignments"
+    },
+    "af-blackout-editor": {
+      "role": "af",
+      "url": "/calendar",
+      "steps": [
+        {
+          "click": "Add Blackout"
+        }
+      ]
+    },
+    "af-calendar": {
+      "role": "af",
+      "url": "/m/admin-finance?view=calendar",
+      "steps": []
+    },
+    "af-closeOutQueue": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Close-Outs"
+        }
+      ],
+      "waitFor": "Close-Outs"
+    },
+    "af-closeOutReview": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Close-Out Review"
+        }
+      ],
+      "waitFor": "Close-Out Review"
+    },
+    "af-employee-detail": {
+      "role": "af",
+      "url": "/m/admin-finance?view=employee-roster",
+      "steps": [
+        {
+          "click": "^Dev Tech"
+        }
+      ]
+    },
+    "af-employee-editor": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Employees"
+        },
+        {
+          "click": "Add Employee"
+        }
+      ],
+      "waitFor": "Add/Edit Employee"
+    },
+    "af-employee-invitations": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Employees"
+        },
+        {
+          "click": "Pending Invitations"
+        }
+      ],
+      "waitFor": "Pending Invitations"
+    },
+    "af-employee-job-detail": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Employee Job Detail"
+        }
+      ],
+      "waitFor": "Employee Job Detail"
+    },
+    "af-employee-roster": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Employees"
+        }
+      ],
+      "waitFor": "Employees"
+    },
+    "af-jobEstimate": {
+      "role": "af",
+      "url": "/job/[jobId]?panel=jobEstimate",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ]
+    },
+    "af-jobs": {
+      "role": "af",
+      "url": "/m/admin-finance?view=jobs",
+      "steps": []
+    },
+    "af-leadCreate": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Leads"
+        },
+        {
+          "click": "New Lead"
+        }
+      ],
+      "waitFor": "New Lead"
+    },
+    "af-leadEdit": {
+      "role": "af",
+      "url": "/m/admin-finance?view=leadInbox",
+      "steps": [
+        {
+          "click": "^Lotta Hooey"
+        }
+      ]
+    },
+    "af-leadInbox": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Leads"
+        }
+      ],
+      "waitFor": "Leads"
+    },
+    "af-overview": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Overview"
+        }
+      ],
+      "waitFor": "Overview"
+    },
+    "af-payments": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payments"
+        }
+      ],
+      "waitFor": "Payments"
+    },
+    "af-payments-PaymentsScreen": {
+      "skip": "no route or subView hook (drill-in), not derivable"
+    },
+    "af-payments-PayoutBatchDetailScreen": {
+      "skip": "no route or subView hook (drill-in), not derivable"
+    },
+    "af-payments-PayoutBatchScreen": {
+      "skip": "no route or subView hook (drill-in), not derivable"
+    },
+    "af-payments-ReimbursementQueueScreen": {
+      "skip": "no route or subView hook (drill-in), not derivable"
+    },
+    "af-planning": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Planning"
+        }
+      ],
+      "waitFor": "Planning"
+    },
+    "af-priceSheetCreate": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Price Sheets"
+        },
+        {
+          "click": "Create price sheet"
+        }
+      ],
+      "waitFor": "New Price Sheet"
+    },
+    "af-priceSheetEditor": {
+      "role": "af",
+      "url": "/m/admin-finance?view=priceSheetList",
+      "steps": [
+        {
+          "click": "^Version 2"
+        }
+      ]
+    },
+    "af-priceSheetList": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Price Sheets"
+        }
+      ],
+      "waitFor": "Price Sheets"
+    },
+    "af-qualify": {
+      "role": "af",
+      "url": "/m/admin-finance?view=leadInbox",
+      "steps": [
+        {
+          "click": "^Lotta Hooey"
+        },
+        {
+          "click": "Create job"
+        }
+      ]
+    },
+    "af-reports": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Reports"
+        }
+      ],
+      "waitFor": "Reports"
+    },
+    "af-review": {
+      "role": "af",
+      "url": "/m/admin-finance",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Review"
+        }
+      ],
+      "waitFor": "Review"
+    },
+    "blackout-range-modal": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "blackout-time-off-list": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "calendar": {
+      "role": "af",
+      "url": "/calendar",
+      "steps": [],
+      "waitFor": "Calendar"
+    },
+    "config-settings": {
+      "role": "af",
+      "url": "/config/settings",
+      "steps": [],
+      "waitFor": "Settings"
+    },
+    "config-test-jobs": {
+      "role": "af",
+      "url": "/config/test-jobs",
+      "steps": [],
+      "waitFor": "Test Jobs"
+    },
+    "field-tech": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [],
+      "waitFor": "Field Tech"
+    },
+    "forgot-password": {
+      "role": "anon",
+      "url": "/forgot-password",
+      "steps": [],
+      "waitFor": null
+    },
+    "ft-Completion": {
+      "role": "ft",
+      "url": "/job/complete/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ],
+      "waitFor": "Completion"
+    },
+    "ft-DayList": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [
+        {
+          "click": "Jobs"
+        }
+      ],
+      "waitFor": "Jobs"
+    },
+    "ft-Earnings": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "ft-FieldJobDetail": {
+      "skip": "no route or subView hook (drill-in), not derivable"
+    },
+    "ft-Greeting": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "ft-Overview": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Overview"
+        }
+      ],
+      "waitFor": "Overview"
+    },
+    "ft-Payroll": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payroll"
+        }
+      ],
+      "waitFor": "Payroll"
+    },
+    "ft-PremJobs": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Prems"
+        }
+      ],
+      "waitFor": "Prems"
+    },
+    "ft-Reimbursements": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "ft-Reviews": {
+      "role": "ft",
+      "url": "/m/field-tech",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Reviews"
+        }
+      ],
+      "waitFor": "Reviews"
+    },
+    "ft-StartChecklist": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "index": {
+      "role": "af",
+      "url": "/",
+      "steps": [],
+      "waitFor": null
+    },
+    "job-id": {
+      "role": "ft",
+      "url": "/job/complete/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ],
+      "waitFor": "Completion"
+    },
+    "job-region-arrive": {
+      "role": "af",
+      "url": "/job/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        },
+        {
+          "scrollTo": "Arrive"
+        }
+      ],
+      "waitFor": "Arrive"
+    },
+    "job-region-assign": {
+      "role": "af",
+      "url": "/job/[jobId]?panel=assign",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ]
+    },
+    "job-region-complete": {
+      "role": "af",
+      "url": "/job/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        },
+        {
+          "scrollTo": "Complete"
+        }
+      ],
+      "waitFor": "Complete"
+    },
+    "job-region-contact": {
+      "role": "af",
+      "url": "/job/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        },
+        {
+          "scrollTo": "Contact"
+        }
+      ],
+      "waitFor": "Contact"
+    },
+    "job-region-evisit": {
+      "role": "af",
+      "url": "/job/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        },
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "^Prelim"
+        }
+      ],
+      "waitFor": "Prelim (Prem)"
+    },
+    "job-region-paid": {
+      "role": "af",
+      "url": "/job/[jobId]",
+      "steps": [
+        {
+          "pickFirstJob": true
+        },
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Paid"
+        }
+      ]
+    },
+    "job-region-plan": {
+      "role": "af",
+      "url": "/job/[jobId]?panel=plan",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ]
+    },
+    "job-region-schedule": {
+      "role": "af",
+      "url": "/job/[jobId]?panel=schedule",
+      "steps": [
+        {
+          "pickFirstJob": true
+        }
+      ]
+    },
+    "jobs": {
+      "role": "af",
+      "url": "/jobs",
+      "steps": [],
+      "waitFor": "Jobs"
+    },
+    "layout": {
+      "skip": "module shell, no own screen"
+    },
+    "module-host": {
+      "skip": "dynamic/group route /m/[moduleId], no concrete url"
+    },
+    "not-found": {
+      "skip": "no route or subView hook (route), not derivable"
+    },
+    "payment-review": {
+      "role": "af",
+      "url": "/m/payment-review",
+      "steps": [],
+      "waitFor": "Payment Review"
+    },
+    "profile": {
+      "role": "af",
+      "url": "/profile",
+      "steps": [],
+      "waitFor": "Profile"
+    },
+    "reset-password": {
+      "role": "anon",
+      "url": "/reset-password",
+      "steps": [],
+      "waitFor": null
+    },
+    "root-layout": {
+      "skip": "no route or subView hook (route), not derivable"
+    },
+    "sales-marketing": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [],
+      "waitFor": "Sales & Marketing"
+    },
+    "sign-in": {
+      "role": "anon",
+      "url": "/sign-in",
+      "steps": [],
+      "waitFor": "Sign In"
+    },
+    "sign-up": {
+      "role": "anon",
+      "url": "/sign-up",
+      "steps": [],
+      "waitFor": "Sign Up"
+    },
+    "sm-CallbackTasks": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Callback tasks"
+        }
+      ],
+      "waitFor": "Callback tasks"
+    },
+    "sm-Composer": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Composer"
+        }
+      ],
+      "waitFor": "Compose Post"
+    },
+    "sm-Overview": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Overview"
+        }
+      ],
+      "waitFor": "Overview"
+    },
+    "sm-Payroll": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Payroll"
+        }
+      ],
+      "waitFor": "Payroll"
+    },
+    "sm-PitchPicker": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Pitch Picker"
+        }
+      ],
+      "waitFor": "Pitch Picker"
+    },
+    "sm-Reporting": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Reporting"
+        }
+      ],
+      "waitFor": "Reporting"
+    },
+    "sm-ReviewLibrary": {
+      "role": "sm",
+      "url": "/m/sales-marketing",
+      "steps": [
+        {
+          "click": "Menu"
+        },
+        {
+          "click": "Review Library"
+        }
+      ],
+      "waitFor": "Review Library"
+    },
+    "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "tabs-layout": {
+      "skip": "dynamic/group route /(tabs), no concrete url"
+    },
+    "time-off-tech-calendar": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    },
+    "universal-calendar": {
+      "skip": "no route or subView hook (sub-view), not derivable"
+    }
+  }
+}
