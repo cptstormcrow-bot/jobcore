@@ -46,7 +46,7 @@ import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
 import { candidatesFor, type TechServiceAreaCoverage } from '../domain/segway-candidates';
 import { overlaps, type TimeWindow } from '../domain/time-window';
-import { sortPoolJobs, unassignedFirst, type SortDirection } from '../domain/assignment-pool-sort';
+import { sortPoolJobs, type SortDirection } from '../domain/assignment-pool-sort';
 import { defaultKind, pickerValue, needsConfirm, techOptionsFor, type VisitKind } from './assignment-board-helpers';
 
 export interface AssignmentBoardScreenProps {
@@ -169,7 +169,8 @@ export function AssignmentBoardScreen({
           (category === 'all' || jobCategoryOf(job) === category)
       );
       const sorted = sortPoolJobs(visible, sortDirection);
-      return unassignedOnTop ? unassignedFirst(sorted, (job) => !!(job.assignedTechId || investigatorTechIdByJob?.[job.id])) : sorted;
+      // Unassigned = show ONLY unassigned jobs (Jeff 2026-10-30).
+      return unassignedOnTop ? sorted.filter((job) => !(job.assignedTechId || investigatorTechIdByJob?.[job.id])) : sorted;
     },
     [jobs, showTestJobs, category, sortDirection, unassignedOnTop, investigatorTechIdByJob]
   );
@@ -392,12 +393,15 @@ export function AssignmentBoardScreen({
   return (
     <View style={styles.screen}>
       <View style={styles.sortTabsRow}>
+        <Text style={styles.headerTitle}>Job Assignments</Text>
         <DefaultTabBar<'order' | 'off'>
+          labelStyle={styles.unbold}
           tabs={[{ id: 'order', label: sortDirection === 'asc' ? 'First to Last' : 'Last to First' }]}
           activeId={sortDirection === 'asc' ? 'order' : 'off'}
           onChange={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
         />
         <DefaultTabBar<'unassigned' | 'off'>
+          labelStyle={styles.unbold}
           tabs={[{ id: 'unassigned', label: 'Unassigned' }]}
           activeId={unassignedOnTop ? 'unassigned' : 'off'}
           onChange={() => setUnassignedOnTop((v) => !v)}
@@ -405,7 +409,6 @@ export function AssignmentBoardScreen({
       </View>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator {...(Platform.OS === 'android' ? { persistentScrollbar: true } : {})}>
         <Card style={styles.poolCard}>
-          <Text style={styles.poolTitle}>Job Assignments</Text>
           {showTestJobs ? (
           <View style={styles.categorySegmentRow}>
             {(showTestJobs ? (['real', 'beta', 'test', 'all'] as const) : (['real'] as const)).map((cat) => (
@@ -413,12 +416,12 @@ export function AssignmentBoardScreen({
                 key={cat}
                 label={cat === 'real' ? 'Real' : cat === 'beta' ? 'Beta' : cat === 'test' ? 'Test' : 'All'}
                 onPress={() => setCategory(cat)}
+                textStyle={styles.unbold}
                 style={{ borderBottomWidth: 2, borderBottomColor: category === cat ? '#2563eb' : 'transparent' }}
               />
             ))}
           </View>
           ) : null}
-          <View style={styles.jobsDivider} />
           {poolJobs.length === 0 ? (
             <Text style={styles.empty}>No jobs.</Text>
           ) : (
@@ -465,10 +468,10 @@ export function AssignmentBoardScreen({
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
                     <View style={styles.rowActions}>
                       <View style={styles.kindSlot}>
-                        <PayrollButton label="Service" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Service" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'service' ? '#2563eb' : 'transparent' }} />
                       </View>
                       <View style={styles.kindSlot}>
-                        <PayrollButton label="Prem" onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
+                        <PayrollButton label="Prem" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'prem' })); }} style={{ borderBottomWidth: 2, borderBottomColor: kind === 'prem' ? '#2563eb' : 'transparent' }} />
                       </View>
                       {/* Own Pressable (via PayrollButton/Select) so RN's nested-touch-responder
                           priority keeps this tap from also firing the row's
@@ -481,7 +484,7 @@ export function AssignmentBoardScreen({
                         style={styles.assignSelect}
                       />
                       <View style={styles.confirmSlot}>
-                        {showConfirm ? <PayrollButton label="Confirm" onPress={() => handleRowConfirm(job)} /> : null}
+                        {showConfirm ? <PayrollButton label="Confirm" textStyle={styles.unbold} onPress={() => handleRowConfirm(job)} /> : null}
                       </View>
                     </View>
                   </View>
@@ -572,10 +575,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   poolCard: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   poolTitle: {
     color: colors.text,
@@ -586,18 +589,13 @@ const styles = StyleSheet.create({
   },
   empty: {
     color: colors.textLight,
-    fontSize: typography.size.body,
+    fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
   },
   categorySegmentRow: {
     flexDirection: 'row',
     gap: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  jobsDivider: {
-    height: 2,
-    backgroundColor: colors.primary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   visitKindSegmentRow: {
     flexDirection: 'row',
@@ -605,10 +603,10 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   poolRow: {
-    paddingVertical: spacing.xs,
+    paddingVertical: 2,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.sm,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
     backgroundColor: colors.surfaceAlt,
   },
   poolRowSelected: {
@@ -620,7 +618,7 @@ const styles = StyleSheet.create({
   },
   poolRowText: {
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
   },
   assignSelect: {
@@ -631,7 +629,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   assignedLine: {
-    fontSize: typography.size.small,
+    fontSize: typography.size.label,
     color: colors.textMuted,
   },
   rowDetail: {},
@@ -647,44 +645,42 @@ const styles = StyleSheet.create({
   },
   rowCustomer: {
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
     flexShrink: 1,
     minWidth: 0,
   },
+  // Description sits directly under the customer name (Jeff 2026-10-30).
   rowTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
   },
   rowDescription: {
     color: colors.text,
-    fontSize: typography.size.small,
+    fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.regular,
-    textAlign: 'right',
-    maxWidth: '55%',
-    marginLeft: spacing.sm,
   },
   rowError: {
     color: colors.danger,
-    fontSize: typography.size.small,
+    fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   rowActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   kindSlot: {
     flex: 1,
     minWidth: 56,
     marginRight: spacing.xs,
   },
-  sortTabsRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  sortTabsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.sm, paddingTop: 2 },
+  unbold: { fontWeight: '400' },
+  headerTitle: { color: colors.text, fontSize: typography.size.h5, fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, marginRight: spacing.sm },
   hint: {
     color: colors.textMuted,
     fontSize: typography.size.label,

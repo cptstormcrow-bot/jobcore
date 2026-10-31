@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { Pressable, Text, StyleSheet } from 'react-native';
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { colors } from './tokens';
 
 export interface PayrollButtonProps {
@@ -16,9 +16,11 @@ export interface PayrollButtonProps {
   testID?: string;
   style?: StyleProp<ViewStyle>;
   tone?: 'default' | 'danger';
+  /** Optional label override, e.g. a non-bold label on a dense screen. */
+  textStyle?: StyleProp<TextStyle>;
 }
 
-export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style, tone }: PayrollButtonProps) {
+export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style, tone, textStyle }: PayrollButtonProps) {
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -30,7 +32,7 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       testID={testID}
       style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, style]}
     >
-      <Text style={styles.text}>{label}</Text>
+      <Text style={[styles.text, textStyle]}>{label}</Text>
     </Pressable>
   );
 }

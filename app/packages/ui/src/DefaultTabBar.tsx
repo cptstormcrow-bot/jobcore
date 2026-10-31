@@ -6,6 +6,7 @@
  */
 import React from 'react';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
+import type { StyleProp, TextStyle } from 'react-native';
 import { colors } from './tokens';
 
 export interface DefaultTabBarProps<T extends string> {
@@ -13,6 +14,8 @@ export interface DefaultTabBarProps<T extends string> {
   activeId: T;
   onChange: (id: T) => void;
   rightSlot?: React.ReactNode;
+  /** Optional label override, applied after the default (e.g. drop the active bold). */
+  labelStyle?: StyleProp<TextStyle>;
 }
 
 export function DefaultTabBar<T extends string>({
@@ -20,6 +23,7 @@ export function DefaultTabBar<T extends string>({
   activeId,
   onChange,
   rightSlot,
+  labelStyle,
 }: DefaultTabBarProps<T>) {
   return (
     <View style={styles.row}>
@@ -39,7 +43,7 @@ export function DefaultTabBar<T extends string>({
               },
             ]}
           >
-            <Text style={{ color: colors.text, fontWeight: selected ? '700' : '400' }}>
+            <Text style={[{ color: colors.text, fontWeight: selected ? '700' : '400' }, labelStyle]}>
               {tab.label}
             </Text>
           </Pressable>
