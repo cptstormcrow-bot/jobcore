@@ -1419,7 +1419,7 @@ export default function JobDrilldownScreen() {
           }}
         />
         {isAdmin && region === 'evisit' && investigatorTechId ? (
-          <Text style={{ paddingLeft: 16 }}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+          <Text style={{ paddingLeft: spacing.lg }}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
         ) : null}
         {region === 'evisit' && (
           <JobInvestigationScreen

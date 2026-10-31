@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState, PayrollButton, colors } from '@jobcore/ui';
+import { EmptyState, PayrollButton, colors, radius, spacing, typography } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
@@ -209,12 +209,12 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const cashInvalid =
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
   const isPaidState = balance <= 0 && settledTotalCents(payments) > 0;
-  const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: colors.text, backgroundColor: colors.surface } as const;
+  const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.size.body, color: colors.text, backgroundColor: colors.surface } as const;
 
   return (
-    <View style={{ padding: 12, gap: 8 }}>
-      <Text style={{ fontWeight: '700', fontSize: 18 }}>Payments</Text>
-      {summary ? <Text style={{ fontSize: 20, fontWeight: '700' }}>{summary}</Text> : null}
+    <View style={{ padding: spacing.md, gap: spacing.sm }}>
+      <Text style={{ fontWeight: '700', fontSize: typography.size.h5 }}>Payments</Text>
+      {summary ? <Text style={{ fontSize: typography.size.h4, fontWeight: '700' }}>{summary}</Text> : null}
       <Text>Time on site: {formatWorkDuration(workDurationMs(job))}</Text>
       <Text>Work total: {money(invoice)}</Text>
       <Text>Paid so far: {money(paid)}</Text>
@@ -231,8 +231,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       {!allowed && !isCash ? (
         <Text>Payments cannot be recorded: the estimate must be approved and the job must not be cancelled.</Text>
       ) : null}
-      <View style={{ gap: 8 }}>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      <View style={{ gap: spacing.sm }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
           {METHOD_CHIP_ORDER.map((m) => (
             <PayrollButton
               key={m}
@@ -243,7 +243,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           ))}
         </View>
         {BARCODE_METHODS.includes(method) ? (
-          <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, padding: 10, gap: 4 }}>
+          <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: spacing.md, gap: spacing.xs }}>
             <Text style={{ fontWeight: '700' }}>Company Info</Text>
             <Text>{company?.name ?? ''}</Text>
             <Text>{company?.address ?? ''}</Text>
@@ -255,10 +255,10 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           </View>
         ) : null}
         {method === 'check' || method === 'cash' ? (
-          <Text style={{ fontSize: 12, color: colors.textMuted }}>Tech manages {method}</Text>
+          <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Tech manages {method}</Text>
         ) : null}
         {method === 'debit' || method === 'credit' ? (
-          <View style={{ gap: 4 }}>
+          <View style={{ gap: spacing.xs }}>
             <Text style={{ fontWeight: '700' }}>Enter card details</Text>
             {([['Cardholder', cardHolder, setCardHolder], ['Last 4 digits', cardLast4, setCardLast4], ['Reference', cardRef, setCardRef]] as const).map(([label, val, set]) => (
               <TextInput
@@ -268,14 +268,14 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
                 placeholder={label}
                 placeholderTextColor={colors.textMuted}
                 accessibilityLabel={label}
-                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16, color: colors.text, backgroundColor: colors.surface }}
+                style={inputStyle}
               />
             ))}
           </View>
         ) : null}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={{ fontSize: 12, color: colors.textMuted }}>Total Paid (for anything selected above)</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm }}>
+          <View style={{ flex: 1, gap: spacing.xs }}>
+            <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Total Paid (for anything selected above)</Text>
             <TextInput
               value={cashReceived}
               onChangeText={setCashReceived}
@@ -285,14 +285,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
               editable={enabled}
               accessibilityLabel="Total Paid"
               style={{
-                borderWidth: 1,
+                ...inputStyle,
                 borderColor: cashInvalid ? colors.danger : colors.border,
-                borderRadius: 8,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                fontSize: 16,
-                color: colors.text,
-                backgroundColor: colors.surface,
                 opacity: enabled ? 1 : 0.5,
               }}
             />
@@ -301,9 +295,9 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
             <View
               accessibilityRole="text"
               accessibilityLabel="Paid"
-              style={{ height: 32, paddingHorizontal: 14, borderRadius: 6, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}
+              style={{ height: 28, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{'✓ Paid'}</Text>
+              <Text style={{ color: '#fff', fontSize: typography.size.small, fontWeight: '700' }}>{'✓ Paid'}</Text>
             </View>
           ) : (
             <PayrollButton

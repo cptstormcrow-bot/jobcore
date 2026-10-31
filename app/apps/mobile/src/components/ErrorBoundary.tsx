@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { PayrollButton, Text } from '@jobcore/ui';
+import { PayrollButton, Text, spacing, typography } from '@jobcore/ui';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -58,16 +58,16 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 18,
+    fontSize: typography.size.h5,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   message: {
-    fontSize: 14,
-    marginBottom: 16,
+    fontSize: typography.size.label,
+    marginBottom: spacing.lg,
     textAlign: 'center',
   },
 });

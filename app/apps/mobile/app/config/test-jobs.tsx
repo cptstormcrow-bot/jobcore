@@ -17,7 +17,7 @@ import * as React from 'react';
 import { View, Switch, StyleSheet } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { buildAdminFinanceMenuItems } from '@jobcore/admin-finance';
-import { AppChrome, PayrollButton, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, PayrollButton, EmptyState, LoadingState, JOB_STATUS_COLORS, colors, radius, spacing, typography, Text, confirmAsync, useScreenNumber } from '@jobcore/ui';
 import type { JobStatus } from '@jobcore/core';
 
 import { createTestJobsRepository } from '../../src/lib/sales-marketing-repos';
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 48,
     paddingVertical: spacing.sm,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
   },
   screenNumLabel: {
     fontFamily: typography.fontFamily.body,
@@ -299,17 +299,17 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   errorText: {
     color: 'red',
-    marginHorizontal: 12,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
   list: {
     gap: spacing.sm,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
   },
   row: {
     flexDirection: 'row',
@@ -325,13 +325,13 @@ const styles = StyleSheet.create({
   },
   rowStatus: {
     marginTop: 2,
-    fontSize: 12,
+    fontSize: typography.size.small,
   },
   simulatorPanel: {
-    marginHorizontal: 12,
+    marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
-    padding: 12,
-    borderRadius: 8,
+    padding: spacing.md,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceAlt,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
   },
   simulatorStageDetail: {
-    fontSize: 12,
+    fontSize: typography.size.small,
     color: colors.textMuted,
   },
 });

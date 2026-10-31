@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, View, StyleSheet } from 'react-native';
-import { PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, colors, radius, spacing, typography, Text } from '@jobcore/ui';
 
 export interface PaymentSimulationNoticeProps {
   visible: boolean;
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radius.md,
     padding: spacing.lg,
   },
   title: {

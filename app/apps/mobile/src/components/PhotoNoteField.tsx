@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
-import { PayrollButton, colors, radius, spacing } from '@jobcore/ui';
+import { PayrollButton, colors, radius, spacing, typography } from '@jobcore/ui';
 import { createCloseOutPhotosRepository } from '../lib/admin-finance-repos';
 import { toUserMessage } from '../lib/offline-mutations';
 import { readPhotoNote } from '../lib/photo-note';
@@ -78,5 +78,5 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   inputDisabled: { backgroundColor: colors.surfaceAlt, color: colors.textMuted },
-  helper: { color: colors.textMuted, fontSize: 12 },
+  helper: { color: colors.textMuted, fontSize: typography.size.small },
 });

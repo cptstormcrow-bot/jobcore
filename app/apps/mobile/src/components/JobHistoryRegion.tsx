@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { useRouter } from 'expo-router';
-import { PayrollButton, colors, spacing } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, typography } from '@jobcore/ui';
 import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { CustomerJobHistoryItem } from '../../../../modules/admin-finance/src/data/ports';
 import { buildAdminFinancePorts } from '../lib/admin-finance-repos';
@@ -79,14 +79,14 @@ export function JobHistoryRegion({ job, role }: JobHistoryRegionProps) {
 
   const trail = useMemo(() => [...timeline].sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)), [timeline]);
 
-  const heading = { fontWeight: '700' as const, fontSize: 16, color: colors.text, marginBottom: spacing.xs };
+  const heading = { fontWeight: '700' as const, fontSize: typography.size.body, color: colors.text, marginBottom: spacing.xs };
   const muted = { color: colors.textMuted, marginBottom: spacing.xs };
   const section = { marginBottom: spacing.md };
 
   return (
     <View style={{ padding: spacing.sm }}>
       <View style={section}>
-        <Text style={{ fontWeight: '700', fontSize: 20, color: colors.text, marginBottom: spacing.xs }}>History</Text>
+        <Text style={{ fontWeight: '700', fontSize: typography.size.h4, color: colors.text, marginBottom: spacing.xs }}>History</Text>
         <Text style={{ color: colors.text }}>
           History is the permanent record of this job after Close-Out. Closed jobs stay on file with their photos, notes,
           payments and pay. Archiving a job only hides it from the Jobs board - nothing is deleted, and an archived job
