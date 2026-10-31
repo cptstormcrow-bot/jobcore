@@ -169,15 +169,7 @@ function AuthGate() {
 
   return (
     <View style={styles.flex}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="sign-in" />
-        <Stack.Screen name="sign-up" />
-        <Stack.Screen name="forgot-password" />
-        <Stack.Screen name="reset-password" />
-        <Stack.Screen name="m" />
-      </Stack>
+      <RootStack />
       {overlay && !isRedirect ? (
         <View pointerEvents="auto" style={StyleSheet.absoluteFill}>
           {overlay}
@@ -189,6 +181,23 @@ function AuthGate() {
     </View>
   );
 }
+
+// Memoized, with a constant screenOptions: AuthGate re-renders on every navigation-state change, and
+// re-rendering the root Stack from there fed a PreventRemoveProvider update loop on Firefox web.
+const ROOT_SCREEN_OPTIONS = { headerShown: false };
+const RootStack = React.memo(function RootStack() {
+  return (
+    <Stack screenOptions={ROOT_SCREEN_OPTIONS}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="sign-in" />
+      <Stack.Screen name="sign-up" />
+      <Stack.Screen name="forgot-password" />
+      <Stack.Screen name="reset-password" />
+      <Stack.Screen name="m" />
+    </Stack>
+  );
+});
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
