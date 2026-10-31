@@ -14,8 +14,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { PayrollButton, Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { PayrollButton, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -130,18 +130,19 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
         ) : (
           <Card style={styles.card}>
             {visibleEmployees.map((profile) => (
-              <ListItem
+              <Pressable
                 key={profile.id}
-                title={profile.fullName}
-                subtitle={[
-                  profile.role,
-                  profile.active ? 'Active' : 'Inactive',
-                  profile.isTest ? 'Test' : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
+                accessibilityRole={onSelectEmployee ? 'button' : undefined}
                 onPress={onSelectEmployee ? () => onSelectEmployee(profile) : undefined}
-              />
+                style={styles.row}
+              >
+                <Text style={styles.rowName} numberOfLines={1}>{profile.fullName}</Text>
+                <Text style={styles.rowDesc} numberOfLines={1}>
+                  {[profile.role, profile.active ? 'Active' : 'Inactive', profile.isTest ? 'Test' : null]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </Text>
+              </Pressable>
             ))}
           </Card>
         )}
@@ -158,21 +159,41 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.sm,
   },
   card: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   headerActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  rowName: {
+    color: colors.text,
+    fontSize: typography.size.label,
+    flexShrink: 1,
+  },
+  rowDesc: {
+    color: colors.textMuted,
+    fontSize: typography.size.small,
+    flexShrink: 1,
   },
 });
