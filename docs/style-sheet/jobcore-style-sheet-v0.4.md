@@ -20,7 +20,7 @@ Scale: xs 4, sm 6, md 10, lg 15, xl 20, xxl 28. Related-item gap xs-sm; row/card
 - `AppChrome` header everywhere; blue bar fills the row between hamburger and options menu.
 - 10 px blue above and below the title, 20 px side padding. Title-bar text is 2 pt smaller than before.
 - JOB screens only: bar inset 10 px each side.
-- OPEN BUG: tech login title bar clips text at the bottom.
+- Title text line height is 20 (was 16, which clipped the bottom of 13 pt Poppins). Fixed in `fbcdae9`; not yet checked on a device (untested, goes to the uber test plan).
 
 ## 4. Tabs
 `DefaultTabBar` only. Tab font 13. Active: bold, sand fill, 2 px #2563eb bottom border. Inactive: weight 400, sandInactive fill.
@@ -41,7 +41,7 @@ Scale: xs 4, sm 6, md 10, lg 15, xl 20, xxl 28. Related-item gap xs-sm; row/card
 
 ## 7b. Text
 - Minimize wrapping: labels, buttons, tabs, titles and list-row primary text stay on one line.
-- Ellipsis => popup: `TruncatedText` (`app/packages/ui/src/TruncatedText.tsx`) opens a popup with the full text only when cut off. Used in ListItem, ScreenTitle, Breadcrumb current segment, AppChrome title/subtitle/sectionHeader/gearTitle, JobTitleBarHeader name/jobLine/dateLine.
+- Ellipsis => popup: `TruncatedText` (`app/packages/ui/src/TruncatedText.tsx`) opens a popup with the full text only when cut off. On a tappable list row a tap still opens the row; a long press opens the popup instead. Used in ListItem, ScreenTitle, Breadcrumb current segment, AppChrome title/subtitle/sectionHeader/gearTitle, JobTitleBarHeader name/jobLine/dateLine.
 
 ## 8. Empty states
 `EmptyState`: centred, bold 16 title, 16 muted message, 12 padding; message says what to do next.

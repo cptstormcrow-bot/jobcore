@@ -99,7 +99,7 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
     H1('7b. Text: minimize wrapping and ellipsis popup'),
     ...tbl([
       { rule: 'Minimize wrapping: labels, buttons, tabs, titles and list-row primary text stay on one line', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Shorten the text rather than wrap.' },
-      { rule: 'Ellipsis => popup: `TruncatedText` opens a popup with the full text only when the text is cut off', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Used in ListItem, ScreenTitle, Breadcrumb current segment, AppChrome title/subtitle/sectionHeader/gearTitle, JobTitleBarHeader name/jobLine/dateLine. Source: app/packages/ui/src/TruncatedText.tsx.' },
+      { rule: 'Ellipsis => popup: `TruncatedText` opens a popup with the full text only when the text is cut off. On a tappable list row a tap still opens the row; a long press opens the popup', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Used in ListItem, ScreenTitle, Breadcrumb current segment, AppChrome title/subtitle/sectionHeader/gearTitle, JobTitleBarHeader name/jobLine/dateLine. Source: app/packages/ui/src/TruncatedText.tsx.' },
     ]),
 
     H1('8. Empty states'),
