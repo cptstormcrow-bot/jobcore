@@ -22,12 +22,12 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| 0116_tech_skills_free_text.sql | Lets Add Skills (#0043) save custom skill names by dropping the six-value check on tech_skills.skill | Pending: needs Jeff's go to push | 2026-10-30 |
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-10-30 | 0116_tech_skills_free_text.sql | OK | This JobCore session (Jobcore UI thread), on Jeff's explicit go ('Yes. Lets do the migration') | Pre-checked: `db push --dry-run` listed only 0116 pending; `db push --linked` printed 'Applying migration 0116_tech_skills_free_text.sql... Finished supabase db push.' Post-check: `select count(*) from pg_constraint where conname='tech_skills_skill_check'` returned 0 (constraint gone). |
 | 2026-10-29 | 0115_time_segments_use_event_time.sql | OK | This JobCore session (Wireless Independence), on Jeff's explicit go ('Yes, push the DB update') | Pre-checked: `db push --dry-run` listed only 0115 pending; `db push --linked` printed 'Applying migration 0115_time_segments_use_event_time.sql... Finished supabase db push.' EXIT=0; `migration list --linked` afterwards shows local=0115 remote=0115. |
 | 2026-10-25 | (data fix, no migration) jobs row, Job #11 | OK | This JobCore session, authorized by Jeff in chat | Job #11 status in_progress -> paid via a single guarded UPDATE (where job_number=11 and status='in_progress'). No trigger touched. Reason: payments were fully settled ($199.00 = work total) but the job never reached completed, so the app never moved it to paid; the progress-bar Paid step needed status 'paid'. |
 | 2026-10-25 | (data fix, no migration) payments row 49ff810c-2bcf-4e06-8708-196c3faa1ac1, Job #11 | OK | This JobCore session, on Jeff's explicit go ('Edit the Job #11 payment row's amount down to the balance'; trigger disable approved separately) | Duplicate cash payment (two $199.00 rows 4 seconds apart vs a $199.00 work total). One guarded UPDATE via `supabase db query --linked` set amount 199.00 to 0.00 (where id, amount, status, job_id matched). Needed `ALTER TABLE payments DISABLE TRIGGER payments_tech_confirm_whitelist_trg` for the update because the CLI role is not is_org_admin(); trigger re-enabled in the same batch, post-check tgenabled='O'. Post-check: settled total 199.00 = work total, balance 0.00. Row kept (not deleted). |
