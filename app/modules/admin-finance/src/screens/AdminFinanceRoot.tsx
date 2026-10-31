@@ -1267,7 +1267,7 @@ export function AdminFinanceRoot() {
         ) : loadState.kind === 'failed' ? (
           <ErrorState message={loadState.message} />
         ) : (
-          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />
+          <ReportsScreen jobs={loadState.jobs} commissions={loadState.commissions} showTestJobs={showTestJobs} onSelectJob={(job) => { router.setParams({ view: 'reports' }); router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } }); }} />
         )
       ) : subView === 'employee-roster' ? (
         <EmployeeRosterScreen

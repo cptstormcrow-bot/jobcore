@@ -1,6 +1,6 @@
 // JobCore screen #0023 - af-reports - Reports
 /**
- * Reports screen — read-only reporting summaries (P3l.4).
+ * Reports screen — read-only reporting summaries (P3l.4); titled "Reports by Status", one card per status.
  *
  * Wires together the three P3-l pure reporting helpers into one screen:
  * `../reporting/group-by.ts` (`byStatus`; `bySource`/`byAttachTiming` moved to Sales & Marketing Reporting),
@@ -23,9 +23,9 @@
  * unclassified record for a known-good one.
  */
 
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { Card, ListItem, DefaultTabBar, EmptyState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, StyleSheet, Pressable, BackHandler } from 'react-native';
+import { Card, ListItem, DefaultTabBar, EmptyState, ScreenTitle, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { byStatus } from '../reporting/group-by';
@@ -58,6 +58,13 @@ function formatPercent(rate: number): string {
   return `${(rate * 100).toFixed(1)}%`;
 }
 
+/** Max jobs previewed per status card before the "View all N" button. */
+const STATUS_PREVIEW_LIMIT = 3;
+
+function jobTitle(job: Job): string {
+  return job.jobNumber != null ? `Job #${job.jobNumber}` : job.id;
+}
+
 /** Renders a drilled-into job list for a group/bucket, filtering test jobs at row-render time only. */
 function JobListDrillDown(props: {
   jobs: Job[];
@@ -75,7 +82,7 @@ function JobListDrillDown(props: {
         visibleJobs.map((job) => (
           <ListItem
             key={job.id}
-            title={job.jobNumber != null ? `Job #${job.jobNumber}` : job.id}
+            title={jobTitle(job)}
             subtitle={[job.address, job.status].filter(Boolean).join(' · ')}
             onPress={onSelectJob ? () => onSelectJob(job) : undefined}
           />
@@ -90,16 +97,30 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
   const [drill, setDrill] = useState<DrillState>(null);
   const [activeTab, setActiveTab] = useState<'status' | 'slots' | 'commission'>('status');
 
+  // Hardware back leaves a drilled view first. Declared before the early returns so hook order is unconditional.
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (drill) {
+        setDrill(null);
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [drill]);
+
   const session = getModuleSession();
 
-  const banner = (
-    <Text style={styles.banner}>Reports are read-only summaries</Text>
+  const titleHeader = (
+    <View style={styles.header}>
+      <ScreenTitle title="Reports by Status" />
+    </View>
   );
 
   if (!session) {
     return (
       <View style={styles.screen}>
-        {banner}
+        {titleHeader}
         <EmptyState
           title="Reports"
           message="Sign in to view this organization's reports."
@@ -111,7 +132,7 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
   if (!jobs || jobs.length === 0) {
     return (
       <View style={styles.screen}>
-        {banner}
+        {titleHeader}
         <EmptyState title="Reports" message="No jobs are available to report on yet." />
       </View>
     );
@@ -145,12 +166,17 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
 
   const backProps = { showTestJobs, onSelectJob };
 
+  /** Back button plus a small heading naming what is drilled into; shown at the top of any drilled view. */
+  const drillHeader = (heading: string) => (
+    <View style={styles.drillHeader}>
+      <PayrollButton label="Back" onPress={() => setDrill(null)} textStyle={{ fontWeight: '400' }} />
+      <Text style={styles.groupHeading}>{heading}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.screen}>
-      {banner}
-      <View style={styles.header}>
-        <ScreenTitle title="Reports #0023" />
-      </View>
+      {titleHeader}
       <DefaultTabBar
         tabs={[
           { id: 'status' as const, label: 'Status' },
@@ -166,30 +192,54 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
       <ScrollView contentContainerStyle={styles.content}>
         {activeTab === 'status' ? (
           <>
-        <Text style={styles.groupHeading}>By Status</Text>
         {drill?.section === 'status' ? (
-          <JobListDrillDown jobs={statusGroups[drill.key] ?? []} {...backProps} />
+          <>
+            {drillHeader(drill.key)}
+            <JobListDrillDown jobs={statusGroups[drill.key] ?? []} {...backProps} />
+          </>
         ) : (
-          <Card style={styles.card}>
-            {Object.entries(statusGroups).map(([status, groupJobs]) => (
-              <ListItem
-                key={status}
-                title={status}
-                subtitle={`${groupJobs.length} job(s)`}
-                onPress={() => setDrill({ section: 'status', key: status as JobStatus })}
-              />
-            ))}
-          </Card>
+          Object.entries(statusGroups).map(([status, groupJobs]) => {
+            const visibleJobs = groupJobs.filter((job) => isBetaVisible(job, showTestJobs));
+            const openStatus = () => setDrill({ section: 'status', key: status as JobStatus });
+            return (
+              <Card key={status} style={styles.card}>
+                <Pressable onPress={openStatus} accessibilityRole="button" style={styles.statusHeaderRow}>
+                  <Text style={styles.statusName}>{status}</Text>
+                  <Text style={styles.statusCount}>{`${groupJobs.length} job(s)`}</Text>
+                </Pressable>
+                {visibleJobs.length === 0 ? (
+                  <Text style={styles.noJobs}>No jobs</Text>
+                ) : (
+                  visibleJobs.slice(0, STATUS_PREVIEW_LIMIT).map((job) => (
+                    <ListItem
+                      key={job.id}
+                      title={jobTitle(job)}
+                      subtitle={job.address ?? undefined}
+                      style={styles.compactItem}
+                      onPress={onSelectJob ? () => onSelectJob(job) : undefined}
+                    />
+                  ))
+                )}
+                {visibleJobs.length > STATUS_PREVIEW_LIMIT ? (
+                  <PayrollButton label={`View all ${visibleJobs.length}`} onPress={openStatus} />
+                ) : null}
+              </Card>
+            );
+          })
         )}
           </>
         ) : null}
 
         {activeTab === 'slots' ? (
           <>
-        <Text style={styles.groupHeading}>Slot Hit Rate</Text>
         {drill?.section === 'slotHitRate' ? (
-          <JobListDrillDown jobs={slotHitRateGroups[drill.key] ?? []} {...backProps} />
+          <>
+            {drillHeader(`Slot Hit Rate: ${drill.key.charAt(0).toUpperCase()}${drill.key.slice(1)}`)}
+            <JobListDrillDown jobs={slotHitRateGroups[drill.key] ?? []} {...backProps} />
+          </>
         ) : (
+          <>
+          <Text style={styles.groupHeading}>Slot Hit Rate</Text>
           <Card style={styles.card}>
             <ListItem title="Hit" subtitle={`${hitRate.hit}`} onPress={() => setDrill({ section: 'slotHitRate', key: 'hit' })} />
             <ListItem title="Miss" subtitle={`${hitRate.miss}`} onPress={() => setDrill({ section: 'slotHitRate', key: 'miss' })} />
@@ -201,19 +251,24 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
             <ListItem title="Total" subtitle={`${hitRate.total}`} />
             <ListItem title="Hit Rate" subtitle={formatPercent(hitRate.hitRate)} />
           </Card>
+          </>
         )}
           </>
         ) : null}
 
         {activeTab === 'commission' ? (
           <>
-        <Text style={styles.groupHeading}>Commission Totals</Text>
         {drill?.section === 'commissionTotals' ? (
-          <JobListDrillDown
-            jobs={drill.key === 'known' ? commissionKnownJobs : commissionUnknownJobs}
-            {...backProps}
-          />
+          <>
+            {drillHeader(`Commission: ${drill.key === 'known' ? 'Known' : 'Unknown'}`)}
+            <JobListDrillDown
+              jobs={drill.key === 'known' ? commissionKnownJobs : commissionUnknownJobs}
+              {...backProps}
+            />
+          </>
         ) : (
+          <>
+          <Text style={styles.groupHeading}>Commission Totals</Text>
           <Card style={styles.card}>
             <ListItem title="Total Commission" subtitle={formatAmount(totals.totalCommission)} />
             <ListItem
@@ -228,6 +283,7 @@ export function ReportsScreen(props: ReportsScreenProps = {}) {
             />
             <ListItem title="Job Count" subtitle={`${totals.jobCount}`} />
           </Card>
+          </>
         )}
           </>
         ) : null}
@@ -243,30 +299,54 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.offWhite,
   },
-  banner: {
-    color: colors.text,
-    fontSize: typography.size.label,
-    fontFamily: typography.fontFamily.body,
-    fontWeight: typography.weight.semibold,
-    backgroundColor: colors.border,
-    padding: spacing.xs,
-    textAlign: 'center',
-  },
   content: {
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   header: {
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.sm,
+    paddingTop: 2,
+    paddingBottom: 2,
+  },
+  drillHeader: {
+    alignItems: 'flex-start',
+    marginBottom: spacing.xs,
   },
   groupHeading: {
     color: colors.text,
     fontSize: typography.size.h5,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: 4,
+    marginBottom: 2,
+    marginTop: 0,
   },
   card: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  statusHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  statusName: {
+    color: colors.text,
+    fontSize: typography.size.h5,
+    fontFamily: typography.fontFamily.body,
+    fontWeight: typography.weight.semibold,
+  },
+  statusCount: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+  },
+  noJobs: {
+    color: colors.textMuted,
+    fontSize: typography.size.label,
+    fontFamily: typography.fontFamily.body,
+    paddingVertical: 4,
+  },
+  compactItem: {
+    paddingVertical: 4,
   },
 });
