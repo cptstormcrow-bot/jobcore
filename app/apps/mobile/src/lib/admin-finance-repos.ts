@@ -28,7 +28,7 @@ import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri } from './signed-url-cache';
-import { cachedRead, getReadCacheIdentity, buildReadCacheKey, patchReadCache } from './read-cache';
+import { cachedRead, getReadCacheIdentity, buildReadCacheKey, patchReadCache, markStale } from './read-cache';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
@@ -1289,6 +1289,8 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       const result = await approveReimbursementViaRpc(supabase as unknown as Parameters<typeof approveReimbursementViaRpc>[0], input);
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.approveReimbursement', result.reason, { input });
+      } else {
+        markStale('reimbursements'); // Payroll's cached reimbursement lists must show the new status.
       }
       return result;
     },
@@ -1298,6 +1300,8 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       const result = await rejectReimbursementViaRpc(supabase as unknown as Parameters<typeof rejectReimbursementViaRpc>[0], input);
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.rejectReimbursement', result.reason, { input });
+      } else {
+        markStale('reimbursements'); // Payroll's cached reimbursement lists must show the new status.
       }
       return result;
     },
@@ -1307,6 +1311,8 @@ export function createReimbursementsRepository(): ReimbursementRepo {
       const result = await markReimbursementPaidViaRpc(supabase as unknown as Parameters<typeof markReimbursementPaidViaRpc>[0], reimbursementId);
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.markReimbursementPaid', result.reason, { reimbursementId });
+      } else {
+        markStale('reimbursements'); // Payroll's cached reimbursement lists must show the new status.
       }
       return result;
     },

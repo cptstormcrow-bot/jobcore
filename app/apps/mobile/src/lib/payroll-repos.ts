@@ -10,7 +10,8 @@ import type {
   PayrollReimbursement,
   NewReimbursementInput,
 } from '../../../../packages/payroll-ui/src/port';
-import { writeThrough } from './offline-mutations';
+import { OfflineError, writeThrough } from './offline-mutations';
+import { isOnlineNow } from './sync-events';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
 import { readEmployeeProfiles } from './employee-profiles-source';
 
@@ -21,12 +22,18 @@ export interface PayrollRepoSession {
   userId: string;
 }
 
-async function readCached<T>(queryName: string, params: Record<string, unknown>, fetchLive: () => Promise<T>): Promise<T> {
-  const id = getReadCacheIdentity();
-  if (!id) return fetchLive();
-  const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
-  const { data } = await cachedRead(key, fetchLive);
-  return data;
+// Offline with nothing saved yet: say so plainly instead of surfacing the raw fetch TypeError.
+export async function readCached<T>(queryName: string, params: Record<string, unknown>, fetchLive: () => Promise<T>): Promise<T> {
+  try {
+    const id = getReadCacheIdentity();
+    if (!id) return await fetchLive();
+    const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
+    const { data } = await cachedRead(key, fetchLive);
+    return data;
+  } catch (e) {
+    if (!isOnlineNow()) throw new OfflineError('Not saved on this device yet. Open this once while online.');
+    throw e;
+  }
 }
 
 function check(error: { message?: string } | null): void {

@@ -1,4 +1,4 @@
-// Admin payroll members (PayrollAdminPort). Admin writes are never queued: every method requires internet.
+// Admin payroll members (PayrollAdminPort). Admin writes are never queued and require internet; the reimbursements list reads through the offline cache.
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { wageEngine } from '@jobcore/core';
 import type {
@@ -11,7 +11,7 @@ import type {
   AdminReimbursement,
 } from '../../../../packages/payroll-ui/src/port';
 import { requireOnline } from './offline-mutations';
-import { toPayrollTimeEntry } from './payroll-repos';
+import { readCached, toPayrollTimeEntry } from './payroll-repos';
 import type { PayrollRepoSession } from './payroll-repos';
 
 type Row = Record<string, any>;
@@ -322,26 +322,27 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
     },
 
     async listAllReimbursements(): Promise<AdminReimbursement[]> {
-      requireOnline('load the reimbursements');
-      const { data, error } = await supabase
-        .from('reimbursements')
-        .select('id, user_id, amount_cents, description, job_id, receipt_photo_path, status, rejection_reason, created_at')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false });
-      check(error);
-      const names = await nameMap();
-      return ((data ?? []) as Row[]).map((r) => ({
-        id: r.id,
-        userId: r.user_id,
-        amountCents: r.amount_cents,
-        description: r.description,
-        jobId: r.job_id,
-        receiptPhotoPath: r.receipt_photo_path,
-        status: r.status,
-        rejectionReason: r.rejection_reason,
-        createdAt: r.created_at,
-        employeeName: names.get(r.user_id as string) ?? '',
-      })) as AdminReimbursement[];
+      return readCached('pr.admin.reimbursements', {}, async () => {
+        const { data, error } = await supabase
+          .from('reimbursements')
+          .select('id, user_id, amount_cents, description, job_id, receipt_photo_path, status, rejection_reason, created_at')
+          .eq('organization_id', orgId)
+          .order('created_at', { ascending: false });
+        check(error);
+        const names = await nameMap();
+        return ((data ?? []) as Row[]).map((r) => ({
+          id: r.id,
+          userId: r.user_id,
+          amountCents: r.amount_cents,
+          description: r.description,
+          jobId: r.job_id,
+          receiptPhotoPath: r.receipt_photo_path,
+          status: r.status,
+          rejectionReason: r.rejection_reason,
+          createdAt: r.created_at,
+          employeeName: names.get(r.user_id as string) ?? '',
+        })) as AdminReimbursement[];
+      });
     },
 
     async getReceiptUrl(path: string): Promise<string | null> {
