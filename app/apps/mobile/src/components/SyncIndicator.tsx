@@ -47,8 +47,11 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
     <Pressable
       disabled={!tappable}
       onPress={() => {
-        if (failedCount > 0 && pathname !== '/sync-issues') router.push('/sync-issues' as never);
+        // Paused drain (no failed rows): retry now and open the sync screen too.
+        if (failed && failedCount === 0) refresh();
+        if (failed && pathname !== '/sync-issues') router.push('/sync-issues' as never);
         else if (failedCount > 0) void retryAll();
+        else if (failed) return;
         else refresh();
       }}
       style={[styles.container, { bottom: spacing.sm + insets.bottom }, style]}
