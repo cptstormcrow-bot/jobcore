@@ -299,6 +299,12 @@ export default function JobDrilldownScreen() {
   // (real UUID) jobId means edit-mode.
   const isCreate = jobId === 'new';
 
+  // Stable repos for the estimate screen: a fresh object each render re-ran its load effects,
+  // so the screen kept reloading and dropped a task added a moment before.
+  const estimateRepo = useMemo(() => createEstimateRepository(), []);
+  const priceSheetRepo = useMemo(() => createPriceSheetRepository(), []);
+  const areaAdjustmentsRepo = useMemo(() => createPriceSheetAreaAdjustmentsRepository(), []);
+
   const priceEstimatingRates = useMemo(() => {
     return {
       list: async (priceSheetId: string) => {
@@ -1490,10 +1496,10 @@ export default function JobDrilldownScreen() {
             job={currentJob}
             embedded
             onEstimateChange={setEstimate}
-            estimates={createEstimateRepository()}
-            priceSheets={createPriceSheetRepository()}
+            estimates={estimateRepo}
+            priceSheets={priceSheetRepo}
             priceSheetRates={priceEstimatingRates}
-            priceSheetAreaAdjustments={createPriceSheetAreaAdjustmentsRepository()}
+            priceSheetAreaAdjustments={areaAdjustmentsRepo}
             techSlot={
               <JobTechFields
                 serviceAreaName={currentServiceAreaName}
