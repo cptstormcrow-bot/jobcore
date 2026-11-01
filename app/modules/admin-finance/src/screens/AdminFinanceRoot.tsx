@@ -1413,6 +1413,7 @@ export function AdminFinanceRoot() {
             }
             refreshJobs();
           }}
+          onAddBlackout={(techId) => handleAddBlackout(techId ?? undefined)}
         />
         )
       ) : (

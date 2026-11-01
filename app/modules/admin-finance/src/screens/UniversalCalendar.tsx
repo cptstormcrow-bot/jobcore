@@ -84,6 +84,8 @@ export interface UniversalCalendarProps {
   onPickDay?: (day: Date) => void;
   onSubmitTimeOff?: (draft: UniversalCalendarTimeOffDraft, techId: string) => Promise<void> | void;
   onCancelTimeOff?: (requestId: string) => Promise<void> | void;
+  /** Admin hook: when set, an "Add Blackout" button opens the host's blackout editor for the filtered tech. */
+  onAddBlackout?: (techId: string | null) => void;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -279,6 +281,11 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         {props.onSubmitTimeOff ? (
           <View testID="calendar-timeoff-toggle">
             <PayrollButton label={requesting ? 'Cancel' : 'Request time off'} onPress={handleToggleRequest} />
+          </View>
+        ) : null}
+        {props.onAddBlackout && !dayPickActive ? (
+          <View testID="calendar-add-blackout">
+            <PayrollButton label="Add Blackout" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
           </View>
         ) : null}
       </View>
