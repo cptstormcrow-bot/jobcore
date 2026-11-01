@@ -746,6 +746,7 @@ function toJobEstimate(row: {
   tracking_number?: string | null;
   tracking_status?: string | null;
   tracking_checked_at?: string | null;
+  contingencies?: unknown;
 }): JobEstimate {
   return {
     jobId: row.job_id,
@@ -772,6 +773,13 @@ function toJobEstimate(row: {
     updatedAt: row.updated_at,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
+    contingencies: Array.isArray(row.contingencies)
+      ? (row.contingencies as Array<Record<string, unknown> | null>).map((c) => ({
+          description: String(c?.description ?? ''),
+          price: c?.price === null || c?.price === undefined ? null : Number(c.price),
+          applies: c?.applies === true,
+        }))
+      : [],
   };
 }
 
@@ -886,6 +894,9 @@ export function createEstimateRepository(): EstimateRepository {
       }
       if (input.trackingCheckedAt !== undefined) {
         patch.tracking_checked_at = input.trackingCheckedAt;
+      }
+      if (input.contingencies !== undefined) {
+        patch.contingencies = input.contingencies.map((c) => ({ ...c, applies: c.applies === true }));
       }
 
       const optimistic = toJobEstimate({

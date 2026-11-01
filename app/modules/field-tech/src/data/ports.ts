@@ -760,6 +760,14 @@ export interface ReimbursementRequestRepository {
 export type EstimateStatus = 'draft' | 'submitted' | 'approved';
 export type EstimateLineItemKind = 'material' | 'labor' | 'other';
 
+// Mirrors admin-finance's EstimateContingency (module isolation: no cross-module import).
+export interface EstimateContingency {
+  description: string;
+  price: number | null;
+  // true = row adds its price to the estimate total.
+  applies?: boolean;
+}
+
 export interface JobEstimate {
   jobId: string;
   organizationId: string;
@@ -785,6 +793,7 @@ export interface JobEstimate {
   trackingNumber: string | null;
   trackingStatus: string | null;
   trackingCheckedAt: string | null;
+  contingencies?: EstimateContingency[];
 }
 
 export interface JobEstimateInput {
@@ -806,6 +815,7 @@ export interface JobEstimateInput {
   trackingNumber?: string | null;
   trackingStatus?: string | null;
   trackingCheckedAt?: string | null;
+  contingencies?: EstimateContingency[];
 }
 
 export interface JobEstimateLineItem {

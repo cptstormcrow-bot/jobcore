@@ -209,16 +209,13 @@ export function Completion({
         checklistSavedRef.current = true;
       }
 
-      // (c) Upstairs fee line (skipped when already present or no estimate).
+      // (c) Upstairs fee as an applied contingency on the estimate (skipped when already present or no estimate).
       if (feeWanted && estimateExists && !feeSavedRef.current) {
-        const existing = await ports.estimates.listLineItems(job.id);
-        if (!existing.some((line) => line.description === UPSTAIRS_FEE_DESCRIPTION)) {
-          await ports.estimates.addLineItem(job.id, {
-            kind: 'other',
-            description: UPSTAIRS_FEE_DESCRIPTION,
-            quantity: 1,
-            unitCost: UPSTAIRS_FEE,
-            lineTotal: UPSTAIRS_FEE,
+        const current = await ports.estimates.getForJob(job.id);
+        const rows = current?.contingencies ?? [];
+        if (!rows.some((row) => row.description === UPSTAIRS_FEE_DESCRIPTION)) {
+          await ports.estimates.upsertForJob(job.id, {
+            contingencies: [...rows, { description: UPSTAIRS_FEE_DESCRIPTION, price: UPSTAIRS_FEE, applies: true }],
           });
         }
         feeSavedRef.current = true;
@@ -260,7 +257,7 @@ export function Completion({
         checked = movedUpstairs;
         onChange = () => setMovedUpstairs((prev) => !prev);
         if (!movedUpstairs) {
-          detail = <Text style={styles.hint}>{`A $${UPSTAIRS_FEE} fee will be added to the Estimate.`}</Text>;
+          detail = <Text style={styles.hint}>{`A $${UPSTAIRS_FEE} fee will be added to the Estimate contingencies.`}</Text>;
         }
         break;
       case 'damage':
