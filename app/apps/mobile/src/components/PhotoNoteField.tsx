@@ -8,11 +8,13 @@ import { readPhotoNote } from '../lib/photo-note';
 export interface PhotoNoteFieldProps {
   photo: { id: string; uri: string; storagePath?: string };
   onSaved?: (note: string) => void;
+  // Extra buttons drawn on the same row as Save Note, so a photo's actions sit together.
+  actions?: React.ReactNode;
 }
 
 const isJpeg = (s?: string): boolean => !!s && /\.jpe?g$/i.test((s.split('?')[0] ?? ''));
 
-export function PhotoNoteField({ photo, onSaved }: PhotoNoteFieldProps) {
+export function PhotoNoteField({ photo, onSaved, actions }: PhotoNoteFieldProps) {
   const [text, setText] = useState('');
   const [saved, setSaved] = useState('');
   const [busy, setBusy] = useState(false);
@@ -60,13 +62,17 @@ export function PhotoNoteField({ photo, onSaved }: PhotoNoteFieldProps) {
         accessibilityLabel="Photo note"
       />
       {!jpegOk ? <Text style={styles.helper}>Notes need a JPEG photo.</Text> : null}
-      <PayrollButton label="Save Note" onPress={() => void save()} disabled={!canSave} />
+      <View style={styles.row}>
+        <PayrollButton label="Save Note" onPress={() => void save()} disabled={!canSave} />
+        {actions}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.sm },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   input: {
     minHeight: 72,
     borderWidth: 1,

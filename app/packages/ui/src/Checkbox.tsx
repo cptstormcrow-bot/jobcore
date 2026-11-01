@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View, StyleSheet, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
 
@@ -12,11 +12,12 @@ export interface CheckboxProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   boxStyle?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
   /** 'box' (default) = filled box with dot; 'check' = bordered box with a bold checkmark glyph; 'tick' = checklist look (black 2px border always, green bold checkmark). */
   variant?: 'box' | 'check' | 'tick';
 }
 
-export function Checkbox({ label, accessibilityLabel, checked, onChange, disabled = false, style, boxStyle, variant = 'box' }: CheckboxProps) {
+export function Checkbox({ label, accessibilityLabel, checked, onChange, disabled = false, style, boxStyle, labelStyle, variant = 'box' }: CheckboxProps) {
   const isCheck = variant === 'check';
   const isTick = variant === 'tick';
   return (
@@ -45,7 +46,7 @@ export function Checkbox({ label, accessibilityLabel, checked, onChange, disable
             <View style={styles.checkMark} />
           ))}
       </View>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, labelStyle]}>{label}</Text>
     </Pressable>
   );
 }

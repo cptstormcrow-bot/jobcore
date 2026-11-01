@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Image, StyleSheet, View } from 'react-native';
-import { Card, PayrollButton, Text, radius, spacing } from '@jobcore/ui';
+import { Card, PayrollButton, Text, colors, radius, spacing, typography } from '@jobcore/ui';
 import { createCloseOutPhotosRepository as createNarrowPhotosRepository } from '../lib/admin-finance-repos';
 import type { JobPhotoRepository } from '../../../../modules/admin-finance/src/data/ports';
 
@@ -140,18 +140,25 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
 
   return (
     <Card>
-      <Text>After photos</Text>
+      <Text style={styles.title}>After photos</Text>
       {photos.length === 0 ? <Text>No after photos yet.</Text> : null}
       {photos.map((p) => (
         <View key={p.id} style={styles.item}>
-          <Image source={{ uri: p.uri }} style={styles.thumb} resizeMode="cover" />
+          <View style={styles.head}>
+            <Image source={{ uri: p.uri }} style={styles.thumb} resizeMode="cover" />
+            <Text style={styles.name} numberOfLines={1}>{photoName(p)}</Text>
+          </View>
           {/* PhotoNoteField has no disabled prop; block touches and dim it while the job is submitting. */}
           <View pointerEvents={disabled ? 'none' : 'auto'} style={disabled ? styles.dimmed : undefined}>
-            <PhotoNoteField photo={{ id: p.id, uri: p.uri, storagePath: p.storagePath }} />
-          </View>
-          <View style={styles.row}>
-            <PayrollButton label="Retake" onPress={() => retake(p)} disabled={locked} />
-            <PayrollButton label="Remove" onPress={() => remove(p)} disabled={locked} />
+            <PhotoNoteField
+              photo={{ id: p.id, uri: p.uri, storagePath: p.storagePath }}
+              actions={
+                <>
+                  <PayrollButton label="Retake" onPress={() => retake(p)} disabled={locked} />
+                  <PayrollButton label="Remove" onPress={() => remove(p)} disabled={locked} />
+                </>
+              }
+            />
           </View>
         </View>
       ))}
@@ -164,9 +171,18 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
   );
 }
 
+// The saved file name without its folder or extension, e.g. 10AFT-1.
+function photoName(p: AfterPhoto): string {
+  const last = (p.storagePath ?? p.uri).split('?')[0]!.split('/').pop() ?? '';
+  return last.replace(/\.[^.]+$/, '');
+}
+
 const styles = StyleSheet.create({
+  title: { fontSize: typography.size.label, fontWeight: 'bold' },
   item: { marginVertical: spacing.sm, gap: spacing.sm },
-  thumb: { width: 120, height: 120, borderRadius: radius.sm },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  thumb: { width: 80, height: 80, borderRadius: radius.sm },
+  name: { flexShrink: 1, fontSize: typography.size.small, color: colors.textLight },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   dimmed: { opacity: 0.5 },
 });

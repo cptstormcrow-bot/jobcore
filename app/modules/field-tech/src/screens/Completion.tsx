@@ -308,14 +308,18 @@ export function Completion({
         break;
       case 'photosTaken':
         checked = photosTaken || afterPhotoCount >= 1;
-        onChange = () => setPhotosTaken((p) => !p);
+        // With photos saved the box stays ticked, so a tap jumps to the photos card instead of doing nothing.
+        onChange = () =>
+          afterPhotoCount >= 1
+            ? scrollRef.current?.scrollTo({ y: photoYRef.current, animated: true })
+            : setPhotosTaken((p) => !p);
         hintText = `${afterPhotoCount} photo(s) - up to 6, each can carry a comment`;
         break;
     }
 
     return (
       <View key={key} style={styles.checkItem}>
-        <Checkbox variant="tick" label={label} checked={checked} onChange={onChange} disabled={submitting} />
+        <Checkbox variant="tick" label={label} labelStyle={styles.itemLabel} checked={checked} onChange={onChange} disabled={submitting} />
         {hintText ? <Text style={styles.hint}>{hintText}</Text> : null}
         {detail}
       </View>
@@ -333,10 +337,6 @@ export function Completion({
           label={submitting ? 'Completing…' : 'Complete Job'}
           onPress={() => void handleSubmit()}
           disabled={!canSubmit}
-        />
-        <PayrollButton
-          label="Completion Photos"
-          onPress={() => scrollRef.current?.scrollTo({ y: photoYRef.current, animated: true })}
         />
       </View>
 
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   heading: {
-    fontSize: typography.size.body,
+    fontSize: typography.size.label,
     fontWeight: 'bold',
     color: colors.text,
     marginBottom: spacing.xs,
@@ -400,8 +400,11 @@ const styles = StyleSheet.create({
   checkItem: {
     marginBottom: spacing.xs,
   },
-  hint: {
+  itemLabel: {
     fontSize: typography.size.label,
+  },
+  hint: {
+    fontSize: typography.size.small,
     color: colors.textLight,
     marginLeft: spacing.lg,
   },
