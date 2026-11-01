@@ -4,9 +4,13 @@
  * calendar screen. Tapping a day opens this modal seeded with that day; the
  * admin picks a technician, adjusts the range and optional reason, then saves.
  * Persistence is the caller's job (`onSave`).
+ *
+ * Drawn as an in-tree overlay, not an RN Modal: #0056 itself opens inside the
+ * Calendar's Add Blackout Modal, and a Modal inside a Modal (plus the tech
+ * picker's own Modal) does not take taps reliably on Android. Back closes it.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, BackHandler } from 'react-native';
 import { PayrollButton, DateRangeCalendar, TechSelect, TextField, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -42,8 +46,18 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
     setStartDate(iso);
     setEndDate(iso);
     setReason('');
-    setTechId(initialTechId ?? '');
-  }, [visible, day, initialTechId]);
+    // A lone tech needs no picking.
+    setTechId(initialTechId ?? (techs.length === 1 ? (techs[0]?.id ?? '') : ''));
+  }, [visible, day, initialTechId, techs]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onCancel]);
 
   const markedRanges = useMemo(
     () =>
@@ -56,8 +70,10 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
   const techOptions = techs.map((tech) => ({ label: tech.fullName, value: tech.id }));
   const canSave = !busy && techId !== '' && startDate !== '' && endDate !== '';
 
+  if (!visible) return <></>;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <View style={styles.layer}>
       <Pressable style={styles.overlay} onPress={onCancel}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetWrap}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -102,11 +118,12 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
-    </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  layer: { ...StyleSheet.absoluteFillObject, zIndex: 10, elevation: 10 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   sheetWrap: { width: '100%', maxHeight: '90%' },
   sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: radius.sm, padding: spacing.lg },
