@@ -14,6 +14,7 @@ import { useGlobalOptionsItems } from './GlobalOptionsContext';
 import { formatVersionLabel } from './formatVersionLabel';
 import { NavDrawer } from './NavDrawer';
 import { MenuGlyph } from './MenuGlyph';
+import { GearGlyph } from './GearGlyph';
 import { HelpCircle } from './HelpCircle';
 import { useScreenNumberReadOnly } from './screen-numbers/ScreenNumberContext';
 import { DRAWER_ROW_HEIGHT, dividerBefore } from './drawer-geometry';
@@ -328,7 +329,7 @@ export function AppChrome({
               hitSlop={8}
               style={styles.drawerSideButton}
             >
-              <Text style={styles.gearGlyph}>{'\u2699\uFE0E'}</Text>
+              <GearGlyph color={colors.primary} holeColor={colors.sand} />
             </Pressable>
           </View>
         }
@@ -525,18 +526,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: typography.fontFamily.body,
     color: colors.primary,
-  },
-  gearGlyph: {
-    fontFamily: typography.fontFamily.heading,
-    fontWeight: typography.weight.semibold,
-    color: colors.primary,
-    fontSize: 28,
-    // The heading font's ⚙ rises above its em box; a 28px line box cut off its top teeth.
-    lineHeight: 38,
-    width: 34,
-    height: 38,
-    textAlign: 'center',
-    textAlignVertical: 'center',
   },
   wordmarkChip: {
     alignSelf: 'center',
