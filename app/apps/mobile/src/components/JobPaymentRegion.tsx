@@ -208,7 +208,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const cashCents = parseCashCents(cashReceived);
   const cashInvalid =
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
-  const isPaidState = balance <= 0 && settledTotalCents(payments) > 0;
+  // The Paid timeline dot goes green on job status alone, so the badge must too, not only when payment rows settle the balance.
+  const isPaidState = job.status === 'paid' || job.status === 'closed' || (balance <= 0 && paid > 0);
   const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.size.body, color: colors.text, backgroundColor: colors.surface } as const;
 
   return (
