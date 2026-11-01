@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    fontSize: 18,
+    fontSize: typography.size.h5,
     paddingVertical: spacing.sm,
     color: colors.text,
     borderBottomWidth: 1,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   rowText: {
     fontFamily: typography.fontFamily.body,
-    fontSize: 18,
+    fontSize: typography.size.h5,
     textAlign: 'center',
     color: colors.text,
   },

@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   headerPressable: {
     flexDirection: 'row',
-    gap: 4,
+    gap: spacing.xs,
   },
   headerText: {
     fontSize: typography.size.small,

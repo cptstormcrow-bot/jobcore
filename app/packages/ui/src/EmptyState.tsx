@@ -21,7 +21,7 @@ export function EmptyState({ title, message, icon, style }: EmptyStateProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: 12 },
+  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   icon: { marginBottom: spacing.md },
   title: {
     color: colors.text,

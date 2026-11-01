@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius } from './tokens';
+import { colors, spacing, radius, typography } from './tokens';
 
 export type CalendarMode = 'week' | 'month' | 'day';
 
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: spacing.sm,
   },
   segmentedControl: {
     flex: 1,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
     alignItems: 'center',
   },
   segmentSelected: {
@@ -130,34 +130,34 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: typography.size.small,
   },
   segmentTextSelected: {
     color: colors.white,
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: typography.size.small,
   },
   navGroup: {
     flexDirection: 'row',
-    gap: 4,
+    gap: spacing.xs,
   },
   navButton: {
     backgroundColor: colors.sand,
     borderRadius: radius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navText: {
     color: colors.text,
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: typography.size.small,
   },
   label: {
     textAlign: 'center',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.text,
   },
 });
