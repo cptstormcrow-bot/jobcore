@@ -23,13 +23,13 @@
       "role": "af",
       "url": "/account",
       "steps": [],
-      "waitFor": "Account"
+      "waitFor": "Sign in as someone else"
     },
     "admin-finance": {
       "role": "af",
       "url": "/m/admin-finance",
       "steps": [],
-      "waitFor": "Admin & Finance"
+      "waitFor": "Rates and area adjustments"
     },
     "af-JobCreateScreen": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -45,7 +45,7 @@
           "click": "Payroll"
         }
       ],
-      "waitFor": "Payroll"
+      "waitFor": "This Week"
     },
     "af-PayrollRun": {
       "role": "af",
@@ -61,7 +61,7 @@
           "click": "Payroll Run"
         }
       ],
-      "waitFor": "Payroll Run"
+      "waitFor": "Close run"
     },
     "af-PayrollSettings": {
       "role": "af",
@@ -77,7 +77,7 @@
           "click": "Payroll Settings"
         }
       ],
-      "waitFor": "Payroll Settings"
+      "waitFor": "Compensation Policy"
     },
     "af-ReportsJobDetailScreen": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -112,7 +112,7 @@
           "click": "Assignments"
         }
       ],
-      "waitFor": "Assignments"
+      "waitFor": "Job Assignments"
     },
     "af-blackout-editor": {
       "role": "af",
@@ -128,17 +128,20 @@
           "click": "Add Blackout"
         }
       ],
-      "waitFor": "Add Blackout"
+      "waitFor": "Schedule time off"
     },
     "af-calendar": {
       "role": "af",
       "url": "/m/admin-finance",
       "steps": [
         {
+          "click": "Menu"
+        },
+        {
           "click": "Calendar"
         }
       ],
-      "waitFor": "Calendar"
+      "waitFor": "Upcoming Blackouts"
     },
     "af-closeOutQueue": {
       "role": "af",
@@ -148,7 +151,7 @@
           "click": "Close-Outs"
         }
       ],
-      "waitFor": "Close-Outs"
+      "waitFor": "Close-Out Queue"
     },
     "af-closeOutReview": {
       "role": "af",
@@ -158,7 +161,7 @@
           "click": "Close-Out Review"
         }
       ],
-      "waitFor": "Close-Out Review"
+      "waitFor": "Close-Out"
     },
     "af-employee-detail": {
       "role": "af",
@@ -168,7 +171,7 @@
           "click": "Employee Detail"
         }
       ],
-      "waitFor": "Employee Detail"
+      "waitFor": "Service Areas"
     },
     "af-employee-editor": {
       "role": "af",
@@ -184,7 +187,7 @@
           "click": "Add Employee"
         }
       ],
-      "waitFor": "Add/Edit Employee"
+      "waitFor": "Vehicle Status"
     },
     "af-employee-invitations": {
       "role": "af",
@@ -200,7 +203,7 @@
           "click": "Pending Invitations"
         }
       ],
-      "waitFor": "Pending Invitations"
+      "waitFor": "Invite by email"
     },
     "af-employee-job-detail": {
       "role": "af",
@@ -210,7 +213,7 @@
           "click": "Employee Job Detail"
         }
       ],
-      "waitFor": "Employee Job Detail"
+      "waitFor": "Assigned Technician"
     },
     "af-employee-roster": {
       "role": "af",
@@ -223,27 +226,30 @@
           "click": "Employees"
         }
       ],
-      "waitFor": "Employees"
+      "waitFor": "Employee Roster"
     },
     "af-jobEstimate": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=jobEstimate",
       "steps": [
         {
           "pickFirstJob": true
         }
       ],
-      "waitFor": "Job Estimate"
+      "waitFor": "Service tasks"
     },
     "af-jobs": {
       "role": "af",
       "url": "/m/admin-finance",
       "steps": [
         {
+          "click": "Menu"
+        },
+        {
           "click": "Jobs"
         }
       ],
-      "waitFor": "Jobs"
+      "waitFor": "Add Job"
     },
     "af-leadCreate": {
       "role": "af",
@@ -259,7 +265,7 @@
           "click": "New Lead"
         }
       ],
-      "waitFor": "New Lead"
+      "waitFor": "Create lead"
     },
     "af-leadEdit": {
       "role": "af",
@@ -269,7 +275,7 @@
           "click": "Edit Lead"
         }
       ],
-      "waitFor": "Edit Lead"
+      "waitFor": "Create job"
     },
     "af-leadInbox": {
       "role": "af",
@@ -282,7 +288,7 @@
           "click": "Leads"
         }
       ],
-      "waitFor": "Leads"
+      "waitFor": "New Lead"
     },
     "af-overview": {
       "role": "af",
@@ -295,7 +301,7 @@
           "click": "Overview"
         }
       ],
-      "waitFor": "Overview"
+      "waitFor": "Rates and area adjustments"
     },
     "af-payments": {
       "role": "af",
@@ -308,7 +314,7 @@
           "click": "Payments"
         }
       ],
-      "waitFor": "Payments"
+      "waitFor": "Needs attention"
     },
     "af-payments-PaymentsScreen": {
       "skip": "no route or subView hook (drill-in), not derivable"
@@ -330,7 +336,7 @@
           "click": "Planning"
         }
       ],
-      "waitFor": "Planning"
+      "waitFor": "Model Numbers"
     },
     "af-priceSheetCreate": {
       "role": "af",
@@ -346,7 +352,7 @@
           "click": "Create price sheet"
         }
       ],
-      "waitFor": "New Price Sheet"
+      "waitFor": "Version number"
     },
     "af-priceSheetEditor": {
       "role": "af",
@@ -356,7 +362,7 @@
           "click": "Price Sheet Editor"
         }
       ],
-      "waitFor": "Price Sheet Editor"
+      "waitFor": "Service Tasks"
     },
     "af-priceSheetList": {
       "role": "af",
@@ -369,7 +375,7 @@
           "click": "Price Sheets"
         }
       ],
-      "waitFor": "Price Sheets"
+      "waitFor": "Create price sheet"
     },
     "af-qualify": {
       "role": "af",
@@ -379,7 +385,7 @@
           "click": "Qualify Lead"
         }
       ],
-      "waitFor": "Qualify Lead"
+      "waitFor": "Qualify"
     },
     "af-reports": {
       "role": "af",
@@ -392,7 +398,7 @@
           "click": "Reports"
         }
       ],
-      "waitFor": "Reports"
+      "waitFor": "Slot Hit Rate"
     },
     "af-review": {
       "role": "af",
@@ -405,7 +411,7 @@
           "click": "Review"
         }
       ],
-      "waitFor": "Review"
+      "waitFor": "Reconciliation"
     },
     "blackout-range-modal": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -417,31 +423,31 @@
       "role": "af",
       "url": "/calendar",
       "steps": [],
-      "waitFor": "Calendar"
+      "waitFor": "Upcoming Blackouts"
     },
     "config-settings": {
       "role": "af",
       "url": "/config/settings",
       "steps": [],
-      "waitFor": "Settings"
+      "waitFor": "Company Info"
     },
     "config-test-jobs": {
       "role": "af",
       "url": "/config/test-jobs",
       "steps": [],
-      "waitFor": "Test Jobs"
+      "waitFor": "Spawn test jobs to see them here."
     },
     "field-tech": {
       "role": "ft",
       "url": "/m/field-tech",
       "steps": [],
-      "waitFor": "Field Tech"
+      "waitFor": "Prems Claimed"
     },
     "forgot-password": {
       "role": "anon",
       "url": "/forgot-password",
       "steps": [],
-      "waitFor": null
+      "waitFor": "Send reset link"
     },
     "ft-Completion": {
       "role": "ft",
@@ -451,7 +457,7 @@
           "pickFirstJob": true
         }
       ],
-      "waitFor": "Completion"
+      "waitFor": "Completion Photos"
     },
     "ft-DayList": {
       "role": "ft",
@@ -461,7 +467,7 @@
           "click": "Jobs"
         }
       ],
-      "waitFor": "Jobs"
+      "waitFor": "Previous Jobs"
     },
     "ft-Earnings": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -483,7 +489,7 @@
           "click": "Overview"
         }
       ],
-      "waitFor": "Overview"
+      "waitFor": "Prems Claimed"
     },
     "ft-Payroll": {
       "role": "ft",
@@ -496,7 +502,7 @@
           "click": "Payroll"
         }
       ],
-      "waitFor": "Payroll"
+      "waitFor": "Payroll is not available yet"
     },
     "ft-PremJobs": {
       "role": "ft",
@@ -509,7 +515,7 @@
           "click": "Prems"
         }
       ],
-      "waitFor": "Prems"
+      "waitFor": "No jobs need a Prem right now"
     },
     "ft-Reimbursements": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -525,7 +531,7 @@
           "click": "Reviews"
         }
       ],
-      "waitFor": "Reviews"
+      "waitFor": "Reviews are coming soon."
     },
     "ft-StartChecklist": {
       "skip": "no route or subView hook (sub-view), not derivable"
@@ -534,127 +540,81 @@
       "role": "af",
       "url": "/",
       "steps": [],
-      "waitFor": null
-    },
-    "job-id": {
-      "role": "ft",
-      "url": "/job/complete/[jobId]",
-      "steps": [
-        {
-          "pickFirstJob": true
-        }
-      ],
-      "waitFor": "Completion"
+      "waitFor": "Rates and area adjustments"
     },
     "job-region-arrive": {
       "role": "af",
       "url": "/job/[jobId]",
-      "steps": [
-        {
-          "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Arrive"
-        }
-      ],
-      "waitFor": "Arrive"
+      "steps": [],
+      "skip": "Header action only (writes inProgressAt); no distinct view"
     },
     "job-region-assign": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=assign",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Assign"
         }
       ],
-      "waitFor": "Assign"
+      "waitFor": "Service Tech"
     },
     "job-region-complete": {
       "role": "af",
       "url": "/job/[jobId]",
-      "steps": [
-        {
-          "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Complete"
-        }
-      ],
-      "waitFor": "Complete"
+      "steps": [],
+      "skip": "Navigates to /job/complete/[jobId]; captured as ft-Completion"
     },
     "job-region-contact": {
       "role": "af",
       "url": "/job/[jobId]",
-      "steps": [
-        {
-          "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Contact"
-        }
-      ],
-      "waitFor": "Contact"
+      "steps": [],
+      "skip": "Header action only (opens tel link, writes contact stamp); no distinct view"
     },
     "job-region-evisit": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=jobInvestigation",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Prelim (Prem)"
         }
       ],
-      "waitFor": "Prelim (Prem)"
+      "waitFor": "Prem Checklist"
     },
     "job-region-paid": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=payment",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Paid"
         }
       ],
-      "waitFor": "Paid"
+      "waitFor": "Paid so far:"
     },
     "job-region-plan": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=plan",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Plan"
         }
       ],
-      "waitFor": "Plan"
+      "waitFor": "Job site address"
     },
     "job-region-schedule": {
       "role": "af",
-      "url": "/job/[jobId]",
+      "url": "/job/[jobId]?panel=schedule",
       "steps": [
         {
           "pickFirstJob": true
-        },
-        {
-          "scrollTo": "Schedule"
         }
       ],
-      "waitFor": "Schedule"
+      "waitFor": "Sun"
     },
     "jobs": {
       "role": "af",
       "url": "/jobs",
       "steps": [],
-      "waitFor": "Jobs"
+      "waitFor": "No job selected."
     },
     "layout": {
       "skip": "module shell, no own screen"
@@ -669,19 +629,19 @@
       "role": "af",
       "url": "/m/payment-review",
       "steps": [],
-      "waitFor": "Payment Review"
+      "waitFor": "Manually confirmed"
     },
     "profile": {
       "role": "af",
       "url": "/profile",
       "steps": [],
-      "waitFor": "Profile"
+      "waitFor": "Change password"
     },
     "reset-password": {
       "role": "anon",
       "url": "/reset-password",
       "steps": [],
-      "waitFor": null
+      "waitFor": "Set new password"
     },
     "root-layout": {
       "skip": "no route or subView hook (route), not derivable"
@@ -690,19 +650,19 @@
       "role": "sm",
       "url": "/m/sales-marketing",
       "steps": [],
-      "waitFor": "Sales & Marketing"
+      "waitFor": "Reporting totals"
     },
     "sign-in": {
       "role": "anon",
       "url": "/sign-in",
       "steps": [],
-      "waitFor": "Sign In"
+      "waitFor": "Forgot password?"
     },
     "sign-up": {
       "role": "anon",
       "url": "/sign-up",
       "steps": [],
-      "waitFor": "Sign Up"
+      "waitFor": "Sign up"
     },
     "sm-CallbackTasks": {
       "role": "sm",
@@ -715,7 +675,7 @@
           "click": "Callback tasks"
         }
       ],
-      "waitFor": "Callback tasks"
+      "waitFor": "Callback Tasks"
     },
     "sm-Composer": {
       "role": "sm",
@@ -728,7 +688,7 @@
           "click": "Composer"
         }
       ],
-      "waitFor": "Compose Post"
+      "waitFor": "Manual export (always available)"
     },
     "sm-Overview": {
       "role": "sm",
@@ -741,7 +701,7 @@
           "click": "Overview"
         }
       ],
-      "waitFor": "Overview"
+      "waitFor": "Reporting totals"
     },
     "sm-Payroll": {
       "role": "sm",
@@ -754,7 +714,7 @@
           "click": "Payroll"
         }
       ],
-      "waitFor": "Payroll"
+      "waitFor": "Payroll is not available yet"
     },
     "sm-PitchPicker": {
       "role": "sm",
@@ -767,7 +727,7 @@
           "click": "Pitch Picker"
         }
       ],
-      "waitFor": "Pitch Picker"
+      "waitFor": "Pick a Pitch Angle"
     },
     "sm-Reporting": {
       "role": "sm",
@@ -780,7 +740,7 @@
           "click": "Reporting"
         }
       ],
-      "waitFor": "Reporting"
+      "waitFor": "Marketing Reporting"
     },
     "sm-ReviewLibrary": {
       "role": "sm",
@@ -793,7 +753,7 @@
           "click": "Review Library"
         }
       ],
-      "waitFor": "Review Library"
+      "waitFor": "Filter by service id"
     },
     "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": {
       "skip": "no route or subView hook (sub-view), not derivable"

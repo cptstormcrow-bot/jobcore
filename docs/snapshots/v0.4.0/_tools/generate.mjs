@@ -236,6 +236,22 @@ const searchText = (s) => [s.key, s.title, s.route, s.subView, s.file, s.module,
 // _tools/pagination.json { screenKey: [unit indexes where continuation pages start] }; absent file = no breaks
 let pagination = {};
 try { pagination = JSON.parse(fs.readFileSync(path.join(here, 'pagination.json'), 'utf8')) || {}; } catch { pagination = {}; }
+// _tools/help-map.json { screens: { screenKey: { kind, confidence, why, help: [{id,title,body}] } } }; absent file = every screen shows the red line
+let helpMap = {};
+try { helpMap = (JSON.parse(fs.readFileSync(path.join(here, 'help-map.json'), 'utf8')) || {}).screens || {}; } catch { helpMap = {}; }
+// Help block units; appended LAST so saved pagination.json break indexes into the earlier units stay valid
+function helpUnits(key) {
+  const m = helpMap[key];
+  const items = m && (m.kind === 'card' || m.kind === 'inline') ? (m.help || []).filter((x) => x && x.body) : [];
+  if (!items.length) return [{ g: 'h', h: '<h3>Help</h3>' }, { g: 'h', h: '<div><span class="help-missing">Help screen not linked ?</span></div>' }];
+  const out = [{ g: 'h', h: '<h3>Help</h3>' }];
+  for (const it of items) {
+    const id = `help-${esc(it.id)}--${esc(key)}`;
+    out.push({ g: 'h', h: `<h4><a class="help-link" href="#${id}">${esc(it.title)}</a>${m.confidence === 'inferred' ? ' <span class="muted">(inferred link)</span>' : ''}</h4>` });
+    out.push({ g: 'h', h: `<div id="${id}"><div class="help-text">${esc(it.body)}</div></div>` });
+  }
+  return out;
+}
 const list = (a) => (Array.isArray(a) && a.length ? a.map(esc).join(', ') : '<span class="muted">none</span>');
 const val = (v) => (v == null || v === '' ? '<span class="muted">none</span>' : esc(v));
 // claim lookups (built once; missing is final by inventory time)
@@ -277,6 +293,7 @@ function card(s) {
     { g: 'h', h: '<h3>Navigation targets</h3>' },
     ...navLis.map((h) => ({ g: 'li', h })),
     ...(inLis.length ? [{ g: 'h', h: '<h3>Reached from</h3>' }, ...inLis.map((h) => ({ g: 'li', h }))] : []),
+    ...helpUnits(s.key),
   ];
   const WRAP = { tr: ['<table><tbody>', '</tbody></table>'], id: ['<div class="ident">', '</div>'], li: ['<ul>', '</ul>'] };
   // render units [from,to) as wrapped runs; mark(i) adds the data-u attribute (and pbrk class when hidden in print)
@@ -320,6 +337,7 @@ const INV_CSS = `.grid{display:grid;grid-template-columns:repeat(auto-fill,minma
 .num-strip{display:flex;align-items:baseline;gap:var(--sp-3);flex-wrap:wrap;margin-bottom:4px}.num-big{font-size:22px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}.num-key{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--c-textMuted)}.sums{display:flex;gap:var(--sp-3);flex-wrap:wrap}code{background:var(--c-surfaceAlt);padding:0 4px;border-radius:3px}
 .head-row{display:block}.head-row>h3{margin-top:var(--sp-2)}.info h3+table{width:auto;min-width:0}
 .claim-box{float:right;width:32%;margin:0 0 6px 12px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;padding:6px 8px;font-size:9px;background:#fafafa}
+.help-missing{color:#c00;font-weight:700}.help-text{white-space:pre-line;font-size:12px;background:var(--c-surfaceAlt);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2)}.info h4{margin:4px 0 2px;font-size:13px}a.help-link{color:var(--c-primary);text-decoration:underline}
 .comp-wrap{display:flex;flex-wrap:wrap;gap:3px;overflow-wrap:anywhere}.comp-wrap span{border:1px solid #ddd;border-radius:3px;padding:0 4px}
 .cont{display:none}.cont-head{border-bottom:1px solid var(--c-border);padding-bottom:4px;margin-bottom:6px;font-size:13px}
 @media print{@page{size:A4 landscape;margin:10mm}

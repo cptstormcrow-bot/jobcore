@@ -1,0 +1,1476 @@
+{
+  "version": 1,
+  "note": "Screen to help-card map for the UI Inventory. confidence \"wired\" = traced through helpContext/helpId/showHelp code; \"inferred\" = see why. Effective card follows getHelpStep: WALKTHROUGH_STEPS before HELP_CARDS. Hand-maintained; verify against app/packages/ui/src/walkthrough/ when help changes.",
+  "cards": {
+    "account": {
+      "id": "account",
+      "title": "Account",
+      "body": "Sign out here, or use \"Sign in as someone else\" to switch to another login.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_overview": {
+      "id": "af_overview",
+      "title": "Overview",
+      "body": "Your starting point for Admin & Finance. Each card (Leads, Jobs, Assignments, Price Sheets, Payments & Payouts, Review, Payroll, Calendar, Reports, Employees) shows a quick count; tap one to open it.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "job_create": {
+      "id": "job_create",
+      "title": "Create a New Job",
+      "body": "Fill in the customer, job site address, and service area, then tap \"Create\". The job starts as New and opens so you can assign techs. Tap \"Cancel\" to leave without saving.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "payroll_rollup": {
+      "id": "payroll_rollup",
+      "title": "Payroll Totals",
+      "body": "Payroll totals appear here once pay runs are set up",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "af_price_sheets": {
+      "id": "af_price_sheets",
+      "title": "Price Sheets",
+      "body": "Rates and area adjustments, grouped as Drafts, Published and Archived. Tap \"Create price sheet\" to start a new one.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_jobs": {
+      "id": "af_jobs",
+      "title": "Jobs",
+      "body": "Every job on file for your organization. Tap a job to open its planning details and estimate.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_assignments": {
+      "id": "af_assignments",
+      "title": "Assignments",
+      "body": "Match qualified jobs to techs. Choose \"Service\" or \"Prem\" for the visit, pick the tech, then tap \"Confirm\".",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_time_off": {
+      "id": "af_time_off",
+      "title": "Time Off",
+      "body": "Time-off requests from your techs and the upcoming blackouts. Reach it from Calendar: tap \"Blackouts\" to show every blackout and tick or untick each tech (all on by default), or tap \"Add Blackout\" to block out dates for a tech.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_calendar": {
+      "id": "af_calendar",
+      "title": "Calendar",
+      "body": "Scheduled jobs by day or week, by tech. Use the tech picker (All Techs) to look at one person at a time.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "job_closeout": {
+      "id": "job_closeout",
+      "title": "Close Out the Job",
+      "body": "The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history. The job still closes if the price sheet has no commission rate. Any commission lines show in the Payouts tab next to that tech's pay and go out with the next payroll run once the job is closed out. On a closed job, the Close-Out page shows what was paid out, read-only: each technician's flat rate, Prem bonus or commission line, and whether it is waiting for the next payroll run or already included. Hourly technicians do not appear because they are paid from their timesheets. The \"Close out job\" and \"Add photo\" buttons are hidden once the job is closed.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_employees": {
+      "id": "af_employees",
+      "title": "Employees",
+      "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "create": {
+      "id": "create",
+      "title": "Create the Lead",
+      "body": "Every job starts as a lead. Open the lead from the Leads list, choose its Source, Payer, Attach timing and Service Area, then qualify it into a real job.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "inline_price_sheets": {
+      "id": "inline_price_sheets",
+      "title": "How price sheets work",
+      "body": "• A price sheet is one versioned set of task prices, trip durations and area adjustments.\n• Only one version is Published at a time; techs and estimates always use that one.\n• Drafts are private — nothing here changes what techs see until you tap Publish.\n• Publish makes this version live and archives the previous one; published versions never change again.\n• Price Area Adjustments raise or lower every price on this sheet for the selected service areas, by percent or a flat amount.",
+      "source": "PriceSheetEditorScreen.tsx HELP_BULLETS (inline collapsible section)"
+    },
+    "af_reports": {
+      "id": "af_reports",
+      "title": "Reports",
+      "body": "Totals for your jobs, including slot Hit Rate and Total Commission. Total Commission now includes each technician's commission lines as well as any older commission records, counted once per job. Tap a line to see the jobs behind the number.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "af_review": {
+      "id": "af_review",
+      "title": "Review",
+      "body": "Payment reconciliation. Shows payments that are pending or failed, and payments that were confirmed by hand, so you can spot anything that needs attention.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "paid": {
+      "id": "paid",
+      "title": "Mark Job Paid",
+      "body": "After the customer pays, an owner or admin marks the job paid so it stops showing as outstanding. Techs do not see this item.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "settings": {
+      "id": "settings",
+      "title": "Settings",
+      "body": "App-wide options live here. \"Show screen numbers\" labels each screen with its number, handy when reporting a problem.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "test_jobs": {
+      "id": "test_jobs",
+      "title": "Test Jobs",
+      "body": "Practice with fake jobs that do not affect real work. \"Spawn Test Jobs\" makes some, \"Run Job Simulator\" plays one through, and \"Delete\" or \"Delete All\" cleans up.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "ft_overview": {
+      "id": "ft_overview",
+      "title": "Field Tech Overview",
+      "body": "A summary of your work in tiles: Jobs, Prems Claimed, Time Off, Reimbursements, Notes, Photos and Checklist. Tap a count such as Assigned or Open to see the matching list.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "ft_jobs": {
+      "id": "ft_jobs",
+      "title": "Assigned Jobs",
+      "body": "Your schedule of upcoming jobs, shown as a Week or Month calendar. Use Prev, Today and Next to move through dates, and tap a job to open it. Previous Jobs are listed below Next Job.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "help_general": {
+      "id": "help_general",
+      "title": "Help",
+      "body": "Use ☰ to move between sections, ⋮ Options for actions here.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "ft_prems": {
+      "id": "ft_prems",
+      "title": "Prems",
+      "body": "Lists jobs that need a Prem (premium visit). Tap Claim to take a job (confirm with Yes), then tap Record on a job you claimed to fill in its Prem report.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "ft_reviews": {
+      "id": "ft_reviews",
+      "title": "Reviews",
+      "body": "Reviews are coming soon. This view only shows a \"Reviews are coming soon.\" message for now.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "arrive": {
+      "id": "arrive",
+      "title": "Arrive On-Site",
+      "body": "When the installer gets to the customer, mark arrival so the clock starts and the office can see progress. Arrive is greyed out until a Service Tech is assigned.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "assign": {
+      "id": "assign",
+      "title": "Assign Your Techs",
+      "body": "Pick a Prem Tech for the pre-estimate visit and a Service Tech for the actual work. Assigning does not change the job status.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "complete": {
+      "id": "complete",
+      "title": "Mark Job Complete",
+      "body": "When the work is finished, mark the job complete so the office knows it is ready to close out and bill.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "contact": {
+      "id": "contact",
+      "title": "Contact the Customer",
+      "body": "Before heading out, reach the customer to confirm the appointment, and log that contact was made.",
+      "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+    },
+    "job_reschedule": {
+      "id": "job_reschedule",
+      "title": "Reschedule the Job",
+      "body": "This job needs a new date. Pick a new date and time on the calendar, then tap \"Save\" and answer \"Yes\" to \"Reschedule?\". Days with other jobs or blackouts are marked, and tapping a day lists them.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "jobs_list": {
+      "id": "jobs_list",
+      "title": "Your Jobs",
+      "body": "This is where you find and open jobs. Turn on \"Show Test Jobs\" to include practice jobs. Tap \"New job\" to start one.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "profile": {
+      "id": "profile",
+      "title": "Profile",
+      "body": "Update your Name and Email with \"Save details\". Change your password under \"Change password\" with \"Update password\". Only an admin can change roles.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_overview": {
+      "id": "sm_overview",
+      "title": "Overview",
+      "body": "A quick snapshot of open callback tasks, Recent reviews and Reporting totals. Tap \"Recent reviews\" to jump to the Review Library.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_callbacks": {
+      "id": "sm_callbacks",
+      "title": "Callback Tasks",
+      "body": "Lists customers waiting for a call back. Tap \"Mark Called Back\" once you have called. Turn on \"Show Test Jobs\" to include test jobs.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_composer": {
+      "id": "sm_composer",
+      "title": "Compose Post",
+      "body": "Pick a Platform (Facebook or Instagram), write the caption and add approved assets, then tap \"Approve draft\". After that use \"Export images, copy caption, share\" or direct post.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_reporting": {
+      "id": "sm_reporting",
+      "title": "Marketing Reporting",
+      "body": "Shows \"Posts by platform and period\", \"Assets used\", \"Reviews collected\", \"Jobs by source\" and \"Jobs by attach timing\". It is read-only.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_pitch": {
+      "id": "sm_pitch",
+      "title": "Pick a Pitch Angle",
+      "body": "Choose how to build a post: \"Service line\", \"Community\", \"Seasonal\" or \"Before / after\". Tapping one opens the Composer with that angle.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "sm_reviews": {
+      "id": "sm_reviews",
+      "title": "Review Library",
+      "body": "Browse published reviews and filter by \"Minimum rating\", \"Service\" and \"Community\". Tap \"Curate as testimonial\" to save one; use the up and down arrows to reorder.",
+      "source": "help-content.ts (HELP_CARDS)"
+    },
+    "calendar": {
+      "id": "calendar",
+      "title": "Calendar",
+      "body": "See scheduled work by day or week. Use the toggles to show or hide \"Jobs\", \"Time Off\", and \"Show Test Jobs\". Tap \"Blackouts\" to see every scheduled blackout and tick or untick each tech (all on by default), or \"Add Blackout\" to block out dates for a tech.",
+      "source": "help-content.ts (HELP_CARDS)"
+    }
+  },
+  "screens": {
+    "account": {
+      "helpIds": [
+        "account"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "account",
+          "title": "Account",
+          "body": "Sign out here, or use \"Sign in as someone else\" to switch to another login.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "admin-finance": {
+      "helpIds": [
+        "af_overview"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "root renders Overview by default; the literal key admin-finance matches no card (falls to help_general)",
+      "help": [
+        {
+          "id": "af_overview",
+          "title": "Overview",
+          "body": "Your starting point for Admin & Finance. Each card (Leads, Jobs, Assignments, Price Sheets, Payments & Payouts, Review, Payroll, Calendar, Reports, Employees) shows a quick count; tap one to open it.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-JobCreateScreen": {
+      "helpIds": [
+        "job_create"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "JobCreateScreen is not mounted by any JSX; the live New Job screen (job/[jobId].tsx:1243) uses screenKey job-create",
+      "help": [
+        {
+          "id": "job_create",
+          "title": "Create a New Job",
+          "body": "Fill in the customer, job site address, and service area, then tap \"Create\". The job starts as New and opens so you can assign techs. Tap \"Cancel\" to leave without saving.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-Payroll": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-PayrollRun": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-PayrollSettings": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-ReportsJobDetailScreen": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in app JSX (only .d.ts/doc mentions), so no help button is reachable",
+      "help": []
+    },
+    "af-addTaskDialog": {
+      "helpIds": [
+        "af_price_sheets"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "dialog opens over the Price Sheet Editor; no own helpContext, chrome help is the editor's",
+      "help": [
+        {
+          "id": "af_price_sheets",
+          "title": "Price Sheets",
+          "body": "Rates and area adjustments, grouped as Drafts, Published and Archived. Tap \"Create price sheet\" to start a new one.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-archivedJobs": {
+      "helpIds": [
+        "af_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEY maps jobs/planning/jobEstimate/archivedJobs/closedJobs to af-jobs",
+      "help": [
+        {
+          "id": "af_jobs",
+          "title": "Jobs",
+          "body": "Every job on file for your organization. Tap a job to open its planning details and estimate.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-assignmentBoard": {
+      "helpIds": [
+        "af_assignments"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_assignments",
+          "title": "Assignments",
+          "body": "Match qualified jobs to techs. Choose \"Service\" or \"Prem\" for the visit, pick the tech, then tap \"Confirm\".",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-blackout-editor": {
+      "helpIds": [
+        "af_time_off"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_time_off",
+          "title": "Time Off",
+          "body": "Time-off requests from your techs and the upcoming blackouts. Reach it from Calendar: tap \"Blackouts\" to show every blackout and tick or untick each tech (all on by default), or tap \"Add Blackout\" to block out dates for a tech.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-calendar": {
+      "helpIds": [
+        "af_calendar"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_calendar",
+          "title": "Calendar",
+          "body": "Scheduled jobs by day or week, by tech. Use the tech picker (All Techs) to look at one person at a time.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-closeOutQueue": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in app JSX (only .d.ts/doc mentions), so no help button is reachable",
+      "help": []
+    },
+    "af-closeOutReview": {
+      "helpIds": [
+        "job_closeout"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "rendered by JobCloseOutRegion inside Job Detail; card chosen by job status (paid -> job_closeout)",
+      "help": [
+        {
+          "id": "job_closeout",
+          "title": "Close Out the Job",
+          "body": "The job is paid. An owner or admin reviews the final numbers and closes it out so it moves into history. The job still closes if the price sheet has no commission rate. Any commission lines show in the Payouts tab next to that tech's pay and go out with the next payroll run once the job is closed out. On a closed job, the Close-Out page shows what was paid out, read-only: each technician's flat rate, Prem bonus or commission line, and whether it is waiting for the next payroll run or already included. Hourly technicians do not appear because they are paid from their timesheets. The \"Close out job\" and \"Add photo\" buttons are hidden once the job is closed.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-compensationPolicy": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-employee-detail": {
+      "helpIds": [
+        "af_employees"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_employees",
+          "title": "Employees",
+          "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-employee-editor": {
+      "helpIds": [
+        "af_employees"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_employees",
+          "title": "Employees",
+          "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-employee-invitations": {
+      "helpIds": [
+        "af_employees"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_employees",
+          "title": "Employees",
+          "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-employee-job-detail": {
+      "helpIds": [
+        "af_employees"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_employees",
+          "title": "Employees",
+          "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-employee-roster": {
+      "helpIds": [
+        "af_employees"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_employees",
+          "title": "Employees",
+          "body": "Your Employee Roster. Tap \"Add Employee\" to add someone, or \"Pending Invitations\" to see invites not yet accepted. Pay is set on an employee's Pay tab: \"Base Pay\" is one box that follows the Hourly/Flat picker. Employees also get a \"Commission\" switch with a percent box. Off means base pay only; on adds an extra commission payout on top of base pay, equal to that percent of the job's labor cost. Contractors do not get the switch.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-jobEstimate": {
+      "helpIds": [
+        "af_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEY maps jobs/planning/jobEstimate/archivedJobs/closedJobs to af-jobs",
+      "help": [
+        {
+          "id": "af_jobs",
+          "title": "Jobs",
+          "body": "Every job on file for your organization. Tap a job to open its planning details and estimate.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-jobs": {
+      "helpIds": [
+        "af_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEY maps jobs/planning/jobEstimate/archivedJobs/closedJobs to af-jobs",
+      "help": [
+        {
+          "id": "af_jobs",
+          "title": "Jobs",
+          "body": "Every job on file for your organization. Tap a job to open its planning details and estimate.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-leadCreate": {
+      "helpIds": [
+        "create"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-leads / qualify-lead: walkthrough step \"create\" is found first by getHelpStep and shadows HELP_CARDS af_leads",
+      "shadowed": [
+        "af_leads"
+      ],
+      "help": [
+        {
+          "id": "create",
+          "title": "Create the Lead",
+          "body": "Every job starts as a lead. Open the lead from the Leads list, choose its Source, Payer, Attach timing and Service Area, then qualify it into a real job.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-leadEdit": {
+      "helpIds": [
+        "create"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-leads / qualify-lead: walkthrough step \"create\" is found first by getHelpStep and shadows HELP_CARDS af_leads",
+      "shadowed": [
+        "af_leads"
+      ],
+      "help": [
+        {
+          "id": "create",
+          "title": "Create the Lead",
+          "body": "Every job starts as a lead. Open the lead from the Leads list, choose its Source, Payer, Attach timing and Service Area, then qualify it into a real job.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-leadInbox": {
+      "helpIds": [
+        "create"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-leads / qualify-lead: walkthrough step \"create\" is found first by getHelpStep and shadows HELP_CARDS af_leads",
+      "shadowed": [
+        "af_leads"
+      ],
+      "help": [
+        {
+          "id": "create",
+          "title": "Create the Lead",
+          "body": "Every job starts as a lead. Open the lead from the Leads list, choose its Source, Payer, Attach timing and Service Area, then qualify it into a real job.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-overview": {
+      "helpIds": [
+        "af_overview"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_overview",
+          "title": "Overview",
+          "body": "Your starting point for Admin & Finance. Each card (Leads, Jobs, Assignments, Price Sheets, Payments & Payouts, Review, Payroll, Calendar, Reports, Employees) shows a quick count; tap one to open it.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-payments": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-payments-PaymentsScreen": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-payments-PayoutBatchDetailScreen": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-payments-PayoutBatchScreen": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-payments-ReimbursementQueueScreen": {
+      "helpIds": [
+        "payroll_rollup"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-payments: walkthrough step payroll_rollup is found first and shadows HELP_CARDS af_payments (payments/payroll/payrollRun/payrollSettings/compensationPolicy all map to af-payments)",
+      "shadowed": [
+        "af_payments"
+      ],
+      "help": [
+        {
+          "id": "payroll_rollup",
+          "title": "Payroll Totals",
+          "body": "Payroll totals appear here once pay runs are set up",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-planning": {
+      "helpIds": [
+        "af_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEY maps jobs/planning/jobEstimate/archivedJobs/closedJobs to af-jobs",
+      "help": [
+        {
+          "id": "af_jobs",
+          "title": "Jobs",
+          "body": "Every job on file for your organization. Tap a job to open its planning details and estimate.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-priceSheetCreate": {
+      "helpIds": [
+        "af_price_sheets"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_price_sheets",
+          "title": "Price Sheets",
+          "body": "Rates and area adjustments, grouped as Drafts, Published and Archived. Tap \"Create price sheet\" to start a new one.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-priceSheetEditor": {
+      "helpIds": [
+        "af_price_sheets",
+        "inline_price_sheets"
+      ],
+      "kind": "inline",
+      "confidence": "wired",
+      "why": "AppChrome card af_price_sheets plus its own collapsible \"How price sheets work\" section",
+      "help": [
+        {
+          "id": "af_price_sheets",
+          "title": "Price Sheets",
+          "body": "Rates and area adjustments, grouped as Drafts, Published and Archived. Tap \"Create price sheet\" to start a new one.",
+          "source": "help-content.ts (HELP_CARDS)"
+        },
+        {
+          "id": "inline_price_sheets",
+          "title": "How price sheets work",
+          "body": "• A price sheet is one versioned set of task prices, trip durations and area adjustments.\n• Only one version is Published at a time; techs and estimates always use that one.\n• Drafts are private — nothing here changes what techs see until you tap Publish.\n• Publish makes this version live and archives the previous one; published versions never change again.\n• Price Area Adjustments raise or lower every price on this sheet for the selected service areas, by percent or a flat amount.",
+          "source": "PriceSheetEditorScreen.tsx HELP_BULLETS (inline collapsible section)"
+        }
+      ]
+    },
+    "af-priceSheetList": {
+      "helpIds": [
+        "af_price_sheets"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_price_sheets",
+          "title": "Price Sheets",
+          "body": "Rates and area adjustments, grouped as Drafts, Published and Archived. Tap \"Create price sheet\" to start a new one.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-qualify": {
+      "helpIds": [
+        "create"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "af-leads / qualify-lead: walkthrough step \"create\" is found first by getHelpStep and shadows HELP_CARDS af_leads",
+      "shadowed": [
+        "af_leads"
+      ],
+      "help": [
+        {
+          "id": "create",
+          "title": "Create the Lead",
+          "body": "Every job starts as a lead. Open the lead from the Leads list, choose its Source, Payer, Attach timing and Service Area, then qualify it into a real job.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "af-reports": {
+      "helpIds": [
+        "af_reports"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_reports",
+          "title": "Reports",
+          "body": "Totals for your jobs, including slot Hit Rate and Total Commission. Total Commission now includes each technician's commission lines as well as any older commission records, counted once per job. Tap a line to see the jobs behind the number.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "af-review": {
+      "helpIds": [
+        "af_review"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "af_review",
+          "title": "Review",
+          "body": "Payment reconciliation. Shows payments that are pending or failed, and payments that were confirmed by hand, so you can spot anything that needs attention.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "blackout-range-modal": {
+      "helpIds": [
+        "af_time_off"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "rendered inside BlackoutEditorScreen (af-time-off); no own helpContext",
+      "help": [
+        {
+          "id": "af_time_off",
+          "title": "Time Off",
+          "body": "Time-off requests from your techs and the upcoming blackouts. Reach it from Calendar: tap \"Blackouts\" to show every blackout and tick or untick each tech (all on by default), or tap \"Add Blackout\" to block out dates for a tech.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "blackout-time-off-list": {
+      "helpIds": [
+        "af_time_off"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "rendered inside BlackoutEditorScreen (af-time-off); no own helpContext",
+      "help": [
+        {
+          "id": "af_time_off",
+          "title": "Time Off",
+          "body": "Time-off requests from your techs and the upcoming blackouts. Reach it from Calendar: tap \"Blackouts\" to show every blackout and tick or untick each tech (all on by default), or tap \"Add Blackout\" to block out dates for a tech.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "completed-review": {
+      "helpIds": [
+        "paid"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: completed -> paid (Job Detail / Complete Job screens use JobHeader helpContext)",
+      "help": [
+        {
+          "id": "paid",
+          "title": "Mark Job Paid",
+          "body": "After the customer pays, an owner or admin marks the job paid so it stops showing as outstanding. Techs do not see this item.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "config-settings": {
+      "helpIds": [
+        "settings"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "settings",
+          "title": "Settings",
+          "body": "App-wide options live here. \"Show screen numbers\" labels each screen with its number, handy when reporting a problem.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "config-test-jobs": {
+      "helpIds": [
+        "test_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "test_jobs",
+          "title": "Test Jobs",
+          "body": "Practice with fake jobs that do not affect real work. \"Spawn Test Jobs\" makes some, \"Run Job Simulator\" plays one through, and \"Delete\" or \"Delete All\" cleans up.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "field-tech": {
+      "helpIds": [
+        "ft_overview"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "root renders Overview by default (HELP_SCREEN_KEYS[overview]=ft-overview)",
+      "help": [
+        {
+          "id": "ft_overview",
+          "title": "Field Tech Overview",
+          "body": "A summary of your work in tiles: Jobs, Prems Claimed, Time Off, Reimbursements, Notes, Photos and Checklist. Tap a count such as Assigned or Open to see the matching list.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "forgot-password": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "ft-Completion": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in field-tech JSX",
+      "help": []
+    },
+    "ft-DayList": {
+      "helpIds": [
+        "ft_jobs"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "ft_jobs",
+          "title": "Assigned Jobs",
+          "body": "Your schedule of upcoming jobs, shown as a Week or Month calendar. Use Prev, Today and Next to move through dates, and tap a job to open it. Previous Jobs are listed below Next Job.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-Earnings": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in field-tech JSX",
+      "help": []
+    },
+    "ft-FieldJobDetail": {
+      "helpIds": [
+        "help_general"
+      ],
+      "kind": "fallback-only",
+      "confidence": "wired",
+      "why": "HelpCircle calls showHelp(getHelpStep('ft-job-detail')); no card matches without a jobStatus so the generic help_general shows",
+      "help": [
+        {
+          "id": "help_general",
+          "title": "Help",
+          "body": "Use ☰ to move between sections, ⋮ Options for actions here.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-Greeting": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in field-tech JSX",
+      "help": []
+    },
+    "ft-Overview": {
+      "helpIds": [
+        "ft_overview"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "FieldTechRoot HELP_SCREEN_KEYS: overview and payroll -> ft-overview",
+      "help": [
+        {
+          "id": "ft_overview",
+          "title": "Field Tech Overview",
+          "body": "A summary of your work in tiles: Jobs, Prems Claimed, Time Off, Reimbursements, Notes, Photos and Checklist. Tap a count such as Assigned or Open to see the matching list.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-Payroll": {
+      "helpIds": [
+        "ft_overview"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "FieldTechRoot HELP_SCREEN_KEYS: overview and payroll -> ft-overview",
+      "help": [
+        {
+          "id": "ft_overview",
+          "title": "Field Tech Overview",
+          "body": "A summary of your work in tiles: Jobs, Prems Claimed, Time Off, Reimbursements, Notes, Photos and Checklist. Tap a count such as Assigned or Open to see the matching list.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-PremJobs": {
+      "helpIds": [
+        "ft_prems"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "ft_prems",
+          "title": "Prems",
+          "body": "Lists jobs that need a Prem (premium visit). Tap Claim to take a job (confirm with Yes), then tap Record on a job you claimed to fill in its Prem report.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-Reimbursements": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in field-tech JSX",
+      "help": []
+    },
+    "ft-Reviews": {
+      "helpIds": [
+        "ft_reviews"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "ft_reviews",
+          "title": "Reviews",
+          "body": "Reviews are coming soon. This view only shows a \"Reviews are coming soon.\" message for now.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "ft-StartChecklist": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in field-tech JSX",
+      "help": []
+    },
+    "index": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "job-region-arrive": {
+      "helpIds": [
+        "arrive"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: en_route -> arrive",
+      "help": [
+        {
+          "id": "arrive",
+          "title": "Arrive On-Site",
+          "body": "When the installer gets to the customer, mark arrival so the clock starts and the office can see progress. Arrive is greyed out until a Service Tech is assigned.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-assign": {
+      "helpIds": [
+        "assign"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "Job Detail help is chosen by job status via JobHeader helpContext; region maps to status new/qualified",
+      "help": [
+        {
+          "id": "assign",
+          "title": "Assign Your Techs",
+          "body": "Pick a Prem Tech for the pre-estimate visit and a Service Tech for the actual work. Assigning does not change the job status.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-complete": {
+      "helpIds": [
+        "complete"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: in_progress -> complete",
+      "help": [
+        {
+          "id": "complete",
+          "title": "Mark Job Complete",
+          "body": "When the work is finished, mark the job complete so the office knows it is ready to close out and bill.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-contact": {
+      "helpIds": [
+        "contact"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: scheduled/assigned -> contact; region itself has no helpContext",
+      "help": [
+        {
+          "id": "contact",
+          "title": "Contact the Customer",
+          "body": "Before heading out, reach the customer to confirm the appointment, and log that contact was made.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-evisit": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "inferred",
+      "why": "Prelim (Prem) region: no status in the job-detail help table maps to it",
+      "help": []
+    },
+    "job-region-paid": {
+      "helpIds": [
+        "paid"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: completed -> paid (Job Detail / Complete Job screens use JobHeader helpContext)",
+      "help": [
+        {
+          "id": "paid",
+          "title": "Mark Job Paid",
+          "body": "After the customer pays, an owner or admin marks the job paid so it stops showing as outstanding. Techs do not see this item.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-plan": {
+      "helpIds": [
+        "contact"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: scheduled/assigned -> contact; region itself has no helpContext",
+      "help": [
+        {
+          "id": "contact",
+          "title": "Contact the Customer",
+          "body": "Before heading out, reach the customer to confirm the appointment, and log that contact was made.",
+          "source": "walkthrough-content.ts (WALKTHROUGH_STEPS)"
+        }
+      ]
+    },
+    "job-region-schedule": {
+      "helpIds": [
+        "job_reschedule"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "status-driven: needs_reschedule -> job_reschedule; Schedule region reachable from the job menu",
+      "help": [
+        {
+          "id": "job_reschedule",
+          "title": "Reschedule the Job",
+          "body": "This job needs a new date. Pick a new date and time on the calendar, then tap \"Save\" and answer \"Yes\" to \"Reschedule?\". Days with other jobs or blackouts are marked, and tapping a day lists them.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "jobs": {
+      "helpIds": [
+        "jobs_list"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "jobs_list",
+          "title": "Your Jobs",
+          "body": "This is where you find and open jobs. Turn on \"Show Test Jobs\" to include practice jobs. Tap \"New job\" to start one.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "layout": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "module-host": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "not-found": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "payment-review": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "profile": {
+      "helpIds": [
+        "profile"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "profile",
+          "title": "Profile",
+          "body": "Update your Name and Email with \"Save details\". Change your password under \"Change password\" with \"Update password\". Only an admin can change roles.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "reset-password": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "root-layout": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "sales-marketing": {
+      "helpIds": [
+        "sm_overview"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "root renders Overview by default (HELP_SCREEN_KEYS[overview]=sm-overview)",
+      "help": [
+        {
+          "id": "sm_overview",
+          "title": "Overview",
+          "body": "A quick snapshot of open callback tasks, Recent reviews and Reporting totals. Tap \"Recent reviews\" to jump to the Review Library.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sign-in": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "sign-up": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "no helpContext/helpId wiring found in this file",
+      "help": []
+    },
+    "sm-CallbackTasks": {
+      "helpIds": [
+        "sm_callbacks"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "sm_callbacks",
+          "title": "Callback Tasks",
+          "body": "Lists customers waiting for a call back. Tap \"Mark Called Back\" once you have called. Turn on \"Show Test Jobs\" to include test jobs.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-Composer": {
+      "helpIds": [
+        "sm_composer"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "sm_composer",
+          "title": "Compose Post",
+          "body": "Pick a Platform (Facebook or Instagram), write the caption and add approved assets, then tap \"Approve draft\". After that use \"Export images, copy caption, share\" or direct post.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-Overview": {
+      "helpIds": [
+        "sm_overview"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "sm_overview",
+          "title": "Overview",
+          "body": "A quick snapshot of open callback tasks, Recent reviews and Reporting totals. Tap \"Recent reviews\" to jump to the Review Library.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-Payroll": {
+      "helpIds": [
+        "sm_reporting"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEYS: reporting and payroll -> sm-reporting",
+      "help": [
+        {
+          "id": "sm_reporting",
+          "title": "Marketing Reporting",
+          "body": "Shows \"Posts by platform and period\", \"Assets used\", \"Reviews collected\", \"Jobs by source\" and \"Jobs by attach timing\". It is read-only.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-PitchPicker": {
+      "helpIds": [
+        "sm_pitch"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "sm_pitch",
+          "title": "Pick a Pitch Angle",
+          "body": "Choose how to build a post: \"Service line\", \"Community\", \"Seasonal\" or \"Before / after\". Tapping one opens the Composer with that angle.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-Reporting": {
+      "helpIds": [
+        "sm_reporting"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "HELP_SCREEN_KEYS: reporting and payroll -> sm-reporting",
+      "help": [
+        {
+          "id": "sm_reporting",
+          "title": "Marketing Reporting",
+          "body": "Shows \"Posts by platform and period\", \"Assets used\", \"Reviews collected\", \"Jobs by source\" and \"Jobs by attach timing\". It is read-only.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sm-ReviewLibrary": {
+      "helpIds": [
+        "sm_reviews"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "help": [
+        {
+          "id": "sm_reviews",
+          "title": "Review Library",
+          "body": "Browse published reviews and filter by \"Minimum rating\", \"Service\" and \"Community\". Tap \"Curate as testimonial\" to save one; use the up and down arrows to reorder.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "reusable component, not a screen; no own help",
+      "help": []
+    },
+    "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "reusable component, not a screen; no own help",
+      "help": []
+    },
+    "tabs-layout": {
+      "helpIds": [
+        "calendar"
+      ],
+      "kind": "card",
+      "confidence": "inferred",
+      "why": "tabs/_layout.tsx HelpCircle calls showHelp(getHelpStep('calendar')); the shell help button is only for the Calendar tab",
+      "help": [
+        {
+          "id": "calendar",
+          "title": "Calendar",
+          "body": "See scheduled work by day or week. Use the toggles to show or hide \"Jobs\", \"Time Off\", and \"Show Test Jobs\". Tap \"Blackouts\" to see every scheduled blackout and tick or untick each tech (all on by default), or \"Add Blackout\" to block out dates for a tech.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    },
+    "time-off-tech-calendar": {
+      "helpIds": [],
+      "kind": "none",
+      "confidence": "wired",
+      "why": "component is not mounted anywhere in app JSX (only .d.ts/doc mentions), so no help button is reachable",
+      "help": []
+    },
+    "universal-calendar": {
+      "helpIds": [
+        "calendar",
+        "af_calendar"
+      ],
+      "kind": "card",
+      "confidence": "wired",
+      "why": "component shared by tabs/calendar (card calendar) and the Admin&Finance calendar subview (card af_calendar)",
+      "help": [
+        {
+          "id": "calendar",
+          "title": "Calendar",
+          "body": "See scheduled work by day or week. Use the toggles to show or hide \"Jobs\", \"Time Off\", and \"Show Test Jobs\". Tap \"Blackouts\" to see every scheduled blackout and tick or untick each tech (all on by default), or \"Add Blackout\" to block out dates for a tech.",
+          "source": "help-content.ts (HELP_CARDS)"
+        },
+        {
+          "id": "af_calendar",
+          "title": "Calendar",
+          "body": "Scheduled jobs by day or week, by tech. Use the tech picker (All Techs) to look at one person at a time.",
+          "source": "help-content.ts (HELP_CARDS)"
+        }
+      ]
+    }
+  }
+}

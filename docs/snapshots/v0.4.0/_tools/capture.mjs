@@ -123,11 +123,16 @@ async function captureOne(page, key, scr, role) {
     else if (s.scrollTo) await scrollToText(page, s.scrollTo);
   }
   if (scr.waitFor) {
-    await page.waitForFunction((t) => document.body.innerText.includes(t), { timeout: 15000 }, scr.waitFor)
-      .catch((e) => log(`${key}: waitFor not met (${e.message.slice(0, 80)})`));
+    try {
+      await page.waitForFunction((t) => document.body.innerText.includes(t), { timeout: 15000 }, scr.waitFor);
+    } catch { throw new Error('waitFor not met: ' + scr.waitFor); }
   }
   await page.screenshot({ path: path.join(outDir, key + '.png'), type: 'png', fullPage: false });
 }
+
+// every non-skipped recipe must declare a waitFor
+const noWait = Object.entries(cfg.screens).filter(([, v]) => !v.skip && !v.waitFor).map(([k]) => k);
+if (noWait.length) { console.error('recipes missing waitFor: ' + noWait.join(', ')); die('recipes missing waitFor: ' + noWait.join(', ')); }
 
 // group screens by role
 const groups = {};
@@ -159,6 +164,7 @@ for (const [roleName, items] of Object.entries(groups)) {
       manifest[key] = { status: 'ok' };
       log('ok ' + key);
     } catch (e) {
+      fs.rmSync(path.join(outDir, key + '.png'), { force: true }); // hard failure: never leave a stale PNG
       manifest[key] = { status: 'failed', reason: String(e.message).slice(0, 200) };
       log(`failed ${key}: ${manifest[key].reason}`);
     }
