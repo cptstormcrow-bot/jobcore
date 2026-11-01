@@ -645,6 +645,11 @@
         }
       ]
     },
+    "job-region-plan--new": {
+      "role": "af",
+      "url": "/job/new",
+      "waitFor": "New Job"
+    },
     "job-region-schedule": {
       "role": "af",
       "url": "/job/[jobId]?panel=schedule",

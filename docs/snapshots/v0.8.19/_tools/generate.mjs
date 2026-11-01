@@ -157,10 +157,13 @@ for (let i = missing.length - 1; i >= 0; i--) if (refutedSet.has(missing[i].id))
 const capturesDir = path.resolve(here, '..', 'captures');
 let captureManifest = {};
 try { captureManifest = JSON.parse(fs.readFileSync(path.join(capturesDir, '_manifest.json'), 'utf8')); } catch { captureManifest = {}; }
+// Extra views of one screen (same badge, other route) are captured as <key>--<view>.png, e.g. job-region-plan--new.png for /job/new.
+const deviceImg = (file, alt) => `<div class="jc-device" data-device-frame="1"><img class="capture" src="data:image/png;base64,${fs.readFileSync(file).toString('base64')}" width="312" height="675" alt="${esc(alt)}"></div>`;
 function mockFor(s) {
   const png = path.join(capturesDir, s.key + '.png');
   if (fs.existsSync(png)) {
-    return `<div class="jc-device" data-device-frame="1"><img class="capture" src="data:image/png;base64,${fs.readFileSync(png).toString('base64')}" width="312" height="675" alt="${esc(s.title)}"></div>`;
+    const extras = fs.readdirSync(capturesDir).filter((f) => f.startsWith(s.key + '--') && f.endsWith('.png')).sort();
+    return deviceImg(png, s.title) + extras.map((f) => deviceImg(path.join(capturesDir, f), s.title + ' (' + f.slice(s.key.length + 2, -4) + ')')).join('');
   }
   return renderMockup(s);
 }
