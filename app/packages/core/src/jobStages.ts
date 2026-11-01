@@ -17,7 +17,7 @@ export const STAGE_LABELS: Record<StageKey, string> = {
   schedule: 'Schedule',
   assign: 'Assign',
   contact: 'Contact',
-  startWork: 'Start work',
+  startWork: 'Start',
   photos: 'Photos',
   completeWork: 'Complete work',
   paid: 'Paid',

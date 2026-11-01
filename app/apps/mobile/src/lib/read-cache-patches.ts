@@ -57,7 +57,11 @@ const jobPatch = (idKey: string, apply: (p: Record<string, unknown>) => Row) => 
 function lifecycleCols(patch: unknown): Row {
   if (!isObj(patch)) return {};
   const out: Row = { ...patch };
-  for (const [k, v] of Object.entries(patch)) out[k.replace(/_([a-z])/g, (_m, c: string) => c.toUpperCase())] = v;
+  // The patch is camelCase (inProgressAt); cached rows may be snake_case (in_progress_at), so write both.
+  for (const [k, v] of Object.entries(patch)) {
+    out[k.replace(/_([a-z])/g, (_m, c: string) => c.toUpperCase())] = v;
+    out[k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] = v;
+  }
   return out;
 }
 

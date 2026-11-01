@@ -108,7 +108,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     title: 'Arrive On-Site',
     body: 'When the installer gets to the customer, mark arrival so the clock starts and the office can see progress. Arrive is greyed out until a Service Tech is assigned.',
     whereScreen: 'Job Detail',
-    whereHint: 'On Job Detail, open the job menu and choose "Arrive". If it is greyed out, set a Service Tech in the header first.',
+    whereHint: 'On Job Detail, open the job menu and choose "Start". If it is greyed out, set a Service Tech in the header first.',
     context: { screens: ['job-detail', 'ft-job-detail'], jobStatuses: ['en_route'] },
   },
   {

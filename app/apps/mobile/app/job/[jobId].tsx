@@ -1,7 +1,7 @@
 // JobCore screens #0041 (job-region-plan, /job/<id>?panel=plan) and the New Job create flow (/job/new). Former #0039 job-detail was retired into #0041 on 2026-10-16.
 // JobCore screen #0040 - job-region-assign - Assign
 // JobCore screen #0075 - job-region-contact - Contact
-// JobCore screen #0076 - job-region-arrive - Arrive
+// JobCore screen #0076 - job-region-arrive - Start
 // JobCore screen #0077 - job-region-complete - Complete
 // JobCore screen #0078 - job-region-paid - Paid
 // JobCore screen #0018 - job-region-closeout - Close-out
@@ -1061,7 +1061,7 @@ export default function JobDrilldownScreen() {
       case 'assign': selectRegion('assign'); break;
       case 'history': selectRegion('history'); break;
       case 'contact': setActiveStage('contact'); handleContact(); break;
-      // Start work is set by Arrive; the before-photo card sits at the top of the Tasks tab.
+      // Start is set by the Start (arrive) action; the before-photo card sits at the top of the Tasks tab.
       case 'startWork': setActiveStage('arrive'); void handleArrive(); break;
       case 'photos': selectRegion('photos'); break;
       case 'completeWork': setActiveStage('complete'); handleComplete(); break;
@@ -1082,7 +1082,7 @@ export default function JobDrilldownScreen() {
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
     if (!(job.assignedTechId)) {
-      Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Arrive can be marked.');
+      Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Start can be marked.');
       return;
     }
     setBusyAction('arrive');
@@ -1090,17 +1090,16 @@ export default function JobDrilldownScreen() {
     try {
       if (!job.inProgressAt) {
         const nowIso = new Date().toISOString();
-        const updated = await createJobRepository().patchLifecycle(job.id, {
-          enRouteAt: job.enRouteAt ?? nowIso,
-          inProgressAt: nowIso,
-        });
-        setJob(updated);
-        if (String(updated.status) !== 'in_progress') {
+        const patch = { enRouteAt: job.enRouteAt ?? nowIso, inProgressAt: nowIso };
+        await createJobRepository().patchLifecycle(job.id, patch);
+        if (String(job.status) !== 'in_progress') {
           await createJobRepository().updateStatus(job.id, 'in_progress');
         }
+        // The repo returns a partial job (this screen never seeds its cache), so merge into the full one.
+        setJob((prev) => (prev && prev.id === job.id ? { ...prev, ...patch, status: 'in_progress' as JobStatus } : prev));
       }
       openEstimateTasks();
-      // openEstimateTasks clears the active stage; keep Arrive lit in the menu.
+      // openEstimateTasks clears the active stage; keep Start lit in the menu.
       setActiveStage('arrive');
     } catch (err) {
       const message = toUserMessage(err);
@@ -1257,7 +1256,7 @@ export default function JobDrilldownScreen() {
     // Same slider menu as an open job; only Job is live until the job is saved.
     const createMenuItems: MenuItem[] = [
       { id: 'plan', label: 'Job', onPress: () => {}, isActive: true },
-      ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Arrive', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
+      ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Start', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
         .map((label) => ({ id: `create-${label.toLowerCase()}`, label, onPress: () => {}, disabled: true })),
     ];
     // Create-mode shell: JobDetailsForm in create mode, local-state-only
@@ -1331,7 +1330,7 @@ export default function JobDrilldownScreen() {
       : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
-    { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
     { id: 'photos', label: 'Photos', onPress: () => selectRegion('photos'), isActive: region === 'photos' && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
     ...(role === 'owner' || role === 'admin'

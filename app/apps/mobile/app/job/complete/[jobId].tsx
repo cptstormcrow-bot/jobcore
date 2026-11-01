@@ -201,7 +201,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     ...(role !== 'tech' && !isAdmin ? [{ id: 'needs-prem', label: 'Needs Prem', onPress: () => go('plan') }] : []),
     { id: 'schedule', label: 'Schedule', onPress: () => go('schedule') },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => go('plan') },
-    { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => go('plan'), disabled: !headerJob?.assignedTechId },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => go('plan'), disabled: !headerJob?.assignedTechId },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => {}, isActive: true },
     ...(role === 'owner' || role === 'admin'
       ? ([{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => go('payment') }] as MenuItem[])
