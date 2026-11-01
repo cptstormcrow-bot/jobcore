@@ -19,7 +19,7 @@ import { View, TextInput, FlatList, StyleSheet } from 'react-native';
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { PayrollButton, colors, Text } from '@jobcore/ui';
+import { PayrollButton, colors, Text, spacing, radius, typography } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -206,52 +206,52 @@ export function Reimbursements(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: spacing.lg,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: typography.size.body,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   label: {
     fontSize: 12,
     color: colors.textMutedDark,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    borderRadius: 6,
-    padding: 8,
-    marginTop: 4,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    marginTop: spacing.xs,
   },
   descriptionInput: {
     minHeight: 60,
     textAlignVertical: 'top',
   },
   submitButton: {
-    marginTop: 12,
+    marginTop: spacing.md,
   },
   requestRow: {
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   requestAmount: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
   },
   requestDescription: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     marginTop: 2,
   },
   requestStatus: {
@@ -269,6 +269,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.danger,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
 });

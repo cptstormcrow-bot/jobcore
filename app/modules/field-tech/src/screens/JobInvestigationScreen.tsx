@@ -18,7 +18,7 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, spacing, radius } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto, JobEstimate, JobEstimateInput } from '../data/ports';
 import { trackingResultToPatch, trackingStatusLine } from './tracking-helpers';
@@ -462,18 +462,18 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 12,
+    padding: spacing.md,
   },
   pairRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 4,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   pairCol: {
     flex: 1,
   },
   fieldRowStacked: {
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   title: {
     fontSize: typography.size.h4,
@@ -489,8 +489,8 @@ const styles = StyleSheet.create({
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
   },
   fieldLabel: {
     width: '38%',
@@ -501,25 +501,25 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     fontSize: typography.size.body,
     fontFamily: typography.fontFamily.body,
     backgroundColor: colors.surface,
   },
   section: {
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
     fontSize: typography.size.h6,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   cardActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
     marginTop: 0,
   },
   actionCell: {
@@ -529,8 +529,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-end',
-    gap: 8,
-    marginBottom: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   trackingField: {
     flex: 1,
@@ -539,29 +539,29 @@ const styles = StyleSheet.create({
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
   },
   checkboxBox: {
     fontSize: typography.size.h4,
   },
   card: {
-    marginBottom: 10,
-    padding: 10,
+    marginBottom: spacing.md,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.textMuted,
-    borderRadius: 6,
+    borderRadius: radius.sm,
   },
   thumb: {
     width: 96,
     height: 96,
-    marginBottom: 6,
+    marginBottom: spacing.sm,
     borderRadius: 4,
   },
   label: {
     fontSize: typography.size.small,
     fontFamily: typography.fontFamily.body,
     color: colors.textMuted,
-    marginTop: 6,
+    marginTop: spacing.sm,
   },
   value: {
     fontSize: typography.size.label,

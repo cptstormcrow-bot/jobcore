@@ -27,7 +27,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { colors, spacing, Text } from '@jobcore/ui';
+import { colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -379,23 +379,23 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: typography.size.body,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   groupCard: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
   },
   groupTitle: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
     marginBottom: spacing.xs,
   },
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 20,
+    fontSize: typography.size.h4,
     fontWeight: '700',
   },
   statLabel: {
@@ -421,18 +421,18 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontSize: 12,
     color: colors.textMutedDark,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   row: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    paddingVertical: 10,
+    paddingVertical: spacing.md,
   },
   emptyText: {
     color: colors.textMutedDark,
   },
   errorText: {
     color: colors.danger,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
 });

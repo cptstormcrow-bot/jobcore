@@ -13,7 +13,7 @@ import { View, StyleSheet } from 'react-native';
 import { PayrollHome } from '@jobcore/payroll-ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors, Text } from '@jobcore/ui';
+import { colors, Text, spacing } from '@jobcore/ui';
 
 export function Payroll(): React.ReactElement {
   const session = getModuleSession();
@@ -31,6 +31,6 @@ export function Payroll(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
+  container: { flex: 1, padding: spacing.lg },
   emptyText: { color: colors.textMutedDark },
 });
