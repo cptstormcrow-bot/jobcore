@@ -1,0 +1,322 @@
+{
+  "account": [
+    13,
+    35
+  ],
+  "admin-finance": [
+    8,
+    27,
+    54
+  ],
+  "af-JobCreateScreen": [
+    7,
+    24
+  ],
+  "af-Payroll": [
+    18
+  ],
+  "af-PayrollRun": [
+    18
+  ],
+  "af-PayrollSettings": [
+    16
+  ],
+  "af-ReportsJobDetailScreen": [
+    7,
+    24
+  ],
+  "af-addTaskDialog": [
+    11
+  ],
+  "af-archivedJobs": [
+    18
+  ],
+  "af-assignmentBoard": [
+    8,
+    26
+  ],
+  "af-blackout-editor": [
+    10,
+    30
+  ],
+  "af-calendar": [
+    8,
+    27,
+    53
+  ],
+  "af-closeOutQueue": [
+    8,
+    26
+  ],
+  "af-closeOutReview": [
+    7,
+    24
+  ],
+  "af-compensationPolicy": [
+    17
+  ],
+  "af-employee-detail": [
+    10,
+    31
+  ],
+  "af-employee-editor": [
+    12
+  ],
+  "af-employee-invitations": [
+    8,
+    26
+  ],
+  "af-employee-job-detail": [
+    10,
+    30
+  ],
+  "af-employee-roster": [
+    7,
+    24
+  ],
+  "af-jobEstimate": [
+    1,
+    12,
+    30
+  ],
+  "af-jobs": [
+    8,
+    27,
+    54
+  ],
+  "af-leadCreate": [
+    8,
+    26
+  ],
+  "af-leadEdit": [
+    8,
+    26
+  ],
+  "af-leadInbox": [
+    10,
+    30
+  ],
+  "af-overview": [
+    12,
+    33
+  ],
+  "af-payments": [
+    7,
+    27
+  ],
+  "af-payments-PaymentsScreen": [
+    7,
+    24
+  ],
+  "af-payments-PayoutBatchDetailScreen": [
+    8
+  ],
+  "af-payments-PayoutBatchScreen": [
+    1,
+    10
+  ],
+  "af-payments-ReimbursementQueueScreen": [
+    6,
+    24
+  ],
+  "af-planning": [
+    8
+  ],
+  "af-priceSheetCreate": [
+    10
+  ],
+  "af-priceSheetEditor": [
+    8,
+    23
+  ],
+  "af-priceSheetList": [
+    7,
+    24
+  ],
+  "af-qualify": [
+    8,
+    26
+  ],
+  "af-reports": [
+    14
+  ],
+  "af-review": [
+    7,
+    24
+  ],
+  "blackout-range-modal": [
+    12
+  ],
+  "blackout-time-off-list": [
+    10
+  ],
+  "completed-review": [
+    14
+  ],
+  "config-settings": [
+    8,
+    26
+  ],
+  "config-test-jobs": [
+    12,
+    33
+  ],
+  "field-tech": [
+    12,
+    34
+  ],
+  "forgot-password": [
+    17
+  ],
+  "ft-Completion": [
+    5,
+    24
+  ],
+  "ft-DayList": [
+    8,
+    26
+  ],
+  "ft-Earnings": [
+    7
+  ],
+  "ft-FieldJobDetail": [
+    8
+  ],
+  "ft-Greeting": [
+    8
+  ],
+  "ft-Overview": [
+    7,
+    27
+  ],
+  "ft-Payroll": [
+    11
+  ],
+  "ft-PremJobs": [
+    15
+  ],
+  "ft-Reimbursements": [
+    8
+  ],
+  "ft-Reviews": [
+    8,
+    28
+  ],
+  "ft-StartChecklist": [
+    8
+  ],
+  "index": [
+    13
+  ],
+  "job-region-arrive": [
+    16
+  ],
+  "job-region-assign": [
+    11,
+    31
+  ],
+  "job-region-complete": [
+    16
+  ],
+  "job-region-contact": [
+    16
+  ],
+  "job-region-evisit": [
+    10
+  ],
+  "job-region-paid": [
+    16
+  ],
+  "job-region-plan": [
+    11,
+    31
+  ],
+  "job-region-schedule": [
+    1,
+    21
+  ],
+  "jobs": [
+    11
+  ],
+  "layout": [
+    14
+  ],
+  "module-host": [
+    15
+  ],
+  "multi-pick-box": [
+    17
+  ],
+  "not-found": [
+    7
+  ],
+  "payment-review": [
+    8
+  ],
+  "profile": [
+    8,
+    26
+  ],
+  "reset-password": [
+    12
+  ],
+  "root-layout": [
+    11,
+    31
+  ],
+  "sales-marketing": [
+    10,
+    31
+  ],
+  "sign-in": [
+    12,
+    33
+  ],
+  "sign-up": [
+    11
+  ],
+  "sm-CallbackTasks": [
+    7,
+    24
+  ],
+  "sm-Composer": [
+    8
+  ],
+  "sm-Overview": [
+    8
+  ],
+  "sm-Payroll": [
+    14
+  ],
+  "sm-PitchPicker": [
+    8
+  ],
+  "sm-Reporting": [
+    8
+  ],
+  "sm-ReviewLibrary": [
+    7,
+    24
+  ],
+  "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
+    1,
+    7
+  ],
+  "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
+    5,
+    23
+  ],
+  "sync-issues": [
+    14
+  ],
+  "tabs-layout": [
+    15
+  ],
+  "time-off-tech-calendar": [
+    8,
+    24
+  ],
+  "universal-calendar": [
+    10
+  ]
+}
