@@ -18,6 +18,7 @@ export type JobPhotosRegionProps = {
 type JobPhoto = { id: string; uri: string; kind: string };
 
 const KIND_ORDER = ['before', 'after'];
+const LOAD_TIMEOUT_MS = 15000;
 
 function kindLabel(kind: string): string {
   if (!kind) return 'Other';
@@ -32,16 +33,24 @@ export function JobPhotosRegion({ jobId }: JobPhotosRegionProps) {
     let alive = true;
     setPhotos(null);
     setError('');
+    // Never spin forever: a load that has not finished in time shows an error the tech can see.
+    const timer = setTimeout(() => {
+      if (alive) setError('Photos took too long to load. Check your connection and open Photos again.');
+    }, LOAD_TIMEOUT_MS);
     createCloseOutPhotosRepository()
       .listForJob(jobId)
       .then((list) => {
-        if (alive) setPhotos(list.map((p) => ({ id: p.id, uri: p.uri, kind: p.kind ?? '' })));
+        if (!alive) return;
+        setError('');
+        setPhotos(list.map((p) => ({ id: p.id, uri: p.uri, kind: p.kind ?? '' })));
       })
       .catch((e) => {
         if (alive) setError(toUserMessage(e));
-      });
+      })
+      .finally(() => clearTimeout(timer));
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, [jobId]);
 

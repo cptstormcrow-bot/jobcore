@@ -1347,7 +1347,7 @@ export default function JobDrilldownScreen() {
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
     { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
-    { id: 'photos', label: 'Photos', onPress: () => selectRegion('photos'), isActive: region === 'photos' && !activeStage },
+    { id: 'photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'photos' && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
