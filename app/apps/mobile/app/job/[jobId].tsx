@@ -848,7 +848,8 @@ export default function JobDrilldownScreen() {
   };
 
   useEffect(() => {
-    if (!jobId) {
+    // New Job has no real id yet ("new" is not a uuid), so skip the lookup.
+    if (!jobId || isCreate) {
       setTotalTaskMinutes(0);
       return undefined;
     }
@@ -872,7 +873,7 @@ export default function JobDrilldownScreen() {
     return () => {
       cancelled = true;
     };
-  }, [jobId, org?.id]);
+  }, [jobId, isCreate, org?.id]);
 
   // Clears the assignment back to the shared "Unassigned" convention
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
@@ -1360,11 +1361,12 @@ export default function JobDrilldownScreen() {
     },
   ];
 
+  // Needs Prem (#0095), Sign out (#0096) and Configuration (#0097) stay in
+  // every role's slider; techs never get Needs Prem (see the list above).
   const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
-    .filter((item) => item.id !== 'needs-prem' && item.id !== 'sign-out' && item.id !== 'configuration')
     .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
   const isTech = role === 'tech';
-  const techJobMenuItems: MenuItem[] = jobDetailMenuItems.filter((item) => item.id !== 'sign-out' && item.id !== 'configuration');
+  const techJobMenuItems: MenuItem[] = jobDetailMenuItems;
 
   return (
     <View style={styles.root}>
