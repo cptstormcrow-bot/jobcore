@@ -7,6 +7,71 @@
   "generatedFrom": "extract.mjs",
   "screens": [
     {
+      "key": "job-region-photos",
+      "kind": "region",
+      "module": null,
+      "route": "/job/[jobId]",
+      "subView": "job:photos",
+      "parentKey": "job-detail",
+      "file": "apps/mobile/src/components/JobPhotosRegion.tsx",
+      "title": "Photos",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "All photos for the job, grouped by kind. Opened from the Photos timeline dot and the Photos slider item.",
+      "testIDs": [
+        "job-photos"
+      ],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {
+        "Card": 1,
+        "Image": 1,
+        "Text": 1,
+        "EmptyState": 3,
+        "LoadingState": 1
+      },
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [
+        "listForJob"
+      ],
+      "imports": [
+        {
+          "src": "@jobcore/ui",
+          "names": [
+            "Card",
+            "EmptyState",
+            "LoadingState",
+            "Text",
+            "radius",
+            "spacing"
+          ]
+        },
+        {
+          "src": "../lib/admin-finance-repos",
+          "names": [
+            "createCloseOutPhotosRepository"
+          ]
+        },
+        {
+          "src": "../lib/offline-mutations",
+          "names": [
+            "toUserMessage"
+          ]
+        }
+      ],
+      "lineCount": 77,
+      "titleInSource": null,
+      "elements": []
+    },
+    {
       "key": "account",
       "kind": "route",
       "module": null,

@@ -52,7 +52,7 @@ export function buildJobStageResults({
     assign: done(!!(job.assignedTechId), 'assign'),
     contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },
     startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
-    photos: done((stageExtras?.photoCount ?? 0) >= 1, 'photos'),
+    photos: { ...done((stageExtras?.photoCount ?? 0) >= 1, 'photos'), notRequired: (stageExtras?.photoCount ?? 0) === 0 },
     completeWork: { ...done(!!job.completedAt, 'completeWork', job.completedAt), sticky: true },
     paid: done(job.status === 'paid' || closed, 'paid'),
     closeout: done(closed, 'closeout'),

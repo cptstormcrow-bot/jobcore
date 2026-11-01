@@ -25,6 +25,8 @@ export function jobSubViewFor(input: JobSubViewInput): string | undefined {
       return 'closeOutReview';
     case 'estimate':
       return 'jobEstimate';
+    case 'photos':
+      return 'job:photos';
     default:
       return undefined;
   }

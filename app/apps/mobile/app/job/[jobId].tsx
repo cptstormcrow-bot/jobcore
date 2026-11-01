@@ -23,6 +23,7 @@ import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../
 import { JobDetailsForm, type JobFormValues } from '../../src/components/JobDetailsForm';
 import JobCloseOutRegion from '../../src/components/JobCloseOutRegion';
 import JobHistoryRegion from '../../src/components/JobHistoryRegion';
+import { JobPhotosRegion } from '../../src/components/JobPhotosRegion';
 import JobPaymentRegion from '../../src/components/JobPaymentRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
 import { useSession, signOut } from '../../src/lib/session';
@@ -337,8 +338,6 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
-  // Photos opens the Estimate Tasks tab; it has no screen number of its own, so it lights the menu here.
-  const [photosActive, setPhotosActive] = useState(false);
   const isTechEstimate = role === 'tech';
   const [estimateChrome, setEstimateChrome] = useState<EstimateChrome | null>(null);
   useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
@@ -926,7 +925,6 @@ export default function JobDrilldownScreen() {
   const selectRegion = useCallback(
     (next: JobRegion) => {
       setActiveStage(undefined);
-      setPhotosActive(false);
       if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
         void handleSaveEdit().finally(() => {
@@ -1065,7 +1063,7 @@ export default function JobDrilldownScreen() {
       case 'contact': setActiveStage('contact'); handleContact(); break;
       // Start work is set by Arrive; the before-photo card sits at the top of the Tasks tab.
       case 'startWork': setActiveStage('arrive'); void handleArrive(); break;
-      case 'photos': openEstimateTasks(); setPhotosActive(true); break;
+      case 'photos': selectRegion('photos'); break;
       case 'completeWork': setActiveStage('complete'); handleComplete(); break;
       case 'paid':
         if (role === 'owner' || role === 'admin') { selectRegion('payment'); setActiveStage('paid'); }
@@ -1320,7 +1318,7 @@ export default function JobDrilldownScreen() {
   const jobDetailMenuItems: MenuItem[] = [
     { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
-    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' && !photosActive },
+    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
     ...(isAdmin
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
@@ -1334,7 +1332,7 @@ export default function JobDrilldownScreen() {
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
     { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
-    { id: 'photos', label: 'Photos', onPress: () => { openEstimateTasks(); setPhotosActive(true); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: photosActive && !activeStage },
+    { id: 'photos', label: 'Photos', onPress: () => selectRegion('photos'), isActive: region === 'photos' && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
@@ -1525,6 +1523,7 @@ export default function JobDrilldownScreen() {
           <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
         {region === 'history' && role && <JobHistoryRegion job={currentJob} role={role} />}
+        {region === 'photos' && <JobPhotosRegion jobId={currentJob.id} />}
         {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} onJobUpdated={(j) => setJob(j)} />}
         {region === 'schedule' && (
           <JobScheduleScreen

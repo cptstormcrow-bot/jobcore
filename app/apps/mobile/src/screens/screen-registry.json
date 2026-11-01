@@ -800,5 +800,14 @@
     "file": "modules/admin-finance/src/screens/CompensationPolicyScreen.tsx",
     "createdAt": "2026-10-23T12:00:00.000Z",
     "subView": "compensationPolicy"
+  },
+  {
+    "number": 94,
+    "key": "job-region-photos",
+    "title": "Photos",
+    "route": "/job/[jobId]",
+    "file": "apps/mobile/src/components/JobPhotosRegion.tsx",
+    "createdAt": "2026-11-01T02:30:00.000Z",
+    "subView": "job:photos"
   }
 ]
