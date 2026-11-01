@@ -1,8 +1,8 @@
 {
   "version": 1,
   "app": "JobCore",
-  "appVersion": "0.6.0",
-  "apk": "app/apps/mobile/jobcore-0.6.0-vc8.apk (untracked, .gitignore:28)",
+  "appVersion": "0.8.19",
+  "apk": "app/apps/mobile/jobcore-0.8.19-vc11.apk (untracked)",
   "generatedBy": "docs/snapshots/_tools/extract.mjs",
   "generatedFrom": "extract.mjs",
   "screens": [

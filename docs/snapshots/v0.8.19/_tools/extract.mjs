@@ -320,9 +320,12 @@ const screens = entries.map(e => {
   return fill({ ...e, key });
 }).sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 
+// App version and versionCode come from the Expo config, so the inventory header matches the APK.
+const expo = JSON.parse(fs.readFileSync(path.join(here, '..', '..', '..', '..', 'app', 'apps', 'mobile', 'app.json'), 'utf8')).expo;
+const appVersion = expo.version;
 const out = {
-  version: 1, app: 'JobCore', appVersion: '0.6.0',
-  apk: 'app/apps/mobile/jobcore-0.6.0-vc8.apk (untracked, .gitignore:28)',
+  version: 1, app: 'JobCore', appVersion,
+  apk: `app/apps/mobile/jobcore-${appVersion}-vc${expo.android.versionCode}.apk (untracked)`,
   generatedBy: 'docs/snapshots/_tools/extract.mjs', generatedFrom: 'extract.mjs',
   screens, uncoveredFiles,
 };
