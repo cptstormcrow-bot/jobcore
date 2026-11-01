@@ -9,7 +9,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Modal, StyleSheet } from 'react-native';
 import { usePathname } from 'expo-router';
-import { Card, ListItem, LoadingState, ErrorState, PayrollButton, colors, spacing, typography, Text, ScreenNumberBadge } from '@jobcore/ui';
+import { Card, ListItem, LoadingState, ErrorState, PayrollButton, AppChrome, colors, spacing, typography, Text, ScreenNumberBadge } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -183,7 +183,15 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
       {addBlackoutButton}
       {body}
       <Modal visible={editorOpen} animationType="slide" onRequestClose={closeEditor}>
+        {/* The modal covers the app header, so it carries its own: AppChrome pads below the status bar and names the screen. */}
+        <AppChrome
+          showBack={false}
+          breadcrumbSegments={[]}
+          menuItems={[{ id: 'blackout-cancel', label: 'Close', onPress: closeEditor }]}
+          titleBar={{ title: 'Add Blackout' }}
+        />
         <BlackoutEditorScreen
+          hideTitle
           techs={techs as unknown as Profile[]}
           timeOffAdmin={timeOffAdmin}
           onSaved={() => {

@@ -10,7 +10,7 @@
  */
 
 import * as React from 'react';
-import { LoadingState } from '@jobcore/ui';
+import { Redirect } from 'expo-router';
 import type { JobcoreModule } from '@jobcore/module-sdk';
 
 import type { SupabaseSelectClient } from './data/ports';
@@ -21,35 +21,20 @@ export { ReconciliationView };
 export type { ReconciliationViewProps } from './screens/ReconciliationView';
 
 /**
- * Injection seam for the Supabase client `ReconciliationView` queries.
- * The host (`apps/mobile/app/m/[moduleId].tsx`) injects the client
- * synchronously in render and clears it (`null`) on unmount.
- * Optional-shaped like `module-session.ts`'s session getter —
- * `getSupabaseClient` returns `null` rather than throwing.
+ * Former injection seam for the standalone route's Supabase client. The route
+ * now redirects to Admin Finance, so nothing reads the client; the setter stays
+ * a no-op so the host (`apps/mobile/app/m/[moduleId].tsx`) keeps compiling.
  */
-let currentClient: SupabaseSelectClient | null = null;
-
-/** Injection point for the host. The ONLY function that may write `currentClient`. */
-export function setSupabaseClient(client: SupabaseSelectClient | null): void {
-  currentClient = client;
-}
-
-function getSupabaseClient(): SupabaseSelectClient | null {
-  return currentClient;
-}
+export function setSupabaseClient(_client: SupabaseSelectClient | null): void {}
 
 /**
- * Root screen for the payment-review route: renders the read-only
- * `ReconciliationView` once a Supabase client has been injected via
- * `setSupabaseClient`, falling back to `@jobcore/ui`'s `LoadingState`
- * before that.
+ * Root screen for the payment-review route. The standalone route had no app
+ * header and no job-number or tech-name lookups, so it redirects to the
+ * Admin Finance Review tab (#0089), which renders the same ReconciliationView
+ * with the header, the lookups and Open Job.
  */
 function PaymentReviewScreen(): React.ReactElement {
-  const client = getSupabaseClient();
-  if (client === null) {
-    return React.createElement(LoadingState);
-  }
-  return React.createElement(ReconciliationView, { client });
+  return React.createElement(Redirect, { href: { pathname: '/m/[moduleId]', params: { moduleId: 'admin-finance', view: 'paymentReview' } } });
 }
 
 /**

@@ -44,6 +44,8 @@ export interface BlackoutEditorScreenProps {
   initialTechId?: string;
   /** Fires after any create or cancel so the caller can refresh its own lists. */
   onChanged?: () => void;
+  /** Hides the in-body title when the host already shows it in a header title bar. */
+  hideTitle?: boolean;
 }
 
 /** localPrefs port, or undefined when the host has not injected ports (mode stays Month). */
@@ -56,7 +58,7 @@ function safeLocalPrefs() {
 }
 
 export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
-  const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId, onChanged } = props;
+  const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId, onChanged, hideTitle } = props;
   useScreenNumber({ subView: 'blackout-editor' });
 
   const [techFilter, setTechFilter] = useState<string>(initialTechId ?? 'all');
@@ -199,7 +201,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
 
   return (
     <View style={styles.screen}>
-      <ScreenTitle title="Add Blackout" />
+      {!hideTitle && <ScreenTitle title="Add Blackout" />}
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Schedule time off</Text>
