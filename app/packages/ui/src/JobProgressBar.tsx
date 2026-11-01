@@ -154,7 +154,8 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 0,
     paddingVertical: 1,
-    fontSize: typography.size.small,
+    // A touch under the small size so the line sits quieter under the dots.
+    fontSize: typography.size.small - 2,
     color: colors.text,
     fontFamily: typography.fontFamily.bodyMedium,
   },
