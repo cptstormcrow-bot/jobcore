@@ -24,7 +24,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { addDays, addMonths, format } from 'date-fns';
-import { PayrollButton, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing } from '@jobcore/ui';
+import { PayrollButton, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing, useScreenNumber } from '@jobcore/ui';
 import type { TimeOffEvent } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffAdminRepo, TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -57,6 +57,7 @@ function safeLocalPrefs() {
 
 export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
   const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId, onChanged } = props;
+  useScreenNumber({ subView: 'blackout-editor' });
 
   const [techFilter, setTechFilter] = useState<string>(initialTechId ?? 'all');
   const [mode, setMode] = useState<CalMode>('month');

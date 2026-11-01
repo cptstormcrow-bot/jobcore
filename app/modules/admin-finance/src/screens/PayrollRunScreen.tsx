@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { EmptyState, PayrollButton, Text, TextField, selectedStyle } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField, selectedStyle, useScreenNumber } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -35,6 +35,8 @@ function addDays(iso: string, days: number): string {
 
 export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
   const { onBack } = props;
+  // Run is a Payroll tab, so it claims its own number over the host's #0088.
+  useScreenNumber({ subView: 'PayrollRun' });
   const session = useModuleSession();
   const payroll = getModulePorts().payroll;
   const [weekStart, setWeekStart] = useState('');

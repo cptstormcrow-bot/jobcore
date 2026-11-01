@@ -10,7 +10,7 @@
 
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { EmptyState, PayrollButton, Text, TextField, Toggle } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField, Toggle, useScreenNumber } from '@jobcore/ui';
 import type { PayrollSettings } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
@@ -38,6 +38,7 @@ function toInt(text: string): number {
 
 export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
   const { onBack } = props;
+  useScreenNumber({ subView: 'PayrollSettings' });
   const session = useModuleSession();
   const payroll = getModulePorts().payroll;
 

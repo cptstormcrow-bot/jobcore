@@ -47,6 +47,7 @@ import {
   createJobInvestigationRepository,
   createJobPlanTasksRepository,
   createPriceSheetStandardDurationRepository,
+  buildAdminFinancePorts,
 } from '../../src/lib/admin-finance-repos';
 import type { JobDetailsPatch, CustomerPatch, CustomerCreateInput, Customer, ServiceArea, JobEstimate, JobInvestigation, TechServiceArea } from '../../../../modules/admin-finance/src/data/ports';
 import type { JobInvestigationInput } from '../../src/lib/admin-finance-repos';
@@ -70,6 +71,16 @@ import {
   clearModuleSession as clearFieldTechModuleSession,
 } from '../../../../modules/field-tech/src/lib/module-session';
 import { setModulePorts as setFieldTechModulePorts } from '../../../../modules/field-tech/src/lib/module-ports';
+import { setModulePorts as setAdminFinanceModulePorts } from '../../../../modules/admin-finance/src/lib/module-ports';
+
+// A direct link to a job lands here without passing /m/admin-finance, which is where
+// admin-finance ports were set; the embedded Estimate screen needs them, so set them here too.
+let afPortsCache: { key: string; ports: ReturnType<typeof buildAdminFinancePorts> } | null = null;
+function adminFinancePortsFor(orgId: string, userId: string) {
+  const key = `${orgId}|${userId}`;
+  if (afPortsCache?.key !== key) afPortsCache = { key, ports: buildAdminFinancePorts({ orgId, userId }) };
+  return afPortsCache.ports;
+}
 import { buildFieldTechPorts } from '../../src/lib/field-tech-repos';
 // NOTE (slice 5, carried forward): the assignment data model has no `kind`
 // column on the row itself distinguishing installer/investigator beyond the
@@ -269,6 +280,7 @@ export default function JobDrilldownScreen() {
     setAdminFinanceSourceModuleSession({ org, role, userId: session.profile.id });
     setFieldTechModuleSession({ org, role, userId: session.profile.id });
     setFieldTechModulePorts(buildFieldTechPorts());
+    setAdminFinanceModulePorts(adminFinancePortsFor(org.id, session.profile.id));
   }
   const moduleSessionReady = session.status === 'authenticated' && !!org && !!role;
 

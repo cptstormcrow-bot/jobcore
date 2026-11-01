@@ -8,7 +8,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Modal, StyleSheet } from 'react-native';
-import { Card, ListItem, LoadingState, ErrorState, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
+import { usePathname } from 'expo-router';
+import { Card, ListItem, LoadingState, ErrorState, PayrollButton, colors, spacing, typography, Text, ScreenNumberBadge } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin, TimeOffAdminRepo } from '../data/time-off-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -41,6 +42,8 @@ function formatDate(value: string): string {
 }
 
 export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) {
+  // The editor opens in a Modal, which covers the app-wide badge, so it carries its own.
+  const pathname = usePathname();
   const { timeOffAdmin, techs = [], onChanged } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [cancelActions, setCancelActions] = useState<Record<string, ActionState>>({});
@@ -193,6 +196,7 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
           }}
           onCancel={closeEditor}
         />
+        <ScreenNumberBadge pathname={pathname} />
       </Modal>
     </View>
   );
