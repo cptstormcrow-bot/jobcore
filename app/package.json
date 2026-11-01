@@ -1,6 +1,6 @@
 {
   "name": "jobcore",
-  "version": "0.8.19",
+  "version": "0.9.17",
   "private": true,
   "description": "Jobcore — modular cross-platform field-service scheduling app (SD Assembly Pros).",
   "workspaces": [
