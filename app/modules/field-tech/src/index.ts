@@ -22,7 +22,7 @@
 import * as React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { router, useRouter } from 'expo-router';
-import { AppChrome, Breadcrumb, useScreenNumber, HelpCircle, getHelpStep, useWalkthrough } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, DefaultTabBar, useScreenNumber, HelpCircle, getHelpStep, useWalkthrough } from '@jobcore/ui';
 import { moduleSwitcherItems, type JobcoreModule } from '@jobcore/module-sdk';
 import type { Job, Ctx } from '@jobcore/core';
 
@@ -262,6 +262,12 @@ function FieldTechRoot(): React.ReactElement {
         setSelectedJobId(null);
         setSubView('overview');
       },
+    }),
+    // The same tabs as the menu, shown along the top under the header.
+    React.createElement(DefaultTabBar<SubView>, {
+      tabs: menuItems.map((item) => ({ id: item.id as SubView, label: item.label })),
+      activeId: subView,
+      onChange: (id: SubView) => menuItems.find((item) => item.id === id)?.onPress(),
     }),
     content,
   );
