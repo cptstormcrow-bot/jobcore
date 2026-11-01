@@ -35,11 +35,13 @@ export function buildJobStageResults({
   const flags = estimateStageFlags(estimate?.status ?? null);
   const inputs: StageInputs = {
     lead: done(true, 'lead'),
-    job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null },
+    // Job never turns yellow (Jeff); its changedAt still yellows the later non-sticky stages.
+    job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null, sticky: true },
     premAvailable: {
       complete: !!investigation?.submittedAt,
       completedAt: investigation?.submittedAt ?? null,
-      inProgress: (!!job.needsPremAt || !!investigatorTechId) && !investigation?.submittedAt,
+      // Gray = Prem needed (or not needed), yellow = a Prem tech has claimed it, green = report submitted.
+      inProgress: !!investigatorTechId && !investigation?.submittedAt,
       notRequired: !job.needsPremAt && !investigatorTechId,
       sticky: true,
     },

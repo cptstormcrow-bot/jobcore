@@ -337,6 +337,8 @@ export default function JobDrilldownScreen() {
   const [region, setRegion] = useState<JobRegion>(regionFromPanel(panel));
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [activeStage, setActiveStage] = useState<JobActionStage | undefined>(undefined);
+  // Photos opens the Estimate Tasks tab; it has no screen number of its own, so it lights the menu here.
+  const [photosActive, setPhotosActive] = useState(false);
   const isTechEstimate = role === 'tech';
   const [estimateChrome, setEstimateChrome] = useState<EstimateChrome | null>(null);
   useScreenNumber({ subView: jobSubViewFor({ isCreate, region, activeStage, isTechEstimate }) });
@@ -924,6 +926,7 @@ export default function JobDrilldownScreen() {
   const selectRegion = useCallback(
     (next: JobRegion) => {
       setActiveStage(undefined);
+      setPhotosActive(false);
       if (!isCreate && dirty && !savingRef.current && !skipAutosaveRef.current) {
         savingRef.current = true;
         void handleSaveEdit().finally(() => {
@@ -1042,13 +1045,14 @@ export default function JobDrilldownScreen() {
 
   const handleStagePress = (key: string) => {
     switch (key as StageKey) {
-      case 'job': selectRegion('details'); break;
+      case 'job': selectRegion('plan'); break;
       case 'premAvailable':
         if (isAdmin) {
           const st = stageResults?.states.find((s) => s.key === 'premAvailable')?.state;
           if (st !== 'green' && st !== 'yellow') { selectRegion('assign'); break; }
         }
-        selectRegion('evisit');
+        // Once the Prelim report is submitted, the next step is the Estimate.
+        selectRegion(investigation?.submittedAt ? 'estimate' : 'evisit');
         break;
       case 'completePrem':
         selectRegion(investigation?.submittedAt ? 'estimate' : 'evisit');
@@ -1061,7 +1065,7 @@ export default function JobDrilldownScreen() {
       case 'contact': setActiveStage('contact'); handleContact(); break;
       // Start work is set by Arrive; the before-photo card sits at the top of the Tasks tab.
       case 'startWork': setActiveStage('arrive'); void handleArrive(); break;
-      case 'photos': openEstimateTasks(); break;
+      case 'photos': openEstimateTasks(); setPhotosActive(true); break;
       case 'completeWork': setActiveStage('complete'); handleComplete(); break;
       case 'paid':
         if (role === 'owner' || role === 'admin') { selectRegion('payment'); setActiveStage('paid'); }
@@ -1316,7 +1320,7 @@ export default function JobDrilldownScreen() {
   const jobDetailMenuItems: MenuItem[] = [
     { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
-    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
+    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' && !photosActive },
     ...(isAdmin
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
@@ -1330,6 +1334,7 @@ export default function JobDrilldownScreen() {
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
     { id: 'arrive', helpId: 'arrive', label: 'Arrive', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
+    { id: 'photos', label: 'Photos', onPress: () => { openEstimateTasks(); setPhotosActive(true); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: photosActive && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
