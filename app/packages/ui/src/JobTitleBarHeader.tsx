@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     flexShrink: 1,
   },
-  link: { fontSize: 14, color: colors.text },
+  link: { fontSize: 12, color: colors.text },
   underline: { textDecorationLine: 'underline' },
   ingress: { marginLeft: spacing.sm },
   line: { marginTop: spacing.xs },
