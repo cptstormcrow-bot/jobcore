@@ -20,7 +20,7 @@
 import * as React from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { isBetaVisible } from '@jobcore/core';
-import { ScreenTitle, Toggle, PayrollButton, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, Toggle, PayrollButton, colors, Text, spacing, typography } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask } from '../data/ports';
@@ -145,7 +145,7 @@ export function CallbackTasks(): React.ReactElement {
                 label={markingIds.has(item.jobId) ? 'Marking…' : 'Mark Called Back'}
                 disabled={markingIds.has(item.jobId)}
                 onPress={() => handleMarkCalledBack(item)}
-                style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }}
               />
               )}
             </View>
@@ -159,13 +159,13 @@ export function CallbackTasks(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: spacing.lg,
   },
   emptyText: {
     color: colors.textMutedDark,
@@ -174,19 +174,19 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingBottom: spacing.lg,
   },
   row: {
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   customerName: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
   },
   meta: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
     marginTop: 2,
   },

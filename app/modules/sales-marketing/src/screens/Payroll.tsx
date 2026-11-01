@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { View } from 'react-native';
 import { PayrollHome } from '@jobcore/payroll-ui';
-import { Text } from '@jobcore/ui';
+import { Text, spacing } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 
@@ -20,7 +20,7 @@ export function Payroll(): React.ReactElement {
 
   if (payroll === undefined || session === null) {
     return (
-      <View style={{ flex: 1, padding: 16 }}>
+      <View style={{ flex: 1, padding: spacing.lg }}>
         <Text>Payroll is not available yet</Text>
       </View>
     );

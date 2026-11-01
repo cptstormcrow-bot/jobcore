@@ -36,7 +36,7 @@
 
 import * as React from 'react';
 import { View, TextInput, Pressable, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { PayrollButton, ScreenTitle, colors, Text } from '@jobcore/ui';
+import { PayrollButton, ScreenTitle, colors, Text, spacing, radius, typography } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { Review, ReviewLibraryFilter } from '../data/ports';
@@ -260,25 +260,25 @@ export function ReviewLibrary(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   filters: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   filterLabel: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
   ratingRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   ratingChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     minHeight: 44,
     justifyContent: 'center',
     borderRadius: 16,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   ratingChipText: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.text,
   },
   ratingChipTextActive: {
@@ -298,16 +298,16 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    fontSize: 14,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.size.label,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: spacing.lg,
   },
   emptyText: {
     color: colors.textMutedDark,
@@ -316,25 +316,25 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingBottom: spacing.lg,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   reorderControls: {
-    marginRight: 12,
+    marginRight: spacing.md,
     alignItems: 'center',
   },
   reorderButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
   reorderButtonText: {
-    fontSize: 16,
+    fontSize: typography.size.body,
     fontWeight: '600',
   },
   rowBody: {
@@ -350,17 +350,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   body: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     color: colors.text,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   meta: {
     fontSize: 12,
     color: colors.textMutedDark,
-    marginTop: 4,
+    marginTop: spacing.xs,
   },
   curateButton: {
-    marginTop: 8,
+    marginTop: spacing.sm,
     alignSelf: 'flex-start',
   },
 });

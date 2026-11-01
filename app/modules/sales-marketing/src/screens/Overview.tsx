@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 import { View, ActivityIndicator, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { colors, Text } from '@jobcore/ui';
+import { colors, Text, spacing, typography } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { CallbackTask, Review, CampaignLogEntry, MarketingAsset } from '../data/ports';
@@ -131,15 +131,15 @@ export function Overview({ onOpenReviewLibrary }: OverviewProps): React.ReactEle
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  scrollContent: { paddingBottom: 24 },
+  container: { flex: 1, padding: spacing.lg },
+  scrollContent: { paddingBottom: spacing.xl },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', marginTop: 16, marginBottom: 8, color: colors.text },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, paddingLeft: 16 },
+  sectionTitle: { fontSize: typography.size.body, fontWeight: '600', marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: spacing.sm, paddingLeft: spacing.lg },
   sectionLink: { color: colors.info, textDecorationLine: 'underline' },
   rowLabel: { flex: 1 },
   rowValue: { fontWeight: '600' },
-  emptyText: { opacity: 0.7, paddingLeft: 16 },
+  emptyText: { opacity: 0.7, paddingLeft: spacing.lg },
   errorText: { color: colors.danger },
 });
 

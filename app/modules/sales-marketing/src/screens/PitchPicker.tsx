@@ -26,7 +26,7 @@
 
 import * as React from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
-import { ScreenTitle, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, spacing, radius, typography } from '@jobcore/ui';
 
 /** The four pitch angles a sales rep can build a post around (spec § Pitch picker and composer). */
 export type PitchAngle = 'service_line' | 'community' | 'seasonal' | 'before_after';
@@ -112,29 +112,29 @@ export function PitchPicker({ onNavigateToComposer }: PitchPickerProps): React.R
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     color: colors.textMutedDark,
-    marginTop: 4,
-    marginBottom: 16,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
   },
   cardList: {
-    gap: 12,
+    gap: spacing.md,
   },
   card: {
     backgroundColor: colors.surfaceAlt,
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: radius.sm,
+    padding: spacing.lg,
   },
   cardLabel: {
-    fontSize: 16,
+    fontSize: typography.size.body,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   cardDescription: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
   },
 });

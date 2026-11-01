@@ -38,7 +38,7 @@ import { View, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import type { CampaignLogEntry, MarketingAsset, Review, JobReportingRow } from '../data/ports';
-import { ScreenTitle, colors, Text } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, spacing, radius, typography } from '@jobcore/ui';
 
 interface PlatformPeriodCount {
   platform: string;
@@ -243,62 +243,62 @@ export function Reporting(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   notice: {
     backgroundColor: colors.sand,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.primary,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+    marginBottom: spacing.lg,
   },
   noticeTitle: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '700',
     color: colors.warning,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   noticeBody: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.warning,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: spacing.lg,
   },
   errorText: {
     color: colors.danger,
   },
   scrollContent: {
-    paddingBottom: 16,
+    paddingBottom: spacing.lg,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   emptyText: {
     color: colors.textMutedDark,
-    fontSize: 13,
-    marginBottom: 4,
+    fontSize: typography.size.small,
+    marginBottom: spacing.xs,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   rowLabel: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     color: colors.text,
   },
   rowValue: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
     color: colors.text,
   },

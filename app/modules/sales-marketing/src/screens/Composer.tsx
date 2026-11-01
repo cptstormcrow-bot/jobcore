@@ -49,7 +49,7 @@ import { getProvider } from '../domain/providers';
 import type { PostResult } from '../domain/providers/types';
 import type { MarketingAsset } from '../data/ports';
 import type { PitchAngle } from './PitchPicker';
-import { ScreenTitle, colors, Text, PayrollButton } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, PayrollButton, spacing, radius, typography } from '@jobcore/ui';
 
 const META_PROVIDER_ID = 'meta-publish';
 
@@ -465,15 +465,15 @@ export function Composer({
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   badge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surfaceAlt,
     borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    marginBottom: 8,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.sm,
   },
   badgeText: {
     fontSize: 12,
@@ -481,24 +481,24 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   suggestedCaption: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontStyle: 'italic',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   label: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   platformRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
   platformChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
     borderRadius: 16,
     minHeight: 44,
     justifyContent: 'center',
@@ -508,37 +508,37 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sand,
   },
   platformChipText: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.text,
   },
   guidanceText: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   captionInput: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    fontSize: 14,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    fontSize: typography.size.label,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   assetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
   },
   checkbox: {
     width: 18,
@@ -546,37 +546,37 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.textMutedDark,
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   checkboxChecked: {
     backgroundColor: colors.text,
   },
   assetLabel: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     color: colors.text,
   },
   errorText: {
     color: colors.danger,
-    fontSize: 13,
-    marginTop: 4,
+    fontSize: typography.size.small,
+    marginTop: spacing.xs,
   },
   infoText: {
-    fontSize: 13,
+    fontSize: typography.size.small,
     color: colors.textMutedDark,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   approvedText: {
-    fontSize: 14,
+    fontSize: typography.size.label,
     fontWeight: '600',
     color: colors.success,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   approveButton: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   doneButton: {
-    borderRadius: 8,
-    paddingVertical: 12,
+    borderRadius: radius.sm,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
