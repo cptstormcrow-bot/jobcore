@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { PayrollButton, DateRangeCalendar, TechSelect, TextField, colors } from '@jobcore/ui';
+import { PayrollButton, DateRangeCalendar, TechSelect, TextField, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 
@@ -107,12 +107,12 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
   sheetWrap: { width: '100%', maxHeight: '90%' },
-  sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: 8, padding: 16 },
-  title: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  field: { marginBottom: 12 },
-  error: { color: colors.danger, marginTop: 8 },
-  buttons: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: radius.sm, padding: spacing.lg },
+  title: { fontSize: typography.size.h5, fontWeight: '600', marginBottom: spacing.sm },
+  field: { marginBottom: spacing.md },
+  error: { color: colors.danger, marginTop: spacing.sm },
+  buttons: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
   button: { flex: 1 },
 });

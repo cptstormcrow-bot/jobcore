@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { ScrollView, View } from 'react-native';
-import { EmptyState, PayrollButton, Text, TextField } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField, spacing } from '@jobcore/ui';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
 import { centsToDollarsText, parseMoneyToCents, parsePercent } from '../domain/parse-money';
@@ -110,7 +110,7 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
 
   return (
     <ScrollView style={{ flex: 1 }}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
         {onBack ? <PayrollButton label="Back" onPress={onBack} /> : null}
         <PayrollButton label="Save policy" disabled={busy || !loaded} onPress={save} />
       </View>

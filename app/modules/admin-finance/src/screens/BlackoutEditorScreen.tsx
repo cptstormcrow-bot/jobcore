@@ -24,7 +24,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { addDays, addMonths, format } from 'date-fns';
-import { PayrollButton, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing, useScreenNumber } from '@jobcore/ui';
+import { PayrollButton, ErrorState, ScreenTitle, TechSelect, EmptyState, CalendarHeader, MonthView, WeekView, Text, colors, spacing, useScreenNumber, typography } from '@jobcore/ui';
 import type { TimeOffEvent } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffAdminRepo, TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: typography.size.body,
     fontWeight: '600',
     marginBottom: spacing.sm,
   },

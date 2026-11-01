@@ -1463,7 +1463,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.md,
     marginBottom: spacing.xs,
   },
   jobsTitle: {
@@ -1474,7 +1474,7 @@ const styles = StyleSheet.create({
   // #0012 Jobs: tight spacing + flag dots (Jeff 2026-10-30).
   jobsContent: { paddingHorizontal: spacing.xs, paddingTop: 2 },
   jobsCard: { paddingHorizontal: spacing.xs, paddingVertical: 0 },
-  flagDot: { width: 12, height: 12, borderRadius: 6 },
+  flagDot: { width: 12, height: 12, borderRadius: radius.sm },
   overviewContent: { paddingTop: spacing.xs },
   overviewCard: {
     minHeight: 32,
@@ -1484,7 +1484,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    marginBottom: 6,
+    marginBottom: spacing.sm,
     justifyContent: 'center',
   },
   overviewCardTitle: { fontSize: typography.size.label, lineHeight: 18, fontWeight: '600', color: colors.text },

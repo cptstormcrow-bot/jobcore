@@ -8,7 +8,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { addDays, addMonths, format } from 'date-fns';
-import { TechSelect, CalendarHeader, MonthView, WeekView, Text, spacing } from '@jobcore/ui';
+import { TechSelect, CalendarHeader, MonthView, WeekView, Text, spacing, typography } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { getModulePorts } from '../lib/module-ports';
@@ -88,6 +88,6 @@ export default TimeOffTechCalendar;
 
 const styles = StyleSheet.create({
   section: { marginBottom: spacing.md },
-  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: spacing.sm },
+  sectionTitle: { fontSize: typography.size.body, fontWeight: '600', marginBottom: spacing.sm },
   field: { marginBottom: spacing.sm },
 });

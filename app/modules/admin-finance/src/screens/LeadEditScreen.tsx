@@ -240,10 +240,10 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.offWhite,
   },
   hintPad: { paddingHorizontal: spacing.md },

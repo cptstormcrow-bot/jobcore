@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
-import { EmptyState, PayrollButton, Text, TextField, selectedStyle, useScreenNumber } from '@jobcore/ui';
+import { EmptyState, PayrollButton, Text, TextField, selectedStyle, useScreenNumber, spacing } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
 import { errorText } from '@jobcore/payroll-ui';
 import { getModulePorts } from '../lib/module-ports';
@@ -101,7 +101,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         placeholder="2026-10-05"
         error={weekStart && !validDate ? 'Use YYYY-MM-DD' : undefined}
       />
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
         {onBack ? <PayrollButton label="Back" onPress={onBack} /> : null}
         <PayrollButton
           label="Close run"

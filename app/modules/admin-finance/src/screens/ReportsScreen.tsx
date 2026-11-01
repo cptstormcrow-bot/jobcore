@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
   },
   statusName: {
     color: colors.text,
@@ -346,9 +346,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: typography.size.label,
     fontFamily: typography.fontFamily.body,
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
   },
   compactItem: {
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
   },
 });

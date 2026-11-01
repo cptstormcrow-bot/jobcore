@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.md,
     marginBottom: spacing.xs,
   },
   title: {

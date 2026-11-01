@@ -1513,11 +1513,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   finePrintActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
     flexWrap: 'wrap',
   },
   cellLabel: {
@@ -1537,7 +1537,7 @@ const styles = StyleSheet.create({
   statusControlWrap: { alignSelf: 'flex-start' },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
   statusCenterGroup: { flex: 1, minWidth: 0, flexShrink: 1, flexWrap: 'wrap', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  statusCenterTotal: { marginLeft: 8 },
+  statusCenterTotal: { marginLeft: spacing.sm },
   totalColumn: { alignItems: 'flex-end' },
   totalLabel: {
     color: colors.textMuted,

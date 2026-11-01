@@ -29,7 +29,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, formatJobNumberLabel, formatCreatedDate } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Text, formatJobNumberLabel, formatCreatedDate, spacing, typography } from '@jobcore/ui';
 
 import type { PaymentRow, SupabaseSelectClient } from '../data/ports';
 
@@ -171,19 +171,19 @@ export function ReconciliationView({ client, jobNumbers, employeeNames, onOpenJo
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: 16,
+    padding: spacing.lg,
   },
   heading: {
-    fontSize: 18,
+    fontSize: typography.size.h5,
     fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 8,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   section: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   groupTitle: {
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
 });

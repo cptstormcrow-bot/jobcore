@@ -176,13 +176,13 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: spacing.sm,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingVertical: 6,
+    paddingVertical: spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },

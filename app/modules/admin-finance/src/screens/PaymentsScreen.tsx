@@ -21,7 +21,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate } from '@jobcore/ui';
+import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate, typography } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   heading: {
-    fontSize: 18,
+    fontSize: typography.size.h5,
     fontWeight: '600',
     marginTop: spacing.md,
     marginBottom: spacing.sm,
