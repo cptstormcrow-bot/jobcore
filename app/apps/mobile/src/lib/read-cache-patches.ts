@@ -122,6 +122,26 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
     patch: (p, rows) => mapRows(rows, idIs(p.requestId), (r) => ({ ...r, status: 'cancelled' })),
   },
   {
+    // Admin blackout: show the new row on every cached time-off list at once, not after the background refetch.
+    op: 'time_off_request.create_blackout',
+    queries: ['af.timeOff.listForOrganization', 'ft.timeOff.listForOrg', 'ft.timeOff.listForTech'],
+    patch: (p, rows, params) => {
+      const d = isObj(p.draft) ? p.draft : {};
+      if ((params?.techId !== undefined && params.techId !== p.techId) || (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id))) return rows;
+      const now = new Date().toISOString();
+      return prepend(rows, {
+        id: p.id, organizationId: p.organizationId, organization_id: p.organizationId, techId: p.techId, tech_id: p.techId,
+        startDate: d.startDate, start_date: d.startDate, endDate: d.endDate, end_date: d.endDate, reason: d.reason ?? null,
+        status: 'approved', createdAt: now, updatedAt: now, createdByAdminId: null,
+      });
+    },
+  },
+  {
+    op: 'time_off_request.admin_cancel',
+    queries: ['af.timeOff.listForOrganization', 'ft.timeOff.listForOrg', 'ft.timeOff.listForTech'],
+    patch: (p, rows) => mapRows(rows, idIs(p.requestId), (r) => ({ ...r, status: 'cancelled' })),
+  },
+  {
     op: 'checklist_instance.create',
     queries: ['ft.checklist.getInstanceForJob'],
     patch: (p, rows) =>

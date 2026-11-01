@@ -118,3 +118,20 @@ test('robustness: non-string jobId leaves rows unchanged', () => {
     assert.strictEqual(run(op, LIST, bad, rows, { jobIds: ['job-1'] }), rows);
   }
 });
+
+test('create_blackout: new row shows on the admin list at once, once only', () => {
+  const op = 'time_off_request.create_blackout';
+  const p = { id: 'b1', organizationId: 'o1', techId: 't1', draft: { startDate: '2026-11-13', endDate: '2026-11-13', reason: null } };
+  const out = run(op, 'af.timeOff.listForOrganization', p, [{ id: 'old' }], { organizationId: 'o1' }) as any[];
+  assert.equal(out.length, 2);
+  assert.equal(out[0].id, 'b1');
+  assert.equal(out[0].startDate, '2026-11-13');
+  assert.equal(out[0].status, 'approved');
+  assert.equal(run(op, 'af.timeOff.listForOrganization', p, out), out);
+  const other = [{ id: 'x' }];
+  assert.equal(run(op, 'ft.timeOff.listForTech', p, other, { techId: 't2' }), other);
+});
+test('admin_cancel: marks the row cancelled', () => {
+  const out = run('time_off_request.admin_cancel', 'af.timeOff.listForOrganization', { requestId: 'b1' }, [{ id: 'b1', status: 'approved' }]) as any[];
+  assert.equal(out[0].status, 'cancelled');
+});
