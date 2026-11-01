@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { Card, PayrollButton, Text, TextField, colors } from '@jobcore/ui';
+import { Card, PayrollButton, Text, TextField, colors, spacing } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -317,20 +317,20 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           />
         </View>
       )}
-      <Card style={{ padding: 6 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+      <Card style={{ padding: spacing.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
         <PayrollButton
           label="<"
           onPress={() => setWeekOffset((o) => o - 1)}
           accessibilityLabel="Previous week"
-          style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+          style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}
         />
         <Text style={{ fontWeight: '700', textAlign: 'center', minWidth: 110 }}>{weekLabel(weekOffset)}</Text>
         <PayrollButton
           label=">"
           onPress={() => setWeekOffset((o) => o + 1)}
           accessibilityLabel="Next week"
-          style={{ paddingHorizontal: 12, paddingVertical: 4 }}
+          style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}
         />
         <Text style={{ marginLeft: 'auto' }}>{monthDay(days[0]!) + ' - ' + monthDay(days[6]!)}</Text>
       </View>

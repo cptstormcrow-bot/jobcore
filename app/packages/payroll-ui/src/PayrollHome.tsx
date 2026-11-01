@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { DefaultTabBar, PayrollButton } from '@jobcore/ui';
+import { DefaultTabBar, PayrollButton, spacing } from '@jobcore/ui';
 import type { PayrollPort } from './port';
 import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
@@ -76,9 +76,9 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
 
   const rightSlot =
     active === 'time' || active === 'reimb' ? (
-      <View style={{ alignItems: 'flex-end', paddingHorizontal: 16 }}>
+      <View style={{ alignItems: 'flex-end', paddingHorizontal: spacing.lg }}>
           {active === 'time' ? (
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
               <PayrollButton
                 label={timeActions?.busy ? 'Saving...' : 'Save'}
                 onPress={() => void timeActions?.saveAll()}
@@ -128,7 +128,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
               }}
               disabled={!reimbActions?.canSubmit || reimbActions?.busy}
               accessibilityLabel="Submit"
-              style={{ marginTop: 6 }}
+              style={{ marginTop: spacing.sm }}
             />
           ) : null}
       </View>
@@ -137,7 +137,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
   return (
     <View style={{ flex: 1 }}>
       <DefaultTabBar tabs={tabs} activeId={active} onChange={(id) => setActive(id as TabId)} rightSlot={rightSlot} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16 }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: spacing.lg }}>
         {active === 'time' ? (
           <TimeEntryPanel
             port={port}

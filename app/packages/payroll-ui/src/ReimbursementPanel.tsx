@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Text, TextInput, View } from 'react-native';
-import { PayrollButton, colors } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, radius } from '@jobcore/ui';
 import type {
   AdminReimbursement,
   PayrollAdminPort,
@@ -158,7 +158,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
   );
 
   return (
-    <View style={{ paddingVertical: 12, paddingHorizontal: 16, gap: 8 }}>
+    <View style={{ paddingVertical: spacing.md, paddingHorizontal: spacing.lg, gap: spacing.sm }}>
       <Text style={{ fontWeight: '600' }}>New reimbursement</Text>
       <TextInput
         value={amountText}
@@ -166,14 +166,14 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
         placeholder="Amount (dollars)"
         keyboardType="decimal-pad"
         editable={!submitting}
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 8 }}
+        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: radius.sm, padding: spacing.sm }}
       />
       <TextInput
         value={description}
         onChangeText={setDescription}
         placeholder="Description (required)"
         editable={!submitting}
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 8 }}
+        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: radius.sm, padding: spacing.sm }}
       />
       <TextInput
         value={jobId}
@@ -181,7 +181,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
         placeholder="Job ID (optional)"
         autoCapitalize="none"
         editable={!submitting}
-        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: 6, padding: 8 }}
+        style={{ borderWidth: 1, borderColor: '#ccc', borderRadius: radius.sm, padding: spacing.sm }}
       />
       <ReceiptCapture uri={receiptUri} onChange={setReceiptUri} disabled={submitting} />
       {formError ? <Text style={{ color: colors.danger }}>{formError}</Text> : null}
@@ -189,14 +189,14 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
         <PayrollButton label="Submit" onPress={() => void onSubmit()} disabled={!canSubmit} />
       )}
 
-      <Text style={{ fontWeight: '600', marginTop: 12 }}>My reimbursements</Text>
+      <Text style={{ fontWeight: '600', marginTop: spacing.md }}>My reimbursements</Text>
       {loadError ? <Text style={{ color: colors.danger }}>{loadError}</Text> : null}
       {history === null && !loadError ? <ActivityIndicator /> : null}
       {history !== null && history.length === 0 ? <Text>No reimbursements yet.</Text> : null}
       {(history ?? []).map((r) => (
         <View
           key={r.id}
-          style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8 }}
+          style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: radius.sm, padding: spacing.sm }}
         >
           <Text>
             {formatMoney(r.amountCents)} - {r.status}
@@ -210,7 +210,7 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
 
       {isAdmin ? (
         <>
-          <Text style={{ fontWeight: '600', marginTop: 12 }}>All reimbursements</Text>
+          <Text style={{ fontWeight: '600', marginTop: spacing.md }}>All reimbursements</Text>
           {allError ? <Text style={{ color: colors.danger }}>{allError}</Text> : null}
           {receiptError ? <Text style={{ color: colors.danger }}>{receiptError}</Text> : null}
           {allList === null && !allError ? <ActivityIndicator /> : null}
@@ -218,9 +218,9 @@ export function ReimbursementPanel({ port, userId, onRegisterActions }: Reimburs
           {(allList ?? []).map((r) => (
             <View
               key={r.id}
-              style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 6, padding: 8, gap: 4 }}
+              style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: radius.sm, padding: spacing.sm, gap: spacing.xs }}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontWeight: '600' }}>{r.employeeName}</Text>
                   <Text>

@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Card, PayrollButton, Text, TextField } from '@jobcore/ui';
+import { Card, PayrollButton, Text, TextField, spacing } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollAdminPort, PayrollDateRange, TeamWeek } from './port';
 import { errorText } from './errorText';
@@ -139,13 +139,13 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
         const key = w.userId + w.weekStart;
         return (
           <Card key={key}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
               <View style={{ flex: 1 }}>
                 <Text>{w.employeeName}</Text>
                 <Text>{w.weekStart + ' to ' + w.weekEnd}</Text>
                 <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + w.status}</Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                 {w.status === 'submitted' ? (
                   <PayrollButton label="Approve" onPress={() => approve(w)} disabled={busy} />
                 ) : null}
@@ -171,7 +171,7 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
             {rejecting === key ? (
               <View>
                 <TextField label="Reason (optional)" value={reason} onChangeText={setReason} />
-                <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                   <PayrollButton label="Confirm kick back" onPress={() => confirmReject(w)} disabled={busy} />
                   <PayrollButton label="Cancel" onPress={() => setRejecting(null)} />
                 </View>

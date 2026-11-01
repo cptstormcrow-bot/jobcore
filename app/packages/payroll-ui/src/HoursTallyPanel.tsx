@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { colors } from '@jobcore/ui';
+import { colors, spacing, typography } from '@jobcore/ui';
 import type { PayrollSelfPort, PayrollSettings, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
 
@@ -80,27 +80,27 @@ export function HoursTallyPanel({ port, userId, refreshKey, range = 'week' }: Ho
   const periodName = tab === 'year' ? 'year' : tab === 'month' ? 'month' : tab === 'day' ? 'day' : 'week';
 
   return (
-    <View style={{ paddingHorizontal: 16 }}>
+    <View style={{ paddingHorizontal: spacing.lg }}>
       {error ? (
         <Text style={{ color: colors.danger }}>{`Couldn't load your hours: ${error}`}</Text>
       ) : entries === null ? (
         <ActivityIndicator />
       ) : (
         <>
-          <Text style={{ fontSize: 20, fontWeight: '700', paddingVertical: 8 }}>
+          <Text style={{ fontSize: typography.size.h4, fontWeight: '700', paddingVertical: spacing.sm }}>
             {`This ${periodName}: ${formatHm(currentMin)}`}
           </Text>
           {rows.length === 0 ? (
             <Text>No submitted hours recorded.</Text>
           ) : (
             rows.map(({ row: r }) => (
-              <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
+              <View key={r.key} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm }}>
                 <Text style={{ flex: 1, fontWeight: '700' }}>{r.key}</Text>
                 {r.otMin > 0 ? (
-                  <Text style={{ marginRight: 8, color: '#b45309' }}>{`OT ${formatHm(r.otMin)}`}</Text>
+                  <Text style={{ marginRight: spacing.sm, color: '#b45309' }}>{`OT ${formatHm(r.otMin)}`}</Text>
                 ) : null}
                 {r.dtMin > 0 ? (
-                  <Text style={{ marginRight: 8, color: colors.danger }}>{`DT ${formatHm(r.dtMin)}`}</Text>
+                  <Text style={{ marginRight: spacing.sm, color: colors.danger }}>{`DT ${formatHm(r.dtMin)}`}</Text>
                 ) : null}
                 <Text style={{ fontWeight: '700' }}>{formatHm(r.totalMin)}</Text>
               </View>

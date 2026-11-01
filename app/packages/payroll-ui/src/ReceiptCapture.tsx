@@ -6,7 +6,7 @@
 import React, { useCallback, useState } from 'react';
 import { Image, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Card, PayrollButton, Text } from '@jobcore/ui';
+import { Card, PayrollButton, Text, spacing, radius } from '@jobcore/ui';
 
 export interface ReceiptCaptureProps {
   uri: string | null;
@@ -55,15 +55,15 @@ export function ReceiptCapture({ uri, onChange, disabled }: ReceiptCaptureProps)
     <Card>
       <Text>Receipt photo</Text>
       {uri ? (
-        <View style={{ marginVertical: 8, alignItems: 'flex-start' }}>
+        <View style={{ marginVertical: spacing.sm, alignItems: 'flex-start' }}>
           <Image
             source={{ uri }}
-            style={{ width: 120, height: 120, borderRadius: 8 }}
+            style={{ width: 120, height: 120, borderRadius: radius.sm }}
             resizeMode="cover"
           />
         </View>
       ) : null}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
         <PayrollButton
           label="Take photo"
           onPress={() => void pick('camera')}

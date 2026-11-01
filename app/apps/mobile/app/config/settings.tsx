@@ -4,7 +4,7 @@ import { View, Switch, StyleSheet, TextInput } from 'react-native';
 import type { CompanyInfo } from '../../../../modules/admin-finance/src/data/ports';
 import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 import { useSession } from '../../src/lib/session';
-import { AppChrome, EmptyState, PayrollButton, Text, spacing, colors, typography, useAppVersion, formatVersionLabel, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, EmptyState, PayrollButton, Text, spacing, colors, typography, useAppVersion, formatVersionLabel, useScreenNumber, radius } from '@jobcore/ui';
 
 const EMPTY_INFO: CompanyInfo = { name: '', address: '', licenseNumber: '', phone: '' };
 
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 6,
+    borderRadius: radius.sm,
     backgroundColor: colors.white,
     color: colors.text,
     paddingHorizontal: spacing.sm,

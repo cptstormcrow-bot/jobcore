@@ -314,10 +314,10 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           </Text>
         ) : null}
         {!cancelled ? (
-          <View style={{ gap: 6 }}>
+          <View style={{ gap: spacing.sm }}>
             <PayrollButton label="Adjust price" disabled={busy} onPress={() => setAdjustOpen((o) => !o)} />
             {adjustOpen ? (
-              <View style={{ gap: 4 }}>
+              <View style={{ gap: spacing.xs }}>
                 <TextInput
                   value={adjDesc}
                   onChangeText={setAdjDesc}

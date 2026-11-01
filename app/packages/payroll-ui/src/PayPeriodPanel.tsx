@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { wageEngine } from '@jobcore/core';
-import { StepperPicker, colors } from '@jobcore/ui';
+import { StepperPicker, colors, spacing } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
   PayrollSelfPort,
@@ -152,7 +152,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
   } else {
     body = (
       <View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
           <Text style={{ flex: 1, fontWeight: '600' }}>{`Your week: ${rangeLabel}`}</Text>
           <Text style={{ color: STATUS_COLOR[status], fontWeight: '600' }}>{status}</Text>
         </View>
@@ -160,19 +160,19 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
           <Text>Your hours could not be calculated.</Text>
         ) : (
           <View>
-            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+            <View style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
               <Text style={{ flex: 1 }}>Your regular hours</Text>
               <Text>{formatHm(calc.totals.regularMin)}</Text>
             </View>
-            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+            <View style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
               <Text style={{ flex: 1, color: '#b45309' }}>Your OT</Text>
               <Text>{formatHm(calc.totals.otMin)}</Text>
             </View>
-            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+            <View style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
               <Text style={{ flex: 1, color: colors.danger }}>Your DT</Text>
               <Text>{formatHm(calc.totals.dtMin)}</Text>
             </View>
-            <View style={{ flexDirection: 'row', paddingVertical: 4 }}>
+            <View style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
               <Text style={{ flex: 1, fontWeight: '600' }}>You earned (estimated)</Text>
               <Text style={{ fontWeight: '600' }}>
                 {calc.grossCents === null ? 'No rate on file' : formatDollars(calc.grossCents)}
@@ -185,7 +185,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
   }
 
   return (
-    <View style={{ paddingHorizontal: 16 }}>
+    <View style={{ paddingHorizontal: spacing.lg }}>
       {picker}
       {body}
     </View>
