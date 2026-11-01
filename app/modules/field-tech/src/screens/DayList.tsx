@@ -29,7 +29,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, radius, type TimeOffEvent, Text } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, radius, type TimeOffEvent, Text, TruncatedText } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
@@ -72,6 +72,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     if (defaultViewMode) setViewMode(defaultViewMode);
   }, [defaultViewMode]);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [fullTextJobId, setFullTextJobId] = useState<string | null>(null);
   const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false)), [jobs, showTestJobs]);
   const nextJob = useMemo(() => pickNextJob(visibleJobs, new Date()), [visibleJobs]);
   const previousJobs = useMemo(() => listPreviousJobs(visibleJobs, 10), [visibleJobs]);
@@ -290,10 +291,15 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
         <Text style={styles.emptyText}>No completed jobs yet.</Text>
       ) : (
         previousJobs.map((job) => (
-          <Pressable key={job.id} style={styles.previousRow} onPress={() => handleOpenJob(job)}>
-            <Text style={styles.previousText} numberOfLines={1}>
+          <Pressable key={job.id} style={styles.previousRow} onPress={() => handleOpenJob(job)} onLongPress={() => setFullTextJobId(job.id)}>
+            <TruncatedText
+              style={styles.previousText}
+              tappable={false}
+              open={fullTextJobId === job.id}
+              onClose={() => setFullTextJobId(null)}
+            >
               {(job.address ?? 'No address') + ' - ' + new Date((job.completedAt ?? job.scheduledStart) as string).toLocaleDateString()}
-            </Text>
+            </TruncatedText>
           </Pressable>
         ))
       )}

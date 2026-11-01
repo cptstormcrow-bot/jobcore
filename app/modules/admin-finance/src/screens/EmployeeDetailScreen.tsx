@@ -26,7 +26,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Card, ScreenTitle, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ScreenTitle, PayrollButton, colors, spacing, typography, Text, TruncatedText } from '@jobcore/ui';
 import type { Job, Profile } from '@jobcore/core';
 import { getModulePorts } from '../lib/module-ports';
 import { centsToDollarsText } from '../domain/parse-money';
@@ -82,6 +82,7 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
   }, [employee.id]);
 
   const [copied, setCopied] = useState(false);
+  const [fullTextJobId, setFullTextJobId] = useState<string | null>(null);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
   const copyPhone = async () => {
@@ -203,12 +204,18 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
               <Pressable
                 key={job.id}
                 onPress={() => onSelectJob?.(job)}
+                onLongPress={() => setFullTextJobId(job.id)}
                 accessibilityRole="button"
                 style={styles.jobRow}
               >
-                <Text style={styles.jobRowText} numberOfLines={1}>
+                <TruncatedText
+                  style={styles.jobRowText}
+                  tappable={false}
+                  open={fullTextJobId === job.id}
+                  onClose={() => setFullTextJobId(null)}
+                >
                   {`${job.status} · ${job.address ?? 'No address'} · ${job.scheduledStart ? new Date(job.scheduledStart).toLocaleDateString() : 'Not scheduled'}`}
-                </Text>
+                </TruncatedText>
               </Pressable>
             ))
           ) : (

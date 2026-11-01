@@ -15,7 +15,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
-import { PayrollButton, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text, TruncatedText } from '@jobcore/ui';
 import type { Profile } from '@jobcore/core';
 import { isTestVisible } from '@jobcore/core';
 import type { EmployeeRepository } from '../data/ports';
@@ -42,6 +42,7 @@ type LoadState =
 export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
   const { employees: employeeRepository, onSelectEmployee, onAddEmployee, onViewInvitations, showTest: showTestProp } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  const [fullTextId, setFullTextId] = useState<string | null>(null);
   const showTest = showTestProp ?? false;
 
   const session = getModuleSession();
@@ -134,14 +135,22 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
                 key={profile.id}
                 accessibilityRole={onSelectEmployee ? 'button' : undefined}
                 onPress={onSelectEmployee ? () => onSelectEmployee(profile) : undefined}
+                onLongPress={() => setFullTextId(profile.id)}
                 style={styles.row}
               >
-                <Text style={styles.rowName} numberOfLines={1}>{profile.fullName}</Text>
-                <Text style={styles.rowDesc} numberOfLines={1}>
+                <TruncatedText
+                  style={styles.rowName}
+                  tappable={false}
+                  open={fullTextId === profile.id}
+                  onClose={() => setFullTextId(null)}
+                >
+                  {profile.fullName}
+                </TruncatedText>
+                <TruncatedText style={styles.rowDesc} tappable={false}>
                   {[profile.role, profile.active ? 'Active' : 'Inactive', profile.isTest ? 'Test' : null]
                     .filter(Boolean)
                     .join(' · ')}
-                </Text>
+                </TruncatedText>
               </Pressable>
             ))}
           </Card>
