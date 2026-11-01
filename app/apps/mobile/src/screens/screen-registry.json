@@ -809,5 +809,32 @@
     "file": "apps/mobile/src/components/JobPhotosRegion.tsx",
     "createdAt": "2026-11-01T02:30:00.000Z",
     "subView": "job:photos"
+  },
+  {
+    "number": 95,
+    "key": "menu-needs-prem",
+    "title": "Needs Prem / Clear Prem",
+    "route": "/job/[jobId]",
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-11-01T03:00:00.000Z",
+    "subView": "menu:needs-prem"
+  },
+  {
+    "number": 96,
+    "key": "menu-sign-out",
+    "title": "Sign out",
+    "route": "/job/[jobId]",
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-11-01T03:00:00.000Z",
+    "subView": "menu:sign-out"
+  },
+  {
+    "number": 97,
+    "key": "menu-configuration",
+    "title": "Configuration",
+    "route": "/job/[jobId]",
+    "file": "apps/mobile/app/job/[jobId].tsx",
+    "createdAt": "2026-11-01T03:00:00.000Z",
+    "subView": "menu:configuration"
   }
 ]

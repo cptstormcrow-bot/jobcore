@@ -15,6 +15,7 @@ import { formatVersionLabel } from './formatVersionLabel';
 import { NavDrawer } from './NavDrawer';
 import { MenuGlyph } from './MenuGlyph';
 import { HelpCircle } from './HelpCircle';
+import { useScreenNumberReadOnly } from './screen-numbers/ScreenNumberContext';
 import { DRAWER_ROW_HEIGHT, dividerBefore } from './drawer-geometry';
 
 export type MenuActionItem = {
@@ -27,6 +28,8 @@ export type MenuActionItem = {
   submenu?: MenuItem[];
   helpId?: WalkthroughStepId;
   section?: string;
+  /** Registry key; its screen number shows beside the label when screen numbers are on. */
+  screenKey?: string;
   /** 'danger' renders the label bold red (e.g. Sync while writes are failing). */
   tone?: 'danger';
 };
@@ -41,6 +44,8 @@ export type MenuToggleItem = {
   submenu?: undefined;
   helpId?: WalkthroughStepId;
   section?: string;
+  /** Registry key; its screen number shows beside the label when screen numbers are on. */
+  screenKey?: string;
 };
 export type MenuItem = MenuActionItem | MenuToggleItem;
 
@@ -83,6 +88,10 @@ function MenuRow({
   const [expanded, setExpanded] = useState(false);
   const hasSubmenu = !!item.submenu && item.submenu.length > 0;
   const pressAnim = useRef(new Animated.Value(0)).current;
+  const screenNumbers = useScreenNumberReadOnly();
+  const screenEntry = item.screenKey && screenNumbers.enabled
+    ? screenNumbers.registry.find((e) => e.key === item.screenKey)
+    : undefined;
 
   const animateTo = (toValue: number) => {
     Animated.timing(pressAnim, { toValue, duration: 175, useNativeDriver: false }).start();
@@ -141,6 +150,9 @@ function MenuRow({
           >
             {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
+            {screenEntry ? (
+              <Text style={styles.rowScreenNumber}>{'  #' + String(screenEntry.number).padStart(4, '0')}</Text>
+            ) : null}
           </Text>
           {item.helpId ? (
             <View style={{ position: 'absolute', right: spacing.md, top: 0, bottom: 0, justifyContent: 'center' }}>
@@ -601,6 +613,11 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   rowTextDisabled: {
+    color: colors.textMuted,
+  },
+  rowScreenNumber: {
+    fontSize: 12,
+    fontWeight: '400',
     color: colors.textMuted,
   },
   rowTextDanger: {

@@ -274,8 +274,8 @@ export interface Ctx {
   hasPaymentRecord?: (job: Job) => boolean | Promise<boolean>;
 }
 // Job Details 15-stage progress bar derivation.
-export type { StageKey, StageState, StageInput, StageInputs, StageResult } from './jobStages.js';
-export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep } from './jobStages.js';
+export type { StageKey, StageState, StageInput, StageInputs, StageResult, YellowReason } from './jobStages.js';
+export { STAGE_KEYS, STAGE_LABELS, deriveStageStates, leadingIndex, deriveNextStep, yellowReasonText } from './jobStages.js';
 export type { EstimateStatusValue, EstimateEditorRole, EstimateStageFlags } from './estimateStatus.js';
 export { allowedEstimateMoves, needsDownstreamWarning, estimateStageFlags } from './estimateStatus.js';
 

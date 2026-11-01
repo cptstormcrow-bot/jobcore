@@ -76,9 +76,26 @@ test('next step ordering: red, then yellow, then gray', () => {
   const g = deriveNextStep(deriveStageStates(inputs({ lead: { complete: true }, job: { complete: true } })));
   assert.equal(g, 'Next Steps: Check Prem availability.');
   const y = deriveNextStep(deriveStageStates(inputs({ lead: { complete: true, missingRequired: true } })));
-  assert.equal(y, 'Next Steps: Review Lead.');
+  assert.equal(y, 'Next Steps: Review Lead (info missing).');
   const r = deriveNextStep(deriveStageStates(inputs({ lead: { complete: true, missingRequired: true }, schedule: { complete: true } })));
   assert.equal(r, 'Next Steps: Redo Job.');
+});
+
+test('yellow next step names the earlier stage that changed', () => {
+  const states = deriveStageStates(inputs({
+    lead: { complete: true },
+    job: { complete: true, changedAt: '2026-02-01T00:00:00Z' },
+    premAvailable: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
+  }));
+  const prem = states.find((s) => s.key === 'premAvailable');
+  assert.equal(prem?.reason, 'changed');
+  assert.equal(prem?.changedBy, 'job');
+  assert.equal(deriveNextStep(states), 'Next Steps: Review Prem available (Job changed).');
+  const sticky = deriveStageStates(inputs({
+    job: { complete: true, changedAt: '2026-02-01T00:00:00Z' },
+    premAvailable: { complete: true, completedAt: '2026-01-01T00:00:00Z', sticky: true },
+  }));
+  assert.equal(sticky.find((s) => s.key === 'premAvailable')?.state, 'green');
 });
 
 const rejectedPrefix = () =>

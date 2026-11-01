@@ -42022,6 +42022,94 @@
         "titleDynamic": false,
         "subtitleDynamic": false
       }
+    },
+    {
+      "key": "menu-needs-prem",
+      "kind": "menu-item",
+      "module": null,
+      "route": "/job/[jobId]",
+      "subView": "menu:needs-prem",
+      "parentKey": "job-detail",
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "Needs Prem / Clear Prem",
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "mounted": true,
+      "notes": "Slider menu toggle that flags or clears the job as needing a Prem. No view of its own; it updates the job in place.",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [],
+      "lineCount": 0
+    },
+    {
+      "key": "menu-sign-out",
+      "kind": "menu-item",
+      "module": null,
+      "route": "/job/[jobId]",
+      "subView": "menu:sign-out",
+      "parentKey": "job-detail",
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "Sign out",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "Slider menu action that signs the user out and returns to the sign-in screen.",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [],
+      "lineCount": 0
+    },
+    {
+      "key": "menu-configuration",
+      "kind": "menu-item",
+      "module": null,
+      "route": "/job/[jobId]",
+      "subView": "menu:configuration",
+      "parentKey": "job-detail",
+      "file": "apps/mobile/app/job/[jobId].tsx",
+      "title": "Configuration",
+      "roles": [
+        "owner",
+        "admin",
+        "tech"
+      ],
+      "mounted": true,
+      "notes": "Slider menu group that opens to Settings (#0065).",
+      "testIDs": [],
+      "accessibilityLabels": [],
+      "buttonLabels": [],
+      "components": {},
+      "pickers": [],
+      "menus": [],
+      "navTargets": [
+        "/config/settings"
+      ],
+      "tables": [],
+      "rpcs": [],
+      "repoMethods": [],
+      "imports": [],
+      "lineCount": 0
     }
   ],
   "uncoveredFiles": [

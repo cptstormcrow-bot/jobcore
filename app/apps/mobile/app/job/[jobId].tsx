@@ -1324,6 +1324,7 @@ export default function JobDrilldownScreen() {
     ...(role !== 'tech'
       ? [{
           id: 'needs-prem',
+          screenKey: 'menu-needs-prem',
           label: currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem',
           onPress: () => void handleToggleNeedsPrem(),
         }]
@@ -1339,9 +1340,10 @@ export default function JobDrilldownScreen() {
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
       : []),
-    { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
+    { id: 'sign-out', screenKey: 'menu-sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
       id: 'configuration',
+      screenKey: 'menu-configuration',
       label: 'Configuration',
       onPress: () => {},
       submenu: [

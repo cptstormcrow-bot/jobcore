@@ -51,37 +51,53 @@ export interface StageResult {
   doneAt: string | null;
   /** True when the stage is gray because it does not apply and a later stage is already complete; `deriveNextStep` skips it. */
   notRequired?: boolean;
+  /** Why a yellow stage needs review: an earlier stage changed after it was done, required info is missing, or it is under way. */
+  reason?: YellowReason;
+  /** With reason 'changed': the first earlier stage that changed after this one was completed. */
+  changedBy?: StageKey;
 }
+
+export type YellowReason = 'changed' | 'missing' | 'inProgress';
 
 export function deriveStageStates(inputs: StageInputs): StageResult[] {
   return STAGE_KEYS.map((key, i) => {
     const cur = inputs[key];
     let state: StageState;
     let skipped = false;
+    let reason: YellowReason | undefined;
+    let changedBy: StageKey | undefined;
     if (cur.rejected) {
       state = 'red';
     } else if (cur.complete) {
       state = 'green';
-      if (cur.missingRequired) state = 'yellow';
+      if (cur.missingRequired) { state = 'yellow'; reason = 'missing'; }
       else if (cur.completedAt && !cur.sticky) {
         // Yellow when any earlier stage changed after this one was completed.
         for (let j = 0; j < i; j++) {
           const prev = STAGE_KEYS[j]; if (!prev) continue; const changed = inputs[prev].changedAt;
           if (changed && Date.parse(changed) > Date.parse(cur.completedAt)) {
             state = 'yellow';
+            reason = 'changed';
+            changedBy = prev;
             break;
           }
         }
       }
     } else if (cur.inProgress) {
       state = 'yellow';
+      reason = 'inProgress';
     } else {
       // Red when a later stage is already complete (this one needs redoing), unless the stage does not apply.
       const laterDone = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete);
       if (laterDone && cur.notRequired) { state = 'gray'; skipped = true; }
       else state = laterDone ? 'red' : 'gray';
     }
-    return { key, state, doneAt: cur.complete && !cur.rejected ? cur.completedAt ?? null : null, ...(skipped ? { notRequired: true } : {}) };
+    return {
+      key, state, doneAt: cur.complete && !cur.rejected ? cur.completedAt ?? null : null,
+      ...(skipped ? { notRequired: true } : {}),
+      ...(reason ? { reason } : {}),
+      ...(changedBy ? { changedBy } : {}),
+    };
   });
 }
 
@@ -111,11 +127,22 @@ const NEXT_PHRASE: Record<StageKey, string> = {
   history: 'Review customer history',
 };
 
+/** Short reason a yellow stage needs review, e.g. "Estimate changed"; empty when none is known. */
+export function yellowReasonText(s: StageResult): string {
+  if (s.reason === 'changed' && s.changedBy) return `${STAGE_LABELS[s.changedBy]} changed`;
+  if (s.reason === 'missing') return 'info missing';
+  if (s.reason === 'inProgress') return 'in progress';
+  return '';
+}
+
 export function deriveNextStep(states: StageResult[]): string {
   const red = states.find((s) => s.state === 'red');
   if (red) return `Next Steps: Redo ${STAGE_LABELS[red.key]}.`;
   const yellow = states.find((s) => s.state === 'yellow');
-  if (yellow) return `Next Steps: Review ${STAGE_LABELS[yellow.key]}.`;
+  if (yellow) {
+    const why = yellowReasonText(yellow);
+    return `Next Steps: Review ${STAGE_LABELS[yellow.key]}${why ? ` (${why})` : ''}.`;
+  }
   const gray = states.find((s) => s.state === 'gray' && !s.notRequired);
   if (gray) return `Next Steps: ${NEXT_PHRASE[gray.key]}.`;
   return 'Next Steps: All done.';
