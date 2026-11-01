@@ -1244,7 +1244,7 @@ export default function JobDrilldownScreen() {
 
   if (isCreate) {
     // Create-mode shell: JobDetailsForm in create mode, local-state-only
-    // until Create is pressed.
+    // until Save is pressed.
     return (
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <AppChrome
@@ -1254,6 +1254,14 @@ export default function JobDrilldownScreen() {
           titleBar={{ title: 'New Job' }}
           helpContext={{ screenKey: 'job-create' }}
         />
+        <View style={styles.topActions}>
+          <PayrollButton label="Cancel" onPress={goBackOrLanding} />
+          <PayrollButton
+            label={saving ? 'Saving…' : 'Save'}
+            disabled={saving}
+            onPress={() => void handleSaveCreate()}
+          />
+        </View>
         <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
           <JobDetailsForm
             mode="create"
@@ -1263,14 +1271,6 @@ export default function JobDrilldownScreen() {
             error={saveError}
           />
         </ScrollView>
-        <View style={styles.footer}>
-          <PayrollButton label="Cancel" onPress={goBackOrLanding} />
-          <PayrollButton
-            label={saving ? 'Creating…' : 'Create'}
-            disabled={saving}
-            onPress={() => void handleSaveCreate()}
-          />
-        </View>
       </KeyboardAvoidingView>
     );
   }
@@ -1555,6 +1555,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   footerButton: { flex: 1 },
+  topActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.white,
+  },
   tabBarWrap: {},
   center: {
     flex: 1,
