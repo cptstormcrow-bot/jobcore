@@ -20,6 +20,10 @@
  *
  * Ties to spec AC3, AC5, VS2.
  *
+ * With `alreadyCompleted` the same screen edits a completed job: it prefills
+ * from the newest saved notes, "Save Changes" writes fresh notes without a
+ * status transition, and "Not Completed" (when allowed) reopens the job.
+ *
  * The screen's only financial effect is one fixed-fee Estimate line ($20
  * 'Materials not moved upstairs fee') when 'Materials moved upstairs' is
  * unticked. It still never renders anything sourced from `price_sheets`,
@@ -46,6 +50,7 @@ import {
   buildCompletionNoteBody,
   canSubmitCompletion,
   formatTimeSpent,
+  parseCompletionNoteBody,
   upstairsFeeApplies,
 } from './completion-helpers';
 import type { CompletionItemKey } from './completion-helpers';
@@ -67,6 +72,12 @@ export interface CompletionProps {
   timeSpentSeconds?: number | null;
   /** Host-provided after-photo UI; call `onCountChange` with the current photo count. */
   renderAfterPhotos?: (api: { onCountChange: (n: number) => void; disabled: boolean }) => ReactNode;
+  /** The job is already complete: prefill from the saved notes, save edits without changing the job's status. */
+  alreadyCompleted?: boolean;
+  /** With alreadyCompleted: whether the "Not Completed" (reopen) button is shown. */
+  canReopen?: boolean;
+  /** Reopens the job; the host navigates away on success. */
+  onReopen?: () => Promise<void>;
 }
 
 /**
@@ -80,6 +91,9 @@ export function Completion({
   persistCompletion,
   timeSpentSeconds = null,
   renderAfterPhotos,
+  alreadyCompleted = false,
+  canReopen = false,
+  onReopen,
 }: CompletionProps): JSX.Element {
   const [materialsOnsite, setMaterialsOnsite] = useState(false);
   const [movedUpstairs, setMovedUpstairs] = useState(false);
@@ -94,6 +108,7 @@ export function Completion({
   const [qualityNotes, setQualityNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reopening, setReopening] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const photoYRef = useRef(0);
   const photoRecordedRef = useRef(false);
@@ -102,8 +117,47 @@ export function Completion({
   const feeSavedRef = useRef(false);
   const feeAppliedRef = useRef(false);
 
+  // Completed job: prefill the checklist and quality notes from the newest saved notes; best-effort.
+  useEffect(() => {
+    if (!alreadyCompleted) return;
+    let cancelled = false;
+    async function loadSaved(): Promise<void> {
+      try {
+        const notes = await getModulePorts().notes.listForJob(job.id);
+        if (cancelled) return;
+        const newest = (kind: 'completion_checklist' | 'quality_notes'): string | null => {
+          const sorted = notes
+            .filter((n) => n.kind === kind)
+            .sort((a, b) => (b.occurredAt || b.createdAt).localeCompare(a.occurredAt || a.createdAt));
+          return sorted[0]?.body ?? null;
+        };
+        const checklist = newest('completion_checklist');
+        if (checklist !== null) {
+          const saved = parseCompletionNoteBody(checklist);
+          setMaterialsOnsite(saved.materialsOnsite);
+          setMovedUpstairs(saved.movedUpstairs);
+          setDamageChecked(saved.damageChecked);
+          setDamageText(saved.damageText);
+          setScopeChecked(saved.scopeChecked);
+          setScopeText(saved.scopeText);
+          setBuildsFinished(saved.buildsFinished);
+          setDebrisCleared(saved.debrisCleared);
+          setPhotosTaken(saved.photosTaken);
+        }
+        setQualityNotes(newest('quality_notes') ?? '');
+      } catch {
+        // prefill is best-effort; the tech can still tick the boxes by hand
+      }
+    }
+    void loadSaved();
+    return () => {
+      cancelled = true;
+    };
+  }, [alreadyCompleted, job.id]);
+
   // Prefill "Materials onsite" from the job's estimate; best-effort, never written back.
   useEffect(() => {
+    if (alreadyCompleted) return;
     let cancelled = false;
     async function loadMaterialsOnsite(): Promise<void> {
       try {
@@ -119,7 +173,7 @@ export function Completion({
     return () => {
       cancelled = true;
     };
-  }, [job.id]);
+  }, [alreadyCompleted, job.id]);
 
   // Stable: the photo card calls this from an effect.
   const handleCountChange = useCallback(
@@ -221,6 +275,12 @@ export function Completion({
         feeSavedRef.current = true;
       }
 
+      // Already complete: the edits are saved as new notes (newest wins), and the status stays as it is.
+      if (alreadyCompleted) {
+        onDone();
+        return;
+      }
+
       // (d) State-machine transition.
       const transitioned = await transitionJob(job, 'completed', {
         hasAfterPhotos: (j) => readHasAfterPhotos(j),
@@ -236,11 +296,27 @@ export function Completion({
 
       onDone();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to complete job.');
+      setError(e instanceof Error ? e.message : alreadyCompleted ? 'Failed to save changes.' : 'Failed to complete job.');
     } finally {
       setSubmitting(false);
     }
   }
+
+  async function handleReopen(): Promise<void> {
+    if (!onReopen) return;
+    setReopening(true);
+    setError(null);
+    try {
+      await onReopen();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to reopen job.');
+      setReopening(false);
+    }
+  }
+
+  const submitLabel = alreadyCompleted
+    ? submitting ? 'Saving…' : 'Save Changes'
+    : submitting ? 'Completing…' : 'Complete Job';
 
   function renderItem(key: CompletionItemKey, label: string, hint: string | undefined): JSX.Element {
     let checked = false;
@@ -331,10 +407,17 @@ export function Completion({
 
       <View style={styles.buttonRow}>
         <PayrollButton
-          label={submitting ? 'Completing…' : 'Complete Job'}
+          label={submitLabel}
           onPress={() => void handleSubmit()}
-          disabled={!canSubmit}
+          disabled={!canSubmit || reopening}
         />
+        {alreadyCompleted && canReopen && onReopen ? (
+          <PayrollButton
+            label={reopening ? 'Reopening…' : 'Not Completed'}
+            onPress={() => void handleReopen()}
+            disabled={reopening || submitting}
+          />
+        ) : null}
       </View>
 
       {error !== null ? (

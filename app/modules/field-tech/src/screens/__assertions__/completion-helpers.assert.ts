@@ -16,6 +16,7 @@ import {
   canSubmitCompletion,
   completionBlockedNotice,
   isAlreadyComplete,
+  parseCompletionNoteBody,
   formatTimeSpent,
   upstairsFeeApplies,
 } from '../completion-helpers';
@@ -216,4 +217,40 @@ test('isAlreadyComplete is false for in_progress without completedAt and for sch
   assert.equal(isAlreadyComplete({ status: 'in_progress' }), false);
   assert.equal(isAlreadyComplete({ status: 'in_progress', completedAt: null }), false);
   assert.equal(isAlreadyComplete({ status: 'scheduled' }), false);
+});
+
+test('parseCompletionNoteBody reads back what buildCompletionNoteBody wrote', () => {
+  const input = {
+    materialsOnsite: true,
+    movedUpstairs: false,
+    damageChecked: true,
+    damageText: 'Dented corner - left side',
+    scopeChecked: false,
+    scopeText: '',
+    buildsFinished: true,
+    debrisCleared: true,
+    afterPhotoCount: 2,
+    timeSpentSeconds: 3600,
+    feeApplied: true,
+  };
+  const parsed = parseCompletionNoteBody(buildCompletionNoteBody(input));
+  assert.deepEqual(parsed, {
+    materialsOnsite: true,
+    movedUpstairs: false,
+    damageChecked: true,
+    damageText: 'Dented corner - left side',
+    scopeChecked: false,
+    scopeText: '',
+    buildsFinished: true,
+    debrisCleared: true,
+    photosTaken: true,
+    feeApplied: true,
+  });
+});
+
+test('parseCompletionNoteBody returns all unticked for an empty body', () => {
+  const parsed = parseCompletionNoteBody('');
+  assert.equal(parsed.buildsFinished, false);
+  assert.equal(parsed.feeApplied, false);
+  assert.equal(parsed.damageText, '');
 });

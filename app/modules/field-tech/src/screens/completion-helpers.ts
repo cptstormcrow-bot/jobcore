@@ -116,6 +116,59 @@ export function buildCompletionNoteBody(input: CompletionNoteInput): string {
   return lines.join('\n');
 }
 
+export interface ParsedCompletionNote {
+  materialsOnsite: boolean;
+  movedUpstairs: boolean;
+  damageChecked: boolean;
+  damageText: string;
+  scopeChecked: boolean;
+  scopeText: string;
+  buildsFinished: boolean;
+  debrisCleared: boolean;
+  photosTaken: boolean;
+  feeApplied: boolean;
+}
+
+/** Reads a buildCompletionNoteBody() body back into checklist state, so a completed job's checklist can be edited. Unknown lines are ignored. */
+export function parseCompletionNoteBody(body: string): ParsedCompletionNote {
+  const out: ParsedCompletionNote = {
+    materialsOnsite: false,
+    movedUpstairs: false,
+    damageChecked: false,
+    damageText: '',
+    scopeChecked: false,
+    scopeText: '',
+    buildsFinished: false,
+    debrisCleared: false,
+    photosTaken: false,
+    feeApplied: false,
+  };
+  for (const raw of body.split('\n')) {
+    const line = raw.trim();
+    if (line.startsWith('Upstairs fee:')) {
+      out.feeApplied = line !== 'Upstairs fee: none';
+      continue;
+    }
+    const m = /^\[(x| )\] (.*)$/.exec(line);
+    if (!m) continue;
+    const on = m[1] === 'x';
+    const rest = m[2] ?? '';
+    const item = COMPLETION_CHECKLIST_ITEMS.find((i) => rest === i.label || rest.startsWith(`${i.label} `));
+    if (!item) continue;
+    const text = rest.startsWith(`${item.label} - `) ? rest.slice(item.label.length + 3).trim() : '';
+    switch (item.key) {
+      case 'materialsOnsite': out.materialsOnsite = on; break;
+      case 'movedUpstairs': out.movedUpstairs = on; break;
+      case 'damage': out.damageChecked = on; out.damageText = text; break;
+      case 'extraScope': out.scopeChecked = on; out.scopeText = text; break;
+      case 'buildsFinished': out.buildsFinished = on; break;
+      case 'debrisCleared': out.debrisCleared = on; break;
+      case 'photosTaken': out.photosTaken = on; break;
+    }
+  }
+  return out;
+}
+
 export interface CompletionBlockInput {
   status: string;
   completedAt?: string | null;

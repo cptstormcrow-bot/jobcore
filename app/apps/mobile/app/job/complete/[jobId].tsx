@@ -11,7 +11,6 @@ import {
 import { setModuleSession as setFieldTechModuleSession } from '../../../../../modules/field-tech/src/lib/module-session';
 import { setModulePorts as setFieldTechModulePorts } from '../../../../../modules/field-tech/src/lib/module-ports';
 import { Completion } from '../../../../../modules/field-tech/src/screens/Completion';
-import { CompletedReview } from '../../../../../modules/field-tech/src/screens/CompletedReview';
 import { completionBlockedNotice, isAlreadyComplete } from '../../../../../modules/field-tech/src/screens/completion-helpers';
 import { useSession, signOut } from '../../../src/lib/session';
 import { JobHeader } from '../../../src/components/JobHeader';
@@ -151,8 +150,10 @@ ${loaded.reason}` : 'This job could not be loaded.'}
       nowMs: Date.now(),
     });
     body = (
-      <CompletedReview
+      <Completion
         job={doneJob}
+        alreadyCompleted
+        onDone={onDone}
         timeSpentSeconds={doneSeconds}
         canReopen={doneJob.status === 'completed'}
         onReopen={() => reopenJob(doneJob)}
