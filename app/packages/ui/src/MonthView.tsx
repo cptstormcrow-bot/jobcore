@@ -68,6 +68,10 @@ export function MonthView({
 
   type TimeOffEventWithRange = TimeOffEvent & { startDate?: string | number | Date; endDate?: string | number | Date };
 
+  // A bare 'yyyy-MM-dd' is read as local midnight; new Date() would read it as UTC and land a day early west of UTC.
+  const toDay = (v: string | number | Date): Date =>
+    typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(`${v}T00:00:00`) : startOfDay(new Date(v));
+
   const pressDay = (day: Date) => {
     if (onDayPress) {
       onDayPress(format(day, 'yyyy-MM-dd'));
@@ -91,8 +95,8 @@ export function MonthView({
             const dayJobs = jobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day));
             const dayStart = startOfDay(day);
             const hasTimeOff = timeOffEvents.some((t) => {
-              const start = startOfDay(new Date((t as TimeOffEventWithRange).startDate ?? t.eventTime));
-              const end = startOfDay(new Date((t as TimeOffEventWithRange).endDate ?? t.eventTime));
+              const start = toDay((t as TimeOffEventWithRange).startDate ?? t.eventTime);
+              const end = toDay((t as TimeOffEventWithRange).endDate ?? t.eventTime);
               return isWithinInterval(dayStart, { start, end });
             });
             const inMonth = isSameMonth(day, anchorDay);
@@ -102,8 +106,8 @@ export function MonthView({
 
             if (listMode) {
               const dayTimeOffList = timeOffEvents.filter((t) => {
-                const start = startOfDay(new Date((t as TimeOffEventWithRange).startDate ?? t.eventTime));
-                const end = startOfDay(new Date((t as TimeOffEventWithRange).endDate ?? t.eventTime));
+                const start = toDay((t as TimeOffEventWithRange).startDate ?? t.eventTime);
+                const end = toDay((t as TimeOffEventWithRange).endDate ?? t.eventTime);
                 return isWithinInterval(dayStart, { start, end });
               });
               const dayJobsList = jobs
