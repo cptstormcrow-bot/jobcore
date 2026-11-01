@@ -16,6 +16,7 @@ import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
+import { usePaidInFull } from '../../src/lib/settle-on-completion';
 import { AppChrome, Breadcrumb, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
@@ -1030,9 +1031,10 @@ export default function JobDrilldownScreen() {
     return () => { cancelled = true; };
   }, [job, estimate, investigation, rev, photoCountTick]);
 
+  const paidInFull = usePaidInFull(job);
   const stageResults = useMemo(
-    () => buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras }),
-    [job, estimate, investigation, investigatorTechId, stageExtras],
+    () => buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras, paidInFull }),
+    [job, estimate, investigation, investigatorTechId, stageExtras, paidInFull],
   );
 
   const handleContact = () => {

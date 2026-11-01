@@ -140,12 +140,15 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           setError(result.reason);
           return;
         }
-        // Payments are allowed while in progress; the job only moves to Paid once it is completed (paid-in-full jobs are flipped when completed).
+        // Payments are allowed while in progress; the job status only moves to Paid once it is completed (paid-in-full jobs are flipped when completed). Completion is never automatic.
         if (result.balanceCents <= 0 && job.status === 'completed') {
           const ctx: Ctx = { role: role as Ctx['role'], now: () => new Date().toISOString(), hasPaymentRecord: () => true };
           const updated = await transitionJob(job, 'paid', ctx);
           await createJobRepository().updateStatus(job.id, 'paid');
           onJobUpdated?.({ ...updated, status: 'paid' as Job['status'] });
+        } else if (result.balanceCents <= 0) {
+          // Paid in full before completion: the job stays in its status, but a fresh object makes the stage bar re-check Paid.
+          onJobUpdated?.({ ...job });
         }
         await load();
         setCardHolder('');
@@ -208,7 +211,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const cashCents = parseCashCents(cashReceived);
   const cashInvalid =
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
-  // The Paid timeline dot goes green on job status alone, so the badge must too, not only when payment rows settle the balance.
+  // The Paid timeline dot goes green on job status or a settled balance, so the badge does both too.
   const isPaidState = job.status === 'paid' || job.status === 'closed' || (balance <= 0 && paid > 0);
   const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.size.body, color: colors.text, backgroundColor: colors.surface } as const;
 

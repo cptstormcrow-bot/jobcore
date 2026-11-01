@@ -10,6 +10,7 @@ import {
 import { supabase } from './supabase';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity } from './read-cache';
 import { buildJobStageResults, type JobStageExtras } from './job-stage-results';
+import { usePaidInFull } from './settle-on-completion';
 
 const stageList = STAGE_KEYS.map((key) => ({ key, label: STAGE_LABELS[key] }));
 
@@ -19,6 +20,7 @@ export function useJobStageTimeline(job: Job | null, enabled: boolean) {
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [stageExtras, setStageExtras] = useState<JobStageExtras | null>(null);
 
+  const paidInFull = usePaidInFull(enabled ? job : null);
   const jobId = job?.id;
   useEffect(() => {
     if (!enabled || !jobId) return undefined;
@@ -72,8 +74,8 @@ export function useJobStageTimeline(job: Job | null, enabled: boolean) {
   }, [enabled, jobId]);
 
   const stageResults = useMemo(
-    () => (enabled ? buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras }) : null),
-    [enabled, job, estimate, investigation, investigatorTechId, stageExtras],
+    () => (enabled ? buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras, paidInFull }) : null),
+    [enabled, job, estimate, investigation, investigatorTechId, stageExtras, paidInFull],
   );
   return { stageResults, stageList, estimate };
 }

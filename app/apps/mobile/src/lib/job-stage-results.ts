@@ -18,12 +18,14 @@ export function buildJobStageResults({
   investigation,
   investigatorTechId,
   stageExtras,
+  paidInFull = false,
 }: {
   job: Job | null;
   estimate: JobEstimate | null;
   investigation: JobInvestigation | null;
   investigatorTechId: string | null;
   stageExtras: JobStageExtras | null;
+  paidInFull?: boolean;
 }) {
   if (!job) return null;
   const marks = stageExtras?.stageMarks ?? {};
@@ -54,7 +56,8 @@ export function buildJobStageResults({
     startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
     photos: { ...done((stageExtras?.photoCount ?? 0) >= 1, 'photos'), notRequired: (stageExtras?.photoCount ?? 0) === 0 },
     completeWork: { ...done(!!job.completedAt, 'completeWork', job.completedAt), sticky: true },
-    paid: done(job.status === 'paid' || closed, 'paid'),
+    // Paid follows the money, not completion: a job paid in full while in progress shows Paid (Jeff).
+    paid: done(paidInFull || job.status === 'paid' || closed, 'paid'),
     closeout: done(closed, 'closeout'),
     history: done(closed, 'history'),
   };
