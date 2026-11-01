@@ -531,11 +531,12 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.semibold,
     color: colors.primary,
     fontSize: 28,
-    lineHeight: 28,
-    width: 28,
-    height: 28,
+    // The heading font's ⚙ rises above its em box; a 28px line box cut off its top teeth.
+    lineHeight: 38,
+    width: 34,
+    height: 38,
     textAlign: 'center',
-    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   wordmarkChip: {
     alignSelf: 'center',
