@@ -184,6 +184,11 @@ function toJob(row: JobRow): Job {
   } as Job;
 }
 
+// Jobs saved from create mode, by id. On device a new job can still be only
+// queued locally when its detail screen opens, so the live fetch finds no row;
+// the screen falls back to this copy until the server has it.
+const justCreatedJobs = new Map<string, Job>();
+
 const JOB_ROW_COLUMNS =
   'id, organization_id, status, customer_id, service_id, source, payer, attach_timing, ' +
   'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
@@ -515,7 +520,8 @@ export default function JobDrilldownScreen() {
       .catch(() => null)
       .then(async (data) => {
         if (cancelled) return;
-        const loaded = data ? toJob(data) : null;
+        if (data) justCreatedJobs.delete(jobId);
+        const loaded = data ? toJob(data) : justCreatedJobs.get(jobId) ?? null;
         setJob(loaded);
         setCustomerId(loaded?.customerId ?? null);
 
@@ -701,6 +707,7 @@ export default function JobDrilldownScreen() {
         ingressInstructions: form.ingressInstructions.trim() || null,
       } as JobDraft;
       const created = await createJobRepository().create(draft);
+      justCreatedJobs.set(created.id, { ...created, totalLaborSeconds: created.totalLaborSeconds ?? 0, isBeta: created.isBeta ?? false });
       router.replace(`/job/${created.id}?panel=plan` as never);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed.');
@@ -1248,6 +1255,7 @@ export default function JobDrilldownScreen() {
     return (
       <View style={styles.center}>
         <EmptyState title="Job unavailable" message="This job could not be found." />
+        <PayrollButton label="Back" onPress={goBackOrLanding} />
       </View>
     );
   }
