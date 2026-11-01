@@ -1243,16 +1243,33 @@ export default function JobDrilldownScreen() {
   }
 
   if (isCreate) {
+    // Same slider menu as an open job; only Job is live until the job is saved.
+    const createMenuItems: MenuItem[] = [
+      { id: 'plan', label: 'Job', onPress: () => {}, isActive: true },
+      ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Arrive', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
+        .map((label) => ({ id: `create-${label.toLowerCase()}`, label, onPress: () => {}, disabled: true })),
+    ];
     // Create-mode shell: JobDetailsForm in create mode, local-state-only
     // until Save is pressed.
     return (
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <AppChrome
-          menuItems={[]}
+          menuItems={createMenuItems}
           optionsItems={[]}
           breadcrumbSegments={[{ label: 'Jobs' }, { label: 'New Job' }]}
-          titleBar={{ title: 'New Job' }}
+          titleBar={{ title: 'Admin & Finance', subtitle: 'New Job' }}
           helpContext={{ screenKey: 'job-create' }}
+          showBack={false}
+          compactMenu
+          fitMenu
+          gearTitle="Configuration"
+          gearItems={[
+            { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
+            { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+            { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
+            ...(isAdmin ? [{ id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') }] : []),
+          ]}
+          onLogoPress={goBackOrLanding}
         />
         <View style={styles.topActions}>
           <PayrollButton label="Cancel" onPress={goBackOrLanding} />
