@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
     color: colors.text,
   },
-  sideText: { fontSize: 11, color: colors.text },
+  sideText: { fontSize: 9, lineHeight: 11, color: colors.text },
   rightText: { textAlign: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   name: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     flexShrink: 1,
   },
-  link: { fontSize: typography.size.detail, color: colors.text },
+  link: { fontSize: 9, lineHeight: 11, color: colors.text },
   underline: { textDecorationLine: 'underline' },
   ingress: { marginLeft: spacing.sm },
   line: { marginTop: spacing.xs },
