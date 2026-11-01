@@ -72,22 +72,58 @@ export async function writeThrough<T>(
   }
 
   await markInflight(id);
-  try {
-    await send({ op, payload: JSON.stringify(payload) });
+  const sending = send({ op, payload: JSON.stringify(payload) });
+  const settled = sending.then(
+    () => ({ ok: true as const }),
+    (err: unknown) => ({ ok: false as const, err }),
+  );
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timedOut = new Promise<null>((resolve) => {
+    timer = setTimeout(() => resolve(null), INLINE_SEND_MS);
+  });
+  const result = await Promise.race([settled, timedOut]);
+  clearTimeout(timer);
+
+  if (result === null) {
+    // A slow send (a big photo upload on a weak signal) must not hold the screen.
+    // The row stays inflight; the send settles it in the background.
+    void settled.then(async (r) => {
+      if (r.ok) {
+        await markDone(id);
+        await patchReadCache(op, payload);
+      } else {
+        await settleFailedSend(id, r.err);
+      }
+      requestDrain();
+    });
+    await patchReadCache(op, payload);
+    return { status: 'queued', data: optimistic };
+  }
+
+  if (result.ok) {
     await markDone(id);
     await patchReadCache(op, payload);
     return { status: 'applied', data: optimistic };
-  } catch (err) {
-    const cls = err instanceof UnknownOpError ? 'permanent' : classifyReplayError(err);
-    if (cls === 'duplicate') {
-      await markDone(id);
-      return { status: 'applied', data: optimistic };
-    }
-    if (cls === 'network' || cls === 'auth' || cls === 'unknown') {
-      await markRetry(id, { errorClass: cls, message: msgOf(err), nextAttemptAt: new Date().toISOString() });
-      return queued();
-    }
-    await markFailed(id, { errorClass: cls, message: msgOf(err) });
-    throw err;
   }
+  const outcome = await settleFailedSend(id, result.err);
+  if (outcome === 'duplicate') return { status: 'applied', data: optimistic };
+  if (outcome === 'retry') return queued();
+  throw result.err;
+}
+
+// Inline sends longer than this hand off to the queue so the caller is never stuck.
+const INLINE_SEND_MS = 15000;
+
+async function settleFailedSend(id: string, err: unknown): Promise<'duplicate' | 'retry' | 'failed'> {
+  const cls = err instanceof UnknownOpError ? 'permanent' : classifyReplayError(err);
+  if (cls === 'duplicate') {
+    await markDone(id);
+    return 'duplicate';
+  }
+  if (cls === 'network' || cls === 'auth' || cls === 'unknown') {
+    await markRetry(id, { errorClass: cls, message: msgOf(err), nextAttemptAt: new Date().toISOString() });
+    return 'retry';
+  }
+  await markFailed(id, { errorClass: cls, message: msgOf(err) });
+  return 'failed';
 }
