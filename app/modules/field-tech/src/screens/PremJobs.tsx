@@ -178,10 +178,9 @@ export function PremJobs(): React.ReactElement {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    padding: spacing.md ?? 16,
   },
   listContent: {
-    paddingBottom: spacing.lg ?? 24,
+    padding: spacing.lg ?? 24,
   },
   centered: {
     flex: 1,

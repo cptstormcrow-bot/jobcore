@@ -27,7 +27,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { ScreenTitle, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -315,10 +315,10 @@ export function Overview({
     const rows = jobLists[activeTile.key] ?? [];
     return (
       <View style={styles.container}>
+        <ScreenTitle title={activeTile.label} />
         <Pressable onPress={() => setActiveTile(null)} style={styles.row}>
           <Text style={styles.cardLabel}>‹ Back to overview</Text>
         </Pressable>
-        <Text style={styles.sectionTitle}>{activeTile.label}</Text>
         {rows.length === 0 ? <Text style={styles.emptyText}>No jobs.</Text> : null}
         {rows.map((job) => (
           <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.row}>
@@ -334,6 +334,7 @@ export function Overview({
 
   return (
     <View style={styles.container}>
+      <ScreenTitle title="Overview" />
       {groups.map((group) => (
         <View key={group.key} style={styles.groupCard}>
           {group.key === 'jobs' ? (
@@ -372,19 +373,13 @@ export function Overview({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    padding: spacing.lg,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: typography.size.body,
-    fontWeight: '600',
-    marginBottom: spacing.md,
   },
   groupCard: {
     borderWidth: StyleSheet.hairlineWidth,

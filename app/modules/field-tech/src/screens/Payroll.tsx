@@ -13,7 +13,7 @@ import { View, StyleSheet } from 'react-native';
 import { PayrollHome } from '@jobcore/payroll-ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { colors, Text, spacing } from '@jobcore/ui';
+import { ScreenTitle, colors, Text, spacing } from '@jobcore/ui';
 
 export function Payroll(): React.ReactElement {
   const session = getModuleSession();
@@ -22,15 +22,25 @@ export function Payroll(): React.ReactElement {
   if (payroll === undefined || session === null) {
     return (
       <View style={styles.container}>
+        <ScreenTitle title="Payroll" />
         <Text style={styles.emptyText}>Payroll is not available yet</Text>
       </View>
     );
   }
 
-  return <PayrollHome mode="self" port={payroll} userId={session.userId} />;
+  return (
+    <View style={styles.screen}>
+      <View style={styles.titleRow}>
+        <ScreenTitle title="Payroll" />
+      </View>
+      <PayrollHome mode="self" port={payroll} userId={session.userId} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  titleRow: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
   container: { flex: 1, padding: spacing.lg },
   emptyText: { color: colors.textMutedDark },
 });
