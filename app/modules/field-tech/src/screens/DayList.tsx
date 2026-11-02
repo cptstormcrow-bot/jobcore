@@ -159,16 +159,16 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
         <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
         <View style={styles.rowBody}>
           <Text style={styles.customer} numberOfLines={1}>{job.customerName ?? 'No customer'}</Text>
-          <Pressable onPress={() => job.address && copyToClipboard(job.address)}>
-            <Text style={styles.meta} numberOfLines={1}>{job.address ?? 'No address'}</Text>
-          </Pressable>
-          {job.customerPhone ? (
-            <Pressable onPress={() => copyToClipboard(job.customerPhone ?? '')}>
-              <Text style={styles.meta}>{job.customerPhone}</Text>
-            </Pressable>
-          ) : null}
-          <Text style={styles.window} numberOfLines={1}>
-            {job.requestedWindow ?? (job.scheduledStart ? new Date(job.scheduledStart).toLocaleString() : 'Unscheduled')}
+          <Text style={styles.meta} numberOfLines={1}>
+            <Text onPress={() => job.address && copyToClipboard(job.address)}>{job.address ?? 'No address'}</Text>
+            {job.customerPhone ? (
+              <>
+                {'  •  '}
+                <Text onPress={() => copyToClipboard(job.customerPhone ?? '')}>{job.customerPhone}</Text>
+              </>
+            ) : null}
+            {'  •  '}
+            {job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled')}
           </Text>
         </View>
       </View>
