@@ -713,6 +713,8 @@ export function AdminFinanceRoot() {
     const prev = prevView.current;
     prevView.current = subView;
     if (prev === subView) return;
+    // The view rides in the route too, so coming back from a job lands on the same view.
+    router.setParams({ view: subView } as never);
     if (poppingBack.current) {
       poppingBack.current = false;
       return;

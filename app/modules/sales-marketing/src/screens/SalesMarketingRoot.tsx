@@ -15,8 +15,8 @@
  */
 
 import * as React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, StyleSheet, BackHandler, Platform } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { EmptyState, AppChrome, useScreenNumber, type MenuActionItem } from '@jobcore/ui';
 import { moduleSwitcherItems } from '@jobcore/module-sdk';
 
@@ -57,7 +57,40 @@ const SUBVIEW_LABELS:Record<SubView, string> = {
 export function SalesMarketingRoot(): React.ReactElement {
   const router = useRouter();
   const session = useModuleSession();
-  const [subView, setSubView] = React.useState<SubView>('overview');
+  // The tab lives in the route too, so coming back from another screen lands on the same tab.
+  const { view } = useLocalSearchParams<{ view?: string }>();
+  const [subView, setSubView] = React.useState<SubView>(
+    view && view in HELP_SCREEN_KEYS ? (view as SubView) : 'overview',
+  );
+  // Android back returns to the tab you came from; every tab change is recorded here.
+  const viewHistory = React.useRef<SubView[]>([]);
+  const prevView = React.useRef<SubView>(subView);
+  const poppingBack = React.useRef(false);
+  React.useEffect(() => {
+    const prev = prevView.current;
+    prevView.current = subView;
+    if (prev === subView) return;
+    router.setParams({ view: subView } as never);
+    if (poppingBack.current) {
+      poppingBack.current = false;
+      return;
+    }
+    const stack = viewHistory.current;
+    // An in-app return to the previous tab counts as going back, so it doesn't loop.
+    if (stack[stack.length - 1] === subView) stack.pop();
+    else stack.push(prev);
+  }, [subView]);
+  React.useEffect(() => {
+    if (Platform.OS !== 'android') return undefined;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      const prev = viewHistory.current.pop();
+      if (!prev) return false;
+      poppingBack.current = true;
+      setSubView(prev);
+      return true;
+    });
+    return () => subscription.remove();
+  }, []);
   // Registry subView keys are PascalCase (sm-Composer → 'Composer').
   useScreenNumber({ subView: subView.charAt(0).toUpperCase() + subView.slice(1) });
   const [pitchAngle, setPitchAngle] = React.useState<PitchAngle | null>(null);
