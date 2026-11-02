@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, View, StyleSheet, StyleProp, ViewStyle, useWindowDimensions } from 'react-native';
 import { Text } from './Text';
 import { TruncatedText } from './TruncatedText';
-import { colors, spacing, typography } from './tokens';
+import { colors, compact, spacing, typography } from './tokens';
 
 export interface ListItemProps {
   title: string;
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: compact.section,
     minHeight: 32,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -76,16 +76,16 @@ const styles = StyleSheet.create({
   main: { flexShrink: 1, flexGrow: 1 },
   mainWithCenter: { flex: 2 },
   centerSide: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  centerStacked: { marginTop: spacing.xs, alignItems: 'flex-start' },
+  centerStacked: { marginTop: compact.gap, alignItems: 'flex-start' },
   content: { flexShrink: 1 },
   title: {
     color: colors.text,
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
   },
-  subtitle: { color: colors.textMuted, fontSize: typography.size.small },
-  overline: { color: colors.textMuted, fontSize: typography.size.small },
-  footer: { color: colors.textMuted, fontSize: typography.size.small },
+  subtitle: { color: colors.textMuted, fontSize: typography.text.hint },
+  overline: { color: colors.textMuted, fontSize: typography.text.hint },
+  footer: { color: colors.textMuted, fontSize: typography.text.hint },
   right: { marginLeft: 'auto' },
 });

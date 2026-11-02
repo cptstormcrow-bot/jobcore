@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, typography } from './tokens';
+import { colors, compact, spacing, typography } from './tokens';
 import { formatJobNumberLine, formatScheduledLabel } from './job-header-format';
 
 export type JobHeaderBlockProps = {
@@ -40,14 +40,14 @@ export function JobHeaderBlock({
 }
 
 const styles = StyleSheet.create({
-  root: { paddingHorizontal: spacing.md, marginTop: spacing.xs },
+  root: { paddingHorizontal: spacing.md, marginTop: compact.gap },
   rootCompact: { paddingHorizontal: spacing.md },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
-  body: { flexShrink: 1, fontSize: typography.size.body, color: colors.text },
+  body: { flexShrink: 1, fontSize: typography.text.body, color: colors.text },
   right: { textAlign: 'right' },
 });

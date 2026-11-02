@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius, typography } from './tokens';
+import { colors, compact, spacing, radius, typography } from './tokens';
 
 export interface ToggleProps {
   label?: string;
@@ -31,9 +31,9 @@ export function Toggle({ label, value, onChange, disabled = false, style }: Togg
 }
 
 const styles = StyleSheet.create({
-  base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
+  base: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: compact.rowMin },
   disabled: { opacity: 0.5 },
-  label: { fontFamily: typography.fontFamily.body, fontSize: typography.size.body, color: colors.text, marginRight: spacing.sm },
+  label: { fontFamily: typography.fontFamily.body, fontSize: typography.text.fieldLabel, color: colors.text, marginRight: spacing.sm },
   track: {
     width: 44,
     height: 24,

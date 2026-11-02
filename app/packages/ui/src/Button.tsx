@@ -15,10 +15,10 @@ export interface ButtonProps {
 
 // Button is the general-purpose button and carries the app-wide Payroll look:
 // padding 3 vertical / 11 horizontal, 1px transparent border (kept on every
-// variant so the box never changes), radius 6, 14px label, no fixed height.
+// variant so the box never changes), radius 6, 13px label, no fixed height.
 // PayrollButton (./PayrollButton) remains available.
 const paddingBySize = { sm: 3, md: 3, lg: 3, tab: 3 } as const;
-const fontBySize = { sm: 14, md: 14, lg: 14, tab: 14 } as const;
+const fontBySize = { sm: 13, md: 13, lg: 13, tab: 13 } as const;
 const paddingHorizontalBySize = { sm: 11, md: 11, lg: 11, tab: 11 } as const;
 
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled = false, fullWidth = false, style }: ButtonProps) {

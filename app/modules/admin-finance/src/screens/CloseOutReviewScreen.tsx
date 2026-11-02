@@ -36,7 +36,7 @@ import React, { useMemo, useState, type ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, PayrollButton, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, compact, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 import type { JobTimelineItem } from '../domain/job-timeline';
 
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   jobStatus: {
     color: colors.textMuted,
-    fontSize: typography.size.small,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
     textTransform: 'capitalize',
   },
@@ -354,37 +354,37 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.text,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   empty: {
     color: colors.textLight,
-    fontSize: typography.size.body,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   trailRow: {
     marginBottom: spacing.xs,
   },
   trailMeta: {
     color: colors.textMuted,
-    fontSize: typography.size.small,
+    fontSize: typography.text.hint,
     fontFamily: typography.fontFamily.body,
   },
   body: {
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   subTitle: {
     color: colors.textMuted,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   photoGrid: {
     flexDirection: 'row',
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   },
   photoRemove: {
     color: colors.warning,
-    fontSize: typography.size.label,
+    fontSize: typography.text.control,
     fontFamily: typography.fontFamily.body,
   },
   notesInput: {
@@ -415,20 +415,20 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
-    padding: spacing.sm,
+    padding: compact.field,
   },
   ready: {
     color: colors.success,
-    fontSize: typography.size.body,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   blocker: {
     color: colors.warning,
-    fontSize: typography.size.body,
+    fontSize: typography.text.error,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
 });

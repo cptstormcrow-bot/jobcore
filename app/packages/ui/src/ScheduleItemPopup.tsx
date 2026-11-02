@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { colors, radius, spacing, typography } from './tokens';
+import { colors, compact, radius, spacing, typography } from './tokens';
 import { Text } from './Text';
 import { PayrollButton } from './PayrollButton';
 
@@ -100,24 +100,24 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   accent: { width: 6 },
-  body: { flex: 1, padding: spacing.lg },
+  body: { flex: 1, padding: spacing.md },
   kind: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     color: colors.textMuted,
   },
   heading: {
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.bold,
-    fontSize: typography.size.body,
+    fontSize: typography.text.title,
     color: colors.text,
     marginTop: 2,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   row: {
     flexDirection: 'row',
     gap: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: compact.field,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -125,13 +125,13 @@ const styles = StyleSheet.create({
     width: 80,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     color: colors.textMuted,
   },
   rowValue: {
     flex: 1,
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     color: colors.text,
   },
   footer: {

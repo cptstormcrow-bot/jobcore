@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   legendTitle: {
-    fontSize: typography.size.body,
+    fontSize: typography.text.title,
     fontWeight: typography.weight.bold,
     color: colors.text,
     fontFamily: typography.fontFamily.body,
@@ -177,9 +177,9 @@ const styles = StyleSheet.create({
   },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 2 },
   legendDot: { width: 12, height: 12, borderRadius: 6 },
-  legendText: { flex: 1, fontSize: typography.size.small, color: colors.text, fontFamily: typography.fontFamily.body },
+  legendText: { flex: 1, fontSize: typography.text.body, color: colors.text, fontFamily: typography.fontFamily.body },
   legendNote: {
-    fontSize: typography.size.small,
+    fontSize: typography.text.hint,
     color: colors.textMuted,
     fontFamily: typography.fontFamily.body,
     marginTop: spacing.xs,

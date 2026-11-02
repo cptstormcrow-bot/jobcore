@@ -23,7 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, compact, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
 import { PayrollButton } from '@jobcore/ui';
 import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
 import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
@@ -1525,14 +1525,14 @@ const styles = StyleSheet.create({
   },
   heading: {
     color: colors.text,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
     marginBottom: 2,
   },
   sectionTitle: {
     color: colors.text,
-    fontSize: typography.size.h4,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
     marginBottom: 0,
@@ -1559,17 +1559,17 @@ const styles = StyleSheet.create({
   },
   cellLabel: {
     color: colors.textMuted,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   cellValue: {
     color: colors.text,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   statusControlWrap: { alignSelf: 'flex-start' },
   statusRow: { flexDirection: 'row', alignItems: 'center' },
@@ -1578,7 +1578,7 @@ const styles = StyleSheet.create({
   totalColumn: { alignItems: 'flex-end' },
   totalLabel: {
     color: colors.textMuted,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
   },
   summaryRow: {
@@ -1611,7 +1611,7 @@ const styles = StyleSheet.create({
   linkChipLabel: {
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    fontSize: typography.size.label,
+    fontSize: typography.text.control,
     color: colors.text,
   },
   field: {
@@ -1638,19 +1638,19 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.text,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
+    marginTop: compact.gap,
+    marginBottom: compact.gap,
   },
   note: {
     color: colors.textMuted,
-    fontSize: typography.size.small,
+    fontSize: typography.text.hint,
     fontFamily: typography.fontFamily.body,
     marginBottom: spacing.xs,
   },
-  blankHint: { color: colors.textMutedDark, fontSize: typography.size.small, paddingTop: 2 },
+  blankHint: { color: colors.textMutedDark, fontSize: typography.text.hint, paddingTop: 2 },
   trackingRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

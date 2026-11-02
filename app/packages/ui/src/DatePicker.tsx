@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius, typography } from './tokens';
+import { colors, compact, spacing, radius, typography } from './tokens';
 
 // Value is an ISO date string ('YYYY-MM-DD') for RN/web portability — this
 // package has no native calendar dependency, so selection is a validated
@@ -56,18 +56,18 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     letterSpacing: typography.letterSpacing.normal,
     color: colors.text,
     backgroundColor: colors.surface,
@@ -76,8 +76,8 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   errorText: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.small,
+    fontSize: typography.text.error,
     color: colors.danger,
-    marginTop: spacing.xs,
+    marginTop: compact.gap,
   },
 });

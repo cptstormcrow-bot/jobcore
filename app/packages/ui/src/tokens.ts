@@ -60,12 +60,19 @@ export const typography = {
   // Source sizes are fluid clamp(); RN has no viewport units, so each collapses
   // to a fixed density-independent value (upper-mid of the clamp range).
   size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13, summary: 8, detail: 10 },
+  // Standard text sizes, set by Jeff 2026-11-02. Range is 12 to 14, titles 16.
+  // Fields, buttons, tabs and job-tab text use these names, not the raw scale above.
+  text: { input: 14, body: 13, fieldLabel: 12, hint: 12, error: 12, title: 16, control: 13, option: 16 },
   lineHeight: { heading: 1.2, body: 1.6, relaxed: 1.7 },
   letterSpacing: { tight: 0, normal: 0.3, wide: 0.5 },
 } as const;
 
 // Named spacing scale — set by Jeff 2026-10-31 (replaces the earlier rem-derived scale).
 export const spacing = { xs: 4, sm: 6, md: 10, lg: 15, xl: 20, xxl: 28 } as const;
+
+// Tight padding for fields and job tabs (Jeff 2026-11-02: "very limited").
+// gap = between a title and its field or between rows; field = inside a field box; section = between groups.
+export const compact = { gap: 2, field: 4, section: 6, rowMin: 32 } as const;
 
 export const radius = { sm: 6, md: 10, lg: 16, xl: 24, pill: 999 } as const;
 
@@ -88,5 +95,5 @@ export const selectedStyle = (selected: boolean, keepSpace = false) =>
       ? ({ borderBottomWidth: 2, borderBottomColor: 'transparent' } as const)
       : undefined;
 
-export const tokens = { colors, typography, spacing, radius, shadow } as const;
+export const tokens = { colors, typography, spacing, compact, radius, shadow } as const;
 export type Tokens = typeof tokens;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { PayrollButton, colors, spacing, Text, TextField, typography } from '@jobcore/ui';
+import { PayrollButton, colors, spacing, compact, Text, TextField, typography } from '@jobcore/ui';
 import type { CustomerJobPlanTaskRow, JobPlanningPhoto } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanningPhotoRepository, createJobPlanTasksRepository } from '../lib/admin-finance-repos';
 import { JobDetailsForm, type JobFormValues } from './JobDetailsForm';
@@ -174,9 +174,9 @@ export default JobOverviewRegion;
 const styles = StyleSheet.create({
   section: { marginBottom: spacing.xs },
   header: { paddingVertical: spacing.xs },
-  headerText: { fontSize: typography.size.body, fontWeight: '600', color: colors.text },
-  body: { gap: spacing.xs },
-  row: { fontSize: typography.size.label, color: colors.text, paddingVertical: spacing.xs },
-  hint: { fontSize: typography.size.label, color: colors.textMutedDark },
+  headerText: { fontSize: typography.text.title, fontWeight: '600', color: colors.text },
+  body: { gap: compact.gap },
+  row: { fontSize: typography.text.body, color: colors.text, paddingVertical: compact.gap },
+  hint: { fontSize: typography.text.hint, color: colors.textMutedDark },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
 });

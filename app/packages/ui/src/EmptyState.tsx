@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, typography } from './tokens';
+import { colors, compact, spacing, typography } from './tokens';
 
 export interface EmptyStateProps {
   title: string;
@@ -21,19 +21,19 @@ export function EmptyState({ title, message, icon, style }: EmptyStateProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.md },
-  icon: { marginBottom: spacing.md },
+  container: { alignItems: 'center', justifyContent: 'center', padding: compact.section },
+  icon: { marginBottom: compact.section },
   title: {
     color: colors.text,
-    fontSize: typography.size.h6,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
   },
   message: {
     color: colors.textMuted,
-    fontSize: typography.size.body,
+    fontSize: typography.text.body,
     textAlign: 'center',
-    lineHeight: typography.lineHeight.body * typography.size.body,
-    marginTop: spacing.sm,
+    lineHeight: typography.lineHeight.body * typography.text.body,
+    marginTop: compact.field,
   },
 });

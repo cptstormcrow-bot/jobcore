@@ -18,7 +18,7 @@ import * as React from 'react';
 import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, spacing, radius } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, spacing, compact, radius } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto, JobEstimate, JobEstimateInput } from '../data/ports';
 import { trackingResultToPatch, trackingStatusLine } from './tracking-helpers';
@@ -476,12 +476,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   title: {
-    fontSize: typography.size.h4,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
   },
   status: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
     color: colors.textLight,
     marginBottom: 0,
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     width: '38%',
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
   },
   fieldInput: {
@@ -503,8 +503,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    fontSize: typography.size.body,
+    paddingVertical: compact.field,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
     backgroundColor: colors.surface,
   },
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: typography.size.h6,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
     marginBottom: spacing.xs,
@@ -558,17 +558,18 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   label: {
-    fontSize: typography.size.small,
+    fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
     color: colors.textMuted,
-    marginTop: spacing.sm,
+    marginTop: compact.gap,
   },
   value: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
   },
   error: {
     color: colors.danger,
+    fontSize: typography.text.error,
     fontFamily: typography.fontFamily.body,
   },
 });

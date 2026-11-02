@@ -266,14 +266,14 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.5 },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   title: { flex: 1, fontWeight: '600', color: colors.text },
-  badge: { color: colors.textMutedDark, fontSize: typography.size.detail },
-  notes: { color: colors.textMutedDark, fontSize: typography.size.detail },
+  badge: { color: colors.textMutedDark, fontSize: typography.text.hint },
+  notes: { color: colors.textMutedDark, fontSize: typography.text.hint },
   qty: { width: 64 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   flex: { flex: 1 },
   group: { fontWeight: '600', marginTop: spacing.sm, color: colors.textMutedDark },
-  error: { color: colors.danger },
+  error: { color: colors.danger, fontSize: typography.text.error },
 });
 
 export default JobTaskList;

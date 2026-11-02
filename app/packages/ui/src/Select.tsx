@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Pressable, Modal, ScrollView, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius, typography } from './tokens';
+import { colors, compact, spacing, radius, typography } from './tokens';
 
 export interface SelectOption {
   label: string;
@@ -92,9 +92,9 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
-    fontSize: typography.size.label,
+    fontSize: typography.text.fieldLabel,
     color: colors.text,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   trigger: {
     flexDirection: 'row',
@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
     backgroundColor: colors.surface,
   },
   triggerCompact: {
@@ -114,14 +114,14 @@ const styles = StyleSheet.create({
   triggerText: {
     flex: 1,
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     color: colors.text,
     fontWeight: typography.weight.semibold,
   },
   placeholderText: { color: colors.textMuted, fontWeight: typography.weight.regular },
   chevron: {
     marginLeft: spacing.sm,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     color: colors.textMuted,
   },
   disabled: { opacity: 0.5 },
@@ -145,14 +145,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.title,
     paddingVertical: spacing.sm,
     color: colors.text,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
   row: {
-    minHeight: 48,
+    minHeight: 40,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   rowText: {
     fontFamily: typography.fontFamily.body,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.option,
     textAlign: 'center',
     color: colors.text,
   },

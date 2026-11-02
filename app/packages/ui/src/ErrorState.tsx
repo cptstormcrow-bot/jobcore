@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, typography } from './tokens';
+import { colors, compact, spacing, typography } from './tokens';
 import { PayrollButton } from './PayrollButton';
 
 export interface ErrorStateProps {
@@ -49,18 +49,18 @@ export function ErrorState({ title = 'Something went wrong', message, onRetry, s
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.md },
   title: {
     color: colors.danger,
-    fontSize: typography.size.h4,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: typography.weight.bold,
   },
   message: {
     color: colors.textMuted,
-    fontSize: typography.size.body,
+    fontSize: typography.text.body,
     textAlign: 'center',
-    marginTop: spacing.sm,
+    marginTop: compact.field,
   },
-  retry: { marginTop: spacing.md },
+  retry: { marginTop: compact.section },
 });

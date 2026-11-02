@@ -21,7 +21,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { PayrollButton, telUrl, colors, spacing, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { PayrollButton, telUrl, colors, spacing, compact, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -256,33 +256,34 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   description: {
-    fontSize: typography.size.label,
-    marginBottom: spacing.sm,
+    fontSize: typography.text.body,
+    marginBottom: compact.section,
   },
   section: {
     marginBottom: spacing.sm,
   },
   sectionTitle: {
-    fontSize: typography.size.h6,
+    fontSize: typography.text.title,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   label: {
-    fontSize: typography.size.small,
+    fontSize: typography.text.fieldLabel,
     color: colors.textMutedDark,
-    marginTop: spacing.xs,
+    marginTop: compact.gap,
   },
   value: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
   },
   noteRow: {
     marginBottom: spacing.sm,
   },
   noteTimestamp: {
-    fontSize: typography.size.detail,
+    fontSize: typography.text.hint,
     color: colors.textMutedDark,
   },
   error: {
     color: colors.danger,
+    fontSize: typography.text.error,
   },
 });

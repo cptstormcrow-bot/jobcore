@@ -40,7 +40,7 @@ import { View, ScrollView, StyleSheet, Pressable, Alert, Platform } from 'react-
 import { useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { isBetaVisible, isTestVisible } from '@jobcore/core';
-import { Card, EmptyState, PayrollButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, radius, typography, Text, selectedStyle } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, DefaultTabBar, TechSelect, ListItem, Checkbox, colors, spacing, compact, radius, typography, Text, selectedStyle } from '@jobcore/ui';
 import type { TechColumnTech } from '../components/TechColumn';
 import { WarningSheet } from '../components/WarningSheet';
 import { warningsFor, type AssignmentTimeOffRequest } from '../domain/assignment-warnings';
@@ -582,14 +582,14 @@ const styles = StyleSheet.create({
   },
   poolTitle: {
     color: colors.text,
-    fontSize: typography.size.h5,
+    fontSize: typography.text.title,
     fontFamily: typography.fontFamily.heading,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   empty: {
     color: colors.textLight,
-    fontSize: typography.size.small,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
   },
   categorySegmentRow: {
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   },
   poolRowText: {
     color: colors.text,
-    fontSize: typography.size.small,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
   },
   assignSelect: {
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   assignedLine: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.hint,
     color: colors.textMuted,
   },
   rowDetail: {},
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   },
   rowCustomer: {
     color: colors.text,
-    fontSize: typography.size.small,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
     flexShrink: 1,
@@ -657,13 +657,13 @@ const styles = StyleSheet.create({
   },
   rowDescription: {
     color: colors.text,
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.regular,
   },
   rowError: {
     color: colors.danger,
-    fontSize: typography.size.label,
+    fontSize: typography.text.error,
     fontFamily: typography.fontFamily.body,
     marginTop: 2,
   },
@@ -680,18 +680,18 @@ const styles = StyleSheet.create({
   },
   sortTabsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.sm, paddingTop: 2 },
   unbold: { fontWeight: '400' },
-  headerTitle: { color: colors.text, fontSize: typography.size.h5, fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, marginRight: spacing.sm },
+  headerTitle: { color: colors.text, fontSize: typography.text.title, fontFamily: typography.fontFamily.heading, fontWeight: typography.weight.semibold, marginRight: spacing.sm },
   hint: {
     color: colors.textMuted,
-    fontSize: typography.size.label,
+    fontSize: typography.text.hint,
     fontFamily: typography.fontFamily.body,
-    marginTop: spacing.sm,
+    marginTop: compact.gap,
   },
   availabilitySummary: {
     color: colors.textMuted,
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontFamily: typography.fontFamily.body,
-    marginBottom: spacing.sm,
+    marginBottom: compact.section,
   },
   board: {
     flexDirection: 'row',

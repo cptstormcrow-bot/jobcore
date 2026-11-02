@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View, StyleSheet, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, radius, typography } from './tokens';
+import { colors, compact, spacing, radius, typography } from './tokens';
 
 export interface CheckboxProps {
   label: string;
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   // Row is min 44 tall so the tap target meets the 44x44 minimum even
   // though the visual box (20x20) stays small; hitSlop above adds margin
   // on top of that for the box itself.
-  base: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  base: { flexDirection: 'row', alignItems: 'center', minHeight: compact.rowMin },
   disabled: { opacity: 0.5 },
   box: {
     width: 20,
@@ -89,5 +89,5 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   checkMark: { width: 10, height: 10, borderRadius: radius.sm / 2, backgroundColor: colors.white },
-  label: { fontFamily: typography.fontFamily.body, fontSize: typography.size.body, color: colors.text },
+  label: { fontFamily: typography.fontFamily.body, fontSize: typography.text.fieldLabel, color: colors.text },
 });

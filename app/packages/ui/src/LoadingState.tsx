@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text } from './Text';
-import { colors, spacing, typography } from './tokens';
+import { colors, compact, spacing, typography } from './tokens';
 
 export interface LoadingStateProps {
   label?: string;
@@ -18,6 +18,6 @@ export function LoadingState({ label, style }: LoadingStateProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  label: { color: colors.textMuted, fontSize: typography.size.body, marginTop: spacing.md },
+  container: { alignItems: 'center', justifyContent: 'center', padding: spacing.md },
+  label: { color: colors.textMuted, fontSize: typography.text.body, marginTop: compact.section },
 });
