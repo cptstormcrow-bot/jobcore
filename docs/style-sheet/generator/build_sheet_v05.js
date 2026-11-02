@@ -109,6 +109,12 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
       { rule: 'Tight padding on a small fixed step: `compact` gap 2 (title to field, row to row), field 4 (inside a field box), section 6 (between groups), row min height 32', status: 'SET', source: 'Jeff 2026-11-02, "very limited"', measures: 'Source: app/packages/ui/src/tokens.ts (`text`, `compact`).' },
     ]),
 
+    H1('7d. Tooltips and the help mark'),
+    ...tbl([
+      { rule: 'The "?" in a circle is reserved for the help system. Tooltips never use it', status: 'SET', source: 'Jeff 2026-11-02', measures: 'Tooltips open on press-and-hold.' },
+      { rule: 'No tooltips on fields that already do a job, such as customer name, address and phone', status: 'SET', source: 'Jeff 2026-11-02', measures: 'Those fields keep their tap action (copy, call, open).' },
+    ]),
+
     H1('8. Empty states'),
     ...tbl([
       { rule: 'Use `EmptyState`: centred, bold 16 title (text colour), 16 muted message, 12 padding', status: 'SET', source: 'Jeff 2026-10-31', measures: 'Padding 12 all round. Centred horizontally; centred vertically in the list area.' },

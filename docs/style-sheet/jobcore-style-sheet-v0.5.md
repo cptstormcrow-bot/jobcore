@@ -49,6 +49,11 @@ Set by Jeff 2026-11-02 in `typography.text` and `compact` (`app/packages/ui/src/
 - Titles 16 (`title`); dropdown lists 16 (`option`); buttons and tabs 13 (`control`).
 - Tight padding: `compact` gap 2, field 4, section 6, row min height 32.
 
+## 7d. Tooltips and the help mark
+Set by Jeff 2026-11-02.
+- The "?" in a circle is reserved for the help system. Tooltips (press-and-hold) never use it.
+- No tooltips on fields that already do a job: customer name, address, phone.
+
 ## 8. Empty states
 `EmptyState`: centred, bold 16 title, 16 muted message, 12 padding; message says what to do next.
 
