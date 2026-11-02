@@ -53,9 +53,29 @@ export const ESTIMATE_LABELS = {
   pdfDelivery: 'PDF delivery',
 } as const;
 
-/** Neutral placeholder boilerplate; not legal advice. */
-export const DEFAULT_FINE_PRINT_PLACEHOLDER =
+/** Default Fine Print, adapted from the SDAssemblypro provider policies; not legal advice. */
+export const DEFAULT_FINE_PRINT_PLACEHOLDER = [
+  'Scope of work: We perform only the work listed in this estimate. We will not ask you to pay for extra services, products or parts beyond that scope unless you ask for them.',
+  'Change orders: If we find conditions during the job that change the scope or the price, we will explain the change and the reason for it and get your approval before we go on. If you decline, we can finish the original scope at the original price, or cancel the job if the original scope cannot be completed. Travel time, scheduling and items already in the listed scope are never a reason for a price change.',
+  'Payment: All payments, refunds and discounts for this job are handled through SD Assembly Pros.',
+  'Trip charges: Travel to your home is included in the price. There is no separate trip charge.',
+  'Rescheduling and cancellation: Please contact us as early as you can if you need to change or cancel your appointment, and we will offer a new date and time that works for you.',
+  'Adult present: A parent, guardian or other adult must be present for the whole visit. We will not work in the home while an unaccompanied minor is inside.',
+  'Safety and conduct: Our technicians are background checked. We have zero tolerance for fraudulent, offensive or illegal behavior on the job, and we may stop work if conditions are unsafe.',
+  'Photos: We take before and after photos of the work, and may take a photo of the technician on site to verify the visit. Photos are used only for job records and service claims.',
+  'Communication: We use your contact details only for this job, never for unrelated marketing.',
+  'Guarantee: If the listed work was not completed to your satisfaction, or your property or product was damaged as a direct result of our work, tell us within 90 days of completion. We will review the photos and messages from both sides and work with you on a fair resolution.',
+].join('\n\n');
+
+/** Wording earlier builds saved as the default; treated as unset so the new default shows. */
+export const LEGACY_FINE_PRINT_PLACEHOLDER =
   '[PLACEHOLDER - Fine Print wording not yet supplied. Replace it with your own text using Edit Fine Print Template. This is not legal advice.]';
+
+/** True when fine print text is blank or still the legacy placeholder. */
+export function isUnsetFinePrint(text: string | null | undefined): boolean {
+  const t = (text ?? '').trim();
+  return t === '' || t === LEGACY_FINE_PRINT_PLACEHOLDER;
+}
 
 function roundCents(n: number): number {
   if (!isFinite(n)) return 0;

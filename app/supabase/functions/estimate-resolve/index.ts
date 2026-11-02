@@ -22,6 +22,7 @@ import {
   DEFAULT_FINE_PRINT_PLACEHOLDER,
   ESTIMATE_LABELS,
   formatMoney,
+  isUnsetFinePrint,
   materialsOnsiteLabel,
 } from "./estimate-layout.ts";
 import type { ContingencyItem } from "./estimate-layout.ts";
@@ -277,10 +278,10 @@ async function fetchEstimatePageData(jobId: string): Promise<EstimatePageData | 
     customerNotes: estimate.customer_notes,
     materialsOnsite: estimate.materials_onsite === true,
     finePrint:
-      typeof estimate.fine_print === "string" && estimate.fine_print.trim() !== ""
+      typeof estimate.fine_print === "string" && !isUnsetFinePrint(estimate.fine_print)
         ? estimate.fine_print
         : typeof settings?.fine_print_template === "string" &&
-            settings.fine_print_template.trim() !== ""
+            !isUnsetFinePrint(settings.fine_print_template)
           ? settings.fine_print_template
           : DEFAULT_FINE_PRINT_PLACEHOLDER,
     pdfDelivery: estimate.pdf_delivery === true,

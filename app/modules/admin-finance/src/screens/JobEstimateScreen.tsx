@@ -28,7 +28,7 @@ import { PayrollButton } from '@jobcore/ui';
 import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
 import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
 import type { MenuItem } from '@jobcore/ui';
-import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney } from '../domain/estimate-layout';
+import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney, isUnsetFinePrint } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
 import type { Job } from '@jobcore/core';
 import type {
@@ -337,7 +337,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         if (cancelled) return;
         setEstimate(loadedEstimate);
         setTrackingInput(loadedEstimate?.trackingNumber ?? '');
-        setFinePrintInput(loadedEstimate?.finePrint ?? '');
+        setFinePrintInput(isUnsetFinePrint(loadedEstimate?.finePrint) ? '' : loadedEstimate?.finePrint ?? '');
         setLineItems(loadedLineItems);
         setLoadState({ kind: 'loaded' });
       })
@@ -498,9 +498,9 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   useEffect(() => {
     if (!estimate) return;
-    if ((estimate.finePrint ?? '').trim() !== '') return;
+    if (!isUnsetFinePrint(estimate.finePrint)) return;
     if (finePrintInput.trim() !== '') return;
-    const seed = templateText && templateText.trim() !== '' ? templateText : DEFAULT_FINE_PRINT_PLACEHOLDER;
+    const seed = !isUnsetFinePrint(templateText) ? templateText ?? '' : DEFAULT_FINE_PRINT_PLACEHOLDER;
     setFinePrintInput(seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estimate, templateText]);
@@ -1476,7 +1476,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               ) : null}
             </>
           ) : (
-            <Text style={styles.note}>{(estimate?.finePrint ?? '').trim() !== '' ? estimate?.finePrint : templateText ?? ''}</Text>
+            <Text style={styles.note}>{!isUnsetFinePrint(estimate?.finePrint) ? estimate?.finePrint : !isUnsetFinePrint(templateText) ? templateText : DEFAULT_FINE_PRINT_PLACEHOLDER}</Text>
           )}
         </Card>
         ) : null}
