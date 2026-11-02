@@ -9,6 +9,7 @@ import { balanceCents, canRecordPayment, invoiceTotalCents, settledTotalCents } 
 import { computeTotals } from '../../../../modules/admin-finance/src/domain/estimate-layout';
 import { transitionJob } from '../../../../modules/admin-finance/src/domain/transition';
 import { recordJobPayment } from '../../../../modules/admin-finance/src/flows/record-job-payment';
+import { getCardProcessor } from '../../../../modules/payment-review/src/domain/card-processors/registry';
 import { buildAdminFinancePorts, createJobRepository } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
 
@@ -129,6 +130,19 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
     setBusy(true);
     void (async () => {
       try {
+        if (useMethod === 'card' || useMethod === 'debit' || useMethod === 'credit') {
+          // The chosen processor (EXPO_PUBLIC_CARD_PROCESSOR) approves the charge first; 'none' records by hand.
+          const charge = await getCardProcessor().charge({
+            jobId: job.id,
+            amountCents,
+            currency: 'USD',
+            card: { number: cardNumber, cvc: cardCvc, zip: cardZip, holder: cardHolder || undefined },
+          });
+          if (charge.status !== 'approved') {
+            setError(charge.message);
+            return;
+          }
+        }
         const result = await recordJobPayment(
           role,
           session.organization.id,
@@ -165,7 +179,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         setBusy(false);
       }
     })();
-  }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated]);
+  }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated, cardNumber, cardCvc, cardZip, cardHolder]);
 
   const saveAdjustment = () => {
     const amt = parseCashCents(adjAmount);
