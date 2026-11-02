@@ -151,6 +151,16 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     setSelectedDay(day);
   };
 
+  // Address • phone • date on one line; TruncatedText opens the full line in a popup when cut off.
+  const assignedJobLine = (job: Job) =>
+    [
+      job.address ?? 'No address',
+      job.customerPhone,
+      job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled'),
+    ]
+      .filter(Boolean)
+      .join('  •  ');
+
   const renderJobRow = (job: Job) => (
     <Pressable key={job.id} onPress={() => handleOpenJob(job)}>
       <View style={styles.row}>
@@ -158,18 +168,10 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
         <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
         <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
         <View style={styles.rowBody}>
-          <Text style={styles.customer} numberOfLines={1}>{job.customerName ?? 'No customer'}</Text>
-          <Text style={styles.meta} numberOfLines={1}>
-            <Text onPress={() => job.address && copyToClipboard(job.address)}>{job.address ?? 'No address'}</Text>
-            {job.customerPhone ? (
-              <>
-                {'  •  '}
-                <Text onPress={() => copyToClipboard(job.customerPhone ?? '')}>{job.customerPhone}</Text>
-              </>
-            ) : null}
-            {'  •  '}
-            {job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled')}
-          </Text>
+          <TruncatedText style={styles.customer} popupTitle="Customer">{job.customerName ?? 'No customer'}</TruncatedText>
+          <TruncatedText style={styles.meta} popupTitle={job.customerName ?? 'Job'}>
+            {assignedJobLine(job)}
+          </TruncatedText>
         </View>
       </View>
     </Pressable>
