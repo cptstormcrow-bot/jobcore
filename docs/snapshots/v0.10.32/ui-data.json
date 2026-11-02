@@ -10433,12 +10433,13 @@
       "testIDs": [],
       "accessibilityLabels": [],
       "buttonLabels": [
+        "Reopen",
         "Add photo",
-        "Close out job",
+        "Close Out",
         "Remove"
       ],
       "components": {
-        "Text": 26,
+        "Text": 25,
         "Card": 4,
         "ScreenTitle": 2,
         "EmptyState": 2,
@@ -10479,7 +10480,7 @@
           ]
         }
       ],
-      "lineCount": 435,
+      "lineCount": 443,
       "titleInSource": "Close-out review",
       "elements": [
         {
@@ -10487,7 +10488,7 @@
           "label": "Close-out review",
           "placeholder": null,
           "variant": null,
-          "line": 133,
+          "line": 137,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10496,7 +10497,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 133,
+          "line": 137,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10505,7 +10506,16 @@
           "label": "Close-Out",
           "placeholder": null,
           "variant": null,
-          "line": 144,
+          "line": 148,
+          "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Reopen",
+          "placeholder": null,
+          "variant": null,
+          "line": 186,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10514,16 +10524,16 @@
           "label": "Add photo",
           "placeholder": null,
           "variant": null,
-          "line": 182,
+          "line": 191,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
         {
           "type": "button",
-          "label": "Close out job",
+          "label": "Close Out",
           "placeholder": null,
           "variant": null,
-          "line": 183,
+          "line": 192,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10532,7 +10542,7 @@
           "label": "Close-Out",
           "placeholder": null,
           "variant": null,
-          "line": 197,
+          "line": 206,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10541,7 +10551,7 @@
           "label": "Payouts",
           "placeholder": null,
           "variant": null,
-          "line": 211,
+          "line": 220,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10550,7 +10560,7 @@
           "label": "Tech payouts",
           "placeholder": null,
           "variant": null,
-          "line": 215,
+          "line": 224,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10559,7 +10569,7 @@
           "label": "Contractor payouts",
           "placeholder": null,
           "variant": null,
-          "line": 234,
+          "line": 242,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10568,7 +10578,7 @@
           "label": "Photos",
           "placeholder": null,
           "variant": null,
-          "line": 252,
+          "line": 260,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10577,7 +10587,7 @@
           "label": "Remove",
           "placeholder": null,
           "variant": null,
-          "line": 262,
+          "line": 270,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10586,7 +10596,7 @@
           "label": "Quality notes",
           "placeholder": null,
           "variant": null,
-          "line": 274,
+          "line": 282,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10595,7 +10605,7 @@
           "label": null,
           "placeholder": "Describe the completed work, any issues, or follow-up needed...",
           "variant": null,
-          "line": 275,
+          "line": 283,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10604,7 +10614,7 @@
           "label": "Trail",
           "placeholder": null,
           "variant": null,
-          "line": 289,
+          "line": 297,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10613,7 +10623,7 @@
           "label": "Close-out review",
           "placeholder": null,
           "variant": null,
-          "line": 320,
+          "line": 328,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         },
@@ -10622,7 +10632,7 @@
           "label": "No job selected.",
           "placeholder": null,
           "variant": null,
-          "line": 320,
+          "line": 328,
           "via": "modules/admin-finance/src/screens/CloseOutReviewScreen.tsx",
           "dynamic": false
         }
@@ -10651,8 +10661,9 @@
         "testIDs": [],
         "accessibilityLabels": [],
         "buttonLabels": [
+          "Reopen",
           "Add photo",
-          "Close out job",
+          "Close Out",
           "Remove"
         ]
       }
@@ -28930,7 +28941,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -28938,7 +28949,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28947,7 +28958,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28956,7 +28967,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28965,7 +28976,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -28974,7 +28985,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30131,29 +30142,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -30216,7 +30209,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -30225,25 +30218,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30252,7 +30236,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30261,7 +30245,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30270,7 +30254,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30279,7 +30263,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30288,7 +30290,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30297,7 +30299,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30306,7 +30308,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -30315,7 +30317,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30324,7 +30326,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30333,7 +30335,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30342,7 +30344,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -30576,7 +30578,7 @@
       "purpose": "",
       "missing": "",
       "flowRank": 33,
-      "captureStatus": "none",
+      "captureStatus": "ok",
       "anchor": "screen-job-region-arrive",
       "identifiers": {
         "file": "apps/mobile/app/job/[jobId].tsx",
@@ -30943,7 +30945,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -30951,7 +30953,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30960,7 +30962,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30969,7 +30971,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30978,7 +30980,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -30987,7 +30989,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32144,29 +32146,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -32229,7 +32213,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -32238,25 +32222,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32265,7 +32240,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32274,7 +32249,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32283,7 +32258,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32292,7 +32267,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32301,7 +32294,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32310,7 +32303,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32319,7 +32312,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -32328,7 +32321,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32337,7 +32330,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32346,7 +32339,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32355,7 +32348,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -32956,7 +32949,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -32964,7 +32957,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32973,7 +32966,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32982,7 +32975,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -32991,7 +32984,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -33000,7 +32993,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -34157,29 +34150,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -34242,7 +34217,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -34251,25 +34226,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34278,7 +34244,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34287,7 +34253,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34296,7 +34262,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34305,7 +34271,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34314,7 +34298,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34323,7 +34307,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34332,7 +34316,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -34341,7 +34325,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34350,7 +34334,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34359,7 +34343,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34368,7 +34352,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -34602,7 +34586,7 @@
       "purpose": "",
       "missing": "",
       "flowRank": 34,
-      "captureStatus": "none",
+      "captureStatus": "ok",
       "anchor": "screen-job-region-complete",
       "identifiers": {
         "file": "apps/mobile/app/job/[jobId].tsx",
@@ -34969,7 +34953,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -34977,7 +34961,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -34986,7 +34970,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -34995,7 +34979,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -35004,7 +34988,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -35013,7 +34997,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -36170,29 +36154,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -36255,7 +36221,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -36264,25 +36230,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36291,7 +36248,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36300,7 +36257,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36309,7 +36266,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36318,7 +36275,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36327,7 +36302,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36336,7 +36311,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36345,7 +36320,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -36354,7 +36329,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36363,7 +36338,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36372,7 +36347,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36381,7 +36356,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -36615,7 +36590,7 @@
       "purpose": "",
       "missing": "",
       "flowRank": 35,
-      "captureStatus": "none",
+      "captureStatus": "ok",
       "anchor": "screen-job-region-contact",
       "identifiers": {
         "file": "apps/mobile/app/job/[jobId].tsx",
@@ -37265,7 +37240,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -37273,7 +37248,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37282,7 +37257,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37291,7 +37266,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37300,7 +37275,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -37309,7 +37284,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -38466,29 +38441,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -38551,7 +38508,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -38560,25 +38517,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38587,7 +38535,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38596,7 +38544,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38605,7 +38553,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38614,7 +38562,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38623,7 +38589,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38632,7 +38598,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38641,7 +38607,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -38650,7 +38616,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38659,7 +38625,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38668,7 +38634,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38677,7 +38643,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -38954,7 +38920,7 @@
       "components": {
         "Text": 1,
         "Card": 1,
-        "EmptyState": 2,
+        "EmptyState": 1,
         "LoadingState": 1
       },
       "pickers": [],
@@ -38976,6 +38942,12 @@
           ]
         },
         {
+          "src": "./JobBeforePhotoCard",
+          "names": [
+            "JobBeforePhotoCard"
+          ]
+        },
+        {
           "src": "../lib/admin-finance-repos",
           "names": [
             "createCloseOutPhotosRepository"
@@ -38988,15 +38960,51 @@
           ]
         }
       ],
-      "lineCount": 87,
+      "lineCount": 98,
       "titleInSource": "Could not load photos",
       "elements": [
+        {
+          "type": "button",
+          "label": "Retake",
+          "placeholder": null,
+          "variant": null,
+          "line": 110,
+          "via": "apps/mobile/src/components/JobBeforePhotoCard.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Remove",
+          "placeholder": null,
+          "variant": null,
+          "line": 111,
+          "via": "apps/mobile/src/components/JobBeforePhotoCard.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Take Photo",
+          "placeholder": null,
+          "variant": null,
+          "line": 116,
+          "via": "apps/mobile/src/components/JobBeforePhotoCard.tsx",
+          "dynamic": false
+        },
+        {
+          "type": "button",
+          "label": "Choose Photo",
+          "placeholder": null,
+          "variant": null,
+          "line": 117,
+          "via": "apps/mobile/src/components/JobBeforePhotoCard.tsx",
+          "dynamic": false
+        },
         {
           "type": "empty",
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -39005,18 +39013,9 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         }
       ],
       "chrome": {
@@ -39395,7 +39394,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -39403,7 +39402,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -39412,7 +39411,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -39421,7 +39420,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -39430,7 +39429,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -39439,7 +39438,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -40596,29 +40595,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -40681,7 +40662,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -40690,25 +40671,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40717,7 +40689,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40726,7 +40698,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40735,7 +40707,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -40744,7 +40716,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -40753,7 +40743,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -40762,7 +40752,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -40771,7 +40761,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -40780,7 +40770,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40789,7 +40779,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40798,7 +40788,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -40807,7 +40797,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -41905,7 +41895,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -41913,7 +41903,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -41922,7 +41912,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -41931,7 +41921,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -41940,7 +41930,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -41949,7 +41939,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -43106,29 +43096,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -43191,7 +43163,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -43200,25 +43172,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43227,7 +43190,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43236,7 +43199,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43245,7 +43208,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -43254,7 +43217,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -43263,7 +43244,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -43272,7 +43253,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -43281,7 +43262,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -43290,7 +43271,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43299,7 +43280,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43308,7 +43289,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43317,7 +43298,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -43914,7 +43895,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -43922,7 +43903,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -43931,7 +43912,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -43940,7 +43921,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -43949,7 +43930,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -43958,7 +43939,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -45115,29 +45096,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -45200,7 +45163,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -45209,25 +45172,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45236,7 +45190,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45245,7 +45199,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45254,7 +45208,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -45263,7 +45217,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -45272,7 +45244,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -45281,7 +45253,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -45290,7 +45262,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -45299,7 +45271,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45308,7 +45280,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45317,7 +45289,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45326,7 +45298,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -45923,7 +45895,7 @@
           ]
         }
       ],
-      "lineCount": 1637,
+      "lineCount": 1631,
       "titleInSource": "Job unavailable",
       "elements": [
         {
@@ -45931,7 +45903,7 @@
           "label": "Job unavailable",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -45940,7 +45912,7 @@
           "label": "This job could not be found.",
           "placeholder": null,
           "variant": null,
-          "line": 1266,
+          "line": 1260,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -45949,7 +45921,7 @@
           "label": "Back",
           "placeholder": null,
           "variant": null,
-          "line": 1267,
+          "line": 1261,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -45958,7 +45930,7 @@
           "label": "Cancel",
           "placeholder": null,
           "variant": null,
-          "line": 1305,
+          "line": 1299,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -45967,7 +45939,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 1306,
+          "line": 1300,
           "via": "apps/mobile/app/job/[jobId].tsx",
           "dynamic": false
         },
@@ -47124,29 +47096,11 @@
           "dynamic": false
         },
         {
-          "type": "empty",
-          "label": "Close-out",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
-          "type": "empty",
-          "label": "Close-out opens once the job is completed.",
-          "placeholder": null,
-          "variant": null,
-          "line": 335,
-          "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
-          "dynamic": false
-        },
-        {
           "type": "button",
           "label": "Compensation Policy",
           "placeholder": null,
           "variant": null,
-          "line": 341,
+          "line": 345,
           "via": "apps/mobile/src/components/JobCloseOutRegion.tsx",
           "dynamic": false
         },
@@ -47209,7 +47163,7 @@
           "label": "Could not load photos",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": false
         },
@@ -47218,25 +47172,16 @@
           "label": "{error}",
           "placeholder": null,
           "variant": null,
-          "line": 57,
+          "line": 66,
           "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
           "dynamic": true
-        },
-        {
-          "type": "empty",
-          "label": "No photos for this job yet",
-          "placeholder": null,
-          "variant": null,
-          "line": 59,
-          "via": "apps/mobile/src/components/JobPhotosRegion.tsx",
-          "dynamic": false
         },
         {
           "type": "empty",
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47245,7 +47190,7 @@
           "label": "Loading...",
           "placeholder": null,
           "variant": null,
-          "line": 201,
+          "line": 240,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47254,7 +47199,7 @@
           "label": "Payments",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47263,7 +47208,7 @@
           "label": "{error ?? 'No estimate yet. Payments open}",
           "placeholder": null,
           "variant": null,
-          "line": 204,
+          "line": 243,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -47272,7 +47217,25 @@
           "label": "{PAYMENT_METHOD_LABELS[m]}",
           "placeholder": null,
           "variant": null,
-          "line": 254,
+          "line": 294,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkFront ? '✓ Check front' : 'Check fr}",
+          "placeholder": null,
+          "variant": null,
+          "line": 320,
+          "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
+          "dynamic": true
+        },
+        {
+          "type": "button",
+          "label": "{checkBack ? '✓ Check back' : 'Check back}",
+          "placeholder": null,
+          "variant": null,
+          "line": 326,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -47281,7 +47244,7 @@
           "label": "{label}",
           "placeholder": "{label}",
           "variant": null,
-          "line": 287,
+          "line": 348,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -47290,7 +47253,7 @@
           "label": "Total Paid",
           "placeholder": "{(balance / 100).toFixed(2)}",
           "variant": null,
-          "line": 308,
+          "line": 369,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -47299,7 +47262,7 @@
           "label": "{`Paid ${money(cashReceived.trim() !== ''}",
           "placeholder": null,
           "variant": null,
-          "line": 332,
+          "line": 393,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": true
         },
@@ -47308,7 +47271,7 @@
           "label": "Adjust price",
           "placeholder": null,
           "variant": null,
-          "line": 346,
+          "line": 407,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47317,7 +47280,7 @@
           "label": "Description",
           "placeholder": "Description",
           "variant": null,
-          "line": 349,
+          "line": 410,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47326,7 +47289,7 @@
           "label": "Amount",
           "placeholder": "Amount ($)",
           "variant": null,
-          "line": 357,
+          "line": 418,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },
@@ -47335,7 +47298,7 @@
           "label": "Save",
           "placeholder": null,
           "variant": null,
-          "line": 366,
+          "line": 427,
           "via": "apps/mobile/src/components/JobPaymentRegion.tsx",
           "dynamic": false
         },

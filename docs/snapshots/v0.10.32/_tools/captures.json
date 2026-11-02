@@ -588,7 +588,8 @@
         }
       ],
       "waitFor": "Arrive",
-      "skip": "Opening this stage taps a button that changes the live job, so it was not captured"
+      "skip": "Opening this stage taps a button that changes the live job, so it was not captured",
+      "testJob": { "steps": [{ "pickFirstJob": true }, { "click": "Menu" }, { "click": "Start" }], "waitFor": "#0076" }
     },
     "job-region-assign": {
       "role": "af",
@@ -612,7 +613,8 @@
         }
       ],
       "waitFor": "Complete",
-      "skip": "Opening this stage taps a button that changes the live job, so it was not captured"
+      "skip": "Opening this stage taps a button that changes the live job, so it was not captured",
+      "testJob": { "steps": [{ "pickFirstJob": true }, { "click": "Menu" }, { "click": "Complete" }, { "back": true }], "waitFor": "#0077" }
     },
     "job-region-contact": {
       "role": "af",
@@ -626,7 +628,8 @@
         }
       ],
       "waitFor": "Contact",
-      "skip": "Opening this stage taps a button that changes the live job, so it was not captured"
+      "skip": "Opening this stage taps a button that changes the live job, so it was not captured",
+      "testJob": { "steps": [{ "pickFirstJob": true }, { "click": "Menu" }, { "click": "Contact" }], "waitFor": "#0075" }
     },
     "job-region-evisit": {
       "role": "af",

@@ -22,5 +22,14 @@
   },
   "af-jobEstimate--search": {
     "status": "ok"
+  },
+  "job-region-complete": {
+    "status": "ok"
+  },
+  "job-region-contact": {
+    "status": "ok"
+  },
+  "job-region-arrive": {
+    "status": "ok"
   }
 }

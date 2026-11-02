@@ -5,7 +5,9 @@
 // reuses that profile headlessly. A page that lands on /sign-in means the profile has no session.
 //
 // Step {click:'^Text'} matches a label prefix (list rows carry long aria-labels).
-// Flags: --only k1,k2   --role af   --log <path>   --profiles <dir>
+// Step {back:true} goes back one history entry (a stage that pushes its own route).
+// A recipe's testJob block replaces its skip only when --job <id> names a test job.
+// Flags: --only k1,k2   --role af   --job <id>   --log <path>   --profiles <dir>
 // stdout: only the final summary line. Exit 0 (even with failures), 2 on config/launch errors.
 import fs from 'fs';
 import os from 'os';
@@ -123,6 +125,7 @@ async function captureOne(page, key, scr, role) {
   for (const s of steps) {
     if (s.click) await clickText(page, s.click);
     else if (s.scrollTo) await scrollToText(page, s.scrollTo);
+    else if (s.back) { await page.evaluate(() => history.back()); await page.waitForNetworkIdle({ idleTime: 500 }).catch(() => {}); await sleep(1500); }
   }
   if (scr.waitFor) {
     try {
@@ -138,8 +141,10 @@ if (noWait.length) { console.error('recipes missing waitFor: ' + noWait.join(', 
 
 // group screens by role
 const groups = {};
-for (const [key, scr] of Object.entries(cfg.screens)) {
+for (const [key, raw] of Object.entries(cfg.screens)) {
   if (only && !only.includes(key)) continue;
+  // a skipped stage that writes to the job runs only with an explicit --job (a test job)
+  const scr = raw.testJob && flag('job') ? { role: raw.role, url: raw.url, ...raw.testJob } : raw;
   if (onlyRole && scr.role !== onlyRole) continue;
   if (scr.skip) { manifest[key] = { status: 'skipped', reason: typeof scr.skip === 'string' ? scr.skip : 'skip' }; continue; }
   (groups[scr.role] ||= []).push([key, scr]);
