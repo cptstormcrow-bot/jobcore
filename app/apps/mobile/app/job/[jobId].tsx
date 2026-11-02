@@ -1272,6 +1272,9 @@ export default function JobDrilldownScreen() {
   if (isCreate) {
     // Same slider menu as an open job; only Job is live until the job is saved.
     const createMenuItems: MenuItem[] = [
+      // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
+      // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
+      { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
       { id: 'plan', label: 'Job', onPress: () => {}, isActive: true },
       ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Start', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
         .map((label) => ({ id: `create-${label.toLowerCase()}`, label, onPress: () => {}, disabled: true })),
@@ -1332,6 +1335,9 @@ export default function JobDrilldownScreen() {
     null;
 
   const jobDetailMenuItems: MenuItem[] = [
+    // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
+    // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
+    { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
     { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },

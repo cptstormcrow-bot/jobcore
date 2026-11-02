@@ -195,6 +195,9 @@ ${loaded.reason}` : 'This job could not be loaded.'}
   }
 
   const menuItems: MenuItem[] = [
+    // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
+    // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
+    { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
     { id: 'plan', label: 'Job', onPress: () => go('plan') },
     { id: 'evisit', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => go('jobEstimate') },
