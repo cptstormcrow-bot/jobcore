@@ -210,7 +210,7 @@ export function AppChrome({
   const wrapTitle = (node: React.ReactElement, fill = false): React.ReactElement =>
     onTitlePress ? (
       <Pressable
-        style={fill ? { flex: 1 } : undefined}
+        style={fill ? { flex: 1, justifyContent: 'center' } : undefined}
         accessibilityRole="button"
         accessibilityLabel="Go to overview"
         onPress={() => {
@@ -280,7 +280,7 @@ export function AppChrome({
           <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
         {(titleBar || titleContent) && wrapTitle(
-          <View style={[styles.titleBar, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }]}>
+          <View style={[styles.titleBar, onTitlePress && styles.titleBarInPress, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }]}>
             {titleContent ? titleContent : titleBar ? (<>
             <TruncatedText
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
@@ -428,6 +428,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
+    columnGap: spacing.md,
   },
   iconButton: {
     paddingHorizontal: 2,
@@ -450,6 +451,12 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     marginHorizontal: 0,
     alignItems: 'center',
+  },
+  // Inside the tappable wrapper the wrapper takes the row width, so the pill must not also flex: on
+  // Android a flex child of an auto-height Pressable collapses and clips the second title line.
+  titleBarInPress: {
+    flex: 0,
+    flexGrow: 0,
   },
   titleBarTitle: {
     fontFamily: typography.fontFamily.headingBold,
