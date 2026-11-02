@@ -53,7 +53,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [workTotal, setWorkTotal] = useState<number | null>(null);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
   const [cardHolder, setCardHolder] = useState('');
-  const [cardLast4, setCardLast4] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
   const [cardRef, setCardRef] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardZip, setCardZip] = useState('');
@@ -154,7 +154,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         }
         await load();
         setCardHolder('');
-        setCardLast4('');
+        setCardNumber('');
         setCardRef('');
         setCardCvc('');
         setCardZip('');
@@ -212,6 +212,17 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const cancelled = job.status === 'cancelled';
   const enabled = isCash ? !cancelled && !busy : canConfirm && allowed && !busy;
   const cashCents = parseCashCents(cashReceived);
+  const isCard = method === 'card' || method === 'debit' || method === 'credit';
+  // Card details are checked here and never saved: they are cleared once the payment is recorded.
+  const cardProblem = !isCard
+    ? null
+    : !luhnValid(cardNumber)
+      ? 'Enter a valid card number.'
+      : !/^\d{3,4}$/.test(cardCvc)
+        ? 'Enter the 3 or 4 digit CVC.'
+        : !/^\d{5}$/.test(cardZip)
+          ? 'Enter the 5 digit zip code.'
+          : null;
   const cashInvalid =
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
   // The Paid timeline dot goes green on job status or a settled balance, so the badge does both too.
@@ -263,12 +274,12 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         {method === 'check' || method === 'cash' ? (
           <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Tech manages {method}</Text>
         ) : null}
-        {method === 'card' || method === 'debit' || method === 'credit' ? (
+        {isCard ? (
           <View style={{ gap: spacing.xs }}>
             <Text>Enter card details</Text>
             {([
               ['Cardholder', cardHolder, setCardHolder, null],
-              ['Last 4 digits', cardLast4, setCardLast4, 4],
+              ['Card number', cardNumber, setCardNumber, 19],
               ['CVC', cardCvc, setCardCvc, 4],
               ['Zip code', cardZip, setCardZip, 5],
               ['Reference', cardRef, setCardRef, null],
@@ -279,12 +290,16 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
                 onChangeText={(t) => set(digits ? t.replace(/\D/g, '').slice(0, digits) : t)}
                 keyboardType={digits ? 'number-pad' : 'default'}
                 secureTextEntry={label === 'CVC'}
+                autoComplete="off"
                 placeholder={label}
                 placeholderTextColor={colors.textMuted}
                 accessibilityLabel={label}
                 style={inputStyle}
               />
             ))}
+            {cardProblem && (cardNumber || cardCvc || cardZip) ? (
+              <Text style={{ color: colors.danger }}>{cardProblem}</Text>
+            ) : null}
           </View>
         ) : null}
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm }}>
@@ -316,7 +331,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           ) : (
             <PayrollButton
               label={`Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
-              disabled={!enabled || balance <= 0 || cashInvalid}
+              disabled={!enabled || balance <= 0 || cashInvalid || cardProblem !== null}
               onPress={() => record(method)}
             />
           )}
@@ -360,3 +375,22 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
 }
 
 export default JobPaymentRegion;
+
+/** Luhn checksum: catches mistyped card numbers (13-19 digits). It does not approve the card. */
+function luhnValid(num: string): boolean {
+  if (!/^\d{13,19}$/.test(num)) {
+    return false;
+  }
+  let sum = 0;
+  for (let i = 0; i < num.length; i++) {
+    let d = Number(num[num.length - 1 - i]);
+    if (i % 2 === 1) {
+      d *= 2;
+      if (d > 9) {
+        d -= 9;
+      }
+    }
+    sum += d;
+  }
+  return sum % 10 === 0;
+}
