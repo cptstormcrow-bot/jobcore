@@ -204,8 +204,28 @@ function postable(techs: JobPayTech[], jobTotalCents = 100000) {
   return postableJobPayLines(computeJobPayLines({ jobTotalCents, policy, techs }));
 }
 
-test('postable: hourly dropped', () => {
-  assert.deepEqual(postable([tech({ hourlyRateCents: 2500, hoursWorked: 2 })]), []);
+test('postable: employee hourly kept as hourly (#0018)', () => {
+  assert.deepEqual(postable([tech({ hourlyRateCents: 2500, hoursWorked: 2 })]), [
+    { techId: 't1', amountCents: 5000, basis: 'hourly' },
+  ]);
+});
+
+test('travel: paid-travel employee gets a travel line after the normal line', () => {
+  const lines = withLabor([tech({ hourlyRateCents: 2500, hoursWorked: 2, paidTravel: true, travelHours: 1.5 })]);
+  assert.deepEqual(lines.map((l) => `${l.basis}:${l.amountCents}`), ['hourly:5000', 'travel:3750']);
+  assert.deepEqual(postableJobPayLines(lines).map((r) => r.basis), ['hourly', 'travel']);
+});
+
+test('travel: no line without paid travel, without hours, or for a contractor', () => {
+  const basesOf = (t: JobPayTech) => withLabor([t]).map((l) => l.basis);
+  assert.deepEqual(basesOf(tech({ hourlyRateCents: 2500, travelHours: 1 })), ['hourly']);
+  assert.deepEqual(basesOf(tech({ hourlyRateCents: 2500, paidTravel: true, travelHours: 0 })), ['hourly']);
+  assert.deepEqual(basesOf(tech({ workerType: 'contractor', hourlyRateCents: 2500, paidTravel: true, travelHours: 1 })), ['hourly']);
+});
+
+test('travel: prem tech with no personal rate uses the policy rate', () => {
+  const lines = withLabor([tech({ techRole: 'prem', devPayMode: null, paidTravel: true, travelHours: 1 })]);
+  assert.deepEqual(lines.map((l) => `${l.basis}:${l.amountCents}`), ['prem-bonus:15000', 'travel:2000']);
 });
 
 test('postable: contractor dropped', () => {
@@ -244,8 +264,8 @@ test('postable: mixed list preserves order', () => {
       24000,
     ),
   );
-  assert.deepEqual(rows.map((r) => r.techId), ['a', 'c']);
-  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'commission']);
+  assert.deepEqual(rows.map((r) => r.techId), ['a', 'b', 'c']);
+  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'hourly', 'commission']);
 });
 
 test('postable: empty in gives empty out', () => {
@@ -333,7 +353,7 @@ test('postable: prem plus on-top commission pair yields prem_bonus then commissi
   ]);
 });
 
-test('postable: zero commission, contractor commission and hourly are dropped', () => {
+test('postable: zero commission and contractor commission are dropped', () => {
   assert.deepEqual(
     postableJobPayLines(withLabor([tech({ techRole: 'service', ...comm })], 0)),
     [],
@@ -352,5 +372,4 @@ test('postable: zero commission, contractor commission and hourly are dropped', 
     ]),
     [],
   );
-  assert.deepEqual(postableJobPayLines(withLabor([tech({ hourlyRateCents: 2500, hoursWorked: 2 })])), []);
 });

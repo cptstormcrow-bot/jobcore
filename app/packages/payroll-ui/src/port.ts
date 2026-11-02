@@ -109,6 +109,22 @@ export interface TeamWeek {
   status: PayrollEntryStatus;
 }
 
+/** One close-out pay line posted to me for a job (hourly, travel, bonus or commission). */
+export interface PayrollJobPayLine {
+  /** Line id. */
+  id: string;
+  /** Job number, if known. */
+  jobNumber: number | null;
+  /** Pay basis: hourly | travel | prem_bonus | commission | dev_flat. */
+  basis: string;
+  /** Amount in cents. */
+  amountCents: number;
+  /** pending = posts to the next payroll run; included = already in a run. */
+  status: 'pending' | 'included';
+  /** When the job was closed out and the line posted. */
+  createdAt: string;
+}
+
 /** Supported export formats. */
 export type PayrollExportFormat = 'generic_csv' | 'qbo_journal_csv' | 'iif_journal' | 'iif_timeact';
 
@@ -130,6 +146,8 @@ export interface PayrollSelfPort {
   getSettings(): Promise<PayrollSettings>;
   /** Computed run lines for my entries in a range. */
   listRunLines(range: PayrollDateRange): Promise<wageEngine.RunLine[]>;
+  /** Close-out job pay posted to me in a range (#0018 → #0084). */
+  listMyJobPay?(range: PayrollDateRange): Promise<PayrollJobPayLine[]>;
   /** List my reimbursements. */
   listMyReimbursements(): Promise<PayrollReimbursement[]>;
   /** Submit a new reimbursement. */

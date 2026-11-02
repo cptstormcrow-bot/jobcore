@@ -343,6 +343,15 @@ export function createJobRepository(): JobRepository {
       await patchReadCache('job.update_status', { jobId, status: restored });
     },
 
+    async reopen(jobId: string): Promise<void> {
+      requireOnline('reopen a closed-out job');
+      const { error } = await supabase.rpc('reopen_closed_job', { p_job_id: jobId });
+      if (error) {
+        throw new Error(`reopen failed: ${error.message}`);
+      }
+      await patchReadCache('job.update_status', { jobId, status: 'paid' });
+    },
+
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), ...patch } as never as Job;
@@ -940,7 +949,7 @@ export function createJobPayoutLineRepository(): JobPayoutLineRepository {
         .eq('job_id', jobId)
         .neq('status', 'void');
       if (error) throw new Error(`list job payout lines failed: ${error.message}`);
-      return ((data ?? []) as Array<{ user_id: string; amount_cents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission'; status: 'pending' | 'included' }>).map((r) => ({
+      return ((data ?? []) as Array<{ user_id: string; amount_cents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' | 'hourly' | 'travel'; status: 'pending' | 'included' }>).map((r) => ({
         techId: r.user_id,
         amountCents: r.amount_cents,
         basis: r.basis,
@@ -3302,6 +3311,24 @@ export function createTimeEntryRepository(): TimeEntryRepository {
           .eq('reason_code', 'job_labor')
           .not('ended_at', 'is', null);
         if (error) throw new Error(`hoursByTechForJob failed: ${error.message}`);
+        const out: Record<string, number> = {};
+        for (const r of (data ?? []) as Array<{ tech_id: string; started_at: string; ended_at: string }>) {
+          const ms = Date.parse(r.ended_at) - Date.parse(r.started_at);
+          if (Number.isFinite(ms) && ms > 0) out[r.tech_id] = (out[r.tech_id] ?? 0) + ms / 3600000;
+        }
+        return out;
+      });
+    },
+
+    async travelHoursByTechForJob(jobId: string): Promise<Record<string, number>> {
+      return readCached('af.timeEntries.travelHoursByTechForJob', { jobId }, async () => {
+        const { data, error } = await supabase
+          .from('job_time_segments')
+          .select('tech_id, started_at, ended_at')
+          .eq('job_id', jobId)
+          .eq('reason_code', 'travel')
+          .not('ended_at', 'is', null);
+        if (error) throw new Error(`travelHoursByTechForJob failed: ${error.message}`);
         const out: Record<string, number> = {};
         for (const r of (data ?? []) as Array<{ tech_id: string; started_at: string; ended_at: string }>) {
           const ms = Date.parse(r.ended_at) - Date.parse(r.started_at);

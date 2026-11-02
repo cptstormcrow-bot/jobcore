@@ -3,10 +3,10 @@ import { Platform, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import type { Ctx, Job } from '@jobcore/core';
 import { useRouter } from 'expo-router';
-import { EmptyState, PayrollButton, colors, spacing } from '@jobcore/ui';
+import { PayrollButton, colors, spacing } from '@jobcore/ui';
 import { CloseOutReviewScreen } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
 import type { CloseOutPhoto } from '../../../../modules/admin-finance/src/screens/CloseOutReviewScreen';
-import { awaitingCloseOut } from '../../../../modules/admin-finance/src/domain/closeout';
+import { isClosedOut } from '../../../../modules/admin-finance/src/domain/closeout';
 import { settledTotalCents, invoiceTotalCents, balanceCents } from '../../../../modules/admin-finance/src/domain/payments';
 import { computeTotals } from '../../../../modules/admin-finance/src/domain/estimate-layout';
 import type { JobTimelineItem } from '../../../../modules/admin-finance/src/domain/job-timeline';
@@ -34,13 +34,12 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<JobTimelineItem[]>([]);
   const [payment, setPayment] = useState<{ paid: boolean; amountCents: number } | null>(null);
-  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none'; note?: string; techId?: string; status?: 'pending' | 'included' };
+  type TechPayoutLine = { techName: string; amount: number; basis: 'hourly' | 'travel' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none'; note?: string; techId?: string; status?: 'pending' | 'included' };
   type ContractorPayoutLine = { contractorName: string; amount: number; basis?: TechPayoutLine['basis']; note?: string; techId?: string };
   const [techPayouts, setTechPayouts] = useState<TechPayoutLine[]>([]);
   const [contractorPayouts, setContractorPayouts] = useState<ContractorPayoutLine[]>([]);
   const [contractorStored, setContractorStored] = useState(false);
-  const awaiting = awaitingCloseOut(job);
-  const isClosedJob = job.status === 'closed';
+  const isClosedJob = isClosedOut(job);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,13 +95,14 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
     }
     let cancelled = false;
     const orgId = session.organization.id;
-    const isClosed = job.status === 'closed';
+    const isClosed = isClosedOut(job);
     void (async () => {
       try {
-        const [policy, assignments, hours, profiles, estimate, commissions, stored, storedLines] = await Promise.all([
+        const [policy, assignments, hours, travelHours, profiles, estimate, commissions, stored, storedLines] = await Promise.all([
           ports.compensationPolicy.getForOrganization(orgId),
           ports.jobAssignments.listForJob(job.id),
           ports.timeEntries.hoursByTechForJob(job.id),
+          ports.timeEntries.travelHoursByTechForJob(job.id),
           ports.employees.listEmployees(orgId),
           ports.estimates.getForJob(job.id),
           isClosed ? ports.commissions.listForOrganization(orgId) : Promise.resolve([]),
@@ -119,7 +119,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
         let contractorLines: ContractorPayoutLine[] = [];
         if (isClosed && storedLines.length > 0) {
           // What close-out actually posted (job_payout_lines): shown as stored, never recomputed.
-          const basisOf = { dev_flat: 'dev-flat', prem_bonus: 'prem-bonus', commission: 'commission' } as const;
+          const basisOf = { dev_flat: 'dev-flat', prem_bonus: 'prem-bonus', commission: 'commission', hourly: 'hourly', travel: 'travel' } as const;
           employeeLines = storedLines.map((row) => ({
             techName: nameOf(row.techId),
             amount: centsToDollars(row.amountCents),
@@ -153,6 +153,8 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
               devPayMode: p?.devPayMode ?? null,
               hourlyRateCents: p?.defaultHourlyRateCents ?? null,
               hoursWorked: hours[id] ?? 0,
+              paidTravel: p?.paidTravel === true,
+              travelHours: travelHours[id] ?? 0,
               commissionEnabled: p?.commissionEnabled === true,
               commissionPercent: p?.commissionPercent ?? null,
             };
@@ -194,9 +196,6 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
   }, [job.id, job.status, ports, session]);
 
   useEffect(() => {
-    if (!awaiting) {
-      return undefined;
-    }
     let cancelled = false;
     Promise.all([ports.closeOutPhotos.listForJob(job.id), ports.closeOutNotes.getForJob(job.id)]).then(
       ([loadedPhotos, loadedNotes]) => {
@@ -209,7 +208,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
     return () => {
       cancelled = true;
     };
-  }, [awaiting, job.id, ports.closeOutPhotos, ports.closeOutNotes]);
+  }, [job.id, ports.closeOutPhotos, ports.closeOutNotes]);
 
   // Library picker (not camera): works on web too. Lives here, not in the module.
   const handleAddPhoto = useCallback(async () => {
@@ -301,13 +300,13 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           }
           const employeePostable = postableJobPayLines(
             techPayouts
-              .filter((t) => t.techId && (t.basis === 'prem-bonus' || t.basis === 'commission'))
+              .filter((t) => t.techId && t.basis !== 'dev-flat' && t.basis !== 'none')
               .map((t) => ({
                 techId: t.techId as string,
                 name: t.techName,
                 workerType: 'employee' as const,
                 techRole: null,
-                basis: t.basis as 'prem-bonus' | 'commission',
+                basis: t.basis as Exclude<typeof t.basis, 'dev-flat'>,
                 amountCents: Math.round(t.amount * 100),
                 note: t.note ?? '',
               })),
@@ -329,11 +328,16 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
     [session, ctx, ports, onClosed, contractorPayouts, contractorStored, techPayouts],
   );
 
-  // After every hook: closeOutBlockers is empty for a non-awaiting job, so the
-  // screen would otherwise offer an enabled close button.
-  if (!awaiting && !isClosedJob) {
-    return <EmptyState title="Close-out" message="Close-out opens once the job is completed." />;
-  }
+  // Reopen (#0018): the job goes back to paid and its pending close-out pay lines are voided.
+  const handleReopen = useCallback(() => {
+    setPhotoError(null);
+    void ports.jobs
+      .reopen(job.id)
+      .then(() => onClosed({ ...job, status: 'paid' }))
+      .catch((err: unknown) => {
+        setPhotoError(`Could not reopen: ${err instanceof Error ? err.message : String(err)}`);
+      });
+  }, [ports.jobs, job, onClosed]);
 
   return (
     <>
@@ -351,6 +355,7 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       onRemovePhoto={handleRemovePhoto}
       onChangeNotes={handleChangeNotes}
       onCloseOut={handleCloseOut}
+      onReopen={job.status === 'closed' ? handleReopen : undefined}
       hoursLogged={job.totalLaborSeconds > 0 ? job.totalLaborSeconds / 3600 : undefined}
       techPayouts={techPayouts}
       contractorPayouts={contractorPayouts}

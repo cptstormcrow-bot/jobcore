@@ -132,6 +132,8 @@ export const TRANSITIONS: readonly Transition[] = [
     precondition: requirePaymentSettled,
   },
   { from: 'paid', to: 'closed', roles: OFFICE },
+  // Reopen (#0018): an office user undoes a close-out.
+  { from: 'closed', to: 'paid', roles: OFFICE },
   { from: 'closed', to: 'archived', roles: OFFICE },
 
   // ↘ declined — a rejected assignment goes back to the office for reassignment.

@@ -11,10 +11,13 @@
  *
  * An employee with commission enabled also gets one extra 'commission' line
  * after their normal line: commissionPercent of the job's labor total.
+ *
+ * An employee with paid travel gets one 'travel' line (travel hours x their
+ * hourly rate) after those, when they logged travel time on the job.
  */
 
 /** How a tech's pay on a job was derived. */
-export type PayBasis = 'hourly' | 'prem-bonus' | 'commission' | 'none';
+export type PayBasis = 'hourly' | 'travel' | 'prem-bonus' | 'commission' | 'none';
 
 /** Org-wide pay policy values used as fallbacks and prem-bonus inputs. */
 export interface JobPayPolicy {
@@ -37,6 +40,9 @@ export interface JobPayTech {
   /** Employee-only commission on labor; percent is a plain 0-100 number (5 = 5%). */
   commissionEnabled?: boolean;
   commissionPercent?: number | null;
+  /** Employee-only: travel hours on this job are paid at the hourly rate. */
+  paidTravel?: boolean;
+  travelHours?: number;
 }
 
 /** Computed pay for one tech on one job. */
@@ -63,20 +69,22 @@ function dollars(c: number): string {
   return centsToDollars(c).toFixed(2);
 }
 
-/** A pay line shaped for the post_job_payout_lines RPC (employee flat/prem pay only). */
+/** A pay line shaped for the post_job_payout_lines RPC (employee pay only). */
 export interface PostableJobPayLine {
   techId: string;
   amountCents: number;
-  basis: 'prem_bonus' | 'commission';
+  basis: 'prem_bonus' | 'commission' | 'hourly' | 'travel';
 }
 
-/** Keeps only positive EMPLOYEE prem-bonus and commission lines (incl. Dev commission), in input order. */
+/** Keeps only positive EMPLOYEE hourly, travel, prem-bonus and commission lines (incl. Dev commission), in input order. */
 export function postableJobPayLines(lines: JobPayLine[]): PostableJobPayLine[] {
   const out: PostableJobPayLine[] = [];
   for (const l of lines) {
     if (l.workerType !== 'employee' || !(l.amountCents > 0)) continue;
     if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
     else if (l.basis === 'commission') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'commission' });
+    else if (l.basis === 'hourly') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'hourly' });
+    else if (l.basis === 'travel') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'travel' });
   }
   return out;
 }
@@ -154,7 +162,7 @@ export function computeJobPayLines(input: {
 
   // Commission rides ON TOP of the normal line: one extra employee-only line after it.
   const laborCents = Math.max(Number.isFinite(laborTotalCents) ? laborTotalCents : 0, 0);
-  return normalLines.flatMap((line, i): JobPayLine[] => {
+  const withCommission = (line: JobPayLine, i: number): JobPayLine[] => {
     const tech = techs[i];
     if (!tech) return [line];
     // A Dev tech already paid by the Dev commission line never gets a second one.
@@ -184,6 +192,41 @@ export function computeJobPayLines(input: {
         basis: 'commission',
         amountCents: nonNegInt(Math.round((pct / 100) * laborCents)),
         note: `${pct}% of labor $${dollars(laborCents)}`,
+      },
+    ];
+  };
+
+  // Paid travel rides on top too: travel hours x the tech's rate (policy rate when none).
+  return normalLines.flatMap((line, i): JobPayLine[] => {
+    const out = withCommission(line, i);
+    const tech = techs[i];
+    const hours = tech?.travelHours;
+    if (
+      !tech ||
+      tech.workerType !== 'employee' ||
+      tech.paidTravel !== true ||
+      typeof hours !== 'number' ||
+      !Number.isFinite(hours) ||
+      !(hours > 0)
+    ) {
+      return out;
+    }
+    const personalRate = tech.hourlyRateCents;
+    const rate =
+      personalRate !== null && personalRate !== undefined && personalRate > 0
+        ? personalRate
+        : policy.hourlyRateCents;
+    if (!(rate > 0)) return out;
+    return [
+      ...out,
+      {
+        techId: tech.techId,
+        name: tech.name,
+        workerType: tech.workerType,
+        techRole: tech.techRole,
+        basis: 'travel',
+        amountCents: nonNegInt(hours * rate),
+        note: `${hours.toFixed(2)} h travel x $${dollars(rate)}/h`,
       },
     ];
   });

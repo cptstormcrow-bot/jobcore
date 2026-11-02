@@ -6,6 +6,7 @@ export type {
   PayrollSettings,
   ReimbursementStatus,
   PayrollReimbursement,
+  PayrollJobPayLine,
   NewReimbursementInput,
   TeamWeek,
   PayrollExportFormat,

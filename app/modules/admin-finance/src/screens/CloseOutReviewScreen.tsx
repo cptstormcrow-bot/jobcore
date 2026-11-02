@@ -7,7 +7,7 @@
  * the screen asks `domain/closeout.ts`'s `closeOutBlockers(job, ctx)` for
  * the job's blocker reasons (rendered verbatim — no rewording, wrapping, or
  * truncation, per that function's own doc comment) and renders a primary
- * "Close out job" button, disabled while any blockers remain. This screen
+ * "Close Out" button, disabled while any blockers remain. This screen
  * still never calls `applyTransition` and never imports `state-machine.ts`
  * directly (ESLint `no-restricted-imports`, P3-f AC-4) — pressing the button
  * fires the `onCloseOut` callback with the job, and the caller (which owns
@@ -47,10 +47,11 @@ export interface CloseOutPhoto {
   storagePath?: string;
 }
 
-type PayoutBasis = 'hourly' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none';
+type PayoutBasis = 'hourly' | 'travel' | 'commission' | 'prem-bonus' | 'dev-flat' | 'none';
 
 const PAYOUT_BASIS_LABELS: Record<PayoutBasis, string> = {
   hourly: 'Hourly',
+  travel: 'Travel',
   'prem-bonus': 'Prem bonus',
   'dev-flat': 'Flat rate',
   commission: 'Commission',
@@ -76,6 +77,8 @@ export interface CloseOutReviewScreenProps {
   onChangeNotes?: (notes: string) => void;
   /** Fired when the primary close action is pressed; disabled while blockers remain. */
   onCloseOut?: (job: Job) => void;
+  /** Closed-out job: shows a Reopen button that sends the job back to paid. */
+  onReopen?: () => void;
   /** Total hours logged to the job. */
   hoursLogged?: number;
   /** Payment summary line: paid = settled (amount paid), else balance still owed. Null/absent hides the line. */
@@ -114,6 +117,7 @@ export function CloseOutReviewScreen({
   onRemovePhoto,
   onChangeNotes,
   onCloseOut,
+  onReopen,
   hoursLogged,
   payment,
   techPayouts,
@@ -176,12 +180,17 @@ export function CloseOutReviewScreen({
         {embedded ? (
           <DefaultTabBar tabs={CLOSE_OUT_TABS} activeId={activeTab} onChange={setActiveTab} />
         ) : null}
-        {readOnly ? <Text style={styles.body}>Closed</Text> : null}
+        {readOnly ? (
+          <View style={styles.actionRow}>
+            <Text style={styles.body}>Closed out</Text>
+            {onReopen ? <PayrollButton label="Reopen" onPress={onReopen} /> : null}
+          </View>
+        ) : null}
         {!readOnly ? (
           <View style={styles.actionRow}>
             <PayrollButton label="Add photo" onPress={() => onAddPhoto?.()} />
             <PayrollButton
-              label="Close out job"
+              label="Close Out"
               onPress={() => onCloseOut?.(job)}
               disabled={blockers.length > 0}
             />
@@ -210,7 +219,7 @@ export function CloseOutReviewScreen({
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Payouts</Text>
           {(!techPayouts || techPayouts.length === 0) && (!contractorPayouts || contractorPayouts.length === 0) ? (
-            <Text style={styles.empty}>{readOnly ? 'No payouts were posted for this job. Hourly technicians are paid through timesheets.' : 'No payouts for this job yet.'}</Text>
+            <Text style={styles.empty}>{readOnly ? 'No payouts were posted for this job.' : 'No payouts for this job yet.'}</Text>
           ) : null}
           <Text style={styles.subTitle}>Tech payouts</Text>
           {!techPayouts || techPayouts.length === 0 ? (
@@ -221,8 +230,7 @@ export function CloseOutReviewScreen({
                 <Text style={payout.basis === 'none' ? styles.empty : styles.body}>
                   {payout.techName} ({payoutBasisLabel(payout.basis)}): ${payout.amount.toFixed(2)}
                 </Text>
-                {payout.basis === 'hourly' ? <Text style={styles.trailMeta}>paid via timesheet</Text> : null}
-                {payout.basis === 'prem-bonus' || payout.basis === 'commission' || payout.basis === 'dev-flat' ? (
+                {payout.basis !== 'none' ? (
                   <Text style={styles.trailMeta}>
                     {readOnly ? (payout.status === 'included' ? 'included in payroll' : 'posted - next payroll run') : 'posts to next payroll run'}
                   </Text>

@@ -230,6 +230,8 @@ export interface JobRepository {
   archive(jobId: string): Promise<void>;
   /** Restore an archived job to the status it had before. Online-only; owner/admin. */
   unarchive(jobId: string): Promise<void>;
+  /** Reopen a closed-out job: back to paid, pending close-out pay lines voided (RPC reopen_closed_job, 0117). Online-only; owner/admin. */
+  reopen(jobId: string): Promise<void>;
   /**
    * Third sanctioned status-write exception (alongside `create` and
    * `updateStatus`): atomically advances a job from `fromStatus` to `'paid'`,
@@ -557,6 +559,8 @@ export interface TimeEntryRepository {
   listForEmployee(profileId: string): Promise<TimeEntry[]>;
   /** Hours per tech id, summed from closed job_labor segments in job_time_segments for the job. */
   hoursByTechForJob(jobId: string): Promise<Record<string, number>>;
+  /** Hours per tech id, summed from closed travel segments in job_time_segments for the job (#0018). */
+  travelHoursByTechForJob(jobId: string): Promise<Record<string, number>>;
 }
 
 /**
@@ -692,9 +696,9 @@ export interface ContractorPayoutRepository {
 /** Posts employee flat/prem/commission pay lines via the post_job_payout_lines RPC (0104, widened by 0106) and reads the stored lines back. */
 export interface JobPayoutLineRepository {
   /** Returns the number the RPC reports as posted. */
-  postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' }[]): Promise<number>;
+  postForJob(jobId: string, rows: { techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' | 'hourly' | 'travel' }[]): Promise<number>;
   /** Stored, non-void lines of the job (what close-out posted). Uncached so a just-closed job reads fresh. */
-  listForJob(jobId: string): Promise<Array<{ techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission'; status: 'pending' | 'included' }>>;
+  listForJob(jobId: string): Promise<Array<{ techId: string; amountCents: number; basis: 'dev_flat' | 'prem_bonus' | 'commission' | 'hourly' | 'travel'; status: 'pending' | 'included' }>>;
   /** Non-void commission lines of the organization (feeds the Reports Commission Totals). Uncached. */
   listCommissionLinesForOrganization(organizationId: string): Promise<Array<{ jobId: string; techId: string; amountCents: number }>>;
 }

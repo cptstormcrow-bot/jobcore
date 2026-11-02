@@ -4,6 +4,7 @@ import { wageEngine } from '@jobcore/core';
 import { StepperPicker, colors, spacing } from '@jobcore/ui';
 import type {
   PayrollEntryStatus,
+  PayrollJobPayLine,
   PayrollSelfPort,
   PayrollSettings,
   PayrollTimeEntry,
@@ -21,6 +22,7 @@ interface Loaded {
   settings: PayrollSettings;
   entries: PayrollTimeEntry[];
   rates: wageEngine.RateChange[];
+  jobPay: PayrollJobPayLine[];
   weekStart: wageEngine.IsoDate;
   weekEnd: wageEngine.IsoDate;
 }
@@ -50,6 +52,14 @@ function weekStatus(entries: PayrollTimeEntry[]): PayrollEntryStatus {
   if (entries.some((e) => e.status === 'submitted')) return 'submitted';
   return 'approved';
 }
+
+const JOB_PAY_LABELS: Record<string, string> = {
+  hourly: 'Hourly',
+  travel: 'Travel',
+  prem_bonus: 'Prem bonus',
+  commission: 'Commission',
+  dev_flat: 'Flat rate',
+};
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -87,12 +97,13 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
         const ref = wageEngine.addDays(today, 7 * periodOffset);
         const weekStart = wageEngine.weekStartOf(ref, settings.payWeek);
         const weekEnd = wageEngine.weekEndOf(ref, settings.payWeek);
-        const [entries, rates] = await Promise.all([
+        const [entries, rates, jobPay] = await Promise.all([
           port.listEntries({ from: weekStart, to: weekEnd }),
           port.getRateHistory(userId),
+          port.listMyJobPay ? port.listMyJobPay({ from: weekStart, to: weekEnd }) : Promise.resolve([]),
         ]);
         if (cancelled) return;
-        setData({ settings, entries, rates, weekStart, weekEnd });
+        setData({ settings, entries, rates, jobPay, weekStart, weekEnd });
       } catch (e) {
         if (!cancelled) setError(errorText(e));
       }
@@ -147,7 +158,7 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
     body = <Text style={{ color: colors.danger }}>{`Couldn't load your pay period: ${error}`}</Text>;
   } else if (!data) {
     body = <ActivityIndicator />;
-  } else if (data.entries.length === 0) {
+  } else if (data.entries.length === 0 && data.jobPay.length === 0) {
     body = <Text style={{ textAlign: 'center' }}>No payroll for this week</Text>;
   } else {
     body = (
@@ -180,6 +191,28 @@ export function PayPeriodPanel({ port, userId, refreshKey }: PayPeriodPanelProps
             </View>
           </View>
         )}
+        {data.jobPay.length > 0 ? (
+          <View style={{ marginTop: spacing.md }}>
+            <Text style={{ fontWeight: '600', marginBottom: spacing.xs }}>Job pay from close-outs</Text>
+            {data.jobPay.map((l) => (
+              <View key={l.id} style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
+                <Text style={{ flex: 1 }} numberOfLines={1}>
+                  {`${l.jobNumber != null ? `Job #${l.jobNumber}` : 'Job'} ${JOB_PAY_LABELS[l.basis] ?? l.basis}`}
+                </Text>
+                <Text style={{ color: l.status === 'included' ? colors.success : colors.textMuted, marginRight: spacing.sm }}>
+                  {l.status === 'included' ? 'paid' : 'next run'}
+                </Text>
+                <Text>{formatDollars(l.amountCents)}</Text>
+              </View>
+            ))}
+            <View style={{ flexDirection: 'row', paddingVertical: spacing.xs }}>
+              <Text style={{ flex: 1, fontWeight: '600' }}>Job pay total</Text>
+              <Text style={{ fontWeight: '600' }}>
+                {formatDollars(data.jobPay.reduce((sum, l) => sum + l.amountCents, 0))}
+              </Text>
+            </View>
+          </View>
+        ) : null}
       </View>
     );
   }

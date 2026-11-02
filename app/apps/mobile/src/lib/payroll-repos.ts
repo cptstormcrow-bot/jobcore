@@ -238,6 +238,28 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
       });
     },
 
+    async listMyJobPay(range) {
+      return readCached('pr.jobPay', { from: range.from, to: range.to }, async () => {
+        const { data, error } = await supabase
+          .from('job_payout_lines')
+          .select('id, basis, amount_cents, status, created_at, jobs(job_number)')
+          .eq('user_id', userId)
+          .neq('status', 'void')
+          .gte('created_at', `${range.from}T00:00:00`)
+          .lte('created_at', `${range.to}T23:59:59.999`)
+          .order('created_at', { ascending: true });
+        check(error);
+        return ((data ?? []) as Row[]).map((r) => ({
+          id: r.id as string,
+          jobNumber: ((r.jobs as Row | null)?.job_number as number | null) ?? null,
+          basis: r.basis as string,
+          amountCents: r.amount_cents as number,
+          status: r.status as 'pending' | 'included',
+          createdAt: r.created_at as string,
+        }));
+      });
+    },
+
     async listMyReimbursements() {
       return readCached('pr.reimbursements', {}, async () => {
         const { data, error } = await supabase

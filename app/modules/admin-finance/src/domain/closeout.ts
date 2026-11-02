@@ -35,6 +35,13 @@ export function awaitingCloseOut(job: Job): boolean {
   return AWAITING_CLOSE_OUT_STATUSES.has(job.status);
 }
 
+const CLOSED: ReadonlySet<JobStatus> = new Set(['closed', 'archived']);
+
+/** True when `job` has been closed out. Membership test only. */
+export function isClosedOut(job: Pick<Job, 'status'>): boolean {
+  return CLOSED.has(job.status);
+}
+
 export type CloseOutStatus = 'unassigned' | 'in_progress' | 'completed';
 
 const IN_PROGRESS: ReadonlySet<JobStatus> = new Set(['assigned', 'accepted', 'en_route', 'in_progress']);
@@ -69,7 +76,8 @@ export function nextCloseOutStatus(job: Pick<Job, 'status'>): JobStatus | null {
  */
 export function closeOutBlockers(job: Job, ctx: Ctx): string[] {
   if (!awaitingCloseOut(job)) {
-    return [];
+    // #0018 always opens now, so a not-yet-completed job needs a reason for the disabled button.
+    return CLOSED.has(job.status) ? [] : ['Job must be completed before it can be closed out.'];
   }
   const next = NEXT_CLOSE_OUT_STATUS[job.status];
   if (next === undefined) {
