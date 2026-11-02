@@ -25,7 +25,7 @@ const BARCODE_METHODS: readonly PaymentMethod[] = ['zelle', 'paypal', 'venmo'];
 const OVER_BALANCE_MSG = 'Amount is more than the balance. Use Adjust price to add an item or fee.';
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`;
 
-// Cash is deliberately last, right of Credit card, and always rendered.
+// Cash is deliberately last, right of Debit/Credit, and always rendered.
 const METHOD_CHIP_ORDER: readonly PaymentMethod[] = [...PAYMENT_METHOD_PICK_ORDER.filter((m) => m !== 'cash'), 'cash'];
 
 // Parses a typed cash amount into cents; blank or invalid input returns null.
@@ -55,6 +55,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [cardHolder, setCardHolder] = useState('');
   const [cardLast4, setCardLast4] = useState('');
   const [cardRef, setCardRef] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardZip, setCardZip] = useState('');
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjDesc, setAdjDesc] = useState('');
   const [adjAmount, setAdjAmount] = useState('');
@@ -154,6 +156,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         setCardHolder('');
         setCardLast4('');
         setCardRef('');
+        setCardCvc('');
+        setCardZip('');
       } catch (err) {
         setError(`Could not record payment: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
@@ -204,7 +208,6 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const paid = settledTotalCents(payments);
   const balance = balanceCents(invoice, payments);
   const allowed = canRecordPayment(job, estimate);
-  const summary = estimate.summary?.trim() || job.description?.trim() || null;
   const isCash = method === 'cash';
   const cancelled = job.status === 'cancelled';
   const enabled = isCash ? !cancelled && !busy : canConfirm && allowed && !busy;
@@ -217,8 +220,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
 
   return (
     <View style={{ padding: spacing.md, gap: spacing.sm }}>
-      <Text style={{ fontWeight: '700', fontSize: typography.size.h5 }}>Payments</Text>
-      {summary ? <Text style={{ fontSize: typography.size.h4, fontWeight: '700' }}>{summary}</Text> : null}
+      <Text style={{ fontSize: typography.size.h5 }}>Payments</Text>
       <Text>Time on site: {formatWorkDuration(workDurationMs(job))}</Text>
       <Text>Work total: {money(invoice)}</Text>
       <Text>Paid so far: {money(paid)}</Text>
@@ -248,7 +250,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         </View>
         {BARCODE_METHODS.includes(method) ? (
           <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, padding: spacing.md, gap: spacing.xs }}>
-            <Text style={{ fontWeight: '700' }}>Company Info</Text>
+            <Text>Company Info</Text>
             <Text>{company?.name ?? ''}</Text>
             <Text>{company?.address ?? ''}</Text>
             <Text>License #: {company?.licenseNumber ?? ''}</Text>
@@ -261,14 +263,22 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         {method === 'check' || method === 'cash' ? (
           <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Tech manages {method}</Text>
         ) : null}
-        {method === 'debit' || method === 'credit' ? (
+        {method === 'card' || method === 'debit' || method === 'credit' ? (
           <View style={{ gap: spacing.xs }}>
-            <Text style={{ fontWeight: '700' }}>Enter card details</Text>
-            {([['Cardholder', cardHolder, setCardHolder], ['Last 4 digits', cardLast4, setCardLast4], ['Reference', cardRef, setCardRef]] as const).map(([label, val, set]) => (
+            <Text>Enter card details</Text>
+            {([
+              ['Cardholder', cardHolder, setCardHolder, null],
+              ['Last 4 digits', cardLast4, setCardLast4, 4],
+              ['CVC', cardCvc, setCardCvc, 4],
+              ['Zip code', cardZip, setCardZip, 5],
+              ['Reference', cardRef, setCardRef, null],
+            ] as const).map(([label, val, set, digits]) => (
               <TextInput
                 key={label}
                 value={val}
-                onChangeText={(t) => set(label === 'Last 4 digits' ? t.replace(/\D/g, '').slice(0, 4) : t)}
+                onChangeText={(t) => set(digits ? t.replace(/\D/g, '').slice(0, digits) : t)}
+                keyboardType={digits ? 'number-pad' : 'default'}
+                secureTextEntry={label === 'CVC'}
                 placeholder={label}
                 placeholderTextColor={colors.textMuted}
                 accessibilityLabel={label}
@@ -301,13 +311,12 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
               accessibilityLabel="Paid"
               style={{ height: 28, paddingHorizontal: spacing.md, borderRadius: radius.sm, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: typography.size.small, fontWeight: '700' }}>{'✓ Paid'}</Text>
+              <Text style={{ color: '#fff', fontSize: typography.size.small }}>{'✓ Paid'}</Text>
             </View>
           ) : (
             <PayrollButton
               label={`Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
               disabled={!enabled || balance <= 0 || cashInvalid}
-              textStyle={{ fontWeight: '700' }}
               onPress={() => record(method)}
             />
           )}

@@ -1428,6 +1428,11 @@ export default function JobDrilldownScreen() {
         </View>
       ) : null}
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+        {region === 'payment' && (estimate?.summary?.trim() || currentJob.description?.trim()) ? (
+          <Text style={{ paddingHorizontal: spacing.md, marginTop: spacing.xs }}>
+            {estimate?.summary?.trim() || currentJob.description?.trim()}
+          </Text>
+        ) : null}
         <JobSummaryRest
           hideTechFields={region === 'estimate' || region === 'schedule' || region === 'closeout'}
           hidePremTech={region === 'payment'}

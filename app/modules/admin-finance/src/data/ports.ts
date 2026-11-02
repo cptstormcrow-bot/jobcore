@@ -1165,12 +1165,12 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   venmo: 'Venmo',
   debit: 'Debit card',
   credit: 'Credit card',
-  card: 'Card',
+  card: 'Debit/Credit',
   ach: 'ACH',
   other: 'Other',
 };
 /** Order the method picker shows (legacy values are accepted but not offered). */
-export const PAYMENT_METHOD_PICK_ORDER: readonly PaymentMethod[] = ['cash', 'zelle', 'paypal', 'venmo', 'check', 'debit', 'credit'];
+export const PAYMENT_METHOD_PICK_ORDER: readonly PaymentMethod[] = ['cash', 'zelle', 'paypal', 'venmo', 'check', 'card'];
 
 /** The full `payments.status` union, restated as a runtime tuple so `toPayment` can validate an untrusted row. */
 export const PAYMENT_STATUSES = ['pending', 'confirmed', 'failed', 'manual_confirmed'] as const;
