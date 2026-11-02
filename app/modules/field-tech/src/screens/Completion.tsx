@@ -21,8 +21,8 @@
  * Ties to spec AC3, AC5, VS2.
  *
  * With `alreadyCompleted` the same screen edits a completed job: it prefills
- * from the newest saved notes, "Save Changes" writes fresh notes without a
- * status transition, and "Not Completed" (when allowed) reopens the job.
+ * from the newest saved notes, "Update" writes fresh notes without a status
+ * transition (no checklist gate, so extra info can always be added), and "Not Completed" (when allowed) reopens the job.
  *
  * The screen's only financial effect is one fixed-fee Estimate line ($20
  * 'Materials not moved upstairs fee') when 'Materials moved upstairs' is
@@ -188,7 +188,7 @@ export function Completion({
   );
 
   const trimmedNotes = qualityNotes.trim();
-  const canSubmit = canSubmitCompletion({
+  const canSubmit = alreadyCompleted ? !submitting : canSubmitCompletion({
     buildsFinished,
     debrisCleared,
     afterPhotoCount: photosTaken ? Math.max(1, afterPhotoCount) : afterPhotoCount,
@@ -315,7 +315,7 @@ export function Completion({
   }
 
   const submitLabel = alreadyCompleted
-    ? submitting ? 'Saving…' : 'Save Changes'
+    ? submitting ? 'Updating…' : 'Update'
     : submitting ? 'Completing…' : 'Complete Job';
 
   function renderItem(key: CompletionItemKey, label: string, hint: string | undefined): JSX.Element {

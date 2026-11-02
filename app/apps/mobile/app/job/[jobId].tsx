@@ -1061,15 +1061,9 @@ export default function JobDrilldownScreen() {
     switch (key as StageKey) {
       case 'job': selectRegion('plan'); break;
       case 'premAvailable':
-        if (isAdmin) {
-          const st = stageResults?.states.find((s) => s.key === 'premAvailable')?.state;
-          if (st !== 'green' && st !== 'yellow') { selectRegion('assign'); break; }
-        }
-        // Once the Prelim report is submitted, the next step is the Estimate.
-        selectRegion(investigation?.submittedAt ? 'estimate' : 'evisit');
-        break;
       case 'completePrem':
-        selectRegion(investigation?.submittedAt ? 'estimate' : 'evisit');
+        // Both Prem dots open the Prem screen #0061.
+        selectRegion('evisit');
         break;
       case 'estimate':
       case 'approval': selectRegion('estimate'); break;
@@ -1553,7 +1547,7 @@ export default function JobDrilldownScreen() {
           <JobCloseOutRegion job={currentJob} role={role} onClosed={(updated) => setJob(updated)} />
         )}
         {region === 'history' && role && <JobHistoryRegion job={currentJob} role={role} />}
-        {region === 'photos' && <JobPhotosRegion jobId={currentJob.id} />}
+        {region === 'photos' && <JobPhotosRegion jobId={currentJob.id} jobNumber={currentJob.jobNumber ?? null} />}
         {region === 'payment' && role && <JobPaymentRegion job={currentJob} role={role} onJobUpdated={(j) => setJob(j)} />}
         {region === 'schedule' && (
           <JobScheduleScreen
