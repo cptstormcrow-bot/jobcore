@@ -56,6 +56,23 @@ export function pickNextJob(jobs: Job[], now: Date): Job | undefined {
 }
 
 /**
+ * Every open job (not in `CLOSED_JOB_STATUSES`), earliest `scheduledStart`
+ * first. Unscheduled or unreadable dates go last; ties keep input order.
+ */
+export function listAssignedJobs(jobs: Job[]): Job[] {
+  const stamp = (job: Job): number => {
+    if (job.scheduledStart === null || job.scheduledStart === undefined) return Infinity;
+    const t = new Date(job.scheduledStart).getTime();
+    return Number.isNaN(t) ? Infinity : t;
+  };
+  return jobs
+    .filter((job) => !CLOSED_JOB_STATUSES.has(job.status))
+    .map((job, index) => ({ job, index, t: stamp(job) }))
+    .sort((a, b) => (a.t === b.t ? a.index - b.index : a.t < b.t ? -1 : 1))
+    .map((entry) => entry.job);
+}
+
+/**
  * Finished jobs (`completed` | `paid` | `closed`), newest first by
  * `completedAt ?? scheduledStart`; jobs with neither go last. Input not mutated.
  */

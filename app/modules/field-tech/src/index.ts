@@ -221,7 +221,7 @@ function FieldTechRoot(): React.ReactElement {
       break;
     case 'jobs':
       content = React.createElement<DayListProps>(DayList, {
-        onSelectJob: (job: Job) => router.push(('/job/' + job.id) as never),
+        onSelectJob: (job: Job) => router.push(('/job/' + job.id + '?panel=plan') as never),
         onOpenTimeOff: () => router.push('/calendar' as never),
         showTestJobs,
         defaultViewMode: defaultMonthView ? 'month' : 'week',

@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from '../day-list-helpers';
+import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs, listAssignedJobs } from '../day-list-helpers';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequest, TimeOffStatus } from '../../data/ports';
 
@@ -188,4 +188,15 @@ test('listPreviousJobs: capped at 10 of 12, custom limit', () => {
   );
   assert.equal(listPreviousJobs(jobs).length, 10);
   assert.equal(listPreviousJobs(jobs, 3).length, 3);
+});
+
+test('listAssignedJobs: open jobs only, earliest first, unscheduled last', () => {
+  const jobs = [
+    makeJob({ id: 'none', scheduledStart: null }),
+    makeJob({ id: 'late', scheduledStart: at(15) }),
+    makeJob({ id: 'done', status: 'completed' as Job['status'], scheduledStart: at(1) }),
+    makeJob({ id: 'early', scheduledStart: at(9) }),
+    makeJob({ id: 'gone', status: 'archived' as Job['status'], scheduledStart: at(2) }),
+  ];
+  assert.deepEqual(listAssignedJobs(jobs).map((j) => j.id), ['early', 'late', 'none']);
 });

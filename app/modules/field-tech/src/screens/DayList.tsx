@@ -13,8 +13,11 @@
  * Mirrors `modules/admin-finance/src` layering: screen reads session +
  * ports via the module seams, never constructs a repository itself.
  *
- * The screen shows a "Next Job" card, a Week/Month calendar with
- * Prev/Today/Next controls on the toggle row (fed the assigned-jobs list
+ * The screen shows an "Assigned Jobs" list (every open job, earliest first,
+ * customer first), then the Week/Month tabs and a `<  Today  >` row sitting
+ * directly above the calendar. The center label shows the anchor day; tapping
+ * a day moves the anchor there, and tapping the label returns to today. The
+ * calendar is fed the assigned-jobs list
  * plus this tech's own active time-off requests, expanded day-by-day into
  * `TimeOffEvent`s the same way `AdminFinanceRoot.toCalendarTimeOffEvents`
  * does for the admin calendar), and a "Previous Jobs" list of the last 10
@@ -29,10 +32,10 @@ import { isBetaVisible } from '@jobcore/core';
 import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, radius, type TimeOffEvent, Text, TruncatedText } from '@jobcore/ui';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, compact, radius, type TimeOffEvent, Text, TruncatedText } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
-import { isScheduledOnLocalDate, expandTimeOffToEvents, pickNextJob, listPreviousJobs } from './day-list-helpers';
+import { isScheduledOnLocalDate, expandTimeOffToEvents, listAssignedJobs, listPreviousJobs } from './day-list-helpers';
 
 /** Props for `DayList`. */
 export interface DayListProps {
@@ -74,7 +77,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [fullTextJobId, setFullTextJobId] = useState<string | null>(null);
   const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false)), [jobs, showTestJobs]);
-  const nextJob = useMemo(() => pickNextJob(visibleJobs, new Date()), [visibleJobs]);
+  const assignedJobs = useMemo(() => listAssignedJobs(visibleJobs), [visibleJobs]);
   const previousJobs = useMemo(() => listPreviousJobs(visibleJobs, 10), [visibleJobs]);
   const timeOffEvents = useMemo(() => expandTimeOffToEvents(timeOffRequests), [timeOffRequests]);
 
@@ -143,7 +146,10 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     onOpenJob?.(job.id);
   };
 
-  const handleSelectDay = (day: Date) => setSelectedDay(day);
+  const handleSelectDay = (day: Date) => {
+    setAnchorDay(day);
+    setSelectedDay(day);
+  };
 
   const renderJobRow = (job: Job) => (
     <Pressable key={job.id} onPress={() => handleOpenJob(job)}>
@@ -152,16 +158,16 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
         <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
         <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
         <View style={styles.rowBody}>
+          <Text style={styles.customer} numberOfLines={1}>{job.customerName ?? 'No customer'}</Text>
           <Pressable onPress={() => job.address && copyToClipboard(job.address)}>
-            <Text style={styles.address}>{job.address ?? 'No address'}</Text>
+            <Text style={styles.meta} numberOfLines={1}>{job.address ?? 'No address'}</Text>
           </Pressable>
-          {job.customerName ? <Text style={styles.meta}>{job.customerName}</Text> : null}
           {job.customerPhone ? (
             <Pressable onPress={() => copyToClipboard(job.customerPhone ?? '')}>
               <Text style={styles.meta}>{job.customerPhone}</Text>
             </Pressable>
           ) : null}
-          <Text style={styles.window}>
+          <Text style={styles.window} numberOfLines={1}>
             {job.requestedWindow ?? (job.scheduledStart ? new Date(job.scheduledStart).toLocaleString() : 'Unscheduled')}
           </Text>
         </View>
@@ -169,56 +175,42 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     </Pressable>
   );
 
-  const weekLabel =
-    viewMode === 'week' ? format(anchorDay, 'MMM d, yyyy') : format(anchorDay, 'MMMM yyyy');
+  const step = (dir: 1 | -1) =>
+    setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7 * dir) : addMonths(d, dir)));
+  const anchorLabel = isSameDay(anchorDay, new Date())
+    ? 'Today'
+    : viewMode === 'week'
+      ? format(anchorDay, 'EEE, MMM d')
+      : format(anchorDay, 'MMMM yyyy');
 
-  const weekNav = (
-    <View style={styles.weekNav}>
-      <Pressable
-        style={styles.navButton}
-        onPress={() =>
-          setAnchorDay((d) => (viewMode === 'week' ? addDays(d, -7) : addMonths(d, -1)))
-        }
-      >
-        <Text style={styles.navButtonText}>Prev</Text>
-      </Pressable>
-      <Pressable style={styles.navButton} onPress={() => setAnchorDay(new Date())}>
-        <Text style={styles.navButtonText}>Today</Text>
-      </Pressable>
-      <Pressable
-        style={styles.navButton}
-        onPress={() =>
-          setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7) : addMonths(d, 1)))
-        }
-      >
-        <Text style={styles.navButtonText}>Next</Text>
-      </Pressable>
+  const calendarNav = (
+    <View style={styles.calendarNav}>
+      <PayrollButton label="<" accessibilityLabel={viewMode === 'week' ? 'Previous week' : 'Previous month'} onPress={() => step(-1)} />
+      <PayrollButton label={anchorLabel} accessibilityLabel="Go to today" style={styles.navCenter} onPress={() => setAnchorDay(new Date())} />
+      <PayrollButton label=">" accessibilityLabel={viewMode === 'week' ? 'Next week' : 'Next month'} onPress={() => step(1)} />
     </View>
   );
 
   return (
     <View style={styles.screen}>
-    <DefaultTabBar
-      tabs={[
-        { id: 'week', label: 'Week' },
-        { id: 'month', label: 'Month' },
-      ]}
-      activeId={viewMode}
-      onChange={(k) => setViewMode(k as 'week' | 'month')}
-      rightSlot={weekNav}
-    />
     <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
-      <ScreenTitle title="Next Job" />
-      {nextJob === undefined ? (
-        <View style={styles.centered}>
-          <Text style={styles.emptyText}>No upcoming jobs.</Text>
-        </View>
+      <ScreenTitle title="Assigned Jobs" />
+      {assignedJobs.length === 0 ? (
+        <Text style={styles.emptyText}>No assigned jobs.</Text>
       ) : (
-        renderJobRow(nextJob)
+        assignedJobs.map(renderJobRow)
       )}
 
-      <View style={styles.weekHeader}>
-        <Text style={styles.weekLabel}>{weekLabel}</Text>
+      <View style={styles.calendarHeader}>
+        <DefaultTabBar
+          tabs={[
+            { id: 'week', label: 'Week' },
+            { id: 'month', label: 'Month' },
+          ]}
+          activeId={viewMode}
+          onChange={(k) => setViewMode(k as 'week' | 'month')}
+        />
+        {calendarNav}
       </View>
       {viewMode === 'week' ? (
         <View style={styles.weekStrip}>
@@ -319,9 +311,11 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   emptyText: {
+    fontSize: typography.text.body,
     color: colors.textMutedDark,
   },
   errorText: {
+    fontSize: typography.text.error,
     color: colors.danger,
   },
   listContent: {
@@ -330,7 +324,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    minHeight: compact.rowMin,
+    paddingVertical: compact.field,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
@@ -353,59 +348,52 @@ const styles = StyleSheet.create({
   rowBody: {
     flex: 1,
   },
+  customer: {
+    fontSize: typography.text.input,
+    fontWeight: '600',
+    color: colors.text,
+  },
   address: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     fontWeight: '600',
   },
   window: {
-    fontSize: typography.size.small,
+    fontSize: typography.text.hint,
     color: colors.textMutedDark,
-    marginTop: 2,
+    marginTop: compact.gap,
   },
   meta: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     color: colors.textMuted,
   },
-  weekHeader: {
-    marginTop: spacing.lg,
+  calendarHeader: {
+    marginTop: compact.section,
   },
-  weekNav: {
+  calendarNav: {
     flexDirection: 'row',
-    marginTop: spacing.sm,
+    alignItems: 'center',
+    gap: compact.section,
+    marginTop: compact.section,
   },
-  navButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    marginRight: spacing.sm,
-    borderRadius: radius.sm,
-    minHeight: 44,
-    justifyContent: 'center',
-    backgroundColor: colors.sand,
-  },
-  navButtonText: {
-    fontSize: typography.size.label,
-    color: colors.text,
-    fontWeight: '600',
-  },
-  weekLabel: {
-    marginTop: spacing.sm,
-    fontSize: typography.size.small,
-    color: colors.textMuted,
+  navCenter: {
+    flex: 1,
   },
   weekStrip: {
     height: 260,
-    marginTop: spacing.sm,
+    marginTop: compact.section,
   },
   monthStrip: {
-    marginTop: spacing.sm,
+    marginTop: compact.section,
   },
   previousRow: {
-    paddingVertical: spacing.sm,
+    minHeight: compact.rowMin,
+    justifyContent: 'center',
+    paddingVertical: compact.field,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
   previousText: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     color: colors.textMutedDark,
   },
   overlay: {
@@ -423,7 +411,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalTitle: {
-    fontSize: typography.size.h5,
+    fontSize: typography.text.title,
     fontWeight: '600',
     marginBottom: spacing.sm,
   },
@@ -438,7 +426,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   modalTimeOffText: {
-    fontSize: typography.size.label,
+    fontSize: typography.text.body,
     color: colors.danger,
   },
   modalCloseButton: {
