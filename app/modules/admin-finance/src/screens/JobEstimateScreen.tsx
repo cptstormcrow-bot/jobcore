@@ -247,6 +247,20 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     setQuantityInput('1');
     setUnitCostInput(row.rate != null ? String(row.rate) : '');
   }
+  // Price-sheet search by description; a pick fills the fields, manual entry still works.
+  const [priceSearch, setPriceSearch] = useState('');
+  const priceQuery = priceSearch.trim().toLowerCase();
+  const priceMatches = priceQuery
+    ? allCatalog.filter((c) => c.name.toLowerCase().includes(priceQuery)).slice(0, 6)
+    : [];
+  function handlePricePick(row: ServiceTaskCatalogEntry): void {
+    setPickedServiceTaskId(row.id);
+    setKindInput('labor');
+    setDescriptionInput(row.name);
+    setQuantityInput('1');
+    setUnitCostInput(row.rate != null ? String(row.rate) : '');
+    setPriceSearch('');
+  }
 
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
   const [rates, setRates] = useState<PriceSheetRate[]>([]);
@@ -554,14 +568,14 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     setActionState({ kind: 'working' });
     setSheetNotice(null);
     try {
-      if (!estimate) await persist({ status: 'draft' });
+      if (!estimate && !(await persist({ status: 'draft' }))) return;
       const added = await estimates.addLineItem(job.id, draft);
       setLineItems((prev) => [...prev, added]);
       setDescriptionInput('');
       setQuantityInput('1');
       setUnitCostInput('');
       setPickedServiceTaskId(null);
-      setActionState({ kind: 'done', message: 'Line item added.' });
+      setActionState({ kind: 'done', message: 'Task added.' });
       if (
         saveToSheet &&
         canSaveToSheet &&
@@ -638,7 +652,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     }
     setActionState({ kind: 'working' });
     try {
-      if (!estimate) await persist({ status: 'draft' });
+      if (!estimate && !(await persist({ status: 'draft' }))) return;
       const added: JobEstimateLineItem[] = [];
       for (const draft of drafts) {
         added.push(await estimates.addLineItem(job.id, draft));
@@ -1202,6 +1216,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               </View>
             ) : null}
           </View>
+          {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+          {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
           {activeTab === 'tasks' ? (
           <>
           {lineItems.length === 0 ? (
@@ -1320,6 +1336,27 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           <>
 
             <>
+              {allCatalog.length > 0 ? (
+                <TextField
+                  label="Search price sheet"
+                  value={priceSearch}
+                  onChangeText={setPriceSearch}
+                  placeholder="Type a description"
+                  disabled={busy}
+                  style={styles.field}
+                />
+              ) : null}
+              {priceMatches.map((c) => (
+                <ListItem
+                  key={c.id}
+                  title={c.name}
+                  subtitle={c.rate != null ? formatCurrency(c.rate) : undefined}
+                  onPress={busy ? undefined : () => handlePricePick(c)}
+                />
+              ))}
+              {priceQuery && priceMatches.length === 0 ? (
+                <Text style={styles.note}>No match. Enter the task below.</Text>
+              ) : null}
               {assemblyCatalog.length > 0 ? (
                 <Select
                   label="Assembly labor"
@@ -1466,8 +1503,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           />
         ) : null}
 
-        {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
-        {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+        {activeTab !== 'tasks' && actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
+        {activeTab !== 'tasks' && actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
       </Root>
     </View>
   );

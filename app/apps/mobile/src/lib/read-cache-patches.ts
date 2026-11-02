@@ -226,6 +226,36 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
     },
   },
   {
+    // A new estimate line must show when the Tasks tab reopens from cache.
+    op: 'job_estimate_line_item.add',
+    queries: ['af.estimates.listLineItems', 'ft.estimates.listLineItems'],
+    patch: (p, rows, params) => {
+      const id = str(p.id);
+      const jobId = str(p.jobId);
+      if (!id || !jobId || !isObj(p.draft)) return rows;
+      if (params?.jobId !== undefined && params.jobId !== jobId) return rows;
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === id)) return rows;
+      const d = p.draft;
+      const row: Row = {
+        id,
+        jobId,
+        kind: d.kind,
+        description: d.description,
+        quantity: d.quantity,
+        unitCost: d.unitCost,
+        lineTotal: d.lineTotal,
+        jobPlanTaskId: d.jobPlanTaskId ?? null,
+        serviceTaskId: d.serviceTaskId ?? null,
+        originLineItemId: d.originLineItemId ?? null,
+        unit: d.unit ?? null,
+        area: d.area ?? null,
+        materialsNote: d.materialsNote ?? null,
+      };
+      if (Array.isArray(rows)) return [...rows, row];
+      return rows === null || rows === undefined ? [row] : rows;
+    },
+  },
+  {
     op: 'job_estimate_line_item.update',
     queries: ['af.estimates.listLineItems'],
     patch: (p, rows) => {

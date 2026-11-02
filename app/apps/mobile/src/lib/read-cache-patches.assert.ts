@@ -135,3 +135,17 @@ test('admin_cancel: marks the row cancelled', () => {
   const out = run('time_off_request.admin_cancel', 'af.timeOff.listForOrganization', { requestId: 'b1' }, [{ id: 'b1', status: 'approved' }]) as any[];
   assert.equal(out[0].status, 'cancelled');
 });
+
+const LINE_ADD = { id: 'l2', jobId: 'job-1', draft: { kind: 'labor', description: 'Hang TV', quantity: 1, unitCost: 80, lineTotal: 80 } };
+test('estimate line add: appends to the cached Tasks list', () => {
+  const rows = [{ id: 'l1', jobId: 'job-1' }];
+  const out = run('job_estimate_line_item.add', 'af.estimates.listLineItems', LINE_ADD, rows, { jobId: 'job-1' }) as any[];
+  assert.equal(out.length, 2);
+  assert.equal(out[1].id, 'l2');
+  assert.equal(out[1].description, 'Hang TV');
+});
+test('estimate line add: other job and repeat add leave the list alone', () => {
+  const rows = [{ id: 'l2', jobId: 'job-1' }];
+  assert.strictEqual(run('job_estimate_line_item.add', 'af.estimates.listLineItems', LINE_ADD, rows, { jobId: 'job-9' }), rows);
+  assert.strictEqual(run('job_estimate_line_item.add', 'af.estimates.listLineItems', LINE_ADD, rows, { jobId: 'job-1' }), rows);
+});
