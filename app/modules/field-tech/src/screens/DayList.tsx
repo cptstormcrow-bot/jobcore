@@ -14,8 +14,8 @@
  * ports via the module seams, never constructs a repository itself.
  *
  * The screen shows an "Assigned Jobs" list (every open job, earliest first,
- * customer first), then the Week/Month tabs and a `<  Today  >` row sitting
- * directly above the calendar. The center label shows the anchor day; tapping
+ * customer first), then one row above the calendar holding the Week/Month tabs and
+ * the `<  Today  >` controls. The center label shows the anchor day; tapping
  * a day moves the anchor there, and tapping the label returns to today. The
  * calendar is fed the assigned-jobs list
  * plus this tech's own active time-off requests, expanded day-by-day into
@@ -367,13 +367,16 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   calendarHeader: {
-    marginTop: compact.section,
-  },
-  calendarNav: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: compact.section,
     marginTop: compact.section,
+  },
+  calendarNav: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: compact.section,
   },
   navCenter: {
     flex: 1,
