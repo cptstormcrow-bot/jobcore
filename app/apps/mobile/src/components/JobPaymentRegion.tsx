@@ -11,6 +11,10 @@ import { transitionJob } from '../../../../modules/admin-finance/src/domain/tran
 import { recordJobPayment } from '../../../../modules/admin-finance/src/flows/record-job-payment';
 import { getCardProcessor } from '../../../../modules/payment-review/src/domain/card-processors/registry';
 import { buildAdminFinancePorts, createJobRepository } from '../lib/admin-finance-repos';
+import { createJobPhotoRepository } from '../lib/field-tech-repos';
+import { newClientId } from '../lib/ids';
+import { pickJobPhoto, type PickedJobPhoto } from '../lib/job-photo-picker';
+import { copyToLocal, storagePathFor } from '../lib/photo-files';
 import { useSession } from '../lib/session';
 
 export type JobPaymentRegionProps = {
@@ -58,6 +62,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [cardRef, setCardRef] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardZip, setCardZip] = useState('');
+  const [checkFront, setCheckFront] = useState<PickedJobPhoto | null>(null);
+  const [checkBack, setCheckBack] = useState<PickedJobPhoto | null>(null);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjDesc, setAdjDesc] = useState('');
   const [adjAmount, setAdjAmount] = useState('');
@@ -166,6 +172,15 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           // Paid in full before completion: the job stays in its status, but a fresh object makes the stage bar re-check Paid.
           onJobUpdated?.({ ...job });
         }
+        if (useMethod === 'check' && checkFront && checkBack) {
+          try {
+            await saveCheckPhotos(session.organization.id, session.session.user.id, job.id, [checkFront, checkBack]);
+          } catch (err) {
+            setError(`Payment recorded, but the check photos did not save: ${err instanceof Error ? err.message : String(err)}`);
+          }
+          setCheckFront(null);
+          setCheckBack(null);
+        }
         await load();
         setCardHolder('');
         setCardNumber('');
@@ -179,7 +194,17 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         setBusy(false);
       }
     })();
-  }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated, cardNumber, cardCvc, cardZip, cardHolder]);
+  }, [session, estimate, role, job, payments, ports.payments, load, cashReceived, workTotal, onJobUpdated, cardNumber, cardCvc, cardZip, cardHolder, checkFront, checkBack]);
+
+  const takeCheckPhoto = (set: (p: PickedJobPhoto) => void) => {
+    void pickJobPhoto('camera')
+      .then((p) => {
+        if (p) {
+          set(p);
+        }
+      })
+      .catch((err) => setError(`Could not take photo: ${err instanceof Error ? err.message : String(err)}`));
+  };
 
   const saveAdjustment = () => {
     const amt = parseCashCents(adjAmount);
@@ -237,6 +262,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         : !/^\d{5}$/.test(cardZip)
           ? 'Enter the 5 digit zip code.'
           : null;
+  const checkPhotosMissing = method === 'check' && (!checkFront || !checkBack);
   const cashInvalid =
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
   // The Paid timeline dot goes green on job status or a settled balance, so the badge does both too.
@@ -287,6 +313,27 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
         ) : null}
         {method === 'check' || method === 'cash' ? (
           <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Tech manages {method}</Text>
+        ) : null}
+        {method === 'check' ? (
+          <View style={{ gap: spacing.xs }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              <PayrollButton
+                label={checkFront ? '✓ Check front' : 'Check front'}
+                disabled={busy}
+                onPress={() => takeCheckPhoto(setCheckFront)}
+                style={selectedStyle(checkFront !== null)}
+              />
+              <PayrollButton
+                label={checkBack ? '✓ Check back' : 'Check back'}
+                disabled={busy}
+                onPress={() => takeCheckPhoto(setCheckBack)}
+                style={selectedStyle(checkBack !== null)}
+              />
+            </View>
+            {checkPhotosMissing ? (
+              <Text style={{ fontSize: typography.size.small, color: colors.textMuted }}>Photograph both sides of the check.</Text>
+            ) : null}
+          </View>
         ) : null}
         {isCard ? (
           <View style={{ gap: spacing.xs }}>
@@ -345,7 +392,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
           ) : (
             <PayrollButton
               label={`Paid ${money(cashReceived.trim() !== '' && !cashInvalid ? (cashCents ?? balance) : balance)}`}
-              disabled={!enabled || balance <= 0 || cashInvalid || cardProblem !== null}
+              disabled={!enabled || balance <= 0 || cashInvalid || cardProblem !== null || checkPhotosMissing}
               onPress={() => record(method)}
             />
           )}
@@ -389,6 +436,33 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
 }
 
 export default JobPaymentRegion;
+
+/**
+ * Saves the check's front and back as receipt photos on the job. Each goes through the
+ * offline job_photo.create op, so it uploads once the device is back online.
+ */
+async function saveCheckPhotos(orgId: string, userId: string, jobId: string, photos: PickedJobPhoto[]): Promise<void> {
+  const repo = createJobPhotoRepository();
+  for (const photo of photos) {
+    const id = newClientId();
+    const ext = photo.mimeType === 'image/png' ? 'png' : 'jpg';
+    const localUri = await copyToLocal(photo.uri, orgId, jobId, id, ext);
+    const occurredAt = new Date().toISOString();
+    await repo.create(orgId, {
+      id,
+      localUri,
+      ext,
+      jobId,
+      techId: userId,
+      kind: 'receipt',
+      storagePath: storagePathFor(orgId, jobId, id, ext),
+      occurredAt,
+      lat: null,
+      lng: null,
+      idempotencyKey: id,
+    });
+  }
+}
 
 /** Luhn checksum: catches mistyped card numbers (13-19 digits). It does not approve the card. */
 function luhnValid(num: string): boolean {
