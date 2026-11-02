@@ -151,31 +151,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     setSelectedDay(day);
   };
 
-  // Address • phone • date on one line; TruncatedText opens the full line in a popup when cut off.
-  const assignedJobLine = (job: Job) =>
-    [
-      job.address ?? 'No address',
-      job.customerPhone,
-      job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled'),
-    ]
-      .filter(Boolean)
-      .join('  •  ');
-
-  const renderJobRow = (job: Job) => (
-    <Pressable key={job.id} onPress={() => handleOpenJob(job)}>
-      <View style={styles.row}>
-        <Text style={styles.bullet}>{'•'}</Text>
-        <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
-        <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
-        <View style={styles.rowBody}>
-          <TruncatedText style={styles.customer} popupTitle="Customer">{job.customerName ?? 'No customer'}</TruncatedText>
-          <TruncatedText style={styles.meta} popupTitle={job.customerName ?? 'Job'}>
-            {assignedJobLine(job)}
-          </TruncatedText>
-        </View>
-      </View>
-    </Pressable>
-  );
+  const renderJobRow = (job: Job) => <AssignedJobRow key={job.id} job={job} onOpen={handleOpenJob} />;
 
   const step = (dir: 1 | -1) =>
     setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7 * dir) : addMonths(d, dir)));
@@ -302,6 +278,50 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
   );
 }
 
+// One Assigned Jobs row. Tapping the name opens the job; tapping the address or phone copies it.
+// A cut-off name or address shows its full text on a long press.
+function AssignedJobRow({ job, onOpen }: { job: Job; onOpen: (job: Job) => void }) {
+  const [nameOpen, setNameOpen] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const when =
+    job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled');
+  return (
+    <View style={styles.row}>
+      <Text style={styles.bullet}>{'•'}</Text>
+      <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
+      <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
+      <View style={styles.rowBody}>
+        <Pressable onPress={() => onOpen(job)} onLongPress={() => setNameOpen(true)}>
+          <TruncatedText style={styles.customer} popupTitle="Customer" tappable={false} open={nameOpen} onClose={() => setNameOpen(false)}>
+            {job.customerName ?? 'No customer'}
+          </TruncatedText>
+        </Pressable>
+        <View style={styles.metaLine}>
+          <Pressable
+            style={styles.metaShrink}
+            onPress={() => job.address && copyToClipboard(job.address)}
+            onLongPress={() => setAddressOpen(true)}
+          >
+            <TruncatedText style={styles.meta} popupTitle="Address" tappable={false} open={addressOpen} onClose={() => setAddressOpen(false)}>
+              {job.address ?? 'No address'}
+            </TruncatedText>
+          </Pressable>
+          {job.customerPhone ? (
+            <>
+              <Text style={styles.meta}>{'  •  '}</Text>
+              <Pressable onPress={() => copyToClipboard(job.customerPhone ?? '')}>
+                <Text style={styles.meta} numberOfLines={1}>{job.customerPhone}</Text>
+              </Pressable>
+            </>
+          ) : null}
+          <Text style={styles.meta}>{'  •  '}</Text>
+          <Text style={styles.meta} numberOfLines={1}>{when}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -367,6 +387,13 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: typography.text.body,
     color: colors.textMuted,
+  },
+  metaLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaShrink: {
+    flexShrink: 1,
   },
   calendarHeader: {
     flexDirection: 'row',
