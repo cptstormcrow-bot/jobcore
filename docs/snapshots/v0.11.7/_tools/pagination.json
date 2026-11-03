@@ -1,0 +1,355 @@
+{
+  "account": [
+    13,
+    35
+  ],
+  "admin-finance": [
+    8,
+    27,
+    54,
+    80
+  ],
+  "af-Payroll": [
+    12
+  ],
+  "af-PayrollRun": [
+    13
+  ],
+  "af-PayrollSettings": [
+    16
+  ],
+  "af-ReportsJobDetailScreen": [
+    7,
+    24
+  ],
+  "af-addTaskDialog": [
+    11
+  ],
+  "af-archivedJobs": [
+    19
+  ],
+  "af-assignmentBoard": [
+    11,
+    30
+  ],
+  "af-blackout-editor": [
+    10,
+    29
+  ],
+  "af-calendar": [
+    8,
+    24,
+    50
+  ],
+  "af-closeOutQueue": [
+    8,
+    26
+  ],
+  "af-closeOutReview": [
+    10,
+    28
+  ],
+  "af-compensationPolicy": [
+    13,
+    33
+  ],
+  "af-employee-detail": [
+    8,
+    27
+  ],
+  "af-employee-editor": [
+    10,
+    28
+  ],
+  "af-employee-invitations": [
+    12,
+    32
+  ],
+  "af-employee-job-detail": [
+    11,
+    31
+  ],
+  "af-employee-roster": [
+    8,
+    26
+  ],
+  "af-jobEstimate": [
+    1,
+    8,
+    21,
+    46
+  ],
+  "af-jobs": [
+    8,
+    26,
+    53
+  ],
+  "af-leadCreate": [
+    8,
+    26
+  ],
+  "af-leadEdit": [
+    8,
+    26
+  ],
+  "af-leadInbox": [
+    7,
+    24
+  ],
+  "af-overview": [
+    13,
+    34,
+    60
+  ],
+  "af-payments": [
+    7,
+    26
+  ],
+  "af-payments-PaymentsScreen": [
+    10
+  ],
+  "af-payments-PayoutBatchDetailScreen": [
+    7,
+    24
+  ],
+  "af-payments-PayoutBatchScreen": [
+    7,
+    24
+  ],
+  "af-payments-ReimbursementQueueScreen": [
+    10
+  ],
+  "af-planning": [
+    6,
+    23
+  ],
+  "af-priceSheetCreate": [
+    10,
+    31
+  ],
+  "af-priceSheetEditor": [
+    8,
+    23
+  ],
+  "af-priceSheetList": [
+    8,
+    24
+  ],
+  "af-qualify": [
+    11,
+    31
+  ],
+  "af-reports": [
+    8,
+    27
+  ],
+  "af-review": [
+    10,
+    28
+  ],
+  "blackout-range-modal": [
+    13
+  ],
+  "blackout-time-off-list": [
+    10,
+    28
+  ],
+  "config-settings": [
+    13,
+    33
+  ],
+  "config-test-jobs": [
+    13,
+    33
+  ],
+  "field-tech": [
+    12,
+    34,
+    60
+  ],
+  "forgot-password": [
+    18
+  ],
+  "ft-Completion": [
+    7,
+    26
+  ],
+  "ft-DayList": [
+    8,
+    26
+  ],
+  "ft-Earnings": [
+    7,
+    26
+  ],
+  "ft-FieldJobDetail": [
+    8
+  ],
+  "ft-Greeting": [
+    8
+  ],
+  "ft-Overview": [
+    8,
+    28
+  ],
+  "ft-Payroll": [
+    8,
+    28
+  ],
+  "ft-PremJobs": [
+    15
+  ],
+  "ft-Reimbursements": [
+    8
+  ],
+  "ft-Reviews": [
+    8,
+    28
+  ],
+  "ft-StartChecklist": [
+    8
+  ],
+  "index": [
+    11
+  ],
+  "job-region-arrive": [
+    16,
+    35
+  ],
+  "job-region-assign": [
+    10,
+    28
+  ],
+  "job-region-complete": [
+    16,
+    35
+  ],
+  "job-region-contact": [
+    16,
+    35
+  ],
+  "job-region-evisit": [
+    10
+  ],
+  "job-region-paid": [
+    16,
+    35
+  ],
+  "job-region-photos": [
+    19
+  ],
+  "job-region-plan": [
+    1,
+    5,
+    20,
+    32
+  ],
+  "job-region-schedule": [
+    3,
+    23
+  ],
+  "jobs": [
+    11,
+    30
+  ],
+  "layout": [
+    12
+  ],
+  "menu-configuration": [
+    11,
+    29
+  ],
+  "menu-needs-prem": [
+    10,
+    28
+  ],
+  "menu-sign-out": [
+    10,
+    26
+  ],
+  "module-host": [
+    15,
+    36
+  ],
+  "multi-pick-box": [
+    14
+  ],
+  "not-found": [
+    8
+  ],
+  "payment-review": [
+    11
+  ],
+  "profile": [
+    12,
+    32
+  ],
+  "reset-password": [
+    13
+  ],
+  "root-layout": [
+    11,
+    31
+  ],
+  "sales-marketing": [
+    11,
+    32
+  ],
+  "sign-in": [
+    13,
+    33
+  ],
+  "sign-up": [
+    8,
+    26
+  ],
+  "sm-CallbackTasks": [
+    4,
+    23
+  ],
+  "sm-Composer": [
+    8,
+    26
+  ],
+  "sm-Overview": [
+    8,
+    28
+  ],
+  "sm-Payroll": [
+    15
+  ],
+  "sm-PitchPicker": [
+    8,
+    28
+  ],
+  "sm-Reporting": [
+    8,
+    28
+  ],
+  "sm-ReviewLibrary": [
+    8,
+    26
+  ],
+  "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
+    4,
+    21
+  ],
+  "sweep-modules-field-tech-src-screens-daterangecalendar-tsx": [
+    5,
+    22
+  ],
+  "sync-issues": [
+    15
+  ],
+  "tabs-layout": [
+    10,
+    29
+  ],
+  "time-off-tech-calendar": [
+    12
+  ],
+  "universal-calendar": [
+    10,
+    26
+  ]
+}

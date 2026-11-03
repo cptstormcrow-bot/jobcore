@@ -1,0 +1,20 @@
+{
+  "forgot-password": {
+    "status": "ok"
+  },
+  "reset-password": {
+    "status": "ok"
+  },
+  "sign-in": {
+    "status": "ok"
+  },
+  "sign-up": {
+    "status": "ok"
+  },
+  "af-Payroll": {
+    "status": "ok"
+  },
+  "job-region-photos": {
+    "status": "ok"
+  }
+}
