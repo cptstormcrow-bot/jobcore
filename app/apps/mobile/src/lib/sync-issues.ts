@@ -51,6 +51,7 @@ const OP_LABELS: Record<string, string> = {
   'customer.create': 'New customer',
   'customer.update': 'Customer update',
   'job_customer.save': 'Job customer',
+  'customer.saveForJob': 'Job customer',
   'job_contact_log.create': 'Contact log entry',
   'job_planning.upsert': 'Job planning',
   'payout_batch.approve': 'Approve payout batch',

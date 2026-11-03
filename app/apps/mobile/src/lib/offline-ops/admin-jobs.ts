@@ -355,6 +355,13 @@ const jobCustomerSave: OpHandler<JobCustomerSavePayload> = async ({ jobId, patch
   return APPLIED;
 };
 
+// Old-build rows may repeat a save that already landed, so the replay is noted.
+const legacyJobCustomerSave: OpHandler<JobCustomerSavePayload> = async (payload, ctx) => {
+  const result = await jobCustomerSave(payload, ctx);
+  ctx.note?.('Sent a customer save queued by an older app version; check the customer details are current.');
+  return result;
+};
+
 const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) => {
   const row: Record<string, unknown> = {
     id: p.id,
@@ -524,6 +531,8 @@ export const ADMIN_JOBS_OP_HANDLERS = {
   'customer.create': customerCreate,
   'customer.update': customerUpdate,
   'job_customer.save': jobCustomerSave,
+  // Name used by the 0.4.0 queue for the same { jobId, patch } payload; old rows still carry it.
+  'customer.saveForJob': legacyJobCustomerSave,
   'job_plan_task.create': jobPlanTaskCreate,
   'job_plan_task.update_quantity': jobPlanTaskUpdateQuantity,
   'job_plan_task.update': jobPlanTaskUpdate,

@@ -81,6 +81,11 @@ export async function getOfflineDb(): Promise<SQLite.SQLiteDatabase> {
       await db.runAsync(
         `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null, last_error = null, error_class = null where status = 'failed' and last_error like 'Not saved:%changed by someone else%'`
       );
+      // Rows failed as an unknown op get another try each start: a later build may
+      // handle (or alias) that op. One still unknown just fails again, once.
+      await db.runAsync(
+        `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null, last_error = null, error_class = null where status = 'failed' and last_error like 'Unknown offline op:%'`
+      );
       return db;
     })();
     dbPromise.catch(() => {
