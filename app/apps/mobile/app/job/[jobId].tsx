@@ -30,7 +30,7 @@ import { WarningSheet } from '../../../../modules/admin-finance/src/components/W
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
-import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
+import { buildReadCacheKey, cachedRead, findSavedRecord, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
 import { QUEUED_COPY, toUserMessage, writeThrough } from '../../src/lib/offline-mutations';
 import { getEnabledModules } from '@jobcore/module-sdk';
 import { landingRouteFor } from '../../src/lib/landing';
@@ -531,7 +531,13 @@ export default function JobDrilldownScreen() {
       .then(async (data) => {
         if (cancelled) return;
         if (data) justCreatedJobs.delete(jobId);
-        const loaded = data ? toJob(data) : justCreatedJobs.get(jobId) ?? null;
+        // Offline and never opened here: use the copy saved with any job list.
+        const saved = data || justCreatedJobs.has(jobId)
+          ? null
+          : await findSavedRecord<Record<string, unknown>>('.jobs.', jobId, (r) => typeof r.status === 'string').catch(() => null);
+        if (cancelled) return;
+        const fromSaved = saved ? ('organization_id' in saved ? toJob(saved as unknown as JobRow) : (saved as unknown as Job)) : null;
+        const loaded = data ? toJob(data) : justCreatedJobs.get(jobId) ?? fromSaved;
         setJob(loaded);
         setCustomerId(loaded?.customerId ?? null);
 
@@ -554,6 +560,9 @@ export default function JobDrilldownScreen() {
               : await fetchCustomer();
           } catch {
             fetchedCustomer = null;
+          }
+          if (!fetchedCustomer) {
+            fetchedCustomer = await findSavedRecord<Customer>('customers', customerKey, (r) => 'name' in r && !('organization_id' in r)).catch(() => null);
           }
         }
         if (cancelled) return;

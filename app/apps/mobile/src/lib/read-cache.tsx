@@ -98,6 +98,26 @@ export async function cachedRead<T>(
   return { data, servingStale: false, fromCache: false, cachedAt: null };
 }
 
+/**
+ * Offline fallback: finds one record by id inside any saved read whose query name contains
+ * `queryPart` (lists or single rows), for this user and org. Null when nothing saved matches.
+ */
+export async function findSavedRecord<T>(queryPart: string, id: string, isMatch?: (rec: Record<string, unknown>) => boolean): Promise<T | null> {
+  if (!identity || !id) return null;
+  const { orgId, userId } = identity;
+  for (const m of await listMeta(userId)) {
+    if (!m.query.includes(queryPart)) continue;
+    const row = await getCached(m.key);
+    if (!row || row.orgId !== orgId) continue;
+    let parsed: unknown;
+    try { parsed = JSON.parse(row.payload); } catch { continue; }
+    for (const rec of Array.isArray(parsed) ? parsed : [parsed]) {
+      if (rec && typeof rec === 'object' && (rec as { id?: unknown }).id === id && (!isMatch || isMatch(rec as Record<string, unknown>))) return rec as T;
+    }
+  }
+  return null;
+}
+
 export function markStale(prefix?: string): void {
   staleEpoch = Date.now();
   if (prefix) {
