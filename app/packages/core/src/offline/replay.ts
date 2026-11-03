@@ -202,6 +202,8 @@ export interface DrainOptions<M extends DrainRow = DrainRow> {
   now(): Date;
   classify?(e: unknown): ReplayErrorClass;
   backoff?(attempts: number): number;
+  /** Keys a row touches (e.g. its job id). When given, a row that must wait holds back only later rows sharing a key and the rest still send (Jeff 2026-11-03). No keys = holds back everything after it, as before. */
+  groupOf?(m: M): readonly string[];
 }
 
 export interface DrainResult {
@@ -212,19 +214,39 @@ export interface DrainResult {
   aborted?: 'network' | 'auth' | 'backoff' | 'unknown' | 'offline';
 }
 
-/** Strict FIFO drain over `pending` as given (caller sorts). */
+/** FIFO drain over `pending` as given (caller sorts). Network/auth stop the pass; a row that must wait for any other reason sets its `groupOf` keys aside and the pass moves on. */
 export async function drainQueue<M extends DrainRow = DrainRow>(
   pending: readonly M[],
   o: DrainOptions<M>
 ): Promise<DrainResult> {
   const res: DrainResult = { sent: 0, failed: 0, retried: 0, skipped: 0 };
+  const held = new Set<string>();
+  // Holds the row's keys and returns true when the pass may go on past it.
+  const hold = (row: M): boolean => {
+    const keys = o.groupOf?.(row) ?? [];
+    for (const k of keys) held.add(k);
+    return keys.length > 0;
+  };
   for (let i = 0; i < pending.length; i++) {
     const row = pending[i]!;
     const remaining = pending.length - i;
+    if (held.size > 0 && (o.groupOf?.(row) ?? []).some((k) => held.has(k))) {
+      // Same job as a row that is waiting: keep it behind that row so changes land in order.
+      if (!hold(row)) {
+        res.skipped += remaining;
+        return res;
+      }
+      res.skipped++;
+      continue;
+    }
     if (row.next_attempt_at && row.next_attempt_at > o.now().toISOString()) {
-      res.aborted = 'backoff';
-      res.skipped = remaining;
-      return res;
+      res.aborted ??= 'backoff';
+      if (!hold(row)) {
+        res.skipped += remaining;
+        return res;
+      }
+      res.skipped++;
+      continue;
     }
     await o.markInflight(row.id);
     try {
@@ -253,9 +275,14 @@ export async function drainQueue<M extends DrainRow = DrainRow>(
       ).toISOString();
       await o.markRetry(row.id, { errorClass: cls, message: msg, nextAttemptAt });
       res.retried++;
-      res.aborted = cls as 'network' | 'auth' | 'unknown';
-      res.skipped = remaining - 1;
-      return res;
+      // Network/auth would fail every row, so stop. Anything else is this row's own trouble.
+      if (cls === 'network' || cls === 'auth' || !hold(row)) {
+        res.aborted = cls as 'network' | 'auth' | 'unknown';
+        res.skipped += remaining - 1;
+        return res;
+      }
+      if (res.aborted === undefined || res.aborted === 'backoff') res.aborted = 'unknown';
+      continue;
     }
     await o.markDone(row.id);
     res.sent++;

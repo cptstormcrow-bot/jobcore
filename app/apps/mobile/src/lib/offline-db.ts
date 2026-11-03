@@ -257,6 +257,31 @@ function classify(e: unknown): ReplayErrorClass {
   return classifyReplayError(e);
 }
 
+/** The records a queued change touches, so a stuck change holds back only that job's later changes (Jeff 2026-11-03). Empty = unknown, holds back everything. */
+export function groupOf(row: Pick<QueueRow, 'op' | 'payload'>): string[] {
+  let p: Record<string, unknown>;
+  try {
+    p = JSON.parse(row.payload) as Record<string, unknown>;
+  } catch {
+    return [];
+  }
+  if (p === null || typeof p !== 'object') return [];
+  const draft = (p.draft ?? {}) as Record<string, unknown>;
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v !== '' ? v : undefined);
+  const keys: string[] = [];
+  const add = (kind: string, v: unknown): void => {
+    const id = str(v);
+    if (id !== undefined) keys.push(`${kind}:${id}`);
+  };
+  add('job', p.jobId ?? p.job_id ?? draft.jobId ?? draft.job_id);
+  if (row.op.startsWith('job.')) add('job', p.id);
+  if (row.op.startsWith('lead.')) add('lead', p.leadId ?? p.id);
+  if (row.op.startsWith('job_photo.')) add('photo', p.id);
+  add('employee', p.profileId);
+  add('payout_batch', p.batchId);
+  return keys;
+}
+
 let drainPromise: Promise<DrainResult> | null = null;
 
 export function drainOfflineQueue(): Promise<DrainResult> {
@@ -295,6 +320,7 @@ export function drainOfflineQueue(): Promise<DrainResult> {
         markFailed,
         now: () => new Date(),
         classify,
+        groupOf,
       });
       if (result.aborted !== 'offline') {
         emitDrainComplete({

@@ -94,3 +94,44 @@ test('drainQueue: network at RETRY_MAX_ATTEMPTS -> markFailed and continues', as
   assert.ok(log.includes('failed:a:network'));
   assert.ok(log.includes('done:b'));
 });
+
+// Per-job holding (Jeff 2026-11-03): a stuck change waits, other jobs keep sending, its own job's later changes wait behind it.
+const byJob = (m: DrainRow): string[] => {
+  const j = (JSON.parse(m.payload) as { jobId?: string }).jobId;
+  return j ? [`job:${j}`] : [];
+};
+const jrow = (id: string, jobId: string | null, extra: Partial<DrainRow> = {}): DrainRow =>
+  row(id, { payload: JSON.stringify(jobId ? { jobId } : {}), ...extra });
+
+test('drainQueue: unknown error holds that job only, other jobs still send', async () => {
+  const { log, o } = harness({ a: { status: 409, message: 'stuck' } });
+  const r = await drainQueue([jrow('a', 'J1'), jrow('b', 'J1'), jrow('c', 'J2')], { ...o, groupOf: byJob });
+  assert.deepEqual(r, { sent: 1, failed: 0, retried: 1, skipped: 1, aborted: 'unknown' });
+  assert.deepEqual(log.filter((l) => l.startsWith('send:')), ['send:a', 'send:c']);
+});
+
+test('drainQueue: a not-yet-due row holds its job, other jobs still send', async () => {
+  const { log, o } = harness();
+  const later = new Date(NOW.getTime() + 60_000).toISOString();
+  const r = await drainQueue(
+    [jrow('a', 'J1', { next_attempt_at: later }), jrow('b', 'J1'), jrow('c', 'J2')],
+    { ...o, groupOf: byJob }
+  );
+  assert.deepEqual(r, { sent: 1, failed: 0, retried: 0, skipped: 2, aborted: 'backoff' });
+  assert.deepEqual(log.filter((l) => l.startsWith('send:')), ['send:c']);
+});
+
+test('drainQueue: a stuck row with no job key still holds everything after it', async () => {
+  const { log, o } = harness({ a: { status: 409, message: 'stuck' } });
+  const r = await drainQueue([jrow('a', null), jrow('b', 'J2')], { ...o, groupOf: byJob });
+  assert.equal(r.aborted, 'unknown');
+  assert.equal(r.skipped, 1);
+  assert.deepEqual(log.filter((l) => l.startsWith('send:')), ['send:a']);
+});
+
+test('drainQueue: network still stops the whole pass with groupOf', async () => {
+  const { log, o } = harness({ a: { status: 503, message: 'down' } });
+  const r = await drainQueue([jrow('a', 'J1'), jrow('b', 'J2')], { ...o, groupOf: byJob });
+  assert.equal(r.aborted, 'network');
+  assert.deepEqual(log.filter((l) => l.startsWith('send:')), ['send:a']);
+});
