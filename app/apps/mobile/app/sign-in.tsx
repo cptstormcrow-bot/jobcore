@@ -8,7 +8,7 @@ import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact,
 
 import NetInfo from '@react-native-community/netinfo';
 
-import { signIn, enterOfflineSession } from '../src/lib/session';
+import { signIn, enterOfflineSession, consumeOfflineLaunch } from '../src/lib/session';
 import { listOfflineAccounts, offlineSignIn, PIN_MAX, type OfflineAccount } from '../src/lib/offline-auth';
 
 const RECENT_EMAILS_KEY = 'jobcore.recentEmails';
@@ -88,14 +88,17 @@ export default function SignInScreen() {
   // Offline sign-in: remembered accounts + PIN, for when there is no wifi or cell service.
   const [accounts, setAccounts] = useState<OfflineAccount[]>([]);
   const [netOffline, setNetOffline] = useState(false);
-  const [offlineOpen, setOfflineOpen] = useState(false);
+  const [offlineOpen, setOfflineOpen] = useState(() => consumeOfflineLaunch());
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [pin, setPin] = useState('');
 
   useEffect(() => {
     let active = true;
     void listOfflineAccounts().then((list) => {
-      if (active) setAccounts(list);
+      if (!active) return;
+      setAccounts(list);
+      // One remembered account: pick it, so only the PIN is left to enter.
+      if (list.length === 1) setPickedId((id) => id ?? list[0]!.userId);
     });
     const unsubscribe = NetInfo.addEventListener((net) => {
       if (active) setNetOffline(net.isConnected === false);

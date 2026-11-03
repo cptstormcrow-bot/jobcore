@@ -6,7 +6,7 @@ import type { Organization, Profile, Role } from '@jobcore/core';
 import NetInfo from '@react-native-community/netinfo';
 
 import { supabase } from './supabase';
-import { rememberAccount, loadActiveSnapshot, clearActive, type OfflineSnapshot } from './offline-auth';
+import { rememberAccount, listOfflineAccounts, clearActive, type OfflineSnapshot } from './offline-auth';
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
 import { getCached } from './read-cache-store';
@@ -240,6 +240,15 @@ export interface SessionProviderProps {
 // running, so a SIGNED_OUT event with no service can be told apart from a real sign-out.
 // `bridge` lets the module-level helpers below reach the mounted provider.
 let signOutIntent = false;
+// Set when a launch with no service is sent to the PIN screen; sign-in opens its PIN panel once.
+let offlineLaunch = false;
+
+/** True once after a launch with no service was routed to the PIN sign-in on #0003. */
+export function consumeOfflineLaunch(): boolean {
+  const v = offlineLaunch;
+  offlineLaunch = false;
+  return v;
+}
 let bridge: { enter: (s: OfflineSnapshot) => void; signedOut: () => void } | null = null;
 
 export function SessionProvider({ children }: SessionProviderProps) {
@@ -305,15 +314,26 @@ export function SessionProvider({ children }: SessionProviderProps) {
       });
     };
 
-    const restoreFromActive = async (): Promise<boolean> => {
+    // Cold start that cannot reach the server: if any account is remembered on this device,
+    // send the user to sign-in #0003 to enter their PIN instead of the error screen.
+    const settled = () => cancelledRef.current || stateRef.current.status === 'authenticated';
+    const routeToPin = async (): Promise<boolean> => {
+      if (settled()) return false;
       try {
-        const snap = await loadActiveSnapshot();
-        if (!snap) return false;
-        enterFromSnapshot(snap);
-        return true;
+        if ((await listOfflineAccounts()).length === 0) return false;
       } catch {
         return false;
       }
+      if (settled()) return false;
+      offlineLaunch = true;
+      setState({ status: 'unauthenticated' });
+      return true;
+    };
+
+    // Applies an outcome, but a cold-start failure with remembered accounts goes to the PIN.
+    const applyOrPin = async (outcome: ResolveOutcome) => {
+      if (outcome.kind === 'failed' && (await routeToPin())) return;
+      applyOutcome(outcome);
     };
 
     function runCheck(): Promise<void> {
@@ -325,12 +345,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
         .then(async ({ data, error }) => {
           // Cold start with no service and an expired token: auth-js reports no session plus an
           // error. That is not a sign-out, so fall back to the remembered account.
-          if (!data.session && error && (await restoreFromActive())) return;
-          applyOutcome(await resolveSession(data.session));
+          if (!data.session && error && (await routeToPin())) return;
+          await applyOrPin(await resolveSession(data.session));
         })
         .catch(async (err) => {
-          if (await restoreFromActive()) return;
-          applyOutcome(toFailure(err));
+          await applyOrPin(toFailure(err));
         });
     }
 
@@ -351,8 +370,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
             if (net && net.isConnected === false) return;
           }
         }
-        applyOutcome(await resolveSession(session));
-      })().catch((err) => applyOutcome(toFailure(err)));
+        await applyOrPin(await resolveSession(session));
+      })().catch((err) => applyOrPin(toFailure(err)));
     });
 
     // Back online while running from a snapshot: re-establish the live session in the background.
