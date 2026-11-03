@@ -61,7 +61,8 @@ function FieldRow({
 }) {
   return (
     <View style={stacked ? styles.fieldRowStacked : styles.fieldRow}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      {/* Stacked labels sit above the input at full width so they stay on one line. */}
+      <Text style={stacked ? styles.fieldLabelStacked : styles.fieldLabel} numberOfLines={1}>{label}</Text>
       <TextInput
         style={styles.fieldInput}
         value={value}
@@ -485,6 +486,11 @@ const styles = StyleSheet.create({
     width: '38%',
     fontSize: typography.text.fieldLabel,
     fontFamily: typography.fontFamily.body,
+  },
+  fieldLabelStacked: {
+    fontSize: typography.text.fieldLabel,
+    fontFamily: typography.fontFamily.body,
+    marginBottom: 2,
   },
   fieldInput: {
     flex: 1,

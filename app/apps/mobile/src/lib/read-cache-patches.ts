@@ -109,6 +109,20 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
   },
   { op: 'job_photo.remove', queries: ['ft.photos.listForJob'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
   {
+    // Photos tab (#0094): a new photo must show on the reload right after it is taken, before it uploads.
+    op: 'job_photo.create',
+    queries: ['af.closeOutPhotos.listForJob'],
+    patch: (p, rows, params) => {
+      if (params?.jobId !== undefined && params.jobId !== p.jobId) return rows;
+      if (params?.kind !== undefined && params.kind !== null && params.kind !== p.kind) return rows;
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id)) return rows;
+      const row: Row = { id: p.id, storage_path: p.storagePath, kind: p.kind, local_uri: p.localUri ?? null };
+      if (Array.isArray(rows)) return [...rows, row];
+      return rows === null || rows === undefined ? [row] : rows;
+    },
+  },
+  { op: 'job_photo.remove', queries: ['af.closeOutPhotos.listForJob'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
+  {
     // Without this the cached job payments stay stale after a record, so the balance never drops and a 2nd tap records again.
     op: 'payment.record_manual',
     queries: ['af.payments.listForJob'],

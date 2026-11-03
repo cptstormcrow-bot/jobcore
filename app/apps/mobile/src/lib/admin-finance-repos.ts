@@ -1531,13 +1531,13 @@ export function createCloseOutPhotosRepository(): CloseOutPhotoRepository {
         if (error) {
           throw new Error(`listForJob failed: ${error.message}`);
         }
-        return (data ?? []) as Array<{ id: string; storage_path: string; kind: string }>;
+        return (data ?? []) as Array<{ id: string; storage_path: string; kind: string; local_uri?: string | null }>;
       });
-      // Signed-URL resolution happens after the cached read; the cache holds storage paths only.
+      // Signed-URL resolution happens after the cached read; a just-taken photo uses its local file until it uploads.
       return Promise.all(
         rows.map(async (row) => ({
           id: row.id,
-          uri: (await resolvePhotoUri(row.storage_path)) ?? row.storage_path,
+          uri: (await resolvePhotoUri(row.storage_path, () => row.local_uri ?? null)) ?? row.storage_path,
           storagePath: row.storage_path,
           kind: row.kind,
         })),

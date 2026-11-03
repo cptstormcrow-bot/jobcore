@@ -149,3 +149,23 @@ test('estimate line add: other job and repeat add leave the list alone', () => {
   assert.strictEqual(run('job_estimate_line_item.add', 'af.estimates.listLineItems', LINE_ADD, rows, { jobId: 'job-9' }), rows);
   assert.strictEqual(run('job_estimate_line_item.add', 'af.estimates.listLineItems', LINE_ADD, rows, { jobId: 'job-1' }), rows);
 });
+
+const PHOTOS = 'af.closeOutPhotos.listForJob';
+const PHOTO_ADD = { id: 'p1', jobId: 'job-1', kind: 'before', storagePath: 'org/job-1/BEF-1.jpg', localUri: 'file:///p1.jpg' };
+
+test('job photo add: shows on the Photos tab lists for that job', () => {
+  const row = { id: 'p1', storage_path: 'org/job-1/BEF-1.jpg', kind: 'before', local_uri: 'file:///p1.jpg' };
+  assert.deepEqual(run('job_photo.create', PHOTOS, PHOTO_ADD, [], { jobId: 'job-1', kind: null }), [row]);
+  assert.deepEqual(run('job_photo.create', PHOTOS, PHOTO_ADD, [{ id: 'p0' }], { jobId: 'job-1', kind: 'before' }), [{ id: 'p0' }, row]);
+});
+
+test('job photo add: other job, other kind and repeat add leave the list alone', () => {
+  const rows = [{ id: 'p1' }];
+  assert.strictEqual(run('job_photo.create', PHOTOS, PHOTO_ADD, rows, { jobId: 'job-9', kind: null }), rows);
+  assert.strictEqual(run('job_photo.create', PHOTOS, PHOTO_ADD, rows, { jobId: 'job-1', kind: 'after' }), rows);
+  assert.strictEqual(run('job_photo.create', PHOTOS, PHOTO_ADD, rows, { jobId: 'job-1', kind: null }), rows);
+});
+
+test('job photo remove: drops it from the Photos tab list', () => {
+  assert.deepEqual(run('job_photo.remove', PHOTOS, { id: 'p1' }, [{ id: 'p0' }, { id: 'p1' }]), [{ id: 'p0' }]);
+});
