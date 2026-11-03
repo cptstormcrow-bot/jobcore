@@ -80,7 +80,14 @@ export function JobDetailsForm({
       <TextField
         label="Job site address"
         value={value.address}
-        onChangeText={(text) => onChange({ address: text })}
+        onChangeText={(text) =>
+          // New jobs: Customer address follows the job site address until it is changed by hand.
+          onChange(
+            mode === 'create' && (value.customerAddress === '' || value.customerAddress === value.address)
+              ? { address: text, customerAddress: text }
+              : { address: text },
+          )
+        }
         placeholder="Street, city, zip"
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
