@@ -8,7 +8,6 @@ export const ADMIN_FINANCE_VIEWS = [
   'assignmentBoard',
   'priceSheetList',
   'payments',
-  'paymentReview',
   'calendar',
   'payroll',
   'reports',
@@ -24,7 +23,6 @@ const LABELS: Record<AdminFinanceView, string> = {
   assignmentBoard: 'Assignments',
   priceSheetList: 'Price Sheets',
   payments: 'Payments',
-  paymentReview: 'Review',
   calendar: 'Calendar',
   payroll: 'Payroll',
   reports: 'Reports',
@@ -39,7 +37,6 @@ const HELP: Record<AdminFinanceView, WalkthroughStepId> = {
   assignmentBoard: 'af_assignments',
   priceSheetList: 'af_price_sheets',
   payments: 'af_payments',
-  paymentReview: 'af_review',
   calendar: 'af_calendar',
   payroll: 'payroll',
   reports: 'af_reports',
@@ -50,7 +47,7 @@ export function isAdminFinanceView(value: unknown): value is AdminFinanceView {
   return typeof value === 'string' && (ADMIN_FINANCE_VIEWS as readonly string[]).includes(value);
 }
 
-/** Builds the 11-item Admin & Finance main menu; `onSelect` decides how a pick navigates. */
+/** Builds the 10-item Admin & Finance main menu; `onSelect` decides how a pick navigates. */
 export function buildAdminFinanceMenuItems(onSelect: (view: AdminFinanceView) => void): MenuItem[] {
   return ADMIN_FINANCE_VIEWS.map((view) => ({ id: view, label: LABELS[view], helpId: HELP[view], onPress: () => onSelect(view) }));
 }

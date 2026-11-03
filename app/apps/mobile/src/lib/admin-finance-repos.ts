@@ -18,8 +18,6 @@ import { supabase, supabaseUrl } from './supabase';
 import { readEmployeeProfiles } from './employee-profiles-source';
 import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { buildPayrollAdminMembers } from './payroll-admin-repos';
-import { ReconciliationView } from '@jobcore/payment-review';
-import type { SupabaseSelectClient as PaymentReviewClient } from '@jobcore/payment-review';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
@@ -3591,10 +3589,6 @@ export function buildAdminFinancePorts(session?: PayrollRepoSession): ModulePort
     timeEntries: createTimeEntryRepository(),
     contractorPayouts: createContractorPayoutRepository(),
     jobPayoutLines: createJobPayoutLineRepository(),
-    paymentReview: {
-      ReconciliationView,
-      client: supabase as unknown as PaymentReviewClient,
-    },
     localPrefs: {
       getBool: getBoolPref,
       setBool: setBoolPref,

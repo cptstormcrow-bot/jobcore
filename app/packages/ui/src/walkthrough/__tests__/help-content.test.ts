@@ -14,7 +14,7 @@ const JOB_STATUSES: JobStatus[] = [
 // ScreenKey is a type-only union: packages/ui/src/walkthrough/walkthrough-content.ts:47
 const SCREEN_KEYS: ScreenKey[] = [
   'job-detail', 'jobs-list', 'admin-finance', 'qualify-lead', 'job-create', 'calendar', 'account', 'profile', 'settings', 'test-jobs',
-  'af-overview', 'af-leads', 'af-jobs', 'af-assignments', 'af-price-sheets', 'af-payments', 'af-review', 'af-time-off', 'af-calendar', 'af-reports', 'af-employees',
+  'af-overview', 'af-leads', 'af-jobs', 'af-assignments', 'af-price-sheets', 'af-payments', 'af-time-off', 'af-calendar', 'af-reports', 'af-employees',
   'ft-overview', 'ft-jobs', 'ft-time-off', 'ft-prems', 'ft-reviews', 'ft-job-detail',
   'sm-overview', 'sm-pitch', 'sm-composer', 'sm-reporting', 'sm-callbacks', 'sm-reviews',
 ];

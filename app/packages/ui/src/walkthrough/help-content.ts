@@ -45,13 +45,6 @@ export const HELP_CARDS: WalkthroughStep[] = [
     context: { screens: ['af-payments'] },
   },
   {
-    id: 'af_review',
-    kind: 'info',
-    title: 'Review',
-    body: 'Payment reconciliation. Shows payments that are pending or failed, and payments that were confirmed by hand, so you can spot anything that needs attention.',
-    context: { screens: ['af-review'] },
-  },
-  {
     id: 'af_time_off',
     kind: 'action',
     title: 'Time Off',

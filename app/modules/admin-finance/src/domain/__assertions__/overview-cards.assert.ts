@@ -10,10 +10,10 @@ import assert from 'node:assert/strict';
 import { buildOverviewCards } from '../overview-cards';
 
 // Manual mirror of the hamburger menu in AdminFinanceRoot.tsx (that file is
-// .tsx and cannot load under npm test): 'overview' plus the 10 card ids.
+// .tsx and cannot load under npm test): 'overview' plus the 9 card ids.
 const HAMBURGER_IDS = [
   'overview', 'leadInbox', 'jobs', 'assignmentBoard', 'priceSheetList',
-  'payments', 'paymentReview', 'payroll', 'calendar', 'reports', 'employee-roster',
+  'payments', 'payroll', 'calendar', 'reports', 'employee-roster',
 ];
 
 const COUNTS = {
@@ -21,7 +21,6 @@ const COUNTS = {
   qualifiedOrScheduled: 3,
   awaitingCloseOut: 2,
   employees: 9,
-  needsAttentionPayments: 25 as number | null,
 };
 
 const ZERO = {
@@ -29,22 +28,21 @@ const ZERO = {
   qualifiedOrScheduled: 0,
   awaitingCloseOut: 0,
   employees: 0,
-  needsAttentionPayments: 0 as number | null,
 };
 
-test('returns 10 rows in menu order', () => {
+test('returns 9 rows in menu order', () => {
   const cards = buildOverviewCards(COUNTS);
-  assert.equal(cards.length, 10);
+  assert.equal(cards.length, 9);
   assert.deepEqual(cards.map((c) => c.id), [
     'leadInbox', 'jobs', 'assignmentBoard', 'priceSheetList',
-    'payments', 'paymentReview', 'payroll', 'calendar', 'reports', 'employee-roster',
+    'payments', 'payroll', 'calendar', 'reports', 'employee-roster',
   ]);
 });
 
 test('titles are in exact order', () => {
   assert.deepEqual(buildOverviewCards(COUNTS).map((c) => c.title), [
     'Leads', 'Jobs', 'Assignments','Price Sheets', 'Payments & Payouts',
-    'Review', 'Payroll', 'Calendar', 'Reports', 'Employees',
+    'Payroll', 'Calendar', 'Reports', 'Employees',
   ]);
 });
 
@@ -65,7 +63,6 @@ test('count interpolation with distinct values', () => {
   const sub = (id: string) => buildOverviewCards(COUNTS).find((c) => c.id === id)?.subtitle;
   assert.equal(sub('jobs'), '7 on file for this organization');
   assert.equal(sub('assignmentBoard'), '3 qualified or scheduled');
-  assert.equal(sub('paymentReview'), '25 pending');
   assert.equal(sub('payroll'), 'Weekly hours and pay');
   assert.equal(sub('employee-roster'), '9 on file');
 });
@@ -73,10 +70,8 @@ test('count interpolation with distinct values', () => {
 test('zero counts render as zero, not the fallback', () => {
   const sub = (id: string) => buildOverviewCards(ZERO).find((c) => c.id === id)?.subtitle;
   assert.equal(sub('jobs'), '0 on file for this organization');
-  assert.equal(sub('paymentReview'), '0 pending');
 });
 
-test('null needs-attention count falls back for Review', () => {
-  const cards = buildOverviewCards({ ...COUNTS, needsAttentionPayments: null });
-  assert.equal(cards.find((c) => c.id === 'paymentReview')?.subtitle, 'Reconcile payments');
+test('Review card is gone (redundant to Payments)', () => {
+  assert.ok(!buildOverviewCards(COUNTS).some((c) => (c.id as string) === 'paymentReview'));
 });

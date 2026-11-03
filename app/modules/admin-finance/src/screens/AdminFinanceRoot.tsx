@@ -77,7 +77,7 @@ type SubView =
   | 'assignmentBoard'
   | 'priceSheetList' | 'priceSheetEditor' | 'priceSheetCreate'
   | 'reports'
-  | 'payments' | 'paymentReview'
+  | 'payments'
   | 'employee-roster' | 'employee-detail' | 'employee-editor' | 'employee-job-detail'
   | 'employee-invitations'
   | 'blackout-editor'
@@ -104,7 +104,7 @@ const HELP_SCREEN_KEY: Record<SubView, HelpScreenKey> = {
   priceSheetList: 'af-price-sheets', priceSheetEditor: 'af-price-sheets', priceSheetCreate: 'af-price-sheets',
   'blackout-editor': 'af-time-off',
   reports: 'af-reports',
-  payments: 'af-payments', paymentReview: 'af-review',
+  payments: 'af-payments',
   'employee-roster': 'af-employees', 'employee-detail': 'af-employees', 'employee-editor': 'af-employees',
   'employee-job-detail': 'af-employees', 'employee-invitations': 'af-employees',
   calendar: 'af-calendar',
@@ -197,7 +197,6 @@ export function AdminFinanceRoot() {
   const [employeeHoursWorked, setEmployeeHoursWorked] = useState<{ week: number; month: number; year: number } | null>(null);
   const [selectedPayoutBatch, setSelectedPayoutBatch] = useState<PayoutBatch | null>(null);
   const [paymentsScrollTarget, setPaymentsScrollTarget] = useState<'payoutBatches' | null>(null);
-  const [needsAttentionCount, setNeedsAttentionCount] = useState<number | null>(null);
   const [selectedEmployeeJob, setSelectedEmployeeJob] = useState<Job | null>(null);
   const [qualifyError, setQualifyError] = useState<string | null>(null);
   const [customerNames, setCustomerNames] = useState<Record<string, string>>({});
@@ -337,13 +336,6 @@ export function AdminFinanceRoot() {
       cancelled = true;
     };
   }, [orgId, jobRepository, employeeRepository, commissionRepository, techServiceAreaRepository, ports.serviceAreas, ports.techSkills, ports.timeOffAdmin]);
-
-  useEffect(() => {
-    if (subView !== 'overview' || !orgId) return undefined;
-    let cancelled = false;
-    ports.payments.listNeedingAttention(orgId).then((rows) => { if (!cancelled) setNeedsAttentionCount(rows.length); }).catch(() => { if (!cancelled) setNeedsAttentionCount(null); });
-    return () => { cancelled = true; };
-  }, [subView, orgId]);
 
   useEffect(() => {
     const jobs = loadState.kind === 'loaded' ? loadState.jobs : [];
@@ -1035,7 +1027,6 @@ export function AdminFinanceRoot() {
               qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
               awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
               employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner' && profile.active).length,
-              needsAttentionPayments: needsAttentionCount,
             }).map((card) => (
               <Pressable
                 key={card.id}
@@ -1230,11 +1221,6 @@ export function AdminFinanceRoot() {
           employeeNames={employeeNames}
           onOpenJob={onOpenJob}
         />
-      ) : subView === 'paymentReview' ? (
-        (() => {
-          const { ReconciliationView, client } = getModulePorts().paymentReview;
-          return <ReconciliationView client={client} jobNumbers={jobNumbers} employeeNames={employeeNames} onOpenJob={onOpenJob} />;
-        })()
       ) : subView === 'assignmentBoard' ? (
         loadState.kind === 'loading' || loadState.kind === 'idle' ? (
           <LoadingState label="Loading jobs..." />
@@ -1448,7 +1434,6 @@ const SUBVIEW_LABELS: Record<Exclude<SubView, 'employee-editor' | 'blackout-edit
   priceSheetCreate: 'New Price Sheet',
   reports: 'Reports',
   payments: 'Payments',
-  paymentReview: 'Review',
   'employee-roster': 'Employees',
   'employee-detail': 'Employee Detail',
   'employee-job-detail': 'Employee Job Detail',

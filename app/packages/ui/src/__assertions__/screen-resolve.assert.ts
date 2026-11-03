@@ -127,7 +127,8 @@ test('real registry sanity', () => {
   assert.equal(resolveScreen('/m/admin-finance', r)?.number, 10);
   assert.equal(resolveScreen('/m/field-tech', r)?.number, 6);
   assert.equal(resolveScreen('/m/sales-marketing', r)?.number, 38);
-  assert.equal(resolveScreen('/m/admin-finance', r, 'paymentReview')?.number, 89);
+  // #0089 Review was retired into #0063 Payments; its sub-view no longer resolves to it.
+  assert.notEqual(resolveScreen('/m/admin-finance', r, 'paymentReview')?.number, 89);
   assert.equal(resolveScreen('/m/admin-finance', r, 'Payroll')?.number, 88);
   assert.equal(resolveScreen('/m/admin-finance', r, 'PayrollRun')?.number, 87);
   assert.equal(resolveScreen('/m/admin-finance', r, 'PayrollSettings')?.number, 86);

@@ -29,12 +29,12 @@ export function setSupabaseClient(_client: SupabaseSelectClient | null): void {}
 
 /**
  * Root screen for the payment-review route. The standalone route had no app
- * header and no job-number or tech-name lookups, so it redirects to the
- * Admin Finance Review tab (#0089), which renders the same ReconciliationView
- * with the header, the lookups and Open Job.
+ * header and no job-number or tech-name lookups, so it redirects to
+ * Admin Finance Payments (#0063). The old Review screen (#0089) was removed as
+ * redundant: Payments already shows the same reconciliation sections.
  */
 function PaymentReviewScreen(): React.ReactElement {
-  return React.createElement(Redirect, { href: { pathname: '/m/[moduleId]', params: { moduleId: 'admin-finance', view: 'paymentReview' } } });
+  return React.createElement(Redirect, { href: { pathname: '/m/[moduleId]', params: { moduleId: 'admin-finance', view: 'payments' } } });
 }
 
 /**
@@ -52,7 +52,7 @@ export const paymentReviewModule: JobcoreModule = {
   requiredRoles: ['owner', 'admin'],
   routes: [{ path: 'payment-review', component: PaymentReviewScreen }],
   navEntries: [{ icon: 'card', label: 'Payment & Review', order: 40 }],
-  // Reached via Admin Finance → Review; a logo-switcher entry would duplicate it. /m/payment-review still routes.
+  // Reached via Admin Finance → Payments; a logo-switcher entry would duplicate it. /m/payment-review still routes.
   hideFromSwitcher: true,
   migrations: ['0010_payment_review.sql'],
 };

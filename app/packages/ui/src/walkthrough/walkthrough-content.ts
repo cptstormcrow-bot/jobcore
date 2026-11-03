@@ -16,7 +16,6 @@ export type WalkthroughStepId =
   | 'af_assignments'
   | 'af_price_sheets'
   | 'af_payments'
-  | 'af_review'
   | 'af_time_off'
   | 'af_calendar'
   | 'af_reports'
@@ -52,7 +51,7 @@ export type WalkthroughStepId =
 
 export type ScreenKey =
   | 'job-detail' | 'jobs-list' | 'admin-finance' | 'qualify-lead' | 'job-create' | 'calendar' | 'account' | 'profile' | 'settings' | 'test-jobs'
-  | 'af-overview' | 'af-leads' | 'af-jobs' | 'af-assignments' | 'af-price-sheets' | 'af-payments' | 'af-review' | 'af-time-off' | 'af-calendar' | 'af-reports' | 'af-employees'
+  | 'af-overview' | 'af-leads' | 'af-jobs' | 'af-assignments' | 'af-price-sheets' | 'af-payments' | 'af-time-off' | 'af-calendar' | 'af-reports' | 'af-employees'
   | 'ft-overview' | 'ft-jobs' | 'ft-time-off' | 'ft-prems' | 'ft-reviews' | 'ft-job-detail'
   | 'sm-overview' | 'sm-pitch' | 'sm-composer' | 'sm-reporting' | 'sm-callbacks' | 'sm-reviews';
 
