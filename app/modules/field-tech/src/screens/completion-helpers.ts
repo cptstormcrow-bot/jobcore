@@ -183,8 +183,10 @@ const MSG_ALREADY_COMPLETE = 'This job is already complete.';
 const MSG_CANCELLED = 'This job was cancelled, so it cannot be completed.';
 const MSG_NOT_STARTED = 'Start the job first, then you can complete it.';
 
-/** true when the job is already complete (completedAt set, or status at/after completed). */
+/** true when the job is already complete (completedAt set, or status at/after completed).
+ *  An in_progress job is never complete: a stale completedAt left by a reopen must not block it (job #3, Jeff 2026-11-02). */
 export function isAlreadyComplete(job: CompletionBlockInput): boolean {
+  if (job.status === 'in_progress') return false;
   const completedSet = job.completedAt !== undefined && job.completedAt !== null && job.completedAt !== '';
   return completedSet || PAST_COMPLETION.includes(job.status);
 }

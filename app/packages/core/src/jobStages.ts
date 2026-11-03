@@ -135,15 +135,25 @@ export function yellowReasonText(s: StageResult): string {
   return '';
 }
 
-export function deriveNextStep(states: StageResult[]): string {
+/** Why a stage cannot move yet, keyed by stage, e.g. `{ startWork: 'needs an installer tech' }`. */
+export type StageBlockers = Partial<Record<StageKey, string>>;
+
+/** The next-step line; when the chosen stage is blocked, the roadblock replaces the generic phrase (Jeff 2026-11-02). */
+export function deriveNextStep(states: StageResult[], blockers: StageBlockers = {}): string {
   const red = states.find((s) => s.state === 'red');
-  if (red) return `Next Steps: Redo ${STAGE_LABELS[red.key]}.`;
+  if (red) {
+    const block = blockers[red.key];
+    return block ? `Next Steps: Redo ${STAGE_LABELS[red.key]}: ${block}.` : `Next Steps: Redo ${STAGE_LABELS[red.key]}.`;
+  }
   const yellow = states.find((s) => s.state === 'yellow');
   if (yellow) {
     const why = yellowReasonText(yellow);
     return `Next Steps: Review ${STAGE_LABELS[yellow.key]}${why ? ` (${why})` : ''}.`;
   }
   const gray = states.find((s) => s.state === 'gray' && !s.notRequired);
-  if (gray) return `Next Steps: ${NEXT_PHRASE[gray.key]}.`;
+  if (gray) {
+    const block = blockers[gray.key];
+    return block ? `Next Steps: ${NEXT_PHRASE[gray.key]}: ${block}.` : `Next Steps: ${NEXT_PHRASE[gray.key]}.`;
+  }
   return 'Next Steps: All done.';
 }

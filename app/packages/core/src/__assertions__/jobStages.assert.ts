@@ -226,3 +226,11 @@ test('next step skips a notRequired gray stage', () => {
     'Next Steps: Redo Prem available.',
   );
 });
+
+test('next step names the roadblock when the next stage is blocked', () => {
+  const over: Partial<StageInputs> = {};
+  for (const k of STAGE_KEYS.slice(0, STAGE_KEYS.indexOf('startWork'))) over[k] = { complete: true };
+  const states = deriveStageStates(inputs(over));
+  assert.equal(deriveNextStep(states, { startWork: 'needs an installer tech' }), 'Next Steps: Start work: needs an installer tech.');
+  assert.equal(deriveNextStep(states, { paid: 'needs an approved estimate' }), 'Next Steps: Start work.');
+});

@@ -200,9 +200,10 @@ test('completionBlockedNotice is null for in_progress with no completedAt', () =
   assert.equal(completionBlockedNotice({ status: 'in_progress', completedAt: '' }), null);
 });
 
-test('completionBlockedNotice says already complete when completedAt is set', () => {
+test('completionBlockedNotice says already complete when completedAt is set, except while in progress', () => {
   const completedAt = '2026-01-02T03:04:05Z';
-  assert.equal(completionBlockedNotice({ status: 'in_progress', completedAt }), ALREADY);
+  // A reopened job keeps a stale completedAt; in_progress can still be completed.
+  assert.equal(completionBlockedNotice({ status: 'in_progress', completedAt }), null);
   assert.equal(completionBlockedNotice({ status: 'scheduled', completedAt }), ALREADY);
 });
 
@@ -210,7 +211,8 @@ test('isAlreadyComplete is true for completed/paid/closed/archived and when comp
   for (const status of ['completed', 'paid', 'closed', 'archived']) {
     assert.equal(isAlreadyComplete({ status }), true, status);
   }
-  assert.equal(isAlreadyComplete({ status: 'in_progress', completedAt: '2026-01-02T03:04:05Z' }), true);
+  assert.equal(isAlreadyComplete({ status: 'scheduled', completedAt: '2026-01-02T03:04:05Z' }), true);
+  assert.equal(isAlreadyComplete({ status: 'in_progress', completedAt: '2026-01-02T03:04:05Z' }), false);
 });
 
 test('isAlreadyComplete is false for in_progress without completedAt and for scheduled', () => {

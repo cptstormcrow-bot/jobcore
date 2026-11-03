@@ -1,6 +1,6 @@
 import type { Job } from '@jobcore/core';
 import { deriveStageStates, deriveNextStep, estimateStageFlags } from '@jobcore/core';
-import type { StageInputs, StageKey } from '@jobcore/core';
+import type { StageBlockers, StageInputs, StageKey } from '@jobcore/core';
 import type { JobEstimate, JobInvestigation } from '../../../../modules/admin-finance/src/data/ports';
 
 export type JobStageExtras = {
@@ -34,6 +34,7 @@ export function buildJobStageResults({
     completedAt: complete ? marks[key] ?? fallback ?? null : null,
   });
   const closed = job.status === 'closed';
+  const pastCompletion = ['completed', 'paid', 'closed', 'archived'].includes(job.status);
   const flags = estimateStageFlags(estimate?.status ?? null);
   const inputs: StageInputs = {
     lead: done(true, 'lead'),
@@ -55,7 +56,8 @@ export function buildJobStageResults({
     contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },
     startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
     photos: { ...done((stageExtras?.photoCount ?? 0) >= 1, 'photos'), notRequired: (stageExtras?.photoCount ?? 0) === 0 },
-    completeWork: { ...done(!!job.completedAt, 'completeWork', job.completedAt), sticky: true },
+    // A stale completedAt on a job sent back to in progress does not count (job #3, Jeff 2026-11-02).
+    completeWork: { ...done(pastCompletion && !!job.completedAt, 'completeWork', job.completedAt), sticky: true },
     // Paid follows the money, not completion: a job paid in full while in progress shows Paid (Jeff).
     paid: done(paidInFull || job.status === 'paid' || closed, 'paid'),
     closeout: done(closed, 'closeout'),
@@ -66,5 +68,15 @@ export function buildJobStageResults({
   const states = (estimate?.status ?? 'draft') === 'draft'
     ? derived.map((s) => (s.key === 'estimate' ? { ...s, state: 'gray' as const } : s))
     : derived;
-  return { states, nextStep: deriveNextStep(states) };
+  // Roadblocks shown in Next Steps, matching what the stage's own screen would refuse with.
+  const blockers: StageBlockers = {};
+  if (job.status === 'cancelled') {
+    blockers.startWork = 'the job is cancelled';
+    blockers.completeWork = 'the job is cancelled';
+  } else {
+    if (!job.assignedTechId) blockers.startWork = 'needs an installer tech';
+    if (job.status !== 'in_progress' && !pastCompletion) blockers.completeWork = 'start the job first';
+  }
+  if (!pastCompletion) blockers.closeout = 'complete the job first';
+  return { states, nextStep: deriveNextStep(states, blockers) };
 }

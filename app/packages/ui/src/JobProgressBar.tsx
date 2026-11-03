@@ -60,7 +60,8 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
         const i = from + k;
         const state = stateAt(i);
         const disabled = !!disabledKeys?.includes(stage.key);
-        const tappable = !!onStagePress && (state === 'green' || state === 'yellow' || state === 'red');
+        // Gray (not started) dots are tappable too, so the next stage can be started from the bar.
+        const tappable = !!onStagePress && !disabled;
         const result = states[i];
         const why = state === 'yellow' && result ? yellowReasonText(result) : '';
         const content = (
