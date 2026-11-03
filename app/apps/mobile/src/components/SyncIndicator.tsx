@@ -16,13 +16,16 @@ export interface SyncIndicatorProps {
 }
 
 export function SyncIndicator({ style }: SyncIndicatorProps) {
-  const { isOnline, pendingCount, failedCount, isSyncing, lastError, refresh, retryAll } = useSyncStatus();
+  const { isOnline, pendingCount, failedCount, isSyncing, retryAll } = useSyncStatus();
   const router = useRouter();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
 
-  const failed = (failedCount > 0 || !!lastError) && isOnline && !isSyncing;
-  if (isOnline && !isSyncing && pendingCount === 0 && !failed) return null;
+  // Online, the badge stays out of the way: changes still waiting are retried
+  // quietly in the background. It shows only offline, while syncing, or when a
+  // change really failed and needs a fix (Jeff 2026-11-02).
+  const failed = failedCount > 0 && isOnline && !isSyncing;
+  if (isOnline && !isSyncing && !failed) return null;
 
   let label: string;
   let labelColor: string = colors.textMuted;
@@ -34,29 +37,21 @@ export function SyncIndicator({ style }: SyncIndicatorProps) {
   } else if (isSyncing) {
     label = 'Syncing…';
     tappable = false;
-  } else if (failed) {
-    // No failed rows but a paused drain: say so instead of a phantom "1 failed".
-    label = failedCount > 0 ? `${failedCount} failed` : 'Sync paused · tap to retry';
-    labelColor = colors.danger;
   } else {
-    label = `${pendingCount} to sync`;
-    labelColor = colors.warning;
+    label = `${failedCount} failed`;
+    labelColor = colors.danger;
   }
 
   return (
     <Pressable
       disabled={!tappable}
       onPress={() => {
-        // Paused drain (no failed rows): retry now and open the sync screen too.
-        if (failed && failedCount === 0) refresh();
-        if (failed && pathname !== '/sync-issues') router.push('/sync-issues' as never);
-        else if (failedCount > 0) void retryAll();
-        else if (failed) return;
-        else refresh();
+        if (pathname !== '/sync-issues') router.push('/sync-issues' as never);
+        else void retryAll();
       }}
       style={[styles.container, { bottom: spacing.sm + insets.bottom }, style]}
     >
-      <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
+      <Text style={[styles.label, { color: labelColor }]} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }

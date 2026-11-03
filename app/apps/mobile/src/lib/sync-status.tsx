@@ -37,6 +37,9 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
   const retryOnNextRef = useRef(false);
   const seenNetRef = useRef(false);
   const lastAutoRetryRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const backoffRef = useRef(0);
+  const triggerRef = useRef<(() => void) | null>(null);
 
   authRef.current = authenticated;
 
@@ -49,6 +52,16 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     } catch {
       // keep last-known count
     }
+  }, []);
+
+  const scheduleQuietRetry = useCallback(() => {
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    const delay = Math.min(15_000 * 2 ** backoffRef.current, 300_000);
+    backoffRef.current += 1;
+    retryTimerRef.current = setTimeout(() => {
+      retryTimerRef.current = null;
+      if (aliveRef.current) triggerRef.current?.();
+    }, delay);
   }, []);
 
   const runDrain = useCallback(async () => {
@@ -67,15 +80,21 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       }
       const result = await drainOfflineQueue();
       if (!aliveRef.current) return;
-      let err: string | null = result.aborted ? `Sync paused (${result.aborted})` : null;
-      if (!err && result.failed > 0) {
+      // An aborted drain (flaky signal, server hiccup) is not shown to the user:
+      // retry quietly with backoff 15 s, 30 s, 60 s ... up to 5 min. Only rows that
+      // really failed set lastError.
+      if (result.aborted) scheduleQuietRetry();
+      else backoffRef.current = 0;
+      let err: string | null = null;
+      if (result.failed > 0) {
         const rows = await listFailed(1);
         err = rows[0]?.last_error ?? null;
       }
       setLastError(err);
       setLastDrainAt(new Date().toISOString());
-    } catch (e) {
-      if (aliveRef.current) setLastError(e instanceof Error ? e.message : 'Sync failed.');
+    } catch {
+      // A thrown drain is treated like an abort: nothing failed for good, try again quietly.
+      if (aliveRef.current) scheduleQuietRetry();
     } finally {
       runningRef.current = false;
       if (aliveRef.current) setIsSyncing(false);
@@ -83,7 +102,7 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       // A reconnect that landed mid-drain still owes its retry pass.
       if (retryOnNextRef.current && aliveRef.current) triggerRef.current?.();
     }
-  }, [recount]);
+  }, [recount, scheduleQuietRetry]);
 
   const trigger = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -92,7 +111,6 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       void runDrain();
     }, 500);
   }, [runDrain]);
-  const triggerRef = useRef<(() => void) | null>(null);
   triggerRef.current = trigger;
 
   const armAutoRetry = useCallback(() => {
@@ -115,6 +133,7 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       registerDrainRequester(null);
       unsub();
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
     };
   }, [trigger, recount]);
 

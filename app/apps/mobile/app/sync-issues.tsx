@@ -10,7 +10,7 @@ import { failureMessage, opLabel, savedAtLabel } from '../src/lib/sync-issues';
 import { useSyncStatus } from '../src/lib/sync-status';
 
 export default function SyncIssuesScreen() {
-  const { refresh, retryAll, failedCount, isSyncing, isOnline, lastError, pendingCount } = useSyncStatus();
+  const { refresh, retryAll, failedCount, isSyncing, isOnline, pendingCount } = useSyncStatus();
   const [rows, setRows] = useState<QueueRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,16 +68,7 @@ export default function SyncIssuesScreen() {
         {!isOnline && list.length > 0 ? (
           <Text style={styles.meta}>You're offline. These will send when you reconnect.</Text>
         ) : null}
-        {rows !== null && list.length === 0 && lastError && isOnline && !isSyncing ? (
-          <Card style={styles.card}>
-            <Text style={styles.emptyTitle}>Sync is paused</Text>
-            <Text style={styles.errorText}>{failureMessage(lastError)}</Text>
-            <View style={styles.actions}>
-              <PayrollButton label="Try again" onPress={() => void run(retryAll)} />
-            </View>
-          </Card>
-        ) : null}
-        {rows !== null && list.length === 0 && pendingCount > 0 && !(lastError && isOnline && !isSyncing) ? (
+        {rows !== null && list.length === 0 && pendingCount > 0 ? (
           <Card style={styles.card}>
             <Text style={styles.emptyTitle} numberOfLines={1}>
               {pendingCount} {pendingCount === 1 ? 'change' : 'changes'} waiting to send
@@ -96,7 +87,7 @@ export default function SyncIssuesScreen() {
             ) : null}
           </Card>
         ) : null}
-        {rows !== null && list.length === 0 && pendingCount === 0 && !(lastError && isOnline && !isSyncing) ? (
+        {rows !== null && list.length === 0 && pendingCount === 0 ? (
           <Card>
             <Text style={styles.emptyTitle}>All caught up</Text>
             <Text style={styles.meta}>Nothing is waiting on a fix. Every change saved on this device has been sent.</Text>

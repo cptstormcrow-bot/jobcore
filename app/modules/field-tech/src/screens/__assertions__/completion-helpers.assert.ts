@@ -77,8 +77,8 @@ test('COMPLETION_CHECKLIST_ITEMS has the 7 items in order with exact labels', ()
     { key: 'movedUpstairs', label: 'Materials moved upstairs', hint: '$20 fee if not done' },
     { key: 'damage', label: 'List any apparent damage to the box(es) or unpacked items before assembly' },
     { key: 'extraScope', label: 'Additional items added to scope after arrival?' },
-    { key: 'buildsFinished', label: 'Build(s) finish successfully' },
-    { key: 'debrisCleared', label: 'Worksite debris cleared/packed' },
+    { key: 'buildsFinished', label: 'Build(s) finish successfully', required: true },
+    { key: 'debrisCleared', label: 'Worksite debris cleared/packed', required: true },
     { key: 'photosTaken', label: 'Photographs taken' },
   ]);
   assert.equal(COMPLETION_CHECKLIST_ITEMS.length, 7);

@@ -25,6 +25,8 @@ export interface CompletionChecklistItem {
   key: CompletionItemKey;
   label: string;
   hint?: string;
+  /** Must be ticked before Complete Job lights up; shown with a trailing * (the stored label stays plain). */
+  required?: boolean;
 }
 
 /** Display order top to bottom. Labels are Jeff's exact words. */
@@ -33,8 +35,8 @@ export const COMPLETION_CHECKLIST_ITEMS: readonly CompletionChecklistItem[] = [
   { key: 'movedUpstairs', label: 'Materials moved upstairs', hint: '$20 fee if not done' },
   { key: 'damage', label: 'List any apparent damage to the box(es) or unpacked items before assembly' },
   { key: 'extraScope', label: 'Additional items added to scope after arrival?' },
-  { key: 'buildsFinished', label: 'Build(s) finish successfully' },
-  { key: 'debrisCleared', label: 'Worksite debris cleared/packed' },
+  { key: 'buildsFinished', label: 'Build(s) finish successfully', required: true },
+  { key: 'debrisCleared', label: 'Worksite debris cleared/packed', required: true },
   { key: 'photosTaken', label: 'Photographs taken' },
 ];
 

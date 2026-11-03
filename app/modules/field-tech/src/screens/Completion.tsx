@@ -236,7 +236,12 @@ export function Completion({
       const feeWanted = upstairsFeeApplies(movedUpstairs);
       let estimateExists = false;
       if (!checklistSavedRef.current || (feeWanted && !feeSavedRef.current)) {
-        estimateExists = (await ports.estimates.getForJob(job.id)) !== null;
+        // Best effort: offline with no cached estimate must not block completion; the fee is then skipped.
+        try {
+          estimateExists = (await ports.estimates.getForJob(job.id)) !== null;
+        } catch {
+          estimateExists = false;
+        }
       }
 
       // (b) Checklist note.
@@ -265,14 +270,19 @@ export function Completion({
 
       // (c) Upstairs fee as an applied contingency on the estimate (skipped when already present or no estimate).
       if (feeWanted && estimateExists && !feeSavedRef.current) {
-        const current = await ports.estimates.getForJob(job.id);
-        const rows = current?.contingencies ?? [];
-        if (!rows.some((row) => row.description === UPSTAIRS_FEE_DESCRIPTION)) {
-          await ports.estimates.upsertForJob(job.id, {
-            contingencies: [...rows, { description: UPSTAIRS_FEE_DESCRIPTION, price: UPSTAIRS_FEE, applies: true }],
-          });
+        // Best effort: a fee write that fails offline must not stop the job from completing.
+        try {
+          const current = await ports.estimates.getForJob(job.id);
+          const rows = current?.contingencies ?? [];
+          if (!rows.some((row) => row.description === UPSTAIRS_FEE_DESCRIPTION)) {
+            await ports.estimates.upsertForJob(job.id, {
+              contingencies: [...rows, { description: UPSTAIRS_FEE_DESCRIPTION, price: UPSTAIRS_FEE, applies: true }],
+            });
+          }
+          feeSavedRef.current = true;
+        } catch {
+          // Left unsaved so the next Update retries it.
         }
-        feeSavedRef.current = true;
       }
 
       // Already complete: the edits are saved as new notes (newest wins), and the status stays as it is.
@@ -344,7 +354,7 @@ export function Completion({
             <TextField inline
               value={damageText}
               onChangeText={setDamageText}
-              placeholder="Describe the damage"
+              placeholder="Describe the damage *"
               disabled={submitting}
               multiline
               style={styles.field}
@@ -360,7 +370,7 @@ export function Completion({
             <TextField inline
               value={scopeText}
               onChangeText={setScopeText}
-              placeholder="List each item added to the scope"
+              placeholder="List each item added to the scope *"
               disabled={submitting}
               multiline
               style={styles.field}
@@ -427,7 +437,8 @@ export function Completion({
       ) : null}
 
       <Text style={styles.heading}>Job Checklist</Text>
-      {COMPLETION_CHECKLIST_ITEMS.map((item) => renderItem(item.key, item.label, item.hint))}
+      {!alreadyCompleted ? <Text style={styles.hint} numberOfLines={1}>* Required to complete the job</Text> : null}
+      {COMPLETION_CHECKLIST_ITEMS.map((item) => renderItem(item.key, item.required ? `${item.label} *` : item.label, item.hint))}
 
       <View
         style={styles.section}
