@@ -459,14 +459,15 @@ export function AssignmentBoardScreen({
                           <Text style={styles.rowDescription} numberOfLines={2}>{(taskTitlesByJobId?.[job.id] ?? []).join(', ')}</Text>
                         ) : null}
                       </View>
-                      <Text style={styles.poolRowText}>{job.address ?? 'No address on file'}</Text>
                       <View style={styles.rowMeta}>
-                        <Text style={[styles.assignedLine, styles.rowMetaTech]}>{techLine}</Text>
-                        {job.jobNumber != null ? <Text style={styles.assignedLine}>{`Job #${job.jobNumber}`}</Text> : null}
+                        <Text style={[styles.poolRowText, styles.rowMetaTech]} numberOfLines={1}>{job.address ?? 'No address on file'}</Text>
+                        {job.jobNumber != null ? <Text style={styles.assignedLine} numberOfLines={1}>{`Job #${job.jobNumber}`}</Text> : null}
                       </View>
                     </Pressable>
                     {rowError[job.id] ? <Text style={styles.rowError}>{rowError[job.id]}</Text> : null}
+                    {/* #0016: assignment, drop box and buttons share one line (Jeff 2026-11-02). */}
                     <View style={styles.rowActions}>
+                      <Text style={[styles.assignedLine, styles.actionTech]} numberOfLines={1}>{techLine}</Text>
                       <View style={styles.kindSlot}>
                         <PayrollButton label="Service" textStyle={styles.unbold} onPress={() => { clearChoice(job.id); setVisitKind((prev) => ({ ...prev, [job.id]: 'service' })); }} style={selectedStyle(kind === 'service', true)} />
                       </View>
@@ -613,7 +614,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.info,
   },
   confirmSlot: {
-    flex: 1,
     minWidth: 64,
   },
   poolRowText: {
@@ -622,11 +622,10 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   assignSelect: {
-    flexGrow: 1,
+    flexShrink: 1,
     flexBasis: 120,
-    minWidth: 120,
+    minWidth: 96,
     width: 'auto',
-    marginRight: spacing.xs,
   },
   assignedLine: {
     fontSize: typography.text.hint,
@@ -635,7 +634,7 @@ const styles = StyleSheet.create({
   rowDetail: {},
   rowMeta: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
   },
   rowMetaTech: {
@@ -669,14 +668,16 @@ const styles = StyleSheet.create({
   },
   rowActions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
+    gap: spacing.xs,
     marginTop: 2,
   },
-  kindSlot: {
+  actionTech: {
     flex: 1,
+    minWidth: 0,
+  },
+  kindSlot: {
     minWidth: 56,
-    marginRight: spacing.xs,
   },
   sortTabsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.sm, paddingTop: 2 },
   unbold: { fontWeight: '400' },

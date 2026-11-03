@@ -1088,8 +1088,8 @@ export function AdminFinanceRoot() {
                       <ListItem
                         key={job.id}
                         title={job.address ?? job.description ?? job.id}
-                        subtitle={formatDate(job.scheduledStart)}
-                        overline={job.customerName ?? undefined}
+                        // #0012: date rides the customer-name line, no line of its own (Jeff 2026-11-02).
+                        overline={[job.customerName, formatDate(job.scheduledStart)].filter(Boolean).join(' · ')}
                         footer={footer}
                         footerLines={2}
                         onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
