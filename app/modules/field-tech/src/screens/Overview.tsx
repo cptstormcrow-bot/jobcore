@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   groupCard: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   row: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     paddingVertical: spacing.md,
   },
   emptyText: {

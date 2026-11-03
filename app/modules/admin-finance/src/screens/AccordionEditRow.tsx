@@ -158,7 +158,7 @@ export function AccordionEditRow({
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.md,
     marginBottom: spacing.sm,
     backgroundColor: colors.surface,

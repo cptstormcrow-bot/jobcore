@@ -347,7 +347,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           <Card key={day} style={{ marginVertical: 1, padding: 3 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
-              <TextField
+              <TextField inline
                 value={inputs[day] ?? ''}
                 onChangeText={(v) => {
                   setSaveState('idle');
@@ -381,7 +381,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
               </Text>
             ) : null}
             {(notes[day] ?? '').trim() !== '' ? (
-              <TextField
+              <TextField inline
                 label="Notes (optional)"
                 value={notes[day] ?? ''}
                 onChangeText={(v) => setNotes((p) => ({ ...p, [day]: v }))}

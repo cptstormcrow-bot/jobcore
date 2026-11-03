@@ -308,13 +308,13 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         <View testID="calendar-timeoff-panel" style={styles.requestPanel}>
           {role === 'admin' && !effectiveTechId ? <Text style={styles.hint}>Pick a technician first</Text> : null}
           <View testID="calendar-timeoff-start" style={styles.field}>
-            <TextField dense label="Start date (YYYY-MM-DD)" labelStyle={styles.fieldLabel} value={reqStart} onChangeText={setReqStart} placeholder="YYYY-MM-DD" />
+            <TextField inline dense label="Start date (YYYY-MM-DD)" labelStyle={styles.fieldLabel} value={reqStart} onChangeText={setReqStart} placeholder="YYYY-MM-DD" />
           </View>
           <View testID="calendar-timeoff-end" style={styles.field}>
-            <TextField dense label="End date (YYYY-MM-DD)" labelStyle={styles.fieldLabel} value={reqEnd} onChangeText={setReqEnd} placeholder="YYYY-MM-DD" />
+            <TextField inline dense label="End date (YYYY-MM-DD)" labelStyle={styles.fieldLabel} value={reqEnd} onChangeText={setReqEnd} placeholder="YYYY-MM-DD" />
           </View>
           <View testID="calendar-timeoff-reason" style={styles.field}>
-            <TextField dense label="Reason (optional)" labelStyle={styles.fieldLabel} value={reqReason} onChangeText={setReqReason} />
+            <TextField inline dense label="Reason (optional)" labelStyle={styles.fieldLabel} value={reqReason} onChangeText={setReqReason} />
           </View>
           <View testID="calendar-timeoff-submit">
             <PayrollButton

@@ -28,7 +28,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, TextInput, StyleSheet } from 'react-native';
-import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { Reimbursement, ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
 
@@ -354,11 +354,12 @@ const styles = StyleSheet.create({
   },
   reasonInput: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: 4,
-    padding: spacing.xs,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: compact.field,
     marginBottom: spacing.xs,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
   },
   actions: {
     flexDirection: 'row',

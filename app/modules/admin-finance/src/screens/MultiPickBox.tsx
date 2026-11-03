@@ -75,7 +75,7 @@ export function MultiPickBox({ items, selectedIds, noun, onToggle, disabledIds, 
 const styles = StyleSheet.create({
   box: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm,
+    borderWidth: 1, borderColor: colors.divider, borderRadius: radius.sm,
     paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, backgroundColor: colors.surface,
   },
   boxText: { fontSize: typography.size.label, color: colors.text },

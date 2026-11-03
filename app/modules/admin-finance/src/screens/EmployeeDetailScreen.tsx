@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     marginRight: spacing.xs,
     marginBottom: spacing.xs,
   },

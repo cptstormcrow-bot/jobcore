@@ -124,9 +124,9 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
       {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
       {message ? <Text style={{ color: 'green' }}>{message}</Text> : null}
 
-      <TextField label="Hourly rate ($/hr)" value={hourly} onChangeText={setHourly} />
-      <TextField label="Commission %" value={commission} onChangeText={setCommission} />
-      <TextField
+      <TextField inline label="Hourly rate ($/hr)" value={hourly} onChangeText={setHourly} />
+      <TextField inline label="Commission %" value={commission} onChangeText={setCommission} />
+      <TextField inline
         label="Dev Tech default commission % of labor (0-50)"
         value={devCommission}
         onChangeText={setDevCommission}
@@ -135,8 +135,8 @@ export function CompensationPolicyScreen({ onBack }: { onBack?: () => void }) {
         Used for Dev Tech employees paid by Commission who have no personal percent. Percent of
         the estimate's labor lines, not materials.
       </Text>
-      <TextField label="Prem Tech bonus: flat ($)" value={premFlat} onChangeText={setPremFlat} />
-      <TextField
+      <TextField inline label="Prem Tech bonus: flat ($)" value={premFlat} onChangeText={setPremFlat} />
+      <TextField inline
         label="Prem Tech bonus: % of job total"
         value={premPct}
         onChangeText={setPremPct}

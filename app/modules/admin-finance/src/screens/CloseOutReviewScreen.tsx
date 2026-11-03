@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     minHeight: spacing.xl * 3,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
     fontSize: typography.text.input,

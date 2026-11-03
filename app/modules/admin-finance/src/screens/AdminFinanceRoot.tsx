@@ -1485,7 +1485,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surface,
     marginBottom: spacing.sm,
     justifyContent: 'center',

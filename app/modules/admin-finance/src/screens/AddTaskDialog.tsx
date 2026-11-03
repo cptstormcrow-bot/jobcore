@@ -138,30 +138,30 @@ export function AddTaskDialog({ visible, serviceName, onCancel, onCreate, onCrea
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator>
             <Text style={styles.title}>{title}</Text>
 
-            <TextField label="Name" value={name} onChangeText={setName} placeholder="Task name" style={styles.field} />
-            <TextField
+            <TextField inline label="Name" value={name} onChangeText={setName} placeholder="Task name" style={styles.field} />
+            <TextField inline
               label="Price ($)"
               value={price}
               onChangeText={setPrice}
               placeholder="0.00"
               style={styles.field}
             />
-            <TextField
+            <TextField inline
               label="Est. minutes"
               value={minutes}
               onChangeText={setMinutes}
               placeholder="0"
               style={styles.field}
             />
-            <TextField label="Category" value={category} onChangeText={setCategory} style={styles.field} />
-            <TextField
+            <TextField inline label="Category" value={category} onChangeText={setCategory} style={styles.field} />
+            <TextField inline
               label="Details"
               value={details}
               onChangeText={setDetails}
               multiline
               style={styles.field}
             />
-            <TextField
+            <TextField inline
               label="Materials"
               value={materials}
               onChangeText={setMaterials}

@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, PayrollButton, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { PriceSheetDraft } from '../data/ports';
 import type { PriceSheet } from '../money/types';
 import { getModuleSession } from '../lib/module-session';
@@ -133,12 +133,13 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
   },
   errorText: {
     color: colors.danger,

@@ -97,7 +97,7 @@ export function Greeting({ job, onDone }: GreetingProps): JSX.Element {
     return (
       <View style={styles.container}>
         <Text style={styles.body}>Please tell us why you&apos;re declining this job.</Text>
-        <TextField
+        <TextField inline
           value={reason}
           onChangeText={setReason}
           placeholder="Reason for declining"

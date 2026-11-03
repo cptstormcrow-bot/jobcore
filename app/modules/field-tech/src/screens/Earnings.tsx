@@ -211,7 +211,7 @@ export function Earnings({
       <View style={styles.section}>
         <Text style={styles.heading}>Dispute</Text>
         <Text style={styles.body}>Filing a dispute records a note only — it does not change this job&apos;s status.</Text>
-        <TextField
+        <TextField inline
           value={disputeText}
           onChangeText={setDisputeText}
           placeholder="Describe the dispute"

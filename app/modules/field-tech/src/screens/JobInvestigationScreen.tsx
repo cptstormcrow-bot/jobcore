@@ -371,7 +371,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
           </Text>
         </PairRow>
         <View style={styles.trackingRow}>
-          <TextField
+          <TextField inline
             label="UPS tracking number"
             value={trackingInput}
             onChangeText={setTrackingInput}
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   fieldInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: compact.field,

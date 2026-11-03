@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Card, ErrorState, PayrollButton, LoadingState, ScreenTitle, colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { Card, ErrorState, PayrollButton, LoadingState, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
 
 import { supabase } from '../src/lib/supabase';
 
@@ -169,11 +169,11 @@ const styles = StyleSheet.create({
   hint: { color: colors.textMuted, fontSize: typography.size.label },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: typography.size.body,
+    paddingVertical: compact.field,
+    fontSize: typography.text.input,
     color: colors.text,
     backgroundColor: colors.white,
   },

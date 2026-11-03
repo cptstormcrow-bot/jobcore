@@ -16,7 +16,7 @@
 
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, PayrollButton, EmptyState, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import type { NewLeadDraft } from '../domain/intake-normalize';
 import { DEFAULT_AXIS_VALUES } from '../domain/intake-normalize';
@@ -100,82 +100,98 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
             Capture the caller&apos;s name, number, and address — everything else can wait.
           </Text>
 
-          <Text style={styles.label}>Name</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Customer name"
-            placeholderTextColor={colors.textLight}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Name:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={name}
+              onChangeText={setName}
+              placeholder="Customer name"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
 
-          <Text style={styles.label}>Phone</Text>
-          <TextInput
-            style={styles.input}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Phone"
-            placeholderTextColor={colors.textLight}
-            keyboardType="phone-pad"
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Phone:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Phone"
+              placeholderTextColor={colors.textLight}
+              keyboardType="phone-pad"
+            />
+          </View>
 
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Email"
-            placeholderTextColor={colors.textLight}
-            keyboardType="email-address"
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Email:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Email"
+              placeholderTextColor={colors.textLight}
+              keyboardType="email-address"
+            />
+          </View>
 
-          <Text style={styles.label}>Service</Text>
-          <TextInput
-            style={styles.input}
-            value={service}
-            onChangeText={setService}
-            placeholder="Requested service"
-            placeholderTextColor={colors.textLight}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Service:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={service}
+              onChangeText={setService}
+              placeholder="Requested service"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
 
-          <Text style={styles.label}>Preferred date</Text>
-          <TextInput
-            style={styles.input}
-            value={preferredDate}
-            onChangeText={setPreferredDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.textLight}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Preferred date:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={preferredDate}
+              onChangeText={setPreferredDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
           {!dateValid && <Text style={styles.errorText}>Use YYYY-MM-DD.</Text>}
 
-          <Text style={styles.label}>Preferred time</Text>
-          <TextInput
-            style={styles.input}
-            value={preferredTime}
-            onChangeText={setPreferredTime}
-            placeholder="Preferred time"
-            placeholderTextColor={colors.textLight}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Preferred time:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={preferredTime}
+              onChangeText={setPreferredTime}
+              placeholder="Preferred time"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
 
-          <Text style={styles.label}>Address</Text>
-          <TextInput
-            style={styles.input}
-            value={address}
-            onChangeText={setAddress}
-            placeholder="Address"
-            placeholderTextColor={colors.textLight}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Address:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              value={address}
+              onChangeText={setAddress}
+              placeholder="Address"
+              placeholderTextColor={colors.textLight}
+            />
+          </View>
 
-          <Text style={styles.label}>Project details</Text>
-          <TextInput
-            style={styles.notesInput}
-            value={projectDetails}
-            onChangeText={setProjectDetails}
-            placeholder="Describe the project..."
-            placeholderTextColor={colors.textLight}
-            multiline
-            textAlignVertical="top"
-          />
+          <View style={styles.inlineRowTop}>
+            <Text style={styles.labelInline} numberOfLines={1}>Project details:</Text>
+            <TextInput
+              style={[styles.notesInput, styles.inlineInput]}
+              value={projectDetails}
+              onChangeText={setProjectDetails}
+              placeholder="Describe the project..."
+              placeholderTextColor={colors.textLight}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
 
           {submitError && <Text style={styles.errorText}>{submitError}</Text>}
 
@@ -199,6 +215,10 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
 export default LeadCreateScreen;
 
 const styles = StyleSheet.create({
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  inlineRowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.sm },
+  labelInline: { fontSize: typography.size.label, color: colors.textMuted },
+  inlineInput: { flex: 1 },
   screen: {
     flex: 1,
     backgroundColor: colors.offWhite,
@@ -232,23 +252,25 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
   },
   notesInput: {
     minHeight: spacing.xl * 3,
     borderRadius: spacing.xs,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
   },
   errorText: {
     color: colors.danger,

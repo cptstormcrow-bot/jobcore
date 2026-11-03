@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     width: `${100 / 7}%`,
     minHeight: 40,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     padding: 0,
   },
   cellSelected: {

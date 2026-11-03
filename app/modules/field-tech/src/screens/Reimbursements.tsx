@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
     padding: spacing.sm,
     marginTop: spacing.xs,

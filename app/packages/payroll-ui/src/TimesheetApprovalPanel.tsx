@@ -170,7 +170,7 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
             </View>
             {rejecting === key ? (
               <View>
-                <TextField label="Reason (optional)" value={reason} onChangeText={setReason} />
+                <TextField inline label="Reason (optional)" value={reason} onChangeText={setReason} />
                 <View style={{ flexDirection: 'row', gap: spacing.sm }}>
                   <PayrollButton label="Confirm kick back" onPress={() => confirmReject(w)} disabled={busy} />
                   <PayrollButton label="Cancel" onPress={() => setRejecting(null)} />

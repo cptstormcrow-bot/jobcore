@@ -125,7 +125,7 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
       {settings ? (
         <View>
           <Text>Week starts on</Text>
-          <TextField
+          <TextField inline
             label="Week-start day (0 = Sunday ... 6 = Saturday)"
             value={String(settings.payWeek.weekStartDow)}
             disabled={!canSaveSettings}
@@ -139,19 +139,19 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
           <Text>{DAY_NAMES[settings.payWeek.weekStartDow] ?? ''}</Text>
 
           <Text>Overtime rules</Text>
-          <TextField
+          <TextField inline
             label="Daily overtime after (minutes)"
             value={String(settings.overtime.dailyOtAfterMin)}
             disabled={!canSaveSettings}
             onChangeText={(t) => patchOvertime({ dailyOtAfterMin: toInt(t) })}
           />
-          <TextField
+          <TextField inline
             label="Daily double time after (minutes)"
             value={String(settings.overtime.dailyDtAfterMin)}
             disabled={!canSaveSettings}
             onChangeText={(t) => patchOvertime({ dailyDtAfterMin: toInt(t) })}
           />
-          <TextField
+          <TextField inline
             label="Weekly overtime after (minutes)"
             value={String(settings.overtime.weeklyOtAfterMin)}
             disabled={!canSaveSettings}
@@ -172,7 +172,7 @@ export function PayrollSettingsScreen(props: PayrollSettingsScreenProps = {}) {
         <View>
           <Text>QuickBooks accounts</Text>
           {QB_FIELDS.map((f) => (
-            <TextField
+            <TextField inline
               key={f.key}
               label={f.label}
               value={qb[f.key] ?? ''}

@@ -34,7 +34,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, PayrollButton, Select, colors, spacing, typography, Text } from '@jobcore/ui';
+import { Card, DefaultTabBar, EmptyState, ErrorState, ScreenTitle, Toggle, PayrollButton, Select, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { Profile, Role } from '@jobcore/core';
 import { DEFAULT_PAID_TRAVEL_POLICY_MESSAGE, DEFAULT_HOURLY_RATE_CENTS } from '@jobcore/core';
 import type {
@@ -649,15 +649,18 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           <Card style={styles.card}>
             <Text style={styles.heading}>Email</Text>
             <Text style={styles.note}>{`Current email: ${profile?.email ?? 'Not on file'}`}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={changeEmailInput}
-              onChangeText={setChangeEmailInput}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <View style={styles.inlineRow}>
+              <Text style={styles.labelInline} numberOfLines={1}>Email:</Text>
+              <TextInput
+                style={[styles.input, styles.inlineInput]}
+                placeholder="Email"
+                value={changeEmailInput}
+                onChangeText={setChangeEmailInput}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
             <PayrollButton
               label={emailActionState.kind === 'working' ? 'Changing...' : 'Change email'}
               onPress={() => {
@@ -673,80 +676,104 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
         {activeTab === 'email' && !isEditMode ? (
           <Card style={styles.card}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={emailInput}
-              onChangeText={(text) => {
-                setEmailInput(text);
-                setDuplicateConflict(null);
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+            <View style={styles.inlineRow}>
+              <Text style={styles.labelInline} numberOfLines={1}>Email:</Text>
+              <TextInput
+                style={[styles.input, styles.inlineInput]}
+                placeholder="Email"
+                value={emailInput}
+                onChangeText={(text) => {
+                  setEmailInput(text);
+                  setDuplicateConflict(null);
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
           </Card>
         ) : null}
 
         {activeTab === 'detail' ? (
         <Card style={styles.card}>
-          <TextInput
-            style={styles.input}
-            placeholder="Full name"
-            value={fullNameInput}
-            onChangeText={setFullNameInput}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Phone"
-            value={phoneInput ?? ''}
-            onChangeText={setPhoneInput}
-            keyboardType="phone-pad"
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Name:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              placeholder="Full name"
+              value={fullNameInput}
+              onChangeText={setFullNameInput}
+            />
+          </View>
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Phone:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              placeholder="Phone"
+              value={phoneInput ?? ''}
+              onChangeText={setPhoneInput}
+              keyboardType="phone-pad"
+            />
+          </View>
 
           {isEditMode ? (
             <>
               {privateState === 'failed' ? (
                 <ErrorState message="Private details could not be loaded; they will not be changed by Save." />
               ) : null}
-              <TextInput
-                style={styles.input}
-                placeholder="Address"
-                value={addressInput}
-                onChangeText={setAddressInput}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Driver's License #"
-                value={driversLicenseInput}
-                onChangeText={setDriversLicenseInput}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="SSN (last 4 digits only)"
-                value={ssnLast4Input}
-                onChangeText={(t) => {
-                  if (/^\d{0,4}$/.test(t)) setSsnLast4Input(t);
-                }}
-                keyboardType="number-pad"
-                maxLength={4}
-                secureTextEntry
-              />
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>Address:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Address"
+                  value={addressInput}
+                  onChangeText={setAddressInput}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>License #:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Driver's License #"
+                  value={driversLicenseInput}
+                  onChangeText={setDriversLicenseInput}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>SSN last 4:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="SSN (last 4 digits only)"
+                  value={ssnLast4Input}
+                  onChangeText={(t) => {
+                    if (/^\d{0,4}$/.test(t)) setSsnLast4Input(t);
+                  }}
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  secureTextEntry
+                />
+              </View>
               <Text style={styles.note}>
                 Stored as last 4 only; shown as •••-••-{ssnLast4Input || '____'}
               </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Emergency Contact Name"
-                value={ecNameInput}
-                onChangeText={setEcNameInput}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Emergency Contact Phone"
-                value={ecPhoneInput}
-                onChangeText={setEcPhoneInput}
-                keyboardType="phone-pad"
-              />
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>EC name:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Emergency Contact Name"
+                  value={ecNameInput}
+                  onChangeText={setEcNameInput}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>EC phone:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Emergency Contact Phone"
+                  value={ecPhoneInput}
+                  onChangeText={setEcPhoneInput}
+                  keyboardType="phone-pad"
+                />
+              </View>
               <Select
                 label="Vehicle Status"
                 value={vehicleStatusInput}
@@ -820,13 +847,16 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
             <Text style={{ fontWeight: typography.weight.semibold }}>{basePayText}</Text>
             {devCommission ? (
               <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Commission % of labor (0-50)"
-                  value={commissionPercentInput}
-                  onChangeText={setCommissionPercentInput}
-                  keyboardType="numeric"
-                />
+                <View style={styles.inlineRow}>
+                  <Text style={styles.labelInline} numberOfLines={1}>Commission %:</Text>
+                  <TextInput
+                    style={[styles.input, styles.inlineInput]}
+                    placeholder="Commission % of labor (0-50)"
+                    value={commissionPercentInput}
+                    onChangeText={setCommissionPercentInput}
+                    keyboardType="numeric"
+                  />
+                </View>
                 <Text style={styles.note}>Paid on the labor lines of the job estimate; leave 0 to use the policy default.</Text>
                 {devCommissionInvalid ? (
                   <Text style={styles.warning}>Enter a commission percent from 0 to 50.</Text>
@@ -834,20 +864,26 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
               </>
             ) : (
               <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Hourly Rate"
-                  value={hourlyRateInput}
-                  onChangeText={setHourlyRateInput}
-                  keyboardType="numeric"
-                />
-                {onSetRate ? (
+                <View style={styles.inlineRow}>
+                  <Text style={styles.labelInline} numberOfLines={1}>Hourly rate:</Text>
                   <TextInput
-                    style={styles.input}
-                    placeholder="Rate effective from (YYYY-MM-DD)"
-                    value={effectiveFromInput}
-                    onChangeText={setEffectiveFromInput}
+                    style={[styles.input, styles.inlineInput]}
+                    placeholder="Hourly Rate"
+                    value={hourlyRateInput}
+                    onChangeText={setHourlyRateInput}
+                    keyboardType="numeric"
                   />
+                </View>
+                {onSetRate ? (
+                  <View style={styles.inlineRow}>
+                    <Text style={styles.labelInline} numberOfLines={1}>Effective:</Text>
+                    <TextInput
+                      style={[styles.input, styles.inlineInput]}
+                      placeholder="Rate effective from (YYYY-MM-DD)"
+                      value={effectiveFromInput}
+                      onChangeText={setEffectiveFromInput}
+                    />
+                  </View>
                 ) : null}
               </>
             )}
@@ -860,13 +896,16 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                 />
                 {commissionEnabled ? (
                   <>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Commission % of job labor"
-                      value={commissionPercentInput}
-                      onChangeText={setCommissionPercentInput}
-                      keyboardType="numeric"
-                    />
+                    <View style={styles.inlineRow}>
+                      <Text style={styles.labelInline} numberOfLines={1}>Commission %:</Text>
+                      <TextInput
+                        style={[styles.input, styles.inlineInput]}
+                        placeholder="Commission % of job labor"
+                        value={commissionPercentInput}
+                        onChangeText={setCommissionPercentInput}
+                        keyboardType="numeric"
+                      />
+                    </View>
                     {commissionInvalid ? (
                       <Text style={styles.warning}>Enter a commission percent above 0 and up to 50.</Text>
                     ) : null}
@@ -975,6 +1014,10 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 export default EmployeeEditorScreen;
 
 const styles = StyleSheet.create({
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  inlineRowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.sm },
+  labelInline: { fontSize: typography.size.label, color: colors.textMuted },
+  inlineInput: { flex: 1, marginBottom: 0 },
   addSkillBtn: { marginBottom: spacing.sm },
   addSkillRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm },
   addSkillInput: { flex: 1, marginBottom: 0 },
@@ -1009,7 +1052,7 @@ const styles = StyleSheet.create({
   },
   confirmRow: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: 4,
     padding: spacing.sm,
     marginBottom: spacing.sm,
@@ -1024,9 +1067,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.textMuted,
+    borderColor: colors.divider,
     borderRadius: 4,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
+    fontSize: typography.text.input,
     marginBottom: spacing.sm,
     color: colors.text,
     fontFamily: typography.fontFamily.body,

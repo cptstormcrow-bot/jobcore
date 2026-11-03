@@ -163,7 +163,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             <Text style={styles.badge}>Hourly · clock</Text>
           ) : edit && !dim ? (
             <View style={styles.qty}>
-              <TextField
+              <TextField inline
                 dense
                 value={d.qty}
                 onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, qty: t } }))}
@@ -175,7 +175,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           )}
         </View>
         {edit && !dim ? (
-          <TextField
+          <TextField inline
             dense
             placeholder="Notes"
             value={d.notes}
@@ -197,14 +197,14 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
                 void saveDetail(row, { unit: u ?? '' });
               }}
             />
-            <TextField
+            <TextField inline
               dense
               placeholder="Area / room"
               value={d.area}
               onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, area: t } }))}
               onBlur={() => void saveDetail(row)}
             />
-            <TextField
+            <TextField inline
               dense
               placeholder="Materials"
               value={d.materials}
@@ -251,7 +251,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       {edit && (
         <View style={styles.addRow}>
           <View style={styles.flex}>
-            <TextField dense placeholder="New task title" value={newTitle} onChangeText={setNewTitle} />
+            <TextField inline dense placeholder="New task title" value={newTitle} onChangeText={setNewTitle} />
           </View>
           <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
         </View>

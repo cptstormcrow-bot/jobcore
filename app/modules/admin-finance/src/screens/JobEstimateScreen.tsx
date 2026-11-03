@@ -1011,7 +1011,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             ) : null}
             <View style={styles.trackingRow}>
             {editable || trackingInput ? (
-              <TextField
+              <TextField inline
                 label={ESTIMATE_LABELS.trackingNumber}
                 value={trackingInput}
                 onChangeText={setTrackingInput}
@@ -1145,14 +1145,14 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           )}
           {editable ? (
             <>
-              <TextField
+              <TextField inline
                 label="Description"
                 value={contingencyForm.description}
                 onChangeText={(text) => setContingencyForm((f) => ({ ...f, description: text }))}
                 disabled={busy}
                 style={styles.field}
               />
-              <TextField
+              <TextField inline
                 label="Price (optional)"
                 value={contingencyForm.priceText}
                 onChangeText={(text) => setContingencyForm((f) => ({ ...f, priceText: text }))}
@@ -1227,42 +1227,42 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             {lineItems.map((item) =>
               editingId === item.id ? (
                 <View key={item.id} style={styles.editRow}>
-                  <TextField
+                  <TextField inline
                     label="Description"
                     value={editDescriptionInput}
                     onChangeText={setEditDescriptionInput}
                     disabled={busy}
                     style={styles.field}
                   />
-                  <TextField
+                  <TextField inline
                     label="Quantity"
                     value={editQuantityInput}
                     onChangeText={setEditQuantityInput}
                     disabled={busy}
                     style={styles.field}
                   />
-                  <TextField
+                  <TextField inline
                     label="Unit Cost"
                     value={editUnitCostInput}
                     onChangeText={setEditUnitCostInput}
                     disabled={busy}
                     style={styles.field}
                   />
-                  <TextField
+                  <TextField inline
                     label="Unit"
                     value={editUnitInput}
                     onChangeText={setEditUnitInput}
                     disabled={busy}
                     style={styles.field}
                   />
-                  <TextField
+                  <TextField inline
                     label="Area"
                     value={editAreaInput}
                     onChangeText={setEditAreaInput}
                     disabled={busy}
                     style={styles.field}
                   />
-                  <TextField
+                  <TextField inline
                     label="Materials note"
                     value={editMaterialsInput}
                     onChangeText={setEditMaterialsInput}
@@ -1337,7 +1337,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
             <>
               {allCatalog.length > 0 ? (
-                <TextField
+                <TextField inline
                   label="Search price sheet"
                   value={priceSearch}
                   onChangeText={setPriceSearch}
@@ -1375,7 +1375,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
-              <TextField
+              <TextField inline
                 label="Description"
                 value={descriptionInput}
                 onChangeText={setDescriptionInput}
@@ -1383,7 +1383,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
-              <TextField
+              <TextField inline
                 label="Quantity"
                 value={quantityInput}
                 onChangeText={setQuantityInput}
@@ -1391,7 +1391,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                 disabled={busy}
                 style={styles.field}
               />
-              <TextField
+              <TextField inline
                 label="Unit Cost"
                 value={unitCostInput}
                 onChangeText={setUnitCostInput}
@@ -1432,7 +1432,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </View>
           {editable ? (
             <>
-              <TextField
+              <TextField inline
                 label="Fine print for this estimate"
                 value={finePrintInput}
                 onChangeText={setFinePrintInput}
@@ -1450,7 +1450,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               {finePrintInput.trim() === '' && templateText ? <Text style={styles.note}>{templateText}</Text> : null}
               {editingTemplate ? (
                 <>
-                  <TextField
+                  <TextField inline
                     label="Organization fine-print template"
                     value={templateInput}
                     onChangeText={setTemplateInput}

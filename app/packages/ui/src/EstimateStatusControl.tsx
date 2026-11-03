@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.sandInactive,
   },
   nodeCompact: { minHeight: 44, paddingHorizontal: spacing.xs },

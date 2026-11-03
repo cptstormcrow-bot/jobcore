@@ -1,7 +1,7 @@
 // JobCore screen #0062 - af-leadEdit - Edit Lead
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, StyleSheet } from 'react-native';
-import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, compact, radius, typography, Text } from '@jobcore/ui';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import type { Lead } from '../domain/lead';
@@ -134,36 +134,52 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <ScreenTitle eyebrow="Lead" title="Edit lead" subtitle={lead.sourceForm ?? undefined} />
       <Card style={styles.card}>
-        <Text style={styles.label}>Name</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Full name" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Name:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={name} onChangeText={setName} placeholder="Full name" />
+        </View>
 
-        <Text style={styles.label}>Phone</Text>
-        <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Phone" keyboardType="phone-pad" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Phone:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={phone} onChangeText={setPhone} placeholder="Phone" keyboardType="phone-pad" />
+        </View>
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Email:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
+        </View>
 
-        <Text style={styles.label}>Service</Text>
-        <TextInput style={styles.input} value={service} onChangeText={setService} placeholder="Service" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Service:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={service} onChangeText={setService} placeholder="Service" />
+        </View>
 
-        <Text style={styles.label}>Preferred date</Text>
-        <TextInput style={styles.input} value={preferredDate} onChangeText={setPreferredDate} placeholder="YYYY-MM-DD" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Preferred date:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={preferredDate} onChangeText={setPreferredDate} placeholder="YYYY-MM-DD" />
+        </View>
         {!dateValid ? <Text style={styles.errorText}>Use YYYY-MM-DD.</Text> : null}
 
-        <Text style={styles.label}>Preferred time</Text>
-        <TextInput style={styles.input} value={preferredTime} onChangeText={setPreferredTime} placeholder="Preferred time" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Preferred time:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={preferredTime} onChangeText={setPreferredTime} placeholder="Preferred time" />
+        </View>
 
-        <Text style={styles.label}>Address</Text>
-        <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Address" />
+        <View style={styles.inlineRow}>
+          <Text style={styles.labelInline} numberOfLines={1}>Address:</Text>
+          <TextInput style={[styles.input, styles.inlineInput]} value={address} onChangeText={setAddress} placeholder="Address" />
+        </View>
 
-        <Text style={styles.label}>Project details</Text>
-        <TextInput
-          style={[styles.input, styles.notesInput]}
-          value={projectDetails}
-          onChangeText={setProjectDetails}
-          placeholder="Project details"
-          multiline
-        />
+        <View style={styles.inlineRowTop}>
+          <Text style={styles.labelInline} numberOfLines={1}>Project details:</Text>
+          <TextInput
+            style={[styles.input, styles.notesInput, styles.inlineInput]}
+            value={projectDetails}
+            onChangeText={setProjectDetails}
+            placeholder="Project details"
+            multiline
+          />
+        </View>
 
         <AxisPicker
           label="Source"
@@ -204,6 +220,10 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
 }
 
 const styles = StyleSheet.create({
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  inlineRowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.sm },
+  labelInline: { fontSize: typography.size.label, color: colors.textMuted },
+  inlineInput: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.offWhite },
   scroll: { flex: 1 },
   content: { padding: spacing.md },
@@ -222,10 +242,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
-    padding: spacing.sm,
-    fontSize: typography.size.body,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
+    fontSize: typography.text.input,
     color: colors.text,
   },
   notesInput: {

@@ -76,9 +76,10 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 72,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
     padding: spacing.sm,
+    fontSize: typography.text.input,
     color: colors.text,
     backgroundColor: colors.surface,
     textAlignVertical: 'top',

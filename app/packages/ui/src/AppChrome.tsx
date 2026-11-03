@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   },
   sheetFramed: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 12,

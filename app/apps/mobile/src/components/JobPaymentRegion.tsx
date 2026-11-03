@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
-import { EmptyState, PayrollButton, colors, radius, selectedStyle, spacing, typography } from '@jobcore/ui';
+import { EmptyState, PayrollButton, colors, radius, selectedStyle, spacing, compact, typography } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
@@ -267,7 +267,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
     cashReceived.trim() !== '' && (cashCents === null || cashCents <= 0 || cashCents > balance);
   // The Paid timeline dot goes green on job status or a settled balance, so the badge does both too.
   const isPaidState = job.status === 'paid' || job.status === 'closed' || (balance <= 0 && paid > 0);
-  const inputStyle = { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.size.body, color: colors.text, backgroundColor: colors.surface } as const;
+  const inputStyle = { borderWidth: 1, borderColor: colors.divider, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: compact.field, fontSize: typography.text.input, color: colors.text, backgroundColor: colors.surface } as const;
 
   return (
     <View style={{ padding: spacing.md, gap: spacing.sm }}>

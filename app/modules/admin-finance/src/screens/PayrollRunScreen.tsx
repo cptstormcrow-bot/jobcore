@@ -137,7 +137,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
   return (
     <View style={{ flex: 1 }}>
       <Text>Weekly payroll run</Text>
-      <TextField
+      <TextField inline
         label="Week start (YYYY-MM-DD)"
         value={weekStart}
         onChangeText={setWeekStart}

@@ -37,7 +37,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
-import { PayrollButton, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, typography, Text } from '@jobcore/ui';
+import { PayrollButton, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult, PriceSheetRate } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
 import type { PriceSheetRepo } from '../data/price-sheet-repo';
@@ -280,48 +280,66 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
         >
           {draft && expandedTaskId === task.id ? (
             <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                value={draft.name}
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, name: text } : prev))}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Price ($)"
-                value={draft.price}
-                keyboardType="decimal-pad"
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, price: text } : prev))}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Est. minutes"
-                value={draft.estimatedMinutes}
-                keyboardType="numeric"
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, estimatedMinutes: text } : prev))}
-              />
-              <TextInput
-                style={[styles.input, styles.inputMultiline]}
-                placeholder="Details"
-                value={draft.details}
-                multiline
-                numberOfLines={3}
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, details: text } : prev))}
-              />
-              <TextInput
-                style={[styles.input, styles.inputMultiline]}
-                placeholder="Materials"
-                value={draft.materials}
-                multiline
-                numberOfLines={3}
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, materials: text } : prev))}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Category"
-                value={draft.category}
-                onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, category: text } : prev))}
-              />
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>Name:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Name"
+                  value={draft.name}
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, name: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>Price:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Price ($)"
+                  value={draft.price}
+                  keyboardType="decimal-pad"
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, price: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>Est. minutes:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Est. minutes"
+                  value={draft.estimatedMinutes}
+                  keyboardType="numeric"
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, estimatedMinutes: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRowTop}>
+                <Text style={styles.labelInline} numberOfLines={1}>Details:</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline, styles.inlineInput]}
+                  placeholder="Details"
+                  value={draft.details}
+                  multiline
+                  numberOfLines={3}
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, details: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRowTop}>
+                <Text style={styles.labelInline} numberOfLines={1}>Materials:</Text>
+                <TextInput
+                  style={[styles.input, styles.inputMultiline, styles.inlineInput]}
+                  placeholder="Materials"
+                  value={draft.materials}
+                  multiline
+                  numberOfLines={3}
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, materials: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>Category:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Category"
+                  value={draft.category}
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, category: text } : prev))}
+                />
+              </View>
               <Toggle
                 label="Active"
                 value={draft.active}
@@ -617,20 +635,26 @@ function RateRowsCard({
             onChange={setEditTiming}
             style={styles.action}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Amount ($)"
-            value={editAmount}
-            keyboardType="decimal-pad"
-            onChangeText={setEditAmount}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Minutes"
-            value={editMinutes}
-            keyboardType="numeric"
-            onChangeText={setEditMinutes}
-          />
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Amount:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              placeholder="Amount ($)"
+              value={editAmount}
+              keyboardType="decimal-pad"
+              onChangeText={setEditAmount}
+            />
+          </View>
+          <View style={styles.inlineRow}>
+            <Text style={styles.labelInline} numberOfLines={1}>Minutes:</Text>
+            <TextInput
+              style={[styles.input, styles.inlineInput]}
+              placeholder="Minutes"
+              value={editMinutes}
+              keyboardType="numeric"
+              onChangeText={setEditMinutes}
+            />
+          </View>
         </AccordionEditRow>
       ))}
 
@@ -659,20 +683,26 @@ function RateRowsCard({
         onChange={setTimingInput}
         style={styles.action}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Amount ($)"
-        value={amountInput}
-        keyboardType="decimal-pad"
-        onChangeText={setAmountInput}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Minutes"
-        value={minutesInput}
-        keyboardType="numeric"
-        onChangeText={setMinutesInput}
-      />
+      <View style={styles.inlineRow}>
+        <Text style={styles.labelInline} numberOfLines={1}>Amount:</Text>
+        <TextInput
+          style={[styles.input, styles.inlineInput]}
+          placeholder="Amount ($)"
+          value={amountInput}
+          keyboardType="decimal-pad"
+          onChangeText={setAmountInput}
+        />
+      </View>
+      <View style={styles.inlineRow}>
+        <Text style={styles.labelInline} numberOfLines={1}>Minutes:</Text>
+        <TextInput
+          style={[styles.input, styles.inlineInput]}
+          placeholder="Minutes"
+          value={minutesInput}
+          keyboardType="numeric"
+          onChangeText={setMinutesInput}
+        />
+      </View>
       <View style={styles.actionRow}>
         <PayrollButton
           label={actionState.kind === 'loading' ? 'Saving...' : 'Save Rate'}
@@ -1153,7 +1183,10 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               The baseline duration ({standardDuration?.standardMinutes ?? 60} min) other job
               estimates are compared against.
             </Text>
-            <TextInput style={styles.input} placeholder="Standard minutes" value={standardMinutesInput} onChangeText={setStandardMinutesInput} keyboardType="numeric" />
+            <View style={styles.inlineRow}>
+              <Text style={styles.labelInline} numberOfLines={1}>Standard minutes:</Text>
+              <TextInput style={[styles.input, styles.inlineInput]} placeholder="Standard minutes" value={standardMinutesInput} onChangeText={setStandardMinutesInput} keyboardType="numeric" />
+            </View>
             <View style={styles.actionRow}>
               <PayrollButton
                 label={standardDurationState.kind === 'working' ? 'Saving...' : 'Save Standard Duration'}
@@ -1314,6 +1347,10 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 export default PriceSheetEditorScreen;
 
 const styles = StyleSheet.create({
+  inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  inlineRowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.sm },
+  labelInline: { fontSize: typography.size.label, color: colors.textMuted },
+  inlineInput: { flex: 1, marginBottom: 0 },
   screen: {
     flex: 1,
     backgroundColor: colors.offWhite,
@@ -1387,9 +1424,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: colors.textMuted,
+    borderColor: colors.divider,
     borderRadius: 4,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
+    fontSize: typography.text.input,
     marginBottom: spacing.sm,
     color: colors.text,
     fontFamily: typography.fontFamily.body,

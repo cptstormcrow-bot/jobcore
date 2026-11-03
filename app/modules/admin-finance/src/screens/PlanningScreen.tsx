@@ -31,7 +31,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput } from 'react-native';
-import { Card, ListItem, PayrollButton, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, radius, typography, Text } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, Select, EmptyState, LoadingState, ErrorState, TextField, colors, spacing, compact, radius, typography, Text } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobPlanningDetails, JobPlanningPhoto, JobPlanningRepository, JobPlanningPhotoRepository, JobInvestigation, JobPlanTasksRepository, JobPlanTaskRow, ServiceTaskCatalogEntry } from '../data/ports';
 import { getModulePorts } from '../lib/module-ports';
@@ -381,7 +381,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
             <>
               <Text style={styles.guidance}>Note what you&apos;d need on-site: model numbers, measurements, parts, access notes.</Text>
 
-              <TextField
+              <TextField inline
                 label="Model Numbers"
                 value={modelNumbers}
                 onChangeText={setModelNumbers}
@@ -392,7 +392,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Parts List"
                 value={partsList}
                 onChangeText={setPartsList}
@@ -403,7 +403,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Measurements"
                 value={measurements}
                 onChangeText={setMeasurements}
@@ -414,7 +414,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Instructions"
                 value={instructions}
                 onChangeText={setInstructions}
@@ -425,7 +425,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Ingress Notes"
                 value={ingressNotes}
                 onChangeText={setIngressNotes}
@@ -436,7 +436,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Logistics Notes"
                 value={logisticsNotes}
                 onChangeText={setLogisticsNotes}
@@ -447,7 +447,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="Parking Notes"
                 value={parkingNotes}
                 onChangeText={setParkingNotes}
@@ -458,7 +458,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
                 multiline
               />
 
-              <TextField
+              <TextField inline
                 label="State Assessment"
                 value={stateAssessment}
                 onChangeText={setStateAssessment}
@@ -562,12 +562,13 @@ const styles = StyleSheet.create({
     minHeight: spacing.xl * 2,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     backgroundColor: colors.surfaceAlt,
     color: colors.text,
-    fontSize: typography.size.body,
+    fontSize: typography.text.input,
     fontFamily: typography.fontFamily.body,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: compact.field,
   },
   errorText: {
     color: colors.danger,

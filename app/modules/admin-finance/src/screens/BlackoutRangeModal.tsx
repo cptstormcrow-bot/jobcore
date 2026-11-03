@@ -96,7 +96,7 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
                 disabled={busy}
                 markedRanges={markedRanges}
               />
-              <TextField
+              <TextField inline
                 label="Reason (optional)"
                 value={reason}
                 onChangeText={setReason}

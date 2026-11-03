@@ -188,7 +188,7 @@ export function DateRangeCalendar({
 const styles = StyleSheet.create({
   container: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: 6,
     padding: 8,
     marginTop: 4,

@@ -341,7 +341,7 @@ export function Completion({
         onChange = () => setDamageChecked((prev) => !prev);
         if (damageChecked) {
           detail = (
-            <TextField
+            <TextField inline
               value={damageText}
               onChangeText={setDamageText}
               placeholder="Describe the damage"
@@ -357,7 +357,7 @@ export function Completion({
         onChange = () => setScopeChecked((prev) => !prev);
         if (scopeChecked) {
           detail = (
-            <TextField
+            <TextField inline
               value={scopeText}
               onChangeText={setScopeText}
               placeholder="List each item added to the scope"
@@ -438,7 +438,7 @@ export function Completion({
         {renderAfterPhotos ? renderAfterPhotos({ onCountChange: handleCountChange, disabled: submitting }) : null}
       </View>
 
-      <TextField
+      <TextField inline
         value={qualityNotes}
         onChangeText={setQualityNotes}
         placeholder="Quality notes"

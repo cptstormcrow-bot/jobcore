@@ -136,10 +136,11 @@ const styles = StyleSheet.create({
   field: { paddingVertical: spacing.xs },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.divider,
     borderRadius: radius.sm,
     backgroundColor: colors.white,
     color: colors.text,
+    fontSize: typography.text.input,
     paddingHorizontal: spacing.sm,
     minHeight: 40,
   },
