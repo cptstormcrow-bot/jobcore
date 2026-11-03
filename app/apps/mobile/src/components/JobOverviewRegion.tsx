@@ -155,7 +155,7 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
             <Text style={styles.row}>{`${picked[t.id] ? '[x]' : '[ ]'} ${t.title} (Job #${t.jobNumber ?? ''})`}</Text>
           </Pressable>
         ))}
-        <TextField dense label="Project title" value={title} onChangeText={setTitle} />
+        <TextField dense inline label="Project title" value={title} onChangeText={setTitle} />
         {msg ? <Text style={styles.hint}>{msg}</Text> : null}
         {blockedJob ? <PayrollButton label={`Open Job #${blockedJob.number ?? ''}`} onPress={() => onOpenJob(blockedJob.id)} /> : null}
         <PayrollButton label={busy ? 'Starting...' : 'Start project'} disabled={busy} onPress={() => void startProject()} />

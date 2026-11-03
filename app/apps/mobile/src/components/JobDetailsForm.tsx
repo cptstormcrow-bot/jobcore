@@ -74,6 +74,7 @@ export function JobDetailsForm({
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.customerName)}
       />
       <TextField
@@ -84,6 +85,7 @@ export function JobDetailsForm({
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.address)}
       />
       <TextField
@@ -94,6 +96,7 @@ export function JobDetailsForm({
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.customerPhone)}
       />
       <TextField
@@ -104,6 +107,7 @@ export function JobDetailsForm({
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.customerEmail)}
       />
       <TextField
@@ -114,10 +118,12 @@ export function JobDetailsForm({
         style={[styles.field, styles.fieldTight]}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.customerAddress)}
       />
-      <View style={[styles.field, styles.fieldTight]}>
-        <Text style={styles.sectionLabel}>Service area</Text>
+      <View style={[styles.field, styles.fieldTight, styles.inlineRow]}>
+        <Text numberOfLines={1} style={[styles.sectionLabel, styles.inlineLabel]}>Service area:</Text>
+        <View style={styles.inlineValue}>
         <Select
           value={value.serviceAreaId ?? UNASSIGNED_SERVICE_AREA}
           options={[
@@ -129,11 +135,12 @@ export function JobDetailsForm({
           compact={compact}
           onChange={(selected) => onChange({ serviceAreaId: selected || null })}
         />
+        </View>
       </View>
       {createdAt && formatCreated(createdAt) ? (
-        <View style={[styles.field, styles.fieldTight]}>
-          <Text style={styles.sectionLabel}>Date created</Text>
-          <Text style={styles.readOnlyText}>{formatCreated(createdAt)}</Text>
+        <View style={[styles.field, styles.fieldTight, styles.inlineRow]}>
+          <Text numberOfLines={1} style={[styles.sectionLabel, styles.inlineLabel]}>Date created:</Text>
+          <Text numberOfLines={1} style={[styles.readOnlyText, styles.inlineValue]}>{formatCreated(createdAt)}</Text>
         </View>
       ) : null}
       <TextField
@@ -144,6 +151,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.ingressInstructions)}
       />
       <TextField
@@ -154,6 +162,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.permitStatus)}
       />
       <TextField
@@ -164,6 +173,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.parkingAvailable)}
       />
       {mode === 'edit' && hasInvestigation ? (
@@ -175,6 +185,7 @@ export function JobDetailsForm({
           style={fld}
           labelStyle={styles.fieldLabel}
           dense={compact}
+          inline
           inputStyle={inputStyleFor(value.evisitParking)}
         />
       ) : null}
@@ -205,6 +216,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.panelInfo)}
       />
       {mode === 'edit' && hasInvestigation ? (
@@ -216,6 +228,7 @@ export function JobDetailsForm({
           style={fld}
           labelStyle={styles.fieldLabel}
           dense={compact}
+          inline
           inputStyle={inputStyleFor(value.evisitPanel)}
         />
       ) : null}
@@ -229,6 +242,7 @@ export function JobDetailsForm({
             style={fld}
             labelStyle={styles.fieldLabel}
             dense={compact}
+          inline
             inputStyle={inputStyleFor(value.service)}
           />
           <TextField
@@ -239,6 +253,7 @@ export function JobDetailsForm({
             style={fld}
             labelStyle={styles.fieldLabel}
             dense={compact}
+          inline
             inputStyle={inputStyleFor(value.preferredDate)}
           />
           <TextField
@@ -249,6 +264,7 @@ export function JobDetailsForm({
             style={fld}
             labelStyle={styles.fieldLabel}
             dense={compact}
+          inline
             inputStyle={inputStyleFor(value.preferredTime)}
           />
         </>
@@ -262,6 +278,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.description)}
       />
       <TextField
@@ -273,6 +290,7 @@ export function JobDetailsForm({
         style={fld}
         labelStyle={styles.fieldLabel}
         dense={compact}
+        inline
         inputStyle={inputStyleFor(value.considerations)}
       />
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -285,12 +303,16 @@ const styles = StyleSheet.create({
   fieldTight: { marginTop: spacing.xs },
   fieldCompact: { marginTop: spacing.xs },
   fieldLabel: { color: colors.textMutedDark, fontSize: typography.size.detail },
-  fieldInput: { fontSize: typography.size.h4, color: colors.text },
+  // Same size as the Select text; lighter gray border than the default (Jeff 2026-11-02).
+  fieldInput: { fontSize: typography.text.input, color: colors.text, borderColor: colors.divider },
   fieldInputFilled: { fontWeight: '600' },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.xs, color: colors.textMutedDark, fontSize: typography.size.detail },
   roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
   roomCheckbox: { width: '50%', minHeight: 28, marginBottom: 0 },
   roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
-  readOnlyText: { color: colors.textMuted },
+  readOnlyText: { color: colors.textMuted, fontSize: typography.text.input },
+  inlineRow: { flexDirection: 'row', alignItems: 'center' },
+  inlineLabel: { marginBottom: 0, marginRight: spacing.xs },
+  inlineValue: { flex: 1 },
   errorText: { color: 'red', marginHorizontal: spacing.md, marginTop: spacing.xs },
 });
