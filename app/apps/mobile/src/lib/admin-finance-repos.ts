@@ -23,7 +23,7 @@ import type { SupabaseSelectClient as PaymentReviewClient } from '@jobcore/payme
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
-import { countPending } from './offline-db';
+import { countPending, listPending, markDone } from './offline-db';
 import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
@@ -240,6 +240,76 @@ async function readCached<T>(
   const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
   const { data } = await cachedRead(key, fetchLive);
   return data;
+}
+
+/** How long the one-step stage save waits for the server before giving up. */
+const STAGE_SAVE_TIMEOUT_MS = 10_000;
+
+/**
+ * Moves a job to a new stage (status plus its lifecycle timestamps) in ONE
+ * server write, for Complete Job (#0018) and its reopen. Jeff 2026-11-03: the
+ * old path was two queued writes in a row, each able to wait 15 s, and the
+ * screen redrew after each, so completing took ~30 s, jumped around, and could
+ * stay red. Online: one update with a 10 s limit and a plain error on failure,
+ * then any older queued status/lifecycle change for this job that the write
+ * replaces is dropped so it cannot replay over it. Offline: falls back to the
+ * queued pair, which sends when the signal returns.
+ */
+export async function saveJobStage(
+  jobId: string,
+  status: JobStatus,
+  lifecycle: JobLifecyclePatch,
+): Promise<Job> {
+  const repo = createJobRepository();
+  if (!isOnlineNow()) {
+    await repo.patchLifecycle(jobId, lifecycle);
+    return repo.updateStatus(jobId, status);
+  }
+
+  const update: Record<string, string | null> = { status };
+  if (lifecycle.enRouteAt !== undefined) update.en_route_at = lifecycle.enRouteAt;
+  if (lifecycle.inProgressAt !== undefined) update.in_progress_at = lifecycle.inProgressAt;
+  if (lifecycle.completedAt !== undefined) update.completed_at = lifecycle.completedAt;
+
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), STAGE_SAVE_TIMEOUT_MS);
+  let res;
+  try {
+    res = await supabase.from('jobs').update(update).eq('id', jobId).select('*').abortSignal(ctl.signal);
+  } catch {
+    throw new Error('Could not reach the server. Check your signal and try again.');
+  } finally {
+    clearTimeout(timer);
+  }
+  if (ctl.signal.aborted) throw new Error('The server took too long to answer. Check your signal and try again.');
+  if (res.error) throw new Error(`Could not save the job: ${res.error.message}`);
+  const row = ((res.data ?? []) as JobRow[])[0];
+  if (!row) throw new Error('Could not save the job: you may no longer have access to it.');
+
+  await dropReplacedStageChanges(jobId, Object.keys(lifecycle));
+  await patchReadCache('job.update_status', { jobId, status });
+  await patchReadCache('job.patch_lifecycle', { jobId, patch: lifecycle });
+  return rememberJob(toJob(row));
+}
+
+/** Deletes queued status changes, and lifecycle changes covered by `fields`, for this job. */
+async function dropReplacedStageChanges(jobId: string, fields: string[]): Promise<void> {
+  try {
+    for (const row of await listPending()) {
+      if (row.op !== 'job.update_status' && row.op !== 'job.patch_lifecycle') continue;
+      let p: { jobId?: unknown; patch?: Record<string, unknown> };
+      try {
+        p = JSON.parse(row.payload) as typeof p;
+      } catch {
+        continue;
+      }
+      if (p.jobId !== jobId) continue;
+      if (row.op === 'job.patch_lifecycle' && !Object.keys(p.patch ?? {}).every((k) => fields.includes(k))) continue;
+      await markDone(row.id);
+    }
+  } catch {
+    // Best effort: a leftover change only means one extra send later.
+  }
 }
 
 /** Jobs last seen this session; used only to build optimistic values for write-through ops. */

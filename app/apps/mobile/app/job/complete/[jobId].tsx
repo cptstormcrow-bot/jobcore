@@ -17,7 +17,7 @@ import { JobHeader } from '../../../src/components/JobHeader';
 import { useJobStageTimeline } from '../../../src/lib/useJobStageTimeline';
 import { buildFieldTechPorts } from '../../../src/lib/field-tech-repos';
 import type { Customer } from '../../../../../modules/admin-finance/src/data/ports';
-import { createJobRepository, createCustomerRepository } from '../../../src/lib/admin-finance-repos';
+import { createJobRepository, createCustomerRepository, saveJobStage } from '../../../src/lib/admin-finance-repos';
 import { ErrorBoundary } from '../../../src/components/ErrorBoundary';
 import { JobAfterPhotoCard } from '../../../src/components/JobAfterPhotoCard';
 import { liveLaborSeconds } from '../../../src/lib/live-labor';
@@ -110,23 +110,19 @@ export default function CompleteJobRoute() {
   };
 
   const persistCompletion = async (job: Job): Promise<void> => {
-    const repo = createJobRepository();
-    await repo.getById(job.id);
-    await repo.patchLifecycle(job.id, { completedAt: new Date().toISOString() });
-    await repo.updateStatus(job.id, 'completed');
-    await markPaidIfSettled(role ?? '', { ...job, status: 'completed' });
-    // Reload so the header's Complete stage (driven by completedAt) turns green right away.
-    const refreshed = await repo.getById(job.id);
-    if (refreshed) setLoaded((prev) => (prev.kind === 'ready' ? { kind: 'ready', job: refreshed } : prev));
+    // One direct save (status + completedAt together) so the screen never waits on the queue.
+    const saved = await saveJobStage(job.id, 'completed', { completedAt: new Date().toISOString() });
+    await markPaidIfSettled(role ?? '', saved);
+    // The saved row drives the header, so the Complete stage turns green right away.
+    setLoaded((prev) => (prev.kind === 'ready' ? { kind: 'ready', job: saved } : prev));
   };
 
-  // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment.
+  // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment
+  // (the trigger only fires when in_progress_at goes from empty to set), so this stays two saves.
   // The first segment stays in job_time_segments, so total hours keep accumulating across visits.
   const reopenJob = async (job: Job): Promise<void> => {
-    const repo = createJobRepository();
-    await repo.patchLifecycle(job.id, { completedAt: null, inProgressAt: null });
-    await repo.patchLifecycle(job.id, { inProgressAt: new Date().toISOString() });
-    await repo.updateStatus(job.id, 'in_progress');
+    await saveJobStage(job.id, 'in_progress', { completedAt: null, inProgressAt: null });
+    await saveJobStage(job.id, 'in_progress', { inProgressAt: new Date().toISOString() });
     onDone();
   };
 
