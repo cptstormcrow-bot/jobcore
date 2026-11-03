@@ -3,8 +3,8 @@
  * Talks only to the injected PayrollSelfPort.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View } from 'react-native';
-import { Card, PayrollButton, StepperPicker, Text, TextField, colors, spacing } from '@jobcore/ui';
+import { StyleSheet, TextInput, View } from 'react-native';
+import { PayrollButton, StepperPicker, Text, colors, typography } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -18,6 +18,11 @@ export interface TimeEntryPanelActions {
   canWithdraw: boolean;
   canDelete: boolean;
   busy: boolean;
+  /** Week picker, so the parent can show it on its own button row. */
+  weekLabel: string;
+  prevWeek: () => void;
+  nextWeek: () => void;
+  nextWeekDisabled: boolean;
 }
 
 export interface TimeEntryPanelProps {
@@ -42,6 +47,7 @@ function toIso(ms: number): Iso {
 }
 
 const FULL_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** "Monday, Oct 26" from an ISO date (computed in UTC from the date parts, no TZ shift). */
 function dayLabel(iso: string): string {
@@ -50,6 +56,14 @@ function dayLabel(iso: string): string {
   const d = parseInt(iso.slice(8, 10), 10);
   const wd = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
   return FULL_WEEKDAYS[wd] + ', ' + monthDay(iso);
+}
+
+/** "Mon" from an ISO date. */
+function shortDay(iso: string): string {
+  const y = parseInt(iso.slice(0, 4), 10);
+  const m = parseInt(iso.slice(5, 7), 10);
+  const d = parseInt(iso.slice(8, 10), 10);
+  return SHORT_WEEKDAYS[new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay()]!;
 }
 
 /** The 7 days of the week containing today, shifted by `weekOffset` whole weeks. */
@@ -100,6 +114,26 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 function monthDay(iso: string): string {
   return MONTHS[parseInt(iso.slice(5, 7), 10) - 1] + ' ' + parseInt(iso.slice(8, 10), 10);
 }
+
+const DAY_W = 56;
+const DATE_W = 72;
+const HOURS_W = 72;
+const CELL = { fontSize: 14, color: colors.text } as const;
+const CELL_HEAD = { fontSize: 12, fontWeight: '600', color: colors.textMuted } as const;
+const CELL_MUTED = { fontSize: 12, color: colors.textMuted } as const;
+// Borderless, short box: a light tint marks it as typeable.
+const HOURS_INPUT = {
+  width: HOURS_W,
+  height: 28,
+  paddingVertical: 0,
+  paddingHorizontal: 6,
+  borderWidth: 0,
+  borderRadius: 4,
+  backgroundColor: colors.surfaceAlt,
+  fontFamily: typography.fontFamily.body,
+  fontSize: 14,
+  color: colors.text,
+} as const;
 
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
   const { port, userId, weekStartDow, onRegisterActions, onChanged } = props;
@@ -191,7 +225,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     () =>
       days.filter((d) => {
         const t = (inputs[d] ?? '').trim();
-        return t !== '' && t !== (prefill[d] ?? '');
+        return t !== (prefill[d] ?? '');
       }),
     [days, inputs, prefill],
   );
@@ -224,6 +258,14 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     };
     try {
       for (const day of dirtyDays) {
+        if ((inputs[day] ?? '').trim() === '') {
+          // Cleared box: remove that day's own (still editable) hours.
+          for (const e of entries.filter((x) => x.workDate === day && x.source === 'manual' && editable(x))) {
+            await port.deleteEntry(e.id);
+            deletedNow.add(e.id);
+          }
+          continue;
+        }
         const mins = parseMinutes(inputs[day] ?? '');
         if (mins === null) {
           throw new Error(dayLabel(day) + ': enter hours as 1.5 or 1:30.');
@@ -299,11 +341,20 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
     [run, port, range, entries],
   );
 
+  const weekLabel = monthDay(days[0]!) + ' - ' + monthDay(days[6]!) + ', ' + days[6]!.slice(0, 4);
+  const prevWeek = useCallback(() => setWeekOffset((o) => o - 1), []);
+  const nextWeek = useCallback(() => setWeekOffset((o) => Math.min(0, o + 1)), []);
+  const nextWeekDisabled = weekOffset === 0;
+
   useEffect(() => {
     if (onRegisterActions) {
-      onRegisterActions({ saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy });
+      onRegisterActions({
+        saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy,
+        weekLabel, prevWeek, nextWeek, nextWeekDisabled,
+      });
     }
-  }, [onRegisterActions, saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy]);
+  }, [onRegisterActions, saveAll, submitWeek, withdrawWeek, deleteWeek, canSubmit, canWithdraw, canDelete, busy,
+    weekLabel, prevWeek, nextWeek, nextWeekDisabled]);
 
   return (
     <View>
@@ -321,77 +372,69 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
           />
         </View>
       )}
-      <Card style={{ padding: spacing.sm }}>
-      <View style={{ marginBottom: spacing.xs }}>
+      {onRegisterActions ? null : (
         <StepperPicker
-          value={monthDay(days[0]!) + ' - ' + monthDay(days[6]!) + ', ' + days[6]!.slice(0, 4)}
+          value={weekLabel}
           prevLabel="Previous pay period"
           nextLabel="Next pay period"
-          onPrev={() => setWeekOffset((o) => o - 1)}
-          onNext={() => setWeekOffset((o) => Math.min(0, o + 1))}
-          nextDisabled={weekOffset === 0}
+          onPrev={prevWeek}
+          onNext={nextWeek}
+          nextDisabled={nextWeekDisabled}
         />
-      </View>
+      )}
       {entries.length > 0 && !canSubmit ? (
-        <Text style={{ color: colors.textMutedDark, fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw to change it.</Text>
+        <Text style={CELL_MUTED}>This week is already submitted or approved. Tap Withdraw to change it.</Text>
       ) : null}
-      {saveState === 'saved' && dirtyDays.length === 0 ? <Text>Saved.</Text> : null}
+      {saveState === 'saved' && dirtyDays.length === 0 ? <Text style={CELL}>Saved.</Text> : null}
+      <View style={{ flexDirection: 'row', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+        <Text style={[CELL_HEAD, { width: DAY_W }]}>Day</Text>
+        <Text style={[CELL_HEAD, { width: DATE_W }]}>Date</Text>
+        <Text style={[CELL_HEAD, { width: HOURS_W }]}>Hours</Text>
+      </View>
       {days.map((day) => {
         const dayEntries = entries.filter((e) => e.workDate === day);
-        const total = dayEntries.reduce((s, e) => s + e.minutes, 0);
         const dayManual = dayEntries.filter((e) => e.source === 'manual');
         const locked = dayManual.length > 0 && !dayManual.some(editable);
+        // The Hours box holds the day's own typed hours; clock time and review notes show underneath.
+        const extras = dayEntries.filter((e) => (e.source === 'clock' && e.minutes > 0) || e.status === 'rejected');
         return (
-          <Card key={day} style={{ marginVertical: 1, padding: 3 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Text>{dayLabel(day) + '  —  ' + fmt(total)}</Text>
-              <TextField inline
+          <View key={day} style={{ borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.divider, paddingVertical: 2 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[CELL, { width: DAY_W }]}>{shortDay(day)}</Text>
+              <Text style={[CELL, { width: DATE_W }]}>{monthDay(day)}</Text>
+              <TextInput
                 value={inputs[day] ?? ''}
                 onChangeText={(v) => {
                   setSaveState('idle');
                   setInputs((p) => ({ ...p, [day]: v }));
                 }}
-                placeholder="1.5 or 1:30"
-                disabled={locked}
-                dense
-                style={{ width: 90 }}
+                placeholder="0:00"
+                placeholderTextColor={colors.textMuted}
+                editable={!locked}
+                accessibilityLabel={dayLabel(day) + ' hours'}
+                keyboardType="numbers-and-punctuation"
+                style={[HOURS_INPUT, locked ? { opacity: 0.5 } : null]}
               />
             </View>
-            {dayEntries.map((e) => (
-              <View key={e.id} style={{ marginVertical: 0, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ flex: 1 }} numberOfLines={1}>
-                  {fmt(e.minutes) + ' · ' + (e.source === 'clock' && e.notes ? e.notes : e.source) + ' · ' + e.status +
+            {extras.map((e) => (
+              <View key={e.id} style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: DAY_W }}>
+                <Text style={[CELL_MUTED, { flex: 1 }]} numberOfLines={1}>
+                  {fmt(e.minutes) + ' ' + (e.source === 'clock' ? 'on the clock' : 'typed') + ' · ' + e.status +
                     (e.status === 'rejected' && e.rejectionReason ? ' (' + e.rejectionReason + ')' : '')}
                 </Text>
-                {editable(e) ? (
-                  <PayrollButton
-                    label="Delete"
-                    onPress={() =>
-                      run(() => (e.source === 'clock' ? port.upsertEntry({ ...e, minutes: 0 }) : port.deleteEntry(e.id)))
-                    }
-                  />
+                {e.source === 'clock' && editable(e) ? (
+                  <PayrollButton label="Delete" onPress={() => run(() => port.upsertEntry({ ...e, minutes: 0 }))} />
                 ) : null}
               </View>
             ))}
             {locked ? (
-              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
-                {dayManual.some((e) => e.status === 'submitted')
-                  ? 'Submitted for approval. Tap Withdraw to change it.'
-                  : 'Approved. Tap Withdraw to reopen it, then submit again after your changes.'}
+              <Text style={[CELL_MUTED, { paddingLeft: DAY_W }]} numberOfLines={1}>
+                {dayManual.some((e) => e.status === 'submitted') ? 'Submitted. Tap Withdraw to change.' : 'Approved. Tap Withdraw to reopen.'}
               </Text>
             ) : null}
-            {(notes[day] ?? '').trim() !== '' ? (
-              <TextField inline
-                label="Notes (optional)"
-                value={notes[day] ?? ''}
-                onChangeText={(v) => setNotes((p) => ({ ...p, [day]: v }))}
-                dense
-              />
-            ) : null}
-          </Card>
+          </View>
         );
       })}
-      </Card>
     </View>
   );
 }

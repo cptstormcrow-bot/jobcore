@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ScrollView, View } from 'react-native';
-import { DefaultTabBar, PayrollButton, spacing } from '@jobcore/ui';
+import { DefaultTabBar, PayrollButton, StepperPicker, spacing } from '@jobcore/ui';
 import type { PayrollPort } from './port';
 import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
@@ -76,7 +76,18 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
     active === 'time' || active === 'reimb' ? (
       <View style={{ alignItems: 'flex-end', paddingHorizontal: spacing.lg }}>
           {active === 'time' ? (
-            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: 2, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: 2, justifyContent: 'flex-start', alignItems: 'center', flexWrap: 'wrap' }}>
+              {timeActions ? (
+                <StepperPicker
+                  value={timeActions.weekLabel}
+                  prevLabel="Previous pay period"
+                  nextLabel="Next pay period"
+                  onPrev={timeActions.prevWeek}
+                  onNext={timeActions.nextWeek}
+                  nextDisabled={timeActions.nextWeekDisabled}
+                  style={{ marginBottom: 0 }}
+                />
+              ) : null}
               <PayrollButton
                 label={timeActions?.busy ? 'Saving...' : 'Save'}
                 onPress={() => void timeActions?.saveAll()}
