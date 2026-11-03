@@ -9,7 +9,7 @@ import { supabase } from './supabase';
 import { rememberAccount, listOfflineAccounts, clearActive, type OfflineSnapshot } from './offline-auth';
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
-import { getCached } from './read-cache-store';
+import { getCached, wipeAll } from './read-cache-store';
 import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
 /* ------------------------------------------------------------------ *
@@ -522,6 +522,8 @@ export async function signOut(): Promise<string | null> {
       await supabase.auth.signOut({ scope: 'local' });
     }
     await clearActive();
+    // Saved data is cleared only on the user's own sign-out, never on a launch with no service.
+    await wipeAll().catch(() => {});
     bridge?.signedOut();
     return null;
   } finally {

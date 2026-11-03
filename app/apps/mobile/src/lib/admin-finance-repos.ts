@@ -16,7 +16,7 @@
 
 import { supabase, supabaseUrl } from './supabase';
 import { readEmployeeProfiles } from './employee-profiles-source';
-import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
+import { createPayrollRepos, readCached, type PayrollRepoSession } from './payroll-repos';
 import { buildPayrollAdminMembers } from './payroll-admin-repos';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
@@ -26,7 +26,7 @@ import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri } from './signed-url-cache';
-import { cachedRead, getReadCacheIdentity, buildReadCacheKey, patchReadCache, markStale } from './read-cache';
+import { patchReadCache, markStale } from './read-cache';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
@@ -224,21 +224,6 @@ export async function closeOutJobWriteViaRpc(
   return { ok: true, value: toJob(data as JobRow) };
 }
 
-/**
- * Cache-first read through the offline read cache (S6); keys `af.<group>.<fn>`. Mirrors
- * field-tech-repos.ts readCached; live fetch until the cache identity exists (pre-auth).
- */
-async function readCached<T>(
-  queryName: string,
-  params: Record<string, unknown>,
-  fetchLive: () => Promise<T>,
-): Promise<T> {
-  const id = getReadCacheIdentity();
-  if (!id) return fetchLive();
-  const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
-  const { data } = await cachedRead(key, fetchLive);
-  return data;
-}
 
 /** How long the one-step stage save waits for the server before giving up. */
 const STAGE_SAVE_TIMEOUT_MS = 10_000;

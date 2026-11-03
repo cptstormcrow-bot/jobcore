@@ -8,7 +8,7 @@ registerOpPatches(OP_PATCH_SPECS as never);
 import { useSession } from './session';
 import { isOnlineNow, subscribeDrainComplete } from './sync-events';
 import {
-  clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listMeta, markAllStaleFor, putCached, wipeAll, wipeOtherUsers,
+  clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listMeta, markAllStaleFor, putCached, wipeOtherUsers,
 } from './read-cache-store';
 
 export { buildReadCacheKey };
@@ -148,8 +148,9 @@ export function ReadCacheProvider({ children }: { children: ReactNode }): ReactN
       identity = { orgId, userId };
       void evictAtStart(Date.now()).then(() => wipeOtherUsers(userId)).catch(() => {});
     } else if (s.status === 'unauthenticated') {
+      // Never wipe here: an offline launch passes through unauthenticated on its way to the
+      // PIN sign-in, and wiping then left nothing to show after the PIN. signOut() wipes.
       identity = null;
-      void wipeAll().catch(() => {});
     }
   }, [userId, orgId, s.status]);
 

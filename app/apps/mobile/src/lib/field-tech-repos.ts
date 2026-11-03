@@ -16,10 +16,9 @@
 import * as ImagePicker from 'expo-image-picker';
 import { captureCamelEditBase, captureJobEditBase, ESTIMATE_FIELD_TO_COLUMN } from '@jobcore/core';
 import { supabase, supabaseUrl } from './supabase';
-import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
+import { createPayrollRepos, readCached, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
 import { writeThrough, requireOnline } from './offline-mutations';
-import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
 import { shrinkPhoto } from './photo-resize';
 import { copyToLocal, localPhotoPath, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri, setSignedUrlResolver } from './signed-url-cache';
@@ -85,21 +84,6 @@ import {
   toTimeEntry,
 } from '../../../../modules/field-tech/src/data/ports';
 
-/**
- * Cache-first read through the offline read cache (S6). Key = buildReadCacheKey(org, user,
- * queryName, params); falls back to the live fetch until the cache identity exists (pre-auth).
- */
-async function readCached<T>(
-  queryName: string,
-  params: Record<string, unknown>,
-  fetchLive: () => Promise<T>,
-): Promise<T> {
-  const id = getReadCacheIdentity();
-  if (!id) return fetchLive();
-  const key = buildReadCacheKey(id.orgId, id.userId, queryName, params);
-  const { data } = await cachedRead(key, fetchLive);
-  return data;
-}
 
 /** Rows last seen this session; used only to build optimistic values for write-through ops. */
 const knownJobs = new Map<string, ReturnType<typeof toJob>>();
