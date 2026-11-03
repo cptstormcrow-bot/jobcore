@@ -422,6 +422,7 @@ export function drainOfflineQueue(): Promise<DrainResult> {
         now: () => new Date(),
         classify,
         groupOf,
+        concurrency: 4,
       });
       if (rows.length > 0 || result.aborted) {
         await logSync({

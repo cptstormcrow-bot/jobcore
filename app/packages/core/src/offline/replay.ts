@@ -204,6 +204,8 @@ export interface DrainOptions<M extends DrainRow = DrainRow> {
   backoff?(attempts: number): number;
   /** Keys a row touches (e.g. its job id). When given, a row that must wait holds back only later rows sharing a key and the rest still send (Jeff 2026-11-03). No keys = holds back everything after it, as before. */
   groupOf?(m: M): readonly string[];
+  /** Rows sent at the same time (default 1). Above 1, rows of different groups overlap while rows sharing a key still go one after another in queue order; a row with no keys waits for everything before it and runs alone. Needs `groupOf`. */
+  concurrency?: number;
 }
 
 export interface DrainResult {
@@ -221,32 +223,24 @@ export async function drainQueue<M extends DrainRow = DrainRow>(
 ): Promise<DrainResult> {
   const res: DrainResult = { sent: 0, failed: 0, retried: 0, skipped: 0 };
   const held = new Set<string>();
+  const keysOf = (row: M): readonly string[] => o.groupOf?.(row) ?? [];
   // Holds the row's keys and returns true when the pass may go on past it.
   const hold = (row: M): boolean => {
-    const keys = o.groupOf?.(row) ?? [];
+    const keys = keysOf(row);
     for (const k of keys) held.add(k);
     return keys.length > 0;
   };
-  for (let i = 0; i < pending.length; i++) {
-    const row = pending[i]!;
-    const remaining = pending.length - i;
-    if (held.size > 0 && (o.groupOf?.(row) ?? []).some((k) => held.has(k))) {
+
+  // One row. 'wait' = not sent now (same job as a waiting row, or backing off);
+  // 'retry' = sent and will be tried again; 'stop' = network/auth, stop the pass.
+  const step = async (row: M): Promise<'sent' | 'failed' | 'wait' | 'retry' | 'stop'> => {
+    if (held.size > 0 && keysOf(row).some((k) => held.has(k))) {
       // Same job as a row that is waiting: keep it behind that row so changes land in order.
-      if (!hold(row)) {
-        res.skipped += remaining;
-        return res;
-      }
-      res.skipped++;
-      continue;
+      return 'wait';
     }
     if (row.next_attempt_at && row.next_attempt_at > o.now().toISOString()) {
       res.aborted ??= 'backoff';
-      if (!hold(row)) {
-        res.skipped += remaining;
-        return res;
-      }
-      res.skipped++;
-      continue;
+      return 'wait';
     }
     await o.markInflight(row.id);
     try {
@@ -257,18 +251,18 @@ export async function drainQueue<M extends DrainRow = DrainRow>(
       if (cls === 'permanent' || cls === 'permission') {
         await o.markFailed(row.id, { errorClass: cls, message: msg });
         res.failed++;
-        continue;
+        return 'failed';
       }
       if (cls === 'duplicate') {
         await o.markDone(row.id);
         res.sent++;
-        continue;
+        return 'sent';
       }
       const cap = cls === 'unknown' ? UNKNOWN_MAX_ATTEMPTS : RETRY_MAX_ATTEMPTS;
       if ((row.attempts ?? 0) + 1 >= cap) {
         await o.markFailed(row.id, { errorClass: cls, message: msg });
         res.failed++;
-        continue;
+        return 'failed';
       }
       const nextAttemptAt = new Date(
         o.now().getTime() + (o.backoff ?? computeBackoffMs)((row.attempts ?? 0) + 1)
@@ -276,16 +270,116 @@ export async function drainQueue<M extends DrainRow = DrainRow>(
       await o.markRetry(row.id, { errorClass: cls, message: msg, nextAttemptAt });
       res.retried++;
       // Network/auth would fail every row, so stop. Anything else is this row's own trouble.
-      if (cls === 'network' || cls === 'auth' || !hold(row)) {
-        res.aborted = cls as 'network' | 'auth' | 'unknown';
-        res.skipped += remaining - 1;
-        return res;
+      if (cls === 'network' || cls === 'auth') {
+        res.aborted = cls;
+        return 'stop';
       }
       if (res.aborted === undefined || res.aborted === 'backoff') res.aborted = 'unknown';
-      continue;
+      return 'retry';
     }
     await o.markDone(row.id);
     res.sent++;
+    return 'sent';
+  };
+
+  const concurrency = Math.max(1, Math.floor(o.concurrency ?? 1));
+  if (concurrency === 1 || !o.groupOf) {
+    for (let i = 0; i < pending.length; i++) {
+      const row = pending[i]!;
+      const remaining = pending.length - i;
+      const r = await step(row);
+      if (r === 'stop') {
+        res.skipped += remaining - 1;
+        return res;
+      }
+      if (r === 'wait' || r === 'retry') {
+        if (!hold(row)) {
+          res.skipped += r === 'wait' ? remaining : remaining - 1;
+          return res;
+        }
+        if (r === 'wait') res.skipped++;
+      }
+    }
+    return res;
   }
+
+  // Batches: up to `concurrency` rows in flight. Each key keeps a tail promise so a
+  // job's rows still go one after another; other jobs fill the free slots.
+  let stopped = false;
+  let active = 0;
+  const slotWaiters: (() => void)[] = [];
+  const acquire = async (): Promise<void> => {
+    if (active < concurrency) {
+      active++;
+      return;
+    }
+    await new Promise<void>((resolve) => slotWaiters.push(resolve));
+  };
+  const release = (): void => {
+    const next = slotWaiters.shift();
+    if (next) next();
+    else active--;
+  };
+  const tails = new Map<string, Promise<void>>();
+  const inflight = new Set<Promise<void>>();
+  let firstError: unknown;
+
+  for (let i = 0; i < pending.length; i++) {
+    const row = pending[i]!;
+    const remaining = pending.length - i;
+    if (stopped) {
+      res.skipped += remaining;
+      break;
+    }
+    const keys = keysOf(row);
+    if (keys.length === 0) {
+      // No keys: it could touch anything, so it runs alone after everything before it.
+      await Promise.all([...inflight]);
+      if (stopped) {
+        res.skipped += remaining;
+        break;
+      }
+      const r = await step(row);
+      if (r === 'stop' || r === 'retry') {
+        stopped = true;
+        res.skipped += remaining - 1;
+        break;
+      }
+      if (r === 'wait') {
+        stopped = true;
+        res.skipped += remaining;
+        break;
+      }
+      continue;
+    }
+    const before = keys.map((k) => tails.get(k)).filter((t): t is Promise<void> => t !== undefined);
+    const task = (async () => {
+      await Promise.all(before);
+      await acquire();
+      try {
+        if (stopped) {
+          res.skipped++;
+          return;
+        }
+        const r = await step(row);
+        if (r === 'stop') stopped = true;
+        else if (r === 'wait' || r === 'retry') {
+          hold(row);
+          if (r === 'wait') res.skipped++;
+        }
+      } finally {
+        release();
+      }
+    })().catch((e: unknown) => {
+      // A mark* write failed: stop starting rows and rethrow once the rest settle.
+      firstError ??= e;
+      stopped = true;
+    });
+    for (const k of keys) tails.set(k, task);
+    inflight.add(task);
+    void task.then(() => inflight.delete(task));
+  }
+  await Promise.all([...inflight]);
+  if (firstError !== undefined) throw firstError;
   return res;
 }

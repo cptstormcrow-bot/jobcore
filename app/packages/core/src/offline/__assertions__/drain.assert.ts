@@ -135,3 +135,72 @@ test('drainQueue: network still stops the whole pass with groupOf', async () => 
   assert.equal(r.aborted, 'network');
   assert.deepEqual(log.filter((l) => l.startsWith('send:')), ['send:a']);
 });
+
+// Batches (Jeff 2026-11-03): different jobs send at the same time, a job's own changes stay in order.
+function slowHarness(fail: Record<string, unknown> = {}, ms: Record<string, number> = {}) {
+  const h = harness(fail);
+  let live = 0;
+  let peak = 0;
+  const send = h.o.send;
+  h.o.send = async (m: DrainRow) => {
+    live++;
+    peak = Math.max(peak, live);
+    h.log.push(`start:${m.id}`);
+    await new Promise((r) => setTimeout(r, ms[m.id] ?? 5));
+    live--;
+    try {
+      await send(m);
+    } finally {
+      h.log.push(`end:${m.id}`);
+    }
+  };
+  return { ...h, peak: () => peak };
+}
+const counted = (r: { sent: number; failed: number; retried: number; skipped: number }) =>
+  r.sent + r.failed + r.retried + r.skipped;
+
+test('drainQueue batches: different jobs overlap, capped at concurrency', async () => {
+  const h = slowHarness();
+  const rows = [jrow('a', 'J1'), jrow('b', 'J2'), jrow('c', 'J3'), jrow('d', 'J4'), jrow('e', 'J5')];
+  const r = await drainQueue(rows, { ...h.o, groupOf: byJob, concurrency: 3 });
+  assert.deepEqual(r, { sent: 5, failed: 0, retried: 0, skipped: 0 });
+  assert.equal(h.peak(), 3);
+});
+
+test('drainQueue batches: one job stays in queue order', async () => {
+  const h = slowHarness({}, { a: 30, b: 1 });
+  const r = await drainQueue([jrow('a', 'J1'), jrow('b', 'J1'), jrow('c', 'J2')], { ...h.o, groupOf: byJob, concurrency: 4 });
+  assert.equal(r.sent, 3);
+  assert.ok(h.log.indexOf('end:a') < h.log.indexOf('start:b'), h.log.join(' '));
+  assert.ok(h.log.indexOf('start:c') < h.log.indexOf('end:a'), 'other job does not wait');
+});
+
+test('drainQueue batches: a stuck job holds only itself', async () => {
+  const h = slowHarness({ a: { status: 409, message: 'stuck' } });
+  const r = await drainQueue([jrow('a', 'J1'), jrow('b', 'J1'), jrow('c', 'J2'), jrow('d', 'J2')], {
+    ...h.o,
+    groupOf: byJob,
+    concurrency: 4,
+  });
+  assert.deepEqual(r, { sent: 2, failed: 0, retried: 1, skipped: 1, aborted: 'unknown' });
+  assert.ok(!h.log.includes('send:b'));
+});
+
+test('drainQueue batches: network stops new sends, every row counted once', async () => {
+  const h = slowHarness({ a: { status: 503, message: 'down' } }, { a: 1, b: 20 });
+  const rows = [jrow('a', 'J1'), jrow('b', 'J2'), jrow('c', 'J3'), jrow('d', 'J4'), jrow('e', 'J5')];
+  const r = await drainQueue(rows, { ...h.o, groupOf: byJob, concurrency: 2 });
+  assert.equal(r.aborted, 'network');
+  assert.equal(r.retried, 1);
+  assert.equal(r.sent, 1, 'b was already sending and finishes');
+  assert.equal(counted(r), rows.length);
+  assert.ok(!h.log.includes('send:e'));
+});
+
+test('drainQueue batches: a row with no key waits for everything before it', async () => {
+  const h = slowHarness({}, { a: 20 });
+  const r = await drainQueue([jrow('a', 'J1'), jrow('x', null), jrow('b', 'J2')], { ...h.o, groupOf: byJob, concurrency: 4 });
+  assert.equal(r.sent, 3);
+  assert.ok(h.log.indexOf('end:a') < h.log.indexOf('start:x'));
+  assert.ok(h.log.indexOf('end:x') < h.log.indexOf('start:b'));
+});

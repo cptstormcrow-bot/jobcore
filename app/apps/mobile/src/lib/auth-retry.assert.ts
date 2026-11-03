@@ -50,3 +50,29 @@ test('non-auth errors are not retried', async () => {
   assert.equal(calls, 1);
   assert.equal(refreshes, 0);
 });
+
+test('rows failing auth at the same time share one refresh and each retry once', async () => {
+  let refreshes = 0;
+  const sent: string[] = [];
+  let fresh = false;
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const s = makeAuthRetrySend<string>({
+    send: async (row) => {
+      if (!fresh) throw authErr;
+      sent.push(row);
+    },
+    isAuthError,
+    refresh: async () => {
+      refreshes++;
+      await gate;
+      fresh = true;
+      return true;
+    },
+  });
+  const all = Promise.all([s('a'), s('b'), s('c')]);
+  release();
+  await all;
+  assert.equal(refreshes, 1);
+  assert.deepEqual(sent.sort(), ['a', 'b', 'c']);
+});
