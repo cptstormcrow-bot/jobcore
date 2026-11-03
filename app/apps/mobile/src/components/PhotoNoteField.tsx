@@ -38,7 +38,7 @@ export function PhotoNoteField({ photo, onSaved, actions }: PhotoNoteFieldProps)
     if (!photo.storagePath) return;
     setBusy(true);
     try {
-      await createCloseOutPhotosRepository().setNote({ id: photo.id, storagePath: photo.storagePath }, text);
+      await createCloseOutPhotosRepository().setNote({ id: photo.id, storagePath: photo.storagePath }, text, saved);
       setSaved(text);
       onSaved?.(text);
     } catch (e) {

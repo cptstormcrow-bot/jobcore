@@ -1,6 +1,8 @@
 // Payroll time-entry replay handlers. Pure network functions: no SQLite, no React.
 // Errors are never wrapped: the drain classifier reads .code/.status/.message.
+import { PAYROLL_TIME_EDIT_POLICY, type RecordEditBase } from '@jobcore/core';
 import { registerOpHandlers, type OpHandler } from './index';
+import { updateRecordGuarded } from './record-edit-guard';
 
 const APPLIED = { applied: true } as const;
 
@@ -17,6 +19,8 @@ export interface PayrollTimeUpsertPayload {
   clockOutAt: string | null;
   source: 'manual' | 'clock';
   notes: string | null;
+  /** Seen values (+ updated_at) when an existing entry was edited; absent for new entries and old queued rows. */
+  base?: RecordEditBase;
 }
 export interface PayrollTimeDeletePayload {
   id: string;
@@ -30,6 +34,26 @@ export interface PayrollTimesheetSubmitPayload {
 // status is deliberately omitted: new rows default to 'draft' and an existing row keeps its
 // status. A row that is no longer draft/rejected fails RLS (42501) and is thrown raw for the classifier.
 const payrollTimeUpsert: OpHandler<PayrollTimeUpsertPayload> = async (p, ctx) => {
+  if (p.base) {
+    // Edit of an existing entry: guarded update (falls back to a plain update if the row is not visible).
+    await updateRecordGuarded(
+      ctx,
+      'payroll_time_entries',
+      p.id,
+      {
+        work_date: p.workDate,
+        minutes: p.minutes,
+        clock_in_at: p.clockInAt,
+        clock_out_at: p.clockOutAt,
+        source: p.source,
+        notes: p.notes ?? null,
+      },
+      p.base,
+      PAYROLL_TIME_EDIT_POLICY,
+      { versionCol: 'updated_at', record: 'time entry' },
+    );
+    return APPLIED;
+  }
   const { error } = await ctx.supabase.from('payroll_time_entries').upsert(
     {
       id: p.id,

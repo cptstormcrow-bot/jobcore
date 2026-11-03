@@ -33,7 +33,13 @@ import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
 import { setOnlineGuard as setPaymentReviewOnlineGuard } from '../../../../modules/payment-review/src/lib/online';
-import { captureJobEditBase } from '@jobcore/core';
+import {
+  captureCamelEditBase,
+  captureJobEditBase,
+  captureRecordEditBase,
+  estimateLineEditBase,
+  ESTIMATE_FIELD_TO_COLUMN,
+} from '@jobcore/core';
 import type { Job, Commission, JobStatus, Profile, Role, VehicleStatus, ToolStatus, WorkerType, TechRole, DevPayMode } from '@jobcore/core';
 import type {
   JobRepository,
@@ -514,8 +520,13 @@ export function createLeadRepository(): LeadRepository {
 
     async update(leadId: string, patch: LeadPatch): Promise<Lead> {
       const occurredAt = new Date().toISOString();
-      const optimistic = { ...(knownLeads.get(leadId) ?? { id: leadId }), ...(patch as object) } as never as Lead;
-      const res = await writeThrough('lead.update', { leadId, patch }, occurredAt, optimistic);
+      const known = knownLeads.get(leadId);
+      const optimistic = { ...(known ?? { id: leadId }), ...(patch as object) } as never as Lead;
+      // Seen values, in the same snake_case columns the update writes.
+      const base = known
+        ? captureRecordEditBase(toLeadRowPatch(known as LeadPatch) as Record<string, unknown>, Object.keys(toLeadRowPatch(patch)))
+        : undefined;
+      const res = await writeThrough('lead.update', { leadId, patch, base }, occurredAt, optimistic);
       return rememberLead(res.data);
     },
   };
@@ -1500,9 +1511,14 @@ export function createCloseOutPhotosRepository(): CloseOutPhotoRepository {
       return { id: photoId, uri: localUri, storagePath, kind: photoKind };
     },
 
-    async setNote(photo: { id: string; storagePath: string }, description: string): Promise<void> {
+    async setNote(photo: { id: string; storagePath: string }, description: string, baseDescription?: string | null): Promise<void> {
       const occurredAt = new Date().toISOString();
-      await writeThrough('job_photo.note', { id: photo.id, storagePath: photo.storagePath, description }, occurredAt, { id: photo.id } as never);
+      await writeThrough(
+        'job_photo.note',
+        { id: photo.id, storagePath: photo.storagePath, description, ...(baseDescription !== undefined ? { baseDescription } : {}) },
+        occurredAt,
+        { id: photo.id } as never,
+      );
     },
 
     async remove(photoId: string, storagePath?: string): Promise<void> {
@@ -2578,10 +2594,13 @@ async function addEstimateLineItem(
 }
 
 export function createEstimateRepository(): EstimateRepository {
+  // What the editor last saw, so a queued edit carries its base (record-edit-guard).
+  const knownEstimates = new Map<string, JobEstimate>();
+  const knownLineItems = new Map<string, JobEstimateLineItem>();
   return {
     async getForJob(jobId: string): Promise<JobEstimate | null> {
       const { organizationId } = requireModuleSession();
-      return readCached('af.estimates.getForJob', { jobId }, async () => {
+      const est = await readCached('af.estimates.getForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_estimates')
           .select('*')
@@ -2593,11 +2612,18 @@ export function createEstimateRepository(): EstimateRepository {
         }
         return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
       });
+      if (est) knownEstimates.set(jobId, est);
+      return est;
     },
 
     async upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
+      const base = captureCamelEditBase(
+        knownEstimates.get(jobId) as never,
+        Object.keys(input).filter((k) => (input as Record<string, unknown>)[k] !== undefined),
+        ESTIMATE_FIELD_TO_COLUMN,
+      );
 
       const patch: Record<string, unknown> = {
         job_id: jobId,
@@ -2693,16 +2719,17 @@ export function createEstimateRepository(): EstimateRepository {
       };
       const result = await writeThrough(
         'job_estimate.upsert',
-        { jobId, input },
+        { jobId, input, base },
         occurredAt,
         toJobEstimate(optimistic as never) as never,
       );
+      knownEstimates.set(jobId, result.data as JobEstimate);
       return result.data as JobEstimate;
     },
 
     async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {
       const { organizationId } = requireModuleSession();
-      return readCached('af.estimates.listLineItems', { jobId }, async () => {
+      const items = await readCached('af.estimates.listLineItems', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_estimate_line_items')
           .select('*')
@@ -2715,6 +2742,8 @@ export function createEstimateRepository(): EstimateRepository {
         }
         return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
       });
+      for (const it of items) knownLineItems.set(it.id, it);
+      return items;
     },
 
     async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
@@ -2757,12 +2786,15 @@ export function createEstimateRepository(): EstimateRepository {
       // An overwrite save re-snapshots the task content.
       const snapshotAt = new Date().toISOString();
       // The optimistic result is a PARTIAL item (id + changed fields); JobEstimateScreen merges it over the row it already holds.
+      const known = knownLineItems.get(lineItemId);
+      const base = known ? estimateLineEditBase(known as never, patch as never) : undefined;
       const result = await writeThrough(
         'job_estimate_line_item.update',
-        { lineItemId, patch, snapshotAt },
+        { lineItemId, patch, snapshotAt, ...(base ? { base } : {}) },
         snapshotAt,
         { ...patch, id: lineItemId, taskSnapshotAt: snapshotAt } as never,
       );
+      if (known) knownLineItems.set(lineItemId, { ...known, ...(result.data as Partial<JobEstimateLineItem>) });
       return result.data as JobEstimateLineItem;
     },
 

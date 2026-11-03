@@ -14,7 +14,7 @@
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { captureJobEditBase } from '@jobcore/core';
+import { captureCamelEditBase, captureJobEditBase, ESTIMATE_FIELD_TO_COLUMN } from '@jobcore/core';
 import { supabase, supabaseUrl } from './supabase';
 import { createPayrollRepos, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
@@ -815,9 +815,11 @@ function toJobEstimateLineItem(row: {
 }
 
 export function createEstimateRepository(): EstimateRepository {
+  // What the editor last saw, so a queued edit carries its base (record-edit-guard).
+  const knownEstimates = new Map<string, JobEstimate>();
   return {
     async getForJob(jobId: string): Promise<JobEstimate | null> {
-      return readCached('ft.estimates.getForJob', { jobId }, async () => {
+      const est = await readCached('ft.estimates.getForJob', { jobId }, async () => {
         const { organizationId } = requireModuleSession();
         const { data, error } = await supabase
           .from('job_estimates')
@@ -830,11 +832,18 @@ export function createEstimateRepository(): EstimateRepository {
         }
         return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
       });
+      if (est) knownEstimates.set(jobId, est);
+      return est;
     },
 
     async upsertForJob(jobId: string, input: JobEstimateInput): Promise<JobEstimate> {
       const { organizationId, userId } = requireModuleSession();
       const occurredAt = new Date().toISOString();
+      const base = captureCamelEditBase(
+        knownEstimates.get(jobId) as never,
+        Object.keys(input).filter((k) => (input as Record<string, unknown>)[k] !== undefined),
+        ESTIMATE_FIELD_TO_COLUMN,
+      );
 
       const patch: Record<string, unknown> = {
         job_id: jobId,
@@ -915,7 +924,8 @@ export function createEstimateRepository(): EstimateRepository {
         ...patch,
         updated_at: occurredAt,
       } as never);
-      const { data } = await writeThrough('job_estimate.upsert', { jobId, input }, occurredAt, optimistic);
+      const { data } = await writeThrough('job_estimate.upsert', { jobId, input, base }, occurredAt, optimistic);
+      knownEstimates.set(jobId, data);
       return data;
     },
 

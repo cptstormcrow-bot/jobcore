@@ -7,7 +7,8 @@
  *
  * Replay contract: errors are rethrown UNWRAPPED (the classifier reads .code/.status/.message);
  * a PK 23505 on a create is treated as "applied" by the drain, so it is never caught here;
- * updates are last-write-wins and 0 affected rows counts as applied; deletes are idempotent.
+ * lead updates go through the record-edit guard when a base was captured (else last-write-wins);
+ * 0 affected rows counts as applied; deletes are idempotent.
  */
 
 import type {
@@ -24,9 +25,10 @@ import type {
 import { toLeadRowPatch } from '../../../../../modules/admin-finance/src/data/ports';
 import type { JobDraft } from '../../../../../modules/admin-finance/src/domain/qualify';
 import type { NewLeadDraft } from '../../../../../modules/admin-finance/src/domain/intake-normalize';
-import type { JobEditBase } from '@jobcore/core';
+import { LEAD_EDIT_POLICY, type JobEditBase, type RecordEditBase } from '@jobcore/core';
 import { registerOpHandlers, type OpHandler } from './index';
 import { updateJobGuarded } from './job-edit-guard';
+import { updateRecordGuarded } from './record-edit-guard';
 
 const APPLIED = { applied: true } as const;
 
@@ -48,7 +50,7 @@ export interface JobAssignmentRemoveInvestigatorPayload { jobId: string }
 export interface JobAssignmentRemoveForJobPayload { jobId: string; kind?: 'installer' | 'investigator' }
 
 export interface LeadCreatePayload { id: string; draft: NewLeadDraft }
-export interface LeadUpdatePayload { leadId: string; patch: LeadPatch }
+export interface LeadUpdatePayload { leadId: string; patch: LeadPatch; base?: RecordEditBase }
 export interface LeadMarkQualifiedPayload { leadId: string; jobId: string; qualifiedAt: string }
 
 export interface CustomerCreatePayload { id: string; input: CustomerCreateInput }
@@ -292,9 +294,8 @@ const leadCreate: OpHandler<LeadCreatePayload> = async ({ id, draft }, ctx) => {
   return APPLIED;
 };
 
-const leadUpdate: OpHandler<LeadUpdatePayload> = async ({ leadId, patch }, ctx) => {
-  const { error } = await ctx.supabase.from('leads').update(toLeadRowPatch(patch)).eq('id', leadId).select('id');
-  if (error) throw error;
+const leadUpdate: OpHandler<LeadUpdatePayload> = async ({ leadId, patch, base }, ctx) => {
+  await updateRecordGuarded(ctx, 'leads', leadId, toLeadRowPatch(patch), base, LEAD_EDIT_POLICY, { record: 'lead' });
   return APPLIED;
 };
 

@@ -1,9 +1,19 @@
 // Tech (field-tech) replay handlers. Pure network functions: no SQLite, no React.
 // Errors are never wrapped: the drain classifier reads .code/.status/.message.
-import { estimateLinePatchToRow, type EstimateLinePatchInput, type JobEditBase } from '@jobcore/core';
+import {
+  decideRecordEdit,
+  estimateLinePatchToRow,
+  ESTIMATE_EDIT_POLICY,
+  ESTIMATE_LINE_EDIT_POLICY,
+  PHOTO_NOTE_EDIT_POLICY,
+  type EstimateLinePatchInput,
+  type JobEditBase,
+  type RecordEditBase,
+} from '@jobcore/core';
 import { registerOpHandlers, type OpContext, type OpHandler } from './index';
 import { updateJobGuarded } from './job-edit-guard';
-import { writeJpegDescription } from '../jpeg-description';
+import { updateRecordGuarded } from './record-edit-guard';
+import { readJpegDescription, writeJpegDescription } from '../jpeg-description';
 import { blobToBytes } from '../photo-note';
 
 type Sb = OpContext['supabase'];
@@ -90,6 +100,8 @@ export interface JobPhotoNotePayload {
   id: string;
   storagePath: string;
   description: string;
+  /** The note this edit started from; absent on rows queued before the guard. */
+  baseDescription?: string | null;
 }
 export interface JobPhotoRemovePayload {
   id: string;
@@ -186,11 +198,13 @@ export interface JobInvestigationUpsertPayload {
 export interface JobEstimateUpsertPayload {
   jobId: string;
   input: Record<string, unknown>;
+  base?: RecordEditBase;
 }
 export interface JobEstimateLineItemUpdatePayload {
   lineItemId: string;
   patch: EstimateLinePatchInput;
   snapshotAt: string;
+  base?: RecordEditBase;
 }
 export interface JobEstimateLineItemRemovePayload {
   lineItemId: string;
@@ -314,9 +328,27 @@ const jobPhotoNote: OpHandler<JobPhotoNotePayload> = async (p, ctx) => {
   const { data, error: dlErr } = await bucket.download(p.storagePath);
   if (dlErr) throw dlErr;
   const bytes = await blobToBytes(data as Blob);
+  let description = p.description;
+  if (p.baseDescription !== undefined) {
+    // Someone else changed the note meanwhile: keep both versions.
+    let current: string | null = null;
+    try {
+      current = readJpegDescription(bytes);
+    } catch {
+      current = null;
+    }
+    const d = decideRecordEdit(
+      { description: p.description },
+      { values: { description: p.baseDescription } },
+      { description: current },
+      PHOTO_NOTE_EDIT_POLICY,
+    );
+    if (!('description' in d.apply)) return APPLIED; // already holds our note
+    description = String(d.apply.description ?? '');
+  }
   let out: Uint8Array;
   try {
-    out = writeJpegDescription(bytes, p.description);
+    out = writeJpegDescription(bytes, description);
   } catch {
     return APPLIED; // not a JPEG: nothing to embed
   }
@@ -515,8 +547,20 @@ const jobEstimateUpsert: OpHandler<JobEstimateUpsertPayload> = async (p, ctx) =>
   for (const [key, column] of Object.entries(ESTIMATE_COLUMNS)) {
     if (p.input[key] !== undefined) row[column] = p.input[key];
   }
-  const { error } = await ctx.supabase.from('job_estimates').upsert(row, { onConflict: 'job_id' });
-  check(error);
+  const upsert = async () => {
+    const { error } = await ctx.supabase.from('job_estimates').upsert(row, { onConflict: 'job_id' });
+    check(error);
+  };
+  if (p.base) {
+    const { job_id: _j, organization_id: _o, ...update } = row;
+    await updateRecordGuarded(ctx, 'job_estimates', p.jobId, update, p.base, ESTIMATE_EDIT_POLICY, {
+      idCol: 'job_id',
+      record: 'estimate',
+      onMissing: upsert,
+    });
+    return APPLIED;
+  }
+  await upsert();
   return APPLIED;
 };
 
@@ -614,6 +658,18 @@ const auditLogWrite: OpHandler<AuditLogWritePayload> = async (p, ctx) => {
 
 // Update by primary key: replaying twice writes the same values (idempotent). The snapshot stamp rides the payload.
 const jobEstimateLineItemUpdate: OpHandler<JobEstimateLineItemUpdatePayload> = async (p, ctx) => {
+  if (p.base) {
+    await updateRecordGuarded(
+      ctx,
+      'job_estimate_line_items',
+      p.lineItemId,
+      estimateLinePatchToRow(p.patch, p.snapshotAt) as Record<string, unknown>,
+      p.base,
+      ESTIMATE_LINE_EDIT_POLICY,
+      { record: 'line item' },
+    );
+    return APPLIED;
+  }
   const { error } = await ctx.supabase
     .from('job_estimate_line_items')
     .update(estimateLinePatchToRow(p.patch, p.snapshotAt))

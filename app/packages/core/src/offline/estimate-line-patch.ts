@@ -4,8 +4,10 @@
  * `estimateLinePatchToRow` builds the DB column patch (only fields the caller set,
  * plus the task_snapshot_at stamp). `applyEstimateLinePatch` produces the optimistic
  * camelCase item shown right away. Both take the stamp from the caller so a replay
- * writes the same value that was shown. No transport, no imports.
+ * writes the same value that was shown. No transport.
  */
+import { captureCamelEditBase, type RecordEditBase } from './record-edit-guard.js';
+
 export interface EstimateLinePatchInput {
   kind?: string;
   description?: string;
@@ -29,6 +31,16 @@ const FIELD_TO_COLUMN: ReadonlyArray<readonly [keyof EstimateLinePatchInput, str
   ['area', 'area'],
   ['materialsNote', 'materials_note'],
 ];
+
+/** Base for a line edit: the columns the patch writes, as the editor last saw them on `item`. */
+export function estimateLineEditBase(
+  item: Record<string, unknown> | null | undefined,
+  patch: EstimateLinePatchInput,
+): RecordEditBase | undefined {
+  if (!item) return undefined;
+  const fields = FIELD_TO_COLUMN.filter(([f]) => patch[f] !== undefined).map(([f]) => f as string);
+  return captureCamelEditBase(item, fields, Object.fromEntries(FIELD_TO_COLUMN));
+}
 
 /** DB column patch for the fields the caller set (undefined = untouched), stamped with task_snapshot_at. */
 export function estimateLinePatchToRow(patch: EstimateLinePatchInput, snapshotAt: string): Record<string, unknown> {

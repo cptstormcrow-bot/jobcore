@@ -949,8 +949,8 @@ export interface JobPhotoRepository {
   add(jobId: string, uri: string, meta?: { kind?: string; fileName?: string }): Promise<CloseOutPhoto>;
   /** When `storagePath` is given, the stored object is deleted too. */
   remove(photoId: string, storagePath?: string): Promise<void>;
-  /** Writes a description note onto a stored photo. */
-  setNote(photo: { id: string; storagePath: string }, description: string): Promise<void>;
+  /** Writes a description note onto a stored photo. `baseDescription` is the note the editor started from (keeps both on a clash). */
+  setNote(photo: { id: string; storagePath: string }, description: string, baseDescription?: string | null): Promise<void>;
 }
 
 /** Read/write access to a job's close-out notes. */

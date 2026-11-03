@@ -1,7 +1,7 @@
 // Self-service payroll repo (PayrollSelfPort). Reads go through the offline read cache
 // (time entries use the query name 'pr.time' so queued ops patch them); writes go through writeThrough.
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { wageEngine } from '@jobcore/core';
+import { captureRecordEditBase, type wageEngine } from '@jobcore/core';
 import type {
   PayrollSelfPort,
   PayrollTimeEntry,
@@ -115,6 +115,17 @@ function extOf(uri: string): string {
 export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRepoSession): PayrollSelfPort {
   const { orgId, userId } = session;
 
+  // What this device last saw per time entry, so a queued edit can carry its base
+  // (record-edit-guard): live rows keep updated_at, cached rows are values only.
+  const TIME_COLS = ['work_date', 'minutes', 'clock_in_at', 'clock_out_at', 'source', 'notes'] as const;
+  const known = new Map<string, { row: Row; updatedAt?: string }>();
+  const remember = (e: PayrollTimeEntry) => {
+    if (known.has(e.id)) return;
+    known.set(e.id, {
+      row: { work_date: e.workDate, minutes: e.minutes, clock_in_at: e.clockInAt, clock_out_at: e.clockOutAt, source: e.source, notes: e.notes },
+    });
+  };
+
   const receiptPath = (uri: string, reimbursementId: string) => `${orgId}/${userId}/${reimbursementId}.${extOf(uri)}`;
 
   return {
@@ -128,19 +139,28 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           .lte('work_date', range.to)
           .order('work_date', { ascending: true });
         check(error);
+        for (const r of (data ?? []) as Row[]) known.set(r.id, { row: r, updatedAt: r.updated_at ?? undefined });
         return ((data ?? []) as Row[]).map(toPayrollTimeEntry);
-      }).catch(async (e) => {
-        const saved = e instanceof OfflineError ? await savedTimeRows(range) : null;
-        if (saved) return saved;
-        throw e;
-      });
+      })
+        .catch(async (e) => {
+          const saved = e instanceof OfflineError ? await savedTimeRows(range) : null;
+          if (saved) return saved;
+          throw e;
+        })
+        .then((rows) => {
+          rows.forEach(remember);
+          return rows;
+        });
     },
 
     async upsertEntry(entry) {
       const occurredAt = new Date().toISOString();
+      const seen = known.get(entry.id);
+      const base = seen ? captureRecordEditBase(seen.row, TIME_COLS, seen.updatedAt) : undefined;
       await writeThrough(
         'payroll_time.upsert',
         {
+          base,
           id: entry.id,
           userId: entry.userId,
           workDate: entry.workDate,
@@ -153,6 +173,10 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
         occurredAt,
         entry,
       );
+      // A second offline edit is based on this one, not on the server row.
+      known.set(entry.id, {
+        row: { work_date: entry.workDate, minutes: entry.minutes, clock_in_at: entry.clockInAt, clock_out_at: entry.clockOutAt, source: entry.source, notes: entry.notes ?? null },
+      });
     },
 
     async deleteEntry(id) {
