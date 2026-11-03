@@ -378,11 +378,11 @@
       ]
     },
     "ft-Completion": {
-      "summary": "Tech sees a completion checklist checkbox, \"Capture after-photo\" button with photo count, Quality notes field, time worked, and \"Complete job\" button (enabled once checklist, photo and notes are done).",
+      "summary": "Tech sees a completion checklist, \"Capture after-photo\" button with photo count, Quality notes field, time worked, and \"Complete job\" button (enabled once the checklist is ticked).",
       "flowStage": "in_progress",
       "specStage": "Completion",
-      "purpose": "Lets the field tech finish a job by confirming the checklist, adding after-photos and quality notes, then transitioning it to completed.",
-      "missing": "Opened from the job menu's Complete (route /job/complete/<jobId>) for tech, admin and owner when the job is in progress. The Complete job button stays disabled until the checklist is ticked, an after-photo is attached and quality notes are typed; tapping it saves the quality note, completes the job (completed time set, status completed) and returns to the job screen. No visible link onward to QR payment/review.",
+      "purpose": "Lets the field tech finish a job by confirming the checklist, optionally adding after-photos and quality notes, then transitioning it to completed.",
+      "missing": "Opened from the job menu's Complete (route /job/complete/<jobId>) for tech, admin and owner when the job is in progress. The Complete job button stays disabled until the checklist is ticked; after-photos and quality notes are optional. Tapping it saves any quality note, completes the job (completed time set, status completed) and returns to the job screen. No visible link onward to QR payment/review.",
       "navTargets": []
     },
     "ft-DayList": {
@@ -731,6 +731,40 @@
       "navTargets": [
         "calendar",
         "jobs"
+      ]
+    },
+    "ft-Payroll": {
+      "summary": "\"Payroll\" title over a tab bar: My Time, Hours, Pay period and Reimbursements, with the selected tab's panel below.",
+      "flowStage": "none",
+      "specStage": "Ancillary",
+      "purpose": "Lets each person log and submit their own time, see hours and pay-period totals, and file reimbursements.",
+      "missing": "Opened from the Payroll entry for owner, admin and tech. Shows the person's own records only (self mode); team approvals and payroll runs live on the admin side. Shows \"Payroll is not available yet\" when payroll is not set up or nobody is signed in.",
+      "navTargets": []
+    },
+    "menu-needs-prem": {
+      "summary": "Job menu item that reads \"Needs Prem\", or \"Clear Prem\" once the job is flagged.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Flags a job as needing a preliminary (Prem) visit, or clears that flag.",
+      "missing": "In the job screen's slide-out menu for owner and admin only; techs never see it. Tapping it sets or clears the job's Needs Prem time and stays on the job screen.",
+      "navTargets": []
+    },
+    "menu-sign-out": {
+      "summary": "\"Sign out\" item in the job screen's slide-out menu.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Signs the current person out of the app from inside a job.",
+      "missing": "Shown to every role. Tapping it ends the session and returns to the sign-in screen.",
+      "navTargets": []
+    },
+    "menu-configuration": {
+      "summary": "\"Configuration\" item in the job screen's slide-out menu, which opens a submenu with Settings.",
+      "flowStage": "none",
+      "specStage": "Job Detail",
+      "purpose": "Gives a shortcut from a job to the app's Settings screen.",
+      "missing": "Shown to every role. Tapping it opens the submenu; Settings goes to /config/settings.",
+      "navTargets": [
+        "/config/settings"
       ]
     }
   }

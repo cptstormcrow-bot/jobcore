@@ -990,7 +990,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   onPress={() => { void handleShare(); }}
                   style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
                 >
-                  <Text style={styles.linkChipLabel}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
+                  <Text style={styles.linkChipLabel} numberOfLines={1}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
                 </Pressable>
                 {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
                 {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
@@ -1572,8 +1572,8 @@ const styles = StyleSheet.create({
     marginBottom: compact.gap,
   },
   statusControlWrap: { alignSelf: 'flex-start' },
-  statusRow: { flexDirection: 'row', alignItems: 'center' },
-  statusCenterGroup: { flex: 1, minWidth: 0, flexShrink: 1, flexWrap: 'wrap', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  statusRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', rowGap: spacing.xs },
+  statusCenterGroup: { flexGrow: 1, flexShrink: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   statusCenterTotal: { marginLeft: spacing.sm },
   totalColumn: { alignItems: 'flex-end' },
   totalLabel: {
@@ -1664,17 +1664,19 @@ const styles = StyleSheet.create({
   trackingButton: {},
   techColumns: {
     flexDirection: 'row',
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
     alignItems: 'flex-start',
     width: '100%',
     gap: spacing.xs,
   },
   techLeftCol: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 280,
     minWidth: 0,
   },
   techRightCol: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 280,
     minWidth: 0,
   },
 });

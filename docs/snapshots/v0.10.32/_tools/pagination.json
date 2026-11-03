@@ -171,7 +171,7 @@
     18
   ],
   "ft-Completion": [
-    6,
+    7,
     26
   ],
   "ft-DayList": [
@@ -193,14 +193,14 @@
     28
   ],
   "ft-Payroll": [
-    15
+    8,
+    28
   ],
   "ft-PremJobs": [
-    11,
-    31
+    15
   ],
   "ft-Reimbursements": [
-    12
+    8
   ],
   "ft-Reviews": [
     8,
@@ -256,16 +256,16 @@
     12
   ],
   "menu-configuration": [
-    12,
-    30
-  ],
-  "menu-needs-prem": [
-    12,
+    11,
     29
   ],
+  "menu-needs-prem": [
+    10,
+    28
+  ],
   "menu-sign-out": [
-    12,
-    30
+    10,
+    26
   ],
   "module-host": [
     15,
@@ -327,8 +327,8 @@
     28
   ],
   "sm-ReviewLibrary": [
-    7,
-    24
+    8,
+    26
   ],
   "sweep-modules-admin-finance-src-screens-accordioneditrow-tsx": [
     4,
