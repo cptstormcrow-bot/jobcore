@@ -410,33 +410,24 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Red flags</Text>
-        <Pressable
-          style={styles.checkboxRow}
-          onPress={() => setRedFlagMarginalEquipment((prev) => !prev)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: redFlagMarginalEquipment }}
-        >
-          <Text style={styles.checkboxBox}>{redFlagMarginalEquipment ? '☑' : '☐'}</Text>
-          <Text style={styles.value}>Marginal or failing equipment</Text>
-        </Pressable>
-        <Pressable
-          style={styles.checkboxRow}
-          onPress={() => setRedFlagUndocumentedSystem((prev) => !prev)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: redFlagUndocumentedSystem }}
-        >
-          <Text style={styles.checkboxBox}>{redFlagUndocumentedSystem ? '☑' : '☐'}</Text>
-          <Text style={styles.value}>Complicated (but undocumented) existing system</Text>
-        </Pressable>
-        <Pressable
-          style={styles.checkboxRow}
-          onPress={() => setRedFlagSubstandardStart((prev) => !prev)}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: redFlagSubstandardStart }}
-        >
-          <Text style={styles.checkboxBox}>{redFlagSubstandardStart ? '☑' : '☐'}</Text>
-          <Text style={styles.value}>Substandard starting point (needs up to code)</Text>
-        </Pressable>
+        <Checkbox
+          label="Marginal or failing equipment"
+          checked={redFlagMarginalEquipment}
+          onChange={setRedFlagMarginalEquipment}
+          labelStyle={styles.value}
+        />
+        <Checkbox
+          label="Complicated (but undocumented) existing system"
+          checked={redFlagUndocumentedSystem}
+          onChange={setRedFlagUndocumentedSystem}
+          labelStyle={styles.value}
+        />
+        <Checkbox
+          label="Substandard starting point (needs up to code)"
+          checked={redFlagSubstandardStart}
+          onChange={setRedFlagSubstandardStart}
+          labelStyle={styles.value}
+        />
         <FieldRow label="Red flag notes" value={redFlagNotes} onChangeText={setRedFlagNotes} />
       </View>
 
@@ -536,14 +527,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trackingButton: {},
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  checkboxBox: {
-    fontSize: typography.size.h4,
-  },
   card: {
     marginBottom: spacing.xs,
     padding: spacing.sm,

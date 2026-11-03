@@ -395,7 +395,7 @@ export function Composer({
               onPress={() => void handleToggleAsset(asset)}
               style={styles.assetRow}
             >
-              <View style={[styles.checkbox, selected && styles.checkboxChecked]} />
+              <View style={styles.checkbox}>{selected ? <Text style={styles.checkboxTick}>✓</Text> : null}</View>
               <Text style={styles.assetLabel}>
                 {asset.jobPhotoId !== null ? `Photo ${asset.jobPhotoId}` : `Review ${asset.reviewId}`}
               </Text>
@@ -547,9 +547,17 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.textMutedDark,
     marginRight: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: colors.text,
+  // Same green checkmark as every checkbox in the app.
+  checkboxTick: {
+    color: colors.success,
+    fontSize: 14,
+    fontWeight: '900',
+    lineHeight: 16,
+    textAlign: 'center',
+    includeFontPadding: false,
   },
   assetLabel: {
     fontSize: typography.size.label,

@@ -145,7 +145,7 @@ function MenuRow({
               item.kind !== 'toggle' && item.tone === 'danger' && styles.rowTextDanger,
             ]}
           >
-            {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
+            {item.kind === 'toggle' ? (item.checked ? <Text style={styles.toggleChecked}>{'☑  '}</Text> : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
           </Text>
           {item.helpId ? (
@@ -600,6 +600,8 @@ const styles = StyleSheet.create({
   rowDisabled: {
     opacity: 0.5,
   },
+  // Checked menu toggles show green, like every checkbox.
+  toggleChecked: { color: colors.success, fontWeight: '900' },
   rowText: {
     fontFamily: typography.fontFamily.heading,
     fontSize: 18,
