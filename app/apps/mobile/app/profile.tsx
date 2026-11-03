@@ -24,6 +24,7 @@ import {
 } from '@jobcore/ui';
 
 import { useSession, updatePassword, updateFullName, updateEmail } from '../src/lib/session';
+import { setPin, isValidPin, hasCustomPin, PIN_MAX } from '../src/lib/offline-auth';
 
 const DASH = '—';
 const MIN_LENGTH = 8;
@@ -49,6 +50,24 @@ export default function ProfileScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [newPin, setNewPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [pinBusy, setPinBusy] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinSaved, setPinSaved] = useState(false);
+  const [pinCustom, setPinCustom] = useState(false);
+  const pinUserId = state.status === 'authenticated' ? state.session.user.id : null;
+
+  useEffect(() => {
+    if (!pinUserId) return;
+    let active = true;
+    void hasCustomPin(pinUserId).then((v) => {
+      if (active) setPinCustom(v);
+    });
+    return () => {
+      active = false;
+    };
+  }, [pinUserId, pinSaved]);
 
   if (state.status !== 'authenticated') {
     return (
@@ -92,6 +111,29 @@ export default function ProfileScreen() {
     }
     setDetailsBusy(false);
     setDetailsNote('Details saved.');
+  }
+
+  async function handleSavePin() {
+    setPinSaved(false);
+    if (!isValidPin(newPin)) {
+      setPinError('PIN must be 4 to 6 digits.');
+      return;
+    }
+    if (newPin !== confirmPin) {
+      setPinError('PINs do not match.');
+      return;
+    }
+    setPinBusy(true);
+    setPinError(null);
+    const message = await setPin(userId, newPin);
+    setPinBusy(false);
+    if (message !== null) {
+      setPinError(message);
+      return;
+    }
+    setNewPin('');
+    setConfirmPin('');
+    setPinSaved(true);
   }
 
   async function handleSubmit() {
@@ -228,6 +270,52 @@ export default function ProfileScreen() {
 
           {success ? <Text style={styles.success}>Password updated</Text> : null}
           {error !== null ? <ErrorState title="Password not updated" message={error} /> : null}
+        </Card>
+
+        <Card style={styles.form}>
+          <Text style={styles.heading}>Offline PIN</Text>
+          <Text style={styles.note}>
+            {pinCustom
+              ? 'Your own PIN signs you in with no wifi or cell service.'
+              : 'Your PIN is 1111 until you change it. Set your own below.'}
+          </Text>
+
+          <Text style={styles.label}>New PIN</Text>
+          <TextInput
+            value={newPin}
+            onChangeText={(v) => setNewPin(v.replace(/\D/g, '').slice(0, PIN_MAX))}
+            keyboardType="number-pad"
+            secureTextEntry
+            maxLength={PIN_MAX}
+            accessibilityLabel="New PIN"
+            placeholder="4 to 6 digits"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+            editable={!pinBusy}
+          />
+          <Text style={styles.label}>Confirm PIN</Text>
+          <TextInput
+            value={confirmPin}
+            onChangeText={(v) => setConfirmPin(v.replace(/\D/g, '').slice(0, PIN_MAX))}
+            keyboardType="number-pad"
+            secureTextEntry
+            maxLength={PIN_MAX}
+            accessibilityLabel="Confirm PIN"
+            placeholder="Confirm PIN"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+            editable={!pinBusy}
+          />
+
+          <PayrollButton
+            label={pinBusy ? 'Saving…' : 'Save PIN'}
+            disabled={pinBusy}
+            onPress={() => void handleSavePin()}
+            style={styles.submit}
+          />
+
+          {pinSaved ? <Text style={styles.success}>PIN saved</Text> : null}
+          {pinError !== null ? <ErrorState title="PIN not saved" message={pinError} /> : null}
         </Card>
         </ScrollView>
       </KeyboardAvoidingView>

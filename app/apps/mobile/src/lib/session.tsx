@@ -3,7 +3,10 @@ import * as Linking from 'expo-linking';
 import type { Session } from '@supabase/supabase-js';
 import type { Organization, Profile, Role } from '@jobcore/core';
 
+import NetInfo from '@react-native-community/netinfo';
+
 import { supabase } from './supabase';
+import { rememberAccount, loadActiveSnapshot, clearActive, type OfflineSnapshot } from './offline-auth';
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
 import { getCached } from './read-cache-store';
@@ -233,8 +236,18 @@ export interface SessionProviderProps {
   children: React.ReactNode;
 }
 
+// Offline sign-in plumbing. `signOutIntent` is true only while the user's own sign-out is
+// running, so a SIGNED_OUT event with no service can be told apart from a real sign-out.
+// `bridge` lets the module-level helpers below reach the mounted provider.
+let signOutIntent = false;
+let bridge: { enter: (s: OfflineSnapshot) => void; signedOut: () => void } | null = null;
+
 export function SessionProvider({ children }: SessionProviderProps) {
   const [state, setState] = useState<SessionState>({ status: 'loading' });
+  const stateRef = useRef<SessionState>(state);
+  stateRef.current = state;
+  // Set while the app is running from a saved snapshot instead of a live Supabase session.
+  const offlineSnapRef = useRef<OfflineSnapshot | null>(null);
   const cancelledRef = useRef(false);
   // Holds the effect-scoped `runCheck` so it stays callable from outside the
   // effect (as `recheck`) without re-running the auth-listener setup below.
@@ -251,6 +264,11 @@ export function SessionProvider({ children }: SessionProviderProps) {
     // back to.
     const applyOutcome = (outcome: ResolveOutcome) => {
       if (cancelledRef.current) return;
+      if (outcome.kind === 'authenticated' && !outcome.fromCache) {
+        // A live, confirmed sign-in: leave offline mode and remember this account for later.
+        offlineSnapRef.current = null;
+        void rememberAccount({ session: outcome.session, profile: outcome.profile, organization: outcome.organization });
+      }
       setState((prev) => {
         if (outcome.kind === 'failed') {
           if (prev.status === 'authenticated') return prev;
@@ -274,19 +292,44 @@ export function SessionProvider({ children }: SessionProviderProps) {
       message: err instanceof Error ? err.message : 'Unable to reach the server.',
     });
 
+    // Run from the saved snapshot of the account that was last signed in (never signed out).
+    const enterFromSnapshot = (snap: OfflineSnapshot) => {
+      if (cancelledRef.current || stateRef.current.status === 'authenticated') return;
+      offlineSnapRef.current = snap;
+      setState({
+        status: 'authenticated',
+        session: snap.session,
+        profile: snap.profile,
+        organization: snap.organization,
+        fromCache: true,
+      });
+    };
+
+    const restoreFromActive = async (): Promise<boolean> => {
+      try {
+        const snap = await loadActiveSnapshot();
+        if (!snap) return false;
+        enterFromSnapshot(snap);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
     function runCheck(): Promise<void> {
       return withTimeout(
         supabase.auth.getSession(),
         15000,
         'Timed out reaching the server. Check your connection and retry.',
       )
-        .then(({ data }) => {
-          return resolveSession(data.session);
+        .then(async ({ data, error }) => {
+          // Cold start with no service and an expired token: auth-js reports no session plus an
+          // error. That is not a sign-out, so fall back to the remembered account.
+          if (!data.session && error && (await restoreFromActive())) return;
+          applyOutcome(await resolveSession(data.session));
         })
-        .then((outcome) => {
-          applyOutcome(outcome);
-        })
-        .catch((err) => {
+        .catch(async (err) => {
+          if (await restoreFromActive()) return;
           applyOutcome(toFailure(err));
         });
     }
@@ -294,16 +337,61 @@ export function SessionProvider({ children }: SessionProviderProps) {
     recheckRef.current = runCheck;
     runCheck();
 
-    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       // Re-resolve from scratch on every auth transition; the listener fires for
       // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED and USER_UPDATED alike.
-      void resolveSession(session)
-        .then(applyOutcome)
-        .catch((err) => applyOutcome(toFailure(err)));
+      void (async () => {
+        if (!session) {
+          // While running from a saved snapshot there is no live session to lose.
+          if (offlineSnapRef.current) return;
+          if (event === 'INITIAL_SESSION') return; // runCheck owns the cold-start decision
+          if (event === 'SIGNED_OUT' && !signOutIntent) {
+            // A failed refresh with no service must never sign the user out.
+            const net = await NetInfo.fetch().catch(() => null);
+            if (net && net.isConnected === false) return;
+          }
+        }
+        applyOutcome(await resolveSession(session));
+      })().catch((err) => applyOutcome(toFailure(err)));
     });
+
+    // Back online while running from a snapshot: re-establish the live session in the background.
+    const recoverOnline = async () => {
+      const snap = offlineSnapRef.current;
+      if (!snap || cancelledRef.current) return;
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          offlineSnapRef.current = null;
+          await runCheck();
+          return;
+        }
+        const { error } = await supabase.auth.setSession({
+          access_token: snap.session.access_token,
+          refresh_token: snap.session.refresh_token,
+        });
+        // On success SIGNED_IN drives a live resolve. On failure stay offline; the PIN path still works.
+        if (!error) offlineSnapRef.current = null;
+      } catch {
+        // still offline or token revoked: keep running from the snapshot
+      }
+    };
+    const unsubscribeNet = NetInfo.addEventListener((net) => {
+      if (net.isConnected && offlineSnapRef.current) void recoverOnline();
+    });
+
+    bridge = {
+      enter: enterFromSnapshot,
+      signedOut: () => {
+        offlineSnapRef.current = null;
+        if (!cancelledRef.current) setState({ status: 'unauthenticated' });
+      },
+    };
 
     return () => {
       cancelledRef.current = true;
+      bridge = null;
+      unsubscribeNet();
       subscription.subscription.unsubscribe();
     };
   }, []);
@@ -404,8 +492,27 @@ export async function signUp(email: string, password: string): Promise<string | 
 
 /** Sign out. Returns an error message on failure, `null` on success. */
 export async function signOut(): Promise<string | null> {
-  const { error } = await supabase.auth.signOut();
-  return error ? error.message : null;
+  signOutIntent = true;
+  try {
+    // A global sign-out needs the network; with no service it fails WITHOUT clearing the
+    // local session. Fall back to a local-scope sign-out so signing out always works.
+    try {
+      const { error } = await withTimeout(supabase.auth.signOut(), 4000, 'sign-out timed out');
+      if (error) await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      await supabase.auth.signOut({ scope: 'local' });
+    }
+    await clearActive();
+    bridge?.signedOut();
+    return null;
+  } finally {
+    signOutIntent = false;
+  }
+}
+
+/** Enter the app from a PIN-verified offline snapshot (screen #0003 offline sign-in). */
+export function enterOfflineSession(snapshot: OfflineSnapshot): void {
+  bridge?.enter(snapshot);
 }
 
 /**

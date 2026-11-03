@@ -6,7 +6,10 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
 
-import { signIn } from '../src/lib/session';
+import NetInfo from '@react-native-community/netinfo';
+
+import { signIn, enterOfflineSession } from '../src/lib/session';
+import { listOfflineAccounts, offlineSignIn, PIN_MAX, type OfflineAccount } from '../src/lib/offline-auth';
 
 const RECENT_EMAILS_KEY = 'jobcore.recentEmails';
 const LEGACY_LAST_EMAIL_KEY = 'jobcore.lastEmail';
@@ -81,6 +84,43 @@ export default function SignInScreen() {
       active = false;
     };
   }, []);
+
+  // Offline sign-in: remembered accounts + PIN, for when there is no wifi or cell service.
+  const [accounts, setAccounts] = useState<OfflineAccount[]>([]);
+  const [netOffline, setNetOffline] = useState(false);
+  const [offlineOpen, setOfflineOpen] = useState(false);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const [pin, setPin] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    void listOfflineAccounts().then((list) => {
+      if (active) setAccounts(list);
+    });
+    const unsubscribe = NetInfo.addEventListener((net) => {
+      if (active) setNetOffline(net.isConnected === false);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+
+  const showOffline = accounts.length > 0 && (netOffline || offlineOpen);
+
+  async function handleOfflineSignIn() {
+    if (!pickedId) return;
+    setBusy(true);
+    setError(null);
+    const result = await offlineSignIn(pickedId, pin);
+    if (!result.ok) {
+      setError(result.message);
+      setBusy(false);
+      setPin('');
+      return;
+    }
+    enterOfflineSession(result.snapshot);
+  }
 
   const canSubmit = email.length > 0 && password.length > 0 && !busy;
   const formRef = useRef<HTMLFormElement>(null);
@@ -205,6 +245,60 @@ export default function SignInScreen() {
           )}
         </Card>
 
+        {accounts.length > 0 && !showOffline ? (
+          <View style={styles.signUpLink}>
+            <PayrollButton label="Sign in offline" onPress={() => setOfflineOpen(true)} />
+          </View>
+        ) : null}
+
+        {showOffline ? (
+          <Card style={[styles.card, styles.signUpLink]}>
+            <Text style={styles.heading}>Sign in offline</Text>
+            <Text style={styles.label}>Pick your account</Text>
+            {accounts.map((a) => (
+              <Pressable
+                key={a.userId}
+                style={[styles.account, pickedId === a.userId && styles.accountPicked]}
+                accessibilityRole="button"
+                accessibilityLabel={`Use ${a.email}`}
+                onPress={() => {
+                  setPickedId(a.userId);
+                  setPin('');
+                  setError(null);
+                }}
+              >
+                <Text style={styles.passwordToggleText} numberOfLines={1}>
+                  {a.fullName ? `${a.fullName} · ${a.email}` : a.email}
+                </Text>
+              </Pressable>
+            ))}
+            {pickedId ? (
+              <>
+                <Text style={styles.label}>PIN</Text>
+                <TextInput
+                  value={pin}
+                  onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, PIN_MAX))}
+                  keyboardType="number-pad"
+                  secureTextEntry
+                  maxLength={PIN_MAX}
+                  accessibilityLabel="PIN"
+                  placeholder="PIN"
+                  placeholderTextColor={colors.textMuted}
+                  style={styles.input}
+                  editable={!busy}
+                  onSubmitEditing={() => void handleOfflineSignIn()}
+                />
+                <PayrollButton
+                  label={busy ? 'Signing in…' : 'Sign in with PIN'}
+                  disabled={busy || pin.length < 4}
+                  onPress={() => void handleOfflineSignIn()}
+                  style={styles.submit}
+                />
+              </>
+            ) : null}
+          </Card>
+        ) : null}
+
         <View style={styles.signUpLink}>
           <PayrollButton
             label="Create an account"
@@ -239,6 +333,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   submit: { marginTop: spacing.lg },
+  heading: {
+    color: colors.primary,
+    fontSize: typography.size.h2,
+    fontFamily: typography.fontFamily.headingBold,
+    fontWeight: typography.weight.bold,
+  },
+  account: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    borderRadius: radius.md,
+  },
+  accountPicked: { borderColor: colors.primary },
   signUpLink: { marginTop: spacing.lg },
   passwordWrap: { position: 'relative', justifyContent: 'center' },
   passwordInput: { paddingRight: spacing.lg * 2 },
