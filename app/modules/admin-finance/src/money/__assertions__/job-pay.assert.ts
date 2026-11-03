@@ -204,16 +204,14 @@ function postable(techs: JobPayTech[], jobTotalCents = 100000) {
   return postableJobPayLines(computeJobPayLines({ jobTotalCents, policy, techs }));
 }
 
-test('postable: employee hourly kept as hourly (#0018)', () => {
-  assert.deepEqual(postable([tech({ hourlyRateCents: 2500, hoursWorked: 2 })]), [
-    { techId: 't1', amountCents: 5000, basis: 'hourly' },
-  ]);
+test('postable: employee hourly is shown only, never posted (paid from timesheet)', () => {
+  assert.deepEqual(postable([tech({ hourlyRateCents: 2500, hoursWorked: 2 })]), []);
 });
 
 test('travel: paid-travel employee gets a travel line after the normal line', () => {
   const lines = withLabor([tech({ hourlyRateCents: 2500, hoursWorked: 2, paidTravel: true, travelHours: 1.5 })]);
   assert.deepEqual(lines.map((l) => `${l.basis}:${l.amountCents}`), ['hourly:5000', 'travel:3750']);
-  assert.deepEqual(postableJobPayLines(lines).map((r) => r.basis), ['hourly', 'travel']);
+  assert.deepEqual(postableJobPayLines(lines), []);
 });
 
 test('travel: no line without paid travel, without hours, or for a contractor', () => {
@@ -264,8 +262,8 @@ test('postable: mixed list preserves order', () => {
       24000,
     ),
   );
-  assert.deepEqual(rows.map((r) => r.techId), ['a', 'b', 'c']);
-  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'hourly', 'commission']);
+  assert.deepEqual(rows.map((r) => r.techId), ['a', 'c']);
+  assert.deepEqual(rows.map((r) => r.basis), ['prem_bonus', 'commission']);
 });
 
 test('postable: empty in gives empty out', () => {

@@ -73,18 +73,20 @@ function dollars(c: number): string {
 export interface PostableJobPayLine {
   techId: string;
   amountCents: number;
-  basis: 'prem_bonus' | 'commission' | 'hourly' | 'travel';
+  basis: 'prem_bonus' | 'commission';
 }
 
-/** Keeps only positive EMPLOYEE hourly, travel, prem-bonus and commission lines (incl. Dev commission), in input order. */
+/**
+ * Keeps only positive EMPLOYEE prem-bonus and commission lines (incl. Dev commission), in input order.
+ * Hourly and travel lines are shown at close-out only: they are paid from the tech's timesheet and
+ * compared against the job clock on the payroll run (#0087), so posting them here would pay twice.
+ */
 export function postableJobPayLines(lines: JobPayLine[]): PostableJobPayLine[] {
   const out: PostableJobPayLine[] = [];
   for (const l of lines) {
     if (l.workerType !== 'employee' || !(l.amountCents > 0)) continue;
     if (l.basis === 'prem-bonus') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'prem_bonus' });
     else if (l.basis === 'commission') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'commission' });
-    else if (l.basis === 'hourly') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'hourly' });
-    else if (l.basis === 'travel') out.push({ techId: l.techId, amountCents: l.amountCents, basis: 'travel' });
   }
   return out;
 }

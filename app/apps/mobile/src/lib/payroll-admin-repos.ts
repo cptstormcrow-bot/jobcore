@@ -7,6 +7,7 @@ import type {
   PayrollSettings,
   PayrollExportFormat,
   TeamWeek,
+  SystemHoursRow,
   PayrollEntryStatus,
   AdminReimbursement,
 } from '../../../../packages/payroll-ui/src/port';
@@ -89,6 +90,36 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       const weeks = [...groups.values()];
       for (const w of weeks) w.status = rollupStatus(w.entries.map((e) => e.status));
       return weeks;
+    },
+
+    async listSystemHours(range: PayrollDateRange): Promise<SystemHoursRow[]> {
+      requireOnline('load the job clock hours');
+      // Pad a day each side for time zones, then keep segments whose local start date is in the range.
+      const { data, error } = await supabase
+        .from('job_time_segments')
+        .select('tech_id, reason_code, started_at, ended_at')
+        .eq('organization_id', orgId)
+        .in('reason_code', ['job_labor', 'travel'])
+        .not('ended_at', 'is', null)
+        .gte('started_at', `${wageEngine.addDays(range.from, -1)}T00:00:00Z`)
+        .lt('started_at', `${wageEngine.addDays(range.to, 2)}T00:00:00Z`);
+      check(error);
+      const byTech = new Map<string, SystemHoursRow>();
+      for (const r of (data ?? []) as Row[]) {
+        const start = new Date(r.started_at as string);
+        const local = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+        if (local < range.from || local > range.to) continue;
+        const ms = Date.parse(r.ended_at as string) - start.getTime();
+        if (!Number.isFinite(ms) || ms <= 0) continue;
+        let t = byTech.get(r.tech_id as string);
+        if (!t) {
+          t = { userId: r.tech_id as string, jobMin: 0, travelMin: 0 };
+          byTech.set(t.userId, t);
+        }
+        if (r.reason_code === 'travel') t.travelMin += ms / 60000;
+        else t.jobMin += ms / 60000;
+      }
+      return [...byTech.values()].map((t) => ({ ...t, jobMin: Math.round(t.jobMin), travelMin: Math.round(t.travelMin) }));
     },
 
     async approveWeek(forUserId, range) {

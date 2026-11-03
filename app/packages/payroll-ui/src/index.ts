@@ -9,6 +9,7 @@ export type {
   PayrollJobPayLine,
   NewReimbursementInput,
   TeamWeek,
+  SystemHoursRow,
   PayrollExportFormat,
   PayrollSelfPort,
   PayrollAdminPort,

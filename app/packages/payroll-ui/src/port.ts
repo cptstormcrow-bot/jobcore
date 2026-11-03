@@ -156,10 +156,19 @@ export interface PayrollSelfPort {
   uploadReceipt(localUri: string, reimbursementId: string): Promise<string>;
 }
 
+/** One tech's job-clock minutes for a range: job labor and travel, closed segments only. */
+export interface SystemHoursRow {
+  userId: string;
+  jobMin: number;
+  travelMin: number;
+}
+
 /** Admin-only members, present only on the AF port. */
 export interface PayrollAdminPort {
   /** List all team weeks in a range. */
   listTeamEntries?(range: PayrollDateRange): Promise<TeamWeek[]>;
+  /** Job-clock minutes per tech for a range, for the hours check on the payroll run. */
+  listSystemHours?(range: PayrollDateRange): Promise<SystemHoursRow[]>;
   /** Approve a user's week. */
   approveWeek?(userId: string, range: PayrollDateRange): Promise<void>;
   /** Reject a user's week with a reason. */
