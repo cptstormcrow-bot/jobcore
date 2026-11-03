@@ -5,3 +5,4 @@ import './admin-people';
 import './admin-finance';
 import './payroll';
 import './sales';
+import './legacy';
