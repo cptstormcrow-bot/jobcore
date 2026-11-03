@@ -1034,7 +1034,7 @@ export function AdminFinanceRoot() {
               jobsOnFile: loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs) && !BOARD_HIDDEN_STATUSES.has(job.status)).length,
               qualifiedOrScheduled: loadState.jobs.filter((job) => job.status === 'qualified' || job.status === 'scheduled').length,
               awaitingCloseOut: loadState.jobs.filter(awaitingCloseOut).length,
-              employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner').length,
+              employees: loadState.employees.filter((profile) => isTestVisible(profile, showTestEmployeesRoster) && profile.role !== 'owner' && profile.active).length,
               needsAttentionPayments: needsAttentionCount,
             }).map((card) => (
               <Pressable

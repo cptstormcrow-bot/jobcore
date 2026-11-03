@@ -44,6 +44,8 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [fullTextId, setFullTextId] = useState<string | null>(null);
   const showTest = showTestProp ?? false;
+  // Deactivated employees stay hidden unless asked for, so they can still be reopened.
+  const [showInactive, setShowInactive] = useState(false);
 
   const session = getModuleSession();
   const rev = useReadCacheRevision();
@@ -112,7 +114,8 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
     );
   }
 
-  const visibleEmployees = loadState.employees.filter((profile) => isTestVisible(profile, showTest) && profile.role !== 'owner');
+  const visibleEmployees = loadState.employees.filter((profile) => isTestVisible(profile, showTest) && profile.role !== 'owner' && (showInactive || profile.active));
+  const inactiveCount = loadState.employees.filter((profile) => isTestVisible(profile, showTest) && profile.role !== 'owner' && !profile.active).length;
 
   return (
     <View style={styles.screen}>
@@ -123,6 +126,12 @@ export function EmployeeRosterScreen(props: EmployeeRosterScreenProps = {}) {
             <PayrollButton label="Add Employee" onPress={() => onAddEmployee?.()} disabled={!onAddEmployee} />
             {onViewInvitations ? (
               <PayrollButton label="Pending Invitations" onPress={() => onViewInvitations?.()} />
+            ) : null}
+            {inactiveCount > 0 || showInactive ? (
+              <PayrollButton
+                label={showInactive ? 'Hide Inactive' : 'Show Inactive (' + inactiveCount + ')'}
+                onPress={() => setShowInactive((v) => !v)}
+              />
             ) : null}
           </View>
         </View>
