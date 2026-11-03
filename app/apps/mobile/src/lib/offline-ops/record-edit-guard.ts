@@ -10,16 +10,6 @@ import {
 } from '@jobcore/core';
 import type { OpContext } from './index';
 
-/** Same-field clash on an important field. status 422 -> 'permanent' (shows on Sync issues). */
-export class RecordEditConflictError extends Error {
-  status = 422 as const;
-  code = 'RECORD_EDIT_CONFLICT' as const;
-  constructor(public conflicts: string[], appliedCount: number, record: string) {
-    super(describeRecordEditConflict(conflicts, appliedCount, record));
-    this.name = 'RecordEditConflictError';
-  }
-}
-
 /** The row kept changing under us (3 tries). 422 so it shows on Sync issues instead of holding the queue. */
 class RecordEditRaceError extends Error {
   status = 422 as const;
@@ -57,7 +47,7 @@ export interface GuardOptions {
  * Updates `table` row `id` with `update`. With no `base` (rows queued before the guard
  * shipped) this is the old unconditional update. With a base it pre-reads the row and
  * writes only what `decideRecordEdit` allows: simple fields win, notes keep both
- * versions, and an important field someone else changed throws RecordEditConflictError.
+ * versions, and an important field someone else changed is still written and noted.
  * Tables without a version column fall back to a plain update after the decision.
  */
 export async function updateRecordGuarded(
@@ -117,7 +107,7 @@ export async function updateRecordGuarded(
       }
     }
     if (decision.conflicts.length > 0) {
-      throw new RecordEditConflictError(decision.conflicts, applyCount, opts.record);
+      ctx.note?.(describeRecordEditConflict(decision.conflicts, applyCount, opts.record));
     }
     return;
   }

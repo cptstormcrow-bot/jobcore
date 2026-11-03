@@ -13,6 +13,7 @@ const KIND_LABEL: Record<SyncLogRow['kind'], string> = {
   retry: 'Will retry',
   failed: 'Failed',
   pass: 'Sync pass',
+  note: 'Saved, note',
 };
 
 export default function SyncLogScreen() {
@@ -87,7 +88,7 @@ export default function SyncLogScreen() {
               {savedAtLabel(row.at)}
               {row.attempts && row.kind !== 'pass' ? ` · try ${row.attempts}` : ''}
             </Text>
-            {row.kind === 'pass' && row.message ? <Text style={styles.meta}>{row.message}</Text> : null}
+            {(row.kind === 'pass' || row.kind === 'note') && row.message ? <Text style={styles.meta}>{row.message}</Text> : null}
             {row.kind === 'retry' || row.kind === 'failed' ? (
               <Text style={styles.errorText}>{failureMessage(row.message)}</Text>
             ) : null}

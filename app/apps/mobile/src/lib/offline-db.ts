@@ -76,6 +76,11 @@ export async function getOfflineDb(): Promise<SQLite.SQLiteDatabase> {
       await db.runAsync(
         `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', inflight_at = null where status = 'inflight'`
       );
+      // Edits failed by the old edit-clash guard (v0.13.10 and earlier) re-send: a clash
+      // is now saved and noted, never a failure. The new guard never writes this text.
+      await db.runAsync(
+        `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null, last_error = null, error_class = null where status = 'failed' and last_error like 'Not saved:%changed by someone else%'`
+      );
       return db;
     })();
     dbPromise.catch(() => {
@@ -327,6 +332,7 @@ async function buildContext(): Promise<OpContext> {
 export async function send(row: Pick<QueueRow, 'op' | 'payload'>): Promise<void> {
   const handler = getOpHandler(row.op); // throws UnknownOpError for stale ops
   const ctx = await buildContext();
+  ctx.note = (message) => void logSync({ kind: 'note', op: row.op, message });
   await handler(JSON.parse(row.payload), ctx);
 }
 

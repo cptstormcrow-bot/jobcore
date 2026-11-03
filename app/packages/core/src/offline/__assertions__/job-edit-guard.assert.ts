@@ -28,9 +28,9 @@ test('server changed a different field: our edit merges', () => {
   assert.deepEqual(d, { apply: { address: 'X' }, conflicts: [] });
 });
 
-test('same field changed by the server: server wins, reported', () => {
+test('same field changed by the server: ours still saves, reported', () => {
   const d = decideJobEdit({ address: 'X', scheduled_start: 'C' }, base, { updated_at: T1, address: '1 Main', scheduled_start: 'B' });
-  assert.deepEqual(d.apply, { address: 'X' });
+  assert.deepEqual(d.apply, { address: 'X', scheduled_start: 'C' });
   assert.deepEqual(d.conflicts, ['scheduled_start']);
 });
 
@@ -48,10 +48,10 @@ test('lifecycle timestamps are tech-owned and never blocked', () => {
   assert.deepEqual(d, { apply: { en_route_at: '2026-10-02T09:00:00Z' }, conflicts: [] });
 });
 
-test('status clash: server wins unless the device stamped a lifecycle time the server lacks', () => {
+test('status clash: ours saves, noted unless the device stamped a lifecycle time the server lacks', () => {
   const server = { updated_at: T1, status: 'cancelled', en_route_at: null };
   const lose = decideJobEdit({ status: 'en_route' }, base, server);
-  assert.deepEqual(lose, { apply: {}, conflicts: ['status'] });
+  assert.deepEqual(lose, { apply: { status: 'en_route' }, conflicts: ['status'] });
   const win = decideJobEdit({ status: 'en_route', en_route_at: '2026-10-02T09:00:00Z' }, base, server);
   assert.equal(win.apply.status, 'en_route');
   assert.deepEqual(win.conflicts, []);
@@ -79,6 +79,6 @@ test('sameJobValue handles timestamps, arrays, null/undefined', () => {
 });
 
 test('conflict message is plain language', () => {
-  assert.match(describeJobEditConflict(['scheduled_start'], 0), /start time was changed by someone else/);
-  assert.match(describeJobEditConflict(['scheduled_start', 'address'], 1), /start time and address were changed.*rest of your edit was saved/);
+  assert.match(describeJobEditConflict(['scheduled_start'], 0), /^Saved your version: the start time was also changed by someone else/);
+  assert.match(describeJobEditConflict(['scheduled_start', 'address'], 1), /start time and address were also changed/);
 });

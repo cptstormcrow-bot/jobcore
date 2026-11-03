@@ -6,8 +6,8 @@
  * (the values the edit was based on, plus `updated_at` when the table has one);
  * at replay the handler pre-reads the server row and asks `decideRecordEdit`
  * what may be written. Each column has a policy:
- *  - 'ask'         important field: a same-field clash keeps the server value and
- *                  is reported, so it shows on Sync issues.
+ *  - 'ask'         important field: a same-field clash still writes our value and
+ *                  is reported, so it is noted in the sync log.
  *  - 'merge-notes' free text: both versions are kept (see `mergeNotes`).
  *  - 'last-wins'   simple field: our value is always written.
  *  - 'derived'     recomputed by the server (e.g. estimate totals from line items):
@@ -34,7 +34,7 @@ export interface RecordEditBase {
 export interface RecordEditDecision {
   /** Columns safe to write now (merged notes included). */
   apply: Record<string, unknown>;
-  /** 'ask' columns where the server changed the same field; our value was dropped. */
+  /** 'ask' columns where the server changed the same field too; our value was still applied. */
   conflicts: string[];
   /** 'merge-notes' columns written as a merge of both versions. */
   merged: string[];
@@ -266,12 +266,13 @@ export function decideRecordEdit(
       merged.push(col);
       continue;
     }
+    apply[col] = want;
     conflicts.push(col);
   }
   return { apply, conflicts, merged };
 }
 
-/** Message shown on the Sync issues screen when `conflicts` is non-empty. */
+/** Note written to the sync log when `conflicts` is non-empty. */
 export function describeRecordEditConflict(
   conflicts: readonly string[],
   appliedCount: number,
@@ -280,6 +281,5 @@ export function describeRecordEditConflict(
   const names = conflicts.map((c) => COLUMN_LABEL[c] ?? c.replace(/_/g, ' '));
   const list = names.length <= 1 ? (names[0] ?? 'a field') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   const verb = names.length > 1 ? 'were' : 'was';
-  const tail = appliedCount > 0 ? ' The rest of your edit was saved.' : '';
-  return `Not saved: the ${record}'s ${list} ${verb} changed by someone else while you were offline, so their version was kept.${tail}`;
+  return `Saved your version: the ${record}'s ${list} ${verb} also changed by someone else while you were offline.`;
 }

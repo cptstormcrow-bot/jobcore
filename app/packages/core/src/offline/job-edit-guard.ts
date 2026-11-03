@@ -24,9 +24,9 @@
  *      * `status` where the device stamped a lifecycle timestamp the server has
  *        not seen -> the device is ahead (resolveConflict's "localIsAhead"), our
  *        status merges in.
- *      * anything else is a true clash on the same field: the server wins
- *        (resolveConflict takes the server value for every non-lifecycle
- *        field), our value is dropped and the column is reported in `conflicts`.
+ *      * anything else is a true clash on the same field: our edit still wins
+ *        (an offline edit must never be blocked), and the column is reported
+ *        in `conflicts` so the clash is noted in the sync log.
  */
 
 import type { Job } from '../index.js';
@@ -125,7 +125,7 @@ export function captureJobEditBase(
 export interface JobEditDecision {
   /** Columns safe to write now. */
   apply: Record<string, unknown>;
-  /** Columns where the server changed the same field; our value was dropped. */
+  /** Columns where the server changed the same field too; our value was still applied. */
   conflicts: string[];
 }
 
@@ -177,16 +177,16 @@ export function decideJobEdit(
       apply[col] = want;
       continue;
     }
+    apply[col] = want;
     conflicts.push(col);
   }
   return { apply, conflicts };
 }
 
-/** Message shown on the Sync issues screen when `conflicts` is non-empty. */
+/** Note written to the sync log when `conflicts` is non-empty. */
 export function describeJobEditConflict(conflicts: readonly string[], appliedCount: number): string {
   const names = conflicts.map((c) => COLUMN_LABEL[c] ?? c.replace(/_/g, ' '));
   const list = names.length <= 1 ? (names[0] ?? 'a field') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
   const verb = names.length > 1 ? 'were' : 'was';
-  const tail = appliedCount > 0 ? ' The rest of your edit was saved.' : '';
-  return `Not saved: the ${list} ${verb} changed by someone else while you were offline, so their version was kept.${tail}`;
+  return `Saved your version: the ${list} ${verb} also changed by someone else while you were offline.`;
 }

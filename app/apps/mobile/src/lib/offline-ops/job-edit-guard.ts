@@ -4,16 +4,6 @@
 import { decideJobEdit, describeJobEditConflict, type JobEditBase } from '@jobcore/core';
 import type { OpContext } from './index';
 
-/** Thrown for a true same-field clash. status 422 -> classifyReplayError 'permanent' (shows on Sync issues). */
-export class JobEditConflictError extends Error {
-  status = 422 as const;
-  code = 'JOB_EDIT_CONFLICT' as const;
-  constructor(public conflicts: string[], appliedCount: number) {
-    super(describeJobEditConflict(conflicts, appliedCount));
-    this.name = 'JobEditConflictError';
-  }
-}
-
 /** The row kept changing under us (3 tries). status 422 -> 'permanent' (409 would classify as 'unknown' and retry), so it shows on Sync issues instead of holding the queue. */
 class JobEditRaceError extends Error {
   status = 422 as const;
@@ -39,7 +29,7 @@ const RACE_TRIES = 3;
 /**
  * Updates `jobs` row `jobId` with `update`. With no `base` (rows queued before the guard
  * shipped) this is the old unconditional update. With a base it pre-reads the row,
- * merges what the server did not touch, and throws JobEditConflictError for true clashes.
+ * merges what the server did not touch, and on a true clash still writes ours and notes it.
  */
 export async function updateJobGuarded(
   ctx: OpContext,
@@ -93,7 +83,7 @@ export async function updateJobGuarded(
         continue;
       }
     }
-    if (decision.conflicts.length > 0) throw new JobEditConflictError(decision.conflicts, applyCount);
+    if (decision.conflicts.length > 0) ctx.note?.(describeJobEditConflict(decision.conflicts, applyCount));
     return;
   }
   throw new JobEditRaceError();

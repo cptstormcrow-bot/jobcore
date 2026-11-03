@@ -7,6 +7,8 @@ export interface OpContext {
   orgId: string;
   userId: string;
   now(): Date;
+  /** Records an informational sync-log line (e.g. an edit clash that was saved anyway). */
+  note?(message: string): void;
 }
 
 export type OpHandler<P = unknown> = (payload: P, ctx: OpContext) => Promise<{ applied: true }>;

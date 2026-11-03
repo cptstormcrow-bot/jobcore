@@ -105,6 +105,7 @@ test('empty lines is a valid export', () => {
     otMin: 0,
     dtMin: 0,
     grossCents: 0,
+    bonusCents: 0,
     reimbursementCents: 0,
     totalCents: 0,
   });
@@ -168,6 +169,7 @@ test('canonicalTotals on fixture', () => {
     otMin: 180,
     dtMin: 30,
     grossCents: 178083,
+    bonusCents: 0,
     reimbursementCents: 1000,
     totalCents: 179083,
   });

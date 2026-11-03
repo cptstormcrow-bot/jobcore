@@ -26,10 +26,10 @@ test('unchanged row version applies everything', () => {
   assert.deepEqual(d.conflicts, []);
 });
 
-test('important field changed by someone else is a conflict', () => {
+test('important field changed by someone else still saves ours, and is noted', () => {
   const base = { values: { name: 'Ann', phone: '111' } };
   const d = decideRecordEdit({ name: 'Anne', phone: '222' }, base, { name: 'Annie', phone: '111' }, LEAD_EDIT_POLICY);
-  assert.deepEqual(d.apply, { phone: '222' });
+  assert.deepEqual(d.apply, { name: 'Anne', phone: '222' });
   assert.deepEqual(d.conflicts, ['name']);
 });
 
@@ -75,10 +75,10 @@ test('captureRecordEditBase keeps only listed columns and the version', () => {
   assert.deepEqual(captureRecordEditBase({ a: undefined }, ['a']), { values: { a: null } });
 });
 
-test('conflict message names the fields in plain words', () => {
+test('clash note names the fields in plain words', () => {
   assert.equal(
     describeRecordEditConflict(['minutes', 'clock_in_at'], 1, 'time entry'),
-    "Not saved: the time entry's hours and clock-in time were changed by someone else while you were offline, so their version was kept. The rest of your edit was saved.",
+    "Saved your version: the time entry's hours and clock-in time were also changed by someone else while you were offline.",
   );
 });
 

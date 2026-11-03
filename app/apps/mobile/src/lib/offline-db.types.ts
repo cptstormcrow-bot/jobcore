@@ -15,7 +15,7 @@ export interface QueueRow {
 }
 
 /** Sync history log row (#0100). */
-export type SyncLogKind = 'sent' | 'retry' | 'failed' | 'pass';
+export type SyncLogKind = 'sent' | 'retry' | 'failed' | 'pass' | 'note';
 
 export interface SyncLogRow {
   id: number;
