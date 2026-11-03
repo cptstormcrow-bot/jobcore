@@ -836,5 +836,13 @@
     "file": "apps/mobile/app/job/[jobId].tsx",
     "createdAt": "2026-11-01T03:00:00.000Z",
     "subView": "menu:configuration"
+  },
+  {
+    "number": 98,
+    "key": "sync-issues",
+    "title": "Sync issues",
+    "route": "/sync-issues",
+    "file": "apps/mobile/app/sync-issues.tsx",
+    "createdAt": "2026-11-02T20:00:00.000Z"
   }
 ]

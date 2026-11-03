@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { drainQueue, UNKNOWN_MAX_ATTEMPTS, type DrainRow } from '../replay.js';
+import { drainQueue, RETRY_MAX_ATTEMPTS, UNKNOWN_MAX_ATTEMPTS, type DrainRow } from '../replay.js';
 
 const NOW = new Date('2026-01-01T00:00:00.000Z');
 
@@ -83,4 +83,14 @@ test('drainQueue: unknown before the cap retries and aborts unknown', async () =
   const r = await drainQueue([row('a', { attempts: 2 })], o);
   assert.equal(r.aborted, 'unknown');
   assert.equal(r.retried, 1);
+});
+
+test('drainQueue: network at RETRY_MAX_ATTEMPTS -> markFailed and continues', async () => {
+  const { log, o } = harness({ a: { status: 503, message: 'down' } });
+  const r = await drainQueue([row('a', { attempts: RETRY_MAX_ATTEMPTS - 1 }), row('b')], o);
+  assert.equal(r.aborted, undefined);
+  assert.equal(r.failed, 1);
+  assert.equal(r.sent, 1);
+  assert.ok(log.includes('failed:a:network'));
+  assert.ok(log.includes('done:b'));
 });

@@ -150,12 +150,13 @@ export async function retryFailed(id: string): Promise<void> {
   );
 }
 
-/** Reset every failed row to pending (see retryFailed). */
+/** Reset every failed row to pending (see retryFailed), and clear backoff on pending rows so a manual retry sends now. */
 export async function retryAllFailed(): Promise<void> {
   const db = await getOfflineDb();
   await db.runAsync(
     `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null where status = 'failed'`
   );
+  await db.runAsync(`update ${OFFLINE_QUEUE_TABLE} set next_attempt_at = null where status = 'pending'`);
 }
 
 /**

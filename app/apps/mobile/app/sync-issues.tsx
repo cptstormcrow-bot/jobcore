@@ -1,4 +1,4 @@
-// JobCore screen - sync-issues - Sync issues (writes that could not be sent)
+// JobCore screen #0098 - sync-issues - Sync issues
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { AppChrome, Card, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
@@ -10,7 +10,7 @@ import { failureMessage, opLabel, savedAtLabel } from '../src/lib/sync-issues';
 import { useSyncStatus } from '../src/lib/sync-status';
 
 export default function SyncIssuesScreen() {
-  const { refresh, retryAll, failedCount, isSyncing, isOnline, lastError } = useSyncStatus();
+  const { refresh, retryAll, failedCount, isSyncing, isOnline, lastError, pendingCount } = useSyncStatus();
   const [rows, setRows] = useState<QueueRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +65,7 @@ export default function SyncIssuesScreen() {
       />
       <ScrollView contentContainerStyle={styles.content}>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {!isOnline ? (
+        {!isOnline && list.length > 0 ? (
           <Text style={styles.meta}>You're offline. These will send when you reconnect.</Text>
         ) : null}
         {rows !== null && list.length === 0 && lastError && isOnline && !isSyncing ? (
@@ -77,7 +77,26 @@ export default function SyncIssuesScreen() {
             </View>
           </Card>
         ) : null}
-        {rows !== null && list.length === 0 && !(lastError && isOnline && !isSyncing) ? (
+        {rows !== null && list.length === 0 && pendingCount > 0 && !(lastError && isOnline && !isSyncing) ? (
+          <Card style={styles.card}>
+            <Text style={styles.emptyTitle} numberOfLines={1}>
+              {pendingCount} {pendingCount === 1 ? 'change' : 'changes'} waiting to send
+            </Text>
+            <Text style={styles.meta}>
+              {!isOnline
+                ? 'Saved on this device. They send when you are back online.'
+                : isSyncing
+                  ? 'Sending now.'
+                  : 'Saved on this device and not sent yet.'}
+            </Text>
+            {isOnline && !isSyncing ? (
+              <View style={styles.actions}>
+                <PayrollButton label="Send now" onPress={() => void run(retryAll)} />
+              </View>
+            ) : null}
+          </Card>
+        ) : null}
+        {rows !== null && list.length === 0 && pendingCount === 0 && !(lastError && isOnline && !isSyncing) ? (
           <Card>
             <Text style={styles.emptyTitle}>All caught up</Text>
             <Text style={styles.meta}>Nothing is waiting on a fix. Every change saved on this device has been sent.</Text>

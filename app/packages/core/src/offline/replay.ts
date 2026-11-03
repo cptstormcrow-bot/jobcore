@@ -187,6 +187,8 @@ export function computeBackoffMs(
 }
 
 export const UNKNOWN_MAX_ATTEMPTS = 8;
+/** Network/auth retries before the row is marked failed, so one stuck head row cannot block the queue forever (Jeff 2026-11-02, 141 saves stuck). */
+export const RETRY_MAX_ATTEMPTS = 10;
 
 /** A queue row as handed to `drainQueue`; `next_attempt_at` is the v2 column. */
 export type DrainRow = QueuedMutation & { next_attempt_at?: string | null };
@@ -240,7 +242,8 @@ export async function drainQueue<M extends DrainRow = DrainRow>(
         res.sent++;
         continue;
       }
-      if (cls === 'unknown' && (row.attempts ?? 0) + 1 >= UNKNOWN_MAX_ATTEMPTS) {
+      const cap = cls === 'unknown' ? UNKNOWN_MAX_ATTEMPTS : RETRY_MAX_ATTEMPTS;
+      if ((row.attempts ?? 0) + 1 >= cap) {
         await o.markFailed(row.id, { errorClass: cls, message: msg });
         res.failed++;
         continue;
