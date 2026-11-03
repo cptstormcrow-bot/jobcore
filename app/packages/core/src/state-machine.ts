@@ -128,7 +128,8 @@ export const TRANSITIONS: readonly Transition[] = [
   {
     from: 'completed',
     to: 'paid',
-    roles: OFFICE,
+    // Techs collect payment for their work and can mark the job Paid (Jeff 2026-11-03).
+    roles: FIELD,
     precondition: requirePaymentSettled,
   },
   { from: 'paid', to: 'closed', roles: OFFICE },
