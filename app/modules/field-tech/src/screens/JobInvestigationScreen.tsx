@@ -462,18 +462,20 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    gap: compact.section,
   },
   pairRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   pairCol: {
     flex: 1,
   },
   fieldRowStacked: {
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   title: {
     fontSize: typography.text.title,
@@ -490,7 +492,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   fieldLabel: {
     width: '38%',
@@ -509,13 +511,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   section: {
-    marginBottom: spacing.sm,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: typography.text.title,
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.semibold,
-    marginBottom: spacing.xs,
+    marginBottom: compact.gap,
   },
   cardActions: {
     flexDirection: 'row',
@@ -530,7 +532,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'flex-end',
     gap: spacing.sm,
-    marginBottom: spacing.sm,
+    marginTop: compact.gap,
   },
   trackingField: {
     flex: 1,
@@ -545,8 +547,8 @@ const styles = StyleSheet.create({
     fontSize: typography.size.h4,
   },
   card: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
+    marginBottom: spacing.xs,
+    padding: spacing.sm,
     borderWidth: 1,
     borderColor: colors.textMuted,
     borderRadius: radius.sm,
@@ -554,7 +556,7 @@ const styles = StyleSheet.create({
   thumb: {
     width: 96,
     height: 96,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
     borderRadius: 4,
   },
   label: {
