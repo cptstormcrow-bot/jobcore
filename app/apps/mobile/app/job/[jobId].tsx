@@ -1624,11 +1624,19 @@ ${body}`)) handleResetLaborTime();
             onChrome={setEstimateChrome}
             focusTab={estimateFocus}
             beforePhotoSlot={
-              <JobBeforePhotoCard
-                jobId={currentJob.id}
-                jobNumber={currentJob.jobNumber ?? null}
-                onSaved={() => setPhotoCountTick((n) => n + 1)}
-              />
+              <>
+                {/* Start screen #0076: Reset time sits here too (Jeff 2026-11-03). */}
+                {activeStage === 'arrive' && canResetLaborTime ? (
+                  <View style={styles.startResetRow}>
+                    <PayrollButton label="Reset time" onPress={confirmResetLaborTime} />
+                  </View>
+                ) : null}
+                <JobBeforePhotoCard
+                  jobId={currentJob.id}
+                  jobNumber={currentJob.jobNumber ?? null}
+                  onSaved={() => setPhotoCountTick((n) => n + 1)}
+                />
+              </>
             }
           />
         )}
@@ -1689,6 +1697,7 @@ const styles = StyleSheet.create({
   scrollBody: { flex: 1 },
   scrollContent: { paddingBottom: spacing.sm },
   jobDetailPane: { marginTop: spacing.sm },
+  startResetRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: spacing.sm },
   footer: {
     flexDirection: 'row',
     gap: spacing.sm,
