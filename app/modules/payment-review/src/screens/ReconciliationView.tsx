@@ -47,6 +47,17 @@ export interface ReconciliationViewProps {
 const NEEDS_ATTENTION_STATUSES: readonly string[] = ['pending', 'failed'];
 const MANUAL_CONFIRMED_STATUS = 'manual_confirmed';
 const UNKNOWN_CONFIRMER_LABEL = 'Unknown tech';
+const LOAD_TIMEOUT_MS = 8000;
+const LOAD_TIMEOUT_MESSAGE = 'Payments request timed out.';
+
+/** Last successful load, kept for the session so a dropped signal degrades to stale data instead of an error. */
+let lastGood: { needsAttention: PaymentRow[]; manualConfirmed: PaymentRow[] } | null = null;
+
+/** True for network-level failures (no signal, DNS, timeout) as opposed to server-side query errors. */
+function isConnectivityFailure(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return /network|fetch|timed out|timeout|offline|connection|internet/i.test(msg);
+}
 
 /** Groups `manual_confirmed` rows by `confirmed_by`, falling back to `UNKNOWN_CONFIRMER_LABEL` for a null confirmer. */
 function groupByConfirmedBy(rows: PaymentRow[]): Map<string, PaymentRow[]> {
@@ -78,15 +89,23 @@ export function ReconciliationView({ client, jobNumbers, employeeNames, onOpenJo
   const [manualConfirmed, setManualConfirmed] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [offlineNotice, setOfflineNotice] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      client.from('payments').select('*').in('status', NEEDS_ATTENTION_STATUSES),
-      client.from('payments').select('*').in('status', [MANUAL_CONFIRMED_STATUS]),
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(LOAD_TIMEOUT_MESSAGE)), LOAD_TIMEOUT_MS);
+    });
+
+    Promise.race([
+      Promise.all([
+        client.from('payments').select('*').in('status', NEEDS_ATTENTION_STATUSES),
+        client.from('payments').select('*').in('status', [MANUAL_CONFIRMED_STATUS]),
+      ]),
+      timeout,
     ])
       .then(([pendingOrFailedResult, manualConfirmedResult]) => {
         if (cancelled) {
@@ -98,11 +117,24 @@ export function ReconciliationView({ client, jobNumbers, employeeNames, onOpenJo
         if (manualConfirmedResult.error) {
           throw new Error(manualConfirmedResult.error.message);
         }
-        setNeedsAttention(pendingOrFailedResult.data ?? []);
-        setManualConfirmed(manualConfirmedResult.data ?? []);
+        const fresh = { needsAttention: pendingOrFailedResult.data ?? [], manualConfirmed: manualConfirmedResult.data ?? [] };
+        lastGood = fresh;
+        setNeedsAttention(fresh.needsAttention);
+        setManualConfirmed(fresh.manualConfirmed);
+        setOfflineNotice(false);
       })
       .catch((err: unknown) => {
-        if (!cancelled) {
+        if (cancelled) {
+          return;
+        }
+        // No signal / slow network: show the last good snapshot, or an empty offline view — never a hard error.
+        if (lastGood) {
+          setNeedsAttention(lastGood.needsAttention);
+          setManualConfirmed(lastGood.manualConfirmed);
+        }
+        if (isConnectivityFailure(err)) {
+          setOfflineNotice(true);
+        } else {
           setError(err instanceof Error ? err.message : 'Failed to load payments.');
         }
       })
@@ -130,6 +162,11 @@ export function ReconciliationView({ client, jobNumbers, employeeNames, onOpenJo
   return (
     <View style={styles.screen}>
       <ScreenTitle title="Reconciliation" />
+      {offlineNotice ? (
+        <Text style={styles.offlineNotice}>
+          {lastGood ? 'No signal — showing the last loaded payments.' : 'No signal — payments will load when you are back online.'}
+        </Text>
+      ) : null}
       <Text style={styles.heading}>Needs attention</Text>
       {needsAttention.length === 0 ? (
         <EmptyState title="Nothing pending" message="No pending or failed payments." />
@@ -172,6 +209,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     padding: spacing.lg,
+  },
+  offlineNotice: {
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
   },
   heading: {
     fontSize: typography.size.h5,

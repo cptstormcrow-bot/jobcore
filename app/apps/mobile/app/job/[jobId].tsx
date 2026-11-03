@@ -538,9 +538,23 @@ export default function JobDrilldownScreen() {
         // job's `customer_id` (job.customerId per the JobRow/Job mapping
         // above) via the CustomerRepository -- the `customers` table is not
         // selected as part of JOB_ROW_COLUMNS.
-        const fetchedCustomer = loaded?.customerId
-          ? await createCustomerRepository().getById(loaded.customerId)
-          : null;
+        // Cache-first and failure-tolerant: a slow or missing network must never hold the page on its spinner.
+        const customerKey = loaded?.customerId;
+        const fetchCustomer = async (): Promise<Customer | null> =>
+          customerKey ? await createCustomerRepository().getById(customerKey) : null;
+        let fetchedCustomer: Customer | null = null;
+        if (customerKey) {
+          try {
+            fetchedCustomer = identity
+              ? (await cachedRead<Customer | null>(
+                  buildReadCacheKey(identity.orgId, identity.userId, 'app.customers.byId', { customerId: customerKey }),
+                  fetchCustomer,
+                )).data
+              : await fetchCustomer();
+          } catch {
+            fetchedCustomer = null;
+          }
+        }
         if (cancelled) return;
         setCustomer(fetchedCustomer);
         // Background refetch (rev bump) after the form was seeded: refresh job/customer only,
