@@ -1095,7 +1095,7 @@ export default function JobDrilldownScreen() {
       case 'photos': selectRegion('photos'); break;
       case 'completeWork': setActiveStage('complete'); handleComplete(); break;
       case 'paid':
-        if (role === 'owner' || role === 'admin') { selectRegion('payment'); setActiveStage('paid'); }
+        if (role === 'owner' || role === 'admin' || role === 'tech') { selectRegion('payment'); setActiveStage('paid'); }
         break;
       case 'closeout':
         if (role === 'owner' || role === 'admin') selectRegion('closeout');
@@ -1362,7 +1362,9 @@ export default function JobDrilldownScreen() {
   // Admin-only stages are hidden in the menu and dimmed on the timeline; Start needs an installer tech in both.
   const lockedStages = new Set<StageKey>([
     ...(stageExtras?.lead ? [] : ['lead' as const]),
-    ...(isAdmin ? [] : ['assign' as const, 'paid' as const, 'closeout' as const]),
+    // Techs collect payment for their work, so Paid opens for them too (Jeff 2026-11-02).
+    ...(isAdmin ? [] : ['assign' as const, 'closeout' as const]),
+    ...(isAdmin || role === 'tech' ? [] : ['paid' as const]),
     ...(currentJob.assignedTechId ? [] : ['startWork' as const]),
   ]);
 
