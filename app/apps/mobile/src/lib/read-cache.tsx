@@ -139,6 +139,9 @@ export function ReadCacheProvider({ children }: { children: ReactNode }): ReactN
   const authed = s.status === 'authenticated';
   const userId = authed ? s.session.user.id : null;
   const orgId = authed ? s.organization.id : null;
+  // Set during render: child screens' load effects run before this provider's effects,
+  // so an effect-only assignment left their first (offline) read with no cache identity.
+  if (userId && orgId && (identity?.userId !== userId || identity?.orgId !== orgId)) identity = { orgId, userId };
 
   useEffect(() => {
     if (userId && orgId) {

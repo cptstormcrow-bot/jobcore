@@ -286,10 +286,10 @@ export function AdminFinanceRoot() {
     void jobRepository.listForOrganization(orgId).then((jobs) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, jobs } : prev));
       void loadCardExtras(jobs);
-    });
+    }, () => {});
     void ports.timeOffAdmin.listForOrganization(orgId).then((timeOffRequests) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, timeOffRequests } : prev));
-    });
+    }, () => {});
   }
 
   const hasFocusedOnceRef = useRef(false);
@@ -312,11 +312,12 @@ export function AdminFinanceRoot() {
     Promise.all([
       jobRepository.listForOrganization(orgId),
       employeeRepository.listEmployees(orgId),
-      commissionRepository.listForOrganization(orgId),
-      techServiceAreaRepository.listForOrganization(orgId),
-      ports.serviceAreas.listForOrganization(orgId),
-      ports.techSkills.listForOrganization(orgId),
-      ports.timeOffAdmin.listForOrganization(orgId),
+      // Supporting lists: one not yet saved on this device (offline) must never block the job list.
+      commissionRepository.listForOrganization(orgId).catch(() => []),
+      techServiceAreaRepository.listForOrganization(orgId).catch(() => []),
+      ports.serviceAreas.listForOrganization(orgId).catch(() => []),
+      ports.techSkills.listForOrganization(orgId).catch(() => []),
+      ports.timeOffAdmin.listForOrganization(orgId).catch(() => []),
       // Per-technician commission lines feed Reports > Commission Totals; a failed read must never block the job list.
       ports.jobPayoutLines.listCommissionLinesForOrganization(orgId).catch(() => []),
     ])

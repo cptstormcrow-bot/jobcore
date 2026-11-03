@@ -24,6 +24,12 @@ export interface PayrollRepoSession {
   userId: string;
 }
 
+// The fetch TypeError, raw or wrapped by a repo ("listForOrganization failed: TypeError: Network request failed").
+function isNetworkFailure(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e);
+  return /Network request failed|Failed to fetch|TypeError: (Network|fetch)/i.test(msg);
+}
+
 // Offline with nothing saved yet: say so plainly instead of surfacing the raw fetch TypeError.
 export async function readCached<T>(queryName: string, params: Record<string, unknown>, fetchLive: () => Promise<T>): Promise<T> {
   try {
@@ -33,7 +39,7 @@ export async function readCached<T>(queryName: string, params: Record<string, un
     const { data } = await cachedRead(key, fetchLive);
     return data;
   } catch (e) {
-    if (!isOnlineNow()) throw new OfflineError('Not saved on this device yet. Open this once while online.');
+    if (!isOnlineNow() || isNetworkFailure(e)) throw new OfflineError('Not saved on this device yet. Open this once while online.');
     throw e;
   }
 }
