@@ -1097,8 +1097,10 @@ export default function JobDrilldownScreen() {
       case 'paid':
         if (role === 'owner' || role === 'admin' || role === 'tech') { selectRegion('payment'); setActiveStage('paid'); }
         break;
-      // Closeout opens #0018 job-region-closeout for every role, same as the menu (Jeff 2026-11-02).
-      case 'closeout': selectRegion('closeout'); break;
+      // Closeout opens #0018 job-region-closeout for admins and techs; Sales has no need (Jeff 2026-11-03).
+      case 'closeout':
+        if (role === 'owner' || role === 'admin' || role === 'tech') selectRegion('closeout');
+        break;
       case 'lead':
         if (stageExtras?.lead) router.push(`/m/admin-finance?leadId=${stageExtras.lead.id}` as never);
         break;
@@ -1395,9 +1397,10 @@ ${body}`)) handleResetLaborTime();
   const lockedStages = new Set<StageKey>([
     ...(stageExtras?.lead ? [] : ['lead' as const]),
     // Techs collect payment for their work, so Paid opens for them too (Jeff 2026-11-02).
-    // Closeout is open to every role, Tech and Sales too (Jeff 2026-11-02).
+    // Techs close out jobs; Sales has no need, so Closeout stays shut for Sales (Jeff 2026-11-03).
     ...(isAdmin ? [] : ['assign' as const]),
     ...(isAdmin || role === 'tech' ? [] : ['paid' as const]),
+    ...(isAdmin || role === 'tech' ? [] : ['closeout' as const]),
     ...(currentJob.assignedTechId ? [] : ['startWork' as const]),
   ]);
 
