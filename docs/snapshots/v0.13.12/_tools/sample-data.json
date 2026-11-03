@@ -1,0 +1,423 @@
+{
+  "source": "app/supabase/seed.sql",
+  "profiles": [
+    { "id": "00000000-0000-4000-8000-000000000101", "fullName": "Dev Owner", "role": "owner", "seedRef": "seed.sql:66" },
+    { "id": "00000000-0000-4000-8000-000000000102", "fullName": "Dev Admin", "role": "admin", "seedRef": "seed.sql:68" },
+    { "id": "00000000-0000-4000-8000-000000000103", "fullName": "Dev Tech", "role": "tech", "seedRef": "seed.sql:70" },
+    { "id": "00000000-0000-4000-8000-000000000104", "fullName": "Dev Sales", "role": "sales", "seedRef": "seed.sql:72" }
+  ],
+  "techSkills": [
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "installation", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "service_repair", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "electrical", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "segway_investigation", "seedRef": "seed.sql:195" },
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "estimating", "seedRef": "seed.sql:195" },
+    { "techId": "00000000-0000-4000-8000-000000000103", "skill": "customer_service", "seedRef": "seed.sql:195" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "installation", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "service_repair", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "electrical", "seedRef": "seed.sql:194" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "segway_investigation", "seedRef": "seed.sql:195" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "estimating", "seedRef": "seed.sql:195" },
+    { "techId": "00000000-0000-4000-8000-000000000104", "skill": "customer_service", "seedRef": "seed.sql:195" }
+  ],
+  "jobs": [
+    {
+      "customerName": "Karen Whitfield",
+      "service": "Furniture Assembly",
+      "address": "412 Prospect St",
+      "city": "La Jolla",
+      "fullAddress": "412 Prospect St, La Jolla, CA 92037",
+      "phone": "+16195550201",
+      "email": "karen.whitfield@example.com",
+      "status": "completed",
+      "statusLabel": "Completed",
+      "requestedWindow": "2026-07-30 morning",
+      "scheduledStart": "2026-07-30 09:00:00+00",
+      "scheduledEnd": "2026-07-30 11:00:00+00",
+      "description": "Assemble two wardrobe units",
+      "ref": "seed.sql:268",
+      "id": "00000000-0000-4000-8000-000000000601",
+      "createdAt": null,
+      "completedAt": "2026-07-30 10:55:00+00",
+      "source": "website",
+      "attachTiming": "before_start",
+      "assignedTechId": "00000000-0000-4000-8000-000000000103",
+      "assignedTechName": "Dev Tech"
+    },
+    {
+      "customerName": "Marcus Delgado",
+      "service": "Plumbing",
+      "address": "88 Third Ave",
+      "city": "Chula Vista",
+      "fullAddress": "88 Third Ave, Chula Vista, CA 91910",
+      "phone": "+16195550202",
+      "email": "marcus.delgado@example.com",
+      "status": "scheduled",
+      "statusLabel": "Scheduled",
+      "requestedWindow": "2026-08-04 morning",
+      "scheduledStart": "2026-08-04 09:00:00+00",
+      "scheduledEnd": "2026-08-04 10:30:00+00",
+      "description": "Kitchen faucet replacement",
+      "ref": "seed.sql:275",
+      "id": "00000000-0000-4000-8000-000000000602",
+      "createdAt": null,
+      "completedAt": null,
+      "source": "website",
+      "attachTiming": "before_start",
+      "assignedTechId": "00000000-0000-4000-8000-000000000103",
+      "assignedTechName": "Dev Tech"
+    },
+    {
+      "customerName": "Priya Anand",
+      "service": "Handyman",
+      "address": "2210 Community Rd",
+      "city": "Poway",
+      "fullAddress": "2210 Community Rd, Poway, CA 92064",
+      "phone": "+16195550203",
+      "email": "priya.anand@example.com",
+      "status": "new",
+      "statusLabel": "New",
+      "requestedWindow": "2026-08-06 afternoon",
+      "scheduledStart": null,
+      "scheduledEnd": null,
+      "description": "Drywall patch and paint touch-up",
+      "ref": "seed.sql:281",
+      "id": "00000000-0000-4000-8000-000000000603",
+      "createdAt": null,
+      "completedAt": null,
+      "source": "website",
+      "attachTiming": "before_start",
+      "assignedTechId": null,
+      "assignedTechName": null
+    },
+    {
+      "customerName": "Trevor Nakamura",
+      "service": "Tile & Flooring",
+      "address": "505 Vulcan Ave",
+      "city": "Encinitas",
+      "fullAddress": "505 Vulcan Ave, Encinitas, CA 92024",
+      "phone": "+16195550204",
+      "email": "trevor.nakamura@example.com",
+      "status": "in_progress",
+      "statusLabel": "In progress",
+      "requestedWindow": "2026-07-28 afternoon",
+      "scheduledStart": "2026-07-28 13:00:00+00",
+      "scheduledEnd": "2026-07-28 16:00:00+00",
+      "description": "Re-grout kitchen tile floor",
+      "ref": "seed.sql:286",
+      "id": "00000000-0000-4000-8000-000000000604",
+      "createdAt": null,
+      "completedAt": null,
+      "source": "website",
+      "attachTiming": "before_start",
+      "assignedTechId": "00000000-0000-4000-8000-000000000103",
+      "assignedTechName": "Dev Tech"
+    },
+    {
+      "customerName": "Sofia Reyes",
+      "service": "Outdoor Equipment",
+      "address": "1901 State St",
+      "city": "Carlsbad",
+      "fullAddress": "1901 State St, Carlsbad, CA 92008",
+      "phone": "+16195550205",
+      "email": "sofia.reyes@example.com",
+      "status": "cancelled",
+      "statusLabel": "Cancelled",
+      "requestedWindow": "2026-08-01 morning",
+      "scheduledStart": null,
+      "scheduledEnd": null,
+      "description": "Assemble patio storage shed",
+      "ref": "seed.sql:293",
+      "id": "00000000-0000-4000-8000-000000000605",
+      "createdAt": null,
+      "completedAt": null,
+      "source": "website",
+      "attachTiming": "before_start",
+      "assignedTechId": null,
+      "assignedTechName": null
+    }
+  ],
+  "customers": [
+    {
+      "name": "Karen Whitfield",
+      "phone": "+16195550201",
+      "email": "karen.whitfield@example.com",
+      "address": "412 Prospect St, La Jolla, CA 92037",
+      "street": "412 Prospect St",
+      "city": "La Jolla",
+      "state": "CA",
+      "zip": "92037",
+      "ref": "seed.sql:206"
+    },
+    {
+      "name": "Marcus Delgado",
+      "phone": "+16195550202",
+      "email": "marcus.delgado@example.com",
+      "address": "88 Third Ave, Chula Vista, CA 91910",
+      "street": "88 Third Ave",
+      "city": "Chula Vista",
+      "state": "CA",
+      "zip": "91910",
+      "ref": "seed.sql:209"
+    },
+    {
+      "name": "Priya Anand",
+      "phone": "+16195550203",
+      "email": "priya.anand@example.com",
+      "address": "2210 Community Rd, Poway, CA 92064",
+      "street": "2210 Community Rd",
+      "city": "Poway",
+      "state": "CA",
+      "zip": "92064",
+      "ref": "seed.sql:212"
+    },
+    {
+      "name": "Trevor Nakamura",
+      "phone": "+16195550204",
+      "email": "trevor.nakamura@example.com",
+      "address": "505 Vulcan Ave, Encinitas, CA 92024",
+      "street": "505 Vulcan Ave",
+      "city": "Encinitas",
+      "state": "CA",
+      "zip": "92024",
+      "ref": "seed.sql:215"
+    },
+    {
+      "name": "Sofia Reyes",
+      "phone": "+16195550205",
+      "email": "sofia.reyes@example.com",
+      "address": "1901 State St, Carlsbad, CA 92008",
+      "street": "1901 State St",
+      "city": "Carlsbad",
+      "state": "CA",
+      "zip": "92008",
+      "ref": "seed.sql:218"
+    },
+    {
+      "name": "Ben Castellano",
+      "phone": "+16195550206",
+      "email": "ben.castellano@example.com",
+      "address": "340 Main St, El Cajon, CA 92020",
+      "street": "340 Main St",
+      "city": "El Cajon",
+      "state": "CA",
+      "zip": "92020",
+      "ref": "seed.sql:221"
+    }
+  ],
+  "services": [
+    {
+      "name": "Furniture Assembly",
+      "ref": "seed.sql:85"
+    },
+    {
+      "name": "Outdoor Equipment",
+      "ref": "seed.sql:87"
+    },
+    {
+      "name": "Fitness & Game Room",
+      "ref": "seed.sql:89"
+    },
+    {
+      "name": "Home Theater & TV",
+      "ref": "seed.sql:91"
+    },
+    {
+      "name": "Wall Hanging & Mounting",
+      "ref": "seed.sql:93"
+    },
+    {
+      "name": "Plumbing",
+      "ref": "seed.sql:95"
+    },
+    {
+      "name": "Handyman",
+      "ref": "seed.sql:97"
+    },
+    {
+      "name": "Carpentry & Construction",
+      "ref": "seed.sql:99"
+    },
+    {
+      "name": "Tile & Flooring",
+      "ref": "seed.sql:101"
+    }
+  ],
+  "areas": [
+    {
+      "name": "La Jolla",
+      "ref": "seed.sql:112"
+    },
+    {
+      "name": "Chula Vista",
+      "ref": "seed.sql:114"
+    },
+    {
+      "name": "Poway",
+      "ref": "seed.sql:116"
+    },
+    {
+      "name": "Encinitas",
+      "ref": "seed.sql:118"
+    },
+    {
+      "name": "Carlsbad",
+      "ref": "seed.sql:120"
+    },
+    {
+      "name": "El Cajon",
+      "ref": "seed.sql:122"
+    },
+    {
+      "name": "San Diego",
+      "ref": "seed.sql:124"
+    }
+  ],
+  "statusHumanizer": {
+    "new": "New",
+    "scheduled": "Scheduled",
+    "in_progress": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "labelValueMap": {
+    "customer name": "Karen Whitfield",
+    "customer phone": "+16195550201",
+    "customer email": "karen.whitfield@example.com",
+    "name": "Karen Whitfield",
+    "phone": "+16195550201",
+    "email": "karen.whitfield@example.com",
+    "address": "412 Prospect St",
+    "street": "412 Prospect St",
+    "city": "La Jolla",
+    "state": "CA",
+    "zip": "92037",
+    "service": "Furniture Assembly",
+    "job title": "Assemble two wardrobe units",
+    "description": "Assemble two wardrobe units",
+    "notes": "Assemble two wardrobe units",
+    "status": "Completed",
+    "preferred date": "2026-07-30",
+    "preferred time": "morning",
+    "date": "2026-07-30",
+    "time": "09:00",
+    "area": "La Jolla"
+  },
+  "labelValueMapByJob": {
+    "Karen Whitfield": {
+      "customer name": "Karen Whitfield",
+      "customer phone": "+16195550201",
+      "customer email": "karen.whitfield@example.com",
+      "name": "Karen Whitfield",
+      "phone": "+16195550201",
+      "email": "karen.whitfield@example.com",
+      "address": "412 Prospect St",
+      "street": "412 Prospect St",
+      "city": "La Jolla",
+      "state": "CA",
+      "zip": "92037",
+      "service": "Furniture Assembly",
+      "job title": "Assemble two wardrobe units",
+      "description": "Assemble two wardrobe units",
+      "notes": "Assemble two wardrobe units",
+      "status": "Completed",
+      "preferred date": "2026-07-30",
+      "preferred time": "morning",
+      "date": "2026-07-30",
+      "time": "09:00",
+      "area": "La Jolla"
+    },
+    "Marcus Delgado": {
+      "customer name": "Marcus Delgado",
+      "customer phone": "+16195550202",
+      "customer email": "marcus.delgado@example.com",
+      "name": "Marcus Delgado",
+      "phone": "+16195550202",
+      "email": "marcus.delgado@example.com",
+      "address": "88 Third Ave",
+      "street": "88 Third Ave",
+      "city": "Chula Vista",
+      "state": "CA",
+      "zip": "91910",
+      "service": "Plumbing",
+      "job title": "Kitchen faucet replacement",
+      "description": "Kitchen faucet replacement",
+      "notes": "Kitchen faucet replacement",
+      "status": "Scheduled",
+      "preferred date": "2026-08-04",
+      "preferred time": "morning",
+      "date": "2026-08-04",
+      "time": "09:00",
+      "area": "Chula Vista"
+    },
+    "Priya Anand": {
+      "customer name": "Priya Anand",
+      "customer phone": "+16195550203",
+      "customer email": "priya.anand@example.com",
+      "name": "Priya Anand",
+      "phone": "+16195550203",
+      "email": "priya.anand@example.com",
+      "address": "2210 Community Rd",
+      "street": "2210 Community Rd",
+      "city": "Poway",
+      "state": "CA",
+      "zip": "92064",
+      "service": "Handyman",
+      "job title": "Drywall patch and paint touch-up",
+      "description": "Drywall patch and paint touch-up",
+      "notes": "Drywall patch and paint touch-up",
+      "status": "New",
+      "preferred date": "2026-08-06",
+      "preferred time": "afternoon",
+      "date": "2026-08-06",
+      "time": "",
+      "area": "Poway"
+    },
+    "Trevor Nakamura": {
+      "customer name": "Trevor Nakamura",
+      "customer phone": "+16195550204",
+      "customer email": "trevor.nakamura@example.com",
+      "name": "Trevor Nakamura",
+      "phone": "+16195550204",
+      "email": "trevor.nakamura@example.com",
+      "address": "505 Vulcan Ave",
+      "street": "505 Vulcan Ave",
+      "city": "Encinitas",
+      "state": "CA",
+      "zip": "92024",
+      "service": "Tile & Flooring",
+      "job title": "Re-grout kitchen tile floor",
+      "description": "Re-grout kitchen tile floor",
+      "notes": "Re-grout kitchen tile floor",
+      "status": "In progress",
+      "preferred date": "2026-07-28",
+      "preferred time": "afternoon",
+      "date": "2026-07-28",
+      "time": "13:00",
+      "area": "Encinitas"
+    },
+    "Sofia Reyes": {
+      "customer name": "Sofia Reyes",
+      "customer phone": "+16195550205",
+      "customer email": "sofia.reyes@example.com",
+      "name": "Sofia Reyes",
+      "phone": "+16195550205",
+      "email": "sofia.reyes@example.com",
+      "address": "1901 State St",
+      "street": "1901 State St",
+      "city": "Carlsbad",
+      "state": "CA",
+      "zip": "92008",
+      "service": "Outdoor Equipment",
+      "job title": "Assemble patio storage shed",
+      "description": "Assemble patio storage shed",
+      "notes": "Assemble patio storage shed",
+      "status": "Cancelled",
+      "preferred date": "2026-08-01",
+      "preferred time": "morning",
+      "date": "2026-08-01",
+      "time": "",
+      "area": "Carlsbad"
+    }
+  }
+}
