@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View } from 'react-native';
-import { Card, PayrollButton, Text, TextField, colors, spacing } from '@jobcore/ui';
+import { Card, PayrollButton, StepperPicker, Text, TextField, colors, spacing } from '@jobcore/ui';
 import type { wageEngine } from '@jobcore/core';
 import type { PayrollSelfPort, PayrollTimeEntry } from './port';
 import { errorText } from './errorText';
@@ -94,13 +94,6 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 /** "Oct 12" from an ISO date. */
 function monthDay(iso: string): string {
   return MONTHS[parseInt(iso.slice(5, 7), 10) - 1] + ' ' + parseInt(iso.slice(8, 10), 10);
-}
-
-function weekLabel(n: number): string {
-  if (n === 0) return 'This Week';
-  if (n === -1) return 'Last Week';
-  if (n === 1) return 'Next Week';
-  return n < -1 ? `${-n} weeks ago` : `In ${n} weeks`;
 }
 
 export function TimeEntryPanel(props: TimeEntryPanelProps) {
@@ -318,21 +311,15 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
         </View>
       )}
       <Card style={{ padding: spacing.sm }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
-        <PayrollButton
-          label="<"
-          onPress={() => setWeekOffset((o) => o - 1)}
-          accessibilityLabel="Previous week"
-          style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}
+      <View style={{ marginBottom: spacing.xs }}>
+        <StepperPicker
+          value={monthDay(days[0]!) + ' - ' + monthDay(days[6]!) + ', ' + days[6]!.slice(0, 4)}
+          prevLabel="Previous pay period"
+          nextLabel="Next pay period"
+          onPrev={() => setWeekOffset((o) => o - 1)}
+          onNext={() => setWeekOffset((o) => Math.min(0, o + 1))}
+          nextDisabled={weekOffset === 0}
         />
-        <Text style={{ fontWeight: '700', textAlign: 'center', minWidth: 110 }}>{weekLabel(weekOffset)}</Text>
-        <PayrollButton
-          label=">"
-          onPress={() => setWeekOffset((o) => o + 1)}
-          accessibilityLabel="Next week"
-          style={{ paddingHorizontal: spacing.md, paddingVertical: spacing.xs }}
-        />
-        <Text style={{ marginLeft: 'auto' }}>{monthDay(days[0]!) + ' - ' + monthDay(days[6]!)}</Text>
       </View>
       {entries.length > 0 && !canSubmit ? (
         <Text style={{ color: colors.textMutedDark, fontSize: 12 }}>This week is already submitted or approved. Tap Withdraw to change it.</Text>

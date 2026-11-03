@@ -7,12 +7,11 @@ import { TimeEntryPanel } from './TimeEntryPanel';
 import type { TimeEntryPanelActions } from './TimeEntryPanel';
 import { HoursTallyPanel } from './HoursTallyPanel';
 import type { HoursRange } from './HoursTallyPanel';
-import { PayPeriodPanel } from './PayPeriodPanel';
 import { ReimbursementPanel } from './ReimbursementPanel';
 import type { ReimbursementPanelActions } from './ReimbursementPanel';
 import { TimesheetApprovalPanel } from './TimesheetApprovalPanel';
 
-export type TabId = 'time' | 'hours' | 'period' | 'reimb' | 'approvals' | 'run' | 'settings';
+export type TabId = 'time' | 'hours' | 'reimb' | 'approvals' | 'run' | 'settings';
 
 export interface PayrollHomeProps {
   port: PayrollPort;
@@ -63,7 +62,6 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
   const tabs: { id: TabId; label: string }[] = [
     { id: 'time', label: 'My Time' },
     { id: 'hours', label: 'Hours' },
-    { id: 'period', label: 'Pay period' },
     { id: 'reimb', label: 'Reimbursements' },
   ];
   if (mode === 'admin' && port.listTeamEntries && port.approveWeek && port.rejectWeek) {
@@ -160,9 +158,6 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
             />
             <HoursTallyPanel port={port} userId={userId} refreshKey={refreshKey} range={hoursRange} />
           </View>
-        ) : null}
-        {active === 'period' ? (
-          <PayPeriodPanel port={port} userId={userId} refreshKey={refreshKey} />
         ) : null}
         {active === 'reimb' ? (
           <ReimbursementPanel port={port} userId={userId} onRegisterActions={setReimbActions} />
