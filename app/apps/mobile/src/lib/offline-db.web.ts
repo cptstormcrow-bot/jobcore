@@ -5,12 +5,12 @@
 // shape as offline-db.ts. The web build has no offline queue.
 
 import type { NewQueuedMutation, DrainResult, ReplayErrorClass } from '@jobcore/core';
-import type { QueueRow, QueueStatus } from './offline-db.types';
+import type { QueueRow, QueueStatus, SyncLogKind, SyncLogRow } from './offline-db.types';
 import { supabase } from './supabase';
 import { getOpHandler } from './offline-ops';
 import type { OpContext } from './offline-ops';
 
-export type { QueueRow, QueueStatus };
+export type { QueueRow, QueueStatus, SyncLogKind, SyncLogRow };
 
 export const OFFLINE_DB_NAME = 'jobcore-offline.db';
 
@@ -53,6 +53,37 @@ export async function retryAllFailed(): Promise<void> {
 }
 
 export async function discardFailed(_id: string): Promise<void> {
+  // No-op on web.
+}
+
+export async function countStuck(): Promise<number> {
+  return 0;
+}
+
+export async function listStuck(_limit: number = 5): Promise<QueueRow[]> {
+  return [];
+}
+
+export async function unstickAll(): Promise<void> {
+  // No-op on web.
+}
+
+export async function logSync(_entry: {
+  kind: SyncLogKind;
+  op?: string | null;
+  rowId?: string | null;
+  attempts?: number | null;
+  errorClass?: string | null;
+  message?: string | null;
+}): Promise<void> {
+  // No-op on web.
+}
+
+export async function listSyncLog(_limit: number = 200): Promise<SyncLogRow[]> {
+  return [];
+}
+
+export async function clearSyncLog(): Promise<void> {
   // No-op on web.
 }
 

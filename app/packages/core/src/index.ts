@@ -3,7 +3,7 @@ import type { ClockConfig } from './clocks.js';
 export type { ClockPair, ClockConfig, SkewEvaluation } from './clocks.js';
 export { DEFAULT_CLOCK_CONFIG, evaluateSkew } from './clocks.js';
 // P2d.2a: re-export the offline queue schema constants and types.
-export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA, OFFLINE_QUEUE_SCHEMA_VERSION, OFFLINE_QUEUE_MIGRATIONS, CREATE_READ_CACHE_TABLE } from './offline/schema.js';
+export { OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_TABLE, CREATE_OFFLINE_QUEUE_INDEX, OFFLINE_QUEUE_SCHEMA, OFFLINE_QUEUE_SCHEMA_VERSION, OFFLINE_QUEUE_MIGRATIONS, CREATE_READ_CACHE_TABLE, SYNC_LOG_TABLE, CREATE_SYNC_LOG_TABLE } from './offline/schema.js';
 export type { QueuedMutationStatus, QueuedMutation, NewQueuedMutation } from './offline/queue.js';
 export { makeIdempotencyKey } from './offline/queue.js';
 // P2d.2b: re-export the optimistic-apply helper.

@@ -14,6 +14,20 @@ export interface QueueRow {
   created_at?: string;
 }
 
+/** Sync history log row (#0100). */
+export type SyncLogKind = 'sent' | 'retry' | 'failed' | 'pass';
+
+export interface SyncLogRow {
+  id: number;
+  at: string;
+  kind: SyncLogKind;
+  op: string | null;
+  row_id: string | null;
+  attempts: number | null;
+  error_class: string | null;
+  message: string | null;
+}
+
 export interface SyncStatus {
   isOnline: boolean;
   pendingCount: number;

@@ -1,6 +1,7 @@
 // JobCore screen #0098 - sync-issues - Sync issues
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AppChrome, Card, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { discardFailed, listAllFailed, retryFailed } from '../src/lib/offline-db';
@@ -11,6 +12,7 @@ import { useSyncStatus } from '../src/lib/sync-status';
 
 export default function SyncIssuesScreen() {
   const { refresh, retryAll, failedCount, isSyncing, isOnline, pendingCount } = useSyncStatus();
+  const router = useRouter();
   const [rows, setRows] = useState<QueueRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +114,9 @@ export default function SyncIssuesScreen() {
             </View>
           </Card>
         ))}
+        <View style={styles.actions}>
+          <PayrollButton label="Sync history" onPress={() => router.push('/sync-log')} />
+        </View>
       </ScrollView>
     </View>
   );

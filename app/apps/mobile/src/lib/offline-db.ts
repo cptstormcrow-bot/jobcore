@@ -11,19 +11,21 @@ import {
   OFFLINE_QUEUE_SCHEMA_VERSION,
   OFFLINE_QUEUE_MIGRATIONS,
   CREATE_READ_CACHE_TABLE,
+  CREATE_SYNC_LOG_TABLE,
+  SYNC_LOG_TABLE,
   drainQueue,
   classifyReplayError,
 } from '@jobcore/core';
 import type { NewQueuedMutation, DrainResult, ReplayErrorClass } from '@jobcore/core';
 import { logSyncFailure } from './log';
 import { supabase } from './supabase';
-import type { QueueRow, QueueStatus } from './offline-db.types';
+import type { QueueRow, QueueStatus, SyncLogKind, SyncLogRow } from './offline-db.types';
 import { getOpHandler, UnknownOpError } from './offline-ops';
 import type { OpContext } from './offline-ops';
 import { emitDrainComplete, isOnlineNow } from './sync-events';
 import { makeAuthRetrySend } from './auth-retry';
 
-export type { QueueRow, QueueStatus };
+export type { QueueRow, QueueStatus, SyncLogKind, SyncLogRow };
 
 export const OFFLINE_DB_NAME = 'jobcore-offline.db';
 
@@ -64,6 +66,10 @@ export async function getOfflineDb(): Promise<SQLite.SQLiteDatabase> {
       // Read cache table + indexes on every open (idempotent) so upgraded v1
       // installs get it; the read-cache store assumes it exists.
       for (const statement of CREATE_READ_CACHE_TABLE) {
+        await db.execAsync(statement);
+      }
+      // Sync history log, also on every open (idempotent).
+      for (const statement of CREATE_SYNC_LOG_TABLE) {
         await db.execAsync(statement);
       }
       // Crash-mid-send rows would otherwise be stuck 'inflight' forever.
@@ -240,6 +246,51 @@ export async function markFailed(
 }
 
 // ---------------------------------------------------------------------------
+// Sync history log (#0100): one row per send, retry, failure and drain pass.
+// Logging never breaks a drain, so every write swallows its own errors.
+
+const SYNC_LOG_KEEP = 500;
+
+export async function logSync(entry: {
+  kind: SyncLogKind;
+  op?: string | null;
+  rowId?: string | null;
+  attempts?: number | null;
+  errorClass?: string | null;
+  message?: string | null;
+}): Promise<void> {
+  try {
+    const db = await getOfflineDb();
+    await db.runAsync(
+      `insert into ${SYNC_LOG_TABLE} (at, kind, op, row_id, attempts, error_class, message) values (?, ?, ?, ?, ?, ?, ?)`,
+      new Date().toISOString(),
+      entry.kind,
+      entry.op ?? null,
+      entry.rowId ?? null,
+      entry.attempts ?? null,
+      entry.errorClass ?? null,
+      entry.message ?? null
+    );
+    await db.runAsync(
+      `delete from ${SYNC_LOG_TABLE} where id <= (select max(id) - ${SYNC_LOG_KEEP} from ${SYNC_LOG_TABLE})`
+    );
+  } catch {
+    // the log is a diagnostic; losing a line is fine
+  }
+}
+
+/** Newest first. */
+export async function listSyncLog(limit: number = 200): Promise<SyncLogRow[]> {
+  const db = await getOfflineDb();
+  return db.getAllAsync<SyncLogRow>(`select * from ${SYNC_LOG_TABLE} order by id desc limit ?`, limit);
+}
+
+export async function clearSyncLog(): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(`delete from ${SYNC_LOG_TABLE}`);
+}
+
+// ---------------------------------------------------------------------------
 // Transport. Every op is a handler in the offline-ops registry; the session
 // (org + user) is resolved from the live Supabase auth session so a background
 // drain does not depend on a screen having injected a module session.
@@ -340,16 +391,46 @@ export function drainOfflineQueue(): Promise<DrainResult> {
           return !error && !!data.session;
         },
       });
+      // Wrap the mark callbacks so every outcome also lands in the sync history log.
+      const byId = new Map(pending.map((r) => [r.id, r]));
+      const logRow = (kind: SyncLogKind, id: string, info?: { errorClass: string; message: string }) => {
+        const r = byId.get(id);
+        return logSync({
+          kind,
+          op: r?.op ?? null,
+          rowId: id,
+          attempts: (r?.attempts ?? 0) + 1,
+          errorClass: info?.errorClass ?? null,
+          message: info?.message ?? null,
+        });
+      };
       const result = await drainQueue(rows, {
         send: sendWithAuthRetry,
         markInflight,
-        markDone,
-        markRetry,
-        markFailed,
+        markDone: async (id) => {
+          await markDone(id);
+          await logRow('sent', id);
+        },
+        markRetry: async (id, info) => {
+          await markRetry(id, info);
+          await logRow('retry', id, info);
+        },
+        markFailed: async (id, info) => {
+          await markFailed(id, info);
+          await logRow('failed', id, info);
+        },
         now: () => new Date(),
         classify,
         groupOf,
       });
+      if (rows.length > 0 || result.aborted) {
+        await logSync({
+          kind: 'pass',
+          message: `sent ${result.sent}, retried ${result.retried}, failed ${result.failed}, held ${result.skipped}${
+            result.aborted ? `, stopped (${result.aborted})` : ''
+          }`,
+        });
+      }
       if (result.aborted !== 'offline') {
         emitDrainComplete({
           sent: result.sent,

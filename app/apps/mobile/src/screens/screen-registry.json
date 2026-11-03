@@ -852,5 +852,13 @@
     "route": "(popup)",
     "file": "apps/mobile/src/components/StuckPopup.tsx",
     "createdAt": "2026-11-03T18:00:00.000Z"
+  },
+  {
+    "number": 100,
+    "key": "sync-log",
+    "title": "Sync history",
+    "route": "/sync-log",
+    "file": "apps/mobile/app/sync-log.tsx",
+    "createdAt": "2026-11-03T20:00:00.000Z"
   }
 ]

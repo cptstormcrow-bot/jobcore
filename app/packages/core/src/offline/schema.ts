@@ -62,6 +62,27 @@ export const CREATE_READ_CACHE_TABLE: string[] = [
   'CREATE INDEX IF NOT EXISTS read_cache_fetched_at ON read_cache (fetched_at)',
 ];
 
+/**
+ * Sync history log (Jeff 2026-11-03): one row per send, retry, failure and drain
+ * pass, kept on the device and trimmed to the newest rows. kind is
+ * 'sent' | 'retry' | 'failed' | 'pass'. Run on every open (idempotent).
+ */
+export const SYNC_LOG_TABLE = 'sync_log';
+
+export const CREATE_SYNC_LOG_TABLE: string[] = [
+  `CREATE TABLE IF NOT EXISTS sync_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  op TEXT,
+  row_id TEXT,
+  attempts INTEGER,
+  error_class TEXT,
+  message TEXT
+)`,
+  'CREATE INDEX IF NOT EXISTS sync_log_at ON sync_log (at)',
+];
+
 /** Replay order is device-clock order, so the queue is read by `occurred_at`. */
 export const CREATE_OFFLINE_QUEUE_INDEX = `
 create index if not exists offline_queue_status_occurred_at
