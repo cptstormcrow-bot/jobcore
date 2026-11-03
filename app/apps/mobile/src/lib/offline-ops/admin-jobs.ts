@@ -32,6 +32,16 @@ import { updateRecordGuarded } from './record-edit-guard';
 
 const APPLIED = { applied: true } as const;
 
+/**
+ * Create ops queued before 0.4.0 stored the draft itself as the payload
+ * (`{ organizationId, name, ... }`) instead of `{ id, draft }`. Those rows
+ * survive upgrades, so read either layout rather than crash on `draft.x`.
+ */
+function legacyBody<T>(payload: object, key: string): T {
+  const nested = (payload as Record<string, unknown>)[key];
+  return (nested ?? payload) as T;
+}
+
 /* ---------------------------- payload types ---------------------------- */
 
 export interface JobCreatePayload { id: string; draft: JobDraft & { serviceAreaId?: string } }
@@ -98,11 +108,12 @@ export function customerPatchToRow(patch: CustomerPatch): Record<string, unknown
 
 /* ------------------------------- handlers ------------------------------- */
 
-const jobCreate: OpHandler<JobCreatePayload> = async ({ id, draft }, ctx) => {
-  const { serviceAreaId, ...rest } = draft;
+const jobCreate: OpHandler<JobCreatePayload> = async (payload, ctx) => {
+  const { id } = payload;
+  const { serviceAreaId, ...rest } = legacyBody<JobCreatePayload['draft']>(payload, 'draft');
   const { error } = await ctx.supabase.from('jobs').insert({
     id,
-    organization_id: rest.organizationId,
+    organization_id: rest.organizationId ?? ctx.orgId,
     status: rest.status,
     customer_id: rest.customerId,
     service_id: rest.serviceId,
@@ -273,10 +284,12 @@ const jobAssignmentRemoveForJob: OpHandler<JobAssignmentRemoveForJobPayload> = a
   return APPLIED;
 };
 
-const leadCreate: OpHandler<LeadCreatePayload> = async ({ id, draft }, ctx) => {
+const leadCreate: OpHandler<LeadCreatePayload> = async (payload, ctx) => {
+  const { id } = payload;
+  const draft = legacyBody<LeadCreatePayload['draft']>(payload, 'draft');
   const { error } = await ctx.supabase.from('leads').insert({
     id,
-    organization_id: draft.organizationId,
+    organization_id: draft.organizationId ?? ctx.orgId,
     source_form: draft.sourceForm,
     name: draft.name,
     phone: draft.phone,
@@ -309,10 +322,12 @@ const leadMarkQualified: OpHandler<LeadMarkQualifiedPayload> = async ({ leadId, 
   return APPLIED;
 };
 
-const customerCreate: OpHandler<CustomerCreatePayload> = async ({ id, input }, ctx) => {
+const customerCreate: OpHandler<CustomerCreatePayload> = async (payload, ctx) => {
+  const { id } = payload;
+  const input = legacyBody<CustomerCreatePayload['input']>(payload, 'input');
   const { error } = await ctx.supabase.from('customers').insert({
     id,
-    organization_id: input.organizationId,
+    organization_id: input.organizationId ?? ctx.orgId,
     name: input.name,
     phone: input.phone,
     email: input.email,
