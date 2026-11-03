@@ -152,6 +152,7 @@ export type JobSummaryRestProps = {
   serviceGateOpen?: boolean;
   hideTechFields?: boolean;
   hidePremTech?: boolean;
+  hideServiceTech?: boolean;
   hideServiceArea?: boolean;
   /** Whether the job is flagged "Prem Needed". */
   needsPrem?: boolean;
@@ -228,6 +229,7 @@ export type JobTechFieldsProps = Pick<
   | 'needsPremDisabled'
   | 'onToggleNeedsPrem'
   | 'hidePremTech'
+  | 'hideServiceTech'
   | 'hideServiceArea'
 >;
 
@@ -248,6 +250,7 @@ export function JobTechFields({
   needsPremDisabled,
   onToggleNeedsPrem,
   hidePremTech = false,
+  hideServiceTech = false,
   hideServiceArea = false,
 }: JobTechFieldsProps) {
   return (
@@ -272,7 +275,7 @@ export function JobTechFields({
           />
         ) : undefined}
       />}
-      <TechRow
+      {hideServiceTech ? null : <TechRow
         label="Service Tech"
         techId={serviceTechId}
         techName={serviceTechName}
@@ -281,7 +284,7 @@ export function JobTechFields({
         busy={serviceBusy}
         disabledWhenUnassigned={!serviceGateOpen}
         blockedMessage={SERVICE_TECH_GATE_HINT}
-      />
+      />}
       {hideServiceArea ? null : <View style={styles.techRow}>
         {serviceAreaName ? (
           <Text style={[styles.summaryLine, styles.serviceAreaText]}>Service Area: {serviceAreaName}</Text>

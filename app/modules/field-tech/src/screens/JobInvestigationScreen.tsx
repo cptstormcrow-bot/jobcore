@@ -39,6 +39,8 @@ export interface JobInvestigationScreenProps {
   onSubmitted?: (investigation: JobInvestigation) => void;
   /** Host-supplied shared task list (module cannot import app components). Absent renders nothing. */
   renderTaskList?: (p: { jobId: string; mode: 'edit' | 'read'; source?: string }) => React.ReactNode;
+  /** Host-supplied rows shown right under the title (e.g. Prem Claimed by and the Prem Tech picker). */
+  headerSlot?: React.ReactNode;
 }
 
 /** Horizontal labelled input: label on the left, input on the right. */
@@ -84,7 +86,7 @@ function formatDateTime(value: string | null): string {
  * action that stamps `submitted_at`. One evolving row per job — the tech can
  * keep refining it across the visit until submitted.
  */
-export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpenCalendar, job: jobProp, onSubmitted, renderTaskList }: JobInvestigationScreenProps): React.ReactElement {
+export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpenCalendar, job: jobProp, onSubmitted, renderTaskList, headerSlot }: JobInvestigationScreenProps): React.ReactElement {
   const session = getModuleSession();
 
   const [job, setJob] = React.useState<Job | null>(null);
@@ -318,6 +320,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       {!embedded && onBack ? <PayrollButton label="Back to Job" onPress={onBack} /> : null}
       {!embedded && <ScreenTitle title="Prelim #0061" />}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
+      {headerSlot}
       {!embedded && (
         <>
           <JobTitleBarHeader
@@ -342,34 +345,26 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
         </>
       )}
       <View style={styles.cardActions}>
-        <View style={styles.actionCell}>
-          <PayrollButton label="Add photo" onPress={() => void handleAddPhoto()} />
-        </View>
-        <View style={styles.actionCell}>
-          <PayrollButton label="Save Draft" onPress={handleSaveDraft} disabled={saving} />
-        </View>
-        <View style={styles.actionCell}>
-          <PayrollButton
-            label="Submit"
-            onPress={handleSubmit}
-            disabled={saving || Boolean(investigation?.submittedAt)}
-          />
-        </View>
+        <PayrollButton label="Add photo" onPress={() => void handleAddPhoto()} />
+        <PayrollButton label="Save Draft" onPress={handleSaveDraft} disabled={saving} />
+        <PayrollButton
+          label="Submit"
+          onPress={handleSubmit}
+          disabled={saving || Boolean(investigation?.submittedAt)}
+        />
+        <Text style={[styles.status, styles.actionStatus]} numberOfLines={1}>
+          {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
+        </Text>
       </View>
 
       <View style={styles.section}>
-        <PairRow>
-          <Checkbox
-            label="Materials Onsite?"
-            variant="check"
-            checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
-            disabled={savingOnsite}
-            onChange={handleMaterialsOnsite}
-          />
-          <Text style={styles.status}>
-            {investigation?.submittedAt ? `Submitted ${formatDateTime(investigation.submittedAt)}` : 'Not yet submitted'}
-          </Text>
-        </PairRow>
+        <Checkbox
+          label="Materials Onsite?"
+          variant="check"
+          checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
+          disabled={savingOnsite}
+          onChange={handleMaterialsOnsite}
+        />
         <View style={styles.trackingRow}>
           <TextField inline
             label="UPS tracking number"
@@ -521,11 +516,13 @@ const styles = StyleSheet.create({
   },
   cardActions: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
     marginTop: 0,
   },
-  actionCell: {
-    flex: 1,
+  actionStatus: {
+    flexShrink: 1,
+    marginLeft: spacing.xs,
   },
   trackingRow: {
     flexDirection: 'row',

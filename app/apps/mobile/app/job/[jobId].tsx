@@ -1428,7 +1428,7 @@ export default function JobDrilldownScreen() {
           </Text>
         ) : null}
         <JobSummaryRest
-          hideTechFields={region === 'estimate' || region === 'schedule' || region === 'closeout'}
+          hideTechFields={region === 'estimate' || region === 'schedule' || region === 'closeout' || region === 'evisit'}
           hidePremTech={region === 'payment'}
           hideServiceArea={region === 'payment'}
           job={currentJob}
@@ -1483,14 +1483,32 @@ export default function JobDrilldownScreen() {
               : (p.techId ? (serviceGateOpen ? handleAssignInstaller(p.techId) : undefined) : handleUnassign('service')));
           }}
         />
-        {isAdmin && region === 'evisit' && investigatorTechId ? (
-          <Text style={{ paddingLeft: spacing.lg }}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
-        ) : null}
         {region === 'evisit' && (
           <JobInvestigationScreen
             jobId={currentJob.id}
             job={currentJob}
             embedded
+            headerSlot={
+              <>
+                {isAdmin && investigatorTechId ? (
+                  <Text numberOfLines={1}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+                ) : null}
+                <JobTechFields
+                  hideServiceTech
+                  hideServiceArea
+                  premTechId={investigatorTechId}
+                  premTechName={premTechName}
+                  premBusy={assigning !== null}
+                  premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+                  {...(isAdmin
+                    ? {
+                        techs: eligibleTechOptions,
+                        onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                      }
+                    : {})}
+                />
+              </>
+            }
             renderTaskList={(p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} />}
             onSubmitted={(inv) => {
               setInvestigation(inv);
