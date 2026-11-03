@@ -1,6 +1,6 @@
 ---
 classification: sdassemblypros/jobcore
-comments: "Deploying `estimate-resolve` (manual dashboard steps — no Docker, no Supabase CLI)"
+comments: "Deploying `estimate-resolve` with the Supabase CLI (--use-api, no Docker)"
 origin: Codespace/SDAssemblyPros/Jobcore/app/supabase/functions/estimate-resolve/DEPLOY.md
 tags: [sdassemblypros, jobcore]
 ---
@@ -17,42 +17,29 @@ but reads `estimate_tokens`/`jobs`/`customers`/`organizations`/
 
 Project: `vogkxkcceahtwyovpxsg` (https://vogkxkcceahtwyovpxsg.supabase.co).
 
-Jeff does not use Docker and does not run the Supabase CLI locally. Deploy
-this function entirely through the **Supabase Dashboard web editor** — no
-`supabase functions deploy`, no `supabase link`, no local Docker daemon
-required.
+## 1. Deploy with the CLI (no Docker)
 
-## 1. Open the function editor in the Dashboard
+The CLI is linked to this project from `app/`. Run from `app/`:
 
-1. Go to https://supabase.com/dashboard/project/vogkxkcceahtwyovpxsg/functions.
-2. If `estimate-resolve` does not already exist in the list, click
-   **Deploy a new function** → **Via Editor** and name it `estimate-resolve`.
-   If it already exists (this function was previously deployed live but its
-   local source went missing — this file is restoring the source only),
-   open it and use **Edit function** instead.
+```
+npx supabase functions deploy estimate-resolve --no-verify-jwt --use-api
+```
 
-## 2. Paste the source
+- `--use-api` bundles on Supabase's side, so no local Docker daemon is needed.
+- `--no-verify-jwt` is **required**: this function is reached with a raw
+  `token` query parameter, not a Supabase JWT, so JWT verification would
+  reject every request before it reaches the handler.
+- The CLI uploads both source files, `index.ts` and `estimate-layout.ts`
+  (the page layout, including the Fine Print). A Dashboard paste of
+  `index.ts` alone would break the import, so don't deploy that way.
 
-Copy the full contents of this directory's `index.ts` into the Dashboard's
-in-browser editor for `estimate-resolve`, replacing whatever is there. There
-is only one file — no `handler.ts` split, no other source files to add.
-
-## 3. Set "Enforce JWT Verification" OFF
-
-In the function's settings panel (or the deploy dialog, depending on
-Dashboard version), find **Enforce JWT Verification** / **Verify JWT** and
-turn it **off**. This is the Dashboard-UI equivalent of the CLI's
-`--no-verify-jwt` flag and is **required** — this function is reached with a
-raw `token` query parameter, not a Supabase JWT; default JWT verification
-would reject every request before it ever reaches the handler.
-
-## 4. Deploy
-
-Click **Deploy** (or **Save and deploy**, depending on Dashboard version).
 No separate secrets step is needed: `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` are provided automatically to every Edge
 Function in this project's runtime — the same as `handoff-resolve` and the
 payment webhooks.
+
+Last deployed 2026-11-02 (reschedule fee Fine Print, commits e340579 and
+0bf3a5c).
 
 ## 5. Verify
 
@@ -100,9 +87,8 @@ Expect `401` with an HTML error page ("This estimate link has expired.").
 
 ## Notes
 
-- Single-file layout, matching `handoff-resolve`:
-  `supabase/functions/estimate-resolve/index.ts` plus this sibling
-  `DEPLOY.md`.
+- Two source files: `index.ts` (token lookup, data reads) and
+  `estimate-layout.ts` (the HTML page), plus this sibling `DEPLOY.md`.
 - All responses — success and error alike — are `text/html`. There is no
   JSON envelope on this function (unlike `handoff-resolve`'s
   `{ "error": string }` shape), because the response itself is the
