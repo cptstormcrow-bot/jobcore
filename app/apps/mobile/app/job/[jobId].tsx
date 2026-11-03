@@ -1492,7 +1492,10 @@ export default function JobDrilldownScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                 {isAdmin && investigatorTechId ? (
                   <>
-                    <Text numberOfLines={1}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+                    <Text numberOfLines={1}>
+                      {'Prem Claimed by: '}
+                      <Text style={{ color: colors.text, fontWeight: '700' }}>{techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}</Text>
+                    </Text>
                     <Text style={{ color: colors.textMuted }}>{'•'}</Text>
                   </>
                 ) : null}
