@@ -15,6 +15,7 @@ import { updateJobGuarded } from './job-edit-guard';
 import { updateRecordGuarded } from './record-edit-guard';
 import { readJpegDescription, writeJpegDescription } from '../jpeg-description';
 import { blobToBytes } from '../photo-note';
+import { readLocalBytes } from '../local-file-bytes';
 
 type Sb = OpContext['supabase'];
 const APPLIED = { applied: true } as const;
@@ -36,6 +37,15 @@ function isAlreadyExists(error: unknown): boolean {
 
 const JOB_PHOTOS_BUCKET = 'job-photos';
 
+async function storageHas(supabase: Sb, storagePath: string): Promise<boolean> {
+  const slash = storagePath.lastIndexOf('/');
+  const dir = slash < 0 ? '' : storagePath.slice(0, slash);
+  const name = storagePath.slice(slash + 1);
+  const { data, error } = await supabase.storage.from(JOB_PHOTOS_BUCKET).list(dir, { search: name });
+  if (error) throw error;
+  return (data ?? []).some((f) => f.name === name);
+}
+
 async function uploadLocal(
   supabase: Sb,
   storagePath: string,
@@ -43,12 +53,17 @@ async function uploadLocal(
   contentType: string,
   upsert = false,
 ): Promise<void> {
-  const blob = await (await fetch(localUri)).blob();
+  const body = await readLocalBytes(localUri);
+  if (body === null) {
+    // The photo file is gone from the phone. An earlier try may have uploaded it already.
+    if (!upsert && (await storageHas(supabase, storagePath))) return;
+    throw Object.assign(new Error('The photo file is no longer on this phone, so it cannot be sent.'), { status: 404 });
+  }
   const { error } = await supabase.storage
     .from(JOB_PHOTOS_BUCKET)
     .upload(
       storagePath,
-      blob,
+      body,
       upsert ? { contentType, upsert: true, cacheControl: '60' } : { contentType },
     );
   if (error && (upsert || !isAlreadyExists(error))) throw error;
@@ -352,7 +367,7 @@ const jobPhotoNote: OpHandler<JobPhotoNotePayload> = async (p, ctx) => {
   } catch {
     return APPLIED; // not a JPEG: nothing to embed
   }
-  const { error } = await bucket.upload(p.storagePath, new Blob([out as BlobPart], { type: 'image/jpeg' }), {
+  const { error } = await bucket.upload(p.storagePath, out, {
     contentType: 'image/jpeg',
     upsert: true,
     cacheControl: '60',
@@ -604,9 +619,13 @@ const calendarEventCreate: OpHandler<CalendarEventCreatePayload> = async (p, ctx
 const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx) => {
   let receiptPath = p.receiptPhotoPath ?? null;
   if (receiptPath && /^(file|content|blob|data):/i.test(receiptPath)) {
-    const blob = await (await fetch(receiptPath)).blob();
+    const native = /^(file|content):\/\//i.test(receiptPath);
+    const body = native ? await readLocalBytes(receiptPath) : await (await fetch(receiptPath)).blob();
+    if (body === null) {
+      throw Object.assign(new Error('The receipt photo is no longer on this phone, so it cannot be sent.'), { status: 404 });
+    }
     let ext = 'jpg';
-    if (/^(file|content):\/\//i.test(receiptPath)) {
+    if (native) {
       const extMatch = /\.([A-Za-z0-9]{2,5})(?:\?.*)?$/.exec(receiptPath);
       ext = extMatch?.[1]?.toLowerCase() ?? 'jpg';
     } else {
@@ -618,12 +637,12 @@ const reimbursementCreate: OpHandler<ReimbursementCreatePayload> = async (p, ctx
         'image/heic': 'heic',
         'image/gif': 'gif',
       };
-      ext = byMime[blob.type.toLowerCase()] ?? 'jpg';
+      ext = body instanceof Blob ? byMime[body.type.toLowerCase()] ?? 'jpg' : 'jpg';
     }
     const storagePath = `${ctx.orgId}/${p.techId}/${p.id}.${ext}`;
     const { error: upErr } = await ctx.supabase.storage
       .from('receipts')
-      .upload(storagePath, blob, { contentType: contentTypeFor(ext), upsert: true });
+      .upload(storagePath, body, { contentType: contentTypeFor(ext), upsert: true });
     if (upErr && !isAlreadyExists(upErr)) throw upErr;
     receiptPath = storagePath;
   }

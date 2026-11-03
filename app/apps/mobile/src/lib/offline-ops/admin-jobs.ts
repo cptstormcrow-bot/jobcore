@@ -225,7 +225,10 @@ const jobResetTimeline: OpHandler<JobResetTimelinePayload> = async ({ jobId }, c
   return APPLIED;
 };
 
-const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async ({ id, organizationId, draft }, ctx) => {
+const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async (payload, ctx) => {
+  const { id } = payload;
+  const draft = legacyBody<JobAssignmentCreatePayload['draft']>(payload, 'draft');
+  const organizationId = payload.organizationId ?? ctx.orgId;
   // Investigator re-assignment: delete-then-insert (partial unique index 0065; keeps the 0035
   // time-off blackout trigger firing for the new assignee). Verbatim from the repo.
   const isInvestigator = draft.kind === 'investigator';
