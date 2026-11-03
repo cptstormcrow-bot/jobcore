@@ -366,6 +366,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
             disabled={savingOnsite}
             onChange={handleMaterialsOnsite}
           />
+          <Text style={{ color: colors.textMuted }}>{'•'}</Text>
           <TextField inline
             label="UPS tracking number"
             value={trackingInput}
