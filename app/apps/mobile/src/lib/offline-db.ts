@@ -159,6 +159,34 @@ export async function retryAllFailed(): Promise<void> {
   await db.runAsync(`update ${OFFLINE_QUEUE_TABLE} set next_attempt_at = null where status = 'pending'`);
 }
 
+/** A stuck row: failed, or pending and already retried twice or more (one quick retry is normal). Feeds the stuck popup (#0099). */
+const STUCK_WHERE = `(status = 'failed' or (status = 'pending' and attempts >= 2))`;
+
+export async function countStuck(): Promise<number> {
+  const db = await getOfflineDb();
+  const row = await db.getFirstAsync<{ n: number }>(
+    `select count(*) as n from ${OFFLINE_QUEUE_TABLE} where ${STUCK_WHERE}`
+  );
+  return row?.n ?? 0;
+}
+
+export async function listStuck(limit: number = 5): Promise<QueueRow[]> {
+  const db = await getOfflineDb();
+  return db.getAllAsync<QueueRow>(
+    `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where ${STUCK_WHERE} order by occurred_at asc, rowid asc limit ?`,
+    limit
+  );
+}
+
+/** Unstick everything: failed rows back to pending, and every pending row's retry count, backoff and error cleared, so the next drain sends them all now. */
+export async function unstickAll(): Promise<void> {
+  const db = await getOfflineDb();
+  await retryAllFailed();
+  await db.runAsync(
+    `update ${OFFLINE_QUEUE_TABLE} set attempts = 0, next_attempt_at = null, inflight_at = null, last_error = null, error_class = null where status = 'pending'`
+  );
+}
+
 /**
  * Delete one failed row. The optimistic read-cache patch has no inverse, so the
  * caller refreshes the read cache (refetchAll) to drop the local-only change.

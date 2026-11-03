@@ -17,6 +17,7 @@ import { getEnabledModules } from '@jobcore/module-sdk';
 import { SyncStatusProvider } from '../src/lib/sync-status';
 import { ReadCacheProvider } from '../src/lib/read-cache';
 import { SyncIndicator } from '../src/components/SyncIndicator';
+import { StuckPopup } from '../src/components/StuckPopup';
 import { SyncOptionsProvider } from '../src/components/SyncOptionsProvider';
 import { installGlobalErrorHandler } from '../src/lib/global-error-handler';
 import '../src/lib/background-sync'; // native-only task definition + registration (no-op on web)
@@ -186,6 +187,7 @@ function AuthGate() {
       {isRedirect ? overlay : null}
       <ScreenNumberBadge pathname={pathname} />
       {state.status === 'authenticated' ? <SyncIndicator /> : null}
+      {state.status === 'authenticated' ? <StuckPopup /> : null}
     </View>
   );
 }

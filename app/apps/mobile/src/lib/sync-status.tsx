@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import { useSession } from './session';
-import { countFailed, countPending, drainOfflineQueue, listFailed, retryAllFailed } from './offline-db';
+import { countFailed, countPending, countStuck, drainOfflineQueue, listFailed, retryAllFailed, unstickAll as unstickAllRows } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
 import type { SyncStatus } from './offline-db.types';
 
@@ -25,6 +25,7 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [failedCount, setFailedCount] = useState(0);
+  const [stuckCount, setStuckCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastDrainAt, setLastDrainAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -49,6 +50,8 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       if (aliveRef.current) setPendingCount(n);
       const f = await countFailed();
       if (aliveRef.current) setFailedCount(f);
+      const st = await countStuck();
+      if (aliveRef.current) setStuckCount(st);
     } catch {
       // keep last-known count
     }
@@ -188,7 +191,30 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     trigger();
   }, [recount, trigger]);
 
-  const value: SyncStatus = { isOnline, pendingCount, failedCount, isSyncing, lastDrainAt, lastError, refresh, retryAll };
+  const unstickAll = useCallback(async () => {
+    try {
+      await unstickAllRows();
+    } catch {
+      // leave rows as they are; Sync issues still lists them
+    }
+    backoffRef.current = 0;
+    if (aliveRef.current) setLastError(null);
+    await recount();
+    trigger();
+  }, [recount, trigger]);
+
+  const value: SyncStatus = {
+    isOnline,
+    pendingCount,
+    failedCount,
+    stuckCount,
+    isSyncing,
+    lastDrainAt,
+    lastError,
+    refresh,
+    retryAll,
+    unstickAll,
+  };
   return <SyncStatusContext.Provider value={value}>{children}</SyncStatusContext.Provider>;
 }
 
