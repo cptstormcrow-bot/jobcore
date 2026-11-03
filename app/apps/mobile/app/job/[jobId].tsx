@@ -1375,7 +1375,7 @@ export default function JobDrilldownScreen() {
   ];
 
   // Configuration (#0097) stays in every role's slider; Needs Prem is the Prem Needed
-  // checkbox on the Job tab, not a menu item. AppChrome adds the line and Sign out (#0096) last.
+  // checkbox on the Job tab, not a menu item. AppChrome adds the line, Sign out (#0096), then Configuration (#0097) last.
   const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
     .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
   const isTech = role === 'tech';

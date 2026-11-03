@@ -225,7 +225,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     ...(role === 'owner' || role === 'admin'
       ? ([{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => go('closeout') }] as MenuItem[])
       : []),
-    // AppChrome adds the line and Sign out last.
+    // AppChrome adds the line, Sign out, then Configuration last.
   ];
 
   const handleStagePress = (key: string) => {

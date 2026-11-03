@@ -218,9 +218,13 @@ export function AppChrome({
       node
     );
   const drawerSignOut = useDrawerSignOut();
-  // Every non-empty main menu ends with a divider and Sign out.
+  // Every non-empty main menu ends with a divider, Sign out, then Configuration.
   const mainItems: MenuItem[] = drawerSignOut && menuItems.length > 0 && !menuItems.some((m) => m.id === 'sign-out')
-    ? [...menuItems, { id: 'sign-out', label: 'Sign out', dividerAbove: true, onPress: drawerSignOut }]
+    ? [
+        ...menuItems.filter((m) => m.id !== 'configuration'),
+        { id: 'sign-out', label: 'Sign out', dividerAbove: true, onPress: drawerSignOut },
+        ...menuItems.filter((m) => m.id === 'configuration'),
+      ]
     : menuItems;
   const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : mainItems;
   useEffect(() => {
