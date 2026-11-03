@@ -1491,7 +1491,10 @@ export default function JobDrilldownScreen() {
             headerSlot={
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                 {isAdmin && investigatorTechId ? (
-                  <Text numberOfLines={1}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+                  <>
+                    <Text numberOfLines={1}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
+                    <Text style={{ color: colors.textMuted }}>{'•'}</Text>
+                  </>
                 ) : null}
                 <View style={{ flex: 1 }}>
                   <JobTechFields
