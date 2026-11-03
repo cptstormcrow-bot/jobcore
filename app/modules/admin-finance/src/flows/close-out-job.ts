@@ -52,7 +52,8 @@ export interface CloseOutJobDeps {
    * caller resolves and supplies them directly — this flow only reuses
    * `calculateCommission` against them, never fetches them itself.
    */
-  compensationPolicy: CompensationPolicy;
+  /** null for a tech's close-out: no commission is computed (an admin posts pay later). */
+  compensationPolicy: CompensationPolicy | null;
   rates: readonly PriceSheetRate[];
   commissionRepository: CommissionRepository;
   /** Who closed the job — `Ctx` has no actor identity field to read this from. */
@@ -91,8 +92,10 @@ export async function closeOutJob(job: Job, deps: CloseOutJobDeps): Promise<Clos
   // Price-sheet commission is best effort: no active sheet, or no matching
   // rate, leaves it null and the close-out continues.
   let commission: CommissionLine | null = null;
-  const activePriceSheet = await deps.priceSheetRepository.getActive(job.organizationId);
-  if (activePriceSheet) {
+  const activePriceSheet = deps.compensationPolicy
+    ? await deps.priceSheetRepository.getActive(job.organizationId)
+    : null;
+  if (activePriceSheet && deps.compensationPolicy) {
     const commissionResult = calculateCommission(
       job,
       activePriceSheet,

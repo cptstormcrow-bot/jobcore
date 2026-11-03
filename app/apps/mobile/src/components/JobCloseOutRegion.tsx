@@ -264,14 +264,17 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
       setPhotoError(null);
       void (async () => {
         try {
-          const policy = await ports.compensationPolicy.getForOrganization(session.organization.id);
-          if (!policy) {
+          // A tech's close-out is a status change only; an admin posts the pay later
+          // by reopening and closing out again (Jeff 2026-11-03, Option A).
+          const isTech = session.profile.role === 'tech';
+          const policy = isTech ? null : await ports.compensationPolicy.getForOrganization(session.organization.id);
+          if (!isTech && !policy) {
             setPhotoError('No compensation policy is configured for this organization. Ask an admin to set one up before closing out.');
             return;
           }
           const paymentRows = await ports.payments.listForJob(target.id);
           const settled = settledTotalCents(paymentRows) > 0;
-          const sheet = await ports.priceSheets.getActive(session.organization.id);
+          const sheet = isTech ? null : await ports.priceSheets.getActive(session.organization.id);
           const rates = sheet ? await ports.priceSheetRates.list(sheet.id) : [];
           const result = await closeOutJob(target, {
             ctx: { ...ctx, hasPaymentRecord: () => settled },
@@ -285,6 +288,10 @@ export function JobCloseOutRegion({ job, role, onClosed }: JobCloseOutRegionProp
           });
           if (!result.ok) {
             setPhotoError(`Could not close out: ${result.reason}`);
+            return;
+          }
+          if (isTech) {
+            onClosed(result.job);
             return;
           }
           const payRows = contractorPayouts

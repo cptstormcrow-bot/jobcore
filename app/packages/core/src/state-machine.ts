@@ -132,7 +132,8 @@ export const TRANSITIONS: readonly Transition[] = [
     roles: FIELD,
     precondition: requirePaymentSettled,
   },
-  { from: 'paid', to: 'closed', roles: OFFICE },
+  // Techs close out too; an admin posts the pay later (Jeff 2026-11-03, Option A).
+  { from: 'paid', to: 'closed', roles: FIELD },
   // Reopen (#0018): an office user undoes a close-out.
   { from: 'closed', to: 'paid', roles: OFFICE },
   { from: 'closed', to: 'archived', roles: OFFICE },
