@@ -17,7 +17,7 @@ import { estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
 import { usePaidInFull } from '../../src/lib/settle-on-completion';
-import { AppChrome, Breadcrumb, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Checkbox, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
@@ -332,6 +332,8 @@ export default function JobDrilldownScreen() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [saving, setSaving] = useState(false);
+  // New Job #0041's Prem Needed box; written right after the job is created.
+  const [createNeedsPrem, setCreateNeedsPrem] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
 
@@ -714,7 +716,9 @@ export default function JobDrilldownScreen() {
         ingressInstructions: form.ingressInstructions.trim() || null,
       } as JobDraft;
       const created = await createJobRepository().create(draft);
-      justCreatedJobs.set(created.id, { ...created, totalLaborSeconds: created.totalLaborSeconds ?? 0, isBeta: created.isBeta ?? false });
+      const needsPremAt = createNeedsPrem ? new Date().toISOString() : null;
+      if (needsPremAt) await createJobRepository().setNeedsPrem?.(created.id, needsPremAt);
+      justCreatedJobs.set(created.id, { ...created, totalLaborSeconds: created.totalLaborSeconds ?? 0, isBeta: created.isBeta ?? false, ...(needsPremAt ? { needsPremAt } : {}) });
       router.replace(`/job/${created.id}?panel=plan` as never);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed.');
@@ -1304,6 +1308,17 @@ export default function JobDrilldownScreen() {
           />
         </View>
         <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
+          {role !== 'tech' ? (
+            <Checkbox
+              label="Prem Needed"
+              accessibilityLabel="Prem Needed"
+              variant="check"
+              checked={createNeedsPrem}
+              disabled={saving}
+              onChange={() => setCreateNeedsPrem((v) => !v)}
+              style={styles.createPremNeeded}
+            />
+          ) : null}
           <JobDetailsForm
             mode="create"
             value={form}
@@ -1338,13 +1353,6 @@ export default function JobDrilldownScreen() {
     ...(isAdmin
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
-    ...(role !== 'tech'
-      ? [{
-          id: 'needs-prem',
-          label: currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem',
-          onPress: () => void handleToggleNeedsPrem(),
-        }]
-      : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
     { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
@@ -1366,8 +1374,8 @@ export default function JobDrilldownScreen() {
       : []),
   ];
 
-  // Needs Prem (#0095) and Configuration (#0097) stay in every role's slider;
-  // techs never get Needs Prem. AppChrome adds the line and Sign out (#0096) last.
+  // Configuration (#0097) stays in every role's slider; Needs Prem is the Prem Needed
+  // checkbox on the Job tab, not a menu item. AppChrome adds the line and Sign out (#0096) last.
   const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
     .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
   const isTech = role === 'tech';
@@ -1632,6 +1640,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   footerButton: { flex: 1 },
+  createPremNeeded: { paddingHorizontal: spacing.md, marginTop: spacing.xs, marginBottom: 0 },
   topActions: {
     flexDirection: 'row',
     gap: spacing.sm,

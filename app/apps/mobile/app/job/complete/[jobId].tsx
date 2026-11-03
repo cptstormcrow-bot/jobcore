@@ -205,7 +205,6 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     { id: 'evisit', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => go('jobEstimate') },
     ...(isAdmin ? ([{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => go('assign') }] as MenuItem[]) : []),
-    ...(role !== 'tech' && !isAdmin ? [{ id: 'needs-prem', label: 'Needs Prem', onPress: () => go('plan') }] : []),
     { id: 'schedule', label: 'Schedule', onPress: () => go('schedule') },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => go('plan') },
     { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => go('plan'), disabled: !headerJob?.assignedTechId },
