@@ -29,6 +29,8 @@ export type JobOverviewRegionProps = {
   onCancel: () => void;
   /** Parent's existing confirmResetTime. Admin only. */
   onReset?: () => void;
+  /** Zeroes the job's time only; the parent decides who sees it (admin or assigned tech). */
+  onResetTime?: () => void;
   onOpenJob: (jobId: string) => void;
 };
 
@@ -164,6 +166,7 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
         <PayrollButton label="Cancel" onPress={props.onCancel} disabled={props.saving} />
         <PayrollButton label={props.saving ? 'Saving...' : 'Save'} onPress={props.onSave} disabled={props.saving} />
         {isAdmin && props.onReset ? <PayrollButton label="Reset" onPress={props.onReset} /> : null}
+        {props.onResetTime ? <PayrollButton label="Reset time" onPress={props.onResetTime} /> : null}
       </View>
     </View>
   );

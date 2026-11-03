@@ -160,6 +160,10 @@ export interface JobMarkContactedPayload {
   jobId: string;
   contactedAt: string;
 }
+export interface JobResetLaborTimePayload {
+  jobId: string;
+  resetAt: string;
+}
 export interface JobInvestigationUpsertPayload {
   jobId: string;
   occurredAt: string;
@@ -461,6 +465,13 @@ const jobMarkContacted: OpHandler<JobMarkContactedPayload> = async (p, ctx) => {
   return APPLIED;
 };
 
+// Zeroes the job's time; a running clock restarts from resetAt (migration 0119).
+const jobResetLaborTime: OpHandler<JobResetLaborTimePayload> = async (p, ctx) => {
+  const { error } = await ctx.supabase.rpc('reset_job_labor_time', { p_job_id: p.jobId, p_reset_at: p.resetAt });
+  check(error);
+  return APPLIED;
+};
+
 const jobInvestigationUpsert: OpHandler<JobInvestigationUpsertPayload> = async (p, ctx) => {
   const patch = p.patch;
   const { error } = await ctx.supabase.from('job_investigations').upsert(
@@ -636,6 +647,7 @@ export const TECH_OP_HANDLERS: Record<string, OpHandler<any>> = {
   'job.updateStatusAsTech': jobUpdateStatusAsTech,
   'job.patch_lifecycle': jobPatchLifecycle,
   'job.mark_contacted': jobMarkContacted,
+  'job.reset_labor_time': jobResetLaborTime,
   'job_investigation.upsert': jobInvestigationUpsert,
   'job_estimate.upsert': jobEstimateUpsert,
   'job_estimate_line_item.add': jobEstimateLineItemAdd,

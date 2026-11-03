@@ -54,6 +54,14 @@ const JOB_QUERIES = ['ft.jobs.listAssignedToTech', 'ft.jobs.getById', 'af.jobs.g
 const jobPatch = (idKey: string, apply: (p: Record<string, unknown>) => Row) => (p: Record<string, unknown>, rows: unknown) =>
   mapRows(rows, idIs(p[idKey]), (r) => ({ ...r, ...apply(p) }));
 
+// Time back to 0; a running job's start stamp moves to the reset moment so the live timer reads 0.
+const resetLaborCols = (at: unknown) => (r: Row): Row => {
+  const out: Row = { ...r, total_labor_seconds: 0, totalLaborSeconds: 0 };
+  if (r.status === 'in_progress') Object.assign(out, { in_progress_at: at, inProgressAt: at });
+  if (r.status === 'en_route') Object.assign(out, { en_route_at: at, enRouteAt: at });
+  return out;
+};
+
 function lifecycleCols(patch: unknown): Row {
   if (!isObj(patch)) return {};
   const out: Row = { ...patch };
@@ -70,6 +78,7 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
   { op: 'job.update_status', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.patch_lifecycle', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => lifecycleCols(p.patch)) },
   { op: 'job.mark_contacted', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ contacted_at: p.contactedAt, contactedAt: p.contactedAt })) },
+  { op: 'job.reset_labor_time', queries: JOB_QUERIES, patch: (p, rows) => mapRows(rows, idIs(p.jobId), resetLaborCols(p.resetAt)) },
   {
     op: 'job_time_entry.clock_in',
     queries: ['ft.timeEntries.listForJob'],

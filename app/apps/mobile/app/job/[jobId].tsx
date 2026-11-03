@@ -1265,6 +1265,39 @@ export default function JobDrilldownScreen() {
     ]);
   };
 
+  // Zeroes the job's time only (migration 0119); status, tech and schedule stay. A running clock restarts at 0.
+  const handleResetLaborTime = (): void => {
+    if (!job) return;
+    const stamp = new Date().toISOString();
+    const running = job.status === 'in_progress' ? { inProgressAt: stamp } : job.status === 'en_route' ? { enRouteAt: stamp } : {};
+    const patch = { totalLaborSeconds: 0, ...running };
+    void writeThrough('job.reset_labor_time', { jobId: job.id, resetAt: stamp }, stamp, patch)
+      .then((res) => {
+        setJob((prev) => (prev && prev.id === job.id ? { ...prev, ...patch } : prev));
+        if (res.status === 'queued') setActionError(QUEUED_COPY);
+      })
+      .catch((err) => setActionError(toUserMessage(err)));
+  };
+
+  const confirmResetLaborTime = (): void => {
+    const title = 'Reset time to 0?';
+    const body = "This sets this job's logged time back to 0. If the clock is running it starts again from 0. Status, tech and schedule are kept.";
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(`${title}
+
+${body}`)) handleResetLaborTime();
+      return;
+    }
+    Alert.alert(title, body, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Yes', onPress: handleResetLaborTime },
+    ]);
+  };
+  const canResetLaborTime =
+    !!job &&
+    !['closed', 'archived'].includes(String(job.status)) &&
+    (isAdmin || (session.status === 'authenticated' && job.assignedTechId === session.profile.id));
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -1636,6 +1669,7 @@ export default function JobDrilldownScreen() {
               onSave={() => void handleSaveEdit()}
               onCancel={handleCancel}
               onReset={isAdmin ? confirmResetTime : undefined}
+              onResetTime={canResetLaborTime ? confirmResetLaborTime : undefined}
               onOpenJob={(id) => router.push(`/job/${id}?panel=plan` as never)}
             />
             <View style={styles.jobDetailPane}>

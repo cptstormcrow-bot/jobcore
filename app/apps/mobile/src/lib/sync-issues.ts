@@ -31,6 +31,7 @@ const OP_LABELS: Record<string, string> = {
   'job.patch_scheduling': 'Job scheduling',
   'job.update_details': 'Job details',
   'job.mark_contacted': 'Customer contacted',
+  'job.reset_labor_time': 'Job time reset',
   'job.mark_beta': 'Job beta flag',
   'job.set_needs_prem': 'Job Prem flag',
   'job.reset_timeline': 'Reset job timeline',
