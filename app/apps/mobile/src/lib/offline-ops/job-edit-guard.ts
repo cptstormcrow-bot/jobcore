@@ -14,9 +14,9 @@ export class JobEditConflictError extends Error {
   }
 }
 
-/** The row kept changing under us (3 tries). status 409 -> 'permanent', so it shows on Sync issues instead of holding the queue. */
+/** The row kept changing under us (3 tries). status 422 -> 'permanent' (409 would classify as 'unknown' and retry), so it shows on Sync issues instead of holding the queue. */
 class JobEditRaceError extends Error {
-  status = 409 as const;
+  status = 422 as const;
   code = 'JOB_EDIT_RACE' as const;
   constructor() {
     super('This job kept changing while saving. Open it and try again.');
