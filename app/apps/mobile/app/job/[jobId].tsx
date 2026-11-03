@@ -373,7 +373,8 @@ export default function JobDrilldownScreen() {
       .listEmployees(org.id)
       .then((list: Profile[]) => {
         if (!cancelled) setTechs(list.filter((p) => p.role === 'tech' && p.active === true));
-      });
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -385,7 +386,7 @@ export default function JobDrilldownScreen() {
     let cancelled = false;
     void createServiceAreaRepository().listForOrganization(org.id).then((list) => {
       if (!cancelled) setServiceAreas(list);
-    });
+    }).catch(() => undefined);
     return () => { cancelled = true; };
   }, [org?.id]);
 
@@ -427,7 +428,7 @@ export default function JobDrilldownScreen() {
     let cancelled = false;
     void createTechServiceAreaRepository().listForOrganization(org.id).then((list) => {
       if (!cancelled) setTechServiceAreas(list);
-    });
+    }).catch(() => undefined);
     return () => { cancelled = true; };
   }, [org?.id]);
 
@@ -886,14 +887,14 @@ export default function JobDrilldownScreen() {
         0,
       );
       setTotalTaskMinutes(sum);
-    });
+    }).catch(() => undefined);
     if (org?.id) {
       void createPriceSheetStandardDurationRepository().get(org.id).then((result) => {
         if (cancelled) return;
         if (result.ok && result.value) {
           setStandardMinutes(result.value.standardMinutes);
         }
-      });
+      }).catch(() => undefined);
     }
     return () => {
       cancelled = true;
