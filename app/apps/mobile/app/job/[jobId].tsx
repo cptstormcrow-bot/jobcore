@@ -1489,25 +1489,27 @@ export default function JobDrilldownScreen() {
             job={currentJob}
             embedded
             headerSlot={
-              <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
                 {isAdmin && investigatorTechId ? (
                   <Text numberOfLines={1}>{`Prem Claimed by: ${techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId}`}</Text>
                 ) : null}
-                <JobTechFields
-                  hideServiceTech
-                  hideServiceArea
-                  premTechId={investigatorTechId}
-                  premTechName={premTechName}
-                  premBusy={assigning !== null}
-                  premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
-                  {...(isAdmin
-                    ? {
-                        techs: eligibleTechOptions,
-                        onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
-                      }
-                    : {})}
-                />
-              </>
+                <View style={{ flex: 1 }}>
+                  <JobTechFields
+                    hideServiceTech
+                    hideServiceArea
+                    premTechId={investigatorTechId}
+                    premTechName={premTechName}
+                    premBusy={assigning !== null}
+                    premIndicator={currentJob.needsPremAt && estimate?.status !== 'approved' ? 'Prem' : null}
+                    {...(isAdmin
+                      ? {
+                          techs: eligibleTechOptions,
+                          onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                        }
+                      : {})}
+                  />
+                </View>
+              </View>
             }
             renderTaskList={(p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} />}
             onSubmitted={(inv) => {

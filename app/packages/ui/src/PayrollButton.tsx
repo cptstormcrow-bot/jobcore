@@ -48,7 +48,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.sand,
   },
-  disabled: { backgroundColor: colors.sandDisabled },
+  // Gray outline so a grayed button stays visible on light screens (Jeff 2026-11-02); padding drops by the border so width holds.
+  disabled: { backgroundColor: colors.sandDisabled, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 9 },
   text: {
     color: '#000',
     fontSize: 13,

@@ -358,14 +358,14 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       </View>
 
       <View style={styles.section}>
-        <Checkbox
-          label="Materials Onsite?"
-          variant="check"
-          checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
-          disabled={savingOnsite}
-          onChange={handleMaterialsOnsite}
-        />
         <View style={styles.trackingRow}>
+          <Checkbox
+            label="Materials Onsite?"
+            variant="check"
+            checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
+            disabled={savingOnsite}
+            onChange={handleMaterialsOnsite}
+          />
           <TextField inline
             label="UPS tracking number"
             value={trackingInput}
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
   trackingRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.sm,
     marginTop: compact.gap,
   },
