@@ -15,6 +15,7 @@ import { isOnlineNow } from './sync-events';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
 import { getCached, listMeta } from './read-cache-store';
 import { readEmployeeProfiles } from './employee-profiles-source';
+import { clockDraftsFromSegments, type ClockSegmentRow } from './clock-entries';
 
 type Row = Record<string, any>;
 
@@ -107,6 +108,12 @@ function toRunLine(r: Row, name: string): wageEngine.RunLine {
   };
 }
 
+function shiftDay(iso: string, days: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function extOf(uri: string): string {
   const m = /\.([A-Za-z0-9]+)(?:\?.*)?$/.exec(uri);
   return m?.[1] ? m[1].toLowerCase() : 'jpg';
@@ -177,6 +184,50 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
       known.set(entry.id, {
         row: { work_date: entry.workDate, minutes: entry.minutes, clock_in_at: entry.clockInAt, clock_out_at: entry.clockOutAt, source: entry.source, notes: entry.notes ?? null },
       });
+    },
+
+    async importClockEntries(range: PayrollDateRange) {
+      // Online only: the segments and the "already imported" check both need the server.
+      if (!isOnlineNow()) return 0;
+      const { data: prof } = await readEmployeeProfiles((source) =>
+        supabase.from(source).select('worker_type').eq('id', userId).maybeSingle(),
+      );
+      // Contractors are paid by payout, not by the hour.
+      if ((prof as Row | null)?.worker_type === 'contractor') return 0;
+      const { data: segs, error } = await supabase
+        .from('job_time_segments')
+        .select('id, reason_code, started_at, ended_at, jobs(job_number)')
+        .eq('organization_id', orgId)
+        .eq('tech_id', userId)
+        .in('reason_code', ['job_labor', 'travel'])
+        .not('ended_at', 'is', null)
+        .gte('started_at', `${shiftDay(range.from, -1)}T00:00:00Z`)
+        .lt('started_at', `${shiftDay(range.to, 2)}T00:00:00Z`);
+      check(error);
+      const rows = (segs ?? []) as unknown as ClockSegmentRow[];
+      if (rows.length === 0) return 0;
+      const { data: have, error: haveErr } = await supabase
+        .from('payroll_time_entries')
+        .select('id')
+        .in('id', rows.map((r) => r.id));
+      check(haveErr);
+      const existing = new Set(((have ?? []) as Row[]).map((r) => r.id as string));
+      const drafts = clockDraftsFromSegments(rows, existing, range);
+      for (const d of drafts) {
+        await this.upsertEntry({
+          id: d.id,
+          userId,
+          workDate: d.workDate as wageEngine.IsoDate,
+          minutes: d.minutes,
+          clockInAt: d.clockInAt,
+          clockOutAt: d.clockOutAt,
+          source: 'clock',
+          status: 'draft',
+          notes: d.notes,
+          rejectionReason: null,
+        });
+      }
+      return drafts.length;
     },
 
     async deleteEntry(id) {

@@ -136,6 +136,8 @@ export interface PayrollSelfPort {
   upsertEntry(entry: PayrollTimeEntry): Promise<void>;
   /** Delete one of my entries. */
   deleteEntry(id: string): Promise<void>;
+  /** Add finished clock sessions in a range as draft entries; returns how many were added. */
+  importClockEntries?(range: PayrollDateRange): Promise<number>;
   /** Submit my entries in a range for approval. */
   submitWeek(range: PayrollDateRange): Promise<void>;
   /** Return an own submitted (not approved) week to draft so it can be edited or deleted. */

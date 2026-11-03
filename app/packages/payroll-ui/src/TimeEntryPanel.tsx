@@ -85,6 +85,11 @@ function fmt(minutes: number): string {
   return Math.floor(minutes / 60) + ':' + pad(minutes % 60);
 }
 
+/** A clock draft the employee deleted is kept at 0 minutes so it is not imported again. */
+function dismissedClock(e: PayrollTimeEntry): boolean {
+  return e.source === 'clock' && e.minutes === 0;
+}
+
 function editable(e: PayrollTimeEntry): boolean {
   return e.status === 'draft' || e.status === 'rejected';
 }
@@ -116,6 +121,12 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
 
   const reload = useCallback(async () => {
     try {
+      // Finished clock sessions become drafts first; a failure here never blocks the list.
+      try {
+        await port.importClockEntries?.(range);
+      } catch {
+        /* offline or not allowed: show what is already saved */
+      }
       const sel = await port.listEntries(range);
       const saved = lastSaved.current;
       const deleted = lastDeleted.current;
@@ -126,7 +137,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
         if (i < 0) merged.push(s);
         else if (merged[i]!.minutes !== s.minutes || merged[i]!.status !== s.status) merged[i] = s;
       }
-      setEntries(merged);
+      setEntries(merged.filter((e) => !dismissedClock(e)));
     } catch (e) {
       setError("Couldn't load your time entries: " + errorText(e, 'Could not load time entries.'));
     }
@@ -348,14 +359,16 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
             </View>
             {dayEntries.map((e) => (
               <View key={e.id} style={{ marginVertical: 0, flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={{ flex: 1 }}>
-                  {fmt(e.minutes) + ' · ' + e.source + ' · ' + e.status +
+                <Text style={{ flex: 1 }} numberOfLines={1}>
+                  {fmt(e.minutes) + ' · ' + (e.source === 'clock' && e.notes ? e.notes : e.source) + ' · ' + e.status +
                     (e.status === 'rejected' && e.rejectionReason ? ' (' + e.rejectionReason + ')' : '')}
                 </Text>
                 {editable(e) ? (
                   <PayrollButton
                     label="Delete"
-                    onPress={() => run(() => port.deleteEntry(e.id))}
+                    onPress={() =>
+                      run(() => (e.source === 'clock' ? port.upsertEntry({ ...e, minutes: 0 }) : port.deleteEntry(e.id)))
+                    }
                   />
                 ) : null}
               </View>
