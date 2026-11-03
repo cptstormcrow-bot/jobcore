@@ -115,6 +115,9 @@ export default function CompleteJobRoute() {
     await repo.patchLifecycle(job.id, { completedAt: new Date().toISOString() });
     await repo.updateStatus(job.id, 'completed');
     await markPaidIfSettled(role ?? '', { ...job, status: 'completed' });
+    // Reload so the header's Complete stage (driven by completedAt) turns green right away.
+    const refreshed = await repo.getById(job.id);
+    if (refreshed) setLoaded((prev) => (prev.kind === 'ready' ? { kind: 'ready', job: refreshed } : prev));
   };
 
   // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment.
