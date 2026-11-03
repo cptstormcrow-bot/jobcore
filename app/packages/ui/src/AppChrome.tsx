@@ -222,7 +222,7 @@ export function AppChrome({
   const mainItems: MenuItem[] = drawerSignOut && menuItems.length > 0 && !menuItems.some((m) => m.id === 'sign-out')
     ? [
         ...menuItems.filter((m) => m.id !== 'configuration'),
-        { id: 'sign-out', label: 'Sign out', dividerAbove: true, onPress: drawerSignOut },
+        { id: 'sign-out', helpId: 'account', label: 'Sign out', dividerAbove: true, onPress: drawerSignOut },
         ...menuItems.filter((m) => m.id === 'configuration'),
       ]
     : menuItems;

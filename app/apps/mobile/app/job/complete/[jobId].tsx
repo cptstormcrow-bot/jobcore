@@ -196,12 +196,12 @@ ${loaded.reason}` : 'This job could not be loaded.'}
   const menuItems: MenuItem[] = [
     // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
-    { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
-    { id: 'plan', label: 'Job', onPress: () => go('plan') },
-    { id: 'evisit', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
+    { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
+    { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => go('plan') },
+    { id: 'evisit', helpId: 'job_prem', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => go('jobEstimate') },
     ...(isAdmin ? ([{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => go('assign') }] as MenuItem[]) : []),
-    { id: 'schedule', label: 'Schedule', onPress: () => go('schedule') },
+    { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => go('schedule') },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => go('plan') },
     { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => go('plan'), disabled: !headerJob?.assignedTechId },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => {}, isActive: true },
@@ -213,9 +213,10 @@ ${loaded.reason}` : 'This job could not be loaded.'}
       : ([
           {
             id: 'configuration',
+            helpId: 'settings',
             label: 'Configuration',
             onPress: () => {},
-            submenu: [{ id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') }],
+            submenu: [{ id: 'config-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') }],
           },
         ] as MenuItem[])),
     ...(role === 'owner' || role === 'admin'
@@ -258,10 +259,10 @@ ${loaded.reason}` : 'This job could not be loaded.'}
             fitMenu={isAdmin || isTech || undefined}
             onSchedulePress={() => go('schedule')}
             gearItems={isAdmin || isTech ? [
-              { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
-              { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-              { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
-              { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
+              { id: 'gear-logins', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+              { id: 'gear-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+              { id: 'gear-profile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
+              { id: 'gear-test-jobs', helpId: 'test_jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
             ] : undefined}
             gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
             onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}

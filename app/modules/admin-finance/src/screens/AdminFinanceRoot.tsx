@@ -924,6 +924,7 @@ export function AdminFinanceRoot() {
             },
             {
               id: 'paid-travel',
+              helpId: 'af_employees',
               label: 'Paid Travel',
               kind: 'toggle',
               checked: editorPaidTravel,
@@ -934,6 +935,7 @@ export function AdminFinanceRoot() {
           ? [
               {
                 id: 'show-test-employees',
+                helpId: 'af_employees',
                 label: 'Show Test Employees',
                 kind: 'toggle',
                 checked: showTestEmployeesRoster,
@@ -946,6 +948,7 @@ export function AdminFinanceRoot() {
             ? [
                 {
                   id: 'show-test-jobs',
+                  helpId: 'jobs_list',
                   label: 'Show Test Jobs',
                   kind: 'toggle',
                   checked: showTestJobs,
@@ -953,6 +956,7 @@ export function AdminFinanceRoot() {
                 },
                 {
                   id: 'show-test-employees',
+                  helpId: 'af_employees',
                   label: 'Show Test Employees',
                   kind: 'toggle',
                   checked: showTestEmployees,
@@ -989,10 +993,10 @@ export function AdminFinanceRoot() {
         fitMenu
         gearTitle="Configuration"
         gearItems={[
-          { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
-          { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-          { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
-          { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
+          { id: 'gear-logins', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+          { id: 'gear-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+          { id: 'gear-profile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
+          { id: 'gear-test-jobs', helpId: 'test_jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
         ]}
         logoMenuItems={[
           {

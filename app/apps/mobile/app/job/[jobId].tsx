@@ -1321,8 +1321,8 @@ ${body}`)) handleResetLaborTime();
     const createMenuItems: MenuItem[] = [
       // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
       // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
-      { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
-      { id: 'plan', label: 'Job', onPress: () => {}, isActive: true },
+      { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
+      { id: 'plan', helpId: 'job_create', label: 'Job', onPress: () => {}, isActive: true },
       ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Start', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
         .map((label) => ({ id: `create-${label.toLowerCase()}`, label, onPress: () => {}, disabled: true })),
     ];
@@ -1341,10 +1341,10 @@ ${body}`)) handleResetLaborTime();
           fitMenu
           gearTitle="Configuration"
           gearItems={[
-            { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
-            { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-            { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
-            ...(isAdmin ? [{ id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') }] : []),
+            { id: 'gear-logins', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+            { id: 'gear-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+            { id: 'gear-profile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
+            ...(isAdmin ? [{ id: 'gear-test-jobs', helpId: 'test_jobs' as const, label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') }] : []),
           ]}
           onLogoPress={goBackOrLanding}
         />
@@ -1407,27 +1407,28 @@ ${body}`)) handleResetLaborTime();
   const jobDetailMenuItems: MenuItem[] = [
     // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
-    { id: 'all-jobs', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
-    { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
-    { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
+    { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
+    { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
+    { id: 'evisit', helpId: 'job_prem', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
     ...(!lockedStages.has('assign')
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
-    { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
+    { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
     { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork'), isActive: activeStage === 'arrive' },
-    { id: 'photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'photos' && !activeStage },
+    { id: 'photos', helpId: 'job_photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'photos' && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
     ...(!lockedStages.has('paid')
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
       : []),
     {
       id: 'configuration',
+      helpId: 'settings',
       label: 'Configuration',
       onPress: () => {},
       submenu: [
-        { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+        { id: 'config-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
       ],
     },
     ...(!lockedStages.has('closeout')
@@ -1453,7 +1454,7 @@ ${body}`)) handleResetLaborTime();
           region === 'estimate'
             ? estimateChrome?.optionsItems
             : region === 'schedule'
-              ? [{ id: 'schedule-blackout-dates', label: 'Blackout Dates?', kind: 'toggle' as const, checked: showBlackouts, onToggle: setShowBlackouts }]
+              ? [{ id: 'schedule-blackout-dates', helpId: 'job_schedule', label: 'Blackout Dates?', kind: 'toggle' as const, checked: showBlackouts, onToggle: setShowBlackouts }]
               : undefined
         }
         showBack={isAdmin || isTech ? false : undefined}
@@ -1461,10 +1462,10 @@ ${body}`)) handleResetLaborTime();
         onSchedulePress={() => selectRegion('schedule')}
         fitMenu={isAdmin || isTech || undefined}
         gearItems={isAdmin || isTech ? [
-          { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
-          { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-          { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
-          ...(isAdmin ? [{ id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') }] : []),
+          { id: 'gear-logins', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+          { id: 'gear-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+          { id: 'gear-profile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
+          ...(isAdmin ? [{ id: 'gear-test-jobs', helpId: 'test_jobs' as const, label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') }] : []),
         ] : undefined}
         gearTitle={isAdmin || isTech ? 'Configuration' : undefined}
         onLogoPress={isAdmin ? () => (router.canGoBack() ? router.back() : router.replace('/m/admin-finance')) : isTech ? () => router.push('/m/field-tech') : undefined}

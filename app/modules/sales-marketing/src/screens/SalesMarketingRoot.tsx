@@ -105,46 +105,53 @@ export function SalesMarketingRoot(): React.ReactElement {
     setSubView('composer');
   }, []);
 
-  const menuItems = React.useMemo(
+  const menuItems = React.useMemo<MenuActionItem[]>(
     () => [
       {
         id: 'overview',
+        helpId: 'sm_overview',
         label: 'Overview',
         isActive: subView === 'overview',
         onPress: () => setSubView('overview'),
       },
       {
         id: 'reviewLibrary',
+        helpId: 'sm_reviews',
         label: 'Review Library',
         isActive: subView === 'reviewLibrary',
         onPress: () => setSubView('reviewLibrary'),
       },
       {
         id: 'pitchPicker',
+        helpId: 'sm_pitch',
         label: 'Pitch Picker',
         isActive: subView === 'pitchPicker',
         onPress: () => setSubView('pitchPicker'),
       },
       {
         id: 'composer',
+        helpId: 'sm_composer',
         label: 'Composer',
         isActive: subView === 'composer',
         onPress: () => setSubView('composer'),
       },
       {
         id: 'reporting',
+        helpId: 'sm_reporting',
         label: 'Reporting',
         isActive: subView === 'reporting',
         onPress: () => setSubView('reporting'),
       },
       {
         id: 'callbackTasks',
+        helpId: 'sm_callbacks',
         label: 'Callback tasks',
         isActive: subView === 'callbackTasks',
         onPress: () => setSubView('callbackTasks'),
       },
       {
         id: 'payroll',
+        helpId: 'payroll',
         label: 'Payroll',
         isActive: subView === 'payroll',
         onPress: () => setSubView('payroll'),
@@ -171,11 +178,11 @@ export function SalesMarketingRoot(): React.ReactElement {
     [router, session?.role],
   );
 
-  const gearItems = React.useMemo(
+  const gearItems = React.useMemo<MenuActionItem[]>(
     () => [
-      { id: 'gearLogin', label: 'Sign Out', onPress: () => router.push('/account') },
-      { id: 'gearSettings', label: 'Settings', onPress: () => router.push('/config/settings') },
-      { id: 'gearProfile', label: 'Profile', onPress: () => router.push('/profile') },
+      { id: 'gearLogin', helpId: 'account', label: 'Sign Out', onPress: () => router.push('/account') },
+      { id: 'gearSettings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+      { id: 'gearProfile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
     ],
     [router],
   );

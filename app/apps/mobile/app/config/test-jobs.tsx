@@ -199,10 +199,10 @@ export default function TestJobsScreen(): React.ReactElement {
         helpContext={{ screenKey: 'test-jobs' }}
         gearTitle="Configuration"
         gearItems={[
-          { id: 'gear-logins', label: 'Logins', onPress: () => router.push('/account') },
-          { id: 'gear-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
-          { id: 'gear-profile', label: 'Profile', onPress: () => router.push('/profile') },
-          { id: 'gear-test-jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
+          { id: 'gear-logins', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+          { id: 'gear-settings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+          { id: 'gear-profile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
+          { id: 'gear-test-jobs', helpId: 'test_jobs', label: 'Test Jobs', onPress: () => router.push('/config/test-jobs') },
         ]}
       />
       <View style={styles.screenNumRow}>

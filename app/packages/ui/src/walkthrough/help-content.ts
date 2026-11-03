@@ -253,6 +253,58 @@ export const HELP_CARDS: WalkthroughStep[] = [
     context: { screens: ['sm-reviews'] },
   },
 
+  // Payroll
+  {
+    id: 'payroll',
+    kind: 'action',
+    title: 'Payroll',
+    body: 'Your pay week lives here. "My Time" shows the week: time you clocked shows up as draft hours, and you can add or fix a day, then tap "Save". Tap "Submit" to send the week for approval, or "Withdraw" to take it back. "Hours" totals your time by Week, Month or Year, and "Reimbursements" sends an expense with a receipt photo. Approvers also see "Approvals" to "Approve" or "Kick back" a week; admins also see "Payroll Run" and "Payroll Settings".',
+    whereScreen: 'Payroll',
+    whereHint: 'Open "My Time", check the week, then tap "Submit".',
+  },
+
+  // Job sections
+  {
+    id: 'job_plan',
+    kind: 'action',
+    title: 'Job',
+    body: 'The job itself: customer, address, service area and what the work is. Change anything here and tap "Save", or "Cancel" to drop your changes. Tick "Prem Needed" when someone must visit before the estimate.',
+    whereScreen: 'Job',
+    whereHint: 'Edit the details, then tap "Save".',
+  },
+  {
+    id: 'job_prem',
+    kind: 'action',
+    title: 'Prelim (Prem)',
+    body: 'The first visit, before the estimate. Fill in the ingress, parking and logistics notes, the state assessment and the instructions for the tech; tick any red flags and add photos. Tap "Save Draft" to keep working later, or "Submit" when the visit is done.',
+    whereScreen: 'Prelim',
+    whereHint: 'Fill the starred notes, then tap "Submit".',
+  },
+  {
+    id: 'job_schedule',
+    kind: 'action',
+    title: 'Schedule',
+    body: 'Set when the work happens. Pick a date and time on the calendar, then tap "Save". Moving a booked job asks "Reschedule?" first. Turn on "Blackout Dates?" in ⋮ Options to see days nobody can be booked.',
+    whereScreen: 'Schedule',
+    whereHint: 'Pick a day and time, then tap "Save".',
+  },
+  {
+    id: 'job_photos',
+    kind: 'action',
+    title: 'Photos',
+    body: 'Every photo for this job, grouped by kind. Tap "Take Photo" or "Choose Photo" to add a before photo; it shows up here as soon as it is saved. Use "Retake" or "Remove" to change it.',
+    whereScreen: 'Photos',
+    whereHint: 'Tap "Take Photo" to add one.',
+  },
+  {
+    id: 'ft_jobs_options',
+    kind: 'info',
+    title: 'Jobs options',
+    body: '"Show Test Jobs" mixes practice jobs into your list so you can try things safely. "Default to Month View" opens your jobs on the month calendar instead of the list.',
+    whereScreen: 'Jobs',
+    whereHint: 'Open ⋮ Options and flip a switch.',
+  },
+
   // Fallback
   {
     id: 'help_general',

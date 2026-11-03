@@ -153,9 +153,10 @@ function FieldTechRoot(): React.ReactElement {
     );
   }
 
-  const menuItems = [
+  const menuItems: MenuActionItem[] = [
     {
       id: 'overview',
+      helpId: 'ft_overview',
       label: 'Overview',
       isActive: subView === 'overview',
       onPress: () => {
@@ -165,34 +166,38 @@ function FieldTechRoot(): React.ReactElement {
     },
     {
       id: 'jobs',
+      helpId: 'ft_jobs',
       label: 'Jobs',
       isActive: subView === 'jobs',
       onPress: () => setSubView('jobs'),
     },
     {
       id: 'prems',
+      helpId: 'ft_prems',
       label: 'Prems',
       isActive: subView === 'prems',
       onPress: () => setSubView('prems'),
     },
     {
       id: 'reviews',
+      helpId: 'ft_reviews',
       label: 'Reviews',
       isActive: subView === 'reviews',
       onPress: () => setSubView('reviews'),
     },
     {
       id: 'payroll',
+      helpId: 'payroll',
       label: 'Payroll',
       isActive: subView === 'payroll',
       onPress: () => setSubView('payroll'),
     },
   ];
 
-  const gearItems = [
-    { id: 'gearLogin', label: 'Logins', onPress: () => router.push('/account') },
-    { id: 'gearSettings', label: 'Settings', onPress: () => router.push('/config/settings') },
-    { id: 'gearProfile', label: 'Profile', onPress: () => router.push('/profile') },
+  const gearItems: MenuActionItem[] = [
+    { id: 'gearLogin', helpId: 'account', label: 'Logins', onPress: () => router.push('/account') },
+    { id: 'gearSettings', helpId: 'settings', label: 'Settings', onPress: () => router.push('/config/settings') },
+    { id: 'gearProfile', helpId: 'profile', label: 'Profile', onPress: () => router.push('/profile') },
   ];
 
   const logoMenuItems: MenuActionItem[] = [
@@ -213,6 +218,7 @@ function FieldTechRoot(): React.ReactElement {
   const jobsOptions: MenuItem[] = [
     {
       id: 'show-test-jobs',
+      helpId: 'ft_jobs_options',
       label: 'Show Test Jobs',
       kind: 'toggle',
       checked: showTestJobs,
@@ -223,6 +229,7 @@ function FieldTechRoot(): React.ReactElement {
     },
     {
       id: 'default-month-view',
+      helpId: 'ft_jobs_options',
       label: 'Default to Month View',
       kind: 'toggle',
       checked: defaultMonthView,
@@ -300,7 +307,7 @@ function FieldTechRoot(): React.ReactElement {
     React.createElement(DefaultTabBar<SubView>, {
       tabs: menuItems.map((item) => ({ id: item.id as SubView, label: item.label })),
       activeId: subView,
-      onChange: (id: SubView) => menuItems.find((item) => item.id === id)?.onPress(),
+      onChange: (id: SubView) => menuItems.find((item) => item.id === id)?.onPress?.(),
     }),
     content,
   );
