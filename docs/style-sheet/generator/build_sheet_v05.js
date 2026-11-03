@@ -111,6 +111,7 @@ const PC = 'Proposed: not yet ruled by Jeff. Comment here to keep, change or dro
 
     H1('7d. Tooltips and the help mark'),
       { rule: 'Fields match the dropdown text size (14) and sit in a gray border (`colors.divider` #CED4DA), not black. A label and its value that would wrap to two lines go on one line as "Label: value", for example "Customer Name: Alex Alvarez" (`TextField inline`)', status: 'SET', source: 'Jeff 2026-11-03, screen #0041 Job screen', measures: 'Applied on #0041 Job screen, commit 51f6746. Applies to every form screen.' },
+      { rule: 'A disabled (grayed) button always has a visible gray border so it does not disappear into the background. App wide, every grayed button', status: 'SET', source: 'Jeff 2026-11-03, screen #0061 (Submit and Check UPS)', measures: 'Applies to every disabled button in the app.' },
     ...tbl([
       { rule: 'The "?" in a circle is reserved for the help system. Tooltips never use it', status: 'SET', source: 'Jeff 2026-11-02', measures: 'Tooltips open on press-and-hold.' },
       { rule: 'No tooltips on fields that already do a job, such as customer name, address and phone', status: 'SET', source: 'Jeff 2026-11-02', measures: 'Those fields keep their tap action (copy, call, open).' },

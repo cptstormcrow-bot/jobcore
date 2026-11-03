@@ -49,6 +49,7 @@ Set by Jeff 2026-11-02 in `typography.text` and `compact` (`app/packages/ui/src/
 - Titles 16 (`title`); dropdown lists 16 (`option`); buttons and tabs 13 (`control`).
 - Tight padding: `compact` gap 2, field 4, section 6, row min height 32.
 - Fields match the dropdown text size (14) with a gray border (`colors.divider` #CED4DA), not black. A label and value that would wrap to two lines go on one line as "Label: value", for example "Customer Name: Alex Alvarez". Set by Jeff 2026-11-03 on screen #0041 Job screen (commit 51f6746); applies to every form screen.
+- A disabled (grayed) button always has a visible gray border so it does not disappear into the background. Set by Jeff 2026-11-03 on screen #0061 (Submit and Check UPS); applies app wide to every grayed button.
 
 ## 7d. Tooltips and the help mark
 Set by Jeff 2026-11-02.
