@@ -27,7 +27,7 @@ import JobHistoryRegion from '../../src/components/JobHistoryRegion';
 import { JobPhotosRegion } from '../../src/components/JobPhotosRegion';
 import JobPaymentRegion from '../../src/components/JobPaymentRegion';
 import { WarningSheet } from '../../../../modules/admin-finance/src/components/WarningSheet';
-import { useSession, signOut } from '../../src/lib/session';
+import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
@@ -1341,7 +1341,6 @@ export default function JobDrilldownScreen() {
     ...(role !== 'tech'
       ? [{
           id: 'needs-prem',
-          screenKey: 'menu-needs-prem',
           label: currentJob.needsPremAt ? 'Clear Prem' : 'Needs Prem',
           onPress: () => void handleToggleNeedsPrem(),
         }]
@@ -1354,23 +1353,21 @@ export default function JobDrilldownScreen() {
     ...(role === 'owner' || role === 'admin'
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
       : []),
-    ...(role === 'owner' || role === 'admin'
-      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
-      : []),
-    { id: 'sign-out', screenKey: 'menu-sign-out', label: 'Sign out', onPress: () => void signOut() },
     {
       id: 'configuration',
-      screenKey: 'menu-configuration',
       label: 'Configuration',
       onPress: () => {},
       submenu: [
         { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
       ],
     },
+    ...(role === 'owner' || role === 'admin'
+      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
+      : []),
   ];
 
-  // Needs Prem (#0095), Sign out (#0096) and Configuration (#0097) stay in
-  // every role's slider; techs never get Needs Prem (see the list above).
+  // Needs Prem (#0095) and Configuration (#0097) stay in every role's slider;
+  // techs never get Needs Prem. AppChrome adds the line and Sign out (#0096) last.
   const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
     .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
   const isTech = role === 'tech';

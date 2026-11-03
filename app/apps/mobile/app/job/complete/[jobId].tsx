@@ -12,7 +12,7 @@ import { setModuleSession as setFieldTechModuleSession } from '../../../../../mo
 import { setModulePorts as setFieldTechModulePorts } from '../../../../../modules/field-tech/src/lib/module-ports';
 import { Completion } from '../../../../../modules/field-tech/src/screens/Completion';
 import { completionBlockedNotice, isAlreadyComplete } from '../../../../../modules/field-tech/src/screens/completion-helpers';
-import { useSession, signOut } from '../../../src/lib/session';
+import { useSession } from '../../../src/lib/session';
 import { JobHeader } from '../../../src/components/JobHeader';
 import { useJobStageTimeline } from '../../../src/lib/useJobStageTimeline';
 import { buildFieldTechPorts } from '../../../src/lib/field-tech-repos';
@@ -213,13 +213,9 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     ...(role === 'owner' || role === 'admin'
       ? ([{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => go('payment') }] as MenuItem[])
       : []),
-    ...(role === 'owner' || role === 'admin'
-      ? ([{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => go('closeout') }] as MenuItem[])
-      : []),
     ...(isAdmin || isTech
       ? []
       : ([
-          { id: 'sign-out', label: 'Sign out', onPress: () => void signOut() },
           {
             id: 'configuration',
             label: 'Configuration',
@@ -227,6 +223,10 @@ ${loaded.reason}` : 'This job could not be loaded.'}
             submenu: [{ id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') }],
           },
         ] as MenuItem[])),
+    ...(role === 'owner' || role === 'admin'
+      ? ([{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => go('closeout') }] as MenuItem[])
+      : []),
+    // AppChrome adds the line and Sign out last.
   ];
 
   const handleStagePress = (key: string) => {

@@ -16,7 +16,7 @@ import { NavDrawer } from './NavDrawer';
 import { MenuGlyph } from './MenuGlyph';
 import { GearGlyph } from './GearGlyph';
 import { HelpCircle } from './HelpCircle';
-import { useScreenNumberReadOnly } from './screen-numbers/ScreenNumberContext';
+import { useDrawerSignOut } from './DrawerSignOutContext';
 import { DRAWER_ROW_HEIGHT, dividerBefore } from './drawer-geometry';
 
 export type MenuActionItem = {
@@ -29,8 +29,8 @@ export type MenuActionItem = {
   submenu?: MenuItem[];
   helpId?: WalkthroughStepId;
   section?: string;
-  /** Registry key; its screen number shows beside the label when screen numbers are on. */
-  screenKey?: string;
+  /** Draws a divider line above this row in the drawer. */
+  dividerAbove?: boolean;
   /** 'danger' renders the label bold red (e.g. Sync while writes are failing). */
   tone?: 'danger';
 };
@@ -45,8 +45,8 @@ export type MenuToggleItem = {
   submenu?: undefined;
   helpId?: WalkthroughStepId;
   section?: string;
-  /** Registry key; its screen number shows beside the label when screen numbers are on. */
-  screenKey?: string;
+  /** Draws a divider line above this row in the drawer. */
+  dividerAbove?: boolean;
 };
 export type MenuItem = MenuActionItem | MenuToggleItem;
 
@@ -89,10 +89,6 @@ function MenuRow({
   const [expanded, setExpanded] = useState(false);
   const hasSubmenu = !!item.submenu && item.submenu.length > 0;
   const pressAnim = useRef(new Animated.Value(0)).current;
-  const screenNumbers = useScreenNumberReadOnly();
-  const screenEntry = item.screenKey && screenNumbers.enabled
-    ? screenNumbers.registry.find((e) => e.key === item.screenKey)
-    : undefined;
 
   const animateTo = (toValue: number) => {
     Animated.timing(pressAnim, { toValue, duration: 175, useNativeDriver: false }).start();
@@ -151,9 +147,6 @@ function MenuRow({
           >
             {item.kind === 'toggle' ? (item.checked ? '☑  ' : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
-            {screenEntry ? (
-              <Text style={styles.rowScreenNumber}>{'  #' + String(screenEntry.number).padStart(4, '0')}</Text>
-            ) : null}
           </Text>
           {item.helpId ? (
             <View style={{ position: 'absolute', right: spacing.md, top: 0, bottom: 0, justifyContent: 'center' }}>
@@ -224,7 +217,12 @@ export function AppChrome({
     ) : (
       node
     );
-  const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : menuItems;
+  const drawerSignOut = useDrawerSignOut();
+  // Every non-empty main menu ends with a divider and Sign out.
+  const mainItems: MenuItem[] = drawerSignOut && menuItems.length > 0 && !menuItems.some((m) => m.id === 'sign-out')
+    ? [...menuItems, { id: 'sign-out', label: 'Sign out', dividerAbove: true, onPress: drawerSignOut }]
+    : menuItems;
+  const drawerItems: MenuItem[] = logoMenuOpen && logoMenuItems?.length ? logoMenuItems : mainItems;
   useEffect(() => {
     if (!hMenuOpen) setLogoMenuOpen(false);
   }, [hMenuOpen]);
@@ -351,7 +349,7 @@ export function AppChrome({
         )}
         {drawerItems.map((item, i) => (
           <React.Fragment key={item.id}>
-            {i > 0 && dividerBefore(drawerItems[i - 1]?.kind === 'toggle' ? 'toggle' : 'action', item.kind === 'toggle' ? 'toggle' : 'action') ? (
+            {i > 0 && (item.dividerAbove || dividerBefore(drawerItems[i - 1]?.kind === 'toggle' ? 'toggle' : 'action', item.kind === 'toggle' ? 'toggle' : 'action')) ? (
               <View style={styles.divider} />
             ) : null}
             {item.section !== undefined && item.section !== drawerItems[i - 1]?.section ? (
@@ -610,11 +608,6 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
   rowTextDisabled: {
-    color: colors.textMuted,
-  },
-  rowScreenNumber: {
-    fontSize: 12,
-    fontWeight: '400',
     color: colors.textMuted,
   },
   rowTextDanger: {
