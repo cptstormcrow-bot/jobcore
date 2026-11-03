@@ -145,7 +145,7 @@ function MenuRow({
               item.kind !== 'toggle' && item.tone === 'danger' && styles.rowTextDanger,
             ]}
           >
-            {item.kind === 'toggle' ? (item.checked ? <Text style={styles.toggleChecked}>{'☑  '}</Text> : '☐  ') : ''}{item.label}
+            {item.kind === 'toggle' ? (item.checked ? <Text style={styles.toggleChecked}>{'■  '}</Text> : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
           </Text>
           {item.helpId ? (

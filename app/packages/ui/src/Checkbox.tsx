@@ -13,7 +13,7 @@ export interface CheckboxProps {
   style?: StyleProp<ViewStyle>;
   boxStyle?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
-  /** Box border only: 'box' (default) = thin border; 'check' = thin border; 'tick' = black 2px border. Every variant shows the same green bold checkmark when checked. */
+  /** Box border only: 'box' (default) = thin border; 'check' = thin border; 'tick' = black 2px border. Every variant fills the whole box green when checked. */
   variant?: 'box' | 'check' | 'tick';
 }
 
@@ -29,12 +29,10 @@ export function Checkbox({ label, accessibilityLabel, checked, onChange, disable
       hitSlop={8}
       style={[styles.base, disabled && styles.disabled, style]}
     >
+      {/* Every checkbox fills solid green when checked (Jeff 2026-11-02). */}
       <View
-        style={isTick ? [styles.box, styles.boxTick, boxStyle] : [styles.box, boxStyle]}
-      >
-        {/* Every checkbox shows the same green checkmark when checked. */}
-        {checked && <Text style={styles.tickGlyph}>✓</Text>}
-      </View>
+        style={[styles.box, isTick && styles.boxTick, boxStyle, checked && styles.boxChecked]}
+      />
       <Text style={[styles.label, labelStyle]}>{label}</Text>
     </Pressable>
   );
@@ -57,15 +55,9 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     backgroundColor: colors.surface,
   },
-  // NOTE: 'tick' is the checklist look - black 2px border in both states, green check.
+  // NOTE: 'tick' is the checklist look - black 2px border when unchecked.
   boxTick: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.black },
-  tickGlyph: {
-    color: colors.success,
-    fontSize: 16,
-    fontWeight: '900',
-    lineHeight: 18,
-    textAlign: 'center',
-    includeFontPadding: false,
-  },
+  // Applied last so it wins over boxStyle overrides: the whole box goes green.
+  boxChecked: { backgroundColor: colors.success, borderColor: colors.success },
   label: { fontFamily: typography.fontFamily.body, fontSize: typography.text.fieldLabel, color: colors.text },
 });
