@@ -59,7 +59,7 @@ export const DEFAULT_FINE_PRINT_PLACEHOLDER = [
   'Change orders: If we find conditions during the job that change the scope or the price, we will explain the change and the reason for it and get your approval before we go on. If you decline, we can finish the original scope at the original price, or cancel the job if the original scope cannot be completed. Travel time, scheduling and items already in the listed scope are never a reason for a price change.',
   'Payment: All payments, refunds and discounts for this job are handled through SD Assembly Pros.',
   'Trip charges: Travel to your home is included in the price. There is no separate trip charge.',
-  'Rescheduling and cancellation: Please contact us as early as you can if you need to change or cancel your appointment, and we will offer a new date and time that works for you.',
+  'Rescheduling and cancellation: Please contact us as early as you can if you need to change or cancel your appointment, and we will offer a new date and time that works for you. A $50 reschedule fee applies when you reschedule or cancel a confirmed appointment.',
   'Adult present: A parent, guardian or other adult must be present for the whole visit. We will not work in the home while an unaccompanied minor is inside.',
   'Safety and conduct: Our technicians are background checked. We have zero tolerance for fraudulent, offensive or illegal behavior on the job, and we may stop work if conditions are unsafe.',
   'Photos: We take before and after photos of the work, and may take a photo of the technician on site to verify the visit. Photos are used only for job records and service claims.',
