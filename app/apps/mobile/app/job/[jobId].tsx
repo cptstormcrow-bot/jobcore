@@ -1358,6 +1358,14 @@ export default function JobDrilldownScreen() {
     matchServiceAreaByZip(serviceAreas, extractZip(form.address || currentJob.address || ''), form.address || currentJob.address || '')?.name ??
     null;
 
+  // One rule set for the timeline dots and the slider menu, so each stage opens (or stays shut) the same way in both (Jeff 2026-11-03).
+  // Admin-only stages are hidden in the menu and dimmed on the timeline; Start needs an installer tech in both.
+  const lockedStages = new Set<StageKey>([
+    ...(stageExtras?.lead ? [] : ['lead' as const]),
+    ...(isAdmin ? [] : ['assign' as const, 'paid' as const, 'closeout' as const]),
+    ...(currentJob.assignedTechId ? [] : ['startWork' as const]),
+  ]);
+
   const jobDetailMenuItems: MenuItem[] = [
     // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
@@ -1365,15 +1373,15 @@ export default function JobDrilldownScreen() {
     { id: 'plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
     { id: 'evisit', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
-    ...(isAdmin
+    ...(!lockedStages.has('assign')
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
       : []),
     { id: 'schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
-    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: !currentJob.assignedTechId, isActive: activeStage === 'arrive' },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork'), isActive: activeStage === 'arrive' },
     { id: 'photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'photos' && !activeStage },
     { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
-    ...(role === 'owner' || role === 'admin'
+    ...(!lockedStages.has('paid')
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
       : []),
     {
@@ -1384,7 +1392,7 @@ export default function JobDrilldownScreen() {
         { id: 'config-settings', label: 'Settings', onPress: () => router.push('/config/settings') },
       ],
     },
-    ...(role === 'owner' || role === 'admin'
+    ...(!lockedStages.has('closeout')
       ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
       : []),
   ];
@@ -1429,7 +1437,7 @@ export default function JobDrilldownScreen() {
             states={stageResults.states}
             nextStep={region === 'payment' || region === 'closeout' ? '' : (stageResults.nextStep ?? '')}
             onStagePress={handleStagePress}
-            disabledKeys={stageExtras?.lead ? [] : ['lead']}
+            disabledKeys={[...lockedStages]}
             testID="job-progress-bar"
           />
         ) : null}

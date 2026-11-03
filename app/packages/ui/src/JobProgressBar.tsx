@@ -44,7 +44,8 @@ const LEGEND: ReadonlyArray<{ state: StageState; text: string }> = [
 const SHARED_MENU = [
   'Prem available and Complete Prem share the Prelim menu item.',
   'Estimate and Approval share the Estimate menu item.',
-  'Lead, Photos and History have no menu item.',
+  'Lead and History have no menu item.',
+  'A dimmed dot is a step your role cannot open, or one that is waiting on an earlier step.',
   'Prem, Estimate, Approval, Contact, Start and Complete stay green once done.',
 ];
 
