@@ -1,6 +1,6 @@
 {
   "name": "@jobcore/mobile",
-  "version": "0.13.13",
+  "version": "0.13.24",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
