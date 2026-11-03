@@ -23,7 +23,7 @@ function stub() {
   return { calls, deps: { payments } };
 }
 
-for (const role of ['admin', 'owner']) {
+for (const role of ['admin', 'owner', 'tech']) {
   test(`${role} can record a payment`, async () => {
     const { calls, deps } = stub();
     const r = await recordJobPayment(role, 'org-1', job(), est(100), [], { amountDollars: 25.5, method: 'check' }, deps);
@@ -113,7 +113,7 @@ test('exact payment equal to balance succeeds with balance 0', async () => {
   assert.equal(calls.length, 1);
 });
 
-for (const role of ['field_tech', 'manager', 'investigator', 'tech', '']) {
+for (const role of ['field_tech', 'manager', 'investigator', '']) {
   test(`role '${role}' is refused`, async () => {
     const { calls, deps } = stub();
     const r = await recordJobPayment(role, 'o', job(), est(100), [], { amountDollars: 10, method: 'check' }, deps);

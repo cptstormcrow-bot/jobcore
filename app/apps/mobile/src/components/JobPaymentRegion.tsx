@@ -68,7 +68,8 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [adjDesc, setAdjDesc] = useState('');
   const [adjAmount, setAdjAmount] = useState('');
   const [, setTick] = useState(0);
-  const canConfirm = role === 'admin' || role === 'owner';
+  // Techs collect card and check as well as cash (Jeff 2026-11-02).
+  const canConfirm = role === 'admin' || role === 'owner' || role === 'tech';
 
   const load = useCallback(async () => {
     try {
@@ -429,7 +430,6 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
             ) : null}
           </View>
         ) : null}
-        {!canConfirm && !isCash ? <Text>Admin/owner only</Text> : null}
       </View>
     </View>
   );

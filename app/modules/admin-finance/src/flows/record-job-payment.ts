@@ -34,8 +34,9 @@ export async function recordJobPayment(
   deps: RecordJobPaymentDeps
 ): Promise<RecordJobPaymentResult> {
   const isCash = input.method === 'cash';
-  if (!isCash && role !== 'admin' && role !== 'owner') {
-    return { ok: false, reason: `recordJobPayment: role '${role}' may not record payments (admin or owner only)` };
+  // Techs collect card and check as well as cash (Jeff 2026-11-02).
+  if (!isCash && role !== 'admin' && role !== 'owner' && role !== 'tech') {
+    return { ok: false, reason: `recordJobPayment: role '${role}' may not record payments (admin, owner or tech only)` };
   }
   if (isCash && String(job.status) === 'cancelled') {
     return { ok: false, reason: `recordJobPayment: job ${job.id} is cancelled` };
