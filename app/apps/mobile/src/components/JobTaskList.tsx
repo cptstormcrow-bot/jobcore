@@ -226,6 +226,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     );
   };
 
+  const empty = active.length === 0 && deferred.length === 0;
+
   return (
     <View style={styles.root}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -240,7 +242,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           }}
         />
       )}
-      {active.length === 0 && deferred.length === 0 ? <Text style={styles.notes}>No tasks yet.</Text> : null}
+      {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
       {active.map((r) => renderRow(r, false))}
       {deferred.length > 0 && (
         <>
@@ -249,7 +251,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         </>
       )}
       {edit && (
+        // While the list is empty the hint shares the add line, and drops once a task exists (Jeff 2026-11-03).
         <View style={styles.addRow}>
+          {empty ? <Text style={styles.notes} numberOfLines={1}>No tasks yet.</Text> : null}
           <View style={styles.flex}>
             <TextField inline dense placeholder="New task title" value={newTitle} onChangeText={setNewTitle} />
           </View>
