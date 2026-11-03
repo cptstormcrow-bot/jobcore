@@ -41,7 +41,7 @@ payment webhooks.
 Last deployed 2026-11-02 (reschedule fee Fine Print, commits e340579 and
 0bf3a5c).
 
-## 5. Verify
+## 2. Verify
 
 Replace `<token>` with a real, unexpired `estimate_tokens.token` value (mint
 one via the `issue_estimate_token` RPC from an authenticated admin/tech
