@@ -241,6 +241,9 @@ ${loaded.reason}` : 'This job could not be loaded.'}
       case 'schedule': go('schedule'); break;
       case 'assign': go('assign'); break;
       case 'history': go('history'); break;
+      // Paid and Close-out stay reachable after the job is paid.
+      case 'paid': if (role === 'owner' || role === 'admin') go('payment'); break;
+      case 'closeout': if (role === 'owner' || role === 'admin') go('closeout'); break;
       default: break;
     }
   };
