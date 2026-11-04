@@ -32,3 +32,16 @@ is either fixed in this pass (with a test) or explained, with what to do about i
 | 7 | The connection drops in the middle of sending a change. | The drop was reported in a shape the app didn't recognize, so it was counted as an unknown error. After 8 drops the change was marked failed for good, and sync kept trying the rest of the queue against a dead connection. | A dropped request is now recognized as a network drop: sync stops and waits for the signal, and the change gets the full 10 tries. |
 
 Already handled, checked in this pass: the app closed mid-send (the change resends on next open), a sign-in token refresh that fails during a drop (treated as a network drop), and a photo that uploaded but whose record did not save (the retry reuses the uploaded file).
+
+## Interrupted connections (cut off before they finish)
+
+The app talks to the server in about 156 places across about 24 files: 102 table reads and writes, 24 server functions, 6 photo storage calls, 3 edge functions and about 21 sign-in calls. Counted with `grep -rn "supabase.from(\|\.rpc(\|\.storage\.from(\|functions\.invoke(" apps/mobile/src` plus the auth calls. Most are reads (a cut-off read just shows saved data) or queued changes that resend safely. Three broke when cut off:
+
+| # | What gets cut off | What went wrong | Fix |
+|---|---|---|---|
+| 8 | Deleting a photo on #0094 Photos (or a planning photo on #0055 Planning), with the signal dropping as the file is removed. | The photo's record was deleted, then the file delete failed quietly (storage reports errors instead of throwing). The change was marked done and the file stayed in storage forever with nothing pointing to it. | A file delete that fails from a drop or an expired sign-in now fails the change, so it is sent again. A file that is already gone is still fine. |
+| 9 | Assigning a tech on #0040 Assign, where the save lands but the reply is lost. | The retry hit "already exists", but the error had been rewrapped and lost its code, so the app couldn't see it was already done. After 8 tries the change was marked failed and showed in #0098 Sync issues. | The error is passed through as is, so the retry is recognized as already done. |
+
+Checked and safe: contractor payouts, commission rows, the pay policy save, payout batches and the test job tools all either run as one server step or recognize a repeat. The investigator assignment deletes then inserts in two steps; a cut between them is fixed by the retry, so it was left as is.
+
+Build note: the app bundles `packages/core` from its built `dist/` folder, so run `npm run build` in `packages/core` before an APK build. The spotty-internet fixes in row 7 only reach the phone after that build.

@@ -242,14 +242,14 @@ const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async (payloa
       .eq('kind', 'investigator')
       .order('assigned_at', { ascending: false })
       .limit(1);
-    if (priorErr) throw new Error(priorErr.message);
+    if (priorErr) throw priorErr;
     priorTechId = (prior?.[0]?.tech_id as string | undefined) ?? null;
     const { error: delError } = await ctx.supabase
       .from('job_assignments')
       .delete()
       .eq('job_id', draft.jobId)
       .eq('kind', 'investigator');
-    if (delError) throw new Error(delError.message);
+    if (delError) throw delError;
   }
   const { error } = await ctx.supabase.from('job_assignments').insert({
     id,
@@ -272,7 +272,9 @@ const jobAssignmentCreate: OpHandler<JobAssignmentCreatePayload> = async (payloa
       // best-effort restore of the prior investigator; the original error is thrown below
     }
   }
-  if (error) throw new Error(error.message);
+  // Thrown as is: a replay whose first send landed hits job_assignments_pkey, which the
+  // drain reads as already done. Wrapped, it lost its code and failed after 8 tries.
+  if (error) throw error;
   return APPLIED;
 };
 

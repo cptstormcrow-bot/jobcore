@@ -16,6 +16,7 @@ import { updateRecordGuarded } from './record-edit-guard';
 import { readJpegDescription, writeJpegDescription } from '../jpeg-description';
 import { blobToBytes } from '../photo-note';
 import { readLocalBytes } from '../local-file-bytes';
+import { removeStoredFile } from '../storage-remove';
 
 type Sb = OpContext['supabase'];
 const APPLIED = { applied: true } as const;
@@ -379,9 +380,7 @@ const jobPhotoNote: OpHandler<JobPhotoNotePayload> = async (p, ctx) => {
 const jobPhotoRemove: OpHandler<JobPhotoRemovePayload> = async (p, ctx) => {
   const { error } = await ctx.supabase.from('job_photos').delete().eq('id', p.id);
   check(error);
-  if (p.storagePath) {
-    await ctx.supabase.storage.from(JOB_PHOTOS_BUCKET).remove([p.storagePath]);
-  }
+  await removeStoredFile(ctx.supabase.storage.from(JOB_PHOTOS_BUCKET), p.storagePath);
   return APPLIED;
 };
 
@@ -407,9 +406,7 @@ const jobPlanningPhotoAdd: OpHandler<JobPlanningPhotoAddPayload> = async (p, ctx
 const jobPlanningPhotoRemove: OpHandler<JobPlanningPhotoRemovePayload> = async (p, ctx) => {
   const { error } = await ctx.supabase.from('job_planning_photos').delete().eq('id', p.id);
   check(error);
-  if (p.storagePath) {
-    await ctx.supabase.storage.from(JOB_PHOTOS_BUCKET).remove([p.storagePath]);
-  }
+  await removeStoredFile(ctx.supabase.storage.from(JOB_PHOTOS_BUCKET), p.storagePath);
   return APPLIED;
 };
 

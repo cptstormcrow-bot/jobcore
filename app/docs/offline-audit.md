@@ -112,3 +112,5 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 13. Edit a time entry on #0084 Payroll and submit the week offline, go online. Both sync, the submit last.
 14. On a very weak signal (or Wi-Fi with no internet behind it), save a change to Job #N. Within about 30 seconds the screen moves on, and the change syncs once a good signal is back, with no app restart.
 15. Toggle airplane mode on and off a few times while changes are syncing. Nothing ends up in #0098 Sync issues; every change syncs once the signal holds.
+16. On #0094 Photos for Job #N, delete a photo and turn on airplane mode right as you tap. Go online. The photo stays gone and nothing shows in #0098 Sync issues.
+17. On #0040 Assign for Job #N, assign a tech on a very weak signal and turn on airplane mode as the save goes out. Go online. The tech stays assigned and nothing shows in #0098 Sync issues.
