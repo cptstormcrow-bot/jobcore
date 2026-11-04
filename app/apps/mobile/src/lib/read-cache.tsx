@@ -7,6 +7,7 @@ import { summarizeStale, type StaleEntry, type StaleSummary } from './stale-hint
 registerOpPatches(OP_PATCH_SPECS as never);
 import { useSession } from './session';
 import { isOnlineNow, subscribeDrainComplete } from './sync-events';
+import { findRecordInPayload } from './offline-fallback';
 import {
   clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listMeta, markAllStaleFor, putCached, wipeOtherUsers,
 } from './read-cache-store';
@@ -111,9 +112,8 @@ export async function findSavedRecord<T>(queryPart: string, id: string, isMatch?
     if (!row || row.orgId !== orgId) continue;
     let parsed: unknown;
     try { parsed = JSON.parse(row.payload); } catch { continue; }
-    for (const rec of Array.isArray(parsed) ? parsed : [parsed]) {
-      if (rec && typeof rec === 'object' && (rec as { id?: unknown }).id === id && (!isMatch || isMatch(rec as Record<string, unknown>))) return rec as T;
-    }
+    const hit = findRecordInPayload<T>(parsed, id, isMatch);
+    if (hit) return hit;
   }
   return null;
 }

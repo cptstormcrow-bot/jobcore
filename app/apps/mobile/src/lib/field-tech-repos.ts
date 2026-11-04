@@ -18,7 +18,8 @@ import { captureCamelEditBase, captureJobEditBase, ESTIMATE_FIELD_TO_COLUMN } fr
 import { supabase, supabaseUrl } from './supabase';
 import { createPayrollRepos, readCached, readCachedOr, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
-import { writeThrough, requireOnline } from './offline-mutations';
+import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
+import { findSavedRecord } from './read-cache';
 import { shrinkPhoto } from './photo-resize';
 import { copyToLocal, localPhotoPath, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri, setSignedUrlResolver } from './signed-url-cache';
@@ -165,7 +166,7 @@ export function createChecklistRepository(): ChecklistRepository {
       organizationId: string,
       serviceId: string,
     ): Promise<ChecklistTemplate | null> {
-      return readCached('ft.checklist.getTemplateForService', { organizationId, serviceId }, async () => {
+      return readCachedOr('ft.checklist.getTemplateForService', { organizationId, serviceId }, async () => {
         const { data, error } = await supabase
           .from('checklist_templates')
           .select('*')
@@ -178,11 +179,11 @@ export function createChecklistRepository(): ChecklistRepository {
           throw new Error(`getTemplateForService failed: ${error.message}`);
         }
         return data ? toChecklistTemplate(data as ChecklistTemplateRow) : null;
-      });
+      }, null);
     },
 
     async listTemplateItems(templateId: string): Promise<ChecklistItem[]> {
-      return readCached('ft.checklist.listTemplateItems', { templateId }, async () => {
+      return readCachedOr('ft.checklist.listTemplateItems', { templateId }, async () => {
         const { data, error } = await supabase
           .from('checklist_items')
           .select('*')
@@ -191,14 +192,14 @@ export function createChecklistRepository(): ChecklistRepository {
           throw new Error(`listTemplateItems failed: ${error.message}`);
         }
         return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
-      });
+      }, []);
     },
 
     async getInstanceForJob(
       jobId: string,
       kind: ChecklistInstanceKind,
     ): Promise<ChecklistInstance | null> {
-      const instance = await readCached('ft.checklist.getInstanceForJob', { jobId, kind }, async () => {
+      const instance = await readCachedOr('ft.checklist.getInstanceForJob', { jobId, kind }, async () => {
         const { data, error } = await supabase
           .from('checklist_instances')
           .select('*')
@@ -209,13 +210,13 @@ export function createChecklistRepository(): ChecklistRepository {
           throw new Error(`getInstanceForJob failed: ${error.message}`);
         }
         return data ? toChecklistInstance(data as ChecklistInstanceRow) : null;
-      });
+      }, null);
       if (instance) knownInstances.set(instance.id, instance);
       return instance;
     },
 
     async listInstanceItems(instanceId: string): Promise<ChecklistItem[]> {
-      return readCached('ft.checklist.listInstanceItems', { instanceId }, async () => {
+      return readCachedOr('ft.checklist.listInstanceItems', { instanceId }, async () => {
         const { data, error } = await supabase
           .from('checklist_items')
           .select('*')
@@ -224,7 +225,7 @@ export function createChecklistRepository(): ChecklistRepository {
           throw new Error(`listInstanceItems failed: ${error.message}`);
         }
         return ((data ?? []) as ChecklistItemRow[]).map(toChecklistItem);
-      });
+      }, []);
     },
 
     async createInstance(
@@ -300,7 +301,7 @@ export function createChecklistRepository(): ChecklistRepository {
 export function createJobPhotoRepository(): JobPhotoRepository {
   return {
     async listForJob(jobId: string): Promise<JobPhoto[]> {
-      return readCached('ft.photos.listForJob', { jobId }, async () => {
+      return readCachedOr('ft.photos.listForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_photos')
           .select('*')
@@ -309,7 +310,7 @@ export function createJobPhotoRepository(): JobPhotoRepository {
           throw new Error(`listForJob failed: ${error.message}`);
         }
         return ((data ?? []) as JobPhotoRow[]).map(toJobPhoto);
-      });
+      }, []);
     },
 
     async create(organizationId: string, draft: JobPhotoDraft): Promise<JobPhoto> {
@@ -359,7 +360,7 @@ export function createJobPhotoRepository(): JobPhotoRepository {
 export function createTimeOffRepository(): TimeOffRepository {
   return {
     async listForTech(techId: string): Promise<TimeOffRequest[]> {
-      return readCached('ft.timeOff.listForTech', { techId }, async () => {
+      return readCachedOr('ft.timeOff.listForTech', { techId }, async () => {
         const { data, error } = await supabase
           .from('time_off_requests')
           .select('*')
@@ -368,11 +369,11 @@ export function createTimeOffRepository(): TimeOffRepository {
           throw new Error(`listForTech failed: ${error.message}`);
         }
         return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
-      });
+      }, []);
     },
 
     async listForOrg(organizationId: string): Promise<TimeOffRequest[]> {
-      return readCached('ft.timeOff.listForOrg', { organizationId }, async () => {
+      return readCachedOr('ft.timeOff.listForOrg', { organizationId }, async () => {
         const { data, error } = await supabase
           .from('time_off_requests')
           .select('*')
@@ -381,7 +382,7 @@ export function createTimeOffRepository(): TimeOffRepository {
           throw new Error(`listForOrg failed: ${error.message}`);
         }
         return ((data ?? []) as TimeOffRequestRow[]).map(toTimeOffRequest);
-      });
+      }, []);
     },
 
     async create(
@@ -449,7 +450,7 @@ export function createTimeOffRepository(): TimeOffRepository {
 export function createReimbursementRequestRepository(): ReimbursementRequestRepository {
   return {
     async listForTech(techId: string): Promise<ReimbursementRequest[]> {
-      return readCached('ft.reimbursements.listForTech', { techId }, async () => {
+      return readCachedOr('ft.reimbursements.listForTech', { techId }, async () => {
         const { data, error } = await supabase
           .from('reimbursements')
           .select('*')
@@ -458,7 +459,7 @@ export function createReimbursementRequestRepository(): ReimbursementRequestRepo
           throw new Error(`listForTech failed: ${error.message}`);
         }
         return ((data ?? []) as ReimbursementRequestRow[]).map(toReimbursementRequest);
-      });
+      }, []);
     },
 
     async create(
@@ -505,7 +506,7 @@ export function createReimbursementRequestRepository(): ReimbursementRequestRepo
 export function createJobNoteRepository(): JobNoteRepository {
   return {
     async listForJob(jobId: string): Promise<JobNote[]> {
-      return readCached('ft.notes.listForJob', { jobId }, async () => {
+      return readCachedOr('ft.notes.listForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_notes')
           .select('*')
@@ -514,7 +515,7 @@ export function createJobNoteRepository(): JobNoteRepository {
           throw new Error(`listForJob failed: ${error.message}`);
         }
         return ((data ?? []) as JobNoteRow[]).map(toJobNote);
-      });
+      }, []);
     },
 
     async create(organizationId: string, techId: string, draft: JobNoteDraft): Promise<JobNote> {
@@ -547,7 +548,7 @@ export function createJobNoteRepository(): JobNoteRepository {
 export function createTechJobRepository(): TechJobRepository {
   return {
     async listAssignedToTech(techId: string) {
-      const jobs = await readCached('ft.jobs.listAssignedToTech', { techId }, async () => {
+      const jobs = await readCachedOr('ft.jobs.listAssignedToTech', { techId }, async () => {
         const { data, error } = await supabase
           .from('jobs')
           .select('*, customers(name, phone), job_assignments!inner(tech_id)')
@@ -556,7 +557,7 @@ export function createTechJobRepository(): TechJobRepository {
           throw new Error(`listAssignedToTech failed: ${error.message}`);
         }
         return (data ?? []).map((row) => toJob(row as never));
-      });
+      }, []);
       for (const job of jobs) knownJobs.set(job.id, job);
       return jobs;
     },
@@ -573,6 +574,12 @@ export function createTechJobRepository(): TechJobRepository {
           throw new Error(`getById failed: ${error.message}`);
         }
         return data ? toJob(data as never) : null;
+      }).catch(async (e: unknown) => {
+        // Offline with no saved copy of this one job: use it from any saved job list.
+        if (!(e instanceof OfflineError)) throw e;
+        const saved = knownJobs.get(jobId) ?? (await findSavedRecord<ReturnType<typeof toJob>>('ft.jobs', jobId));
+        if (!saved) throw e;
+        return saved;
       });
       if (job) knownJobs.set(job.id, job);
       return job;
@@ -1117,7 +1124,7 @@ export async function getJobInvestigation(jobId: string): Promise<JobInvestigati
 export function createJobPlanTaskRepository(): JobPlanTaskRepository {
   return {
     async listForJob(jobId: string): Promise<JobPlanTaskSummary[]> {
-      return readCached('ft.planTasks.listForJob', { jobId }, async () => {
+      return readCachedOr('ft.planTasks.listForJob', { jobId }, async () => {
         const { organizationId } = requireModuleSession();
         const { data, error } = await supabase
           .from('job_plan_tasks')
@@ -1147,7 +1154,7 @@ export function createJobPlanTaskRepository(): JobPlanTaskRepository {
           materialsNote: r.materials_note ?? null,
           contentUpdatedAt: r.content_updated_at ?? new Date(0).toISOString(),
         }));
-      });
+      }, []);
     },
   };
 }
@@ -1346,7 +1353,7 @@ export function createTimeEntryRepository(): TimeEntryRepository {
     async listForJob(jobId: string): Promise<TimeEntry[]> {
       const { organizationId } = requireModuleSession();
 
-      const entries = await readCached('ft.timeEntries.listForJob', { jobId }, async () => {
+      const entries = await readCachedOr('ft.timeEntries.listForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_time_entries')
           .select('*')
@@ -1359,7 +1366,7 @@ export function createTimeEntryRepository(): TimeEntryRepository {
         }
 
         return ((data ?? []) as TimeEntryRow[]).map(toTimeEntry);
-      });
+      }, []);
       for (const entry of entries) knownEntries.set(entry.id, entry);
       return entries;
     },
@@ -1373,7 +1380,7 @@ export function createTimeEntryRepository(): TimeEntryRepository {
 export function createPremQueueRepository(): PremQueueRepository {
   return {
     async listOpen(techId: string): Promise<{ items: PremQueueItem[]; unavailable: boolean }> {
-      return readCached('ft.premQueue.listOpen', { techId }, async () => {
+      return readCachedOr('ft.premQueue.listOpen', { techId }, async () => {
         const { data: jobRows, error: jobsError } = await supabase
           .from('jobs')
           .select('*, customers(name, phone)')
@@ -1437,7 +1444,7 @@ export function createPremQueueRepository(): PremQueueRepository {
           });
         }
         return { items, unavailable: false };
-      });
+      }, { items: [], unavailable: false });
     },
 
     async claim(organizationId: string, jobId: string, techId: string): Promise<void> {
@@ -1478,7 +1485,7 @@ export function buildFieldTechPorts(session?: PayrollRepoSession): ModulePorts {
     localPrefs: { getBool: getBoolPref, setBool: setBoolPref },
     techs: {
       list: async (orgId: string) => {
-        return readCached('ft.techs.list', { orgId }, async () => {
+        return readCachedOr('ft.techs.list', { orgId }, async () => {
           const { data, error } = await supabase
             .from('profiles')
             .select('id, full_name')
@@ -1486,7 +1493,7 @@ export function buildFieldTechPorts(session?: PayrollRepoSession): ModulePorts {
             .order('full_name');
           if (error) throw asError(error);
           return (data ?? []).map((r: { id: string; full_name: string }) => ({ id: r.id, fullName: r.full_name }));
-        });
+        }, []);
       },
     },
   };

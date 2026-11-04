@@ -12,6 +12,7 @@ import type {
 } from '../../../../packages/payroll-ui/src/port';
 import { OfflineError, writeThrough } from './offline-mutations';
 import { isOnlineNow } from './sync-events';
+import { orWhenOffline } from './offline-fallback';
 import { cachedRead, getReadCacheIdentity, buildReadCacheKey } from './read-cache';
 import { getCached, listMeta } from './read-cache-store';
 import { readEmployeeProfiles } from './employee-profiles-source';
@@ -46,7 +47,7 @@ export async function readCached<T>(queryName: string, params: Record<string, un
 
 /** Like readCached, but an offline miss gives `empty` (a blank form) instead of an error. */
 export async function readCachedOr<T>(queryName: string, params: Record<string, unknown>, fetchLive: () => Promise<T>, empty: T): Promise<T> {
-  try { return await readCached(queryName, params, fetchLive); } catch (e) { if (e instanceof OfflineError) return empty; throw e; }
+  return orWhenOffline(() => readCached(queryName, params, fetchLive), empty, (e) => e instanceof OfflineError);
 }
 
 // Offline miss on a new date range (Hours keys on today, so its key changes daily):
@@ -265,7 +266,7 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
 
     async getRateHistory(forUserId) {
       const uid = forUserId ?? userId;
-      return readCached('pr.rateHistory', { uid }, async () => {
+      return readCachedOr('pr.rateHistory', { uid }, async () => {
         const { data, error } = await supabase
           .from('employee_rate_history')
           .select('effective_from, hourly_rate_cents')
@@ -288,7 +289,7 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           return [{ effectiveFrom: '1970-01-01' as wageEngine.IsoDate, hourlyRateCents: cents }];
         }
         return rows;
-      });
+      }, []);
     },
 
     async getSettings(): Promise<PayrollSettings> {
@@ -312,7 +313,7 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
     },
 
     async listRunLines(range) {
-      return readCached('pr.runLines', { from: range.from, to: range.to }, async () => {
+      return readCachedOr('pr.runLines', { from: range.from, to: range.to }, async () => {
         const { data, error } = await supabase
           .from('payout_lines')
           .select('*, payout_batches!inner(period_start, period_end)')
@@ -321,11 +322,11 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           .lte('payout_batches.period_end', range.to);
         check(error);
         return ((data ?? []) as Row[]).map((r) => toRunLine(r, ''));
-      });
+      }, []);
     },
 
     async listMyJobPay(range) {
-      return readCached('pr.jobPay', { from: range.from, to: range.to }, async () => {
+      return readCachedOr('pr.jobPay', { from: range.from, to: range.to }, async () => {
         const { data, error } = await supabase
           .from('job_payout_lines')
           .select('id, basis, amount_cents, status, created_at, jobs(job_number)')
@@ -343,11 +344,11 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           status: r.status as 'pending' | 'included',
           createdAt: r.created_at as string,
         }));
-      });
+      }, []);
     },
 
     async listMyReimbursements() {
-      return readCached('pr.reimbursements', {}, async () => {
+      return readCachedOr('pr.reimbursements', {}, async () => {
         const { data, error } = await supabase
           .from('reimbursements')
           .select('id, user_id, amount_cents, description, job_id, receipt_photo_path, status, rejection_reason, created_at')
@@ -355,7 +356,7 @@ export function createPayrollRepos(supabase: SupabaseClient, session: PayrollRep
           .order('created_at', { ascending: false });
         check(error);
         return ((data ?? []) as Row[]).map(toReimbursement);
-      });
+      }, []);
     },
 
     async submitReimbursement(input: NewReimbursementInput) {

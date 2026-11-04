@@ -12,7 +12,7 @@ import type {
   AdminReimbursement,
 } from '../../../../packages/payroll-ui/src/port';
 import { requireOnline } from './offline-mutations';
-import { readCached, toPayrollTimeEntry } from './payroll-repos';
+import { readCachedOr, toPayrollTimeEntry } from './payroll-repos';
 import type { PayrollRepoSession } from './payroll-repos';
 
 type Row = Record<string, any>;
@@ -353,7 +353,7 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
     },
 
     async listAllReimbursements(): Promise<AdminReimbursement[]> {
-      return readCached('pr.admin.reimbursements', {}, async () => {
+      return readCachedOr('pr.admin.reimbursements', {}, async () => {
         const { data, error } = await supabase
           .from('reimbursements')
           .select('id, user_id, amount_cents, description, job_id, receipt_photo_path, status, rejection_reason, created_at')
@@ -373,7 +373,7 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
           createdAt: r.created_at,
           employeeName: names.get(r.user_id as string) ?? '',
         })) as AdminReimbursement[];
-      });
+      }, []);
     },
 
     async getReceiptUrl(path: string): Promise<string | null> {
