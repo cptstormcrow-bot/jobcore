@@ -29,6 +29,9 @@ export function emitDrainComplete(e: DrainCompleteEvent): void {
 }
 
 let onlineNow = true;
+// False until the first network report after launch; until then onlineNow is only a guess.
+let netKnown = false;
+const netWaiters = new Set<() => void>();
 
 export function isOnlineNow(): boolean {
   return onlineNow;
@@ -36,6 +39,22 @@ export function isOnlineNow(): boolean {
 
 export function setOnlineNow(v: boolean): void {
   onlineNow = v;
+  netKnown = true;
+  for (const w of Array.from(netWaiters)) w();
+}
+
+export function isNetKnown(): boolean {
+  return netKnown;
+}
+
+/** Resolves on the first network report, or after maxMs, whichever comes first. */
+export function whenNetKnown(maxMs: number): Promise<void> {
+  if (netKnown) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = () => { clearTimeout(t); netWaiters.delete(done); resolve(); };
+    const t = setTimeout(done, maxMs);
+    netWaiters.add(done);
+  });
 }
 
 let drainRequester: (() => void) | null = null;

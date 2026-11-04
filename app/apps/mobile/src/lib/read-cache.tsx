@@ -6,11 +6,11 @@ import { OP_PATCH_SPECS } from './read-cache-patches';
 import { summarizeStale, type StaleEntry, type StaleSummary } from './stale-hint';
 registerOpPatches(OP_PATCH_SPECS as never);
 import { useSession } from './session';
-import { isOnlineNow, subscribeDrainComplete } from './sync-events';
+import { isNetKnown, isOnlineNow, subscribeDrainComplete, whenNetKnown } from './sync-events';
 import { findRecordInPayload } from './offline-fallback';
-import { offlineMissError, skipFetchWhenNoCopy } from './offline-read-policy';
+import { NET_KNOWN_WAIT_MS, offlineMissError, skipFetchWhenNoCopy } from './offline-read-policy';
 import {
-  clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listMeta, markAllStaleFor, putCached, wipeOtherUsers,
+  clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listCachedMatching, listMeta, markAllStaleFor, putCached, wipeOtherUsers,
 } from './read-cache-store';
 
 export { buildReadCacheKey };
@@ -95,6 +95,8 @@ export async function cachedRead<T>(
     setStale(key, { query, servingStale, cachedAt: cached.fetchedAt });
     return { data: JSON.parse(cached.payload) as T, servingStale, fromCache: true, cachedAt: cached.fetchedAt };
   }
+  // Just after launch the network state is a guess: wait briefly for the first report.
+  if (!isNetKnown()) await whenNetKnown(NET_KNOWN_WAIT_MS);
   // Known offline with nothing saved: fail now so the screen's fallback shows at once.
   if (skipFetchWhenNoCopy(isOnlineNow())) throw offlineMissError();
   const data = await fetchAndStore(key, fetcher); // rethrows when no cache + failure
@@ -109,10 +111,7 @@ export async function cachedRead<T>(
 export async function findSavedRecord<T>(queryPart: string, id: string, isMatch?: (rec: Record<string, unknown>) => boolean): Promise<T | null> {
   if (!identity || !id) return null;
   const { orgId, userId } = identity;
-  for (const m of await listMeta(userId)) {
-    if (!m.query.includes(queryPart)) continue;
-    const row = await getCached(m.key);
-    if (!row || row.orgId !== orgId) continue;
+  for (const row of await listCachedMatching(userId, orgId, queryPart)) {
     let parsed: unknown;
     try { parsed = JSON.parse(row.payload); } catch { continue; }
     const hit = findRecordInPayload<T>(parsed, id, isMatch);
@@ -128,10 +127,7 @@ export async function findSavedRecord<T>(queryPart: string, id: string, isMatch?
 export async function scanSavedReads<T>(queryPart: string, pick: (payload: unknown, params: Record<string, unknown>) => T | undefined): Promise<T | undefined> {
   if (!identity) return undefined;
   const { orgId, userId } = identity;
-  for (const m of await listMeta(userId)) {
-    if (!m.query.includes(queryPart)) continue;
-    const row = await getCached(m.key);
-    if (!row || row.orgId !== orgId) continue;
+  for (const row of await listCachedMatching(userId, orgId, queryPart)) {
     try {
       const params = JSON.parse(row.params);
       const hit = pick(JSON.parse(row.payload), params && typeof params === 'object' && !Array.isArray(params) ? params : {});

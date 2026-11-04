@@ -13,6 +13,8 @@ export async function getSignedUrlCached(
   const id = `${bucket}/${storagePath}`;
   const hit = urls.get(id);
   if (hit && hit.expiresAt - SKEW_MS > Date.now()) return hit.url;
+  // Offline: signing needs the server, so skip the wait (the photo shows no image).
+  if (!isOnlineNow()) return null;
   const r = await createSignedUrl(bucket, storagePath);
   if (!r) return null;
   urls.set(id, { url: r.url, expiresAt: Date.now() + (r.expiresInSec ? r.expiresInSec * 1000 : DEFAULT_TTL_MS) });

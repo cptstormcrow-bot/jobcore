@@ -127,3 +127,5 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 22. In airplane mode, open Job #N from #0054 Overview when only the list was saved (the job itself was never opened). #0027 Job Detail opens at once with the list's data, with no wait.
 23. In airplane mode, open a new prem #0061 and a new estimate #0057 for Job #N. Each blank form shows at once, with no wait.
 24. In airplane mode, move between screens never opened online (for example #0023 Reports for a new date range). Each shows blank at once, with no wait.
+25. Close the app fully, turn on airplane mode, open the app and go straight to a screen never opened online. It shows blank within about a second, with no long wait.
+26. In airplane mode, open #0027 Job Detail for a Job #N that has photos. The rest of the job shows at once; the photos show no image instead of hanging.

@@ -44,6 +44,14 @@ export async function putCached(i: PutCachedInput): Promise<void> {
     i.key, i.orgId, i.userId, i.query, JSON.stringify(i.params ?? null), i.payload, i.fetchedAt, i.bytes);
 }
 
+/** Saved reads for this user and org whose query name contains `queryPart`, in one query. */
+export async function listCachedMatching(userId: string, orgId: string, queryPart: string): Promise<CachedRow[]> {
+  const db = await getOfflineDb();
+  const rows = await db.getAllAsync<{ key: string; org_id: string; user_id: string; query: string; params: string; payload: string; fetched_at: number; bytes: number }>(
+    'select key, org_id, user_id, query, params, payload, fetched_at, bytes from read_cache where user_id = ? and org_id = ? and instr(query, ?) > 0', userId, orgId, queryPart);
+  return rows.map((r) => ({ key: r.key, orgId: r.org_id, userId: r.user_id, query: r.query, params: r.params, payload: r.payload, fetchedAt: r.fetched_at, bytes: r.bytes }));
+}
+
 export async function listMeta(userId?: string): Promise<CacheMeta[]> {
   const db = await getOfflineDb();
   if (userId) return db.getAllAsync<CacheMeta>('select key, query, user_id, fetched_at, bytes from read_cache where user_id = ?', userId);

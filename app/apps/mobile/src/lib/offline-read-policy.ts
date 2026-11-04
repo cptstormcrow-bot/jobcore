@@ -12,3 +12,6 @@ export function offlineMissError(): TypeError {
 export function skipFetchWhenNoCopy(online: boolean): boolean {
   return !online;
 }
+
+/** Longest a cold-start read with nothing saved waits for the first network report. */
+export const NET_KNOWN_WAIT_MS = 1500;
