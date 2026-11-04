@@ -12,7 +12,7 @@ import { useSyncStatus } from '../src/lib/sync-status';
 export default function AccountScreen() {
   const router = useRouter();
   const state = useSession();
-  const { failedCount } = useSyncStatus();
+  const { failedCount, pendingCount } = useSyncStatus();
 
   if (state.status !== 'authenticated') {
     return (
@@ -24,6 +24,15 @@ export default function AccountScreen() {
 
   const { organization, profile } = state;
 
+  // Unsent changes are kept on the phone (sign-out clears saved reads only) and wait
+  // for this person's next sign-in, so warn instead of blocking.
+  const unsentNote =
+    pendingCount > 0
+      ? `
+
+${pendingCount} change${pendingCount === 1 ? " hasn't" : "s haven't"} sent yet. They stay on this phone and send the next time you sign in with internet.`
+      : '';
+
   const confirmSignOut = () => {
     const doSignOut = async () => {
       await signOut();
@@ -31,11 +40,11 @@ export default function AccountScreen() {
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm('Sign out of JobCore?')) {
+      if (window.confirm(`Sign out of JobCore?${unsentNote}`)) {
         void doSignOut();
       }
     } else {
-      Alert.alert('Sign out', 'Sign out of JobCore?', [
+      Alert.alert('Sign out', `Sign out of JobCore?${unsentNote}`, [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Sign out', style: 'destructive', onPress: () => void doSignOut() },
       ]);
@@ -48,7 +57,7 @@ export default function AccountScreen() {
       router.replace('/sign-in');
     };
     const title = 'Switch user';
-    const body = 'This will sign you out and return to the sign-in screen.';
+    const body = `This will sign you out and return to the sign-in screen.${unsentNote}`;
 
     if (Platform.OS === 'web') {
       if (window.confirm(`${title}\n\n${body}`)) {

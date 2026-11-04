@@ -21,7 +21,8 @@ import { buildPayrollAdminMembers } from './payroll-admin-repos';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
-import { countPending, listPending, markDone } from './offline-db';
+import { countPending, listOpen, markDone } from './offline-db';
+import { planStageSave } from './queue-order';
 import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
@@ -244,7 +245,10 @@ export async function saveJobStage(
   lifecycle: JobLifecyclePatch,
 ): Promise<Job> {
   const repo = createJobRepository();
-  if (!isOnlineNow()) {
+  // An older change to this job still unsent (being sent right now, or a create or
+  // note) must land first, so the stage save queues behind it instead of racing it.
+  const plan = planStageSave(await listOpen().catch(() => []), jobId, Object.keys(lifecycle));
+  if (!isOnlineNow() || plan.mustQueue) {
     await repo.patchLifecycle(jobId, lifecycle);
     return repo.updateStatus(jobId, status);
   }
@@ -269,27 +273,16 @@ export async function saveJobStage(
   const row = ((res.data ?? []) as JobRow[])[0];
   if (!row) throw new Error('Could not save the job: you may no longer have access to it.');
 
-  await dropReplacedStageChanges(jobId, Object.keys(lifecycle));
+  await dropReplacedStageChanges(plan.dropIds);
   await patchReadCache('job.update_status', { jobId, status });
   await patchReadCache('job.patch_lifecycle', { jobId, patch: lifecycle });
   return rememberJob(toJob(row));
 }
 
-/** Deletes queued status changes, and lifecycle changes covered by `fields`, for this job. */
-async function dropReplacedStageChanges(jobId: string, fields: string[]): Promise<void> {
+/** Deletes the older queued stage changes the one-step save replaced. */
+async function dropReplacedStageChanges(ids: readonly string[]): Promise<void> {
   try {
-    for (const row of await listPending()) {
-      if (row.op !== 'job.update_status' && row.op !== 'job.patch_lifecycle') continue;
-      let p: { jobId?: unknown; patch?: Record<string, unknown> };
-      try {
-        p = JSON.parse(row.payload) as typeof p;
-      } catch {
-        continue;
-      }
-      if (p.jobId !== jobId) continue;
-      if (row.op === 'job.patch_lifecycle' && !Object.keys(p.patch ?? {}).every((k) => fields.includes(k))) continue;
-      await markDone(row.id);
-    }
+    for (const id of ids) await markDone(id);
   } catch {
     // Best effort: a leftover change only means one extra send later.
   }

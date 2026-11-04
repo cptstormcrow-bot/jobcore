@@ -106,3 +106,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 7. Change estimate fine print offline (#0065).
 8. Open Payroll #0088 timesheets and clock hours offline.
 9. Turn the internet back on. Every queued change syncs and #0098 Sync issues is empty.
+10. Edit Job #N offline twice, go online. Both changes land in order (sequence-gotchas.md row 1).
+11. Make a change offline as one user, sign out on #0068 Account (the prompt names the waiting count), sign in as another. The change does not send until the first user signs in again.
+12. Change Job #N's stage offline, go online, finish it on #0018 Complete Job. It stays finished.
+13. Edit a time entry on #0084 Payroll and submit the week offline, go online. Both sync, the submit last.

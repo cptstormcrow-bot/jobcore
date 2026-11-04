@@ -1,10 +1,11 @@
 import './offline-ops/register';
 import { Platform } from 'react-native';
 import { classifyReplayError } from '@jobcore/core';
-import { countPending, enqueue, markDone, markFailed, markInflight, markRetry, send } from './offline-db';
+import { countPending, enqueue, markDone, markFailed, markRetry, send } from './offline-db';
 import { UnknownOpError } from './offline-ops';
 import { newClientId } from './ids';
-import { patchReadCache } from './read-cache';
+import { getReadCacheIdentity, patchReadCache } from './read-cache';
+import { makeLock } from './queue-order';
 import { isOnlineNow, requestDrain } from './sync-events';
 
 export const QUEUED_COPY = 'Saved on this device — will sync when back online';
@@ -55,9 +56,18 @@ export async function writeThrough<T>(
 
   // Queue row id is always fresh: payload.id is the record id, and two writes
   // to one record (create then note, or two edits) must not collide.
+  // The check and the insert run under one lock: two quick saves (a double tap, or
+  // assign then note) could both see an empty queue and race each other to the server.
+  // An inline row goes in already inflight, so a drain starting now can't send it too.
   const id = newClientId();
-  const wasEmpty = (await countPending()) === 0;
-  await enqueue({ id, op, payload: JSON.stringify(payload), occurredAt });
+  const wasEmpty = await queueLock(async () => {
+    const empty = isOnlineNow() && (await countPending()) === 0;
+    await enqueue(
+      { id, op, payload: JSON.stringify(payload), occurredAt },
+      { inflight: empty, userId: getReadCacheIdentity()?.userId ?? null }
+    );
+    return empty;
+  });
 
   const queued = async (): Promise<{ status: 'queued'; data: T }> => {
     requestDrain();
@@ -65,13 +75,14 @@ export async function writeThrough<T>(
     return { status: 'queued', data: optimistic };
   };
 
-  if (!wasEmpty) return queued();
-  if (!isOnlineNow()) {
-    await patchReadCache(op, payload);
-    return { status: 'queued', data: optimistic };
+  if (!wasEmpty) {
+    if (!isOnlineNow()) {
+      await patchReadCache(op, payload);
+      return { status: 'queued', data: optimistic };
+    }
+    return queued();
   }
 
-  await markInflight(id);
   const sending = send({ op, payload: JSON.stringify(payload) });
   const settled = sending.then(
     () => ({ ok: true as const }),
@@ -103,12 +114,21 @@ export async function writeThrough<T>(
   if (result.ok) {
     await markDone(id);
     await patchReadCache(op, payload);
+    await drainIfWaiting();
     return { status: 'applied', data: optimistic };
   }
   const outcome = await settleFailedSend(id, result.err);
-  if (outcome === 'duplicate') return { status: 'applied', data: optimistic };
   if (outcome === 'retry') return queued();
+  await drainIfWaiting();
+  if (outcome === 'duplicate') return { status: 'applied', data: optimistic };
   throw result.err;
+}
+
+const queueLock = makeLock();
+
+// Changes saved while this one was sending were held behind it; send them now.
+async function drainIfWaiting(): Promise<void> {
+  if ((await countPending()) > 0) requestDrain();
 }
 
 // Inline sends longer than this hand off to the queue so the caller is never stuck.

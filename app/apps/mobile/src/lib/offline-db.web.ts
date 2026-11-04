@@ -24,11 +24,18 @@ export async function countPending(): Promise<number> {
   return 0;
 }
 
-export async function enqueue(_mutation: NewQueuedMutation): Promise<void> {
+export async function enqueue(
+  _mutation: NewQueuedMutation,
+  _opts: { inflight?: boolean; userId?: string | null } = {}
+): Promise<void> {
   // No-op on web: there is no offline queue to persist to.
 }
 
 export async function listPending(_now?: string): Promise<QueueRow[]> {
+  return [];
+}
+
+export async function listOpen(): Promise<QueueRow[]> {
   return [];
 }
 

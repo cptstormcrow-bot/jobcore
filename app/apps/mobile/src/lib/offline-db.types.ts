@@ -11,6 +11,8 @@ export interface QueueRow {
   error_class: string | null;
   next_attempt_at: string | null;
   inflight_at: string | null;
+  /** Who made the change; null on rows queued before v3. Only that person's session sends it. */
+  user_id?: string | null;
   created_at?: string;
 }
 

@@ -24,6 +24,7 @@ import { getOpHandler, UnknownOpError } from './offline-ops';
 import type { OpContext } from './offline-ops';
 import { emitDrainComplete, isOnlineNow } from './sync-events';
 import { makeAuthRetrySend } from './auth-retry';
+import { filterRunnable, groupOf } from './queue-order';
 
 export type { QueueRow, QueueStatus, SyncLogKind, SyncLogRow };
 
@@ -106,15 +107,22 @@ export async function countPending(): Promise<number> {
   return row?.n ?? 0;
 }
 
-export async function enqueue(mutation: NewQueuedMutation): Promise<void> {
+/** `inflight` inserts the row already claimed, for a send the caller makes itself, so a drain can't pick it up in between. `userId` is who made the change. */
+export async function enqueue(
+  mutation: NewQueuedMutation,
+  opts: { inflight?: boolean; userId?: string | null } = {}
+): Promise<void> {
   try {
     const db = await getOfflineDb();
     await db.runAsync(
-      `insert into ${OFFLINE_QUEUE_TABLE} (id, op, payload, occurred_at, status, attempts) values (?, ?, ?, ?, 'pending', 0)`,
+      `insert into ${OFFLINE_QUEUE_TABLE} (id, op, payload, occurred_at, status, attempts, inflight_at, user_id) values (?, ?, ?, ?, ?, 0, ?, ?)`,
       mutation.id,
       mutation.op,
       mutation.payload,
-      mutation.occurredAt
+      mutation.occurredAt,
+      opts.inflight ? 'inflight' : 'pending',
+      opts.inflight ? new Date().toISOString() : null,
+      opts.userId ?? null
     );
   } catch (err) {
     logSyncFailure('offline-db.enqueue', err instanceof Error ? err.message : String(err), { mutation });
@@ -123,13 +131,21 @@ export async function enqueue(mutation: NewQueuedMutation): Promise<void> {
 }
 
 const QUEUE_COLUMNS =
-  'id, op, payload, occurred_at, status, attempts, last_error, error_class, next_attempt_at, inflight_at';
+  'id, op, payload, occurred_at, status, attempts, last_error, error_class, next_attempt_at, inflight_at, user_id';
 
 /** Strict FIFO. NOT filtered by next_attempt_at: the drain inspects the head and aborts 'backoff'. */
 export async function listPending(_now?: string): Promise<QueueRow[]> {
   const db = await getOfflineDb();
   return db.getAllAsync<QueueRow>(
     `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status = 'pending' order by occurred_at asc, rowid asc`
+  );
+}
+
+/** Every unsent row (pending and being sent), in queue order. */
+export async function listOpen(): Promise<QueueRow[]> {
+  const db = await getOfflineDb();
+  return db.getAllAsync<QueueRow>(
+    `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status in ('pending', 'inflight') order by occurred_at asc, rowid asc`
   );
 }
 
@@ -347,30 +363,7 @@ function classify(e: unknown): ReplayErrorClass {
   return classifyReplayError(e);
 }
 
-/** The records a queued change touches, so a stuck change holds back only that job's later changes (Jeff 2026-11-03). Empty = unknown, holds back everything. */
-export function groupOf(row: Pick<QueueRow, 'op' | 'payload'>): string[] {
-  let p: Record<string, unknown>;
-  try {
-    p = JSON.parse(row.payload) as Record<string, unknown>;
-  } catch {
-    return [];
-  }
-  if (p === null || typeof p !== 'object') return [];
-  const draft = (p.draft ?? {}) as Record<string, unknown>;
-  const str = (v: unknown): string | undefined => (typeof v === 'string' && v !== '' ? v : undefined);
-  const keys: string[] = [];
-  const add = (kind: string, v: unknown): void => {
-    const id = str(v);
-    if (id !== undefined) keys.push(`${kind}:${id}`);
-  };
-  add('job', p.jobId ?? p.job_id ?? draft.jobId ?? draft.job_id);
-  if (row.op.startsWith('job.')) add('job', p.id);
-  if (row.op.startsWith('lead.')) add('lead', p.leadId ?? p.id);
-  if (row.op.startsWith('job_photo.')) add('photo', p.id);
-  add('employee', p.profileId);
-  add('payout_batch', p.batchId);
-  return keys;
-}
+export { groupOf };
 
 let drainPromise: Promise<DrainResult> | null = null;
 
@@ -381,7 +374,14 @@ export function drainOfflineQueue(): Promise<DrainResult> {
   }
   drainPromise = (async () => {
     try {
-      const pending = await listPending(new Date().toISOString());
+      // One read of pending + inflight: an inflight row (a save being sent from a screen)
+      // holds back later changes to its records, and another person's changes wait for them.
+      const db = await getOfflineDb();
+      const open = await db.getAllAsync<QueueRow>(
+        `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status in ('pending', 'inflight') order by occurred_at asc, rowid asc`
+      );
+      const { data: sess } = await supabase.auth.getSession();
+      const pending = filterRunnable(open, sess.session?.user?.id ?? null);
       // Core's DrainRow is camelCase (occurredAt) + next_attempt_at; map the SQL rows.
       const rows = pending.map((r) => ({
         id: r.id,

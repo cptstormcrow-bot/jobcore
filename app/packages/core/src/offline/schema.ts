@@ -29,12 +29,13 @@ create table if not exists offline_queue (
   last_error text,
   error_class text,
   next_attempt_at text,
-  inflight_at text
+  inflight_at text,
+  user_id text
 );
 `;
 
-/** Current offline_queue schema version (v2 adds the four retry/diagnostic columns). */
-export const OFFLINE_QUEUE_SCHEMA_VERSION = 2;
+/** Current offline_queue schema version (v2 adds the four retry/diagnostic columns; v3 adds user_id, who made the change). */
+export const OFFLINE_QUEUE_SCHEMA_VERSION = 3;
 
 /** Upgrade statements keyed by the version they migrate TO. */
 export const OFFLINE_QUEUE_MIGRATIONS: Record<number, string[]> = {
@@ -44,6 +45,7 @@ export const OFFLINE_QUEUE_MIGRATIONS: Record<number, string[]> = {
     'ALTER TABLE offline_queue ADD COLUMN next_attempt_at TEXT',
     'ALTER TABLE offline_queue ADD COLUMN inflight_at TEXT',
   ],
+  3: ['ALTER TABLE offline_queue ADD COLUMN user_id TEXT'],
 };
 
 /** Read-through cache table DDL (one statement per entry). */
