@@ -118,6 +118,26 @@ export async function findSavedRecord<T>(queryPart: string, id: string, isMatch?
   return null;
 }
 
+/**
+ * Offline fallback: runs `pick` over every saved read whose query name contains `queryPart`
+ * (this user and org) and returns the first non-undefined answer.
+ */
+export async function scanSavedReads<T>(queryPart: string, pick: (payload: unknown, params: Record<string, unknown>) => T | undefined): Promise<T | undefined> {
+  if (!identity) return undefined;
+  const { orgId, userId } = identity;
+  for (const m of await listMeta(userId)) {
+    if (!m.query.includes(queryPart)) continue;
+    const row = await getCached(m.key);
+    if (!row || row.orgId !== orgId) continue;
+    try {
+      const params = JSON.parse(row.params);
+      const hit = pick(JSON.parse(row.payload), params && typeof params === 'object' && !Array.isArray(params) ? params : {});
+      if (hit !== undefined) return hit;
+    } catch { continue; }
+  }
+  return undefined;
+}
+
 export function markStale(prefix?: string): void {
   staleEpoch = Date.now();
   if (prefix) {

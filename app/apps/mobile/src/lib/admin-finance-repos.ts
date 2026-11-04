@@ -26,7 +26,7 @@ import { newClientId } from './ids';
 import { isOnlineNow } from './sync-events';
 import { copyToLocal, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri } from './signed-url-cache';
-import { patchReadCache, markStale } from './read-cache';
+import { patchReadCache, markStale, findSavedRecord, scanSavedReads } from './read-cache';
 import { logSyncFailure } from './log';
 import { getBoolPref, setBoolPref } from './local-prefs';
 import { setOnlineGuard } from '../../../../modules/admin-finance/src/lib/online';
@@ -341,6 +341,12 @@ export function createJobRepository(): JobRepository {
           throw new Error(`getById failed: ${error.message}`);
         }
         return data ? rememberJob(toJob(data as JobRow)) : null;
+      }).catch(async (e: unknown) => {
+        // Offline with no saved copy of this one job: use it from any saved job list.
+        if (!(e instanceof OfflineError) && isOnlineNow()) throw e;
+        const saved = knownJobs.get(jobId) ?? (await findSavedRecord<Job>('af.jobs', jobId)) ?? (await findSavedRecord<Job>('jobs', jobId));
+        if (!saved) throw e;
+        return saved;
       });
     },
 
@@ -886,6 +892,15 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
           .limit(1);
         if (error) throw new Error(`get investigator tech failed: ${error.message}`);
         return (data?.[0]?.tech_id as string | undefined) ?? null;
+      }).catch(async (e: unknown) => {
+        // Offline with no saved answer for this job: read it from a saved board-wide list, else none.
+        if (!(e instanceof OfflineError) && isOnlineNow()) throw e;
+        const hit = await scanSavedReads<string | null>('af.assignments.listInvestigatorTechIds', (payload, params) => {
+          if (!Array.isArray(params.jobIds) || !params.jobIds.includes(jobId) || !payload || typeof payload !== 'object') return undefined;
+          const techId = (payload as Record<string, unknown>)[jobId];
+          return typeof techId === 'string' ? techId : null;
+        });
+        return hit ?? null;
       });
     },
 
