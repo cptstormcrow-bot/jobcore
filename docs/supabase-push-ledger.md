@@ -22,6 +22,7 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
+| 0121_device_sync_status | New table device_sync_status (one row per tech per phone) plus RPCs report_device_sync_status and set_device_sync_status_hidden, for the web Tech sync monitor #0101. | Written, not pushed. Needs Jeff's go naming 0121; run db push --dry-run first. | 2026-11-04 |
 
 ## Past (pushes and attempts)
 

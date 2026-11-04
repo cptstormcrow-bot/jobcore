@@ -135,3 +135,6 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 30. On #0041 Job Timeline for Job #N, there are no Lead, Photos or History dots, and the work dot reads "Complete". Tapping Prem opens the prem section; tapping Complete opens the completion screen.
 31. On #0041 Job Timeline for Job #N, the dots sit in two even rows: Job to Assign (6) on top, Contact to Closeout (5) below, each row spread across the full width.
 32. On #0041 job header for Job #N, the gold bar has almost no padding around the text; Job # and date sit flush left, name, address and phone are centered, and Scheduled plus the time lines sit flush right.
+33. (Needs migration 0121 live.) On web as owner or admin, the ⋮ menu shows Sync, and it opens #0101 Tech sync monitor. As a tech on web, Sync is not in the menu. On the phone, Sync still opens #0098.
+34. On #0101, a tech whose phone has the app open shows a green dot and "Seen just now" within 2 minutes; after the app is closed for over 5 minutes the dot turns gray.
+35. On #0101, a phone with a failed change shows the failed count in red; tapping the card lists the change with its Job #N, and Hide removes the card until that phone checks in again.

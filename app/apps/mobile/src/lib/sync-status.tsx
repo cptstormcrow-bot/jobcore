@@ -6,6 +6,7 @@ import { useSession } from './session';
 import { countFailed, countPending, countStuck, drainOfflineQueue, listFailed, retryAllFailed, unstickAll as unstickAllRows } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
 import { warmSavedData, type WarmSession } from './warm-cache';
+import { reportDeviceStatus } from './device-status-report';
 import type { SyncStatus } from './offline-db.types';
 
 /* ------------------------------------------------------------------ *
@@ -113,6 +114,8 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       runningRef.current = false;
       if (aliveRef.current) setIsSyncing(false);
       await recount();
+      // Tech sync monitor (#0101): never throws, never blocks the pass.
+      if (authRef.current) void reportDeviceStatus(onlineRef.current);
       // A reconnect that landed mid-drain still owes its retry pass.
       if (retryOnNextRef.current && aliveRef.current) triggerRef.current?.();
     }
@@ -165,10 +168,21 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       onlineRef.current = online;
       setOnlineNow(online);
       setIsOnline(online);
+      if (authRef.current) void reportDeviceStatus(online);
       if (online) trigger();
     });
     return unsub;
   }, [trigger, armAutoRetry]);
+
+  // Tech sync monitor (#0101): check in every 2 minutes while signed in and open.
+  useEffect(() => {
+    if (Platform.OS === 'web' || !authenticated) return;
+    void reportDeviceStatus(onlineRef.current, true);
+    const id = setInterval(() => {
+      if (AppState.currentState === 'active') void reportDeviceStatus(onlineRef.current, true);
+    }, 120_000);
+    return () => clearInterval(id);
+  }, [authenticated]);
 
   // Foreground.
   useEffect(() => {
