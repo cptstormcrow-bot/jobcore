@@ -51,6 +51,7 @@ export interface JobPatchLifecyclePayload { jobId: string; patch: JobLifecyclePa
 export interface JobUpdateDetailsPayload { jobId: string; patch: JobDetailsPatch; base?: JobEditBase }
 export interface JobUpdateStatusPayload { jobId: string; status: string; base?: JobEditBase }
 export interface JobMarkBetaPayload { jobId: string; isBeta: boolean }
+export interface JobArchivePayload { jobId: string; status: string }
 export interface JobSetNeedsPremPayload { jobId: string; at: string | null }
 export interface JobMarkContactedPayload { jobId: string; contactedAt: string }
 export interface JobResetTimelinePayload { jobId: string }
@@ -490,6 +491,21 @@ const jobNoteUpsert: OpHandler<JobNoteUpsertPayload> = async ({ id, jobId, notes
   return APPLIED;
 };
 
+// archive_job returns early when the job is already archived, so a replay is harmless.
+const jobArchive: OpHandler<JobArchivePayload> = async ({ jobId }, ctx) => {
+  const { error } = await ctx.supabase.rpc('archive_job', { p_job_id: jobId });
+  if (error) throw error;
+  return APPLIED;
+};
+
+// unarchive_job raises 22023 when the job is no longer archived: on a replay that
+// means the first send already landed.
+const jobUnarchive: OpHandler<JobArchivePayload> = async ({ jobId }, ctx) => {
+  const { error } = await ctx.supabase.rpc('unarchive_job', { p_job_id: jobId });
+  if (error && error.code !== '22023') throw error;
+  return APPLIED;
+};
+
 const calendarEventCreate: OpHandler<CalendarEventCreatePayload> = async ({ id, organizationId, draft }, ctx) => {
   const { error } = await ctx.supabase.from('calendar_events').insert({
     id,
@@ -512,6 +528,8 @@ export const ADMIN_JOBS_OP_HANDLERS = {
   'job.update_details': jobUpdateDetails,
   'job.update_status': jobUpdateStatus,
   'job.mark_beta': jobMarkBeta,
+  'job.archive': jobArchive,
+  'job.unarchive': jobUnarchive,
   'job.set_needs_prem': jobSetNeedsPrem,
   'job.mark_contacted': jobMarkContacted,
   'job.reset_timeline': jobResetTimeline,

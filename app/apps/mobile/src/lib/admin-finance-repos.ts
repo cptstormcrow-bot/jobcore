@@ -390,22 +390,13 @@ export function createJobRepository(): JobRepository {
     },
 
     async archive(jobId: string): Promise<void> {
-      requireOnline('archive a job');
-      const { error } = await supabase.rpc('archive_job', { p_job_id: jobId });
-      if (error) {
-        throw new Error(`archive failed: ${error.message}`);
-      }
-      await patchReadCache('job.update_status', { jobId, status: 'archived' });
+      await writeThrough('job.archive', { jobId, status: 'archived' }, new Date().toISOString(), undefined);
     },
 
+    // Offline the restored status is unknown; 'closed' is the RPC's own default. The
+    // next online read of the job replaces it with the real restored status.
     async unarchive(jobId: string): Promise<void> {
-      requireOnline('unarchive a job');
-      const { data, error } = await supabase.rpc('unarchive_job', { p_job_id: jobId });
-      if (error) {
-        throw new Error(`unarchive failed: ${error.message}`);
-      }
-      const restored = typeof data === 'string' && data ? data : 'closed';
-      await patchReadCache('job.update_status', { jobId, status: restored });
+      await writeThrough('job.unarchive', { jobId, status: 'closed' }, new Date().toISOString(), undefined);
     },
 
     async reopen(jobId: string): Promise<void> {
@@ -2920,30 +2911,28 @@ export function createEstimateRepository(): EstimateRepository {
 
     async getFinePrintTemplate(): Promise<string | null> {
       const { organizationId } = requireModuleSession();
-      const { data, error } = await supabase
-        .from('estimate_settings')
-        .select('fine_print_template')
-        .eq('organization_id', organizationId)
-        .maybeSingle();
-      if (error) {
-        throw new Error(`getFinePrintTemplate failed: ${error.message}`);
-      }
-      const t = (data as { fine_print_template?: string | null } | null)?.fine_print_template;
-      return typeof t === 'string' ? t : null;
+      return readCachedOr('af.estimates.finePrint', { organizationId }, async () => {
+        const { data, error } = await supabase
+          .from('estimate_settings')
+          .select('fine_print_template')
+          .eq('organization_id', organizationId)
+          .maybeSingle();
+        if (error) {
+          throw new Error(`getFinePrintTemplate failed: ${error.message}`);
+        }
+        const t = (data as { fine_print_template?: string | null } | null)?.fine_print_template;
+        return typeof t === 'string' ? t : null;
+      }, null);
     },
 
     async setFinePrintTemplate(text: string): Promise<void> {
-      requireOnline('save the estimate fine print');
-      const { organizationId } = requireModuleSession();
-      const { error } = await supabase
-        .from('estimate_settings')
-        .upsert(
-          { organization_id: organizationId, fine_print_template: text, updated_at: new Date().toISOString() },
-          { onConflict: 'organization_id' },
-        );
-      if (error) {
-        throw new Error(`setFinePrintTemplate failed: ${error.message}`);
-      }
+      const occurredAt = new Date().toISOString();
+      await writeThrough(
+        'estimate_settings.fine_print_upsert',
+        { text, updatedAt: occurredAt },
+        occurredAt,
+        undefined,
+      );
     },
   };
 }

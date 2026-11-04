@@ -169,3 +169,17 @@ test('job photo add: other job, other kind and repeat add leave the list alone',
 test('job photo remove: drops it from the Photos tab list', () => {
   assert.deepEqual(run('job_photo.remove', PHOTOS, { id: 'p1' }, [{ id: 'p0' }, { id: 'p1' }]), [{ id: 'p0' }]);
 });
+
+test('job archive and unarchive: change the status on the cached job lists', () => {
+  const rows = [{ id: 'job-1', status: 'completed' }, { id: 'job-2', status: 'scheduled' }];
+  const archived = run('job.archive', 'af.jobs.listForOrganization', { jobId: 'job-1', status: 'archived' }, rows);
+  assert.deepEqual(archived, [{ id: 'job-1', status: 'archived' }, { id: 'job-2', status: 'scheduled' }]);
+  const back = run('job.unarchive', 'af.jobs.getById', { jobId: 'job-1', status: 'closed' }, { id: 'job-1', status: 'archived' });
+  assert.deepEqual(back, { id: 'job-1', status: 'closed' });
+});
+
+test('estimate fine print save: replaces the saved fine print', () => {
+  const op = 'estimate_settings.fine_print_upsert';
+  assert.equal(run(op, 'af.estimates.finePrint', { text: 'New terms', updatedAt: 'x' }, 'Old terms'), 'New terms');
+  assert.equal(run(op, 'af.estimates.finePrint', { text: 'First terms', updatedAt: 'x' }, null), 'First terms');
+});

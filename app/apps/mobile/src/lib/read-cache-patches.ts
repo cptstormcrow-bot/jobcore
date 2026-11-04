@@ -76,6 +76,9 @@ function lifecycleCols(patch: unknown): Row {
 export const OP_PATCH_SPECS: OpPatchSpec[] = [
   { op: 'job.updateStatusAsTech', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.update_status', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
+  { op: 'estimate_settings.fine_print_upsert', queries: ['af.estimates.finePrint'], patch: (p) => (typeof p.text === 'string' ? p.text : null) },
+  { op: 'job.archive', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
+  { op: 'job.unarchive', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.patch_lifecycle', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => lifecycleCols(p.patch)) },
   { op: 'job.mark_contacted', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ contacted_at: p.contactedAt, contactedAt: p.contactedAt })) },
   { op: 'job.reset_labor_time', queries: JOB_QUERIES, patch: (p, rows) => mapRows(rows, idIs(p.jobId), resetLaborCols(p.resetAt)) },
