@@ -49,7 +49,7 @@ export function Select({
         accessibilityState={{ disabled }}
         style={[styles.trigger, compact && styles.triggerCompact, disabled && styles.disabled]}
       >
-        <Text style={[styles.triggerText, !selected && styles.placeholderText]}>
+        <Text style={[styles.triggerText, !selected && styles.placeholderText]} numberOfLines={1}>
           {selected ? selected.label : placeholder}
         </Text>
         <Text

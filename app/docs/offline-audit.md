@@ -129,3 +129,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 24. In airplane mode, move between screens never opened online (for example #0023 Reports for a new date range). Each shows blank at once, with no wait.
 25. Close the app fully, turn on airplane mode, open the app and go straight to a screen never opened online. It shows blank within about a second, with no long wait.
 26. In airplane mode, open #0027 Job Detail for a Job #N that has photos. The rest of the job shows at once; the photos show no image instead of hanging.
+27. On #0041 for Job #N on a narrow phone, the Prem tech dropdown is one short line, with the tech name on one line.
+28. On #0041 Job Timeline for Job #N, assign a Prem tech. The single Prem dot turns yellow. Submit the prem report and it turns green.
+29. On #0041 Job Timeline for a Job #N with no prem needed and no Prem tech, the Prem dot stays gray and Next Steps skips it.
+30. On #0041 Job Timeline for Job #N, there are no Lead, Photos or History dots, and the work dot reads "Complete". Tapping Prem opens the prem section; tapping Complete opens the completion screen.

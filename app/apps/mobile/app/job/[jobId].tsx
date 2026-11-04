@@ -1088,20 +1088,17 @@ export default function JobDrilldownScreen() {
   const handleStagePress = (key: string) => {
     switch (key as StageKey) {
       case 'job': selectRegion('plan'); break;
-      case 'premAvailable':
-      case 'completePrem':
-        // Both Prem dots open the Prem screen #0061.
+      case 'prem':
+        // The Prem dot opens the Prem screen #0061.
         selectRegion('evisit');
         break;
       case 'estimate':
       case 'approval': selectRegion('estimate'); break;
       case 'schedule': selectRegion('schedule'); break;
       case 'assign': selectRegion('assign'); break;
-      case 'history': selectRegion('history'); break;
       case 'contact': setActiveStage('contact'); handleContact(); break;
       // Start is set by the Start (arrive) action; the before-photo card sits at the top of the Tasks tab.
       case 'startWork': setActiveStage('arrive'); void handleArrive(); break;
-      case 'photos': selectRegion('photos'); break;
       case 'completeWork': setActiveStage('complete'); handleComplete(); break;
       case 'paid':
         if (role === 'owner' || role === 'admin' || role === 'tech') { selectRegion('payment'); setActiveStage('paid'); }
@@ -1109,9 +1106,6 @@ export default function JobDrilldownScreen() {
       // Closeout opens #0018 job-region-closeout for admins and techs; Sales has no need (Jeff 2026-11-03).
       case 'closeout':
         if (role === 'owner' || role === 'admin' || role === 'tech') selectRegion('closeout');
-        break;
-      case 'lead':
-        if (stageExtras?.lead) router.push(`/m/admin-finance?leadId=${stageExtras.lead.id}` as never);
         break;
       default: break;
     }
@@ -1404,7 +1398,6 @@ ${body}`)) handleResetLaborTime();
   // One rule set for the timeline dots and the slider menu, so each stage opens (or stays shut) the same way in both (Jeff 2026-11-03).
   // Admin-only stages are hidden in the menu and dimmed on the timeline; Start needs an installer tech in both.
   const lockedStages = new Set<StageKey>([
-    ...(stageExtras?.lead ? [] : ['lead' as const]),
     // Techs collect payment for their work, so Paid opens for them too (Jeff 2026-11-02).
     // Techs close out jobs; Sales has no need, so Closeout stays shut for Sales (Jeff 2026-11-03).
     ...(isAdmin ? [] : ['assign' as const]),

@@ -1,28 +1,24 @@
-// Pure derivation of the 15-stage job progress bar and its "Next Steps" sentence. No I/O.
+// Pure derivation of the 11-stage job progress bar and its "Next Steps" sentence. No I/O.
 
 export const STAGE_KEYS = [
-  'lead', 'job', 'premAvailable', 'completePrem', 'estimate', 'approval', 'schedule', 'assign',
-  'contact', 'startWork', 'photos', 'completeWork', 'paid', 'closeout', 'history',
+  'job', 'prem', 'estimate', 'approval', 'schedule', 'assign',
+  'contact', 'startWork', 'completeWork', 'paid', 'closeout',
 ] as const;
 
 export type StageKey = (typeof STAGE_KEYS)[number];
 
 export const STAGE_LABELS: Record<StageKey, string> = {
-  lead: 'Lead',
   job: 'Job',
-  premAvailable: 'Prem available',
-  completePrem: 'Complete Prem',
+  prem: 'Prem',
   estimate: 'Estimate',
   approval: 'Approval',
   schedule: 'Schedule',
   assign: 'Assign',
   contact: 'Contact',
   startWork: 'Start',
-  photos: 'Photos',
-  completeWork: 'Complete work',
+  completeWork: 'Complete',
   paid: 'Paid',
   closeout: 'Closeout',
-  history: 'History',
 };
 
 export type StageState = 'gray' | 'green' | 'yellow' | 'red';
@@ -87,9 +83,9 @@ export function deriveStageStates(inputs: StageInputs): StageResult[] {
       state = 'yellow';
       reason = 'inProgress';
     } else {
-      // Red when a later stage is already complete (this one needs redoing), unless the stage does not apply.
+      // Gray and skipped when the stage does not apply; otherwise red when a later stage is already complete.
       const laterDone = STAGE_KEYS.slice(i + 1).some((k) => inputs[k].complete);
-      if (laterDone && cur.notRequired) { state = 'gray'; skipped = true; }
+      if (cur.notRequired) { state = 'gray'; skipped = true; }
       else state = laterDone ? 'red' : 'gray';
     }
     return {
@@ -110,21 +106,17 @@ export function leadingIndex(states: StageResult[]): number {
 }
 
 const NEXT_PHRASE: Record<StageKey, string> = {
-  lead: 'Capture the lead',
   job: 'Create the job',
-  premAvailable: 'Check Prem availability',
-  completePrem: 'Complete Prem',
+  prem: 'Complete Prem',
   estimate: 'Build the estimate',
   approval: 'Get approval',
   schedule: 'Schedule the job',
   assign: 'Assign a tech',
   contact: 'Contact the customer',
   startWork: 'Start work',
-  photos: 'Add photos',
   completeWork: 'Complete the work',
   paid: 'Collect payment',
   closeout: 'Close out the job',
-  history: 'Review customer history',
 };
 
 /** Short reason a yellow stage needs review, e.g. "Estimate changed"; empty when none is known. */

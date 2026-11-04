@@ -189,6 +189,7 @@ function TechRow({ label, techId, techName, techs, onRequest, busy, indicator, d
         {techs && onRequest ? (
           <View style={styles.techSelect}>
             <TechSelect
+              compact
               value={techId ?? ''}
               options={[{ label: 'Unassigned', value: '' }, ...techs.map((tech) => ({ label: tech.name, value: tech.id }))]}
               placeholder="Choose technician"

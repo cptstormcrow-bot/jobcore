@@ -37,31 +37,27 @@ export function buildJobStageResults({
   const pastCompletion = ['completed', 'paid', 'closed', 'archived'].includes(job.status);
   const flags = estimateStageFlags(estimate?.status ?? null);
   const inputs: StageInputs = {
-    lead: done(true, 'lead'),
     // Job never turns yellow (Jeff); its changedAt still yellows the later non-sticky stages.
     job: { ...done(true, 'job', job.createdAt), changedAt: stageExtras?.upstreamChangedAt ?? null, sticky: true },
-    premAvailable: {
+    prem: {
       complete: !!investigation?.submittedAt,
-      completedAt: investigation?.submittedAt ?? null,
-      // Gray = Prem needed (or not needed), yellow = a Prem tech has claimed it, green = report submitted.
+      completedAt: investigation?.submittedAt ? (marks.prem ?? marks.completePrem ?? investigation.submittedAt) : null,
+      // One Prem dot: gray = needed or not, yellow = a Prem tech has claimed it, green = report submitted.
       inProgress: !!investigatorTechId && !investigation?.submittedAt,
       notRequired: !job.needsPremAt && !investigatorTechId,
       sticky: true,
     },
-    completePrem: { ...done(!!investigation?.submittedAt, 'completePrem', investigation?.submittedAt), sticky: true },
     estimate: { ...done(flags.approvalComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: estimate?.status === 'submitted', sticky: true },
     approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected, sticky: true },
     schedule: done(!!job.scheduledStart, 'schedule'),
     assign: done(!!(job.assignedTechId), 'assign'),
     contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },
     startWork: { ...done(!!job.inProgressAt, 'startWork', job.inProgressAt), sticky: true },
-    photos: { ...done((stageExtras?.photoCount ?? 0) >= 1, 'photos'), notRequired: (stageExtras?.photoCount ?? 0) === 0 },
     // A stale completedAt on a job sent back to in progress does not count (job #3, Jeff 2026-11-02).
     completeWork: { ...done(pastCompletion && !!job.completedAt, 'completeWork', job.completedAt), sticky: true },
     // Paid follows the money, not completion: a job paid in full while in progress shows Paid (Jeff).
     paid: done(paidInFull || job.status === 'paid' || closed, 'paid'),
     closeout: done(closed, 'closeout'),
-    history: done(closed, 'history'),
   };
   const derived = deriveStageStates(inputs);
   // Draft/none stays gray (Jeff: gray draft, yellow submitted, green approved).

@@ -228,15 +228,12 @@ ${loaded.reason}` : 'This job could not be loaded.'}
   const handleStagePress = (key: string) => {
     switch (key) {
       case 'job': go('plan'); break;
-      case 'premAvailable':
-      case 'completePrem': go('jobInvestigation'); break;
+      case 'prem': go('jobInvestigation'); break;
       case 'estimate':
       case 'approval':
-      case 'startWork':
-      case 'photos': go('jobEstimate'); break;
+      case 'startWork': go('jobEstimate'); break;
       case 'schedule': go('schedule'); break;
       case 'assign': go('assign'); break;
-      case 'history': go('history'); break;
       // Paid and Close-out stay reachable after the job is paid.
       case 'paid': if (role === 'owner' || role === 'admin') go('payment'); break;
       case 'closeout': if (role === 'owner' || role === 'admin') go('closeout'); break;
@@ -273,7 +270,6 @@ ${loaded.reason}` : 'This job could not be loaded.'}
                 states={stageResults.states}
                 nextStep={stageResults.nextStep ?? ''}
                 onStagePress={handleStagePress}
-                disabledKeys={['lead']}
                 testID="job-progress-bar"
               />
             ) : null}
