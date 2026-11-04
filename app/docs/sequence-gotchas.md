@@ -23,3 +23,12 @@ is either fixed in this pass (with a test) or explained, with what to do about i
 | D | Discard a change in #0098 Sync issues while offline. | The screen can still show the discarded value until the internet is back and the saved data refreshes. | Go online once, or pull to refresh. |
 | E | Approve a week on #0088 Payroll while a tech still has unsent hours on their own phone. | The approval does not include those hours. Another phone's queue can't be seen from here. | Ask the tech to open the app with internet before you approve. |
 | F | Sign out with unsent changes and never sign in again as that person. | Those changes stay on the phone. | Sign in as that person with internet once, and they send. |
+
+## Spotty internet (random drops)
+
+| # | What happens on a bad signal | What went wrong | Fix |
+|---|---|---|---|
+| 6 | The phone shows connected, but no data gets through (weak bars, a dead hotspot, a captive Wi-Fi page). | A request waited forever. Sync stayed stuck "running", so no later sync ever started, and a save being sent stayed "sending" until the app was restarted, holding back later changes to that job. | Every request now gives up after 30 seconds (2 minutes for photo uploads) and is retried later like any dropped request. |
+| 7 | The connection drops in the middle of sending a change. | The drop was reported in a shape the app didn't recognize, so it was counted as an unknown error. After 8 drops the change was marked failed for good, and sync kept trying the rest of the queue against a dead connection. | A dropped request is now recognized as a network drop: sync stops and waits for the signal, and the change gets the full 10 tries. |
+
+Already handled, checked in this pass: the app closed mid-send (the change resends on next open), a sign-in token refresh that fails during a drop (treated as a network drop), and a photo that uploaded but whose record did not save (the retry reuses the uploaded file).

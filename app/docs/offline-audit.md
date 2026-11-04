@@ -110,3 +110,5 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 11. Make a change offline as one user, sign out on #0068 Account (the prompt names the waiting count), sign in as another. The change does not send until the first user signs in again.
 12. Change Job #N's stage offline, go online, finish it on #0018 Complete Job. It stays finished.
 13. Edit a time entry on #0084 Payroll and submit the week offline, go online. Both sync, the submit last.
+14. On a very weak signal (or Wi-Fi with no internet behind it), save a change to Job #N. Within about 30 seconds the screen moves on, and the change syncs once a good signal is back, with no app restart.
+15. Toggle airplane mode on and off a few times while changes are syncing. Nothing ends up in #0098 Sync issues; every change syncs once the signal holds.

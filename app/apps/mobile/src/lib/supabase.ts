@@ -7,6 +7,7 @@ import { AppState, Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { makeTimedFetch } from './timed-fetch';
 
 /**
  * Storage adapter backing the Supabase auth session with Expo SecureStore
@@ -111,6 +112,8 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     // fragment to parse, and enabling it breaks deep links.
     detectSessionInUrl: false,
   },
+  // Every request gives up after a while, so a dead-but-"connected" signal can't hang sync.
+  global: { fetch: makeTimedFetch((...a) => fetch(...a)) },
 });
 
 // Supabase-recommended RN pattern: only run the token auto-refresh timer while the

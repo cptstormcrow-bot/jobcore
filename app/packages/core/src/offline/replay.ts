@@ -145,6 +145,9 @@ export function classifyReplayError(e: unknown): ReplayErrorClass {
   if (
     (name === 'TypeError' && /fetch|network|failed to fetch|load failed/i.test(message)) ||
     name === 'AuthRetryableFetchError' ||
+    // postgrest hands back a dropped request as a plain object ({ message: 'TypeError: Network
+    // request failed', code: '' }), so the name and status are lost by the time it is thrown.
+    (code === '' && /^(TypeError|AbortError|FetchError): |network request (failed|timed out)|failed to fetch|load failed/i.test(message)) ||
     status === 0 ||
     (status >= 500 && status <= 599) ||
     status === 429
