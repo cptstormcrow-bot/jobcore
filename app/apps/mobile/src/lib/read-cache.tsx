@@ -8,6 +8,7 @@ registerOpPatches(OP_PATCH_SPECS as never);
 import { useSession } from './session';
 import { isOnlineNow, subscribeDrainComplete } from './sync-events';
 import { findRecordInPayload } from './offline-fallback';
+import { offlineMissError, skipFetchWhenNoCopy } from './offline-read-policy';
 import {
   clearStaleFor, deleteKeys, evictAtStart, getCached, isStaleFor, listMeta, markAllStaleFor, putCached, wipeOtherUsers,
 } from './read-cache-store';
@@ -94,6 +95,8 @@ export async function cachedRead<T>(
     setStale(key, { query, servingStale, cachedAt: cached.fetchedAt });
     return { data: JSON.parse(cached.payload) as T, servingStale, fromCache: true, cachedAt: cached.fetchedAt };
   }
+  // Known offline with nothing saved: fail now so the screen's fallback shows at once.
+  if (skipFetchWhenNoCopy(isOnlineNow())) throw offlineMissError();
   const data = await fetchAndStore(key, fetcher); // rethrows when no cache + failure
   setStale(key, null);
   return { data, servingStale: false, fromCache: false, cachedAt: null };

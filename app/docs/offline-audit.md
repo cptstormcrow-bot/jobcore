@@ -124,3 +124,6 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 19. On a fresh install, sign in as a tech online and wait a minute without opening any job. Turn on airplane mode. #0054 Overview lists the assigned jobs, and Job #N opens on #0027 Job Detail with its notes, photos and checklists.
 20. On a fresh install, sign in online and wait a minute without opening #0057. Turn on airplane mode, open #0057 Job Estimate for Job #N. The price sheet rates show.
 21. On a fresh install, sign in as a tech online and wait a minute without opening #0084. Turn on airplane mode. This week's hours show on #0084 Payroll.
+22. In airplane mode, open Job #N from #0054 Overview when only the list was saved (the job itself was never opened). #0027 Job Detail opens at once with the list's data, with no wait.
+23. In airplane mode, open a new prem #0061 and a new estimate #0057 for Job #N. Each blank form shows at once, with no wait.
+24. In airplane mode, move between screens never opened online (for example #0023 Reports for a new date range). Each shows blank at once, with no wait.
