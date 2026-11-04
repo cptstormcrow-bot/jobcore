@@ -20,7 +20,6 @@ export type JobProgressBarProps = {
   testID?: string;
 };
 
-const ROW_SPLIT = 8;
 const DOT = 18;
 const STATE_COLOR: Record<StageState, string> = {
   gray: colors.textMuted,
@@ -54,6 +53,9 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
   const stateAt = (i: number): StageState => states[i]?.state ?? 'gray';
   // A connector takes the color of the dot on its right: that dot's state color when lit, border gray when not reached.
   const lineColor = (toIndex: number) => (stateAt(toIndex) === 'gray' ? colors.border : STATE_COLOR[stateAt(toIndex)]);
+
+  // Balanced rows: top gets the extra dot when the count is odd (11 stages: 6 + 5).
+  const split = Math.ceil(stages.length / 2);
 
   const renderRow = (from: number, to: number) => (
     <View style={styles.row}>
@@ -101,8 +103,8 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
 
   return (
     <View testID={testID} style={styles.wrap}>
-      {renderRow(0, ROW_SPLIT)}
-      {renderRow(ROW_SPLIT, stages.length)}
+      {renderRow(0, split)}
+      {renderRow(split, stages.length)}
       <View style={styles.nextRow}>
         <Text style={styles.next} numberOfLines={1}>{nextStep}</Text>
         <HelpCircle
