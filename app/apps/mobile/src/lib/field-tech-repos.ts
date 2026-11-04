@@ -803,7 +803,7 @@ export function createEstimateRepository(): EstimateRepository {
   const knownEstimates = new Map<string, JobEstimate>();
   return {
     async getForJob(jobId: string): Promise<JobEstimate | null> {
-      const est = await readCached('ft.estimates.getForJob', { jobId }, async () => {
+      const est = await readCachedOr('ft.estimates.getForJob', { jobId }, async () => {
         const { organizationId } = requireModuleSession();
         const { data, error } = await supabase
           .from('job_estimates')
@@ -815,7 +815,7 @@ export function createEstimateRepository(): EstimateRepository {
           throw new Error(`getForJob failed: ${error.message}`);
         }
         return data ? toJobEstimate(data as Parameters<typeof toJobEstimate>[0]) : null;
-      });
+      }, null);
       if (est) knownEstimates.set(jobId, est);
       return est;
     },
@@ -952,7 +952,7 @@ export function createEstimateRepository(): EstimateRepository {
     },
 
     async listLineItems(jobId: string): Promise<JobEstimateLineItem[]> {
-      return readCached('ft.estimates.listLineItems', { jobId }, async () => {
+      return readCachedOr('ft.estimates.listLineItems', { jobId }, async () => {
         const { organizationId } = requireModuleSession();
         const { data, error } = await supabase
           .from('job_estimate_line_items')
@@ -965,7 +965,7 @@ export function createEstimateRepository(): EstimateRepository {
           throw new Error(`listLineItems failed: ${error.message}`);
         }
         return ((data ?? []) as Array<Parameters<typeof toJobEstimateLineItem>[0]>).map(toJobEstimateLineItem);
-      });
+      }, []);
     },
 
     async addLineItem(jobId: string, draft: JobEstimateLineItemDraft): Promise<JobEstimateLineItem> {
