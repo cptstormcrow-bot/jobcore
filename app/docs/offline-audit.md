@@ -1,3 +1,9 @@
+﻿---
+classification: sdassemblypros/jobcore
+comments: "Offline audit (v0.13.30 + offline pass, next build vc28)"
+origin: Codespace/SDAssemblyPros/Jobcore/app/docs/offline-audit.md
+tags: [sdassemblypros, jobcore]
+---
 # Offline audit (v0.13.30 + offline pass, next build vc28)
 
 How each screen behaves in airplane mode. Screen numbers come from the v0.13.30 UI Inventory.
@@ -40,7 +46,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 | Screen | Offline | Notes |
 |---|---|---|
 | #0057 Job Estimate | Works offline | An unsaved estimate opens blank (4e0b0c4). Line edits queue. |
-| Estimate fine print (#0065 Settings) | Works offline | New in this pass. |
+| Estimate fine print (#0065 Settings) | Works offline | New in this pass. Filled in the background while online, for owners and admins. |
 | Estimate links (send to customer) | Needs internet | The link is made by the server. |
 | Save a line to the price sheet | Needs internet | Changes the shared price sheet. |
 | #0019 Price Sheets, #0020 Price Sheet Editor | Saved data | Rates read offline. Publishing needs internet. |
@@ -79,7 +85,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 
 | Screen | Offline | Notes |
 |---|---|---|
-| #0088 Payroll (admin), #0087 Payroll Run | Saved data | Timesheets and clock hours read offline (new in this pass). Approve, reject, delete, close and export need internet. |
+| #0088 Payroll (admin), #0087 Payroll Run | Saved data | Timesheets and clock hours read offline (new in this pass), filled in the background while online for this pay week and last. Approve, reject, delete, close and export need internet. |
 | #0086 Payroll Settings | Needs internet | Rates, settings and QuickBooks. |
 | #0084 Payroll (field tech), #0085 Payroll (sales) | Works offline | Clock in and out queue. |
 
@@ -114,3 +120,4 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 15. Toggle airplane mode on and off a few times while changes are syncing. Nothing ends up in #0098 Sync issues; every change syncs once the signal holds.
 16. On #0094 Photos for Job #N, delete a photo and turn on airplane mode right as you tap. Go online. The photo stays gone and nothing shows in #0098 Sync issues.
 17. On #0040 Assign for Job #N, assign a tech on a very weak signal and turn on airplane mode as the save goes out. Go online. The tech stays assigned and nothing shows in #0098 Sync issues.
+18. On a fresh install, sign in as an admin online and wait a minute without opening #0065, #0088 or #0087. Turn on airplane mode. Fine print on #0065 and this week's timesheets and clock hours on #0088 and #0087 show.

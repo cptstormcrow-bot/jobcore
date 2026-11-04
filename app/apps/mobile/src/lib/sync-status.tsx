@@ -5,6 +5,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { useSession } from './session';
 import { countFailed, countPending, countStuck, drainOfflineQueue, listFailed, retryAllFailed, unstickAll as unstickAllRows } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
+import { warmSavedData, type WarmSession } from './warm-cache';
 import type { SyncStatus } from './offline-db.types';
 
 /* ------------------------------------------------------------------ *
@@ -14,6 +15,7 @@ import type { SyncStatus } from './offline-db.types';
  * debounced (500 ms) trigger that runs only when online && authenticated.
  * Failed rows are put back to pending automatically on each reconnect
  * (offline -> online edge, first reading, sign-in), at most once per 30 s.
+ * A finished pass also fills saved data for admin screens (warm-cache.ts).
  * ------------------------------------------------------------------ */
 
 const SyncStatusContext = createContext<SyncStatus | null>(null);
@@ -43,6 +45,11 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
   const triggerRef = useRef<(() => void) | null>(null);
 
   authRef.current = authenticated;
+  const warmRef = useRef<WarmSession | null>(null);
+  warmRef.current =
+    session.status === 'authenticated'
+      ? { orgId: session.organization.id, userId: session.profile.id, role: session.profile.role }
+      : null;
 
   const recount = useCallback(async () => {
     try {
@@ -87,7 +94,11 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
       // retry quietly with backoff 15 s, 30 s, 60 s ... up to 5 min. Only rows that
       // really failed set lastError.
       if (result.aborted) scheduleQuietRetry();
-      else backoffRef.current = 0;
+      else {
+        backoffRef.current = 0;
+        // Queued changes are in, so the fill reads them back. Fire and forget.
+        if (warmRef.current) void warmSavedData(warmRef.current).catch(() => {});
+      }
       let err: string | null = null;
       if (result.failed > 0) {
         const rows = await listFailed(1);

@@ -2903,19 +2903,7 @@ export function createEstimateRepository(): EstimateRepository {
     },
 
     async getFinePrintTemplate(): Promise<string | null> {
-      const { organizationId } = requireModuleSession();
-      return readCachedOr('af.estimates.finePrint', { organizationId }, async () => {
-        const { data, error } = await supabase
-          .from('estimate_settings')
-          .select('fine_print_template')
-          .eq('organization_id', organizationId)
-          .maybeSingle();
-        if (error) {
-          throw new Error(`getFinePrintTemplate failed: ${error.message}`);
-        }
-        const t = (data as { fine_print_template?: string | null } | null)?.fine_print_template;
-        return typeof t === 'string' ? t : null;
-      }, null);
+      return loadFinePrintTemplate(requireModuleSession().organizationId);
     },
 
     async setFinePrintTemplate(text: string): Promise<void> {
@@ -3511,6 +3499,22 @@ function createCompanyInfoPort(): NonNullable<ModulePorts['companyInfo']> {
       if (error) throw new Error(`save company info failed: ${error.message}`);
     },
   };
+}
+
+/** Estimate fine print, saved on the phone. Also called by warm-cache with the signed-in org. */
+export async function loadFinePrintTemplate(organizationId: string): Promise<string | null> {
+  return readCachedOr('af.estimates.finePrint', { organizationId }, async () => {
+    const { data, error } = await supabase
+      .from('estimate_settings')
+      .select('fine_print_template')
+      .eq('organization_id', organizationId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`getFinePrintTemplate failed: ${error.message}`);
+    }
+    const t = (data as { fine_print_template?: string | null } | null)?.fine_print_template;
+    return typeof t === 'string' ? t : null;
+  }, null);
 }
 
 let cachedPorts: ModulePorts | null = null;
