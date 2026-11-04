@@ -22,12 +22,12 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| 0121_device_sync_status | New table device_sync_status (one row per tech per phone) plus RPCs report_device_sync_status and set_device_sync_status_hidden, for the web Tech sync monitor #0101. | Written, not pushed. Needs Jeff's go naming 0121; run db push --dry-run first. | 2026-11-04 |
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-11-04 | 0121_device_sync_status.sql | OK | This JobCore session (role landing thread), on Jeff's explicit go ('push the migration') | Pre-checked: `db push --dry-run` listed only 0121 pending. `db push` printed 'Applying migration 0121_device_sync_status.sql... Finished supabase db push.' Post-check: to_regclass finds device_sync_status and pg_proc shows both RPCs (report_device_sync_status, set_device_sync_status_hidden). Backs the web Tech sync monitor #0101. Not yet tested live. |
 | 2026-11-03 | 0120_tech_close_out.sql | OK | This JobCore session (role landing thread), on Jeff's explicit go ('go') | Pre-checked: `db push --dry-run` listed only 0120 pending. `db push` printed 'Applying migration 0120_tech_close_out.sql... Finished supabase db push.' Post-check: pg_proc shows close_out_job_write has the admin-or-assigned-tech check. Lets the assigned tech close out on #0018 (status only; commission written only for an admin). Not yet tested live. |
 | 2026-11-03 | 0119_reset_job_labor_time.sql | OK | This JobCore session (role landing thread), on Jeff's explicit go ('go and push') | Pre-checked: `db push --dry-run` listed only 0119 pending. `db push` printed 'Applying migration 0119_reset_job_labor_time.sql... Finished supabase db push.' EXIT=0. Post-check: pg_proc shows reset_job_labor_time live. Backs the Reset time buttons on #0041 and #0076 (admin or assigned tech; closed/archived refused). Not yet tested live. |
 | 2026-11-03 | 0118_tech_card_check_payment_insert.sql | OK | This JobCore session (role landing / payments thread), on Jeff's explicit go ('go on the database push', 'Yes, push live') | Pre-checked: `db push --dry-run` listed only 0118 pending. Two earlier attempts were refused by the local auto-mode safety check (nothing ran). `db push --linked` then printed 'Applying migration 0118_tech_card_check_payment_insert.sql... Finished supabase db push.' Post-check: `migration list --linked` shows 0118 local and remote. Replaces payments_insert_tech_cash with payments_insert_tech_manual (assigned tech, cash/card/check). Policy not yet tested live. |

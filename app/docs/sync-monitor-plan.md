@@ -6,7 +6,7 @@ tags: [sdassemblypros, jobcore]
 ---
 # Admin Sync Monitor: plan and evaluation
 
-Status: Steps 1, 2 and 4 built 2026-11-04 (no admin buttons yet). Step 3 not built. Migration 0121 is written but not pushed live.
+Status: Steps 1, 2 and 4 built 2026-11-04 (no admin buttons yet). Step 3 not built. Migration 0121 pushed live 2026-11-04.
 
 ## What you asked for
 
