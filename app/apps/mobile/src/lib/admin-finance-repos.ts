@@ -16,7 +16,7 @@
 
 import { supabase, supabaseUrl } from './supabase';
 import { readEmployeeProfiles } from './employee-profiles-source';
-import { createPayrollRepos, readCached, type PayrollRepoSession } from './payroll-repos';
+import { createPayrollRepos, readCached, readCachedOr, type PayrollRepoSession } from './payroll-repos';
 import { buildPayrollAdminMembers } from './payroll-admin-repos';
 import type { CalculationResult } from '../../../../modules/admin-finance/src/money/types';
 import type { PostgrestError } from '@supabase/supabase-js';
@@ -3030,7 +3030,7 @@ function toJobInvestigation(row: {
 export function createJobInvestigationRepository(): JobInvestigationRepository {
   return {
     async getForJob(jobId: string): Promise<JobInvestigation | null> {
-      return readCached('af.investigations.getForJob', { jobId }, async () => {
+      return readCachedOr('af.investigations.getForJob', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_investigations')
           .select('*')
@@ -3040,7 +3040,7 @@ export function createJobInvestigationRepository(): JobInvestigationRepository {
           throw new Error(`getForJob failed: ${error.message}`);
         }
         return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
-      });
+      }, null);
     },
 
     async upsertForJob(jobId: string, patch: JobInvestigationInput): Promise<JobInvestigation> {

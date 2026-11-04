@@ -16,7 +16,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { captureCamelEditBase, captureJobEditBase, ESTIMATE_FIELD_TO_COLUMN } from '@jobcore/core';
 import { supabase, supabaseUrl } from './supabase';
-import { createPayrollRepos, readCached, type PayrollRepoSession } from './payroll-repos';
+import { createPayrollRepos, readCached, readCachedOr, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
 import { writeThrough, requireOnline } from './offline-mutations';
 import { shrinkPhoto } from './photo-resize';
@@ -1099,7 +1099,7 @@ function toJobInvestigation(row: {
 }
 
 export async function getJobInvestigation(jobId: string): Promise<JobInvestigation | null> {
-  return readCached('ft.investigation.getForJob', { jobId }, async () => {
+  return readCachedOr('ft.investigation.getForJob', { jobId }, async () => {
     const { organizationId } = requireModuleSession();
     const { data, error } = await supabase
       .from('job_investigations')
@@ -1111,7 +1111,7 @@ export async function getJobInvestigation(jobId: string): Promise<JobInvestigati
       throw new Error(`getJobInvestigation failed: ${error.message}`);
     }
     return data ? toJobInvestigation(data as Parameters<typeof toJobInvestigation>[0]) : null;
-  });
+  }, null);
 }
 
 export function createJobPlanTaskRepository(): JobPlanTaskRepository {
@@ -1225,7 +1225,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
 
   return {
     async list(jobId: string): Promise<JobPlanningPhoto[]> {
-      const rows = await readCached('ft.planningPhotos.list', { jobId }, async () => {
+      const rows = await readCachedOr('ft.planningPhotos.list', { jobId }, async () => {
         const { data, error } = await supabase
           .from('job_planning_photos')
           .select('id, job_id, storage_path, caption, created_at, job_plan_task_id')
@@ -1235,7 +1235,7 @@ function createJobPlanningPhotoRepository(): JobPlanningPhotoRepo {
           throw new Error(`planningPhotos.list failed: ${error.message}`);
         }
         return (data ?? []) as PhotoRow[];
-      });
+      }, [] as PhotoRow[]);
       return Promise.all(rows.map(toPhoto));
     },
 

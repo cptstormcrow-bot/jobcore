@@ -44,6 +44,11 @@ export async function readCached<T>(queryName: string, params: Record<string, un
   }
 }
 
+/** Like readCached, but an offline miss gives `empty` (a blank form) instead of an error. */
+export async function readCachedOr<T>(queryName: string, params: Record<string, unknown>, fetchLive: () => Promise<T>, empty: T): Promise<T> {
+  try { return await readCached(queryName, params, fetchLive); } catch (e) { if (e instanceof OfflineError) return empty; throw e; }
+}
+
 // Offline miss on a new date range (Hours keys on today, so its key changes daily):
 // rebuild the range from every saved pr.time range instead of showing an error.
 async function savedTimeRows(range: PayrollDateRange): Promise<PayrollTimeEntry[] | null> {
