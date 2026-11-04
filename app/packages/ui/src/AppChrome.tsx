@@ -68,6 +68,7 @@ export type AppChromeProps = {
   onLogoPress?: () => void; // logo acts as Back (opt-in)
   onTitlePress?: () => void; // header logo/title press -> overview (opt-in)
   titleBarInset?: number; // px to inset the title-bar pill on both sides (default 0)
+  titleBarTight?: boolean; // minimal padding inside the title-bar pill (job header)
 };
 
 function MenuRow({
@@ -182,6 +183,7 @@ export function AppChrome({
   onLogoPress,
   onTitlePress,
   titleBarInset = 0,
+  titleBarTight = false,
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -282,7 +284,7 @@ export function AppChrome({
           <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
         {(titleBar || titleContent) && wrapTitle(
-          <View style={[styles.titleBar, onTitlePress && styles.titleBarInPress, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }]}>
+          <View style={[styles.titleBar, onTitlePress && styles.titleBarInPress, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }, titleBarTight && styles.titleBarTight]}>
             {titleContent ? titleContent : titleBar ? (<>
             <TruncatedText
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
@@ -479,6 +481,7 @@ const styles = StyleSheet.create({
   titleBarGold: {
     backgroundColor: colors.sand,
   },
+  titleBarTight: { paddingHorizontal: 4, paddingTop: 2, paddingBottom: 2 },
   titleBarTextGold: {
     color: colors.text,
     opacity: 1,

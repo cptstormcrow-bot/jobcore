@@ -112,6 +112,7 @@ export function JobHeader({
         }
         titleBarTone="gold"
         titleBarInset={5}
+        titleBarTight
         helpContext={{ screenKey: 'job-detail', jobStatus: job.status }}
         gearItems={gearItems}
         showBack={showBack}

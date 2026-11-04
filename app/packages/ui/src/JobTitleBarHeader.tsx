@@ -183,10 +183,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
   },
   root: { alignSelf: 'stretch' },
-  threeRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.sm },
-  leftCol: { flex: 1, alignItems: 'center' },
+  threeRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', gap: spacing.xs },
+  leftCol: { flex: 1, alignItems: 'flex-start' },
   centreCol: { flexShrink: 0, maxWidth: '60%', alignItems: 'center' },
-  rightCol: { flex: 1, alignItems: 'center' },
+  rightCol: { flex: 1, alignItems: 'flex-end' },
   jobLine: {
     fontSize: 11,
     fontFamily: typography.fontFamily.headingBold,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sideText: { fontSize: 9, lineHeight: 11, color: colors.text },
-  rightText: { textAlign: 'center' },
+  rightText: { textAlign: 'right' },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   name: {
     fontSize: 18,
@@ -206,5 +206,5 @@ const styles = StyleSheet.create({
   link: { fontSize: 9, lineHeight: 11, color: colors.text },
   underline: { textDecorationLine: 'underline' },
   ingress: { marginLeft: spacing.sm },
-  line: { marginTop: spacing.xs },
+  line: { marginTop: 1 },
 });

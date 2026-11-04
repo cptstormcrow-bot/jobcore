@@ -134,3 +134,4 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 29. On #0041 Job Timeline for a Job #N with no prem needed and no Prem tech, the Prem dot stays gray and Next Steps skips it.
 30. On #0041 Job Timeline for Job #N, there are no Lead, Photos or History dots, and the work dot reads "Complete". Tapping Prem opens the prem section; tapping Complete opens the completion screen.
 31. On #0041 Job Timeline for Job #N, the dots sit in two even rows: Job to Assign (6) on top, Contact to Closeout (5) below, each row spread across the full width.
+32. On #0041 job header for Job #N, the gold bar has almost no padding around the text; Job # and date sit flush left, name, address and phone are centered, and Scheduled plus the time lines sit flush right.
