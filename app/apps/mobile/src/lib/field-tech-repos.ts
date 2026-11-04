@@ -19,7 +19,7 @@ import { supabase, supabaseUrl } from './supabase';
 import { createPayrollRepos, readCached, readCachedOr, type PayrollRepoSession } from './payroll-repos';
 import { newClientId } from './ids';
 import { writeThrough, requireOnline, OfflineError } from './offline-mutations';
-import { findSavedRecord } from './read-cache';
+import { findSavedRecord, getReadCacheIdentity } from './read-cache';
 import { shrinkPhoto } from './photo-resize';
 import { copyToLocal, localPhotoPath, storagePathFor, planningStoragePathFor } from './photo-files';
 import { resolvePhotoUri, setSignedUrlResolver } from './signed-url-cache';
@@ -692,19 +692,22 @@ export function createCameraRepository(): CameraRepository {
  * `getModuleSession()` (`../../../../modules/field-tech/src/lib/module-session`)
  * — the host is the only legal source for field-tech's ambient org/user
  * context, per that module's own doc comment on the host-to-module read
- * direction. Fail-closed: throws if no session is injected yet, matching
+ * direction. Falls back to the signed-in read-cache identity when no module
+ * screen is mounted. Fail-closed: throws if neither is set yet, matching
  * this file's other functions' fail-fast convention for missing session/
  * auth state (see `createCalendarEventRepository`'s `supabase.auth.getUser()`
  * guard above).
  */
 function requireModuleSession(): { organizationId: string; userId: string } {
   const session = getModuleSession();
-  if (session === null) {
-    throw new Error(
-      'field-tech-repos: no module session injected — the host must call setModuleSession() before estimate writes.',
-    );
-  }
-  return { organizationId: session.org.id, userId: session.userId };
+  if (session !== null) return { organizationId: session.org.id, userId: session.userId };
+  // No module screen is open (the background fill in warm-cache.ts): the signed-in
+  // org and user the saved-data cache is keyed by are the same ones.
+  const id = getReadCacheIdentity();
+  if (id !== null) return { organizationId: id.orgId, userId: id.userId };
+  throw new Error(
+    'field-tech-repos: no module session injected — the host must call setModuleSession() before estimate writes.',
+  );
 }
 
 /**

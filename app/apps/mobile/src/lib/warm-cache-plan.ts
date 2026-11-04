@@ -8,6 +8,39 @@ export interface WarmRange {
 /** Only these roles open #0088 Payroll (admin), #0087 Payroll Run and #0065 Settings. */
 export const WARM_ROLES: readonly string[] = ['owner', 'admin'];
 
+/** What one fill covers for a role. */
+export interface WarmPlan {
+  /** #0065 fine print and #0088 / #0087 team timesheets and clock hours. */
+  adminPayroll: boolean;
+  /** Own time on #0084 / #0085 Payroll (and My Time on #0088). Every role has it. */
+  ownTime: boolean;
+  /** Active price sheet rates for #0057 Job Estimate. */
+  rates: boolean;
+  /** Assigned open jobs for #0054 Overview and #0027 Job Detail: notes, photos, checklists, estimate, investigation, plan. */
+  assignedJobs: boolean;
+}
+
+export function warmPlanFor(role: string): WarmPlan {
+  const known = ['owner', 'admin', 'tech', 'sales'].includes(role);
+  return {
+    adminPayroll: WARM_ROLES.includes(role),
+    ownTime: known,
+    rates: known,
+    assignedJobs: known,
+  };
+}
+
+/** Same set as field-tech's CLOSED_JOB_STATUSES (day-list-helpers.ts), kept here so the node tests load without it. */
+const CLOSED_JOB_STATUSES: ReadonlySet<string> = new Set(['completed', 'paid', 'closed', 'declined', 'cancelled', 'archived']);
+
+/** At most this many jobs are pre-loaded per fill, so a long job list never floods a weak signal. */
+export const WARM_MAX_JOBS = 30;
+
+/** The open jobs worth pre-loading, in list order. */
+export function openJobIds(jobs: readonly { id: string; status: string }[], max: number = WARM_MAX_JOBS): string[] {
+  return jobs.filter((j) => !CLOSED_JOB_STATUSES.has(j.status)).slice(0, max).map((j) => j.id);
+}
+
 /** At most one fill per this long, however often the phone reconnects or comes to the front. */
 export const WARM_EVERY_MS = 10 * 60_000;
 

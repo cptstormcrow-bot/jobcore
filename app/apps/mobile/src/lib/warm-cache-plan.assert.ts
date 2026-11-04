@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { makeWarmGate, payWeekRange, warmRanges } from './warm-cache-plan';
+import { makeWarmGate, openJobIds, payWeekRange, warmPlanFor, warmRanges } from './warm-cache-plan';
 
 test('pay week starts on the set day and runs 7 days', () => {
   // Wednesday 2026-11-04, weeks start Monday.
@@ -27,4 +27,23 @@ test('the gate lets one fill through per wait', () => {
   assert.equal(gate(), false);
   t = 1000;
   assert.equal(gate(), true);
+});
+
+test('each role fills what its screens show', () => {
+  assert.deepEqual(warmPlanFor('admin'), { adminPayroll: true, ownTime: true, rates: true, assignedJobs: true });
+  assert.deepEqual(warmPlanFor('tech'), { adminPayroll: false, ownTime: true, rates: true, assignedJobs: true });
+  assert.deepEqual(warmPlanFor('sales'), { adminPayroll: false, ownTime: true, rates: true, assignedJobs: true });
+  assert.deepEqual(warmPlanFor('unknown'), { adminPayroll: false, ownTime: false, rates: false, assignedJobs: false });
+});
+
+test('only open jobs are pre-loaded, up to the cap', () => {
+  const jobs = [
+    { id: 'a', status: 'scheduled' },
+    { id: 'b', status: 'completed' },
+    { id: 'c', status: 'in_progress' },
+    { id: 'd', status: 'archived' },
+    { id: 'e', status: 'new' },
+  ];
+  assert.deepEqual(openJobIds(jobs), ['a', 'c', 'e']);
+  assert.deepEqual(openJobIds(jobs, 2), ['a', 'c']);
 });

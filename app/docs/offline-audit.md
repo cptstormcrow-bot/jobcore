@@ -49,7 +49,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 | Estimate fine print (#0065 Settings) | Works offline | New in this pass. Filled in the background while online, for owners and admins. |
 | Estimate links (send to customer) | Needs internet | The link is made by the server. |
 | Save a line to the price sheet | Needs internet | Changes the shared price sheet. |
-| #0019 Price Sheets, #0020 Price Sheet Editor | Saved data | Rates read offline. Publishing needs internet. |
+| #0019 Price Sheets, #0020 Price Sheet Editor | Saved data | Rates read offline, and the active sheet's rates are filled in the background while online for every role. Publishing needs internet. |
 | #0053 New Price Sheet | Needs internet | Publishing is server-checked. |
 
 ## Leads and planning
@@ -87,13 +87,13 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 |---|---|---|
 | #0088 Payroll (admin), #0087 Payroll Run | Saved data | Timesheets and clock hours read offline (new in this pass), filled in the background while online for this pay week and last. Approve, reject, delete, close and export need internet. |
 | #0086 Payroll Settings | Needs internet | Rates, settings and QuickBooks. |
-| #0084 Payroll (field tech), #0085 Payroll (sales) | Works offline | Clock in and out queue. |
+| #0084 Payroll (field tech), #0085 Payroll (sales) | Works offline | Clock in and out queue. Own hours for this pay week and last are filled in the background while online. |
 
 ## Field tech and sales
 
 | Screen | Offline | Notes |
 |---|---|---|
-| #0006 Field Tech, #0054 Overview, #0069 Prems, #0067 Reviews | Saved data | |
+| #0006 Field Tech, #0054 Overview, #0069 Prems, #0067 Reviews | Saved data | Assigned open jobs (up to 30) are filled in the background while online: job, notes, photos, checklists, estimate, investigation and plan. |
 | #0038 Sales & Marketing, #0074 Overview, #0049 Callback tasks, #0036 Reporting, #0037 Review Library, #0035 Pitch Picker | Saved data | |
 | #0034 Compose Post | Needs internet | Social posting. |
 
@@ -121,3 +121,6 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 16. On #0094 Photos for Job #N, delete a photo and turn on airplane mode right as you tap. Go online. The photo stays gone and nothing shows in #0098 Sync issues.
 17. On #0040 Assign for Job #N, assign a tech on a very weak signal and turn on airplane mode as the save goes out. Go online. The tech stays assigned and nothing shows in #0098 Sync issues.
 18. On a fresh install, sign in as an admin online and wait a minute without opening #0065, #0088 or #0087. Turn on airplane mode. Fine print on #0065 and this week's timesheets and clock hours on #0088 and #0087 show.
+19. On a fresh install, sign in as a tech online and wait a minute without opening any job. Turn on airplane mode. #0054 Overview lists the assigned jobs, and Job #N opens on #0027 Job Detail with its notes, photos and checklists.
+20. On a fresh install, sign in online and wait a minute without opening #0057. Turn on airplane mode, open #0057 Job Estimate for Job #N. The price sheet rates show.
+21. On a fresh install, sign in as a tech online and wait a minute without opening #0084. Turn on airplane mode. This week's hours show on #0084 Payroll.
