@@ -1465,6 +1465,8 @@ export interface JobPlanTaskRow {
   contractorName: string | null;
   contractorContact: string | null;
   contractorLicense: string | null;
+  /** null = firm; 'pending' = last-minute scan add awaiting HQ price approval. */
+  priceStatus?: 'pending' | 'approved' | null;
   /** ISO timestamp of the last content change to this task. */
   contentUpdatedAt: string;
 }
@@ -1489,6 +1491,7 @@ export interface JobPlanTaskPatch {
   taskType?: JobPlanTaskType | null;
   sku?: string | null;
   price?: number | null;
+  priceStatus?: 'pending' | 'approved' | null;
   hourlyRate?: number | null;
   extrasCost?: number | null;
   contractorName?: string | null;
@@ -1499,6 +1502,8 @@ export interface JobPlanTaskPatch {
 export interface ServiceTaskCatalogEntry {
   id: string;
   name: string;
+  /** Box SKU, so a scan can resolve to this price-sheet row. */
+  sku?: string | null;
   category: string | null;
   estimatedMinutes: number | null;
   rate: number | null;
@@ -1525,6 +1530,7 @@ export interface JobPlanTasksRepository {
       taskType?: JobPlanTaskType | null;
       sku?: string | null;
       price?: number | null;
+      priceStatus?: 'pending' | 'approved' | null;
       hourlyRate?: number | null;
       extrasCost?: number | null;
       contractorName?: string | null;
@@ -1532,6 +1538,9 @@ export interface JobPlanTasksRepository {
       contractorLicense?: string | null;
     },
   ): Promise<JobPlanTaskRow>;
+  /** Admin only, online only: HQ approves a pending price (optional override) and publishes the task to the price sheet (#0019). */
+  approveTaskPrice?(taskRowId: string, price?: number | null): Promise<string>;
+
   /** Admin only, online only: publish an Assembly task into the active price sheet (#0019); returns the service task id. */
   publishAssemblyTask?(taskRowId: string): Promise<string>;
   updateTask(taskRowId: string, patch: JobPlanTaskPatch): Promise<JobPlanTaskRow>;

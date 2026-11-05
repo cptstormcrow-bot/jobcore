@@ -73,13 +73,13 @@ export interface JobPlanTaskCreatePayload {
   id: string; organizationId: string; jobId: string; serviceTaskId: string | null; quantity?: number;
   kind?: 'misc'; title?: string; notes?: string; estimatedMinutes?: number; source?: string;
   unit?: string | null; area?: string | null; materialsNote?: string | null;
-  taskType?: string | null; sku?: string | null; price?: number | null; hourlyRate?: number | null; extrasCost?: number | null;
+  taskType?: string | null; sku?: string | null; price?: number | null; priceStatus?: string | null; hourlyRate?: number | null; extrasCost?: number | null;
   contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null;
 }
 export interface JobPlanTaskUpdatePayload {
   taskRowId: string;
   patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null;
-    taskType?: string | null; sku?: string | null; price?: number | null; hourlyRate?: number | null; extrasCost?: number | null;
+    taskType?: string | null; sku?: string | null; price?: number | null; priceStatus?: string | null; hourlyRate?: number | null; extrasCost?: number | null;
     contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null };
   updatedAt: string;
 }
@@ -384,6 +384,7 @@ const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) =>
   if (p.taskType !== undefined) row.task_type = p.taskType;
   if (p.sku !== undefined) row.sku = p.sku;
   if (p.price !== undefined) row.price = p.price;
+  if (p.priceStatus !== undefined) row.price_status = p.priceStatus;
   if (p.hourlyRate !== undefined) row.hourly_rate = p.hourlyRate;
   if (p.extrasCost !== undefined) row.extras_cost = p.extrasCost;
   if (p.contractorName !== undefined) row.contractor_name = p.contractorName;
@@ -408,6 +409,7 @@ const jobPlanTaskUpdate: OpHandler<JobPlanTaskUpdatePayload> = async ({ taskRowI
   if (patch.taskType !== undefined) row.task_type = patch.taskType;
   if (patch.sku !== undefined) row.sku = patch.sku;
   if (patch.price !== undefined) row.price = patch.price;
+  if (patch.priceStatus !== undefined) row.price_status = patch.priceStatus;
   if (patch.hourlyRate !== undefined) row.hourly_rate = patch.hourlyRate;
   if (patch.extrasCost !== undefined) row.extras_cost = patch.extrasCost;
   if (patch.contractorName !== undefined) row.contractor_name = patch.contractorName;

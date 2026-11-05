@@ -3085,6 +3085,7 @@ type JobPlanTaskDbRow = {
   task_type?: JobPlanTaskType | null;
   sku?: string | null;
   price?: number | null;
+  price_status?: 'pending' | 'approved' | null;
   hourly_rate?: number | null;
   extras_cost?: number | null;
   contractor_name?: string | null;
@@ -3131,6 +3132,7 @@ function toJobPlanTaskRow(row: JobPlanTaskDbRow): JobPlanTaskRow {
     taskType: row.task_type ?? null,
     sku: row.sku ?? null,
     price: row.price == null ? null : Number(row.price),
+    priceStatus: row.price_status ?? null,
     hourlyRate: row.hourly_rate == null ? null : Number(row.hourly_rate),
     extrasCost: row.extras_cost == null ? null : Number(row.extras_cost),
     contractorName: row.contractor_name ?? null,
@@ -3171,6 +3173,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           task_number: number | string | null;
           details: string | null;
           materials: string | null;
+          sku: string | null;
         };
         let rows: CatalogRow[] | null = null;
         const viaRpc = await supabase.rpc('price_sheet_lookup');
@@ -3179,7 +3182,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         } else {
           const { data, error } = await supabase
             .from('service_tasks')
-            .select('id, name, category, estimated_minutes, rate, task_number, details, materials')
+            .select('id, name, category, estimated_minutes, rate, task_number, details, materials, sku')
             .eq('organization_id', organizationId)
             .eq('active', true);
           if (error) {
@@ -3196,6 +3199,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           taskNumber: row.task_number == null ? null : Number(row.task_number),
           details: row.details ?? null,
           materials: row.materials ?? null,
+          sku: row.sku ?? null,
         }));
       }, []);
     },
@@ -3288,6 +3292,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         taskType: input.taskType ?? null,
         sku: input.sku ?? null,
         price: input.price ?? null,
+        priceStatus: input.priceStatus ?? null,
         hourlyRate: input.hourlyRate ?? null,
         extrasCost: input.extrasCost ?? null,
         contractorName: input.contractorName ?? null,
@@ -3312,6 +3317,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           taskType: input.taskType ?? null,
           sku: input.sku ?? null,
           price: input.price ?? null,
+          priceStatus: input.priceStatus ?? null,
           hourlyRate: input.hourlyRate ?? null,
           extrasCost: input.extrasCost ?? null,
           contractorName: input.contractorName ?? null,
@@ -3322,6 +3328,12 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         optimistic,
       );
       return data;
+    },
+
+    async approveTaskPrice(taskRowId, price) {
+      const { data, error } = await supabase.rpc('approve_task_price', { p_task_id: taskRowId, p_price: price ?? null });
+      if (error) throw new Error(`approveTaskPrice failed: ${error.message}`);
+      return data as string;
     },
 
     async publishAssemblyTask(taskRowId) {

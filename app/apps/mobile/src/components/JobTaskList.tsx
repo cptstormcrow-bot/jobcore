@@ -69,6 +69,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
+  // Scan-from-box (Job Overview #0081): a box SKU resolves to a price-sheet task, else a last-minute add pending HQ price approval.
+  const [scanSku, setScanSku] = useState('');
+  const [scanMiss, setScanMiss] = useState(false);
+  const [scanTitle, setScanTitle] = useState('');
+  const [scanPrice, setScanPrice] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({}); // rolled-up rows show the title only (Jeff 2026-11-05)
   const edit = mode === 'edit';
   const isAdmin = session.status === 'authenticated' && (session.profile.role === 'owner' || session.profile.role === 'admin');
@@ -153,6 +158,53 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         apply([...rows, { ...row, price }]);
       } else apply([...rows, row]);
     }, 'Failed to add task.');
+
+  const resetScan = () => {
+    setScanSku('');
+    setScanMiss(false);
+    setScanTitle('');
+    setScanPrice('');
+  };
+
+  // Typed or keyboard-wedge scanned SKU. Known SKU -> price-sheet task; unknown -> ask for a title and price.
+  const lookupSku = () =>
+    run(async () => {
+      const sku = scanSku.trim();
+      if (!sku) return;
+      const hit = catalog.find((c) => (c.sku ?? '').trim().toLowerCase() === sku.toLowerCase());
+      if (hit) {
+        await addCatalog(hit.id);
+        resetScan();
+        return;
+      }
+      setScanMiss(true);
+    }, 'Failed to look up SKU.');
+
+  const addScanned = () =>
+    run(async () => {
+      const sku = scanSku.trim();
+      const title = scanTitle.trim();
+      const price = num(scanPrice);
+      if (!sku || !title || price == null) throw new Error('Enter a title and a price.');
+      const row = await repo.addMiscTask(jobId, {
+        title,
+        taskType: 'assembly',
+        sku,
+        price,
+        priceStatus: 'pending',
+        source,
+      });
+      apply([...rows, row]);
+      resetScan();
+    }, 'Failed to add scanned task.');
+
+  const approvePrice = (row: JobPlanTaskRow) =>
+    run(async () => {
+      if (!repo.approveTaskPrice) throw new Error('Approval is not available.');
+      const price = num(drafts[row.id]?.price ?? '') ?? row.price ?? null;
+      const id = await repo.approveTaskPrice(row.id, price);
+      replaceRow(row.id, { priceStatus: 'approved', price, serviceTaskId: id, kind: 'price_sheet', billing: 'flat' });
+    }, 'Failed to approve price.');
 
   const q = query.trim().toLowerCase();
   const matches = q ? catalog.filter((t) => t.name.toLowerCase().includes(q)).slice(0, 6) : [];
@@ -387,8 +439,14 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         {edit && !dim ? null : detail ? (
           <Text style={styles.notes}>{detail}</Text>
         ) : null}
+        {row.priceStatus === 'pending' ? (
+          <Text style={styles.notes}>Pending HQ approval{row.sku ? ` · SKU ${row.sku}` : ''}</Text>
+        ) : null}
         {edit && (
           <View style={styles.actions}>
+            {!dim && isAdmin && row.priceStatus === 'pending' && (
+              <PayrollButton label="Approve price" onPress={() => void approvePrice(row)} />
+            )}
             {!dim && <PayrollButton label="Defer" onPress={() => void defer(row)} />}
             {!dim && isAdmin && row.taskType === 'assembly' && !row.serviceTaskId && (
               <PayrollButton label="To price sheet" onPress={() => void publish(row)} />
@@ -417,6 +475,27 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
               {t.rate != null ? <Text style={styles.notes}>${t.rate}</Text> : null}
             </Pressable>
           ))}
+        </View>
+      )}
+      {edit && search && (
+        <View style={styles.search}>
+          <TextField inline dense placeholder="Scan box SKU" value={scanSku}
+            onChangeText={(t) => { setScanSku(t); setScanMiss(false); }} />
+          {scanMiss ? (
+            <>
+              <Text style={styles.notes}>SKU not on the price sheet. Add it last-minute; HQ approves the price.</Text>
+              <TextField inline dense placeholder="Piece name" value={scanTitle} onChangeText={setScanTitle} />
+              <TextField inline dense placeholder="Price $" keyboardType="decimal-pad" value={scanPrice} onChangeText={setScanPrice} />
+              <View style={styles.actions}>
+                <PayrollButton label="Cancel" onPress={resetScan} />
+                <PayrollButton label="Add (pending HQ)" textStyle={{ fontWeight: '700' }} onPress={() => void addScanned()} />
+              </View>
+            </>
+          ) : (
+            <View style={styles.actions}>
+              <PayrollButton label="Find SKU" onPress={() => void lookupSku()} />
+            </View>
+          )}
         </View>
       )}
       {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
