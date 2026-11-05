@@ -1093,8 +1093,7 @@ export default function JobDrilldownScreen() {
         // The Prem dot opens the Prem screen #0061.
         selectRegion('evisit');
         break;
-      case 'estimate':
-      case 'approval': selectRegion('estimate'); break;
+      case 'estimate': selectRegion('estimate'); break;
       case 'schedule': selectRegion('schedule'); break;
       case 'assign': selectRegion('assign'); break;
       case 'contact': setActiveStage('contact'); handleContact(); break;

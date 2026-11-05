@@ -48,7 +48,6 @@ export function buildJobStageResults({
       sticky: true,
     },
     estimate: { ...done(flags.approvalComplete, 'estimate', estimate?.updatedAt), rejected: flags.rejected, inProgress: estimate?.status === 'submitted', sticky: true },
-    approval: { ...done(flags.approvalComplete, 'approval', estimate?.updatedAt), rejected: flags.rejected, sticky: true },
     schedule: done(!!job.scheduledStart, 'schedule'),
     assign: done(!!(job.assignedTechId), 'assign'),
     contact: { ...done(!!stageExtras?.contactedAt, 'contact', stageExtras?.contactedAt), sticky: true },

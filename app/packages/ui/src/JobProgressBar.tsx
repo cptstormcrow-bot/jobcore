@@ -1,4 +1,4 @@
-// JobProgressBar — 15-stage job progress dots in two rows (8 + 7), with a 4px connector
+// JobProgressBar — 10-stage job progress dots in two rows (5 + 5), with a 4px connector
 // line colored like the lit dot to its right (gray when that dot is not reached), plus a "Next Steps:" line
 // with a "?" that opens a compact dot legend.
 // Plain react-native primitives only, so it renders on web and Android.
@@ -43,10 +43,10 @@ const LEGEND: ReadonlyArray<{ state: StageState; text: string }> = [
 ];
 const SHARED_MENU = [
   'Prem available and Complete Prem share the Prem menu item.',
-  'Estimate and Approval share the Estimate menu item.',
+  'The Estimate dot turns green only once the estimate is approved.',
   'Lead and History have no menu item.',
   'A dimmed dot is a step your role cannot open, or one that is waiting on an earlier step.',
-  'Prem, Estimate, Approval, Contact, Start and Complete stay green once done.',
+  'Prem, Estimate, Contact, Start and Complete stay green once done.',
 ];
 
 export function JobProgressBar({ stages, states, nextStep, onStagePress, disabledKeys, testID }: JobProgressBarProps) {
@@ -56,7 +56,7 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
   // A connector takes the color of the dot on its right: that dot's state color when lit, border gray when not reached.
   const lineColor = (toIndex: number) => (stateAt(toIndex) === 'gray' ? colors.border : STATE_COLOR[stateAt(toIndex)]);
 
-  // Balanced rows: top gets the extra dot when the count is odd (11 stages: 6 + 5).
+  // Balanced rows: top gets the extra dot when the count is odd (10 stages: 5 + 5).
   const split = Math.ceil(stages.length / 2);
 
   const renderRow = (from: number, to: number) => (
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
   // Cells are sized by their label (flexBasis auto) and then share the spare width, so a long label such as
-  // Complete or Approval is never squeezed into an equal slot and broken mid-word (Jeff 2026-11-05).
+  // Complete or Estimate is never squeezed into an equal slot and broken mid-word (Jeff 2026-11-05).
   cell: { flexGrow: 1, flexShrink: 0, flexBasis: 'auto', minWidth: 44, minHeight: 30, paddingHorizontal: 2, alignItems: 'center', justifyContent: 'flex-start' },
   disabled: { opacity: 0.4 },
   dotLine: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', height: 20 },

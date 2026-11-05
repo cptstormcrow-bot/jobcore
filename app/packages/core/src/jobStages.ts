@@ -1,7 +1,8 @@
-// Pure derivation of the 11-stage job progress bar and its "Next Steps" sentence. No I/O.
+// Pure derivation of the 10-stage job progress bar and its "Next Steps" sentence. No I/O.
+// Approval is not its own stage: the Estimate dot turns green only once the estimate is approved (Jeff 2026-11-05).
 
 export const STAGE_KEYS = [
-  'job', 'prem', 'estimate', 'approval', 'schedule', 'assign',
+  'job', 'prem', 'estimate', 'schedule', 'assign',
   'contact', 'startWork', 'completeWork', 'paid', 'closeout',
 ] as const;
 
@@ -11,7 +12,6 @@ export const STAGE_LABELS: Record<StageKey, string> = {
   job: 'Job',
   prem: 'Prem',
   estimate: 'Estimate',
-  approval: 'Approval',
   schedule: 'Schedule',
   assign: 'Assign',
   contact: 'Contact',
@@ -109,7 +109,6 @@ const NEXT_PHRASE: Record<StageKey, string> = {
   job: 'Create the job',
   prem: 'Complete Prem',
   estimate: 'Build the estimate',
-  approval: 'Get approval',
   schedule: 'Schedule the job',
   assign: 'Assign a tech',
   contact: 'Contact the customer',

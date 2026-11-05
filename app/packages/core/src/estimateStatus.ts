@@ -1,7 +1,7 @@
 /**
  * Estimate status change rules.
  * Admin and sales may move between all three states (mirrors migration 0093's role gate); a tech never touches Approved.
- * Leaving Approved warns because the Estimate/Approval stages go red once schedule/assign are done.
+ * Leaving Approved warns because the Estimate stage goes red once schedule/assign are done.
  */
 export type EstimateStatusValue = 'draft' | 'submitted' | 'approved';
 export type EstimateEditorRole = 'admin' | 'sales' | 'tech';
@@ -34,7 +34,7 @@ export interface EstimateStageFlags {
   rejected: boolean;
 }
 
-/** Maps an estimate status (null/undefined = no estimate yet) to the Estimate and Approval timeline facts. */
+/** Maps an estimate status (null/undefined = no estimate yet) to the Estimate timeline facts (green only once approved). */
 export function estimateStageFlags(status: EstimateStatusValue | null | undefined): EstimateStageFlags {
   return {
     estimateComplete: status === 'submitted' || status === 'approved',

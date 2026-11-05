@@ -13,9 +13,9 @@ function inputs(over: Partial<Record<(typeof STAGE_KEYS)[number], StageInput>> =
 const stateOf = (i: StageInputs, key: (typeof STAGE_KEYS)[number]) =>
   deriveStageStates(i).find((s) => s.key === key)!.state;
 
-test('all incomplete is gray, length 11', () => {
+test('all incomplete is gray, length 10', () => {
   const r = deriveStageStates(inputs());
-  assert.equal(r.length, 11);
+  assert.equal(r.length, 10);
   assert.ok(r.every((s) => s.state === 'gray' && s.doneAt === null));
 });
 
@@ -39,12 +39,10 @@ test('sticky stages stay green after a later upstream change', () => {
     job: { complete: true, completedAt: '2026-01-01T00:00:00Z', changedAt: '2026-01-05T00:00:00Z' },
     prem: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
     estimate: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
-    approval: { complete: true, completedAt: '2026-01-02T00:00:00Z', sticky: true },
     paid: { complete: true, completedAt: '2026-01-02T00:00:00Z' },
   });
   assert.equal(stateOf(i, 'prem'), 'green');
   assert.equal(stateOf(i, 'estimate'), 'green');
-  assert.equal(stateOf(i, 'approval'), 'green');
   assert.equal(stateOf(i, 'paid'), 'yellow');
 });
 
@@ -55,7 +53,7 @@ test('missingRequired is yellow', () => {
 test('incomplete with a later stage complete is red', () => {
   const i = inputs({ estimate: { complete: true } });
   assert.equal(stateOf(i, 'job'), 'red');
-  assert.equal(stateOf(i, 'approval'), 'gray');
+  assert.equal(stateOf(i, 'schedule'), 'gray');
 });
 
 test('prem inProgress: yellow, red without it, green when complete', () => {
@@ -102,17 +100,13 @@ const rejectedPrefix = () =>
     job: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
     prem: { complete: true, completedAt: '2026-01-01T00:00:00Z' },
     estimate: { complete: false, rejected: true },
-    approval: { complete: false, rejected: true },
   });
 
-test('rejected estimate and approval are red with no doneAt', () => {
+test('rejected estimate is red with no doneAt', () => {
   const r = deriveStageStates(rejectedPrefix());
   const est = r.find((s) => s.key === 'estimate')!;
-  const app = r.find((s) => s.key === 'approval')!;
   assert.equal(est.state, 'red');
-  assert.equal(app.state, 'red');
   assert.equal(est.doneAt, null);
-  assert.equal(app.doneAt, null);
 });
 
 test('rejected wins over complete', () => {
@@ -139,7 +133,7 @@ test('non-rejected complete estimate stays green (regression guard)', () => {
     estimate: { complete: true },
   });
   assert.equal(stateOf(i, 'estimate'), 'green');
-  assert.equal(stateOf(i, 'approval'), 'gray');
+  assert.equal(stateOf(i, 'schedule'), 'gray');
   assert.equal(leadingIndex(deriveStageStates(i)), 2);
 });
 

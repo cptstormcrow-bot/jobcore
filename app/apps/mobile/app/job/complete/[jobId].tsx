@@ -227,7 +227,6 @@ ${loaded.reason}` : 'This job could not be loaded.'}
       case 'job': go('plan'); break;
       case 'prem': go('jobInvestigation'); break;
       case 'estimate':
-      case 'approval':
       case 'startWork': go('jobEstimate'); break;
       case 'schedule': go('schedule'); break;
       case 'assign': go('assign'); break;
