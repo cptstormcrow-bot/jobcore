@@ -25,7 +25,6 @@ export type JobFormValues = {
   panelInfo: string;
   considerations: string;
   ingressInstructions: string;
-  evisitParking: string;
   evisitPanel: string;
   service: string;
   preferredDate: string;
@@ -183,19 +182,6 @@ export function JobDetailsForm({
         inline
         inputStyle={inputStyleFor(value.parkingAvailable)}
       />
-      {mode === 'edit' && hasInvestigation ? (
-        <TextField
-          label="Parking (Prem)"
-          value={value.evisitParking}
-          onChangeText={(text) => onChange({ evisitParking: text })}
-          placeholder="e.g. Driveway, street only"
-          style={fld}
-          labelStyle={styles.fieldLabel}
-          dense={compact}
-          inline
-          inputStyle={inputStyleFor(value.evisitParking)}
-        />
-      ) : null}
       <View style={styles.field}>
         <Text style={styles.sectionLabel}>Rooms needing work</Text>
         <View style={styles.roomsGrid}>

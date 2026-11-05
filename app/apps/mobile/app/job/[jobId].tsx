@@ -258,7 +258,6 @@ const EMPTY_JOB_FORM: JobFormState = {
   service: '',
   preferredDate: '',
   preferredTime: '',
-  evisitParking: '',
   evisitPanel: '',
 };
 
@@ -482,10 +481,11 @@ export default function JobDrilldownScreen() {
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
-      evisitParking: investigation?.parkingNotes ?? '',
+      // One Parking field on #0041: a Prem parking note fills Parking availability when that is still empty.
+      parkingAvailable: prev.parkingAvailable.trim() ? prev.parkingAvailable : investigation?.parkingNotes ?? '',
       evisitPanel: investigation?.stateAssessment ?? '',
     }));
-  }, [investigation]);
+  }, [investigation, loading]);
 
   // Org-scoped lookup by id: jobs_select_org / jobs_select_tech RLS policies
   // OR together server-side, so this is already the RLS-correct row for
@@ -584,7 +584,6 @@ export default function JobDrilldownScreen() {
                 description: loaded.description ?? '',
                 serviceAreaId: loaded.service_area_id ?? null,
                 houseAgeYears: '',
-                evisitParking: '',
                 evisitPanel: '',
                 customerName: fetchedCustomer?.name ?? '',
                 customerPhone: fetchedCustomer?.phone ?? '',
@@ -657,7 +656,8 @@ export default function JobDrilldownScreen() {
           techId: investigation.techId,
           ingressNotes: investigation.ingressNotes,
           logisticsNotes: investigation.logisticsNotes,
-          parkingNotes: form.evisitParking.trim() || null,
+          // Write-through: the Prem checklist (#0061) shows the same single Parking value.
+          parkingNotes: form.parkingAvailable.trim() || null,
           stateAssessment: form.evisitPanel.trim() || null,
           roomWork: investigation.roomWork,
           measurements: investigation.measurements,
