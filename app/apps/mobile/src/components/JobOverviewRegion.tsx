@@ -31,6 +31,8 @@ export type JobOverviewRegionProps = {
   onReset?: () => void;
   /** Zeroes the job's time only; the parent decides who sees it (admin or assigned tech). */
   onResetTime?: () => void;
+  /** The page shows Cancel/Save/Reset in its title row instead (Jeff 2026-11-05). */
+  hideActions?: boolean;
   onOpenJob: (jobId: string) => void;
 };
 
@@ -162,12 +164,12 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
         {blockedJob ? <PayrollButton label={`Open Job #${blockedJob.number ?? ''}`} onPress={() => onOpenJob(blockedJob.id)} /> : null}
         <PayrollButton label={busy ? 'Starting...' : 'Start project'} disabled={busy} onPress={() => void startProject()} />
       </Section>
-      <View style={styles.actions}>
+      {props.hideActions ? null : <View style={styles.actions}>
         <PayrollButton label="Cancel" onPress={props.onCancel} disabled={props.saving} />
         <PayrollButton label={props.saving ? 'Saving...' : 'Save'} onPress={props.onSave} disabled={props.saving} />
         {isAdmin && props.onReset ? <PayrollButton label="Reset" onPress={props.onReset} /> : null}
         {props.onResetTime ? <PayrollButton label="Reset time" onPress={props.onResetTime} /> : null}
-      </View>
+      </View>}
     </View>
   );
 }

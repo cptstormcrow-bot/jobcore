@@ -203,7 +203,6 @@ export function CloseOutReviewScreen({
               </Text>
             ))
           : null}
-        {embedded ? <ScreenTitle title="Close-Out" /> : null}
         <Text style={styles.body}>
           {[job.jobNumber != null ? `Job #${job.jobNumber}` : null, job.description?.trim() || null]
             .filter(Boolean)

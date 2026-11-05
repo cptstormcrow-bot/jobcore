@@ -18,7 +18,7 @@ import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
 import { jobRuleColor } from '../../src/lib/job-rule-color';
 import { usePaidInFull } from '../../src/lib/settle-on-completion';
-import { AppChrome, Breadcrumb, Checkbox, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Checkbox, PayrollButton, ScreenTitleRow, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
@@ -1352,14 +1352,19 @@ ${body}`)) handleResetLaborTime();
           ]}
           onLogoPress={goBackOrLanding}
         />
-        <View style={styles.topActions}>
-          <PayrollButton label="Cancel" onPress={goBackOrLanding} />
-          <PayrollButton
-            label={saving ? 'Saving…' : 'Save'}
-            disabled={saving}
-            onPress={() => void handleSaveCreate()}
-          />
-        </View>
+        <ScreenTitleRow
+          title="New Job"
+          right={(
+            <>
+              <PayrollButton label="Cancel" onPress={goBackOrLanding} />
+              <PayrollButton
+                label={saving ? 'Saving…' : 'Save'}
+                disabled={saving}
+                onPress={() => void handleSaveCreate()}
+              />
+            </>
+          )}
+        />
         <ScrollView contentContainerStyle={styles.scrollContent} testID={form.address ? undefined : 'job-create-shell'}>
           {role !== 'tech' ? (
             <Checkbox
@@ -1491,6 +1496,18 @@ ${body}`)) handleResetLaborTime();
           <DefaultTabBar tabs={estimateChrome.tabs} activeId={estimateChrome.activeTab} onChange={estimateChrome.onTabChange} />
         </View>
       ) : null}
+      <ScreenTitleRow
+        title={REGION_TITLES[region] ?? 'Job'}
+        testID="job-screen-title"
+        right={region === 'details' || region === 'plan' ? (
+          <>
+            <PayrollButton label="Cancel" onPress={handleCancel} disabled={saving} />
+            <PayrollButton label={saving ? 'Saving...' : 'Save'} onPress={() => void handleSaveEdit()} disabled={saving} />
+            {isAdmin ? <PayrollButton label="Reset" onPress={confirmResetTime} /> : null}
+            {canResetLaborTime ? <PayrollButton label="Reset time" onPress={confirmResetLaborTime} /> : null}
+          </>
+        ) : undefined}
+      />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
         {region === 'payment' && (estimate?.summary?.trim() || currentJob.description?.trim()) ? (
           <Text style={{ paddingHorizontal: spacing.md, marginTop: spacing.xs }}>
@@ -1683,6 +1700,7 @@ ${body}`)) handleResetLaborTime();
               saving={saving}
               onSave={() => void handleSaveEdit()}
               onCancel={handleCancel}
+              hideActions
               onReset={isAdmin ? confirmResetTime : undefined}
               onResetTime={canResetLaborTime ? confirmResetLaborTime : undefined}
               onOpenJob={(id) => router.push(`/job/${id}?panel=plan` as never)}
@@ -1697,6 +1715,20 @@ ${body}`)) handleResetLaborTime();
     </View>
   );
 }
+
+/** Title shown at the left of the title row for each Job timeline region (Jeff 2026-11-05). */
+const REGION_TITLES: Record<string, string> = {
+  details: 'Job Details',
+  plan: 'Job Details',
+  evisit: 'Prelim (Prem)',
+  estimate: 'Estimate',
+  assign: 'Assign',
+  schedule: 'Schedule',
+  photos: 'Photos',
+  history: 'History',
+  payment: 'Paid',
+  closeout: 'Close-Out',
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },

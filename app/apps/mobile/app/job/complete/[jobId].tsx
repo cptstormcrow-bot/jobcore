@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
 import { jobRuleColor } from '../../../src/lib/job-rule-color';
-import { AppChrome, EmptyState, JobProgressBar, LoadingState, colors, spacing } from '@jobcore/ui';
+import { AppChrome, EmptyState, JobProgressBar, LoadingState, ScreenTitleRow, colors, spacing } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import {
   setModuleSession as setAdminFinanceSourceModuleSession,
@@ -279,6 +279,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
       ) : (
         <AppChrome breadcrumbSegments={[{ label: 'Complete Job' }]} menuItems={[]} titleBar={{ title: 'Complete Job' }} />
       )}
+      <ScreenTitleRow title="Complete Job" testID="job-screen-title" />
       <View style={styles.body}>
         <ErrorBoundary>{body}</ErrorBoundary>
       </View>
