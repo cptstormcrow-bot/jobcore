@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: typography.fontFamily.bodyMedium,
   },
-  overlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'center', paddingHorizontal: spacing.lg },
+  overlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'center', paddingHorizontal: spacing.sm },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,

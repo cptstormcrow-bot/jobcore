@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   frame: {
     backgroundColor: colors.sand,
     borderRadius: radius.md,
-    paddingVertical: 14,
+    paddingVertical: 4,
     paddingHorizontal: spacing.md,
     marginHorizontal: 0,
   },

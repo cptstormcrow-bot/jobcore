@@ -124,7 +124,7 @@ export function BlackoutRangeModal(props: BlackoutRangeModalProps): React.ReactE
 
 const styles = StyleSheet.create({
   layer: { ...StyleSheet.absoluteFillObject, zIndex: 10, elevation: 10 },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: spacing.lg },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: spacing.sm },
   sheetWrap: { width: '100%', maxHeight: '90%' },
   sheet: { width: '100%', flexShrink: 1, backgroundColor: colors.white, borderRadius: radius.sm, padding: spacing.lg },
   title: { fontSize: typography.size.h5, fontWeight: '600', marginBottom: spacing.sm },

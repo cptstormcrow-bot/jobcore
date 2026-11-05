@@ -20,7 +20,7 @@ export function Payroll(): React.ReactElement {
 
   if (payroll === undefined || session === null) {
     return (
-      <View style={{ flex: 1, padding: spacing.lg }}>
+      <View style={{ flex: 1, padding: spacing.md }}>
         <Text>Payroll is not available yet</Text>
       </View>
     );

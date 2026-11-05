@@ -22,7 +22,7 @@ export function Reviews(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg },
+  container: { flex: 1, padding: spacing.md },
   emptyText: { fontSize: typography.text.body, color: colors.textMutedDark },
 });
 

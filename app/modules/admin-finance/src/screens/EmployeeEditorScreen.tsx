@@ -1026,7 +1026,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   heading: {
     color: colors.text,
@@ -1083,7 +1083,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   multiline: {
-    minHeight: 80,
+    minHeight: 64,
     textAlignVertical: 'top',
   },
 });

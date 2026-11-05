@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.offWhite,
   },
   content: {
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   group: {
     marginBottom: spacing.md,

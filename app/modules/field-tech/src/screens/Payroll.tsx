@@ -40,7 +40,7 @@ export function Payroll(): React.ReactElement {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  titleRow: { paddingHorizontal: spacing.lg, paddingTop: spacing.lg },
-  container: { flex: 1, padding: spacing.lg },
+  titleRow: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  container: { flex: 1, padding: spacing.md },
   emptyText: { color: colors.textMutedDark },
 });

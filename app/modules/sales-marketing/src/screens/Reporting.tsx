@@ -243,7 +243,7 @@ export function Reporting(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   notice: {
     backgroundColor: colors.sand,
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   errorText: {
     color: colors.danger,

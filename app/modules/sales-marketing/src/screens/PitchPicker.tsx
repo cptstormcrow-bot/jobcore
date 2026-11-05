@@ -112,7 +112,7 @@ export function PitchPicker({ onNavigateToComposer }: PitchPickerProps): React.R
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   subtitle: {
     fontSize: typography.size.label,
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surfaceAlt,
     borderRadius: radius.sm,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   cardLabel: {
     fontSize: typography.size.body,

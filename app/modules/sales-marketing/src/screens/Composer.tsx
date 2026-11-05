@@ -465,7 +465,7 @@ export function Composer({
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   badge: {
     alignSelf: 'flex-start',
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 16,
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
     backgroundColor: colors.sandInactive,
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     fontSize: typography.size.label,
-    minHeight: 80,
+    minHeight: 64,
     textAlignVertical: 'top',
     marginBottom: spacing.lg,
   },

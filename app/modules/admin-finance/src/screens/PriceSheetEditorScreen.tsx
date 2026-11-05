@@ -1434,7 +1434,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.body,
   },
   inputMultiline: {
-    minHeight: 72,
+    minHeight: 64,
     textAlignVertical: 'top',
   },
   signRow: {

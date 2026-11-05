@@ -40,7 +40,7 @@ export function BlackoutTimeOffList({ rows, techNameById, cancellingId, highligh
 }
 
 const styles = StyleSheet.create({
-  card: { marginBottom: spacing.md },
+  card: { marginBottom: spacing.xs },
   row: { marginBottom: spacing.md, borderWidth: 2, borderColor: 'transparent' },
   highlight: { borderColor: colors.primary },
   action: { marginBottom: spacing.sm },

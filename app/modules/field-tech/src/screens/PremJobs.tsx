@@ -180,13 +180,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: spacing.lg ?? 24,
+    padding: spacing.md ?? 24,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.xl,
+    padding: spacing.lg,
   },
   emptyText: {
     color: colors.textMuted,

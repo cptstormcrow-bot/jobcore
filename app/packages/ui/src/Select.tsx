@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.divider,
   },
   row: {
-    minHeight: 40,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.md,

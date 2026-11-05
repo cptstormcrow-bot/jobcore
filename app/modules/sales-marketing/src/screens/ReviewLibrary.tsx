@@ -260,7 +260,7 @@ export function ReviewLibrary(): React.ReactElement {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   filters: {
     marginBottom: spacing.lg,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   ratingChip: {
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    minHeight: 44,
+    minHeight: 36,
     justifyContent: 'center',
     borderRadius: 16,
     backgroundColor: colors.sandInactive,
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   emptyText: {
     color: colors.textMutedDark,

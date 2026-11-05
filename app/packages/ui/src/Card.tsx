@@ -14,8 +14,8 @@ export function Card({ children, style }: CardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    ...shadow.md,
+    borderRadius: radius.md,
+    padding: spacing.sm,
+    ...shadow.sm,
   },
 });

@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.surface,
   },
-  inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
+  inputMultiline: { minHeight: 64, textAlignVertical: 'top' },
   labelDense: { marginBottom: 0 },
   labelInline: { marginBottom: 0, marginRight: spacing.xs, flexShrink: 0 },
   inputInline: { flex: 1, paddingVertical: compact.gap },

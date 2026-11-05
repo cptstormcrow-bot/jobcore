@@ -131,7 +131,7 @@ export function Overview({ onOpenReviewLibrary }: OverviewProps): React.ReactEle
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg },
+  container: { flex: 1, padding: spacing.md },
   scrollContent: { paddingBottom: spacing.xl },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: { fontSize: typography.size.body, fontWeight: '600', marginTop: spacing.lg, marginBottom: spacing.sm, color: colors.text },

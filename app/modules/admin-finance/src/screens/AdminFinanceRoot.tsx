@@ -1450,8 +1450,8 @@ export default AdminFinanceRoot;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
-  content: { padding: spacing.md },
-  card: { marginBottom: spacing.md },
+  content: { padding: spacing.sm },
+  card: { marginBottom: spacing.xs },
   jobsTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',

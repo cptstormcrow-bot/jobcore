@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   emptyText: {
     fontSize: typography.text.body,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   listContent: {
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   row: {
     flexDirection: 'row',
@@ -433,14 +433,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   sheet: {
     width: '100%',
     maxHeight: '80%',
     backgroundColor: colors.white,
     borderRadius: radius.sm,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   modalTitle: {
     fontSize: typography.text.title,

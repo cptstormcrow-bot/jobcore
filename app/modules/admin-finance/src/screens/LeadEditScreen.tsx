@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   inlineInput: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.offWhite },
   scroll: { flex: 1 },
-  content: { padding: spacing.md },
+  content: { padding: spacing.sm },
   card: { padding: spacing.md },
   guidance: {
     fontSize: typography.size.label,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   notesInput: {
-    minHeight: 80,
+    minHeight: 64,
     textAlignVertical: 'top',
   },
   errorText: {

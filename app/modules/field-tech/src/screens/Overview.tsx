@@ -373,13 +373,13 @@ export function Overview({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   centered: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   groupCard: {
     borderWidth: StyleSheet.hairlineWidth,
