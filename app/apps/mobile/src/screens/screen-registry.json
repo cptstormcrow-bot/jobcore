@@ -527,7 +527,7 @@
   {
     "number": 61,
     "key": "job-region-evisit",
-    "title": "Prelim (Prem)",
+    "title": "Prem Checklist",
     "route": "/job/[jobId]",
     "file": "modules/field-tech/src/screens/JobInvestigationScreen.tsx",
     "createdAt": "2026-09-02T21:06:36-07:00",

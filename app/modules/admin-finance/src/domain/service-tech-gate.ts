@@ -3,7 +3,7 @@
  *
  * Pure, dependency-free helper. Assigning a Service Tech is gated ONLY on
  * materials having arrived onsite, from either the estimate's Materials Onsite
- * checkbox or the Prelim/investigation `materials_arrived` flag. A missing
+ * checkbox or the Prem/investigation `materials_arrived` flag. A missing
  * estimate never blocks by itself. Unassigning is never gated, and Prem Tech
  * assignment is not gated.
  */

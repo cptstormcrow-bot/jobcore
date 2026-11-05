@@ -198,7 +198,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
     { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
     { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => go('plan') },
-    { id: 'evisit', helpId: 'job_prem', label: isAdmin ? 'Prelim' : 'Prelim (Prem)', onPress: () => go('jobInvestigation') },
+    { id: 'evisit', helpId: 'job_prem', label: 'Prem', onPress: () => go('jobInvestigation') },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => go('jobEstimate') },
     ...(isAdmin ? ([{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => go('assign') }] as MenuItem[]) : []),
     { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => go('schedule') },

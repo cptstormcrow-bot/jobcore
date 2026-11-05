@@ -1,4 +1,4 @@
-// JobCore screen #0061 - job-region-evisit - Prelim (Prem)
+// JobCore screen #0061 - job-region-evisit - Prem Checklist
 /**
  * JobInvestigationScreen — module-local, tech-facing Segway investigation
  * form (P1 §2a).
@@ -319,7 +319,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
   return (
     <View style={styles.container}>
       {!embedded && onBack ? <PayrollButton label="Back to Job" onPress={onBack} /> : null}
-      {!embedded && <ScreenTitle title="Prelim #0061" />}
+      {!embedded && <ScreenTitle title="Prem Checklist #0061" />}
       {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       {headerSlot}
       {!embedded && (

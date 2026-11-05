@@ -187,7 +187,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'ft_prems',
     kind: 'action',
     title: 'Prems',
-    body: 'Lists jobs that need a Prem (premium visit). Tap Claim to take a job (confirm with Yes), then tap Record on a job you claimed to fill in its Prem report.',
+    body: 'Lists jobs that need a Prem (preliminary visit). Tap Claim to take a job (confirm with Yes), then tap Record on a job you claimed to fill in its Prem report.',
     context: { screens: ['ft-prems'] },
   },
   {
@@ -263,9 +263,9 @@ export const HELP_CARDS: WalkthroughStep[] = [
   {
     id: 'job_prem',
     kind: 'action',
-    title: 'Prelim (Prem)',
-    body: 'The first visit, before the estimate. Fill in the ingress, parking and logistics notes, the state assessment and the instructions for the tech; tick any red flags and add photos. Tap "Save Draft" to keep working later, or "Submit" when the visit is done.',
-    whereScreen: 'Prelim',
+    title: 'Prem Checklist',
+    body: 'Prem is short for preliminary: the first visit, before the estimate. Fill in the ingress, parking and logistics notes, the state assessment and the instructions for the tech; tick any red flags and add photos. Tap "Save Draft" to keep working later, or "Submit" when the visit is done.',
+    whereScreen: 'Prem',
     whereHint: 'Fill the starred notes, then tap "Submit".',
   },
   {

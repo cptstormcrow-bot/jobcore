@@ -1327,7 +1327,7 @@ ${body}`)) handleResetLaborTime();
       // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
       { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
       { id: 'plan', helpId: 'job_create', label: 'Job', onPress: () => {}, isActive: true },
-      ...['Prelim', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Start', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
+      ...['Prem', 'Estimate', ...(isAdmin ? ['Assign'] : []), 'Schedule', 'Contact', 'Start', 'Complete', ...(isAdmin ? ['Paid', 'Close-out'] : [])]
         .map((label) => ({ id: `create-${label.toLowerCase()}`, label, onPress: () => {}, disabled: true })),
     ];
     // Create-mode shell: JobDetailsForm in create mode, local-state-only
@@ -1417,7 +1417,7 @@ ${body}`)) handleResetLaborTime();
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
     { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
     { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
-    { id: 'evisit', helpId: 'job_prem', label: 'Prelim (Prem)', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
+    { id: 'evisit', helpId: 'job_prem', label: 'Prem', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
     { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
     ...(!lockedStages.has('assign')
       ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
@@ -1446,8 +1446,7 @@ ${body}`)) handleResetLaborTime();
 
   // Configuration (#0097) stays in every role's slider; Needs Prem is the Prem Needed
   // checkbox on the Job tab, not a menu item. AppChrome adds the line, Sign out (#0096), then Configuration (#0097) last.
-  const adminJobMenuItems: MenuItem[] = jobDetailMenuItems
-    .map((item) => (item.id === 'evisit' ? { ...item, label: 'Prelim' } : item));
+  const adminJobMenuItems: MenuItem[] = jobDetailMenuItems;
   const isTech = role === 'tech';
   const techJobMenuItems: MenuItem[] = jobDetailMenuItems;
 
@@ -1720,7 +1719,7 @@ ${body}`)) handleResetLaborTime();
 const REGION_TITLES: Record<string, string> = {
   details: 'Job Details',
   plan: 'Job Details',
-  evisit: 'Prelim (Prem)',
+  evisit: 'Prem Checklist',
   estimate: 'Estimate',
   assign: 'Assign',
   schedule: 'Schedule',
