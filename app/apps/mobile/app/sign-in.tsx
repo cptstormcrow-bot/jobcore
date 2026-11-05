@@ -1,6 +1,6 @@
 // JobCore screen #0003 - sign-in - Sign In
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -228,7 +228,7 @@ export default function SignInScreen() {
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.body}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <ScreenTitle title="Sign In" subtitle="Sign in to continue" />
 
         <Card style={styles.card}>
@@ -310,14 +310,16 @@ export default function SignInScreen() {
         </View>
 
         {error !== null ? <ErrorState title="Sign-in failed" message={error} /> : null}
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
-  body: { flex: 1, justifyContent: 'center', padding: spacing.lg },
+  scroll: { flex: 1 },
+  // Top-aligned in a scroll view so the keyboard never hides a field or button; on a tablet the card is centered, max 420 (Jeff 2026-11-05).
+  body: { flexGrow: 1, padding: spacing.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   card: { gap: spacing.xs },
   label: {
     color: colors.textLight,
@@ -335,7 +337,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.white,
   },
-  submit: { marginTop: spacing.lg },
+  submit: { marginTop: spacing.sm },
   heading: {
     color: colors.primary,
     fontSize: typography.size.h2,
@@ -350,7 +352,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   accountPicked: { borderColor: colors.primary },
-  signUpLink: { marginTop: spacing.lg },
+  signUpLink: { marginTop: spacing.sm },
   passwordWrap: { position: 'relative', justifyContent: 'center' },
   passwordInput: { paddingRight: spacing.lg * 2 },
   passwordToggle: {

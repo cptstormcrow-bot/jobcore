@@ -1,6 +1,6 @@
 // JobCore screen #0079 - forgot-password - Reset Password
 import React, { useRef, useState } from 'react';
-import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
@@ -66,7 +66,7 @@ export default function ForgotPasswordScreen() {
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.body}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <ScreenTitle title="Reset Password" subtitle="We will email you a reset link" />
 
         <Card style={styles.card}>
@@ -101,14 +101,16 @@ export default function ForgotPasswordScreen() {
         ) : null}
 
         {error !== null ? <ErrorState title="Couldn't send reset link" message={error} /> : null}
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
-  body: { flex: 1, justifyContent: 'center', padding: spacing.lg },
+  scroll: { flex: 1 },
+  // Top-aligned in a scroll view so the keyboard never hides a field or button; on a tablet the card is centered, max 420 (Jeff 2026-11-05).
+  body: { flexGrow: 1, padding: spacing.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   card: { gap: spacing.xs },
   heading: { color: colors.text, fontSize: typography.size.body, fontWeight: typography.weight.semibold },
   label: {
@@ -127,6 +129,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.white,
   },
-  submit: { marginTop: spacing.lg },
-  link: { marginTop: spacing.lg },
+  submit: { marginTop: spacing.sm },
+  link: { marginTop: spacing.sm },
 });

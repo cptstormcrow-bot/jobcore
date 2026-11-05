@@ -1,6 +1,6 @@
 // JobCore screen #0080 - reset-password - New Password
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Card, ErrorState, PayrollButton, LoadingState, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
@@ -117,7 +117,7 @@ export default function ResetPasswordScreen() {
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.body}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <ScreenTitle title="New Password" subtitle="Choose a new password" />
 
         {ready ? (
@@ -151,14 +151,16 @@ export default function ResetPasswordScreen() {
         )}
 
         {error !== null ? <ErrorState title="Couldn't update password" message={error} /> : null}
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
-  body: { flex: 1, justifyContent: 'center', padding: spacing.lg },
+  scroll: { flex: 1 },
+  // Top-aligned in a scroll view so the keyboard never hides a field or button; on a tablet the card is centered, max 420 (Jeff 2026-11-05).
+  body: { flexGrow: 1, padding: spacing.sm, width: '100%', maxWidth: 420, alignSelf: 'center' },
   card: { gap: spacing.xs },
   label: {
     color: colors.textLight,
@@ -177,5 +179,5 @@ const styles = StyleSheet.create({
     color: colors.text,
     backgroundColor: colors.white,
   },
-  submit: { marginTop: spacing.lg },
+  submit: { marginTop: spacing.sm },
 });
