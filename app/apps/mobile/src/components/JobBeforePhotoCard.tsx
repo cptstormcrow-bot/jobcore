@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Image, StyleSheet, View } from 'react-native';
-import { Card, PayrollButton, Text, radius, spacing } from '@jobcore/ui';
+import { Alert, StyleSheet, View } from 'react-native';
+import { Card, PayrollButton, PhotoThumb, Text, radius, spacing } from '@jobcore/ui';
 import { createCloseOutPhotosRepository as createNarrowPhotosRepository } from '../lib/admin-finance-repos';
 import type { JobPhotoRepository } from '../../../../modules/admin-finance/src/data/ports';
 
@@ -104,7 +104,7 @@ export function JobBeforePhotoCard({ jobId, jobNumber, onSaved }: JobBeforePhoto
       <Text>Take a photo of the job Before proceeding</Text>
       {photos.map((p) => (
         <View key={p.id} style={styles.item}>
-          <Image source={{ uri: p.uri }} style={styles.thumb} resizeMode="cover" />
+          <PhotoThumb uri={p.uri} style={styles.thumb} />
           <PhotoNoteField photo={{ id: p.id, uri: p.uri, storagePath: p.storagePath }} />
           <View style={styles.row}>
             <PayrollButton label="Retake" onPress={() => retake(p)} disabled={busy} />

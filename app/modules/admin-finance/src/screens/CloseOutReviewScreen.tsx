@@ -33,10 +33,10 @@
  */
 
 import React, { useMemo, useState, type ReactNode } from 'react';
-import { View, ScrollView, StyleSheet, TextInput, Image, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import * as Clipboard from 'expo-clipboard';
-import { Card, EmptyState, PayrollButton, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, compact, radius, typography, Text } from '@jobcore/ui';
+import { Card, EmptyState, PayrollButton, PhotoThumb, ScreenTitle, JobHeaderBlock, JobTitleBarHeader, DefaultTabBar, formatJobHeaderLines, formatScheduleLabel, colors, spacing, compact, radius, typography, Text } from '@jobcore/ui';
 import { closeOutBlockers } from '../domain/closeout';
 import type { JobTimelineItem } from '../domain/job-timeline';
 
@@ -264,7 +264,7 @@ export function CloseOutReviewScreen({
             <View style={styles.photoGrid}>
               {photos.map((photo) => (
                 <View key={photo.id} style={styles.photoTile}>
-                  <Image source={{ uri: photo.uri }} style={styles.photoImage} />
+                  <PhotoThumb uri={photo.uri} style={styles.photoImage} resizeMode="contain" />
                   {renderPhotoExtra ? renderPhotoExtra(photo) : null}
                   {!readOnly ? (
                     <Pressable onPress={() => onRemovePhoto?.(photo.id)}>

@@ -15,10 +15,10 @@
  */
 
 import * as React from 'react';
-import { View, Image, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { ScreenTitle, PayrollButton, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, spacing, compact, radius } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, PhotoThumb, Checkbox, TextField, colors, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel, spacing, compact, radius } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobInvestigation, JobInvestigationInput, JobPlanningPhoto, JobEstimate, JobEstimateInput } from '../data/ports';
 import { trackingResultToPatch, trackingStatusLine } from './tracking-helpers';
@@ -438,7 +438,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
         {photos.map((photo) => (
           <View key={photo.id} style={styles.card}>
             <PayrollButton label="Delete" onPress={() => void handleRemovePhoto(photo.id)} />
-            {photo.url ? <Image source={{ uri: photo.url }} style={styles.thumb} /> : <Text style={styles.value}>Photo unavailable</Text>}
+            {photo.url ? <PhotoThumb uri={photo.url} style={styles.thumb} resizeMode="contain" /> : <Text style={styles.value}>Photo unavailable</Text>}
           </View>
         ))}
         {submitError ? <Text style={styles.error}>{submitError}</Text> : null}

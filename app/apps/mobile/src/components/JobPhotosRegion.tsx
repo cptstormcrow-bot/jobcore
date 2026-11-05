@@ -7,8 +7,8 @@
  * photos but still opens this screen.
  */
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { Card, EmptyState, LoadingState, Text, radius, spacing } from '@jobcore/ui';
+import { StyleSheet, View } from 'react-native';
+import { Card, EmptyState, LoadingState, PhotoThumb, Text, radius, spacing } from '@jobcore/ui';
 import { JobBeforePhotoCard } from './JobBeforePhotoCard';
 import { createCloseOutPhotosRepository } from '../lib/admin-finance-repos';
 import { toUserMessage } from '../lib/offline-mutations';
@@ -82,7 +82,7 @@ export function JobPhotosRegion({ jobId, jobNumber }: JobPhotosRegionProps) {
           <Text>{kindLabel(kind)} photos</Text>
           <View style={styles.grid}>
             {others.filter((p) => p.kind === kind).map((p) => (
-              <Image key={p.id} source={{ uri: p.uri }} style={styles.thumb} resizeMode="cover" />
+              <PhotoThumb key={p.id} uri={p.uri} style={styles.thumb} />
             ))}
           </View>
         </Card>

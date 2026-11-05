@@ -66,3 +66,4 @@ export type { RegistryEntry } from './screen-numbers/screen-resolve';
 export { jobSubViewFor, JOB_ACTION_STAGES } from './screen-numbers/job-subview';
 export type { JobActionStage, JobSubViewInput } from './screen-numbers/job-subview';
 export * from './sand';
+export * from './PhotoViewer';

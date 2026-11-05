@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Image, StyleSheet, View } from 'react-native';
-import { Card, PayrollButton, Text, colors, radius, spacing, typography } from '@jobcore/ui';
+import { Alert, StyleSheet, View } from 'react-native';
+import { Card, PayrollButton, PhotoThumb, Text, colors, radius, spacing, typography } from '@jobcore/ui';
 import { createCloseOutPhotosRepository as createNarrowPhotosRepository } from '../lib/admin-finance-repos';
 import type { JobPhotoRepository } from '../../../../modules/admin-finance/src/data/ports';
 
@@ -145,7 +145,7 @@ export function JobAfterPhotoCard({ jobId, jobNumber, onSaved, onCountChange, di
       {photos.map((p) => (
         <View key={p.id} style={styles.item}>
           <View style={styles.head}>
-            <Image source={{ uri: p.uri }} style={styles.thumb} resizeMode="cover" />
+            <PhotoThumb uri={p.uri} style={styles.thumb} />
             <Text style={styles.name} numberOfLines={1}>{photoName(p)}</Text>
           </View>
           {/* PhotoNoteField has no disabled prop; block touches and dim it while the job is submitting. */}

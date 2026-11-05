@@ -3,9 +3,9 @@
 // resolved from the registry by the caller (P2e.3b). The JobAction type comes from
 // @jobcore/module-sdk (the contract package), never from a module implementation.
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { Job } from '@jobcore/core';
-import { colors, spacing, typography, radius, Text } from '@jobcore/ui';
+import { colors, spacing, typography, radius, Text, PhotoThumb } from '@jobcore/ui';
 import { JOB_STATUS_COLORS } from '@jobcore/ui';
 import { supabase } from '../lib/supabase';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../lib/read-cache';
@@ -196,7 +196,7 @@ export function JobDetail({ job }: JobDetailProps) {
             {photos.map((photo) =>
               photo.uri ? (
                 <View key={photo.id} style={styles.photoTile}>
-                  <Image source={{ uri: photo.uri }} style={styles.photoImage} />
+                  <PhotoThumb uri={photo.uri} style={styles.photoImage} resizeMode="contain" />
                 </View>
               ) : null,
             )}
