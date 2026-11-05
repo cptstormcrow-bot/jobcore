@@ -274,7 +274,7 @@ export function AppChrome({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.controlsRow}>
+      <View style={[styles.controlsRow, winWidth < 600 && styles.controlsRowPhone]}>
         <Pressable
           onPress={() => setHMenuOpen(true)}
           accessibilityRole="button"
@@ -435,6 +435,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     columnGap: spacing.md,
   },
+  // Phone (< 600 dp): tighter header row, Jeff 2026-11-05. The menu and gear buttons keep their 8 px hitSlop.
+  controlsRowPhone: { paddingTop: 2, paddingBottom: 2, columnGap: spacing.sm },
   iconButton: {
     paddingHorizontal: 2,
     paddingVertical: spacing.xs,
