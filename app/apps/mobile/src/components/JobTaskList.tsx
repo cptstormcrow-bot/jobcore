@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontWeight: '600', color: colors.text },
   badge: { color: colors.textMutedDark, fontSize: typography.text.hint },
   notes: { color: colors.textMutedDark, fontSize: typography.text.hint },
-  arrow: { fontSize: typography.text.title, fontWeight: '600', color: colors.text },
+  arrow: { fontSize: typography.text.title + 6, fontWeight: '600', color: colors.text },
   qty: { width: 80 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
