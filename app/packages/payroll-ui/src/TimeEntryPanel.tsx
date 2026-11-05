@@ -121,13 +121,14 @@ const HOURS_W = 72;
 const CELL = { fontSize: 14, color: colors.text } as const;
 const CELL_HEAD = { fontSize: 12, fontWeight: '600', color: colors.textMuted } as const;
 const CELL_MUTED = { fontSize: 12, color: colors.textMuted } as const;
-// Borderless, short box: a light tint marks it as typeable.
+// Short box with a thin gray border and a light tint so it reads as typeable (min row 32).
 const HOURS_INPUT = {
   width: HOURS_W,
-  height: 28,
+  height: 32,
   paddingVertical: 0,
   paddingHorizontal: 6,
-  borderWidth: 0,
+  borderWidth: 1,
+  borderColor: colors.border,
   borderRadius: 4,
   backgroundColor: colors.surfaceAlt,
   fontFamily: typography.fontFamily.body,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, View, Pressable, Modal, ScrollView, StyleSheet } from 'react-native';
+import { Animated, View, Pressable, Modal, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { Text } from './Text';
 import { TruncatedText } from './TruncatedText';
 import { useRouter } from 'expo-router';
@@ -187,6 +187,7 @@ export function AppChrome({
 }: AppChromeProps): JSX.Element {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: winWidth } = useWindowDimensions();
   const [hMenuOpen, setHMenuOpen] = useState(false);
   const menuProgress = useRef(new Animated.Value(0)).current;
   const [oMenuOpen, setOMenuOpen] = useState(false);
@@ -284,7 +285,7 @@ export function AppChrome({
           <MenuGlyph progress={menuProgress} color={colors.primary} />
         </Pressable>
         {(titleBar || titleContent) && wrapTitle(
-          <View style={[styles.titleBar, onTitlePress && styles.titleBarInPress, titleBarTone === 'gold' && styles.titleBarGold, titleBarInset > 0 && { marginHorizontal: titleBarInset }, titleBarTight && styles.titleBarTight]}>
+          <View style={[styles.titleBar, onTitlePress && styles.titleBarInPress, titleBarTone === 'gold' && styles.titleBarGold, winWidth < 600 && styles.titleBarPhone, titleBarInset > 0 && { marginHorizontal: titleBarInset }, titleBarTight && styles.titleBarTight]}>
             {titleContent ? titleContent : titleBar ? (<>
             <TruncatedText
               style={[styles.titleBarTitle, titleBarTone === 'gold' && styles.titleBarTextGold]}
@@ -473,7 +474,7 @@ const styles = StyleSheet.create({
   },
   titleBarSubtitle: {
     fontFamily: typography.fontFamily.body,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 14,
     fontWeight: '400',
     color: colors.white,
@@ -481,6 +482,8 @@ const styles = StyleSheet.create({
   titleBarGold: {
     backgroundColor: colors.sand,
   },
+  // Phone (< 600 dp): tight pill, Jeff 2026-11-05. Tablet keeps the roomy 20 / 10 / 10 above.
+  titleBarPhone: { paddingHorizontal: 8, paddingTop: 4, paddingBottom: 4 },
   titleBarTight: { paddingHorizontal: 4, paddingTop: 2, paddingBottom: 2 },
   titleBarTextGold: {
     color: colors.text,

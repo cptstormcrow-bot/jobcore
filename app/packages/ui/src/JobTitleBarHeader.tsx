@@ -145,7 +145,7 @@ export function JobTitleBarHeader({
       <View style={styles.rightCol}>
         {scheduleLabel ? (
           onSchedulePress ? (
-            <Pressable accessibilityRole="link" hitSlop={8} onPress={onSchedulePress}>
+            <Pressable accessibilityRole="link" hitSlop={12} onPress={onSchedulePress}>
               <Text style={[styles.sideText, styles.underline, styles.rightText]} numberOfLines={2}>
                 {scheduleLabel}
               </Text>
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
     color: colors.text,
   },
-  sideText: { fontSize: 9, lineHeight: 11, color: colors.text },
+  sideText: { fontSize: 11, lineHeight: 14, color: colors.text },
   rightText: { textAlign: 'right' },
   nameRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   name: {
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     flexShrink: 1,
   },
-  link: { fontSize: 9, lineHeight: 11, color: colors.text },
+  link: { fontSize: 11, lineHeight: 14, color: colors.text },
   underline: { textDecorationLine: 'underline' },
   ingress: { marginLeft: spacing.sm },
   line: { marginTop: 1 },

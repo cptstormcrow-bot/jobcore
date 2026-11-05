@@ -59,7 +59,7 @@ export const typography = {
   },
   // Source sizes are fluid clamp(); RN has no viewport units, so each collapses
   // to a fixed density-independent value (upper-mid of the clamp range).
-  size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13, summary: 8, detail: 10 },
+  size: { h1: 40, h2: 32, h3: 24, h4: 20, h5: 18, h6: 16, body: 16, label: 14, small: 13, detail: 11 },
   // Standard text sizes, set by Jeff 2026-11-02. Range is 12 to 14, titles 16.
   // Fields, buttons, tabs and job-tab text use these names, not the raw scale above.
   text: { input: 14, body: 13, fieldLabel: 12, hint: 12, error: 12, title: 16, control: 13, option: 16 },

@@ -95,10 +95,10 @@ export function StuckPopup() {
                 <Text style={styles.rowTitle} numberOfLines={1}>
                   {opLabel(r.op)}
                 </Text>
-                <Text style={styles.rowMeta} numberOfLines={1}>
+                <Text style={styles.rowMeta} numberOfLines={2}>
                   {savedAtLabel(r.occurred_at)}
                 </Text>
-                <Text style={styles.rowError} numberOfLines={2}>
+                <Text style={styles.rowError} numberOfLines={4}>
                   {r.status === 'failed' || r.last_error ? failureMessage(r.last_error) : 'Retrying, not sent yet.'}
                 </Text>
               </View>

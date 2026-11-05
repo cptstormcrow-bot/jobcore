@@ -356,13 +356,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   statusChip: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     marginRight: spacing.xs,
   },
   statusGlyph: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.text,
     marginRight: spacing.sm,

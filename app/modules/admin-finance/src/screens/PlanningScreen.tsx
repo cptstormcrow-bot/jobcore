@@ -175,7 +175,7 @@ function TaskListSection({ jobId, jobPlanTasks, standardMinutes }: { jobId: stri
           <View key={row.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text>{row.title}</Text>
             <TextInput
-              style={{ width: 60, textAlign: 'center' }}
+              style={{ width: 80, textAlign: 'center' }}
               keyboardType="numeric"
               value={quantityDrafts[row.id] ?? String(row.quantity)}
               onChangeText={(text) => setQuantityDrafts((prev) => ({ ...prev, [row.id]: text }))}

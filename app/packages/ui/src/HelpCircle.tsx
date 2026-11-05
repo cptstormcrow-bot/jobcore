@@ -20,7 +20,7 @@ export function HelpCircle({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      hitSlop={8}
+      hitSlop={small ? 10 : 8}
       testID={testID}
     >
       <View style={[styles.helpCircle, small && styles.helpCircleSm]}>
@@ -41,9 +41,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   helpCircleSm: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 1.5,
   },
   helpCircleText: {
@@ -53,6 +53,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   helpCircleTextSm: {
-    fontSize: 11,
+    fontSize: 12,
   },
 });

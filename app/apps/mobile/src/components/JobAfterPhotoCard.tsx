@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   title: { fontSize: typography.size.label, fontWeight: 'bold' },
   item: { marginVertical: spacing.sm, gap: spacing.sm },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  thumb: { width: 80, height: 80, borderRadius: radius.sm },
+  thumb: { width: 104, height: 104, borderRadius: radius.sm },
   name: { flexShrink: 1, fontSize: typography.size.small, color: colors.textLight },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   dimmed: { opacity: 0.5 },

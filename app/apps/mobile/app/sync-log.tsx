@@ -84,7 +84,7 @@ export default function SyncLogScreen() {
             <Text style={styles.title} numberOfLines={1}>
               {row.kind === 'pass' ? KIND_LABEL.pass : `${KIND_LABEL[row.kind]}: ${opLabel(row.op ?? '')}`}
             </Text>
-            <Text style={styles.meta} numberOfLines={1}>
+            <Text style={styles.meta} numberOfLines={3}>
               {savedAtLabel(row.at)}
               {row.attempts && row.kind !== 'pass' ? ` · try ${row.attempts}` : ''}
             </Text>

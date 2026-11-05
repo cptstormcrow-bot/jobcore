@@ -115,10 +115,10 @@ export default function SyncMonitorScreen() {
                   <View style={[styles.dot, { backgroundColor: online ? colors.success : colors.textMuted }]} />
                   <Text style={styles.title} numberOfLines={1}>{row.profiles?.full_name ?? 'Unknown tech'}</Text>
                 </View>
-                <Text style={styles.meta} numberOfLines={1}>
+                <Text style={styles.meta} numberOfLines={2}>
                   {seenLabel(row.last_seen_at)} · {row.device_name ?? 'Phone'} · v{row.app_version ?? '?'}
                 </Text>
-                <Text style={row.failed_count + row.stuck_count > 0 ? styles.errorText : styles.meta} numberOfLines={1}>
+                <Text style={row.failed_count + row.stuck_count > 0 ? styles.errorText : styles.meta} numberOfLines={3}>
                   {row.pending_count} waiting · {row.failed_count} failed · {row.stuck_count} stuck
                 </Text>
                 {row.last_error ? <Text style={styles.errorText}>{failureMessage(row.last_error)}</Text> : null}
@@ -128,7 +128,7 @@ export default function SyncMonitorScreen() {
                   {items.length === 0 ? <Text style={styles.meta}>No failed changes on this phone.</Text> : null}
                   {items.map((it, i) => (
                     <View key={i} style={styles.item}>
-                      <Text style={styles.itemTitle} numberOfLines={1}>
+                      <Text style={styles.itemTitle} numberOfLines={3}>
                         {opLabel(it.op)}
                         {it.job_id && jobNumbers[it.job_id] !== undefined ? ` · Job #${jobNumbers[it.job_id]}` : ''}
                       </Text>
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.md, gap: spacing.sm },
   card: { gap: spacing.xs },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 14, height: 14, borderRadius: 7 },
   items: { gap: spacing.sm, marginTop: spacing.xs },
   item: { gap: 2 },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },

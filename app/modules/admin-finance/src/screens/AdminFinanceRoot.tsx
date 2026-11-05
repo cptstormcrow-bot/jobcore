@@ -1467,7 +1467,7 @@ const styles = StyleSheet.create({
   // #0012 Jobs: tight spacing + flag dots (Jeff 2026-10-30).
   jobsContent: { paddingHorizontal: spacing.xs, paddingTop: 2 },
   jobsCard: { paddingHorizontal: spacing.xs, paddingVertical: 0 },
-  flagDot: { width: 12, height: 12, borderRadius: radius.sm },
+  flagDot: { width: 14, height: 14, borderRadius: radius.sm },
   overviewContent: { paddingTop: spacing.xs },
   overviewCard: {
     minHeight: 32,

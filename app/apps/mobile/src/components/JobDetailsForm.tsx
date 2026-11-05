@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   fieldInputFilled: { fontWeight: '600' },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.xs, color: colors.textMutedDark, fontSize: typography.size.detail },
   roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
-  roomCheckbox: { width: '50%', minHeight: 28, marginBottom: 0 },
+  roomCheckbox: { width: '50%', minHeight: 32, marginBottom: 0 },
   roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   readOnlyText: { color: colors.textMuted, fontSize: typography.text.input },
   inlineRow: { flexDirection: 'row', alignItems: 'center' },

@@ -385,6 +385,6 @@ const styles = StyleSheet.create({
   statusError: { color: colors.danger, fontSize: typography.text.error, marginTop: 2 },
   serviceAreaUnassigned: { color: colors.textMutedDark },
   serviceAreaText: { flex: 1 },
-  premNeededCheckbox: { minHeight: 28, marginBottom: 0 },
+  premNeededCheckbox: { minHeight: 32, marginBottom: 0 },
   blockedNote: { fontFamily: typography.fontFamily.body, fontSize: typography.text.hint, color: colors.textMutedDark, marginTop: 2 },
 });
