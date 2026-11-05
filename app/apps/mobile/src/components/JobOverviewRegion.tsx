@@ -122,7 +122,7 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
   return (
     <View>
       <Section title="Tasks">
-        <JobTaskList jobId={jobId} mode="edit" allowCatalog={isAdmin} />
+        <JobTaskList jobId={jobId} mode="edit" allowCatalog />
       </Section>
       <Section title="Prem photos" open={false}>
         {photos.length === 0 ? (

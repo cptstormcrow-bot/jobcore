@@ -102,7 +102,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   }, [jobId, repo]);
 
   useEffect(() => {
-    if (!edit || !search || !orgId) return;
+    if (!orgId) return; // catalog also feeds the price shown on every row
     let cancelled = false;
     repo
       .listCatalogTasks(orgId)
@@ -113,7 +113,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     return () => {
       cancelled = true;
     };
-  }, [edit, search, orgId, repo]);
+  }, [orgId, repo]);
 
   async function run(fn: () => Promise<void>, msg: string) {
     try {
@@ -232,6 +232,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           .filter((x) => !!x).join(' · ')
       : '';
     const expanded = !edit || !!open[row.id];
+    const cat = row.serviceTaskId ? catalog.find((c) => c.id === row.serviceTaskId) : undefined;
+    const typed = taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes);
+    const priceNum = typed ?? (cat?.rate != null ? Math.round(cat.rate * (row.quantity || 1) * 100) / 100 : null);
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
         <Pressable
@@ -244,6 +247,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         >
           {edit ? <Text style={styles.notes}>{expanded ? '▾' : '▸'}</Text> : null}
           <Text style={[styles.title, edit && styles.flex]} numberOfLines={edit && !expanded ? 1 : undefined}>{row.title}</Text>
+          {priceNum != null ? <Text style={styles.notes}>{`$${priceNum}`}</Text> : null}
           {row.kind === 'misc' ? (
             <Text style={styles.badge}>Hourly · clock</Text>
           ) : edit && !dim && expanded ? (
