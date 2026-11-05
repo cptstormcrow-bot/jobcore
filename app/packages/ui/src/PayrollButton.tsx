@@ -28,7 +28,7 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!disabled }}
-      hitSlop={{ top: 6, bottom: 6 }}
+      hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
       testID={testID}
       style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, style]}
     >
@@ -43,13 +43,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 28,
-    paddingHorizontal: 10,
+    height: 32,
+    paddingHorizontal: 12,
     borderRadius: 6,
     backgroundColor: colors.sand,
   },
   // Gray outline so a grayed button stays visible on light screens (Jeff 2026-11-02); padding drops by the border so width holds.
-  disabled: { backgroundColor: colors.sandDisabled, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 9 },
+  disabled: { backgroundColor: colors.sandDisabled, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11 },
   text: {
     color: '#000',
     fontSize: 13,
