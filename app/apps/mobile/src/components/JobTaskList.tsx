@@ -145,7 +145,13 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const addCatalog = (id: string) =>
     run(async () => {
       const row = await repo.addTask(jobId, id, 1);
-      apply([...rows, row]);
+      const rate = catalog.find((c) => c.id === id)?.rate;
+      if (rate != null) {
+        // Firm price = sheet rate x quantity, frozen on the task at drop time.
+        const price = Math.round(rate * 100) / 100;
+        await repo.updateTask(row.id, { price });
+        apply([...rows, { ...row, price }]);
+      } else apply([...rows, row]);
     }, 'Failed to add task.');
 
   const q = query.trim().toLowerCase();
@@ -155,6 +161,13 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     run(async () => {
       const q = Number(drafts[row.id]?.qty);
       if (!(q > 0) || q === row.quantity) return;
+      const rate = row.serviceTaskId && !row.taskType ? catalog.find((c) => c.id === row.serviceTaskId)?.rate : null;
+      if (rate != null) {
+        const price = Math.round(rate * q * 100) / 100;
+        await repo.updateTask(row.id, { quantity: q, price });
+        replaceRow(row.id, { quantity: q, price });
+        return;
+      }
       await repo.updateTask(row.id, { quantity: q });
       replaceRow(row.id, { quantity: q });
     }, 'Failed to save quantity.');
@@ -234,7 +247,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     const expanded = !edit || !!open[row.id];
     const cat = row.serviceTaskId ? catalog.find((c) => c.id === row.serviceTaskId) : undefined;
     const typed = taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes);
-    const priceNum = typed ?? (cat?.rate != null ? Math.round(cat.rate * (row.quantity || 1) * 100) / 100 : null);
+    const priceNum = typed ?? (!row.taskType && row.price != null ? row.price : null) ?? (cat?.rate != null ? Math.round(cat.rate * (row.quantity || 1) * 100) / 100 : null);
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
         <Pressable
@@ -245,7 +258,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           accessibilityLabel={`${row.title}, ${expanded ? 'roll up' : 'roll down'}`}
           testID={`task-row-toggle-${row.id}`}
         >
-          {edit ? <Text style={styles.notes}>{expanded ? '▾' : '▸'}</Text> : null}
+          {edit ? <Text style={styles.arrow}>{expanded ? '▾' : '▸'}</Text> : null}
           <Text style={[styles.title, edit && styles.flex]} numberOfLines={edit && !expanded ? 1 : undefined}>{row.title}</Text>
           {priceNum != null ? <Text style={styles.notes}>{`$${priceNum}`}</Text> : null}
           {row.kind === 'misc' ? (
@@ -444,6 +457,7 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontWeight: '600', color: colors.text },
   badge: { color: colors.textMutedDark, fontSize: typography.text.hint },
   notes: { color: colors.textMutedDark, fontSize: typography.text.hint },
+  arrow: { fontSize: typography.text.title, fontWeight: '600', color: colors.text },
   qty: { width: 80 },
   actions: { flexDirection: 'row', gap: spacing.sm },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
