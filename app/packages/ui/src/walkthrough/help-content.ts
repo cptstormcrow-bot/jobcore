@@ -264,7 +264,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'job_prem',
     kind: 'action',
     title: 'Prem Checklist',
-    body: 'Prem is short for preliminary: the first visit, before the estimate. Fill in the ingress, parking and logistics notes, the state assessment and the instructions for the tech; tick any red flags and add photos. Tap "Save Draft" to keep working later, or "Submit" when the visit is done.',
+    body: 'Prem is short for preliminary: the first visit, before the estimate. Fill in the ingress, parking and logistics notes, the state assessment and the instructions for the tech; tick any red flags and add photos. Tap "Save Draft" to keep working later, or "Submit" when the visit is done. Type in "Search price sheet" to find an item; tap a result to see its rate, Details and Materials, then tap "Add" to put it on the checklist.',
     whereScreen: 'Prem',
     whereHint: 'Fill the starred notes, then tap "Submit".',
   },

@@ -1485,6 +1485,9 @@ export interface ServiceTaskCatalogEntry {
   estimatedMinutes: number | null;
   rate: number | null;
   taskNumber?: number | null;
+  /** Price sheet (#0019) Details / Materials text, shown in the #0061 item sheet. */
+  details?: string | null;
+  materials?: string | null;
 }
 
 export interface JobPlanTasksRepository {

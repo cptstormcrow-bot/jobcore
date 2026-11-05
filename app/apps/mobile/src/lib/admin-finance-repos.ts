@@ -3141,28 +3141,42 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
 
     async listCatalogTasks(organizationId: string): Promise<ServiceTaskCatalogEntry[]> {
       return readCachedOr('af.planTasks.listCatalogTasks', { organizationId }, async () => {
-        const { data, error } = await supabase
-          .from('service_tasks')
-          .select('id, name, category, estimated_minutes, rate, task_number')
-          .eq('organization_id', organizationId)
-          .eq('active', true);
-        if (error) {
-          throw new Error(`listCatalogTasks failed: ${error.message}`);
-        }
-        return ((data ?? []) as Array<{
+        // 0122 RPC lets techs read the catalog (service_tasks RLS is admin-only); fall back to the
+        // table for admins until the migration is live.
+        type CatalogRow = {
           id: string;
           name: string;
           category: string | null;
           estimated_minutes: number | null;
           rate: number | null;
-          task_number: number | null;
-        }>).map((row) => ({
+          task_number: number | string | null;
+          details: string | null;
+          materials: string | null;
+        };
+        let rows: CatalogRow[] | null = null;
+        const viaRpc = await supabase.rpc('price_sheet_lookup');
+        if (!viaRpc.error) {
+          rows = (viaRpc.data ?? []) as CatalogRow[];
+        } else {
+          const { data, error } = await supabase
+            .from('service_tasks')
+            .select('id, name, category, estimated_minutes, rate, task_number, details, materials')
+            .eq('organization_id', organizationId)
+            .eq('active', true);
+          if (error) {
+            throw new Error(`listCatalogTasks failed: ${error.message}`);
+          }
+          rows = (data ?? []) as CatalogRow[];
+        }
+        return rows.map((row) => ({
           id: row.id,
           name: row.name,
           category: row.category,
           estimatedMinutes: row.estimated_minutes,
           rate: row.rate,
-          taskNumber: row.task_number ?? null,
+          taskNumber: row.task_number == null ? null : Number(row.task_number),
+          details: row.details ?? null,
+          materials: row.materials ?? null,
         }));
       }, []);
     },

@@ -1,7 +1,7 @@
 // Shared job task list — single source of truth (job_plan_tasks). Used by Job Overview #0081, #0061, #0057, field detail.
 // Mutations go through createJobPlanTasksRepository(), which already routes via writeThrough (offline queue).
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PayrollButton, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
 import type { JobPlanTaskRow, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanTasksRepository } from '../lib/admin-finance-repos';
@@ -35,7 +35,10 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [newTitle, setNewTitle] = useState('');
   const [newMinutes, setNewMinutes] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
   const edit = mode === 'edit';
+  const prem = source === 'prem'; // #0061 Prem Checklist: price-sheet search + item sheet
 
   const apply = useCallback(
     (next: JobPlanTaskRow[]) => {
@@ -64,7 +67,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   }, [jobId, repo]);
 
   useEffect(() => {
-    if (!edit || !allowCatalog || !orgId) return;
+    if (!edit || !(allowCatalog || prem) || !orgId) return;
     let cancelled = false;
     repo
       .listCatalogTasks(orgId)
@@ -75,7 +78,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     return () => {
       cancelled = true;
     };
-  }, [edit, allowCatalog, orgId, repo]);
+  }, [edit, allowCatalog, prem, orgId, repo]);
 
   async function run(fn: () => Promise<void>, msg: string) {
     try {
@@ -109,6 +112,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       const row = await repo.addTask(jobId, id, 1);
       apply([...rows, row]);
     }, 'Failed to add task.');
+
+  const q = query.trim().toLowerCase();
+  const matches = q ? catalog.filter((t) => t.name.toLowerCase().includes(q)).slice(0, 6) : [];
 
   const saveQty = (row: JobPlanTaskRow) =>
     run(async () => {
@@ -231,7 +237,18 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   return (
     <View style={styles.root}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {edit && allowCatalog && (
+      {edit && prem && (
+        <View style={styles.search}>
+          <TextField inline dense placeholder="Search price sheet" value={query} onChangeText={setQuery} />
+          {matches.map((t) => (
+            <Pressable key={t.id} onPress={() => setPicked(t)} accessibilityRole="button" style={styles.hit}>
+              <Text style={styles.hitName} numberOfLines={1}>{t.name}</Text>
+              {t.rate != null ? <Text style={styles.notes}>${t.rate}</Text> : null}
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {edit && !prem && allowCatalog && (
         <Select
           compact
           options={catalog.map((t) => ({ label: t.name, value: t.id }))}
@@ -260,6 +277,28 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
         </View>
       )}
+      <Modal visible={!!picked} transparent animationType="slide" onRequestClose={() => setPicked(null)}>
+        <Pressable style={styles.overlay} onPress={() => setPicked(null)}>
+          <Pressable style={styles.sheet} onPress={() => undefined}>
+            {picked ? (
+              <ScrollView>
+                <Text style={styles.sheetTitle}>{picked.name}</Text>
+                {picked.rate != null ? <Text style={styles.notes}>Rate: ${picked.rate}</Text> : null}
+                {picked.details ? <Text style={styles.sheetText}>Details: {picked.details}</Text> : null}
+                {picked.materials ? <Text style={styles.sheetText}>Materials: {picked.materials}</Text> : null}
+              </ScrollView>
+            ) : null}
+            <PayrollButton
+              label="Add"
+              onPress={() => {
+                const id = picked?.id;
+                setPicked(null);
+                if (id) void addCatalog(id);
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -276,6 +315,13 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: spacing.sm },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   flex: { flex: 1 },
+  search: { gap: spacing.xs },
+  hit: { minHeight: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  hitName: { flex: 1, color: colors.text, fontSize: 14 },
+  overlay: { flex: 1, backgroundColor: colors.overlay, justifyContent: 'flex-end' },
+  sheet: { backgroundColor: colors.surface, padding: spacing.sm, gap: spacing.sm, maxHeight: '60%' },
+  sheetTitle: { fontWeight: '700', color: colors.text, fontSize: 14 },
+  sheetText: { color: colors.text, fontSize: 14, marginTop: spacing.xs },
   group: { fontWeight: '600', marginTop: spacing.sm, color: colors.textMutedDark },
   error: { color: colors.danger, fontSize: typography.text.error },
 });

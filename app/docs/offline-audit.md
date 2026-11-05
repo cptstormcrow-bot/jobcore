@@ -143,3 +143,4 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 38. On #0019 open the published sheet, change a rate and an area adjustment, and confirm a new estimate uses the new price. Publish still shows only on a draft, and the list order is Drafts, Published, Archived.
 39. Sign in as a tech and open #0009: only jobs assigned to that tech list, each row opens the job, Show Test Jobs adds practice jobs, and with none assigned it says so.
 40. On #0061 the title reads Prem Checklist. The job detail menu, the Create menu and the Complete Job menu all say Prem, and none says Prelim.
+41. On #0061 type in Search price sheet: matching price-sheet items list under the field. Tap one and a bottom sheet shows its name, Rate, Details and Materials with an Add button; Add puts it on the checklist and the search stays in place. Sign in as a tech and confirm the search and rate show there too.
