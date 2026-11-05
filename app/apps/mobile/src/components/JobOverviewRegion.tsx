@@ -2,7 +2,7 @@
 // Compact collapsible overview region: contact, location, tasks, Prem photos, customer projects, save/cancel.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { PayrollButton, colors, spacing, compact, Text, TextField, typography } from '@jobcore/ui';
 import type { CustomerJobPlanTaskRow, JobPlanningPhoto } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanningPhotoRepository, createJobPlanTasksRepository } from '../lib/admin-finance-repos';
@@ -58,6 +58,7 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
   const taskRepo = useMemo(() => createJobPlanTasksRepository(), []);
   const photoRepo = useMemo(() => createJobPlanningPhotoRepository(), []);
   const [photos, setPhotos] = useState<JobPlanningPhoto[]>([]);
+  const [viewing, setViewing] = useState<{ name: string; uri: string } | null>(null);
   const [customerTasks, setCustomerTasks] = useState<CustomerJobPlanTaskRow[]>([]);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [title, setTitle] = useState('');
@@ -128,13 +129,24 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
         {photos.length === 0 ? (
           <Text style={styles.hint}>No Prem photos.</Text>
         ) : (
-          photos.map((p) => (
-            <Text key={p.id} style={styles.row}>
-              {p.caption ?? p.storagePath}
-            </Text>
-          ))
+          photos.map((p) => {
+            // Show only the file name; the repo resolves a signed uri (falls back to the raw path offline).
+            const name = p.storagePath.split('/').pop() || p.storagePath;
+            const uri = (p as JobPlanningPhoto & { uri?: string }).uri ?? p.storagePath;
+            return (
+              <Pressable key={p.id} onPress={() => setViewing({ name, uri })}>
+                <Text style={[styles.row, styles.link]} numberOfLines={1}>{name}</Text>
+              </Pressable>
+            );
+          })
         )}
       </Section>
+      <Modal visible={viewing != null} transparent animationType="fade" onRequestClose={() => setViewing(null)}>
+        <Pressable style={styles.viewer} onPress={() => setViewing(null)}>
+          {viewing ? <Image source={{ uri: viewing.uri }} style={styles.viewerImg} resizeMode="contain" /> : null}
+          {viewing ? <Text style={styles.viewerName} numberOfLines={1}>{viewing.name}</Text> : null}
+        </Pressable>
+      </Modal>
       <Section title="Customer projects" open={false}>
         {otherJobs.length === 0 ? <Text style={styles.hint}>No other jobs for this customer.</Text> : null}
         {otherJobs.map((j) => (
@@ -183,5 +195,9 @@ const styles = StyleSheet.create({
   body: { gap: compact.gap },
   row: { fontSize: typography.text.body, color: colors.text, paddingVertical: compact.gap },
   hint: { fontSize: typography.text.hint, color: colors.textMutedDark },
+  link: { textDecorationLine: 'underline' },
+  viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center', padding: spacing.sm },
+  viewerImg: { width: '100%', height: '85%' },
+  viewerName: { color: '#fff', marginTop: spacing.xs },
   actions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
 });
