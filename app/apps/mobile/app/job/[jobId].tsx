@@ -16,9 +16,9 @@ import type { Job, JobStatus, Profile } from '@jobcore/core';
 import { STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
-import { jobRuleColor } from '../../src/lib/job-rule-color';
+import { jobRuleColor, jobRuleState } from '../../src/lib/job-rule-color';
 import { usePaidInFull } from '../../src/lib/settle-on-completion';
-import { AppChrome, Breadcrumb, Checkbox, PayrollButton, ScreenTitleRow, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Checkbox, PayrollButton, ScreenTitleRow, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber, BadgeTooltip } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
@@ -1489,7 +1489,7 @@ ${body}`)) handleResetLaborTime();
           />
         ) : null}
       </JobHeader>
-      <View style={[styles.rule, { backgroundColor: jobRuleColor(job?.status) }]} />
+      <BadgeTooltip title="Job status line" state={jobRuleState(job?.status)} detail="It turns yellow when Start is pressed and green when the job is complete." color={jobRuleColor(job?.status)} hitSlop={{ top: 12, bottom: 12 }} testID="job-status-rule"><View style={[styles.rule, { backgroundColor: jobRuleColor(job?.status) }]} /></BadgeTooltip>
       <StaleDataHint queries={['app.jobs.byId', 'app.jobs.stageExtras']} />
       {region === 'estimate' && estimateChrome?.tabs ? (
         <View testID="estimate-tab-bar" style={styles.tabBarWrap}>

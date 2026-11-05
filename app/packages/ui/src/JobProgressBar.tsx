@@ -9,6 +9,7 @@ import { yellowReasonText } from '@jobcore/core';
 import { Text } from './Text';
 import { HelpCircle } from './HelpCircle';
 import { PayrollButton } from './PayrollButton';
+import { TooltipCard } from './BadgeTooltip';
 import { colors, radius, spacing, typography } from './tokens';
 
 export type JobProgressBarProps = {
@@ -50,6 +51,7 @@ const SHARED_MENU = [
 
 export function JobProgressBar({ stages, states, nextStep, onStagePress, disabledKeys, testID }: JobProgressBarProps) {
   const [legendOpen, setLegendOpen] = useState(false);
+  const [tip, setTip] = useState<{ label: string; state: StageState; text: string; why: string; disabled: boolean } | null>(null);
   const stateAt = (i: number): StageState => states[i]?.state ?? 'gray';
   // A connector takes the color of the dot on its right: that dot's state color when lit, border gray when not reached.
   const lineColor = (toIndex: number) => (stateAt(toIndex) === 'gray' ? colors.border : STATE_COLOR[stateAt(toIndex)]);
@@ -77,22 +79,21 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
             <Text style={styles.label}>{stage.label}</Text>
           </>
         );
-        if (!tappable) {
-          return (
-            <View key={stage.key} style={[styles.cell, disabled && styles.disabled]}>
-              {content}
-            </View>
-          );
-        }
+        const stateText = LEGEND.find((l) => l.state === state)?.text ?? STATE_WORD[state];
+        // Every dot opens its tooltip on press-and-hold, dimmed ones too, so no `disabled` prop here
+        // (a disabled Pressable swallows the long-press). A tap only fires on a tappable dot.
         return (
           <Pressable
             key={stage.key}
-            onPress={() => onStagePress?.(stage.key)}
-            disabled={disabled}
-            accessibilityRole="button"
+            onPress={tappable ? () => onStagePress?.(stage.key) : undefined}
+            onLongPress={() => setTip({ label: stage.label, state, text: stateText, why, disabled })}
+            delayLongPress={350}
+            accessibilityRole={tappable ? 'button' : undefined}
             accessibilityLabel={`${stage.label}, ${STATE_WORD[state]}${why ? `, ${why}` : ''}`}
+            accessibilityHint="Press and hold for details"
             accessibilityState={{ disabled }}
             style={[styles.cell, disabled && styles.disabled]}
+            testID={`job-progress-dot-${stage.key}`}
           >
             {content}
           </Pressable>
@@ -114,6 +115,15 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
           testID={testID ? `${testID}-legend-open` : 'job-progress-legend-open'}
         />
       </View>
+      <TooltipCard
+        visible={!!tip}
+        title={tip ? `${tip.label} step` : ''}
+        state={tip ? tip.text : ''}
+        detail={tip ? [tip.why, tip.disabled ? 'Your role cannot open this step, or it is waiting on an earlier step.' : ''].filter(Boolean).join(' ') : undefined}
+        color={tip ? STATE_COLOR[tip.state] : undefined}
+        onClose={() => setTip(null)}
+        testID="job-progress-dot-tooltip"
+      />
       <Modal visible={legendOpen} transparent animationType="fade" onRequestClose={() => setLegendOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setLegendOpen(false)}>
           <Pressable style={styles.card} onPress={() => {}} testID="job-progress-legend">

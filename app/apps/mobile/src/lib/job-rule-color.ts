@@ -12,3 +12,10 @@ export function jobRuleColor(status: string | null | undefined): string {
   if (status === 'in_progress') return colors.estimateApprovedBar;
   return colors.text;
 }
+
+/** Tooltip wording for the status rule (press-and-hold, Jeff 2026-11-05). */
+export function jobRuleState(status: string | null | undefined): string {
+  if (status === 'completed' || status === 'paid' || status === 'closed') return 'Job is complete (green)';
+  if (status === 'in_progress') return 'Job is started, in progress (yellow)';
+  return 'Job is not started yet (black)';
+}

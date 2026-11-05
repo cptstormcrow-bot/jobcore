@@ -55,6 +55,8 @@ export * from './walkthrough/WalkthroughProvider';
 export * from './walkthrough/WalkthroughOverlay';
 export * from './walkthrough/WalkthroughHelpCallout';
 export { HelpCircle } from './HelpCircle';
+export { BadgeTooltip, TooltipCard } from './BadgeTooltip';
+export type { BadgeTooltipProps, TooltipCardProps } from './BadgeTooltip';
 export { HELP_CARDS } from './walkthrough/help-content';
 export * from './AppVersionContext';
 export * from './GlobalOptionsContext';

@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { jobRuleColor } from '../../../src/lib/job-rule-color';
-import { AppChrome, EmptyState, JobProgressBar, LoadingState, ScreenTitleRow, colors, spacing } from '@jobcore/ui';
+import { jobRuleColor, jobRuleState } from '../../../src/lib/job-rule-color';
+import { AppChrome, EmptyState, JobProgressBar, LoadingState, ScreenTitleRow, colors, spacing, BadgeTooltip } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import {
   setModuleSession as setAdminFinanceSourceModuleSession,
@@ -274,7 +274,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
               />
             ) : null}
           </JobHeader>
-          <View style={[styles.rule, { backgroundColor: jobRuleColor(headerJob?.status) }]} />
+          <BadgeTooltip title="Job status line" state={jobRuleState(headerJob?.status)} detail="It turns yellow when Start is pressed and green when the job is complete." color={jobRuleColor(headerJob?.status)} hitSlop={{ top: 12, bottom: 12 }} testID="job-status-rule"><View style={[styles.rule, { backgroundColor: jobRuleColor(headerJob?.status) }]} /></BadgeTooltip>
         </>
       ) : (
         <AppChrome breadcrumbSegments={[{ label: 'Complete Job' }]} menuItems={[]} titleBar={{ title: 'Complete Job' }} />

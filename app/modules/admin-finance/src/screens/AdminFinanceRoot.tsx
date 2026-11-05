@@ -27,7 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, BadgeTooltip, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { buildAdminFinanceMenuItems, isAdminFinanceView } from '../menu';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
@@ -1076,8 +1076,8 @@ export function AdminFinanceRoot() {
                     const cardFlags = cardExtras.flags[job.id];
                     const dots = cardFlags?.premCompleted || cardFlags?.estimateApproved ? (
                       <>
-                        {cardFlags?.premCompleted ? <View style={[styles.flagDot, { backgroundColor: colors.warning }]} accessibilityLabel="Prem done" testID={`job-flag-prem-${job.id}`} /> : null}
-                        {cardFlags?.estimateApproved ? <View style={[styles.flagDot, { backgroundColor: colors.success }]} accessibilityLabel="Estimate approved" testID={`job-flag-estimate-${job.id}`} /> : null}
+                        {cardFlags?.premCompleted ? <BadgeTooltip title="Prem badge" state="Prem is done" detail={`${jobLabel ?? 'This job'}: the Prem walkthrough is complete.`} color={colors.warning} testID={`job-flag-prem-${job.id}`}><View style={[styles.flagDot, { backgroundColor: colors.warning }]} /></BadgeTooltip> : null}
+                        {cardFlags?.estimateApproved ? <BadgeTooltip title="Estimate badge" state="Estimate approved" detail={`${jobLabel ?? 'This job'}: the customer approved the estimate.`} color={colors.success} testID={`job-flag-estimate-${job.id}`}><View style={[styles.flagDot, { backgroundColor: colors.success }]} /></BadgeTooltip> : null}
                       </>
                     ) : undefined;
                     return (
