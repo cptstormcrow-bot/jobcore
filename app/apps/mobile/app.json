@@ -30,7 +30,8 @@
       "expo-font",
       "expo-media-library",
       "expo-background-fetch",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      ["expo-camera", { "cameraPermission": "Allow JobCore to use the camera to scan box barcodes." }]
     ],
     "experiments": {
       "typedRoutes": true

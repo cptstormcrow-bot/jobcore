@@ -1,6 +1,7 @@
 // Shared job task list — single source of truth (job_plan_tasks). Used by Job Overview #0081, #0061, #0057, field detail.
 // Mutations go through createJobPlanTasksRepository(), which already routes via writeThrough (offline queue).
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PayrollButton, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
 import type { JobPlanTaskRow, JobPlanTaskType, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
@@ -71,6 +72,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
   // Scan-from-box (Job Overview #0081): a box SKU resolves to a price-sheet task, else a last-minute add pending HQ price approval.
   const [scanSku, setScanSku] = useState('');
+  const [camOpen, setCamOpen] = useState(false);
+  const [camPerm, requestCamPerm] = useCameraPermissions();
   const [scanMiss, setScanMiss] = useState(false);
   const [scanTitle, setScanTitle] = useState('');
   const [scanPrice, setScanPrice] = useState('');
@@ -167,9 +170,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   };
 
   // Typed or keyboard-wedge scanned SKU. Known SKU -> price-sheet task; unknown -> ask for a title and price.
-  const lookupSku = () =>
+  const lookupSku = (skuArg?: string) =>
     run(async () => {
-      const sku = scanSku.trim();
+      const sku = (skuArg ?? scanSku).trim();
       if (!sku) return;
       const hit = catalog.find((c) => (c.sku ?? '').trim().toLowerCase() === sku.toLowerCase());
       if (hit) {
@@ -179,6 +182,23 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       }
       setScanMiss(true);
     }, 'Failed to look up SKU.');
+
+  const openCamera = async () => {
+    if (!camPerm?.granted) {
+      const res = await requestCamPerm();
+      if (!res.granted) return;
+    }
+    setCamOpen(true);
+  };
+
+  const onBarcode = (data: string) => {
+    const code = data.trim();
+    if (!code) return;
+    setCamOpen(false);
+    setScanSku(code);
+    setScanMiss(false);
+    void lookupSku(code);
+  };
 
   const addScanned = () =>
     run(async () => {
@@ -493,11 +513,25 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             </>
           ) : (
             <View style={styles.actions}>
+              <PayrollButton label="Scan" onPress={() => void openCamera()} />
               <PayrollButton label="Find SKU" onPress={() => void lookupSku()} />
             </View>
           )}
         </View>
       )}
+      <Modal visible={camOpen} animationType="slide" onRequestClose={() => setCamOpen(false)}>
+        <View style={styles.camWrap}>
+          <CameraView
+            style={styles.camView}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'itf14', 'qr', 'datamatrix'] }}
+            onBarcodeScanned={({ data }) => onBarcode(data)}
+          />
+          <View style={styles.actions}>
+            <PayrollButton label="Cancel" onPress={() => setCamOpen(false)} />
+          </View>
+        </View>
+      </Modal>
       {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
       {active.map((r) => renderRow(r, false))}
       {deferred.length > 0 && (
@@ -543,6 +577,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
 }
 
 const styles = StyleSheet.create({
+  camWrap: { flex: 1, backgroundColor: '#000' },
+  camView: { flex: 1 },
   root: { gap: spacing.sm },
   row: { gap: spacing.xs, paddingVertical: spacing.xs },
   dim: { opacity: 0.5 },
