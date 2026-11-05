@@ -263,21 +263,22 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           {priceNum != null ? <Text style={styles.notes}>{`$${priceNum}`}</Text> : null}
           {row.kind === 'misc' ? (
             <Text style={styles.badge}>Hourly · clock</Text>
-          ) : edit && !dim && expanded ? (
-            <View style={styles.qty}>
-              <TextField inline
-                dense
-                value={d.qty}
-                onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, qty: t } }))}
-                onBlur={() => void saveQty(row)}
-              />
-            </View>
           ) : (
             <Text style={styles.badge}>Qty {row.quantity}</Text>
           )}
         </Pressable>
         {expanded ? (
         <>
+        {edit && !dim && row.kind !== 'misc' ? (
+          <TextField inline dense label="Quantity" keyboardType="number-pad" value={d.qty}
+            onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, qty: t } }))}
+            onBlur={() => void saveQty(row)} />
+        ) : null}
+        {edit && !dim && !prem ? (
+          <TextField inline dense label="SKU" value={d.sku}
+            onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, sku: t } }))}
+            onBlur={() => void saveType(row)} />
+        ) : null}
         {edit && !dim ? (
           <TextField inline
             dense
@@ -383,34 +384,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         ) : typeSummary ? (
           <Text style={styles.notes}>{typeSummary}</Text>
         ) : null}
-        {edit && !dim ? (
-          <>
-            <Select
-              compact
-              options={UNIT_OPTIONS}
-              value={d.unit || null}
-              placeholder="Unit"
-              onChange={(u) => {
-                setDrafts((p) => ({ ...p, [row.id]: { ...d, unit: u ?? '' } }));
-                void saveDetail(row, { unit: u ?? '' });
-              }}
-            />
-            <TextField inline
-              dense
-              placeholder="Area / room"
-              value={d.area}
-              onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, area: t } }))}
-              onBlur={() => void saveDetail(row)}
-            />
-            <TextField inline
-              dense
-              placeholder="Materials"
-              value={d.materials}
-              onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, materials: t } }))}
-              onBlur={() => void saveDetail(row)}
-            />
-          </>
-        ) : detail ? (
+        {edit && !dim ? null : detail ? (
           <Text style={styles.notes}>{detail}</Text>
         ) : null}
         {edit && (
