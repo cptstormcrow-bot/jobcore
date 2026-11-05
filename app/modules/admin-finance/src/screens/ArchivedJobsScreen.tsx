@@ -11,13 +11,15 @@ export type ArchivedJobsScreenProps = {
   busyJobId: string | null;
   message: string | null;
   onUnarchive: (jobId: string) => void;
+  /** Closed variant only: owner/admin archive action for a closed job. Omit to hide the button. */
+  onArchive?: (jobId: string) => void;
   onOpenJob: (jobId: string) => void;
   onBack: () => void;
   variant?: 'archived' | 'closed';
 };
 
 export function ArchivedJobsScreen(props: ArchivedJobsScreenProps) {
-  const { rows, busyJobId, message, onUnarchive, onOpenJob, onBack, variant = 'archived' } = props;
+  const { rows, busyJobId, message, onUnarchive, onArchive, onOpenJob, onBack, variant = 'archived' } = props;
   const isClosed = variant === 'closed';
   return (
     <View style={styles.screen}>
@@ -35,7 +37,14 @@ export function ArchivedJobsScreen(props: ArchivedJobsScreenProps) {
                 <Text style={styles.title}>{row.title}</Text>
                 {row.subtitle !== null ? <Text style={styles.subtitle}>{row.subtitle}</Text> : null}
               </Pressable>
-              {isClosed ? null : (
+              {isClosed ? (onArchive ? (
+                <PayrollButton
+                  label={busyJobId === row.id ? 'Archiving...' : 'Archive'}
+                  testID={`job-archive-${row.id}`}
+                  disabled={busyJobId !== null}
+                  onPress={() => onArchive(row.id)}
+                />
+              ) : null) : (
                 <PayrollButton
                   label={busyJobId === row.id ? 'Unarchiving...' : 'Unarchive'}
                   testID={`job-unarchive-${row.id}`}

@@ -150,3 +150,4 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 45. On #0061, fill in Red flag notes with a long note: the field wraps and grows to show all of it instead of scrolling on one line.
 46. On the investigation screen, leave every note blank and add one photo: it submits. With no photo it will not submit and says a photo is needed.
 47. Complete job #9 on #0077 (Complete Job) after opening it from Prem Checklist #0061: you land on Estimate #0057, not Prem. Also tap Update on a completed job and Not Completed: each lands on #0057.
+48. As owner or admin, open Closed from the Jobs board #0010 (list #0092): each closed job row has an Archive button. Tap it, confirm, and the job leaves the Closed list and appears under Archived. A tech or non-admin sees no Archive button.

@@ -1181,9 +1181,14 @@ export function AdminFinanceRoot() {
           rows={(loadState.kind === 'loaded' ? loadState.jobs : [])
             .filter((j) => j.status === 'closed')
             .map((j) => ({ id: j.id, title: j.jobNumber != null ? `Job #${j.jobNumber}` : 'Job', subtitle: j.address ?? null }))}
-          busyJobId={null}
+          busyJobId={archiveBusyId}
           message={null}
-          onUnarchive={() => {}} onOpenJob={onOpenJob}
+          onUnarchive={() => {}}
+          onArchive={canArchive ? (id) => {
+            const job = (loadState.kind === 'loaded' ? loadState.jobs : []).find((j) => j.id === id);
+            if (job) void archiveJob(job);
+          } : undefined}
+          onOpenJob={onOpenJob}
           onBack={() => setSubView('jobs')}
         />
       ) : subView === 'priceSheetList' ? (
