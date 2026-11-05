@@ -16,18 +16,19 @@ Live project: `vogkxkcceahtwyovpxsg`. Seeded 2026-10-24 from `npx supabase migra
 - Never push without Jeff's explicit per-push approval that names the migration numbers.
 - A plain `db push` applies ALL pending migrations, so list the pending ones first (`npx supabase migration list`, then `db push --dry-run`).
 
-Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
+Past pushes: OK 13 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 ## Future (planned / pending push)
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| 0124_job_plan_task_types.sql | Adds task_type, sku, price, hourly_rate, extras_cost and contractor name/contact/license to job_plan_tasks, sku to service_tasks, and admin-only RPC publish_assembly_task() that adds an Assembly task to the active price sheet (Prem Checklist #0061, Price Sheets #0019) | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0124. App fields do not save and To price sheet fails until live. | 2026-11-05 |
+| (none pending) | | | |
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-11-05 | 0124_job_plan_task_types.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 0124') | `db push --dry-run` listed only 0124 pending; `db push --linked` printed 'Applying migration 0124_job_plan_task_types.sql... Finished supabase db push.' EXIT=0. `migration list --linked` shows 0124 local and remote. Backs the Prem Checklist #0061 task Type fields and the admin To price sheet button (publish_assembly_task). Not yet tested live (uber items 43-46). |
 | 2026-11-05 | 0122_price_sheet_lookup_for_techs.sql, 0123_payment_barcodes.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 0122 and 0123') | `db push --dry-run` first listed 0122, 0123 and 0124; 0124 was set aside (not approved) so only 0122 and 0123 applied, then restored locally. `migration list --linked` shows 0122 and 0123 in both columns; 0124 remote blank. Not yet tested live (uber items 42, price-sheet search). |
 | 2026-11-04 | 0121_device_sync_status.sql | OK | This JobCore session (role landing thread), on Jeff's explicit go ('push the migration') | Pre-checked: `db push --dry-run` listed only 0121 pending. `db push` printed 'Applying migration 0121_device_sync_status.sql... Finished supabase db push.' Post-check: to_regclass finds device_sync_status and pg_proc shows both RPCs (report_device_sync_status, set_device_sync_status_hidden). Backs the web Tech sync monitor #0101. Not yet tested live. |
 | 2026-11-03 | 0120_tech_close_out.sql | OK | This JobCore session (role landing thread), on Jeff's explicit go ('go') | Pre-checked: `db push --dry-run` listed only 0120 pending. `db push` printed 'Applying migration 0120_tech_close_out.sql... Finished supabase db push.' Post-check: pg_proc shows close_out_job_write has the admin-or-assigned-tech check. Lets the assigned tech close out on #0018 (status only; commission written only for an admin). Not yet tested live. |
