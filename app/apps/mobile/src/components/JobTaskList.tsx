@@ -317,11 +317,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
                     }}
                   />
                   {mode === 'hourly' ? (
-                    <TextField inline dense placeholder="Hourly rate $" keyboardType="decimal-pad" value={d.rate}
+                    <TextField inline dense label="Hourly rate $" keyboardType="decimal-pad" value={d.rate}
                       onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, rate: t } }))}
                       onBlur={() => void saveType(row)} />
                   ) : (
-                    <TextField inline dense placeholder="Fixed price $" keyboardType="decimal-pad" value={d.price}
+                    <TextField inline dense label="Fixed price $" keyboardType="decimal-pad" value={d.price}
                       onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, price: t } }))}
                       onBlur={() => void saveType(row)} />
                   )}
