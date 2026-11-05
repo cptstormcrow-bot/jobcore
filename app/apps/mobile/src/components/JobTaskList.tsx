@@ -69,6 +69,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
+  const [open, setOpen] = useState<Record<string, boolean>>({}); // rolled-up rows show the title only (Jeff 2026-11-05)
   const edit = mode === 'edit';
   const isAdmin = session.status === 'authenticated' && (session.profile.role === 'owner' || session.profile.role === 'admin');
   const prem = source === 'prem'; // #0061 Prem Checklist: item sheet rows
@@ -230,13 +231,22 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
            ? `$${taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes)}` : null]
           .filter((x) => !!x).join(' · ')
       : '';
+    const expanded = !edit || !!open[row.id];
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
-        <View style={styles.head}>
-          <Text style={styles.title}>{row.title}</Text>
+        <Pressable
+          style={styles.head}
+          disabled={!edit}
+          onPress={() => setOpen((p) => ({ ...p, [row.id]: !p[row.id] }))}
+          accessibilityRole="button"
+          accessibilityLabel={`${row.title}, ${expanded ? 'roll up' : 'roll down'}`}
+          testID={`task-row-toggle-${row.id}`}
+        >
+          {edit ? <Text style={styles.notes}>{expanded ? '▾' : '▸'}</Text> : null}
+          <Text style={[styles.title, edit && styles.flex]} numberOfLines={edit && !expanded ? 1 : undefined}>{row.title}</Text>
           {row.kind === 'misc' ? (
             <Text style={styles.badge}>Hourly · clock</Text>
-          ) : edit && !dim ? (
+          ) : edit && !dim && expanded ? (
             <View style={styles.qty}>
               <TextField inline
                 dense
@@ -248,7 +258,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           ) : (
             <Text style={styles.badge}>Qty {row.quantity}</Text>
           )}
-        </View>
+        </Pressable>
+        {expanded ? (
+        <>
         {edit && !dim ? (
           <TextField inline
             dense
@@ -354,6 +366,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
           </View>
         )}
+        </>
+        ) : null}
       </View>
     );
   };
