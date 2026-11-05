@@ -129,7 +129,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     id: 'paid',
     kind: 'action',
     title: 'Mark Job Paid',
-    body: 'Find out how the customer wants to pay, then tap that payment type.\n- Zelle, PayPal or Venmo: shows your company info and a barcode box.\n- Debit or Credit: enter the card details.\n- Cash: enter the amount you collected.\n- Check: take a photo of the front and the back.\nCash and check are recorded by the tech for the amount collected only.\nWhen the payment due reaches $0 the job stops showing as outstanding.',
+    body: 'Find out how the customer wants to pay, then tap that payment type. The tab stays highlighted.\n- Zelle, PayPal or Venmo: shows the barcode fullscreen for the customer to scan on their phone. Android back closes it and "Show barcode" opens it again. It is a marked placeholder until your payment details are set up.\n- Debit or Credit: enter the card details.\n- Cash: enter the amount you collected.\n- Check: take a photo of the front and the back.\nCash and check are recorded by the tech for the amount collected only.\nWhen the payment due reaches $0 the job stops showing as outstanding.',
     whereScreen: 'Job Detail',
     whereHint: 'On Job Detail, open the job menu, choose "Paid", and confirm "Yes" once payment is collected.',
     context: { screens: ['job-detail', 'ft-job-detail'], jobStatuses: ['completed'] },

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import { EmptyState, PayrollButton, colors, radius, selectedStyle, spacing, compact, typography } from '@jobcore/ui';
 import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
@@ -51,6 +51,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<PaymentMethod>('zelle');
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   // Sync guard: a fast double-tap fires twice before `busy` re-renders.
   const recordingRef = useRef(false);
@@ -295,7 +296,10 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
             <PayrollButton
               key={m}
               label={PAYMENT_METHOD_LABELS[m]}
-              onPress={() => setMethod(m)}
+              onPress={() => {
+                setMethod(m);
+                if (BARCODE_METHODS.includes(m)) setBarcodeOpen(true);
+              }}
               style={selectedStyle(method === m)}
             />
           ))}
@@ -307,9 +311,26 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
             <Text>{company?.address ?? ''}</Text>
             <Text>License #: {company?.licenseNumber ?? ''}</Text>
             <Text>Phone: {company?.phone ?? ''}</Text>
-            <View style={{ borderWidth: 1, borderStyle: 'dashed', borderColor: colors.border, height: 120, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colors.textMuted }}>{PAYMENT_METHOD_LABELS[method]} barcode</Text>
-            </View>
+            <PayrollButton label="Show barcode" onPress={() => setBarcodeOpen(true)} />
+            {/* Fullscreen for the customer to scan. Android back or a tap closes it. The box stays a
+                marked placeholder until the company's payment details exist to encode. */}
+            <Modal visible={barcodeOpen} animationType="fade" onRequestClose={() => setBarcodeOpen(false)}>
+              <Pressable
+                onPress={() => setBarcodeOpen(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close barcode"
+                style={{ flex: 1, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.lg }}
+              >
+                <Text style={{ fontSize: typography.text.title, fontWeight: typography.weight.bold, color: colors.text }}>
+                  {PAYMENT_METHOD_LABELS[method]}
+                </Text>
+                <View style={{ width: '100%', maxWidth: 360, aspectRatio: 1, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.border, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', padding: spacing.md, gap: spacing.xs }}>
+                  <Text style={{ fontWeight: typography.weight.bold, color: colors.danger }}>PLACEHOLDER</Text>
+                  <Text style={{ color: colors.textMuted, textAlign: 'center' }}>Not a real barcode. Do not scan.</Text>
+                </View>
+                <Text style={{ color: colors.text }}>{company?.name ?? ''}</Text>
+              </Pressable>
+            </Modal>
           </View>
         ) : null}
         {method === 'check' || method === 'cash' ? (

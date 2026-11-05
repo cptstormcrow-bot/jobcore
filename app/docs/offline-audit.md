@@ -139,3 +139,6 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 34. On #0101, a tech whose phone has the app open shows a green dot and "Seen just now" within 2 minutes; after the app is closed for over 5 minutes the dot turns gray.
 35. On #0101, a phone with a failed change shows the failed count in red; tapping the card lists the change with its Job #N, and Hide removes the card until that phone checks in again.
 36. Press and hold a colored badge on a #0012 job card (Prem yellow, Estimate green), any #0041 timeline dot (dimmed ones too), and the status line under the job header on #0041 and #0061: each opens a card naming the badge and its state, tied to its Job #N; a tap anywhere or Android back closes it, and a short tap on a dot still opens its step.
+37. On #0078 tap Zelle, PayPal and Venmo: the tab highlights, a fullscreen placeholder barcode opens, Android back closes it, and Show barcode opens it again.
+38. On #0019 open the published sheet, change a rate and an area adjustment, and confirm a new estimate uses the new price. Publish still shows only on a draft, and the list order is Drafts, Published, Archived.
+39. Sign in as a tech and open #0009: only jobs assigned to that tech list, each row opens the job, Show Test Jobs adds practice jobs, and with none assigned it says so.

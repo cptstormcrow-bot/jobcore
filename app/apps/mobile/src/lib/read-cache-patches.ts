@@ -49,7 +49,7 @@ function setInvestigator(rows: unknown, params: Record<string, unknown> | undefi
   return rows;
 }
 
-const JOB_QUERIES = ['ft.jobs.listAssignedToTech', 'ft.jobs.getById', 'af.jobs.getById', 'af.jobs.listForOrganization', 'app.jobs.byId', 'app.jobs.list'];
+const JOB_QUERIES = ['ft.jobs.listAssignedToTech', 'ft.jobs.getById', 'af.jobs.getById', 'af.jobs.listForOrganization', 'app.jobs.byId'];
 
 const jobPatch = (idKey: string, apply: (p: Record<string, unknown>) => Row) => (p: Record<string, unknown>, rows: unknown) =>
   mapRows(rows, idIs(p[idKey]), (r) => ({ ...r, ...apply(p) }));

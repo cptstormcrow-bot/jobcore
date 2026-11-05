@@ -1,71 +1,22 @@
 // JobCore screen #0009 - jobs - Jobs
-// P2e.3b / S2.3 - Job Detail host. JobDetail owns its own rendering; this
-// screen just selects the job and passes it through.
+// Your Jobs: the jobs assigned to the signed-in user (job_assignments, installer or
+// investigator). Owner and admin are sent to #0012 instead. Tapping a row opens the job.
 
-import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import type { Job, JobStatus } from '@jobcore/core';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { AppChrome, PayrollButton, colors, EmptyState, spacing, Toggle } from '@jobcore/ui';
+import { AppChrome, EmptyState, ListItem, LoadingState, PayrollButton, Toggle, colors, spacing } from '@jobcore/ui';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
-import { JobDetail } from '../../src/components/JobDetail';
+import { createTechJobRepository } from '../../src/lib/field-tech-repos';
 import { useSession } from '../../src/lib/session';
-import { supabase } from '../../src/lib/supabase';
-import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
+import { useReadCacheRevision } from '../../src/lib/read-cache';
 
-/** `jobs` row shape (snake_case) -> domain `Job` (camelCase). */
-interface JobRow {
-  id: string;
-  organization_id: string;
-  status: string;
-  customer_id: string | null;
-  service_id: string | null;
-  source: string | null;
-  payer: string | null;
-  attach_timing: string | null;
-  requested_window: string | null;
-  scheduled_start: string | null;
-  scheduled_end: string | null;
-  address: string | null;
-  description: string | null;
-  assigned_tech_id: string | null;
-  en_route_at: string | null;
-  in_progress_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  is_beta: boolean;
-}
-
-function toJob(row: JobRow): Job {
-  return {
-    id: row.id,
-    organizationId: row.organization_id,
-    status: row.status as JobStatus,
-    customerId: row.customer_id,
-    serviceId: row.service_id,
-    source: row.source,
-    payer: row.payer,
-    attachTiming: row.attach_timing,
-    requestedWindow: row.requested_window,
-    scheduledStart: row.scheduled_start,
-    scheduledEnd: row.scheduled_end,
-    address: row.address,
-    description: row.description,
-    assignedTechId: row.assigned_tech_id,
-    enRouteAt: row.en_route_at,
-    inProgressAt: row.in_progress_at,
-    completedAt: row.completed_at,
-    createdAt: row.created_at,
-    isBeta: row.is_beta,
-    totalLaborSeconds: 0,
-  };
-}
-
-const JOB_ROW_COLUMNS =
-  'id, organization_id, status, customer_id, service_id, source, payer, attach_timing, ' +
-  'requested_window, scheduled_start, scheduled_end, address, description, assigned_tech_id, ' +
-  'en_route_at, in_progress_at, completed_at, created_at, is_beta';
+const statusText = (status: string) => {
+  const words = status.replace(/[_-]/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 export default function JobsScreen() {
   const router = useRouter();
@@ -75,9 +26,9 @@ export default function JobsScreen() {
 
   const isFinanceRole = role === 'owner' || role === 'admin';
 
-  // #0009 is only a placeholder for owner/admin: their Jobs list is #0012 (the admin-finance
-  // 'jobs' sub-view). replace (not push) keeps Back from returning here and bouncing forward again;
-  // the ts nonce makes AdminFinanceRoot's effect re-fire if that screen is already mounted.
+  // Owner/admin's Jobs list is #0012 (the admin-finance 'jobs' sub-view). replace (not push)
+  // keeps Back from returning here and bouncing forward again; the ts nonce makes
+  // AdminFinanceRoot's effect re-fire if that screen is already mounted.
   useFocusEffect(
     useCallback(() => {
       if (isFinanceRole) router.replace(`/m/admin-finance?view=jobs&ts=${Date.now()}` as never);
@@ -85,67 +36,38 @@ export default function JobsScreen() {
   );
 
   const rev = useReadCacheRevision();
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [jobs, setJobs] = useState<Job[] | null>(null);
   const [showBeta, setShowBeta] = useState(false);
+  const techJobs = useMemo(() => createTechJobRepository(), []);
 
-  // Tech job query: fetch the signed-in tech's assigned job(s) via RLS
-  // (jobs_select_tech / job_assignments join, per plan §Stale P4-spec prose).
-  // Non-tech roles are untouched - no query fires and selectedJob stays null,
-  // preserving the prior "no job data seam" placeholder behavior for them.
   useEffect(() => {
-    if (role !== 'tech' || !userId) {
-      setSelectedJob(null);
+    if (isFinanceRole || !userId) {
+      setJobs([]);
       return;
     }
     let cancelled = false;
-    const fetchLive = async (): Promise<JobRow | null> => {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select(JOB_ROW_COLUMNS)
-        .eq('assigned_tech_id', userId)
-        .limit(1)
-        .maybeSingle<JobRow>();
-      if (error) throw error;
-      return data ?? null;
-    };
-    const identity = getReadCacheIdentity();
-    const load = identity
-      ? cachedRead<JobRow | null>(
-          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.list', { techId: userId }),
-          fetchLive,
-        ).then((r) => r.data)
-      : fetchLive();
-    void load
-      .then((data) => {
-        if (cancelled) return;
-        setSelectedJob(data ? toJob(data) : null);
+    void techJobs
+      .listAssignedToTech(userId)
+      .then((rows) => {
+        if (!cancelled) setJobs(rows);
       })
       .catch(() => {
-        if (!cancelled) setSelectedJob(null);
+        if (!cancelled) setJobs([]);
       });
     return () => {
       cancelled = true;
     };
-  }, [role, userId, rev]);
+  }, [isFinanceRole, userId, techJobs, rev]);
 
-  if (isFinanceRole) return null; // redirecting to #0012; skip the placeholder flash
+  const visibleJobs = useMemo(
+    () =>
+      (jobs ?? [])
+        .filter((job) => isBetaVisible(job, showBeta) || job.source === 'job-simulator')
+        .sort((a, b) => (b.jobNumber ?? 0) - (a.jobNumber ?? 0)),
+    [jobs, showBeta],
+  );
 
-  if (!selectedJob || !(isBetaVisible(selectedJob, showBeta) || selectedJob.source === 'job-simulator')) {
-    return (
-      <View style={styles.center}>
-        <AppChrome
-          helpContext={{ screenKey: 'jobs-list' }}
-          breadcrumbSegments={[{ label: 'Jobs' }]}
-          menuItems={[]}
-          optionsItems={[]}
-          titleBar={{ title: 'Jobs' }}
-        />
-        <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-        <PayrollButton label="New job" onPress={() => router.push('/job/new')} />
-        <EmptyState title="Jobs" message="No job selected. The job list lands in a later slice." />
-      </View>
-    );
-  }
+  if (isFinanceRole) return null; // redirecting to #0012; skip the flash
 
   return (
     <View style={styles.root}>
@@ -156,21 +78,35 @@ export default function JobsScreen() {
         optionsItems={[]}
         titleBar={{ title: 'Jobs' }}
       />
-      <StaleDataHint queries={['app.jobs.']} />
-      <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
-      <PayrollButton label="New job" onPress={() => router.push('/job/new')} />
-      <JobDetail job={selectedJob} />
+      <StaleDataHint queries={['ft.jobs.']} />
+      <View style={styles.controls}>
+        <Toggle label="Show Test Jobs" value={showBeta} onChange={setShowBeta} />
+        <PayrollButton label="New job" onPress={() => router.push('/job/new')} />
+      </View>
+      {jobs === null ? (
+        <LoadingState />
+      ) : (
+        <FlatList
+          style={styles.list}
+          data={visibleJobs}
+          keyExtractor={(job) => job.id}
+          ListEmptyComponent={<EmptyState title="No jobs" message="No jobs are assigned to you." />}
+          renderItem={({ item: job }) => (
+            <ListItem
+              title={`Job #${job.jobNumber ?? ''} ${job.customerName ?? ''}`.trim()}
+              subtitle={job.address ?? undefined}
+              footer={statusText(job.status)}
+              onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id } })}
+            />
+          )}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    backgroundColor: colors.offWhite,
-  },
+  controls: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, padding: spacing.md },
+  list: { flex: 1 },
 });

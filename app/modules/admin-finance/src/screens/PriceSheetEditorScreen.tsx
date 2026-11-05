@@ -102,8 +102,9 @@ interface ServiceTasksRepoPort {
 const HELP_BULLETS = [
   'A price sheet is one versioned set of task prices, trip durations and area adjustments.',
   'Only one version is Published at a time; techs and estimates always use that one.',
-  'Drafts are private — nothing here changes what techs see until you tap Publish.',
-  'Publish makes this version live and archives the previous one; published versions never change again.',
+  'Drafts are private — nothing in a draft changes what techs see until you tap Publish.',
+  'Edit the Published version to change live prices; each change goes live as soon as it saves.',
+  'Publish makes a draft live and archives the previous Published version.',
   'Price Area Adjustments raise or lower every price on this sheet for the selected service areas, by percent or a flat amount.',
 ];
 
@@ -1168,8 +1169,9 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
           </Text>
         ) : (
           <Text style={styles.note}>
-            This version is {STATUS_LABEL[sheet.status].toLowerCase()} and can no longer change.
-            Create a new price sheet to edit prices.
+            {sheet.status === 'published'
+              ? 'This version is live. Changes in each section save as you go and go live as soon as they save.'
+              : 'This version is archived, so techs and estimates no longer use it. Create a new price sheet to change prices.'}
           </Text>
         )}
 

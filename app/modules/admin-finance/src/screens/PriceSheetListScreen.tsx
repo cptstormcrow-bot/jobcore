@@ -10,7 +10,7 @@
  * P3i.3b implements draft / published / archived GROUPING: sheets are
  * partitioned by the DOMAIN value of `sheet.status` (`'draft' | 'published' |
  * 'archived'` — `../money/types.ts`'s `PriceSheetStatus`), rendered as
- * Published → Draft → Archived, one `<Card>` per non-empty group. The
+ * Drafts → Published → Archived, one `<Card>` per non-empty group. The
  * ledger's "superseded" is DB-only vocabulary; `DB_TO_APP_STATUS`
  * (`../data/price-sheet-repo.ts`) already translates it to `'archived'`
  * before a row reaches this screen, so `'superseded'` never appears here.
@@ -138,8 +138,8 @@ export function PriceSheetListScreen(props: PriceSheetListScreenProps = {}) {
   }
 
   const groups: Array<{ status: PriceSheetStatus; label: string }> = [
-    { status: 'published', label: 'Published' },
     { status: 'draft', label: 'Drafts' },
+    { status: 'published', label: 'Published' },
     { status: 'archived', label: 'Archived' },
   ];
 

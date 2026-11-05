@@ -34,7 +34,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_price_sheets',
     kind: 'action',
     title: 'Price Sheets',
-    body: 'Rates for services and area adjustments, grouped as Published, Drafts and Archived. Tap "Create price sheet" to start a new one.\nTo make a draft live, open it and tap "Publish". Only one price sheet is published at a time.',
+    body: 'Rates for services and area adjustments, grouped as Drafts, Published and Archived. Tap "Create price sheet" to start a new one.\nEdit the published price sheet and each change goes live as soon as it saves. To make a draft live instead, open it and tap "Publish". Only one price sheet is published at a time.',
     context: { screens: ['af-price-sheets'] },
   },
   {
@@ -113,7 +113,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'jobs_list',
     kind: 'info',
     title: 'Your Jobs',
-    body: 'Tap "New job" to start one or add a job.\nTurn on "Show Test Jobs" to include practice jobs.',
+    body: 'These are the jobs assigned to you. Tap a job to open it.\nTap "New job" to add a job.\nTurn on "Show Test Jobs" to include practice jobs.',
     whereScreen: 'Jobs',
     context: { screens: ['jobs-list'] },
   },
