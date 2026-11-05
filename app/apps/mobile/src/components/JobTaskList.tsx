@@ -71,7 +71,8 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
   const edit = mode === 'edit';
   const isAdmin = session.status === 'authenticated' && (session.profile.role === 'owner' || session.profile.role === 'admin');
-  const prem = source === 'prem'; // #0061 Prem Checklist: price-sheet search + item sheet
+  const prem = source === 'prem'; // #0061 Prem Checklist: item sheet rows
+  const search = prem || allowCatalog; // price-sheet search on #0061 and Job Overview
 
   const apply = useCallback(
     (next: JobPlanTaskRow[]) => {
@@ -100,7 +101,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   }, [jobId, repo]);
 
   useEffect(() => {
-    if (!edit || !(allowCatalog || prem) || !orgId) return;
+    if (!edit || !search || !orgId) return;
     let cancelled = false;
     repo
       .listCatalogTasks(orgId)
@@ -111,7 +112,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     return () => {
       cancelled = true;
     };
-  }, [edit, allowCatalog, prem, orgId, repo]);
+  }, [edit, search, orgId, repo]);
 
   async function run(fn: () => Promise<void>, msg: string) {
     try {
@@ -362,7 +363,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   return (
     <View style={styles.root}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {edit && prem && (
+      {edit && search && (
         <View style={styles.search}>
           <TextField inline dense placeholder="Search price sheet" value={query} onChangeText={setQuery} />
           {matches.map((t) => (
@@ -372,17 +373,6 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             </Pressable>
           ))}
         </View>
-      )}
-      {edit && !prem && allowCatalog && (
-        <Select
-          compact
-          options={catalog.map((t) => ({ label: t.name, value: t.id }))}
-          value={null}
-          placeholder="Add price-sheet task..."
-          onChange={(id) => {
-            if (id) void addCatalog(id);
-          }}
-        />
       )}
       {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
       {active.map((r) => renderRow(r, false))}

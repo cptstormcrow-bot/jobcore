@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingHorizontal: spacing.sm,
     paddingVertical: compact.field,
+    minHeight: compact.rowMin,
     backgroundColor: colors.surface,
   },
   triggerCompact: {

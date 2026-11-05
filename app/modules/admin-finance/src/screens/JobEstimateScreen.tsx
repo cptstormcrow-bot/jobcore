@@ -253,13 +253,17 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const priceMatches = priceQuery
     ? allCatalog.filter((c) => c.name.toLowerCase().includes(priceQuery)).slice(0, 6)
     : [];
+  const [manualOpen, setManualOpen] = useState(false);
+  // A pick adds the task straight away (rate from the sheet, quantity 1).
   function handlePricePick(row: ServiceTaskCatalogEntry): void {
-    setPickedServiceTaskId(row.id);
-    setKindInput('labor');
-    setDescriptionInput(row.name);
-    setQuantityInput('1');
-    setUnitCostInput(row.rate != null ? String(row.rate) : '');
     setPriceSearch('');
+    void handleAddLineItem({
+      kind: 'labor',
+      description: row.name,
+      quantity: '1',
+      unitCost: row.rate != null ? String(row.rate) : '0',
+      serviceTaskId: row.id,
+    });
   }
 
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
@@ -546,10 +550,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     { materials: 0, labor: 0, other: 0, total: 0 },
   );
 
-  async function handleAddLineItem(): Promise<void> {
-    const quantity = Number(quantityInput);
-    const unitCost = Number(unitCostInput);
-    if (!descriptionInput.trim()) {
+  async function handleAddLineItem(over?: { kind: EstimateLineItemKind; description: string; quantity: string; unitCost: string; serviceTaskId: string | null }): Promise<void> {
+    const kindValue = over?.kind ?? kindInput;
+    const descriptionValue = over?.description ?? descriptionInput;
+    const pickedId = over ? over.serviceTaskId : pickedServiceTaskId;
+    const quantity = Number(over?.quantity ?? quantityInput);
+    const unitCost = Number(over?.unitCost ?? unitCostInput);
+    if (!descriptionValue.trim()) {
       setActionState({ kind: 'failed', message: 'Enter a description.' });
       return;
     }
@@ -558,12 +565,12 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       return;
     }
     const draft: JobEstimateLineItemDraft = {
-      kind: kindInput,
-      description: descriptionInput.trim(),
+      kind: kindValue,
+      description: descriptionValue.trim(),
       quantity,
       unitCost,
       lineTotal: quantity * unitCost,
-      ...(pickedServiceTaskId ? { serviceTaskId: pickedServiceTaskId } : {}),
+      ...(pickedId ? { serviceTaskId: pickedId } : {}),
     };
     setActionState({ kind: 'working' });
     setSheetNotice(null);
@@ -579,7 +586,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       if (
         saveToSheet &&
         canSaveToSheet &&
-        !pickedServiceTaskId &&
+        !pickedId &&
         unitCost !== 0 &&
         draft.description.length >= 3 &&
         !findCatalogDuplicate(allCatalog, draft.description)
@@ -1161,39 +1168,119 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         <Card style={styles.card}>
           <View style={styles.finePrintHeader}>
             <Text style={styles.sectionTitle}>{ESTIMATE_LABELS.tasks}</Text>
-            <PayrollButton
-              label="Add Task"
-              testID="estimate-add-task"
-              onPress={() => {
-                void handleAddLineItem();
-              }}
-              disabled={busy}
-            />
-            {!pickedServiceTaskId && canSaveToSheet ? (
-              <View style={styles.finePrintActions}>
-                <Text style={styles.label}>Save to price sheet</Text>
-                {([true, false] as const).map((on) => (
-                  <PayrollButton
-                    key={on ? 'on' : 'off'}
-                    label={on ? 'On' : 'Off'}
-                    onPress={() => setSaveToSheet(on)}
-                    disabled={busy}
-                    style={
-                      saveToSheet === on
-                        ? { borderBottomWidth: 2, borderBottomColor: colors.primary }
-                        : undefined
-                    }
-                  />
-                ))}
-              </View>
-            ) : null}
           </View>
           {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
           {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
+          {editable ? (
+            <View style={styles.addBlock} testID="estimate-add-task-block">
+              {allCatalog.length > 0 ? (
+                <TextField inline
+                  label="Add from price sheet"
+                  value={priceSearch}
+                  onChangeText={setPriceSearch}
+                  placeholder="Type a task name"
+                  disabled={busy}
+                  style={styles.field}
+                />
+              ) : null}
+              {priceMatches.map((c) => (
+                <ListItem
+                  key={c.id}
+                  title={c.name}
+                  subtitle={c.rate != null ? `${formatCurrency(c.rate)} - tap to add` : 'Tap to add'}
+                  onPress={busy ? undefined : () => handlePricePick(c)}
+                />
+              ))}
+              {priceQuery && priceMatches.length === 0 ? (
+                <Text style={styles.note}>No match. Use Add manually.</Text>
+              ) : null}
+              <PayrollButton
+                label={manualOpen ? 'Hide manual entry' : 'Add manually'}
+                testID="estimate-add-manual-toggle"
+                onPress={() => setManualOpen((v) => !v)}
+                disabled={busy}
+              />
+              {manualOpen ? (
+                <>
+                  {assemblyCatalog.length > 0 ? (
+                    <Select
+                      label="Assembly labor"
+                      value={pickedServiceTaskId}
+                      options={assemblyCatalog.map((c) => ({ value: c.id, label: c.name }))}
+                      onChange={(value) => handleAssemblyPick(value as string | null)}
+                      disabled={busy}
+                      style={styles.field}
+                    />
+                  ) : null}
+                  <Select
+                    label="Type"
+                    value={kindInput}
+                    options={KIND_OPTIONS}
+                    onChange={(value) => setKindInput((value as EstimateLineItemKind) ?? 'labor')}
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <TextField inline
+                    label="Description"
+                    value={descriptionInput}
+                    onChangeText={setDescriptionInput}
+                    placeholder="Description"
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <TextField inline
+                    label="Quantity"
+                    value={quantityInput}
+                    onChangeText={setQuantityInput}
+                    placeholder="1"
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <TextField inline
+                    label="Unit Cost"
+                    value={unitCostInput}
+                    onChangeText={setUnitCostInput}
+                    placeholder="0.00"
+                    disabled={busy}
+                    style={styles.field}
+                  />
+                  <PayrollButton
+                    label="Add Task"
+                    testID="estimate-add-task"
+                    onPress={() => {
+                      void handleAddLineItem();
+                    }}
+                    disabled={busy}
+                  />
+                  {!pickedServiceTaskId && canSaveToSheet ? (
+                    <View style={styles.finePrintActions}>
+                      <Text style={styles.label}>Save to price sheet</Text>
+                      {([true, false] as const).map((on) => (
+                        <PayrollButton
+                          key={on ? 'on' : 'off'}
+                          label={on ? 'On' : 'Off'}
+                          onPress={() => setSaveToSheet(on)}
+                          disabled={busy}
+                          style={
+                            saveToSheet === on
+                              ? { borderBottomWidth: 2, borderBottomColor: colors.primary }
+                              : undefined
+                          }
+                        />
+                      ))}
+                    </View>
+                  ) : null}
+                  {sheetNotice ? <Text style={styles.note}>{sheetNotice}</Text> : null}
+                </>
+              ) : sheetNotice ? (
+                <Text style={styles.note}>{sheetNotice}</Text>
+              ) : null}
+            </View>
+          ) : null}
           {activeTab === 'tasks' ? (
           <>
           {lineItems.length === 0 ? (
-            <EmptyState title="No tasks" message="Add a task below." />
+            <EmptyState title="No tasks" message="Search the price sheet above to add one." />
           ) : (
             <View style={styles.itemList}>
             {lineItems.map((item) =>
@@ -1304,77 +1391,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </>
           ) : null}
 
-          {editable ? (
-          <>
-
-            <>
-              {allCatalog.length > 0 ? (
-                <TextField inline
-                  label="Search price sheet"
-                  value={priceSearch}
-                  onChangeText={setPriceSearch}
-                  placeholder="Type a description"
-                  disabled={busy}
-                  style={styles.field}
-                />
-              ) : null}
-              {priceMatches.map((c) => (
-                <ListItem
-                  key={c.id}
-                  title={c.name}
-                  subtitle={c.rate != null ? formatCurrency(c.rate) : undefined}
-                  onPress={busy ? undefined : () => handlePricePick(c)}
-                />
-              ))}
-              {priceQuery && priceMatches.length === 0 ? (
-                <Text style={styles.note}>No match. Enter the task below.</Text>
-              ) : null}
-              {assemblyCatalog.length > 0 ? (
-                <Select
-                  label="Assembly labor"
-                  value={pickedServiceTaskId}
-                  options={assemblyCatalog.map((c) => ({ value: c.id, label: c.name }))}
-                  onChange={(value) => handleAssemblyPick(value as string | null)}
-                  disabled={busy}
-                  style={styles.field}
-                />
-              ) : null}
-              <Select
-                label="Type"
-                value={kindInput}
-                options={KIND_OPTIONS}
-                onChange={(value) => setKindInput((value as EstimateLineItemKind) ?? 'labor')}
-                disabled={busy}
-                style={styles.field}
-              />
-              <TextField inline
-                label="Description"
-                value={descriptionInput}
-                onChangeText={setDescriptionInput}
-                placeholder="Description"
-                disabled={busy}
-                style={styles.field}
-              />
-              <TextField inline
-                label="Quantity"
-                value={quantityInput}
-                onChangeText={setQuantityInput}
-                placeholder="1"
-                disabled={busy}
-                style={styles.field}
-              />
-              <TextField inline
-                label="Unit Cost"
-                value={unitCostInput}
-                onChangeText={setUnitCostInput}
-                placeholder="0.00"
-                disabled={busy}
-                style={styles.field}
-              />
-              {sheetNotice ? <Text style={styles.note}>{sheetNotice}</Text> : null}
-            </>
-          </>
-          ) : null}
         </Card>
         ) : null}
 
@@ -1587,6 +1603,10 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   field: {
+    marginBottom: spacing.xs,
+  },
+  addBlock: {
+    gap: spacing.xs,
     marginBottom: spacing.xs,
   },
   editRow: {

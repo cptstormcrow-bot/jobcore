@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   inputMultiline: { minHeight: 64, textAlignVertical: 'top' },
   labelDense: { marginBottom: 0 },
   labelInline: { marginBottom: 0, marginRight: spacing.xs, flexShrink: 0 },
-  inputInline: { flex: 1, paddingVertical: compact.gap },
+  inputInline: { flex: 1, paddingVertical: compact.gap, minHeight: compact.rowMin },
   inputDense: { paddingHorizontal: spacing.xs, paddingVertical: spacing.xs },
   inputMultilineDense: { minHeight: 56 },
   inputError: { borderColor: colors.danger },
