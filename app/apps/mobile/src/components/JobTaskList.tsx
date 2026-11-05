@@ -302,7 +302,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
               : 'No price set';
           return (
             <>
-              <Text style={styles.notes}>{locked ? `${info} (locked)` : info}</Text>
+              <Text style={styles.notes}>{info}</Text>
               {locked ? null : (
                 <>
                   <Select
