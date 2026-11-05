@@ -201,7 +201,7 @@ export function FieldJobDetail({ jobId, customerPhone, onOpenCalendar }: FieldJo
         ) : null}
         {job.rooms && job.rooms.length > 0 ? (
           <>
-            <Text style={styles.label}>Rooms needing work</Text>
+            <Text style={styles.label}>Description of work</Text>
             <Text style={styles.value}>{job.rooms.join(', ')}</Text>
           </>
         ) : null}

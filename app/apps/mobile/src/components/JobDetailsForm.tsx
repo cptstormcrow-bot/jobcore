@@ -5,9 +5,8 @@
 // business logic -- this component only renders `value` and reports
 // changes via `onChange`.
 import { StyleSheet, View } from 'react-native';
-import { Checkbox, colors, Select, spacing, TextField, typography, Text } from '@jobcore/ui';
+import { colors, Select, spacing, TextField, typography, Text } from '@jobcore/ui';
 
-const ROOM_OPTIONS = ['Kitchen', 'Bathroom', 'Bedroom', 'Garage', 'Basement', 'Attic', 'Other'];
 const UNASSIGNED_SERVICE_AREA = '';
 
 export type JobFormValues = {
@@ -182,25 +181,19 @@ export function JobDetailsForm({
         inline
         inputStyle={inputStyleFor(value.parkingAvailable)}
       />
-      <View style={styles.field}>
-        <Text style={styles.sectionLabel}>Rooms needing work</Text>
-        <View style={styles.roomsGrid}>
-          {ROOM_OPTIONS.map((room) => (
-            <Checkbox
-              key={room}
-              label={room}
-              checked={value.rooms.includes(room)}
-              onChange={(checked) =>
-                onChange({
-                  rooms: checked ? [...value.rooms, room] : value.rooms.filter((r) => r !== room),
-                })
-              }
-              style={styles.roomCheckbox}
-              boxStyle={styles.roomCheckboxBox}
-            />
-          ))}
-        </View>
-      </View>
+      <TextField
+        label="Description of work"
+        // Same jobs.rooms column: older checkbox picks (Kitchen, Bathroom) read as "Kitchen, Bathroom"; a save keeps the text as one entry.
+        value={value.rooms.join(', ')}
+        onChangeText={(text) => onChange({ rooms: text ? [text] : [] })}
+        placeholder="What is being requested"
+        multiline
+        style={fld}
+        labelStyle={styles.fieldLabel}
+        dense={compact}
+        inline
+        inputStyle={inputStyleFor(value.rooms.join(', '))}
+      />
       <TextField
         label="Main panel size/style"
         value={value.panelInfo}
@@ -300,9 +293,6 @@ const styles = StyleSheet.create({
   fieldInput: { fontSize: typography.text.input, color: colors.text, borderColor: colors.divider },
   fieldInputFilled: { fontWeight: '600' },
   sectionLabel: { fontWeight: '600', marginBottom: spacing.xs, color: colors.textMutedDark, fontSize: typography.size.detail },
-  roomsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.md, marginTop: spacing.xs },
-  roomCheckbox: { width: '50%', minHeight: 32, marginBottom: 0 },
-  roomCheckboxBox: { borderWidth: 2, borderColor: colors.primary },
   readOnlyText: { color: colors.textMuted, fontSize: typography.text.input },
   inlineRow: { flexDirection: 'row', alignItems: 'center' },
   inlineLabel: { marginBottom: 0, marginRight: spacing.xs },
