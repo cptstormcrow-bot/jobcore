@@ -4,19 +4,19 @@
     "slug": "jobcore",
     "scheme": "jobcore",
     "owner": "wolfgaard-studio",
-    "version": "0.15.14",
+    "version": "0.16.33",
     "icon": "./assets/icon-1024.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.sdassemblypros.jobcore",
-      "buildNumber": "29",
+      "buildNumber": "30",
       "supportsTablet": true
     },
     "android": {
       "package": "com.sdassemblypros.jobcore.v2",
-      "versionCode": 30,
+      "versionCode": 31,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground-1024.png",
         "backgroundColor": "#1B2A41"
@@ -31,7 +31,12 @@
       "expo-media-library",
       "expo-background-fetch",
       "@react-native-community/datetimepicker",
-      ["expo-camera", { "cameraPermission": "Allow JobCore to use the camera to scan box barcodes." }]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow JobCore to use the camera to scan box barcodes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
