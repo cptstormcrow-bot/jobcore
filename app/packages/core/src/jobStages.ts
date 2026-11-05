@@ -1,8 +1,9 @@
 // Pure derivation of the 10-stage job progress bar and its "Next Steps" sentence. No I/O.
 // Approval is not its own stage: the Estimate dot turns green only once the estimate is approved (Jeff 2026-11-05).
+// Assign comes before Schedule: a tech is assigned first, then the job is scheduled (Jeff 2026-11-05).
 
 export const STAGE_KEYS = [
-  'job', 'prem', 'estimate', 'schedule', 'assign',
+  'job', 'prem', 'estimate', 'assign', 'schedule',
   'contact', 'startWork', 'completeWork', 'paid', 'closeout',
 ] as const;
 

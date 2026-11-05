@@ -53,7 +53,14 @@ test('missingRequired is yellow', () => {
 test('incomplete with a later stage complete is red', () => {
   const i = inputs({ estimate: { complete: true } });
   assert.equal(stateOf(i, 'job'), 'red');
-  assert.equal(stateOf(i, 'schedule'), 'gray');
+  assert.equal(stateOf(i, 'assign'), 'gray');
+});
+
+test('assign comes before schedule', () => {
+  assert.ok(STAGE_KEYS.indexOf('assign') < STAGE_KEYS.indexOf('schedule'));
+  // Scheduled without a tech: the earlier Assign dot turns red.
+  assert.equal(stateOf(inputs({ schedule: { complete: true } }), 'assign'), 'red');
+  assert.equal(stateOf(inputs({ assign: { complete: true } }), 'schedule'), 'gray');
 });
 
 test('prem inProgress: yellow, red without it, green when complete', () => {
@@ -133,7 +140,7 @@ test('non-rejected complete estimate stays green (regression guard)', () => {
     estimate: { complete: true },
   });
   assert.equal(stateOf(i, 'estimate'), 'green');
-  assert.equal(stateOf(i, 'schedule'), 'gray');
+  assert.equal(stateOf(i, 'assign'), 'gray');
   assert.equal(leadingIndex(deriveStageStates(i)), 2);
 });
 
