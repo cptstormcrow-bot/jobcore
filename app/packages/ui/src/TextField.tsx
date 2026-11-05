@@ -18,7 +18,7 @@ export interface TextFieldProps {
   inputStyle?: StyleProp<TextStyle>;
   /** Compact: label margin 0, xs padding, multiline minHeight 56. */
   dense?: boolean;
-  /** Label sits left of the box on one line ("Customer name: ..."). */
+  /** Label sits left of the box on one line ("Customer name: ..."). Default true (Jeff 2026-11-05); pass false to stack. */
   inline?: boolean;
 }
 
@@ -36,7 +36,7 @@ export function TextField({
   labelStyle,
   inputStyle,
   dense = false,
-  inline = false,
+  inline = true,
 }: TextFieldProps) {
   const hasError = !!error;
   return (
@@ -80,7 +80,7 @@ export function TextField({
 
 const styles = StyleSheet.create({
   base: { width: '100%' },
-  baseInline: { flexDirection: 'row', alignItems: 'center' },
+  baseInline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   baseInlineTop: { alignItems: 'flex-start' },
   label: {
     fontFamily: typography.fontFamily.body,
@@ -114,5 +114,6 @@ const styles = StyleSheet.create({
     fontSize: typography.text.error,
     color: colors.danger,
     marginTop: compact.gap,
+    width: '100%',
   },
 });

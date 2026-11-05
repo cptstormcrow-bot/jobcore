@@ -14,6 +14,8 @@ export interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   error?: string;
+  /** Label left of the box on one line. Default true (Jeff 2026-11-05); pass false to stack. */
+  inline?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -26,13 +28,14 @@ export function DatePicker({
   placeholder = 'YYYY-MM-DD',
   disabled = false,
   error,
+  inline = true,
   style,
 }: DatePickerProps) {
   const invalid = value.length > 0 && !ISO_DATE_RE.test(value);
   const hasError = !!error || invalid;
   return (
-    <View style={[styles.base, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={[styles.base, inline && !!label && styles.baseInline, style]}>
+      {label && <Text numberOfLines={1} style={[styles.label, inline && styles.labelInline]}>{inline ? `${label}:` : label}</Text>}
       <TextInput
         value={value}
         onChangeText={onChange}
@@ -44,7 +47,7 @@ export function DatePicker({
         accessibilityState={{ disabled }}
         aria-invalid={hasError}
         accessibilityHint={hasError ? (error ?? 'Enter a date as YYYY-MM-DD') : undefined}
-        style={[styles.input, hasError && styles.inputError, disabled && styles.disabled]}
+        style={[styles.input, inline && !!label && styles.inputInline, hasError && styles.inputError, disabled && styles.disabled]}
       />
       {hasError && <Text style={styles.errorText}>{error ?? 'Enter a date as YYYY-MM-DD'}</Text>}
     </View>
@@ -53,6 +56,9 @@ export function DatePicker({
 
 const styles = StyleSheet.create({
   base: { width: '100%' },
+  baseInline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  labelInline: { marginBottom: 0, marginRight: spacing.xs, flexShrink: 0 },
+  inputInline: { flex: 1 },
   label: {
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
@@ -79,5 +85,6 @@ const styles = StyleSheet.create({
     fontSize: typography.text.error,
     color: colors.danger,
     marginTop: compact.gap,
+    width: '100%',
   },
 });

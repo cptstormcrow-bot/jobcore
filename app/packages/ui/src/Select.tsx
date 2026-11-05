@@ -22,6 +22,8 @@ export interface SelectProps {
   compact?: boolean;
   /** Narrower popup sheet (field-tech pickers). */
   narrow?: boolean;
+  /** Label left of the trigger on one line. Default true (Jeff 2026-11-05); pass false to stack. */
+  inline?: boolean;
 }
 
 export function Select({
@@ -35,19 +37,20 @@ export function Select({
   title,
   compact = false,
   narrow = false,
+  inline = true,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
 
   return (
-    <View style={[styles.base, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+    <View style={[styles.base, inline && !!label && styles.baseInline, style]}>
+      {label && <Text numberOfLines={1} style={[styles.label, inline && styles.labelInline]}>{inline ? `${label}:` : label}</Text>}
       <Pressable
         onPress={() => !disabled && setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={label ?? 'Select'}
         accessibilityState={{ disabled }}
-        style={[styles.trigger, compact && styles.triggerCompact, disabled && styles.disabled]}
+        style={[styles.trigger, compact && styles.triggerCompact, inline && !!label && styles.triggerInline, disabled && styles.disabled]}
       >
         <Text style={[styles.triggerText, !selected && styles.placeholderText]} numberOfLines={1}>
           {selected ? selected.label : placeholder}
@@ -89,6 +92,9 @@ export function Select({
 
 const styles = StyleSheet.create({
   base: { width: '100%' },
+  baseInline: { flexDirection: 'row', alignItems: 'center' },
+  labelInline: { marginBottom: 0, marginRight: spacing.xs, flexShrink: 0 },
+  triggerInline: { flex: 1 },
   label: {
     fontFamily: typography.fontFamily.body,
     fontWeight: typography.weight.medium,
