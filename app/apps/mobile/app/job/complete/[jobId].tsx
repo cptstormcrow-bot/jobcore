@@ -102,11 +102,8 @@ export default function CompleteJobRoute() {
   }, [ready, jobId]);
 
   const onDone = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace({ pathname: '/job/[jobId]', params: { jobId } } as never);
-    }
+    // Always land on Estimate #0057, never on whichever panel was stacked last (was Prem #0061).
+    router.replace(`/job/${jobId}?panel=jobEstimate` as never);
   };
 
   const persistCompletion = async (job: Job): Promise<void> => {
