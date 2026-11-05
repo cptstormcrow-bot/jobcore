@@ -289,6 +289,46 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         ) : row.notes ? (
           <Text style={styles.notes}>{row.notes}</Text>
         ) : null}
+        {edit && !dim && !prem ? (() => {
+          // Fixed vs hourly pricing on Job Overview. Amounts live inside the dropdown block (editable) and beside it (info).
+          // Once a price is established only an admin can change it.
+          const mode = d.type === 'assembly' ? 'fixed' : d.type === 'handyman' || d.type === 'appliance' ? 'hourly' : null;
+          const established = row.taskType != null ? (row.price != null || row.hourlyRate != null) : row.price != null;
+          const locked = established && !isAdmin;
+          const info = mode === 'hourly'
+            ? `Hourly $${num(d.rate) ?? 0}/hr x ${row.estimatedMinutes ?? 0} min${total != null ? ` = $${total}` : ''}`
+            : mode === 'fixed' || row.price != null
+              ? `Fixed $${num(d.price) ?? row.price ?? 0}`
+              : 'No price set';
+          return (
+            <>
+              <Text style={styles.notes}>{locked ? `${info} (locked)` : info}</Text>
+              {locked ? null : (
+                <>
+                  <Select
+                    compact
+                    options={[{ label: 'Fixed price', value: 'assembly' }, { label: 'Hourly', value: 'handyman' }]}
+                    value={mode === 'fixed' ? 'assembly' : mode === 'hourly' ? 'handyman' : (row.price != null ? 'assembly' : null)}
+                    placeholder="Fixed or hourly"
+                    onChange={(v) => {
+                      setDrafts((p) => ({ ...p, [row.id]: { ...d, type: v ?? '' } }));
+                      void saveType(row, { type: v ?? '' });
+                    }}
+                  />
+                  {mode === 'hourly' ? (
+                    <TextField inline dense placeholder="Hourly rate $" keyboardType="decimal-pad" value={d.rate}
+                      onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, rate: t } }))}
+                      onBlur={() => void saveType(row)} />
+                  ) : (
+                    <TextField inline dense placeholder="Fixed price $" keyboardType="decimal-pad" value={d.price}
+                      onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, price: t } }))}
+                      onBlur={() => void saveType(row)} />
+                  )}
+                </>
+              )}
+            </>
+          );
+        })() : null}
         {edit && !dim && prem ? (
           <>
             <Select
