@@ -1457,6 +1457,14 @@ export interface JobPlanTaskRow {
   unit: string | null;
   area: string | null;
   materialsNote: string | null;
+  taskType: JobPlanTaskType | null;
+  sku: string | null;
+  price: number | null;
+  hourlyRate: number | null;
+  extrasCost: number | null;
+  contractorName: string | null;
+  contractorContact: string | null;
+  contractorLicense: string | null;
   /** ISO timestamp of the last content change to this task. */
   contentUpdatedAt: string;
 }
@@ -1465,6 +1473,8 @@ export interface CustomerJobPlanTaskRow extends JobPlanTaskRow {
   jobNumber: string | number | null;
   jobStatus: string | null;
 }
+
+export type JobPlanTaskType = 'assembly' | 'handyman' | 'appliance' | 'contractor';
 
 export interface JobPlanTaskPatch {
   quantity?: number;
@@ -1476,6 +1486,14 @@ export interface JobPlanTaskPatch {
   unit?: string | null;
   area?: string | null;
   materialsNote?: string | null;
+  taskType?: JobPlanTaskType | null;
+  sku?: string | null;
+  price?: number | null;
+  hourlyRate?: number | null;
+  extrasCost?: number | null;
+  contractorName?: string | null;
+  contractorContact?: string | null;
+  contractorLicense?: string | null;
 }
 
 export interface ServiceTaskCatalogEntry {
@@ -1504,8 +1522,18 @@ export interface JobPlanTasksRepository {
       unit?: string | null;
       area?: string | null;
       materialsNote?: string | null;
+      taskType?: JobPlanTaskType | null;
+      sku?: string | null;
+      price?: number | null;
+      hourlyRate?: number | null;
+      extrasCost?: number | null;
+      contractorName?: string | null;
+      contractorContact?: string | null;
+      contractorLicense?: string | null;
     },
   ): Promise<JobPlanTaskRow>;
+  /** Admin only, online only: publish an Assembly task into the active price sheet (#0019); returns the service task id. */
+  publishAssemblyTask?(taskRowId: string): Promise<string>;
   updateTask(taskRowId: string, patch: JobPlanTaskPatch): Promise<JobPlanTaskRow>;
   deferTask(taskRowId: string): Promise<JobPlanTaskRow>;
   listForCustomer(customerId: string): Promise<CustomerJobPlanTaskRow[]>;

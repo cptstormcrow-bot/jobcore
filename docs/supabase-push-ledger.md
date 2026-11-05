@@ -24,6 +24,7 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 |-----------|---------|---------------------------|-------|
 | 0122_price_sheet_lookup_for_techs.sql | RPC price_sheet_lookup(): lets techs read active price-sheet name, rate, Details, Materials (Prem Checklist #0061 search); no cost columns | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0122. App falls back to the table (admins) until live. | 2026-11-05 |
 | 0123_payment_barcodes.sql | Adds paypal/venmo/zelle barcode path columns to company_info and a private org-scoped payment-barcodes bucket (members read, admins write); Company Info #0065 uploads, #0078 shows fullscreen | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0123. App shows no barcode (soft-fails) until live. | 2026-11-05 |
+| 0124_job_plan_task_types.sql | Adds task_type, sku, price, hourly_rate, extras_cost and contractor name/contact/license to job_plan_tasks, sku to service_tasks, and admin-only RPC publish_assembly_task() that adds an Assembly task to the active price sheet (Prem Checklist #0061, Price Sheets #0019) | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0124. App fields do not save and To price sheet fails until live. | 2026-11-05 |
 
 ## Past (pushes and attempts)
 

@@ -53,20 +53,27 @@ function FieldRow({
   value,
   onChangeText,
   stacked,
+  multiline,
 }: {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
   stacked?: boolean;
+  /** Wraps and grows with its text instead of scrolling inside a one-line box. */
+  multiline?: boolean;
 }) {
+  const [growHeight, setGrowHeight] = React.useState<number | null>(null);
   return (
     <View style={stacked ? styles.fieldRowStacked : styles.fieldRow}>
       {/* Stacked labels sit above the input at full width so they stay on one line. */}
       <Text style={stacked ? styles.fieldLabelStacked : styles.fieldLabel} numberOfLines={1}>{label}</Text>
       <TextInput
-        style={styles.fieldInput}
+        style={[styles.fieldInput, multiline && growHeight ? { height: Math.max(growHeight, 32) } : null]}
         value={value}
         onChangeText={onChangeText}
+        multiline={multiline}
+        scrollEnabled={multiline ? false : undefined}
+        onContentSizeChange={multiline ? (e) => setGrowHeight(e.nativeEvent.contentSize.height + 8) : undefined}
         accessibilityLabel={label}
       />
     </View>
@@ -252,11 +259,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
   const handleSubmit = React.useCallback(() => {
     const missing: string[] = [];
-    if (!ingressNotes.trim()) missing.push('Ingress notes');
-    if (!logisticsNotes.trim()) missing.push('Logistics notes');
-    if (!parkingNotes.trim()) missing.push('Parking notes');
-    if (!stateAssessment.trim()) missing.push('State assessment');
-    if (!techInstructions.trim()) missing.push('Instructions for tech');
     if (photos.length === 0) missing.push('at least one photo');
     if (missing.length > 0) {
       setSubmitError(`Please complete: ${missing.join(', ')}.`);
@@ -264,7 +266,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
     }
     setSubmitError(null);
     void handleSave({ submittedAt: new Date().toISOString() });
-  }, [handleSave, ingressNotes, logisticsNotes, parkingNotes, stateAssessment, techInstructions, photos]);
+  }, [handleSave, photos]);
 
   const handleAddPhoto = React.useCallback(async () => {
     try {
@@ -396,17 +398,17 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Investigation notes</Text>
         <PairRow>
-          <FieldRow stacked label="Ingress notes *" value={ingressNotes} onChangeText={setIngressNotes} />
-          <FieldRow stacked label="Parking notes *" value={parkingNotes} onChangeText={setParkingNotes} />
+          <FieldRow stacked label="Ingress notes" value={ingressNotes} onChangeText={setIngressNotes} />
+          <FieldRow stacked label="Parking notes" value={parkingNotes} onChangeText={setParkingNotes} />
         </PairRow>
         <PairRow>
-          <FieldRow stacked label="Logistics notes *" value={logisticsNotes} onChangeText={setLogisticsNotes} />
-          <FieldRow stacked label="State assessment *" value={stateAssessment} onChangeText={setStateAssessment} />
+          <FieldRow stacked label="Logistics notes" value={logisticsNotes} onChangeText={setLogisticsNotes} />
+          <FieldRow stacked label="State assessment" value={stateAssessment} onChangeText={setStateAssessment} />
         </PairRow>
       </View>
 
       <View style={styles.section}>
-        <FieldRow label="Instructions for tech *" value={techInstructions} onChangeText={setTechInstructions} />
+        <FieldRow label="Instructions for tech" value={techInstructions} onChangeText={setTechInstructions} />
       </View>
 
       <View style={styles.section}>
@@ -429,7 +431,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
           onChange={setRedFlagSubstandardStart}
           labelStyle={styles.value}
         />
-        <FieldRow label="Red flag notes" value={redFlagNotes} onChangeText={setRedFlagNotes} />
+        <FieldRow multiline label="Red flag notes" value={redFlagNotes} onChangeText={setRedFlagNotes} />
       </View>
 
       <View style={styles.section}>

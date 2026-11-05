@@ -9,6 +9,7 @@ export interface TextFieldProps {
   onChangeText?: (value: string) => void;
   onBlur?: () => void;
   placeholder?: string;
+  keyboardType?: import('react-native').KeyboardTypeOptions;
   multiline?: boolean;
   disabled?: boolean;
   error?: string;
@@ -27,6 +28,7 @@ export function TextField({
   onChangeText,
   onBlur,
   placeholder,
+  keyboardType,
   multiline = false,
   disabled = false,
   error,
@@ -52,6 +54,7 @@ export function TextField({
         onChangeText={onChangeText}
         onBlur={onBlur}
         placeholder={placeholder}
+        keyboardType={keyboardType}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         editable={!disabled}

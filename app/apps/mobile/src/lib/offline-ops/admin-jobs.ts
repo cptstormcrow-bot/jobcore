@@ -73,10 +73,14 @@ export interface JobPlanTaskCreatePayload {
   id: string; organizationId: string; jobId: string; serviceTaskId: string | null; quantity?: number;
   kind?: 'misc'; title?: string; notes?: string; estimatedMinutes?: number; source?: string;
   unit?: string | null; area?: string | null; materialsNote?: string | null;
+  taskType?: string | null; sku?: string | null; price?: number | null; hourlyRate?: number | null; extrasCost?: number | null;
+  contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null;
 }
 export interface JobPlanTaskUpdatePayload {
   taskRowId: string;
-  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null };
+  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null;
+    taskType?: string | null; sku?: string | null; price?: number | null; hourlyRate?: number | null; extrasCost?: number | null;
+    contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null };
   updatedAt: string;
 }
 export interface JobPlanTaskDeferPayload { taskRowId: string; updatedAt: string }
@@ -377,6 +381,14 @@ const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) =>
   if (p.unit !== undefined) row.unit = p.unit;
   if (p.area !== undefined) row.area = p.area;
   if (p.materialsNote !== undefined) row.materials_note = p.materialsNote;
+  if (p.taskType !== undefined) row.task_type = p.taskType;
+  if (p.sku !== undefined) row.sku = p.sku;
+  if (p.price !== undefined) row.price = p.price;
+  if (p.hourlyRate !== undefined) row.hourly_rate = p.hourlyRate;
+  if (p.extrasCost !== undefined) row.extras_cost = p.extrasCost;
+  if (p.contractorName !== undefined) row.contractor_name = p.contractorName;
+  if (p.contractorContact !== undefined) row.contractor_contact = p.contractorContact;
+  if (p.contractorLicense !== undefined) row.contractor_license = p.contractorLicense;
   const { error } = await ctx.supabase.from('job_plan_tasks').insert(row);
   if (error) throw error;
   return APPLIED;
@@ -393,6 +405,14 @@ const jobPlanTaskUpdate: OpHandler<JobPlanTaskUpdatePayload> = async ({ taskRowI
   if (patch.unit !== undefined) row.unit = patch.unit;
   if (patch.area !== undefined) row.area = patch.area;
   if (patch.materialsNote !== undefined) row.materials_note = patch.materialsNote;
+  if (patch.taskType !== undefined) row.task_type = patch.taskType;
+  if (patch.sku !== undefined) row.sku = patch.sku;
+  if (patch.price !== undefined) row.price = patch.price;
+  if (patch.hourlyRate !== undefined) row.hourly_rate = patch.hourlyRate;
+  if (patch.extrasCost !== undefined) row.extras_cost = patch.extrasCost;
+  if (patch.contractorName !== undefined) row.contractor_name = patch.contractorName;
+  if (patch.contractorContact !== undefined) row.contractor_contact = patch.contractorContact;
+  if (patch.contractorLicense !== undefined) row.contractor_license = patch.contractorLicense;
   const { error } = await ctx.supabase.from('job_plan_tasks').update(row).eq('id', taskRowId).select('id');
   if (error) throw error;
   return APPLIED;

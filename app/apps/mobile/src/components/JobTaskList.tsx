@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PayrollButton, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
-import type { JobPlanTaskRow, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
+import type { JobPlanTaskRow, JobPlanTaskType, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
 import { createJobPlanTasksRepository } from '../lib/admin-finance-repos';
 import { useSession } from '../lib/session';
 
@@ -15,7 +15,31 @@ export type JobTaskListProps = {
   onChange?: (tasks: JobPlanTaskRow[]) => void;
 };
 
-type TaskDraft = { qty: string; notes: string; unit: string; area: string; materials: string };
+type TaskDraft = {
+  qty: string; notes: string; unit: string; area: string; materials: string;
+  type: string; sku: string; price: string; rate: string; extras: string;
+  cName: string; cContact: string; cLicense: string;
+};
+const TYPE_OPTIONS = [
+  { label: 'Assembly', value: 'assembly' },
+  { label: 'Handyman', value: 'handyman' },
+  { label: 'Appliance', value: 'appliance' },
+  { label: 'Contractor', value: 'contractor' },
+];
+const money = (n: number | null | undefined) => (n == null ? '' : String(n));
+const num = (t: string): number | null => {
+  const n = Number(t);
+  return t.trim() !== '' && Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+};
+// Assembly = flat price. Handyman / Appliance = hourly rate x expected hours + materials / parts.
+export function taskTotal(type: string | null, price: number | null, rate: number | null, extras: number | null, minutes: number | null): number | null {
+  if (type === 'assembly') return price;
+  if (type === 'handyman' || type === 'appliance') {
+    if (rate == null) return null;
+    return Math.round((rate * ((minutes ?? 0) / 60) + (extras ?? 0)) * 100) / 100;
+  }
+  return null;
+}
 const UNIT_OPTIONS = ['ea', 'sq ft', 'lin ft', 'hr', 'set'].map((u) => ({ label: u, value: u }));
 const toDraft = (r: JobPlanTaskRow): TaskDraft => ({
   qty: String(r.quantity),
@@ -23,6 +47,14 @@ const toDraft = (r: JobPlanTaskRow): TaskDraft => ({
   unit: r.unit ?? '',
   area: r.area ?? '',
   materials: r.materialsNote ?? '',
+  type: r.taskType ?? '',
+  sku: r.sku ?? '',
+  price: money(r.price),
+  rate: money(r.hourlyRate),
+  extras: money(r.extrasCost),
+  cName: r.contractorName ?? '',
+  cContact: r.contractorContact ?? '',
+  cLicense: r.contractorLicense ?? '',
 });
 
 export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan', onChange }: JobTaskListProps) {
@@ -38,6 +70,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [query, setQuery] = useState('');
   const [picked, setPicked] = useState<ServiceTaskCatalogEntry | null>(null);
   const edit = mode === 'edit';
+  const isAdmin = session.status === 'authenticated' && (session.profile.role === 'owner' || session.profile.role === 'admin');
   const prem = source === 'prem'; // #0061 Prem Checklist: price-sheet search + item sheet
 
   const apply = useCallback(
@@ -143,6 +176,33 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       replaceRow(row.id, { unit, area, materialsNote });
     }, 'Failed to save task details.');
 
+  // Task type + its price fields (Prem Checklist #0061). Blank text clears the field.
+  const saveType = (row: JobPlanTaskRow, over?: Partial<TaskDraft>) =>
+    run(async () => {
+      const d = { ...(drafts[row.id] ?? toDraft(row)), ...over };
+      const patch = {
+        taskType: (d.type || null) as JobPlanTaskType | null,
+        sku: d.sku.trim() || null,
+        price: num(d.price),
+        hourlyRate: num(d.rate),
+        extrasCost: num(d.extras),
+        contractorName: d.cName.trim() || null,
+        contractorContact: d.cContact.trim() || null,
+        contractorLicense: d.cLicense.trim() || null,
+      };
+      const same = (Object.keys(patch) as (keyof typeof patch)[]).every((k) => patch[k] === (row[k] ?? null));
+      if (same) return;
+      await repo.updateTask(row.id, patch);
+      replaceRow(row.id, patch);
+    }, 'Failed to save task type.');
+
+  const publish = (row: JobPlanTaskRow) =>
+    run(async () => {
+      if (!repo.publishAssemblyTask) throw new Error('Publishing is not available.');
+      const id = await repo.publishAssemblyTask(row.id);
+      replaceRow(row.id, { serviceTaskId: id, kind: 'price_sheet', billing: 'flat' });
+    }, 'Failed to add to price sheet.');
+
   const defer = (row: JobPlanTaskRow) =>
     run(async () => {
       await repo.deferTask(row.id);
@@ -161,6 +221,14 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const renderRow = (row: JobPlanTaskRow, dim: boolean) => {
     const d = drafts[row.id] ?? toDraft(row);
     const detail = [row.area, row.unit, row.materialsNote].filter((x) => !!x).join(' · ');
+    const total = taskTotal(d.type || null, num(d.price), num(d.rate), num(d.extras), row.estimatedMinutes);
+    const typeLabel = TYPE_OPTIONS.find((o) => o.value === row.taskType)?.label;
+    const typeSummary = typeLabel
+      ? [typeLabel, row.sku, row.contractorName, row.contractorContact, row.contractorLicense ? `Lic ${row.contractorLicense}` : null,
+         taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes) != null
+           ? `$${taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes)}` : null]
+          .filter((x) => !!x).join(' · ')
+      : '';
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
         <View style={styles.head}>
@@ -190,6 +258,60 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
           />
         ) : row.notes ? (
           <Text style={styles.notes}>{row.notes}</Text>
+        ) : null}
+        {edit && !dim && prem ? (
+          <>
+            <Select
+              compact
+              options={TYPE_OPTIONS}
+              value={d.type || null}
+              placeholder="Type"
+              onChange={(v) => {
+                setDrafts((p) => ({ ...p, [row.id]: { ...d, type: v ?? '' } }));
+                void saveType(row, { type: v ?? '' });
+              }}
+            />
+            {d.type === 'assembly' && (
+              <>
+                <TextField inline dense placeholder="Name or SKU (video lookup)" value={d.sku}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, sku: t } }))}
+                  onBlur={() => void saveType(row)} />
+                <TextField inline dense placeholder="Flat rate price $" keyboardType="decimal-pad" value={d.price}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, price: t } }))}
+                  onBlur={() => void saveType(row)} />
+              </>
+            )}
+            {(d.type === 'handyman' || d.type === 'appliance') && (
+              <>
+                <TextField inline dense placeholder="Hourly rate $" keyboardType="decimal-pad" value={d.rate}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, rate: t } }))}
+                  onBlur={() => void saveType(row)} />
+                <TextField inline dense placeholder={d.type === 'handyman' ? 'Materials $' : 'Parts $'} keyboardType="decimal-pad" value={d.extras}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, extras: t } }))}
+                  onBlur={() => void saveType(row)} />
+              </>
+            )}
+            {d.type === 'contractor' && (
+              <>
+                <TextField inline dense placeholder="Contractor name" value={d.cName}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, cName: t } }))}
+                  onBlur={() => void saveType(row)} />
+                <TextField inline dense placeholder="Phone / email" value={d.cContact}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, cContact: t } }))}
+                  onBlur={() => void saveType(row)} />
+                <TextField inline dense placeholder="License #" value={d.cLicense}
+                  onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, cLicense: t } }))}
+                  onBlur={() => void saveType(row)} />
+              </>
+            )}
+            {total != null && (
+              <Text style={styles.notes}>
+                {d.type === 'assembly' ? 'Flat' : `${row.estimatedMinutes ?? 0} min`} · Total ${total}
+              </Text>
+            )}
+          </>
+        ) : typeSummary ? (
+          <Text style={styles.notes}>{typeSummary}</Text>
         ) : null}
         {edit && !dim ? (
           <>
@@ -224,6 +346,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         {edit && (
           <View style={styles.actions}>
             {!dim && <PayrollButton label="Defer" onPress={() => void defer(row)} />}
+            {!dim && isAdmin && row.taskType === 'assembly' && !row.serviceTaskId && (
+              <PayrollButton label="To price sheet" onPress={() => void publish(row)} />
+            )}
             <PayrollButton label="Remove" onPress={() => void remove(row)} />
             <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
           </View>

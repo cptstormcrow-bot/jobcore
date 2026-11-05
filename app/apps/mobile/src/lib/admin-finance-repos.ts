@@ -101,6 +101,7 @@ import type {
   JobEstimateInput,
   JobPlanTasksRepository,
   JobPlanTaskRow,
+  JobPlanTaskType,
   ServiceTaskCatalogEntry,
   TimeEntryRepository,
   TimeEntryRow,
@@ -3081,6 +3082,14 @@ type JobPlanTaskDbRow = {
   unit?: string | null;
   area?: string | null;
   materials_note?: string | null;
+  task_type?: JobPlanTaskType | null;
+  sku?: string | null;
+  price?: number | null;
+  hourly_rate?: number | null;
+  extras_cost?: number | null;
+  contractor_name?: string | null;
+  contractor_contact?: string | null;
+  contractor_license?: string | null;
   content_updated_at?: string | null;
   // Null for techs: service_tasks is not readable under their RLS.
   service_tasks?: {
@@ -3119,6 +3128,14 @@ function toJobPlanTaskRow(row: JobPlanTaskDbRow): JobPlanTaskRow {
     unit: row.unit ?? null,
     area: row.area ?? null,
     materialsNote: row.materials_note ?? null,
+    taskType: row.task_type ?? null,
+    sku: row.sku ?? null,
+    price: row.price == null ? null : Number(row.price),
+    hourlyRate: row.hourly_rate == null ? null : Number(row.hourly_rate),
+    extrasCost: row.extras_cost == null ? null : Number(row.extras_cost),
+    contractorName: row.contractor_name ?? null,
+    contractorContact: row.contractor_contact ?? null,
+    contractorLicense: row.contractor_license ?? null,
     contentUpdatedAt: row.content_updated_at ?? '',
   };
 }
@@ -3268,6 +3285,14 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         unit: input.unit ?? null,
         area: input.area ?? null,
         materialsNote: input.materialsNote ?? null,
+        taskType: input.taskType ?? null,
+        sku: input.sku ?? null,
+        price: input.price ?? null,
+        hourlyRate: input.hourlyRate ?? null,
+        extrasCost: input.extrasCost ?? null,
+        contractorName: input.contractorName ?? null,
+        contractorContact: input.contractorContact ?? null,
+        contractorLicense: input.contractorLicense ?? null,
       } as never as JobPlanTaskRow;
       const { data } = await writeThrough(
         'job_plan_task.create',
@@ -3284,11 +3309,25 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           unit: input.unit ?? null,
           area: input.area ?? null,
           materialsNote: input.materialsNote ?? null,
+          taskType: input.taskType ?? null,
+          sku: input.sku ?? null,
+          price: input.price ?? null,
+          hourlyRate: input.hourlyRate ?? null,
+          extrasCost: input.extrasCost ?? null,
+          contractorName: input.contractorName ?? null,
+          contractorContact: input.contractorContact ?? null,
+          contractorLicense: input.contractorLicense ?? null,
         },
         occurredAt,
         optimistic,
       );
       return data;
+    },
+
+    async publishAssemblyTask(taskRowId) {
+      const { data, error } = await supabase.rpc('publish_assembly_task', { p_task_id: taskRowId });
+      if (error) throw new Error(`publishAssemblyTask failed: ${error.message}`);
+      return data as string;
     },
 
     async updateTask(taskRowId, patch) {
