@@ -137,8 +137,10 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
   {
     id: 'payroll_rollup',
     kind: 'info',
-    title: 'Payroll Totals',
-    body: 'Payroll totals appear here once pay runs are set up',
+    title: 'Payments',
+    body: 'Payments, Reimbursements and Payout Batches in one place, on three tabs. "Payments" lists payments that are pending or failed under "Needs attention", and payments someone confirmed by hand under "Manually confirmed". "Reimbursements" lists expenses techs sent in with a receipt photo, waiting for you to review. "Payout Batches" groups what is owed to techs into batches; tap a batch to see what is in it. Payroll totals for each pay week are on the Payroll screen.',
+    whereScreen: 'Payments',
+    whereHint: 'Tap a tab to switch sections, and tap a payout batch to open it.',
     context: { screens: ['af-payments'] },
   },
 ];

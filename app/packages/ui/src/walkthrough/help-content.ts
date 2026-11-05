@@ -198,7 +198,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'ft_reviews',
     kind: 'info',
     title: 'Reviews',
-    body: 'Reviews are coming soon. This view only shows a "Reviews are coming soon." message for now.',
+    body: 'Customer reviews of your work will be collected here. This screen is not active yet and shows only "Reviews are coming soon." Nothing here needs your action for now; sales and marketing staff can already browse published reviews in the Review Library.',
     context: { screens: ['ft-reviews'] },
   },
 
@@ -303,6 +303,6 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'help_general',
     kind: 'info',
     title: 'Help',
-    body: 'Use ☰ to move between sections, ⋮ Options for actions here.',
+    body: 'Tap ☰ to move between sections of the app. Tap ⋮ Options for the actions that belong to the screen you are on. Tap the gear for Logins, Settings and Profile. Tap the ? beside a screen title or menu item to see help for that screen.',
   },
 ];
