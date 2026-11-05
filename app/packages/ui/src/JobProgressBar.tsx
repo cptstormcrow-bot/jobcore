@@ -76,7 +76,7 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
               <View style={[styles.dot, { backgroundColor: STATE_COLOR[state] }]} />
               <View style={[styles.half, i < stages.length - 1 && { backgroundColor: lineColor(i + 1) }]} />
             </View>
-            <Text style={styles.label}>{stage.label}</Text>
+            <Text style={styles.label} numberOfLines={1}>{stage.label}</Text>
           </>
         );
         const stateText = LEGEND.find((l) => l.state === state)?.text ?? STATE_WORD[state];
@@ -148,10 +148,11 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: spacing.xs, paddingTop: 0, paddingBottom: 0 },
+  wrap: { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  // flex:1 cells keep a 44px minimum tap target in both directions.
-  cell: { flex: 1, minWidth: 44, minHeight: 30, alignItems: 'center', justifyContent: 'flex-start' },
+  // Cells are sized by their label (flexBasis auto) and then share the spare width, so a long label such as
+  // Complete or Approval is never squeezed into an equal slot and broken mid-word (Jeff 2026-11-05).
+  cell: { flexGrow: 1, flexShrink: 0, flexBasis: 'auto', minWidth: 44, minHeight: 30, paddingHorizontal: 2, alignItems: 'center', justifyContent: 'flex-start' },
   disabled: { opacity: 0.4 },
   dotLine: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', height: 20 },
   half: { flex: 1, height: 4 },
