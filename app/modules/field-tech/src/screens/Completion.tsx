@@ -411,23 +411,26 @@ export function Completion({
 
   return (
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
-      <View style={styles.headerRow}>
-        <Text style={styles.timeSpent}>{`Time Spent: ${formatTimeSpent(timeSpentSeconds)}`}</Text>
-      </View>
-
-      <View style={styles.buttonRow}>
-        <PayrollButton
-          label={submitLabel}
-          onPress={() => void handleSubmit()}
-          disabled={!canSubmit || reopening}
-        />
-        {alreadyCompleted && canReopen && onReopen ? (
+      {/* #0024 title row (Jeff 2026-11-05): Job Checklist left, Time Spent centered (small), buttons right. */}
+      <View style={styles.titleRow} testID="job-screen-title">
+        <View style={styles.titleLeft}>
+          <Text style={styles.heading} numberOfLines={1}>Job Checklist</Text>
+        </View>
+        <Text style={styles.timeSpent} numberOfLines={1}>{`Time Spent: ${formatTimeSpent(timeSpentSeconds)}`}</Text>
+        <View style={styles.titleRight}>
+          {alreadyCompleted && canReopen && onReopen ? (
+            <PayrollButton
+              label={reopening ? 'Reopening…' : 'Not Completed'}
+              onPress={() => void handleReopen()}
+              disabled={reopening || submitting}
+            />
+          ) : null}
           <PayrollButton
-            label={reopening ? 'Reopening…' : 'Not Completed'}
-            onPress={() => void handleReopen()}
-            disabled={reopening || submitting}
+            label={submitLabel}
+            onPress={() => void handleSubmit()}
+            disabled={!canSubmit || reopening}
           />
-        ) : null}
+        </View>
       </View>
 
       {error !== null ? (
@@ -436,7 +439,6 @@ export function Completion({
         </Text>
       ) : null}
 
-      <Text style={styles.heading}>Job Checklist</Text>
       {!alreadyCompleted ? <Text style={styles.hint} numberOfLines={1}>* Required to complete the job</Text> : null}
       {COMPLETION_CHECKLIST_ITEMS.map((item) => renderItem(item.key, item.required ? `${item.label} *` : item.label, item.hint))}
 
@@ -465,28 +467,23 @@ const styles = StyleSheet.create({
   container: {
     padding: spacing.md,
   },
-  headerRow: {
+  titleRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
+    minHeight: 32,
     marginBottom: spacing.xs,
   },
+  titleLeft: { flex: 1, alignItems: 'flex-start' },
+  titleRight: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: spacing.xs },
   timeSpent: {
-    fontSize: typography.size.body,
-    color: colors.text,
-    marginLeft: spacing.md,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
+    fontSize: 11,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
   heading: {
     fontSize: typography.size.label,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: spacing.xs,
   },
   checkItem: {
     marginBottom: spacing.xs,
