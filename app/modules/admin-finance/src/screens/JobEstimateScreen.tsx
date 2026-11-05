@@ -76,6 +76,8 @@ export interface JobEstimateScreenProps {
   focusTab?: { tab: EstimateTab; nonce: number };
   /** Rendered at the top of the Tasks tab, before the first card. */
   beforePhotoSlot?: ReactNode;
+  /** Host-supplied editable task list (admins). When given and `editable`, replaces the read-only task rows. */
+  renderTaskList?: (p: { jobId: string; mode: 'edit' | 'read'; allowCatalog?: boolean; source?: string; onChange?: (tasks: JobPlanTaskRow[]) => void }) => ReactNode;
 }
 
 export type EstimateTab = 'tasks' | 'contingency' | 'finePrint';
@@ -1066,7 +1068,21 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </View>
         </View>
 
-        {activeTab === 'tasks' && visibleTasks.length > 0 ? (
+        {activeTab === 'tasks' && editable && props.renderTaskList ? (
+        <Card style={styles.card}>
+          {props.renderTaskList({ jobId: job.id, mode: 'edit', allowCatalog: true, source: 'estimate', onChange: (rows) => setPlanTasks(rows) })}
+          <PayrollButton
+            label={busy ? 'Building...' : 'Build from tasks'}
+            onPress={() => {
+              void handleBuildFromTasks();
+            }}
+            disabled={busy}
+            style={styles.action}
+          />
+        </Card>
+        ) : null}
+
+        {activeTab === 'tasks' && !(editable && props.renderTaskList) && visibleTasks.length > 0 ? (
         <Card style={styles.card}>
           {visibleTasks.length > 0 ? (
             <View testID="estimate-task-list">

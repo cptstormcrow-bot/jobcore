@@ -1613,6 +1613,9 @@ ${body}`)) handleResetLaborTime();
           <JobEstimateScreen
             job={currentJob}
             embedded
+            {...(isAdmin
+              ? { renderTaskList: (p) => <JobTaskList {...p} source={p.source as 'plan' | 'prem' | 'estimate' | undefined} /> }
+              : {})}
             onEstimateChange={setEstimate}
             estimates={estimateRepo}
             priceSheets={priceSheetRepo}
