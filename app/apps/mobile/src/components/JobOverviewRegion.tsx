@@ -121,18 +121,6 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
 
   return (
     <View>
-      <Section>
-        <JobDetailsForm
-          compact
-          mode="edit"
-          value={props.value}
-          onChange={props.onChange}
-          serviceAreas={props.serviceAreas}
-          hasInvestigation={props.hasInvestigation}
-          createdAt={props.createdAt}
-          error={props.error}
-        />
-      </Section>
       <Section title="Tasks">
         <JobTaskList jobId={jobId} mode="edit" allowCatalog={isAdmin} />
       </Section>
@@ -163,6 +151,18 @@ export function JobOverviewRegion(props: JobOverviewRegionProps) {
         {msg ? <Text style={styles.hint}>{msg}</Text> : null}
         {blockedJob ? <PayrollButton label={`Open Job #${blockedJob.number ?? ''}`} onPress={() => onOpenJob(blockedJob.id)} /> : null}
         <PayrollButton label={busy ? 'Starting...' : 'Start project'} disabled={busy} onPress={() => void startProject()} />
+      </Section>
+      <Section>
+        <JobDetailsForm
+          compact
+          mode="edit"
+          value={props.value}
+          onChange={props.onChange}
+          serviceAreas={props.serviceAreas}
+          hasInvestigation={props.hasInvestigation}
+          createdAt={props.createdAt}
+          error={props.error}
+        />
       </Section>
       {props.hideActions ? null : <View style={styles.actions}>
         <PayrollButton label="Cancel" onPress={props.onCancel} disabled={props.saving} />
