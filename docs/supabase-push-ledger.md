@@ -23,6 +23,7 @@ Past pushes: OK 12 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
 | 0122_price_sheet_lookup_for_techs.sql | RPC price_sheet_lookup(): lets techs read active price-sheet name, rate, Details, Materials (Prem Checklist #0061 search); no cost columns | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0122. App falls back to the table (admins) until live. | 2026-11-05 |
+| 0123_payment_barcodes.sql | Adds paypal/venmo/zelle barcode path columns to company_info and a private org-scoped payment-barcodes bucket (members read, admins write); Company Info #0065 uploads, #0078 shows fullscreen | Local only, NOT pushed. Needs Jeff's explicit per-push approval naming 0123. App shows no barcode (soft-fails) until live. | 2026-11-05 |
 
 ## Past (pushes and attempts)
 

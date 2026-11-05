@@ -15,6 +15,8 @@
  */
 
 import { supabase, supabaseUrl } from './supabase';
+import { readLocalBytes } from './local-file-bytes';
+import type { BarcodePaths } from '../../../../modules/admin-finance/src/data/ports';
 import { readEmployeeProfiles } from './employee-profiles-source';
 import { createPayrollRepos, readCached, readCachedOr, type PayrollRepoSession } from './payroll-repos';
 import { buildPayrollAdminMembers } from './payroll-admin-repos';
@@ -3511,6 +3513,43 @@ function createCompanyInfoPort(): NonNullable<ModulePorts['companyInfo']> {
         { onConflict: 'organization_id' },
       );
       if (error) throw new Error(`save company info failed: ${error.message}`);
+    },
+    async getBarcodePaths(orgId) {
+      // Separate soft-failing read: the columns do not exist until migration 0123 is live.
+      const { data, error } = await supabase.from('company_info').select('paypal_barcode_path, venmo_barcode_path, zelle_barcode_path').eq('organization_id', orgId).maybeSingle();
+      if (error || !data) return {};
+      const row = data as Record<string, string | null>;
+      const out: BarcodePaths = {};
+      if (row.paypal_barcode_path) out.paypal = row.paypal_barcode_path;
+      if (row.venmo_barcode_path) out.venmo = row.venmo_barcode_path;
+      if (row.zelle_barcode_path) out.zelle = row.zelle_barcode_path;
+      return out;
+    },
+    async saveBarcode(orgId, service, file) {
+      const bytes = await readLocalBytes(file.uri);
+      if (!bytes) throw new Error('The picked image is no longer on this phone.');
+      const ext = file.mimeType.includes('png') ? 'png' : file.mimeType.includes('webp') ? 'webp' : 'jpg';
+      const path = `${orgId}/${service}-${Date.now()}.${ext}`;
+      const bucket = supabase.storage.from('payment-barcodes');
+      const up = await bucket.upload(path, bytes as never, { contentType: file.mimeType });
+      if (up.error) throw new Error(`upload barcode failed: ${up.error.message}`);
+      const column = `${service}_barcode_path`;
+      const { data: before } = await supabase.from('company_info').select(column).eq('organization_id', orgId).maybeSingle();
+      const old = (before as Record<string, string | null> | null)?.[column] ?? null;
+      const { error } = await supabase.from('company_info').upsert(
+        { organization_id: orgId, [column]: path, updated_at: new Date().toISOString() },
+        { onConflict: 'organization_id' },
+      );
+      if (error) {
+        await bucket.remove([path]);
+        throw new Error(`save barcode failed: ${error.message}`);
+      }
+      if (old) await bucket.remove([old]); // best effort; the new path is already live
+      return path;
+    },
+    async barcodeUrl(path) {
+      const { data } = await supabase.storage.from('payment-barcodes').createSignedUrl(path, 3600);
+      return data?.signedUrl ?? null;
     },
   };
 }

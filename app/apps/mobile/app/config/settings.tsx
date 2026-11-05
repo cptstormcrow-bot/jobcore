@@ -1,11 +1,13 @@
 // JobCore screen #0065 - config-settings - Settings
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Switch, StyleSheet, TextInput } from 'react-native';
-import type { CompanyInfo } from '../../../../modules/admin-finance/src/data/ports';
+import { View, Switch, StyleSheet, TextInput, Image } from 'react-native';
+import type { CompanyInfo, BarcodePaths, BarcodeService } from '../../../../modules/admin-finance/src/data/ports';
 import { buildAdminFinancePorts } from '../../src/lib/admin-finance-repos';
 import { useSession } from '../../src/lib/session';
+import { pickBarcodeImage } from '../../src/lib/barcode-image-picker';
 import { AppChrome, EmptyState, PayrollButton, Text, spacing, colors, typography, useAppVersion, formatVersionLabel, useScreenNumber, radius } from '@jobcore/ui';
 
+const BARCODE_LABELS: Record<BarcodeService, string> = { paypal: 'PayPal', venmo: 'Venmo', zelle: 'Zelle' };
 const EMPTY_INFO: CompanyInfo = { name: '', address: '', licenseNumber: '', phone: '' };
 
 export default function SettingsScreen() {
@@ -15,6 +17,9 @@ export default function SettingsScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [barcodes, setBarcodes] = useState<BarcodePaths>({});
+  const [barcodeUrls, setBarcodeUrls] = useState<BarcodePaths>({});
+  const [barcodeBusy, setBarcodeBusy] = useState<BarcodeService | null>(null);
   const orgId = session.status === 'authenticated' ? session.organization.id : null;
   const role = session.status === 'authenticated' ? session.profile.role : null;
   const canEdit = role === 'admin' || role === 'owner';
@@ -34,6 +39,50 @@ export default function SettingsScreen() {
       live = false;
     };
   }, [ports, orgId]);
+
+  useEffect(() => {
+    if (!orgId || !ports.companyInfo.getBarcodePaths) return;
+    let live = true;
+    void ports.companyInfo.getBarcodePaths(orgId).then((paths) => {
+      if (live) setBarcodes(paths);
+    }).catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [ports, orgId]);
+
+  useEffect(() => {
+    let live = true;
+    (['paypal', 'venmo', 'zelle'] as const).forEach((svc) => {
+      const path = barcodes[svc];
+      if (!path || !ports.companyInfo.barcodeUrl) return;
+      void ports.companyInfo.barcodeUrl(path).then((url) => {
+        if (live && url) setBarcodeUrls((prev) => ({ ...prev, [svc]: url }));
+      }).catch(() => undefined);
+    });
+    return () => {
+      live = false;
+    };
+  }, [ports, barcodes]);
+
+  const chooseBarcode = useCallback(async (svc: BarcodeService) => {
+    if (!orgId || !canEdit || !ports.companyInfo.saveBarcode) return;
+    setError(null);
+    setMessage(null);
+    try {
+      const file = await pickBarcodeImage();
+      if (!file) return;
+      setBarcodeBusy(svc);
+      const path = await ports.companyInfo.saveBarcode(orgId, svc, file);
+      setBarcodes((prev) => ({ ...prev, [svc]: path }));
+      setBarcodeUrls((prev) => ({ ...prev, [svc]: file.uri }));
+      setMessage('Barcode saved');
+    } catch (err) {
+      setError(`Could not save barcode: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBarcodeBusy(null);
+    }
+  }, [ports, orgId, canEdit]);
 
   const save = useCallback(async () => {
     if (!orgId || !canEdit) return;
@@ -93,6 +142,27 @@ export default function SettingsScreen() {
             />
           </View>
         ))}
+        <Text style={styles.sectionTitle}>Payment barcodes</Text>
+        {(['paypal', 'venmo', 'zelle'] as const).map((svc) => (
+          <View key={svc} style={styles.barcodeRow} testID={`barcode-row-${svc}`}>
+            {barcodeUrls[svc] ? (
+              <Image source={{ uri: barcodeUrls[svc] }} style={styles.barcodeThumb} accessibilityLabel={`${BARCODE_LABELS[svc]} barcode`} />
+            ) : (
+              <View style={styles.barcodeThumb} />
+            )}
+            <Text style={[styles.rowLabel, { flex: 1 }]} numberOfLines={1}>{BARCODE_LABELS[svc]}</Text>
+            {canEdit ? (
+              <PayrollButton
+                testID={`barcode-pick-${svc}`}
+                label={barcodes[svc] ? 'Replace' : 'Upload'}
+                onPress={() => void chooseBarcode(svc)}
+                disabled={barcodeBusy !== null || busy}
+              />
+            ) : (
+              <Text style={{ color: colors.textMuted }}>{barcodes[svc] ? 'Saved' : 'None'}</Text>
+            )}
+          </View>
+        ))}
         {canEdit ? (
           <PayrollButton testID="company-info-save" label="Save" onPress={() => void save()} disabled={busy} />
         ) : null}
@@ -134,6 +204,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   field: { paddingVertical: spacing.xs },
+  barcodeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 40, paddingVertical: spacing.xs },
+  barcodeThumb: { width: 36, height: 36, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.divider, backgroundColor: colors.white },
   input: {
     borderWidth: 1,
     borderColor: colors.divider,

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import type { Ctx, Job } from '@jobcore/core';
 import { EmptyState, PayrollButton, colors, radius, selectedStyle, spacing, compact, typography } from '@jobcore/ui';
-import type { JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
+import type { BarcodePaths, BarcodeService, JobEstimate, Payment, PaymentMethod } from '../../../../modules/admin-finance/src/data/ports';
 import { PAYMENT_METHOD_LABELS, PAYMENT_METHOD_PICK_ORDER } from '../../../../modules/admin-finance/src/data/ports';
 import { formatWorkDuration, workDurationMs } from '../../../../modules/admin-finance/src/domain/work-duration';
 import { balanceCents, canRecordPayment, invoiceTotalCents, settledTotalCents } from '../../../../modules/admin-finance/src/domain/payments';
@@ -58,6 +58,9 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
   const [cashReceived, setCashReceived] = useState('');
   const [workTotal, setWorkTotal] = useState<number | null>(null);
   const [company, setCompany] = useState<CompanyInfo | null>(null);
+  const [barcodePaths, setBarcodePaths] = useState<BarcodePaths>({});
+  const [barcodeUrls, setBarcodeUrls] = useState<BarcodePaths>({});
+  const barcodeUrl = barcodeUrls[method as BarcodeService] ?? null;
   const [cardHolder, setCardHolder] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardRef, setCardRef] = useState('');
@@ -113,7 +116,22 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
       return;
     }
     void ports.companyInfo.get(orgId).then(setCompany).catch(() => setCompany(null));
+    void ports.companyInfo.getBarcodePaths?.(orgId).then(setBarcodePaths).catch(() => undefined);
   }, [ports, orgId]);
+
+  useEffect(() => {
+    let live = true;
+    (['paypal', 'venmo', 'zelle'] as const).forEach((svc) => {
+      const path = barcodePaths[svc];
+      if (!path || !ports.companyInfo.barcodeUrl) return;
+      void ports.companyInfo.barcodeUrl(path).then((url) => {
+        if (live && url) setBarcodeUrls((prev) => ({ ...prev, [svc]: url }));
+      }).catch(() => undefined);
+    });
+    return () => {
+      live = false;
+    };
+  }, [ports, barcodePaths]);
 
   const record = useCallback((useMethod: PaymentMethod) => {
     if (session.status !== 'authenticated' || !estimate || recordingRef.current) {
@@ -313,7 +331,7 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
             <Text>Phone: {company?.phone ?? ''}</Text>
             <PayrollButton label="Show barcode" onPress={() => setBarcodeOpen(true)} />
             {/* Fullscreen for the customer to scan. Android back or a tap closes it. The box stays a
-                marked placeholder until the company's payment details exist to encode. */}
+                saved image of the chosen service, with its tab highlighted. */}
             <Modal visible={barcodeOpen} animationType="fade" onRequestClose={() => setBarcodeOpen(false)}>
               <Pressable
                 onPress={() => setBarcodeOpen(false)}
@@ -324,10 +342,28 @@ export function JobPaymentRegion({ job, role, onJobUpdated }: JobPaymentRegionPr
                 <Text style={{ fontSize: typography.text.title, fontWeight: typography.weight.bold, color: colors.text }}>
                   {PAYMENT_METHOD_LABELS[method]}
                 </Text>
-                <View style={{ width: '100%', maxWidth: 360, aspectRatio: 1, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.border, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', padding: spacing.md, gap: spacing.xs }}>
-                  <Text style={{ fontWeight: typography.weight.bold, color: colors.danger }}>PLACEHOLDER</Text>
-                  <Text style={{ color: colors.textMuted, textAlign: 'center' }}>Not a real barcode. Do not scan.</Text>
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  {BARCODE_METHODS.map((m) => (
+                    <PayrollButton
+                      key={m}
+                      label={PAYMENT_METHOD_LABELS[m]}
+                      onPress={() => setMethod(m)}
+                      style={selectedStyle(method === m)}
+                    />
+                  ))}
                 </View>
+                {barcodeUrl ? (
+                  <Image
+                    source={{ uri: barcodeUrl }}
+                    resizeMode="contain"
+                    accessibilityLabel={`${PAYMENT_METHOD_LABELS[method]} barcode`}
+                    style={{ width: '100%', maxWidth: 420, aspectRatio: 1 }}
+                  />
+                ) : (
+                  <Text style={{ color: colors.textMuted, textAlign: 'center' }}>
+                    No {PAYMENT_METHOD_LABELS[method]} barcode saved. The owner adds it in Settings, Company Info.
+                  </Text>
+                )}
                 <Text style={{ color: colors.text }}>{company?.name ?? ''}</Text>
               </Pressable>
             </Modal>

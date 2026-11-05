@@ -171,6 +171,12 @@ export interface ModulePorts {
   companyInfo: {
     get(orgId: string): Promise<import('../data/ports').CompanyInfo | null>;
     save(orgId: string, info: import('../data/ports').CompanyInfo): Promise<void>;
+    /** Saved payment QR image paths. Never throws (empty until migration 0123 is live). */
+    getBarcodePaths?(orgId: string): Promise<import('../data/ports').BarcodePaths>;
+    /** Saves or replaces one service's QR image, unresized. Returns the new storage path. */
+    saveBarcode?(orgId: string, service: import('../data/ports').BarcodeService, file: { uri: string; mimeType: string }): Promise<string>;
+    /** A short-lived link to show a saved QR image, or null. */
+    barcodeUrl?(path: string): Promise<string | null>;
   };
 }
 

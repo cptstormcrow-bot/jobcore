@@ -1623,3 +1623,8 @@ export interface TimeSegmentCorrectionAdminRepository {
 
 /** Org Company Info (migration 0100). */
 export type CompanyInfo = { name: string; address: string; licenseNumber: string; phone: string };
+
+/** Payment services that have a saved QR image (Company Info, screen #0078 shows it). */
+export type BarcodeService = 'paypal' | 'venmo' | 'zelle';
+/** Storage paths of the saved QR images; a missing key means none saved. */
+export type BarcodePaths = Partial<Record<BarcodeService, string>>;
