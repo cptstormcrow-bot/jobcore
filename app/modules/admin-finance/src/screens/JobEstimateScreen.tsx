@@ -23,7 +23,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { View, ScrollView, StyleSheet, Platform, Alert, Pressable } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, DefaultTabBar, Select, TextField, colors, spacing, radius, compact, typography, Text, EstimateStatusControl, JobHeaderBlock, JobTitleBarHeader, Checkbox } from '@jobcore/ui';
+import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitleRow, DefaultTabBar, Select, TextField, colors, spacing, radius, compact, typography, Text, EstimateStatusControl, Checkbox } from '@jobcore/ui';
 import { PayrollButton } from '@jobcore/ui';
 import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
 import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
@@ -932,13 +932,26 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         onChange={(key) => {
           setActiveTab(key as EstimateTab);
         }}
-        rightSlot={
-          <View style={styles.totalColumn}>
-            <Text style={styles.totalLabel}>Total Estimate</Text>
-            <Text style={styles.cellValue}>{totalText}</Text>
-          </View>
-        }
       />
+    </View>
+  );
+
+  const linkControl = (
+    <View style={styles.linkRowHug} testID="estimate-link-row">
+      <Pressable
+        testID="estimate-link-button"
+        accessibilityRole="button"
+        accessibilityLabel="Copy estimate link"
+        accessibilityState={{ disabled: busy || !linkEnabled }}
+        disabled={busy || !linkEnabled}
+        onPress={() => { void handleShare(); }}
+        style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
+      >
+        <Text style={styles.linkChipLabel} numberOfLines={1}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
+      </Pressable>
+      {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
+      {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
+      {shareError ? <ErrorState message={shareError} /> : null}
     </View>
   );
 
@@ -957,7 +970,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             style={styles.action}
           />
         )}
-        {!embedded && <ScreenTitle title="Estimate" />}
+        {!embedded && <ScreenTitleRow title="Estimate" right={linkControl} testID="estimate-title-row" />}
         <View style={styles.summaryRow} testID="estimate-summary-row">
           <View style={[styles.summaryCell, styles.summaryCellWide]}>
             <View style={styles.statusRow} testID="estimate-status-row">
@@ -980,25 +993,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             />
             </View>
             <View style={styles.statusCenterGroup} testID="estimate-center-group">
-              <View style={styles.linkRowHug} testID="estimate-link-row">
-                <Pressable
-                  testID="estimate-link-button"
-                  accessibilityRole="button"
-                  accessibilityLabel="Copy estimate link"
-                  accessibilityState={{ disabled: busy || !linkEnabled }}
-                  disabled={busy || !linkEnabled}
-                  onPress={() => { void handleShare(); }}
-                  style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
-                >
-                  <Text style={styles.linkChipLabel} numberOfLines={1}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
-                </Pressable>
-                {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
-                {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
-                {shareError ? <ErrorState message={shareError} /> : null}
-              </View>
-              <View style={[styles.totalColumn, styles.statusCenterTotal]}>
-                <Text style={styles.totalLabel}>Total Estimate</Text>
-                <Text style={styles.cellValue}>{totalText}</Text>
+              {embedded ? linkControl : null}
+              <View style={styles.totalInline} testID="estimate-total">
+                <Text style={styles.totalLabel} numberOfLines={1}>Total Estimate:</Text>
+                <Text style={styles.cellValue} numberOfLines={1}>{totalText}</Text>
               </View>
             </View>
             </View>
@@ -1061,34 +1059,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
           </View>
         </View>
 
-        {activeTab === 'tasks' ? props.beforePhotoSlot : null}
-
-        {activeTab === 'tasks' ? (
+        {activeTab === 'tasks' && visibleTasks.length > 0 ? (
         <Card style={styles.card}>
-          {!embedded && (
-            <>
-              <JobTitleBarHeader
-                framed
-                customerName={job.customerName}
-                address={job.address}
-                phone={job.customerPhone}
-                ingressCode={job.ingressInstructions}
-                onCopy={async (text) => {
-                  await Clipboard.setStringAsync(text);
-                }}
-              />
-              <JobHeaderBlock
-                jobNumber={job.jobNumber}
-                createdAt={job.createdAt}
-                scheduledStart={job.scheduledStart}
-              />
-            </>
-          )}
-          <Text style={styles.note} testID="estimate-service-area">
-            {resolvedServiceArea
-              ? `Service area: ${resolvedServiceArea.name} (auto from address)`
-              : 'Not matched - standard pricing'}
-          </Text>
           {visibleTasks.length > 0 ? (
             <View testID="estimate-task-list">
               <Text style={styles.heading}>Service tasks</Text>
@@ -1574,7 +1546,7 @@ const styles = StyleSheet.create({
   statusControlWrap: { alignSelf: 'flex-start' },
   statusRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', rowGap: spacing.xs },
   statusCenterGroup: { flexGrow: 1, flexShrink: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  statusCenterTotal: { marginLeft: spacing.sm },
+  totalInline: { flexDirection: 'row', alignItems: 'baseline', columnGap: spacing.xs, marginLeft: 'auto' },
   totalColumn: { alignItems: 'flex-end' },
   totalLabel: {
     color: colors.textMuted,
