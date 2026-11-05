@@ -67,7 +67,7 @@ export function EstimateStatusControl({ status, allowed, busy = false, onSelect,
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   node: {
-    minHeight: 44,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     backgroundColor: colors.sandInactive,
   },
-  nodeCompact: { minHeight: 44, paddingHorizontal: spacing.xs },
+  nodeCompact: { minHeight: 36, paddingHorizontal: spacing.xs },
   nodeReached: { borderColor: colors.primary, backgroundColor: colors.sandInactive },
   nodeSelected: { backgroundColor: colors.sand, borderColor: colors.primary },
   dimmed: { backgroundColor: colors.sandInactive },

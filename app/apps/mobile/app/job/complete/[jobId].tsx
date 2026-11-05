@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import type { Job } from '@jobcore/core';
-import { estimateStageFlags } from '@jobcore/core';
+import { jobRuleColor } from '../../../src/lib/job-rule-color';
 import { AppChrome, EmptyState, JobProgressBar, LoadingState, colors, spacing } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import {
@@ -274,7 +274,7 @@ ${loaded.reason}` : 'This job could not be loaded.'}
               />
             ) : null}
           </JobHeader>
-          <View style={[styles.rule, { backgroundColor: headerJob?.status === 'paid' || headerJob?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
+          <View style={[styles.rule, { backgroundColor: jobRuleColor(headerJob?.status) }]} />
         </>
       ) : (
         <AppChrome breadcrumbSegments={[{ label: 'Complete Job' }]} menuItems={[]} titleBar={{ title: 'Complete Job' }} />

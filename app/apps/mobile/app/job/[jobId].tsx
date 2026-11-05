@@ -13,9 +13,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
-import { estimateStageFlags, STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
+import { STAGE_KEYS, STAGE_LABELS } from '@jobcore/core';
 import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
+import { jobRuleColor } from '../../src/lib/job-rule-color';
 import { usePaidInFull } from '../../src/lib/settle-on-completion';
 import { AppChrome, Breadcrumb, Checkbox, PayrollButton, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
@@ -1483,7 +1484,7 @@ ${body}`)) handleResetLaborTime();
           />
         ) : null}
       </JobHeader>
-      <View style={[styles.rule, { backgroundColor: job?.status === 'paid' || job?.status === 'closed' ? colors.paidBar : estimateStageFlags(estimate?.status ?? null).approvalComplete ? colors.estimateApprovedBar : colors.text }]} />
+      <View style={[styles.rule, { backgroundColor: jobRuleColor(job?.status) }]} />
       <StaleDataHint queries={['app.jobs.byId', 'app.jobs.stageExtras']} />
       {region === 'estimate' && estimateChrome?.tabs ? (
         <View testID="estimate-tab-bar" style={styles.tabBarWrap}>
