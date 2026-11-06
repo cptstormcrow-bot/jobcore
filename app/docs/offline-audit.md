@@ -220,3 +220,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 101. The time picker on #0011 Calendar, the day popup and #0058 Job schedule is back to scrolling Hour, Min and AM/PM columns with the picked row highlighted in blue (no wrapped buttons). The month grid is unchanged. Works on phone and tablet widths.
 
 102. #0058 Job schedule now has Save, Add to schedule, Clear, Cancel and Time-off buttons. Time-off books the job's assigned tech out for the picked day (red on every calendar) and refreshes the calendar. It asks for a technician first if the job has none.
+
+103. The job header schedule link (top right of every job screen, opens #0058 Job schedule) now reads like "Friday, November 13 2026 - 9:00AM" when scheduled, and "Unscheduled" when not.

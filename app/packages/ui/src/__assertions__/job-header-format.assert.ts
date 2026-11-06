@@ -43,11 +43,11 @@ test('formatJobHeaderLines', () => {
 });
 
 test('formatScheduleLabel times', () => {
-  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 0)), 'Monday, Dec 14, 2026 - 9am');
-  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 30)), 'Monday, Dec 14, 2026 - 9:30am');
-  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 12, 0)), 'Monday, Dec 14, 2026 - 12pm');
-  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 0, 0)), 'Monday, Dec 14, 2026 - 12am');
-  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 15, 5)), 'Monday, Dec 14, 2026 - 3:05pm');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 0)), 'Monday, December 14 2026 - 9:00AM');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 9, 30)), 'Monday, December 14 2026 - 9:30AM');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 12, 0)), 'Monday, December 14 2026 - 12:00PM');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 0, 0)), 'Monday, December 14 2026 - 12:00AM');
+  assert.equal(formatScheduleLabel(new Date(2026, 11, 14, 15, 5)), 'Monday, December 14 2026 - 3:05PM');
 });
 test('formatScheduleLabel unscheduled', () => {
   assert.equal(formatScheduleLabel(null), 'Unscheduled');
@@ -57,7 +57,7 @@ test('formatScheduleLabel unscheduled', () => {
 });
 
 test('formatScheduledLabel scheduled morning', () => {
-  assert.equal(formatScheduledLabel(new Date(2026, 9, 23, 8, 0), true, 'en-US'), 'Friday, Oct 23, 2026 - 8am');
+  assert.equal(formatScheduledLabel(new Date(2026, 9, 23, 8, 0), true, 'en-US'), 'Friday, October 23 2026 - 8:00AM');
 });
 test('formatScheduledLabel unscheduled', () => {
   assert.equal(formatScheduledLabel(null, true, 'en-US'), 'Unscheduled ▸');
@@ -65,5 +65,5 @@ test('formatScheduledLabel unscheduled', () => {
   assert.equal(formatScheduledLabel('garbage', true, 'en-US'), 'Unscheduled ▸');
 });
 test('formatScheduledLabel afternoon', () => {
-  assert.ok(norm(formatScheduledLabel('2026-10-23T15:05:00', true, 'en-US')).endsWith('3:05pm'));
+  assert.ok(norm(formatScheduledLabel('2026-10-23T15:05:00', true, 'en-US')).endsWith('3:05PM'));
 });
