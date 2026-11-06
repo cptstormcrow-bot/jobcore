@@ -18,7 +18,7 @@ const OP_LABELS: Record<string, string> = {
   'time_off_request.create': 'Time-off request',
   'time_off_request.cancel': 'Cancel time-off request',
   'time_off_request.update': 'Time-off request change',
-  'time_off_request.create_blackout': 'Blackout day',
+  'time_off_request.create_blackout': 'Time-off day',
   'time_off_request.admin_cancel': 'Cancel time-off request',
   'job_assignment.claim': 'Claim job',
   'job_assignment.create': 'Job assignment',

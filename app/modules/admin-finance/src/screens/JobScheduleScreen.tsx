@@ -14,10 +14,10 @@
  * `reschedule` calendar event; No behaves like Cancel). Clearing a saved slot
  * and saving asks "Remove from schedule?" (Yes persists null start/end).
  *
- * The calendar shows every schedulable job and every blackout (time-off
+ * The calendar shows every schedulable job and every time-off (time-off
  * request); each is tappable for a detail popup (name / address / phone /
  * description) with a link that switches to that job via `onOpenJob`.
- * `showBlackouts` (job Options menu "Blackout Dates?") toggles the red
+ * `showBlackouts` (job Options menu "Time-off Dates?") toggles the red
  * blackouts. The end time is derived: picked start + the saved duration, else
  * the job's task minutes, else the standard minutes, else 60.
  *
@@ -85,7 +85,7 @@ export interface JobScheduleScreenProps {
   totalTaskMinutes?: number;
   /** Org's price-sheet standard duration (minutes), when known; the next fallback duration. */
   standardMinutes?: number;
-  /** Show the red blackout days on the calendar (job Options menu "Blackout Dates?"). Default true. */
+  /** Show the red time-off days on the calendar (job Options menu "Time-off Dates?"). Default true. */
   showBlackouts?: boolean;
   /** Switches the host to another job (the popup's "Open job" link). */
   onOpenJob?: (jobId: string) => void;
@@ -187,7 +187,7 @@ export function JobScheduleScreen({
       ? []
       : feedTimeOff.map((r) => ({
           id: r.id,
-          title: r.reason ?? 'Blackout',
+          title: r.reason ?? 'Time-off',
           description: r.reason,
           eventTime: r.startDate,
           techId: r.techId,

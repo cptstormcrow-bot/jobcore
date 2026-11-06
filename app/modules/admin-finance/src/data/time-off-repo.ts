@@ -94,7 +94,7 @@ export function toTimeOffRequestAdmin(row: TimeOffRequestAdminRow): TimeOffReque
  *
  * A database trigger auto-decides each request (migration 0035), so there is
  * no approve/deny here. `createBlackout(organizationId, techId, draft)` is
- * used by the #0056 Add Blackout calendar screen (`BlackoutEditorScreen`);
+ * used by the #0056 Add Time-off calendar screen (`BlackoutEditorScreen`);
  * admin-created blackouts are auto-approved. `cancel` is the only admin
  * mutation besides create.
  */

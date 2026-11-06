@@ -908,7 +908,7 @@ export function AdminFinanceRoot() {
         ? 'Edit Employee'
         : 'Add Employee'
       : subView === 'blackout-editor'
-        ? 'Add Blackout'
+        ? 'Add Time-off'
         : SUBVIEW_LABELS[subView];
 
   const optionsItems: MenuItem[] | undefined =

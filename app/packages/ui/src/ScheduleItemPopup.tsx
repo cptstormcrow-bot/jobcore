@@ -47,7 +47,7 @@ export function ScheduleItemPopup({ visible, detail, onClose, onOpenJob }: Sched
             style={[styles.accent, { backgroundColor: detail.kind === 'job' ? colors.primary : colors.danger }]}
           />
           <View style={styles.body}>
-            <Text style={styles.kind}>{detail.kind === 'job' ? 'Job' : 'Blackout'}</Text>
+            <Text style={styles.kind}>{detail.kind === 'job' ? 'Job' : 'Time-off'}</Text>
             <Text style={styles.heading}>{detail.whenLabel}</Text>
             {rows.map((r) => (
               <View key={r.label} style={styles.row}>

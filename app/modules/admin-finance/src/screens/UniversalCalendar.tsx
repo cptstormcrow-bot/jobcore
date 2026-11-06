@@ -85,7 +85,7 @@ export interface UniversalCalendarProps {
   onPickDay?: (day: Date) => void;
   onSubmitTimeOff?: (draft: UniversalCalendarTimeOffDraft, techId: string) => Promise<void> | void;
   onCancelTimeOff?: (requestId: string) => Promise<void> | void;
-  /** Admin hook: when set, an "Add Blackout" button opens the host's blackout editor for the filtered tech. */
+  /** Admin hook: when set, an "Add Time-off" button opens the host's blackout editor for the filtered tech. */
   onAddBlackout?: (techId: string | null, day?: Date) => void;
   /** Host hook: when set, the day sheet shows Add Job; receives the tapped day and the filtered tech. */
   onAddJob?: (day: Date, techId: string | null, time?: string | null) => void;
@@ -146,7 +146,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
     (e) => !effectiveTechId || e.techId === effectiveTechId,
   );
 
-  // #0058-style Show/Hide Blackouts: hides time-off from the grids only; the day sheet still lists them.
+  // #0058-style Show/Hide Time-off: hides time-off from the grids only; the day sheet still lists them.
   const shownTimeOff = showBlackouts ? timeOffEvents : [];
 
   function handleJobInfo(job: Job): void {
@@ -188,7 +188,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       setPicked([]);
       setPickDays(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not save blackouts');
+      setError(e instanceof Error ? e.message : 'Could not save time-off');
     } finally {
       setSaving(false);
     }
@@ -310,11 +310,11 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           />
         ) : null}
         <View testID="calendar-blackouts-toggle">
-          <PayrollButton label={pickDays ? 'Cancel' : 'Blackouts'} onPress={handleTogglePick} />
+          <PayrollButton label={pickDays ? 'Cancel' : 'Time-off'} onPress={handleTogglePick} />
         </View>
         <View testID="calendar-blackouts-visibility">
           <PayrollButton
-            label={showBlackouts ? 'Hide Blackouts' : 'Show Blackouts'}
+            label={showBlackouts ? 'Hide Time-off' : 'Show Time-off'}
             onPress={() => setShowBlackouts((v) => !v)}
           />
         </View>
@@ -325,7 +325,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         ) : null}
         {props.onAddBlackout && !dayPickActive ? (
           <View testID="calendar-add-blackout">
-            <PayrollButton label="Add Blackout" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
+            <PayrollButton label="Add Time-off" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
           </View>
         ) : null}
         <View testID="calendar-hour-picker" style={styles.hourPicker}>

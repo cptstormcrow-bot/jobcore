@@ -128,7 +128,7 @@ export function buildScheduleItems(args: {
       kind: 'blackout',
       startIso: start,
       endIso: end,
-      title: `${name} - Blackout`,
+      title: `${name} - Time-off`,
     });
   }
 

@@ -1,12 +1,12 @@
 // JobCore screen #0081 - blackout-range-modal - blackout-range-modal
 /**
- * BlackoutRangeModal — schedule admin time off ("blackout") from the #0056
+ * BlackoutRangeModal — schedule admin time off ("time-off") from the #0056
  * calendar screen. Tapping a day opens this modal seeded with that day; the
  * admin picks a technician, adjusts the range and optional reason, then saves.
  * Persistence is the caller's job (`onSave`).
  *
  * Drawn as an in-tree overlay, not an RN Modal: #0056 itself opens inside the
- * Calendar's Add Blackout Modal, and a Modal inside a Modal (plus the tech
+ * Calendar's Add Time-off Modal, and a Modal inside a Modal (plus the tech
  * picker's own Modal) does not take taps reliably on Android. Back closes it.
  */
 import React, { useEffect, useMemo, useState } from 'react';

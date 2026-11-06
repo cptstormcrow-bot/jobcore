@@ -1491,7 +1491,7 @@ ${body}`)) handleResetLaborTime();
           region === 'estimate'
             ? estimateChrome?.optionsItems
             : region === 'schedule'
-              ? [{ id: 'schedule-blackout-dates', helpId: 'job_schedule', label: 'Blackout Dates?', kind: 'toggle' as const, checked: showBlackouts, onToggle: setShowBlackouts }]
+              ? [{ id: 'schedule-blackout-dates', helpId: 'job_schedule', label: 'Time-off Dates?', kind: 'toggle' as const, checked: showBlackouts, onToggle: setShowBlackouts }]
               : undefined
         }
         showBack={isAdmin || isTech ? false : undefined}

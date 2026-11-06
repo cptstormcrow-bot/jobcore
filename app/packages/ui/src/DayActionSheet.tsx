@@ -1,6 +1,6 @@
 /**
  * DayActionSheet: the tap-a-day sheet, modeled on the #0025 DayList day popup.
- * Shows the day's jobs and blackouts, each with a details button, plus Add Job / Add Blackout.
+ * Shows the day's jobs and blackouts, each with a details button, plus Add Job / Add Time-off.
  * Shared by every calendar so a day tap behaves the same everywhere (Jeff 2026-11-05).
  */
 import React from 'react';
@@ -25,7 +25,7 @@ export interface DayActionSheetProps {
   onClose: () => void;
   /** Omit to hide the Add Job button. */
   onAddJob?: (day: Date, time: string | null) => void;
-  /** Omit to hide the Add Blackout button. */
+  /** Omit to hide the Add Time-off button. */
   onAddBlackout?: (day: Date) => void;
   onOpenJob?: (job: Job) => void;
   onOpenBlackout?: (blackout: DayActionBlackout) => void;
@@ -165,10 +165,10 @@ export function DayActionSheet({
                 {blackouts.map((b) => (
                   <View key={b.id} style={styles.row}>
                     <Pressable style={styles.rowText} onPress={onBlackoutInfo ? () => onBlackoutInfo(b) : undefined}>
-                      <Text numberOfLines={1} style={styles.blackoutTitle}>{b.title ?? 'Blackout'}</Text>
+                      <Text numberOfLines={1} style={styles.blackoutTitle}>{b.title ?? 'Time-off'}</Text>
                     </Pressable>
                     {onOpenBlackout ? (
-                      <PayrollButton label="Blackout details" onPress={() => onOpenBlackout(b)} />
+                      <PayrollButton label="Time-off details" onPress={() => onOpenBlackout(b)} />
                     ) : null}
                   </View>
                 ))}
@@ -201,7 +201,7 @@ export function DayActionSheet({
                     <PayrollButton label="Confirm" onPress={() => void confirm(day, time)} />
                   ) : null}
                   {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
-                  {onAddBlackout ? <PayrollButton label="Add Blackout" onPress={() => onAddBlackout(day)} /> : null}
+                  {onAddBlackout ? <PayrollButton label="Add Time-off" onPress={() => onAddBlackout(day)} /> : null}
                   {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
                   <PayrollButton label="Close" onPress={onClose} />
                 </View>

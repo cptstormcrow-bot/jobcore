@@ -1,4 +1,4 @@
-// JobCore screen #0056 - af-blackout-editor - Add Blackout
+// JobCore screen #0056 - af-blackout-editor - Add Time-off
 /**
  * Admin blackout editor screen — full-screen editor (not a modal), following
  * the `-editor` naming convention used by `EmployeeEditorScreen.tsx` /
@@ -17,7 +17,7 @@
  * admin can pick different dates or a different tech.
  *
  * `initialTechId` (Fix 4) lets a caller — the Calendar tab's tech-filtered
- * "Add Blackout" entry point — preselect the tech; the Time Off queue's
+ * "Add Time-off" entry point — preselect the tech; the Time Off queue's
  * entry point omits it, leaving the filter on All Techs.
  */
 
@@ -123,7 +123,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
   if (!session) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Add Blackout" message="Sign in to add a blackout for this organization." />
+        <EmptyState title="Add Time-off" message="Sign in to add time-off for this organization." />
       </View>
     );
   }
@@ -131,7 +131,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
   if (!timeOffAdmin) {
     return (
       <View style={styles.screen}>
-        <EmptyState title="Add Blackout" message="No data source is connected for this module yet." />
+        <EmptyState title="Add Time-off" message="No data source is connected for this module yet." />
       </View>
     );
   }
@@ -178,7 +178,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
         setRows((prev) => (prev.some((r) => r.id === created.id) ? prev : [...prev, created]));
       }
     } catch (error: unknown) {
-      setSaveError(error instanceof Error ? error.message : 'Could not add the blackout.');
+      setSaveError(error instanceof Error ? error.message : 'Could not add the time-off.');
     } finally {
       setSaving(false);
     }
@@ -203,7 +203,7 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
 
   return (
     <View style={styles.screen}>
-      {!hideTitle && <ScreenTitle title="Add Blackout" />}
+      {!hideTitle && <ScreenTitle title="Add Time-off" />}
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Schedule time off</Text>

@@ -1,7 +1,7 @@
 // JobCore screen #0008 - calendar - Calendar (admin Time Off section, re-homed from #0047 af-timeOffQueue)
 /**
  * Admin-only Time Off section rendered under the Calendar: org-wide Pending Review,
- * org-wide Upcoming Blackouts with per-row Cancel, and an Add Blackout entry that
+ * org-wide Upcoming Time-off with per-row Cancel, and an Add Time-off entry that
  * opens the existing BlackoutEditorScreen in a modal, in place. Ported verbatim from
  * TimeOffQueueScreen.tsx (same repo calls, copy and behavior).
  */
@@ -101,7 +101,7 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
         onChanged?.();
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Could not cancel this blackout.';
+        const message = error instanceof Error ? error.message : 'Could not cancel this time-off.';
         setCancelActions((prev) => ({ ...prev, [requestId]: { kind: 'failed', message } }));
       });
   }
@@ -116,7 +116,7 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
   }
 
   const addBlackoutButton = (
-    <PayrollButton label="Add Blackout" onPress={() => setEditorOpen(true)} style={styles.action} />
+    <PayrollButton label="Add Time-off" onPress={() => setEditorOpen(true)} style={styles.action} />
   );
 
   let body: React.ReactNode;
@@ -151,7 +151,7 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
         )}
         {upcomingBlackouts.length > 0 ? (
           <>
-            <Text style={styles.groupHeading}>Upcoming Blackouts</Text>
+            <Text style={styles.groupHeading}>Upcoming Time-off</Text>
             <Card style={styles.card}>
               {upcomingBlackouts.map((item) => {
                 const rowState = cancelActions[item.id] ?? { kind: 'idle' as const };
@@ -188,7 +188,7 @@ export function CalendarTimeOffSection(props: CalendarTimeOffSectionProps = {}) 
           showBack={false}
           breadcrumbSegments={[]}
           menuItems={[{ id: 'blackout-cancel', label: 'Close', onPress: closeEditor }]}
-          titleBar={{ title: 'Add Blackout' }}
+          titleBar={{ title: 'Add Time-off' }}
         />
         <BlackoutEditorScreen
           hideTitle

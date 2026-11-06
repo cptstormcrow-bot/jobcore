@@ -77,14 +77,14 @@ test('denied and cancelled time off excluded; approved blackout included with ti
   assert.equal(items.length, 1);
   assert.equal(items[0]!.id, 'blackout:a');
   assert.equal(items[0]!.kind, 'blackout');
-  assert.equal(items[0]!.title, 'Pat Tech - Blackout');
+  assert.equal(items[0]!.title, 'Pat Tech - Time-off');
 });
 
 test('one-day blackout covers exactly its local day; unknown employee has fallback', () => {
   const [item] = buildScheduleItems({ jobs: [], timeOff: [off()], employees: [] });
   assert.equal(item!.startIso, new Date(2026, 9, 23).toISOString());
   assert.equal(item!.endIso, new Date(2026, 9, 24).toISOString());
-  assert.equal(item!.title, 'Unknown tech - Blackout');
+  assert.equal(item!.title, 'Unknown tech - Time-off');
 });
 
 test('items are ordered by start', () => {

@@ -1,6 +1,6 @@
 // JobCore screen #0083 - time-off-tech-calendar - per-tech blackout calendar (display-only)
 /**
- * The calendar is display-only (no onSelectDay / onSelectTimeOff), because "Add Blackout"
+ * The calendar is display-only (no onSelectDay / onSelectTimeOff), because "Add Time-off"
  * already routes to #0056. It shows pending and approved rows only (expandBlackoutsToEvents).
  * Month is the default; Week is restored from device-local prefs and shares
  * BLACKOUT_WEEK_VIEW_KEY with #0056.
@@ -65,7 +65,7 @@ export function TimeOffTechCalendar({ rows, techs }: TimeOffTechCalendarProps) {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Blackout calendar</Text>
+      <Text style={styles.sectionTitle}>Time-off calendar</Text>
       <TechSelect value={techFilter} options={selectOptions} onChange={setTechFilter} style={styles.field} />
       <CalendarHeader
         mode={mode}
