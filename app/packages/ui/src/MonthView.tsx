@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable, ScrollView, StyleSheet, type LayoutChangeEvent } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import { Text } from './Text';
 import {
   addDays,
@@ -66,6 +66,10 @@ export function MonthView({
   // Cell width drives the phone/tablet look (uber 85): a 7-column grid on a phone gives ~50dp cells, too narrow for an
   // address, so below COMPACT_CELL_WIDTH a list cell shows a status-coloured time chip instead and fewer entries.
   const [gridWidth, setGridWidth] = React.useState(0);
+  // Tiles size from the window: ~square on phones, capped so tablets don't get giant blocks.
+  const { width: winW } = useWindowDimensions();
+  const tileH = Math.max(40, Math.min(64, Math.round(Math.min(winW, 900) / 7) - 6));
+  const tileFont = tileH >= 56 ? 17 : 14;
   const onGridLayout = (e: LayoutChangeEvent) => {
     const w = Math.round(e.nativeEvent.layout.width);
     setGridWidth((prev) => (Math.abs(prev - w) > 1 ? w : prev));
@@ -220,13 +224,13 @@ export function MonthView({
                     }
                     style={[
                       styles.tile,
-                      { backgroundColor: bg },
+                      { backgroundColor: bg, height: tileH },
                       !inMonth && styles.tileFaded,
                       today && styles.tileToday,
                       selected && hasTimeOff && styles.tileSelectedOff,
                     ]}
                   >
-                    <Text style={[styles.tileText, onColor && styles.tileTextOn, today && styles.dayTextToday]}>
+                    <Text style={[styles.tileText, { fontSize: tileFont }, onColor && styles.tileTextOn, today && styles.dayTextToday]}>
                       {format(day, 'd')}
                     </Text>
                     {badgeCount > 0 && (
