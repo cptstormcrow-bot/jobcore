@@ -133,9 +133,9 @@ export function MonthView({
                       styles.dayText,
                       !inMonth && styles.dayTextMuted,
                       today && styles.dayTextToday,
-                      selected && styles.dayTextSelected,
                       picked && styles.dayTextPicked,
                       dayTimeOffList.length > 0 && styles.dayTextTimeOff,
+                      selected && !picked && styles.dayTextSelected, // last, so a selected day is always white on the dark cell (Jeff 2026-11-05)
                     ]}
                   >
                     {format(day, 'd')}
@@ -177,9 +177,9 @@ export function MonthView({
                     styles.dayText,
                     !inMonth && styles.dayTextMuted,
                     today && styles.dayTextToday,
-                    selected && styles.dayTextSelected,
                     picked && styles.dayTextPicked,
                     hasTimeOff && styles.dayTextTimeOff,
+                    selected && !picked && styles.dayTextSelected,
                   ]}
                 >
                   {format(day, 'd')}
