@@ -1,8 +1,8 @@
 // JobCore shared Universal Calendar (admin + tech) - month/week/day with blackout day-picking and time-off requests (replaces #0031).
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { PayrollButton, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { DayActionSheet, PayrollButton,SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -85,7 +85,9 @@ export interface UniversalCalendarProps {
   onSubmitTimeOff?: (draft: UniversalCalendarTimeOffDraft, techId: string) => Promise<void> | void;
   onCancelTimeOff?: (requestId: string) => Promise<void> | void;
   /** Admin hook: when set, an "Add Blackout" button opens the host's blackout editor for the filtered tech. */
-  onAddBlackout?: (techId: string | null) => void;
+  onAddBlackout?: (techId: string | null, day?: Date) => void;
+  /** Host hook: when set, the day sheet shows Add Job; receives the tapped day and the filtered tech. */
+  onAddJob?: (day: Date, techId: string | null) => void;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -107,6 +109,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [reqReason, setReqReason] = useState('');
   const [reqSaving, setReqSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [sheetDay, setSheetDay] = useState<Date | null>(null);
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
@@ -372,7 +375,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
               props.onPickDay(d);
               return;
             }
-            setMode('day');
+            setSheetDay(d); // #0025-style day sheet: add a job or blackout, open details
           }}
           onSelectJob={onSelectJob}
         />
@@ -382,7 +385,15 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           anchorDay={anchor}
           timeOffEvents={timeOffEvents}
           onSelectJob={onSelectJob}
-          onDayPress={dayPickActive ? (d) => handleDayPress(format(d, 'yyyy-MM-dd')) : props.onPickDay}
+          onDayPress={
+            dayPickActive
+              ? (d) => handleDayPress(format(d, 'yyyy-MM-dd'))
+              : (d) => {
+                  setAnchor(d);
+                  if (props.onPickDay) props.onPickDay(d);
+                  else setSheetDay(d);
+                }
+          }
         />
       ) : (
         <>
@@ -390,6 +401,30 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           <DayView date={anchor} jobs={calendarJobs} timeOff={timeOffEvents} onJobPress={onSelectJob} />
         </>
       )}
+      <DayActionSheet
+        day={sheetDay}
+        jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
+        blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
+        onClose={() => setSheetDay(null)}
+        onAddJob={props.onAddJob ? (d) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId); } : undefined}
+        onAddBlackout={(d) => {
+          setSheetDay(null);
+          if (props.onAddBlackout) { props.onAddBlackout(effectiveTechId, d); return; }
+          // No blackout editor on this host: start the in-calendar day picking with this day preselected.
+          setRequesting(false);
+          setError(null);
+          setPickDays(true);
+          setPicked([format(d, 'yyyy-MM-dd')]);
+        }}
+        onOpenJob={(job) => { setSheetDay(null); onSelectJob(job); }}
+        onOpenBlackout={props.onAddBlackout ? (b) => {
+          const day = sheetDay;
+          setSheetDay(null);
+          const ev = timeOffEvents.find((e) => e.id === b.id);
+          props.onAddBlackout?.(ev?.techId ?? effectiveTechId, day ?? undefined);
+        } : undefined}
+        onOpenDayView={(d) => { setSheetDay(null); setAnchor(d); setMode('day'); }}
+      />
     </View>
   );
 }

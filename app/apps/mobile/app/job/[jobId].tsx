@@ -262,7 +262,11 @@ const EMPTY_JOB_FORM: JobFormState = {
 };
 
 export default function JobDrilldownScreen() {
-  const { jobId, panel } = useLocalSearchParams<{ jobId: string; panel?: string }>();
+  const { jobId, panel, preferredDate: preferredDateParam } = useLocalSearchParams<{
+    jobId: string;
+    panel?: string;
+    preferredDate?: string;
+  }>();
   const router = useRouter();
   const navigation = useNavigation();
   const session = useSession();
@@ -494,7 +498,12 @@ export default function JobDrilldownScreen() {
   useEffect(() => {
     if (isCreate) {
       setJob(null);
-      setForm(EMPTY_JOB_FORM);
+      // A calendar day tap (Add Job on the day sheet) passes the day as preferredDate.
+      setForm(
+        preferredDateParam && /^\d{4}-\d{2}-\d{2}$/.test(preferredDateParam)
+          ? { ...EMPTY_JOB_FORM, preferredDate: preferredDateParam }
+          : EMPTY_JOB_FORM,
+      );
       setCustomerId(null);
       setCustomer(null);
       formSeededForRef.current = null;
@@ -608,7 +617,7 @@ export default function JobDrilldownScreen() {
     return () => {
       cancelled = true;
     };
-  }, [isCreate, org?.id, jobId, rev]);
+  }, [isCreate, org?.id, jobId, rev, preferredDateParam]);
 
   /**
    * Edit-mode-only combined save: saves the customer first (updates the

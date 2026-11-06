@@ -2,6 +2,7 @@
 // Thin wrapper: loads data, renders the shared UniversalCalendar.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
+import { format } from 'date-fns';
 import { colors } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -252,6 +253,7 @@ export default function CalendarScreen() {
         anchorDate={anchorDate}
         {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
         onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
+        onAddJob={(day) => router.push(`/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}` as never)}
         onSaveBlackouts={onSaveBlackouts}
         onSubmitTimeOff={onSubmitTimeOff}
         onCancelTimeOff={onCancelTimeOff}

@@ -27,6 +27,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { format as formatIsoDay } from 'date-fns';
 import { Card, ListItem, PayrollButton, BadgeTooltip, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { buildAdminFinanceMenuItems, isAdminFinanceView } from '../menu';
@@ -873,8 +874,11 @@ export function AdminFinanceRoot() {
       ? loadState.employees.filter((e) => e.role === 'tech' && e.active)
       : [];
 
-  function handleAddBlackout(initialTechId?: string) {
+  const [blackoutInitialDay, setBlackoutInitialDay] = useState<Date | undefined>(undefined);
+
+  function handleAddBlackout(initialTechId?: string, day?: Date) {
     setBlackoutInitialTechId(initialTechId);
+    setBlackoutInitialDay(day);
     setBlackoutReturnView('calendar');
     setSubView('blackout-editor');
   }
@@ -1364,6 +1368,7 @@ export function AdminFinanceRoot() {
           techs={activeTechs}
           timeOffAdmin={ports.timeOffAdmin}
           initialTechId={blackoutInitialTechId}
+          initialDay={blackoutInitialDay}
           onSaved={handleBlackoutEditorSaved}
           onChanged={refreshJobs}
           onCancel={handleBlackoutEditorCancel}
@@ -1411,7 +1416,8 @@ export function AdminFinanceRoot() {
             }
             refreshJobs();
           }}
-          onAddBlackout={(techId) => handleAddBlackout(techId ?? undefined)}
+          onAddBlackout={(techId, day) => handleAddBlackout(techId ?? undefined, day)}
+          onAddJob={(day) => router.push(`/job/new?preferredDate=${formatIsoDay(day, 'yyyy-MM-dd')}` as never)}
         />
         )
       ) : (

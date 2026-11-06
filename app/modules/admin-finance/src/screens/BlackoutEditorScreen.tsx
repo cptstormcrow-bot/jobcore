@@ -42,6 +42,8 @@ export interface BlackoutEditorScreenProps {
   onCancel?: () => void;
   /** Preselects the tech picker, e.g. when opened from a tech-filtered Calendar view. */
   initialTechId?: string;
+  /** Opens the add-blackout modal on this day (from the tap-a-day sheet). */
+  initialDay?: Date;
   /** Fires after any create or cancel so the caller can refresh its own lists. */
   onChanged?: () => void;
   /** Hides the in-body title when the host already shows it in a header title bar. */
@@ -58,16 +60,16 @@ function safeLocalPrefs() {
 }
 
 export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
-  const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId, onChanged, hideTitle } = props;
+  const { timeOffAdmin, techs = [], onSaved, onCancel, initialTechId, initialDay, onChanged, hideTitle } = props;
   useScreenNumber({ subView: 'blackout-editor' });
 
   const [techFilter, setTechFilter] = useState<string>(initialTechId ?? 'all');
   const [mode, setMode] = useState<CalMode>('month');
-  const [anchorDay, setAnchorDay] = useState<Date>(new Date());
+  const [anchorDay, setAnchorDay] = useState<Date>(initialDay ?? new Date());
   const [rows, setRows] = useState<TimeOffRequestAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [modalDay, setModalDay] = useState<Date | null>(null);
+  const [modalDay, setModalDay] = useState<Date | null>(initialDay ?? null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
