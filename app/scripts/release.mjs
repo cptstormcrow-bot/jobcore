@@ -135,7 +135,7 @@ function main() {
     throw new Error(NO_TAG_MESSAGE);
   }
 
-  const raw = git(['log', '--format=%H%x1f%s%x1f%b%x1e', `${lastTag}..HEAD`]);
+  const raw = git(['log', '--first-parent', '--format=%H%x1f%s%x1f%b%x1e', `${lastTag}..HEAD`]);
   const commits = raw
     .split('\x1e')
     .map((r) => r.replace(/^\n/, ''))
