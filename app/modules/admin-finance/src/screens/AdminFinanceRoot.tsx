@@ -722,7 +722,8 @@ export function AdminFinanceRoot() {
 
   /** Steps back to the previous view; false when there is nowhere left to go in this module. */
   function goBack(): boolean {
-    const prev = viewHistory.current.pop();
+    // Empty history on a non-home view goes to Overview; only Overview itself lets Android leave.
+    const prev = viewHistory.current.pop() ?? (subView !== 'overview' ? 'overview' : undefined);
     if (!prev) return false;
     poppingBack.current = true;
     setSubView(prev);

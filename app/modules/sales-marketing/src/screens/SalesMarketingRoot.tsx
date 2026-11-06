@@ -83,7 +83,8 @@ export function SalesMarketingRoot(): React.ReactElement {
   React.useEffect(() => {
     if (Platform.OS !== 'android') return undefined;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      const prev = viewHistory.current.pop();
+      // Empty history on a non-home tab goes to Overview; only Overview itself lets Android leave.
+      const prev = viewHistory.current.pop() ?? (prevView.current !== 'overview' ? 'overview' : undefined);
       if (!prev) return false;
       poppingBack.current = true;
       setSubView(prev);
