@@ -329,9 +329,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
             <PayrollButton label="Add Time-off" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
           </View>
         ) : null}
-        <View testID="calendar-hour-picker" style={styles.hourPicker}>
-          <TimePicker value={pickTime} onChange={setPickTime} />
-        </View>
       </View>
       {pickDays ? (
         <View style={styles.pickBar}>
@@ -443,6 +440,9 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           <DayView date={anchor} jobs={calendarJobs} timeOff={shownTimeOff} onJobPress={onSelectJob} />
         </>
       )}
+      <View testID="calendar-hour-picker" style={styles.hourPicker}>
+        <TimePicker value={pickTime} onChange={setPickTime} />
+      </View>
       <DayActionSheet
         day={sheetDay}
         time={pickTime}
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   returnText: { color: colors.primary },
   actionRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
   techSelect: { minWidth: 240 },
-  hourPicker: { flexGrow: 1, flexShrink: 1, minWidth: 260 },
+  hourPicker: { alignSelf: 'stretch', marginTop: spacing.xs },
   pickBar: {
     flexDirection: 'row',
     alignItems: 'center',

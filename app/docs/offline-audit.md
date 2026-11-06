@@ -224,3 +224,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 103. The job header schedule link (top right of every job screen, opens #0058 Job schedule) now reads like "Friday, November 13 2026 - 9:00AM" when scheduled, and "Unscheduled" when not.
 
 104. The Start time picker (#0011 Calendar, the day popup and #0058 Job schedule) now only offers 7:00 AM through 6:00 PM. Hours run 7 to 12 then 1 to 6; picking an hour sets AM or PM to match, and 6 PM only offers :00.
+
+105. The Start time picker now sits below the calendar (date picker) on #0011 Calendar and #0058 Job schedule, instead of in the button row above it.

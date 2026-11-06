@@ -446,9 +446,6 @@ export function JobScheduleScreen({
             <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
             <PayrollButton label="Time-off" onPress={() => void handleTimeOff()} disabled={busy} testID="schedule-timeoff" />
-            <View testID="schedule-hour-picker" style={styles.hourPicker}>
-              <TimePicker value={pickedTime} onChange={pickTime} />
-            </View>
           </View>
 
           <Text style={styles.hintText} testID="schedule-tech">
@@ -487,6 +484,10 @@ export function JobScheduleScreen({
                 handleSelectItem({ id: `blackout:${ev.id}`, startIso: String(ev.eventTime), endIso: null })
               }
             />
+          </View>
+
+          <View testID="schedule-hour-picker" style={styles.hourPicker}>
+            <TimePicker value={pickedTime} onChange={pickTime} />
           </View>
         </Card>
       </Root>
@@ -556,7 +557,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     flexGrow: 1,
   },
-  hourPicker: { flexGrow: 1, flexShrink: 1, minWidth: 260 },
+  hourPicker: { alignSelf: 'stretch', marginTop: spacing.sm },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
