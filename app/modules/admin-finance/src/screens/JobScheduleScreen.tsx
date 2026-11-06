@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     flexGrow: 1,
   },
-  hourPicker: { alignSelf: 'stretch', marginTop: spacing.sm },
+  hourPicker: { alignSelf: 'stretch', marginTop: spacing.xs, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.border },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     fontSize: typography.text.title,
     fontFamily: typography.fontFamily.headingBold,
   },
-  calendarWrap: { flex: 1, minHeight: 480 },
+  calendarWrap: {},
   backRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',

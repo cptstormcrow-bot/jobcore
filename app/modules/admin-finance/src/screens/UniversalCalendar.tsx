@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   returnText: { color: colors.primary },
   actionRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
   techSelect: { minWidth: 240 },
-  hourPicker: { alignSelf: 'stretch', marginTop: spacing.xs },
+  hourPicker: { alignSelf: 'stretch', marginTop: spacing.xs, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.border },
   pickBar: {
     flexDirection: 'row',
     alignItems: 'center',
