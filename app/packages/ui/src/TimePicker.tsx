@@ -83,8 +83,9 @@ function Column(props: {
   const ref = useRef<ScrollView>(null);
   const idx = selected === null ? -1 : values.indexOf(selected);
   useEffect(() => {
-    if (!scroll || idx < 0) return;
-    ref.current?.scrollTo({ y: Math.max(0, idx * ROW_H - ROW_H), animated: false });
+    if (!scroll) return;
+    // No time yet: sit at the top so the column opens on 7. Otherwise show the picked row one down from the top.
+    ref.current?.scrollTo({ y: idx < 0 ? 0 : Math.max(0, idx * ROW_H - ROW_H), animated: false });
   }, [idx, scroll]);
   const rows = values.map((v) => {
     const on = v === selected;
