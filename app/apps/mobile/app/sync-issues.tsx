@@ -4,7 +4,7 @@ import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AppChrome, Card, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
-import { discardFailed, listAllFailed, retryFailed } from '../src/lib/offline-db';
+import { discardFailed, listAllFailed, listWaiting, retryFailed } from '../src/lib/offline-db';
 import type { QueueRow } from '../src/lib/offline-db.types';
 import { refetchAll } from '../src/lib/read-cache';
 import { failureMessage, opLabel, savedAtLabel } from '../src/lib/sync-issues';
@@ -14,11 +14,13 @@ export default function SyncIssuesScreen() {
   const { refresh, retryAll, failedCount, isSyncing, isOnline, pendingCount } = useSyncStatus();
   const router = useRouter();
   const [rows, setRows] = useState<QueueRow[] | null>(null);
+  const [waiting, setWaiting] = useState<QueueRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setRows(await listAllFailed());
+      setWaiting(await listWaiting());
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load sync issues.');
@@ -28,7 +30,7 @@ export default function SyncIssuesScreen() {
 
   useEffect(() => {
     void load();
-  }, [load, failedCount, isSyncing]);
+  }, [load, failedCount, isSyncing, pendingCount]);
 
   const run = useCallback(
     async (action: () => Promise<void>, afterCacheRefresh = false) => {
@@ -112,6 +114,15 @@ export default function SyncIssuesScreen() {
               <PayrollButton label="Retry" onPress={() => void run(() => retryFailed(row.id))} />
               <PayrollButton label="Discard" onPress={() => confirmDiscard(row)} />
             </View>
+          </Card>
+        ))}
+        {waiting.map((row) => (
+          <Card key={row.id} style={styles.card}>
+            <Text style={styles.title} numberOfLines={2}>Waiting: {opLabel(row.op)}</Text>
+            <Text style={styles.meta}>
+              {savedAtLabel(row.occurred_at)} · {row.status === 'inflight' ? 'sending' : `tried ${row.attempts} ${row.attempts === 1 ? 'time' : 'times'}`}
+            </Text>
+            {row.last_error ? <Text style={styles.errorText}>{failureMessage(row.last_error)}</Text> : null}
           </Card>
         ))}
         <View style={styles.actions}>

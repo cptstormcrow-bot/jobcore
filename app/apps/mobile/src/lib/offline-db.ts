@@ -189,6 +189,21 @@ export async function retryAllFailed(): Promise<void> {
     `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null where status = 'failed'`
   );
   await db.runAsync(`update ${OFFLINE_QUEUE_TABLE} set next_attempt_at = null where status = 'pending'`);
+  // A send that died mid-flight stays 'inflight' and blocks later changes to the same job;
+  // anything inflight for over 2 minutes is released so Send now can pick it up.
+  await db.runAsync(
+    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', inflight_at = null where status = 'inflight' and (inflight_at is null or inflight_at < ?)`,
+    new Date(Date.now() - 120_000).toISOString()
+  );
+}
+
+/** Changes saved but not yet sent (pending or mid-send), oldest first, with their last error. */
+export async function listWaiting(limit: number = 50): Promise<QueueRow[]> {
+  const db = await getOfflineDb();
+  return db.getAllAsync<QueueRow>(
+    `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status in ('pending', 'inflight') order by occurred_at asc, rowid asc limit ?`,
+    limit
+  );
 }
 
 /** A stuck row: failed, or pending and already retried twice or more (one quick retry is normal). Feeds the stuck popup (#0099). */
