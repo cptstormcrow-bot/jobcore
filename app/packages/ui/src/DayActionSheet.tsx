@@ -30,6 +30,10 @@ export interface DayActionSheetProps {
   onOpenBlackout?: (blackout: DayActionBlackout) => void;
   /** Omit to hide the Open day view button. */
   onOpenDayView?: (day: Date) => void;
+  /** Jobs ready to schedule (estimate approved, tech assigned, not yet scheduled). Shown as a pick list. */
+  schedulableJobs?: Job[];
+  /** Confirm with a picked job and time schedules that job on the tapped day. Should throw on failure. */
+  onConfirmSchedule?: (job: Job, day: Date, time: string) => Promise<void>;
 }
 
 export function DayActionSheet({
@@ -42,10 +46,37 @@ export function DayActionSheet({
   onOpenJob,
   onOpenBlackout,
   onOpenDayView,
+  schedulableJobs,
+  onConfirmSchedule,
 }: DayActionSheetProps) {
   // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
   const [time, setTime] = React.useState<string | null>(null);
-  React.useEffect(() => setTime(null), [day]);
+  const [pickedJobId, setPickedJobId] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    setTime(null);
+    setPickedJobId(null);
+    setError(null);
+  }, [day]);
+  const readyJobs = onConfirmSchedule ? schedulableJobs ?? [] : [];
+  const pickedJob = readyJobs.find((j) => j.id === pickedJobId) ?? null;
+  const confirm = async (d: Date, t: string): Promise<void> => {
+    if (pickedJob && onConfirmSchedule) {
+      setBusy(true);
+      setError(null);
+      try {
+        await onConfirmSchedule(pickedJob, d, t);
+        onClose();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Could not schedule the job.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    onAddJob?.(d, t);
+  };
   return (
     <Modal visible={day !== null} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -80,7 +111,23 @@ export function DayActionSheet({
                     ) : null}
                   </View>
                 ))}
-                {onAddJob ? (
+                {readyJobs.length > 0 ? (
+                  <View style={styles.timeBlock}>
+                    <Text style={styles.timeLabel}>Ready to schedule (tap one, pick a time, Confirm)</Text>
+                    {readyJobs.map((job) => (
+                      <Pressable
+                        key={job.id}
+                        onPress={() => setPickedJobId(pickedJobId === job.id ? null : job.id)}
+                        style={[styles.readyRow, pickedJobId === job.id ? styles.chipOn : null]}
+                      >
+                        <Text numberOfLines={1} style={pickedJobId === job.id ? styles.chipTextOn : styles.chipText}>
+                          {[job.address ?? 'No address', job.customerName].filter(Boolean).join('  •  ')}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+                {onAddJob || (onConfirmSchedule && pickedJob) ? (
                   <View style={styles.timeBlock}>
                     <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Start time (optional)'}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -96,8 +143,11 @@ export function DayActionSheet({
                     </ScrollView>
                   </View>
                 ) : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={styles.actions}>
-                  {onAddJob && time ? <PayrollButton label="Confirm" onPress={() => onAddJob(day, time)} /> : null}
+                  {(onAddJob || pickedJob) && time && !busy ? (
+                    <PayrollButton label="Confirm" onPress={() => void confirm(day, time)} />
+                  ) : null}
                   {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
                   {onAddBlackout ? <PayrollButton label="Add Blackout" onPress={() => onAddBlackout(day)} /> : null}
                   {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
@@ -132,6 +182,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginRight: spacing.xs,
   },
+  readyRow: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.xs,
+  },
+  errorText: { fontSize: 12, color: colors.danger, marginTop: spacing.sm },
   chipOn: { backgroundColor: colors.text, borderColor: colors.text },
   chipText: { fontSize: typography.text.body, color: colors.text },
   chipTextOn: { fontSize: typography.text.body, color: colors.white },

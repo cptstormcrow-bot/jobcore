@@ -88,6 +88,10 @@ export interface UniversalCalendarProps {
   onAddBlackout?: (techId: string | null, day?: Date) => void;
   /** Host hook: when set, the day sheet shows Add Job; receives the tapped day and the filtered tech. */
   onAddJob?: (day: Date, techId: string | null, time?: string | null) => void;
+  /** Admin: jobs with an approved estimate and an assigned tech that have no slot yet. Listed on the day sheet. */
+  schedulableJobs?: Job[];
+  /** Admin: Confirm on the day sheet with a picked job and time schedules that job. Throws on failure. */
+  onScheduleJob?: (job: Job, day: Date, time: string) => Promise<void>;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -406,6 +410,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
+        schedulableJobs={(props.schedulableJobs ?? []).filter((j) => !effectiveTechId || j.assignedTechId === effectiveTechId)}
+        {...(props.onScheduleJob ? { onConfirmSchedule: props.onScheduleJob } : {})}
         onAddJob={props.onAddJob ? (d, time) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId, time); } : undefined}
         onAddBlackout={(d) => {
           setSheetDay(null);

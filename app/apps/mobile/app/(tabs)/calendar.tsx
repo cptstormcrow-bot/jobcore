@@ -2,8 +2,8 @@
 // Thin wrapper: loads data, renders the shared UniversalCalendar.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { format } from 'date-fns';
-import { colors } from '@jobcore/ui';
+import { format, parse } from 'date-fns';
+import { colors, deriveEndIso } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniversalCalendar, parseCalendarDate, type UniversalCalendarEmployee } from '../../../../modules/admin-finance/src/screens/UniversalCalendar';
@@ -12,7 +12,7 @@ import type { TimeOffRequestAdmin } from '../../../../modules/admin-finance/src/
 import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
-import { createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
+import { createJobCardExtrasRepository, createJobRepository, createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
 import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
@@ -243,6 +243,58 @@ export default function CalendarScreen() {
     setTimeOffRev((n) => n + 1);
   };
 
+  // Schedule straight from the #0011 day sheet (uber 77). A job is ready when its estimate is
+  // accepted (approved) and a tech is assigned (Assign-before-Schedule) and it has no slot yet.
+  const [approvedJobIds, setApprovedJobIds] = useState<Set<string>>(new Set());
+  const [scheduleRev, setScheduleRev] = useState(0);
+  const unscheduledAssigned = useMemo(
+    () =>
+      jobs.filter(
+        (j) =>
+          isAdminRole &&
+          j.assignedTechId &&
+          !j.scheduledStart &&
+          j.status !== 'completed' &&
+          j.status !== 'cancelled' &&
+          j.status !== 'paid',
+      ),
+    [jobs, isAdminRole],
+  );
+  useEffect(() => {
+    if (!orgId || unscheduledAssigned.length === 0) {
+      setApprovedJobIds(new Set());
+      return;
+    }
+    let cancelled = false;
+    void createJobCardExtrasRepository()
+      .listCardFlags(orgId, unscheduledAssigned.map((j) => j.id))
+      .then((flags) => {
+        if (cancelled) return;
+        setApprovedJobIds(new Set(Object.keys(flags).filter((id) => flags[id]?.estimateApproved)));
+      })
+      .catch(() => {
+        if (!cancelled) setApprovedJobIds(new Set());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, unscheduledAssigned, scheduleRev]);
+  const schedulableJobs = useMemo(
+    () => unscheduledAssigned.filter((j) => approvedJobIds.has(j.id)),
+    [unscheduledAssigned, approvedJobIds],
+  );
+
+  const onScheduleJob = async (job: Job, day: Date, time: string): Promise<void> => {
+    if (!job.assignedTechId) throw new Error('Assign a tech before scheduling this job.');
+    const startDate = parse(time, 'h:mm a', day);
+    if (Number.isNaN(startDate.getTime())) throw new Error('Pick a valid start time.');
+    const scheduledStart = startDate.toISOString();
+    const scheduledEnd = deriveEndIso(scheduledStart, 60);
+    await createJobRepository().updateDetails(job.id, { scheduledStart, scheduledEnd });
+    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, scheduledStart, scheduledEnd } : j)));
+    setScheduleRev((n) => n + 1);
+  };
+
   const calendarNode = (
     <UniversalCalendar
         role={isAdminRole ? 'admin' : 'tech'}
@@ -258,6 +310,8 @@ export default function CalendarScreen() {
             `/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}${time ? `&preferredTime=${encodeURIComponent(time)}` : ''}` as never,
           )
         }
+        schedulableJobs={schedulableJobs}
+        onScheduleJob={onScheduleJob}
         onSaveBlackouts={onSaveBlackouts}
         onSubmitTimeOff={onSubmitTimeOff}
         onCancelTimeOff={onCancelTimeOff}
