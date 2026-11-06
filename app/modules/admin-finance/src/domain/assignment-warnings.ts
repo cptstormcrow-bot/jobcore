@@ -107,25 +107,16 @@ export function warningsFor(
 
   if (job.scheduledStart && job.scheduledEnd) {
     const window: TimeWindow = { start: job.scheduledStart, end: job.scheduledEnd };
-    const approvedConflict = techTimeOffRequests.some(
+    // No approval step (first come, first served): any request that is not denied counts as time off.
+    const timeOffConflict = techTimeOffRequests.some(
       (request) =>
-        request.status === 'approved' &&
+        request.status !== 'denied' &&
         overlaps(window, { start: request.startDate, end: request.endDate }),
     );
-    const pendingConflict = techTimeOffRequests.some(
-      (request) =>
-        request.status === 'pending' &&
-        overlaps(window, { start: request.startDate, end: request.endDate }),
-    );
-    if (approvedConflict) {
+    if (timeOffConflict) {
       warnings.push({
         code: 'time_off_conflict',
-        message: 'This tech has approved time off during this window.',
-      });
-    } else if (pendingConflict) {
-      warnings.push({
-        code: 'time_off_conflict',
-        message: 'This tech has a pending time-off request during this window.',
+        message: 'This tech has time off during this window.',
       });
     }
   }

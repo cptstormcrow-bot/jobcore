@@ -234,3 +234,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 108. The Time-off button on #0058 Job schedule now only shows when a technician is assigned to the job. #0011 Calendar (no job) keeps its Time-off button.
 
 109. On #0054 Overview, each job in the green-day popup now has an "Open Job #N" button that closes the popup and opens that job in the app.
+
+110. Time-off has no approval step (first come, first served). The assignment warning on the board (#0051 area) now says "This tech has time off during this window." for any time-off request that is not denied, instead of separate approved and pending wording. New requests were already decided on entry by the database (migration 0019), so no approve or deny screen exists. Test: assign a job to a tech who has time off on that day; the warning reads "has time off".
