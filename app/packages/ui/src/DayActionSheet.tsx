@@ -15,9 +15,15 @@ import { colors, radius, spacing, typography } from './tokens';
 export interface DayActionBlackout {
   id: string;
   title?: string | null;
+  /** The time-off reason or notes, shown in the popup. */
+  description?: string | null;
 }
 
 export interface DayActionSheetProps {
+  /** Tap-to-copy for job name, address and phone. Omit and those lines are plain text. */
+  onCopy?: (text: string) => void;
+  /** One-tap Time-off for the logged-in tech: sets this day red. Should throw on failure. */
+  onQuickTimeOff?: (day: Date) => Promise<void> | void;
   /** The tapped day. null hides the sheet. */
   day: Date | null;
   jobs: Job[];
@@ -67,7 +73,22 @@ export function DayActionSheet({
   onJobInfo,
   onBlackoutInfo,
   time: hostTime,
+  onCopy,
+  onQuickTimeOff,
 }: DayActionSheetProps) {
+  const [copied, setCopied] = React.useState<string | null>(null);
+  const copyLine = (text: string): void => {
+    onCopy?.(text);
+    setCopied(text);
+  };
+  const copyable = (text: string, style: object, key: string, lines = 1): JSX.Element =>
+    onCopy ? (
+      <Pressable key={key} accessibilityRole="button" accessibilityLabel={`Copy ${text}`} onPress={() => copyLine(text)}>
+        <Text numberOfLines={lines} style={style}>{copied === text ? `${text}  (copied)` : text}</Text>
+      </Pressable>
+    ) : (
+      <Text key={key} numberOfLines={lines} style={style}>{text}</Text>
+    );
   // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
   const [ownTime, setTime] = React.useState<string | null>(null);
   const hostOwnsTime = hostTime !== undefined;
@@ -82,7 +103,21 @@ export function DayActionSheet({
     setTime(null);
     setPickedJobId(null);
     setError(null);
+    setCopied(null);
   }, [day]);
+  const quickTimeOff = async (d: Date): Promise<void> => {
+    if (!onQuickTimeOff) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onQuickTimeOff(d);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not set time-off.');
+    } finally {
+      setBusy(false);
+    }
+  };
   const readyJobs = onConfirmSchedule ? schedulableJobs ?? [] : [];
   const pickedJob = readyJobs.find((j) => j.id === pickedJobId) ?? null;
   const confirm = async (d: Date, t: string): Promise<void> => {
@@ -123,21 +158,23 @@ export function DayActionSheet({
           <ScrollView>
             {day !== null ? (
               <>
-                <Text style={styles.title}>{`Scheduled: ${format(day, 'EEEE MMM d')}`}</Text>
+                <Text style={styles.title}>{format(day, 'EEEE, MMMM d, yyyy')}</Text>
                 {jobs.length === 0 && blackouts.length === 0 ? (
                   <Text style={styles.empty}>Nothing scheduled.</Text>
                 ) : null}
                 {jobs.map((job) => (
                   <View key={job.id} style={styles.jobBlock}>
                     <View style={styles.rowInner}>
-                      <Pressable style={styles.rowText} onPress={onJobInfo ? () => onJobInfo(job) : undefined}>
-                        <Text numberOfLines={1} style={styles.rowTitle}>{job.address ?? 'No address'}</Text>
-                        <Text numberOfLines={1} style={styles.rowMeta}>
-                          {[job.customerName, job.scheduledStart ? format(new Date(job.scheduledStart), 'h:mm a') : null]
-                            .filter(Boolean)
-                            .join('  •  ')}
-                        </Text>
-                      </Pressable>
+                      <View style={styles.rowText}>
+                        {job.customerName ? copyable(job.customerName, styles.rowTitle, 'name') : null}
+                        {copyable(job.address ?? 'No address', styles.rowTitle, 'addr', 2)}
+                        {job.customerPhone ? copyable(job.customerPhone, styles.rowTitle, 'phone') : null}
+                        {job.scheduledStart ? (
+                          <Text style={styles.rowMeta}>{format(new Date(job.scheduledStart), 'h:mm a')}</Text>
+                        ) : null}
+                        {job.description ? <Text style={styles.jobDesc}>{job.description}</Text> : null}
+                      </View>
+                      {onJobInfo ? <PayrollButton label="Info" onPress={() => onJobInfo(job)} /> : null}
                       {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
                     </View>
                     {onRescheduleJob || onClearJob ? (
@@ -165,7 +202,8 @@ export function DayActionSheet({
                 {blackouts.map((b) => (
                   <View key={b.id} style={styles.row}>
                     <Pressable style={styles.rowText} onPress={onBlackoutInfo ? () => onBlackoutInfo(b) : undefined}>
-                      <Text numberOfLines={1} style={styles.blackoutTitle}>{b.title ?? 'Time-off'}</Text>
+                      <Text style={styles.blackoutTitle}>{b.title ?? 'Time-off'}</Text>
+                      {b.description ? <Text style={styles.jobDesc}>{b.description}</Text> : null}
                     </Pressable>
                     {onOpenBlackout ? (
                       <PayrollButton label="Time-off details" onPress={() => onOpenBlackout(b)} />
@@ -201,7 +239,12 @@ export function DayActionSheet({
                     <PayrollButton label="Confirm" onPress={() => void confirm(day, time)} />
                   ) : null}
                   {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
-                  {onAddBlackout ? <PayrollButton label="Add Time-off" onPress={() => onAddBlackout(day)} /> : null}
+                  {onQuickTimeOff && blackouts.length === 0 && !busy ? (
+                    <PayrollButton label="Time-off" onPress={() => void quickTimeOff(day)} />
+                  ) : null}
+                  {onAddBlackout && !onQuickTimeOff ? (
+                    <PayrollButton label="Add Time-off" onPress={() => onAddBlackout(day)} />
+                  ) : null}
                   {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
                   <PayrollButton label="Close" onPress={onClose} />
                 </View>
@@ -267,6 +310,7 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, marginRight: spacing.sm },
   rowTitle: { fontSize: typography.text.body, color: colors.text },
   rowMeta: { fontSize: 12, color: colors.textMuted },
+  jobDesc: { fontSize: 12, color: colors.text, marginTop: spacing.xs },
   blackoutTitle: { fontSize: typography.text.body, color: colors.danger },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
 });

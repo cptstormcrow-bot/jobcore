@@ -1,16 +1,21 @@
 /**
- * TimePicker: half-hour chips (6:00 AM to 8:00 PM) plus a minute row.
- * One component for the calendar screen header and the day sheet, so the hour of the day is picked the same way everywhere (Jeff 2026-11-06).
+ * TimePicker: three scrolling columns (Hour, Min, AM/PM) with a blue highlight on the picked row.
+ * Brings back the look of the earlier SchedulePicker time columns (Jeff 2026-11-06: "the scrolling time with the
+ * blue highlight was much neater"). Same props as the old chip picker, so the calendar header, the day sheet and
+ * the Job schedule screen all pick the time the same way. Value is an "h:mm a" string, or null when no time is set.
  */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { format } from 'date-fns';
 import { Text } from './Text';
-import { colors, radius, spacing, typography } from './tokens';
+import { colors, spacing, typography } from './tokens';
 
+const ROW_H = 32;
+const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const MINUTES = ['00', '15', '30', '45'];
+const MERIDIEMS = ['AM', 'PM'];
 
-/** Half-hour slots, 6:00 AM to 8:00 PM. */
+/** Half-hour slots, 6:00 AM to 8:00 PM. Kept for callers that list slots. */
 export const TIME_SLOTS: string[] = (() => {
   const out: string[] = [];
   for (let m = 6 * 60; m <= 20 * 60; m += 30) {
@@ -24,59 +29,134 @@ export function withMinute(time: string, mm: string): string {
   return time.replace(/:\d\d/, `:${mm}`);
 }
 
+interface Parts {
+  hour: number;
+  minute: string;
+  meridiem: string;
+}
+
+function parse(value: string | null): Parts | null {
+  if (!value) return null;
+  const m = /^(\d{1,2}):(\d\d)\s*(AM|PM)$/i.exec(value.trim());
+  if (!m) return null;
+  return { hour: Number(m[1]), minute: m[2] as string, meridiem: (m[3] as string).toUpperCase() };
+}
+
+function join(p: Parts): string {
+  return `${p.hour}:${p.minute} ${p.meridiem}`;
+}
+
 export interface TimePickerProps {
   value: string | null;
   onChange: (time: string | null) => void;
   label?: string;
 }
 
+function Column(props: {
+  title: string;
+  values: Array<number | string>;
+  selected: number | string | null;
+  onPick: (v: number | string) => void;
+  testPrefix: string;
+  scroll?: boolean;
+}) {
+  const { title, values, selected, onPick, testPrefix, scroll } = props;
+  const ref = useRef<ScrollView>(null);
+  const idx = selected === null ? -1 : values.indexOf(selected);
+  useEffect(() => {
+    if (!scroll || idx < 0) return;
+    ref.current?.scrollTo({ y: Math.max(0, idx * ROW_H - ROW_H), animated: false });
+  }, [idx, scroll]);
+  const rows = values.map((v) => {
+    const on = v === selected;
+    return (
+      <Pressable
+        key={String(v)}
+        onPress={() => onPick(v)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: on }}
+        testID={`${testPrefix}-${v}`}
+        style={[styles.cell, on ? styles.cellOn : null]}
+      >
+        <Text numberOfLines={1} style={on ? styles.textOn : styles.text}>{String(v)}</Text>
+      </Pressable>
+    );
+  });
+  return (
+    <View style={styles.col}>
+      <Text numberOfLines={1} style={styles.header}>{title}</Text>
+      {scroll ? (
+        <ScrollView ref={ref} style={styles.scroll} nestedScrollEnabled showsVerticalScrollIndicator>
+          {rows}
+        </ScrollView>
+      ) : (
+        <View style={styles.scroll}>{rows}</View>
+      )}
+    </View>
+  );
+}
+
 export function TimePicker({ value, onChange, label }: TimePickerProps) {
+  const parts = parse(value);
+  const set = (patch: Partial<Parts>) => {
+    const base: Parts = parts ?? { hour: 9, minute: '00', meridiem: 'AM' };
+    onChange(join({ ...base, ...patch }));
+  };
+  const title = label ?? 'Start time';
   return (
     <View>
-      <Text numberOfLines={1} style={styles.label}>
-        {value ? `${label ?? 'Start time'}: ${value}` : `${label ?? 'Start time'} (optional)`}
-      </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {TIME_SLOTS.map((slot) => (
-          <Pressable
-            key={slot}
-            onPress={() => onChange(value === slot ? null : slot)}
-            style={[styles.chip, value === slot ? styles.chipOn : null]}
-          >
-            <Text numberOfLines={1} style={value === slot ? styles.chipTextOn : styles.chipText}>{slot}</Text>
+      <View style={styles.labelRow}>
+        <Text numberOfLines={1} style={styles.label}>{value ? `${title}: ${value}` : `${title} (optional)`}</Text>
+        {value ? (
+          <Pressable onPress={() => onChange(null)} accessibilityRole="button" hitSlop={6} testID="time-picker-clear">
+            <Text numberOfLines={1} style={styles.clear}>No time</Text>
           </Pressable>
-        ))}
-      </ScrollView>
-      {value ? (
-        <View style={styles.minuteRow}>
-          <Text style={styles.label}>Minute</Text>
-          {MINUTES.map((mm) => (
-            <Pressable
-              key={mm}
-              onPress={() => onChange(withMinute(value, mm))}
-              style={[styles.chip, value.includes(`:${mm}`) ? styles.chipOn : null]}
-            >
-              <Text style={value.includes(`:${mm}`) ? styles.chipTextOn : styles.chipText}>{`:${mm}`}</Text>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
+        ) : null}
+      </View>
+      <View style={styles.row}>
+        <Column
+          title="Hour"
+          values={HOURS}
+          selected={parts ? parts.hour : null}
+          onPick={(v) => set({ hour: v as number })}
+          testPrefix="time-hour"
+          scroll
+        />
+        <Column
+          title="Min"
+          values={MINUTES}
+          selected={parts ? parts.minute : null}
+          onPick={(v) => set({ minute: v as string })}
+          testPrefix="time-minute"
+        />
+        <Column
+          title="AM/PM"
+          values={MERIDIEMS}
+          selected={parts ? parts.meridiem : null}
+          onPick={(v) => set({ meridiem: v as string })}
+          testPrefix="time-meridiem"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.xs },
-  chip: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: spacing.xs,
+  labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
+  label: { flexShrink: 1, fontSize: 12, color: colors.textMuted },
+  clear: { fontSize: 12, color: colors.info, fontWeight: typography.weight.bold },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  col: { flex: 1 },
+  header: { textAlign: 'center', fontSize: 12, color: colors.textMuted, marginBottom: spacing.xs },
+  scroll: { height: ROW_H * 4 },
+  cell: {
+    height: ROW_H,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  chipOn: { backgroundColor: colors.text, borderColor: colors.text },
-  chipText: { fontSize: typography.text.body, color: colors.text },
-  chipTextOn: { fontSize: typography.text.body, color: colors.white },
-  minuteRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs },
+  cellOn: { borderBottomColor: colors.info },
+  text: { fontSize: typography.text.body, color: colors.text },
+  textOn: { fontSize: typography.text.body, color: colors.info, fontWeight: typography.weight.bold },
 });

@@ -212,3 +212,9 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 97. "Blackout" is now "Time-off" everywhere you can see it: the Calendar day menu, the Add Time-off screen (#0056), the Upcoming Time-off list, the job Options menu toggle on #0058, the Time-off tech calendar, popups, sync-issue labels and help text. Who can set it is unchanged: a tech for themselves, an admin for anyone. Test: open Calendar #0011, tap a day, look for the Time-off button, then open Admin & Finance and check the Time-off list and Add Time-off screen.
 
 98. Calendar squares are now flat: no rounded buttons, borders or padding, only a thin gray line between days, with the full-box colour fill kept (red time off, green assigned with count badge, blue picked). Today is marked by a bold underlined number; the Today control keeps its plain "Today" label (the blue fill already marks today, and a refresh opens on the current month, Jeff 2026-11-06).
+
+99. The Today control on #0011 Calendar keeps its plain "Today" label (undone from uber 98); the blue fill already marks today and a refresh opens on the current month.
+
+100. On #0011 Calendar, tap an open day: a popup shows the full date, a Time-off button (sets that day red for the signed-in tech) and Close. A time-off day shows its title and notes. A day with jobs shows each job's Job #, name, address and phone (tap to copy) and the job description.
+
+101. The time picker on #0011 Calendar, the day popup and #0058 Job schedule is back to scrolling Hour, Min and AM/PM columns with the picked row highlighted in blue (no wrapped buttons). The month grid is unchanged. Works on phone and tablet widths.

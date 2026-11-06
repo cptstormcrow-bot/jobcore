@@ -5,6 +5,7 @@ import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, s
 import { DayActionSheet, TimePicker, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, ScheduleItemDetail } from '@jobcore/ui';
 import { blackoutScheduleDetail, jobScheduleDetail } from '../domain/schedule-items';
+import * as Clipboard from 'expo-clipboard';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { togglePickedDay } from './blackout-calendar-logic';
@@ -448,6 +449,10 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
+        onCopy={(text) => { void Clipboard.setStringAsync(text); }}
+        {...(effectiveTechId
+          ? { onQuickTimeOff: (d: Date) => onSaveBlackouts([format(d, 'yyyy-MM-dd')], effectiveTechId) }
+          : {})}
         schedulableJobs={(props.schedulableJobs ?? []).filter((j) => !effectiveTechId || j.assignedTechId === effectiveTechId)}
         {...(props.onScheduleJob ? { onConfirmSchedule: props.onScheduleJob } : {})}
         {...(props.onRescheduleJob ? { onRescheduleJob: props.onRescheduleJob } : {})}
