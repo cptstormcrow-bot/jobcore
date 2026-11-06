@@ -312,24 +312,6 @@ export function JobScheduleScreen({
   const assignedTech = job.assignedTechId ? feedEmployees.find((e) => e.id === job.assignedTechId) : undefined;
   const techLabel = job.assignedTechId ? assignedTech?.fullName ?? 'assigned tech' : null;
 
-  function handleAddToSchedule(): void {
-    if (busy) return;
-    if (!job.assignedTechId) {
-      setErrorText('Assign a technician to this job before adding it to the schedule.');
-      return;
-    }
-    if (!draftStart) {
-      setErrorText('Pick a date and time on the calendar first.');
-      return;
-    }
-    if (!changed) {
-      setErrorText(null);
-      setNoticeText('Already on the schedule at that time.');
-      return;
-    }
-    handleSave();
-  }
-
   // Jeff 2026-11-06: Time-off books the assigned tech out for the picked day, like an assigned job.
   async function handleTimeOff(): Promise<void> {
     if (busy) return;
@@ -357,8 +339,23 @@ export function JobScheduleScreen({
     }
   }
 
+  // Jeff 2026-11-06: Save is the one button (Add to schedule merged in). Putting a job on the
+  // calendar needs an assigned tech and a picked slot; removing a saved slot needs neither.
   function handleSave(): void {
-    if (busy || !changed) return;
+    if (busy) return;
+    if (draftStart !== null && !job.assignedTechId) {
+      setErrorText('Assign a technician to this job before saving it to the schedule.');
+      return;
+    }
+    if (draftStart === null && saved.start === null) {
+      setErrorText('Pick a date and time on the calendar first.');
+      return;
+    }
+    if (!changed) {
+      setErrorText(null);
+      setNoticeText('Already on the schedule at that time.');
+      return;
+    }
     if (saved.start === null) {
       void persist(draftStart);
     } else if (draftStart === null) {
@@ -446,14 +443,8 @@ export function JobScheduleScreen({
             <PayrollButton
               label={busy ? 'Saving...' : 'Save'}
               onPress={handleSave}
-              disabled={!changed || busy}
-              testID="schedule-save"
-            />
-            <PayrollButton
-              label="Add to schedule"
-              onPress={handleAddToSchedule}
               disabled={busy}
-              testID="schedule-add"
+              testID="schedule-save"
             />
             <PayrollButton label="Unschedule" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
