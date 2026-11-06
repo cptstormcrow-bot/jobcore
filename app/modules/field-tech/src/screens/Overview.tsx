@@ -20,14 +20,15 @@
 
 import * as React from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { addMonths, format, isSameDay } from 'date-fns';
 
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { ScreenTitle, colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { ScreenTitle, MonthView, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -104,6 +105,9 @@ export function Overview({
   const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  // Assigned-jobs calendar (uber 84): month shown and the day whose jobs are listed beneath it.
+  const [anchorDay, setAnchorDay] = React.useState<Date>(() => new Date());
+  const [selectedDay, setSelectedDay] = React.useState<Date>(() => new Date());
 
   const activeDrillLabel = activeTile ? activeTile.label : null;
   React.useEffect(() => {
@@ -332,9 +336,47 @@ export function Overview({
     );
   }
 
+  const assignedForCalendar = jobLists.assigned ?? [];
+  const selectedDayJobs = assignedForCalendar
+    .filter((job) => job.scheduledStart != null && isSameDay(new Date(job.scheduledStart), selectedDay))
+    .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime());
+  const isCurrentMonth = isSameDay(anchorDay, new Date());
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <ScreenTitle title="Overview" />
+      <View style={styles.groupCard}>
+        <Text style={styles.groupTitle}>My Schedule</Text>
+        <View style={styles.calendarNav}>
+          <PayrollButton label="<" onPress={() => setAnchorDay((d) => addMonths(d, -1))} />
+          <PayrollButton
+            label={isCurrentMonth ? 'Today' : format(anchorDay, 'MMMM yyyy')}
+            onPress={() => {
+              setAnchorDay(new Date());
+              setSelectedDay(new Date());
+            }}
+            style={styles.navCenter}
+          />
+          <PayrollButton label=">" onPress={() => setAnchorDay((d) => addMonths(d, 1))} />
+        </View>
+        <MonthView
+          jobs={assignedForCalendar}
+          anchorDay={anchorDay}
+          variant="list"
+          onSelectDay={(day: Date) => setSelectedDay(day)}
+          onSelectJob={(job: Job) => onOpenJob?.(job.id)}
+        />
+        <Text style={styles.groupTitle}>{format(selectedDay, 'EEEE MMM d')}</Text>
+        {selectedDayJobs.length === 0 ? <Text style={styles.emptyText}>No assigned jobs this day.</Text> : null}
+        {selectedDayJobs.map((job) => (
+          <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.row}>
+            <Text style={styles.cardValue}>
+              {format(new Date(job.scheduledStart as string), 'h:mm a')}  {job.jobNumber != null ? `#${job.jobNumber}` : 'Job'} {job.customerName ?? ''}
+            </Text>
+            <Text style={styles.cardLabel}>{job.address ?? ''}</Text>
+          </Pressable>
+        ))}
+      </View>
       {groups.map((group) => (
         <View key={group.key} style={styles.groupCard}>
           {group.key === 'jobs' ? (
@@ -366,14 +408,25 @@ export function Overview({
           </View>
         </View>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+  },
+  container: {
     padding: spacing.md,
+  },
+  calendarNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginBottom: spacing.xs,
+  },
+  navCenter: {
+    flex: 1,
   },
   centered: {
     flex: 1,
