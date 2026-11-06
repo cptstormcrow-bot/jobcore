@@ -185,7 +185,9 @@ export function JobScheduleScreen({
   const calendarTimeOff: TimeOffEvent[] =
     showBlackouts === false
       ? []
-      : feedTimeOff.map((r) => ({
+      : feedTimeOff
+          .filter((r) => r.status !== 'cancelled' && r.status !== 'denied')
+          .map((r) => ({
           id: r.id,
           title: r.reason ?? 'Time-off',
           description: r.reason,
