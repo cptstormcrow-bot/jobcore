@@ -322,7 +322,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
     <View style={styles.container}>
       {!embedded && onBack ? <PayrollButton label="Back to Job" onPress={onBack} /> : null}
       {!embedded && <ScreenTitle title="Prem Checklist #0061" />}
-      {embedded && <Text style={styles.title}>Prem Checklist</Text>}
       {headerSlot}
       {!embedded && (
         <>
