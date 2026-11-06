@@ -18,13 +18,13 @@ export type JobProgressBarProps = {
   nextStep: string;
   onStagePress?: (key: string) => void;
   disabledKeys?: string[];
-  /** Stage key whose screen is currently in view; its dot renders 20% larger (double breadcrumb with the menu). */
+  /** Stage key whose screen is currently in view; its dot renders 40% larger (double breadcrumb with the menu). */
   activeKey?: string;
   testID?: string;
 };
 
 const DOT = 18;
-const DOT_ACTIVE = DOT * 1.2; // 21.6 - current-screen badge
+const DOT_ACTIVE = DOT * 1.4; // 25.2 - current-screen badge (Jeff 2026-11-06: 20% was not enough)
 const STATE_COLOR: Record<StageState, string> = {
   gray: colors.textMuted,
   green: colors.success,
