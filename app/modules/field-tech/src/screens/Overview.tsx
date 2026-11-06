@@ -21,15 +21,14 @@
 import * as React from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { addMonths, format, isSameDay } from 'date-fns';
+import { format } from 'date-fns';
 
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { CLOSED_JOB_STATUSES, expandTimeOffToEvents } from './day-list-helpers';
-import type { TimeOffEvent } from '@jobcore/ui';
-import { ScreenTitle, MonthView, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { CLOSED_JOB_STATUSES } from './day-list-helpers';
+import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -104,13 +103,8 @@ export function Overview({
   const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
   const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
   const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
-  // Same time-off entries the Jobs tab calendar (#0025) shows, so both calendars match.
-  const [timeOffEvents, setTimeOffEvents] = React.useState<TimeOffEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  // Assigned-jobs calendar (uber 84): month shown and the day whose jobs are listed beneath it.
-  const [anchorDay, setAnchorDay] = React.useState<Date>(() => new Date());
-  const [selectedDay, setSelectedDay] = React.useState<Date>(() => new Date());
 
   const activeDrillLabel = activeTile ? activeTile.label : null;
   React.useEffect(() => {
@@ -196,7 +190,6 @@ export function Overview({
       if (!cancelled) {
         setJobLists(lists);
         setPremsClaimed(claimed);
-        setTimeOffEvents(expandTimeOffToEvents(timeOffRequests));
         setCounts({
           assignedJobs: assignedJobs.length,
           openJobs: openJobs.length,
@@ -340,46 +333,33 @@ export function Overview({
     );
   }
 
-  const assignedForCalendar = jobLists.assigned ?? [];
-  const selectedDayJobs = assignedForCalendar
-    .filter((job) => job.scheduledStart != null && isSameDay(new Date(job.scheduledStart), selectedDay))
-    .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime());
-  const isCurrentMonth = isSameDay(anchorDay, new Date());
+  const assignedForList = jobLists.assigned ?? [];
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <ScreenTitle title="Overview" />
       <View style={styles.groupCard}>
-        <Text style={styles.groupTitle}>My Schedule</Text>
-        <View style={styles.calendarNav}>
-          <PayrollButton label="<" onPress={() => setAnchorDay((d) => addMonths(d, -1))} />
-          <PayrollButton
-            label={isCurrentMonth ? 'Today' : format(anchorDay, 'MMMM yyyy')}
-            onPress={() => {
-              setAnchorDay(new Date());
-              setSelectedDay(new Date());
-            }}
-            style={styles.navCenter}
-          />
-          <PayrollButton label=">" onPress={() => setAnchorDay((d) => addMonths(d, 1))} />
-        </View>
-        <MonthView
-          jobs={assignedForCalendar}
-          anchorDay={anchorDay}
-          timeOffEvents={timeOffEvents}
-          onSelectDay={(day: Date) => setSelectedDay(day)}
-          onSelectJob={(job: Job) => onOpenJob?.(job.id)}
-        />
-        <Text style={styles.groupTitle}>{format(selectedDay, 'EEEE MMM d')}</Text>
-        {selectedDayJobs.length === 0 ? <Text style={styles.emptyText}>No assigned jobs this day.</Text> : null}
-        {selectedDayJobs.map((job) => (
-          <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.row}>
-            <Text style={styles.cardValue}>
-              {format(new Date(job.scheduledStart as string), 'h:mm a')}  {job.jobNumber != null ? `#${job.jobNumber}` : 'Job'} {job.customerName ?? ''}
-            </Text>
-            <Text style={styles.cardLabel}>{job.address ?? ''}</Text>
-          </Pressable>
-        ))}
+        <Text style={styles.groupTitle}>Assigned Jobs</Text>
+        {assignedForList.length === 0 ? <Text style={styles.emptyText}>No assigned jobs.</Text> : null}
+        {assignedForList.map((job) => {
+          const when =
+            job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled');
+          return (
+            <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.assignedRow}>
+              <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
+              <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
+              <View style={styles.assignedBody}>
+                <Text style={styles.cardValue} numberOfLines={1}>
+                  {job.jobNumber != null ? `#${job.jobNumber} ` : ''}{job.customerName ?? 'No customer'}
+                </Text>
+                <Text style={styles.cardLabel} numberOfLines={1}>
+                  {(job.address ?? 'No address') + (job.customerPhone ? `  •  ${job.customerPhone}` : '') + `  •  ${when}`}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+        <PayrollButton label="Open calendar" onPress={() => onOpenJobs?.()} style={styles.calendarLink} />
       </View>
       {groups.map((group) => (
         <View key={group.key} style={styles.groupCard}>
@@ -423,14 +403,28 @@ const styles = StyleSheet.create({
   container: {
     padding: spacing.md,
   },
-  calendarNav: {
+  assignedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.xs,
+    paddingVertical: spacing.xs,
   },
-  navCenter: {
+  assignedBody: {
     flex: 1,
+  },
+  statusChip: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: spacing.xs,
+  },
+  statusGlyph: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text,
+    marginRight: spacing.sm,
+  },
+  calendarLink: {
+    marginTop: spacing.xs,
   },
   centered: {
     flex: 1,
