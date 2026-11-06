@@ -1,5 +1,5 @@
 // JobCore shared Universal Calendar (admin + tech) - month/week/day with blackout day-picking and time-off requests (replaces #0031).
-import React, { useEffect, useRef, useState, type ReactNode } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { DayActionSheet, TimePicker, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
@@ -126,14 +126,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
-  const autoPicked = useRef(false);
-  useEffect(() => {
-    if (autoPicked.current) return;
-    if (role !== 'tech' && !defaultFilters?.techId && viewerId && techs.some((t) => t.id === viewerId)) {
-      autoPicked.current = true;
-      setTechFilter(viewerId);
-    }
-  });
+  // Admins start on "All Techs" so every tech's jobs (open or closed) show green; the picker narrows it.
   const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
 
   const calendarJobs = jobs
@@ -270,7 +263,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       ? timeOffRequests
           .filter(
             (r) =>
-              r.techId === effectiveTechId && (r.status === 'pending' || r.status === 'approved') && r.endDate >= todayKey,
+              r.techId === effectiveTechId && r.status !== 'cancelled' && r.status !== 'denied' && r.endDate >= todayKey,
           )
           .slice(0, 3)
       : [];
