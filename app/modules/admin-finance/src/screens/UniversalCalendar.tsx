@@ -400,7 +400,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         onPrev={handlePrev}
         onNext={handleNext}
         onToday={handleToday}
-        anchorDay={anchor}
       />
       {mode === 'month' ? (
         <MonthView

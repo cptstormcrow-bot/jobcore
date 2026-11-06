@@ -168,7 +168,6 @@ export function DateRangeCalendar({
         onPrev={handlePrev}
         onNext={handleNext}
         onToday={handleToday}
-        anchorDay={anchorDay}
       />
 
       {mode === 'week' ? (

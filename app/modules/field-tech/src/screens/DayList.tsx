@@ -165,8 +165,11 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
 
   const step = (dir: 1 | -1) =>
     setAnchorDay((d) => (viewMode === 'week' ? addDays(d, 7 * dir) : addMonths(d, dir)));
-  // Shows today's date while pointed at today; otherwise the way back (Jeff 2026-11-06).
-  const anchorLabel = isSameDay(anchorDay, new Date()) ? format(new Date(), 'EEE, MMM d') : 'Back to Today';
+  const anchorLabel = isSameDay(anchorDay, new Date())
+    ? 'Today'
+    : viewMode === 'week'
+      ? format(anchorDay, 'EEE, MMM d')
+      : format(anchorDay, 'MMMM yyyy');
 
   const calendarNav = (
     <View style={styles.calendarNav}>

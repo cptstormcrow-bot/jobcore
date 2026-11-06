@@ -215,7 +215,6 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
             onPrev={() => step(-1)}
             onNext={() => step(1)}
             onToday={() => setAnchorDay(new Date())}
-            anchorDay={anchorDay}
           />
           {mode === 'week' ? (
             <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={openModal} />
