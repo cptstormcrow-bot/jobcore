@@ -27,7 +27,8 @@ import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { CLOSED_JOB_STATUSES } from './day-list-helpers';
+import { CLOSED_JOB_STATUSES, expandTimeOffToEvents } from './day-list-helpers';
+import type { TimeOffEvent } from '@jobcore/ui';
 import { ScreenTitle, MonthView, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
@@ -103,6 +104,8 @@ export function Overview({
   const [jobLists, setJobLists] = React.useState<Record<string, Job[]>>({});
   const [activeTile, setActiveTile] = React.useState<{ key: TileKey; label: string } | null>(null);
   const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
+  // Same time-off entries the Jobs tab calendar (#0025) shows, so both calendars match.
+  const [timeOffEvents, setTimeOffEvents] = React.useState<TimeOffEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   // Assigned-jobs calendar (uber 84): month shown and the day whose jobs are listed beneath it.
@@ -193,6 +196,7 @@ export function Overview({
       if (!cancelled) {
         setJobLists(lists);
         setPremsClaimed(claimed);
+        setTimeOffEvents(expandTimeOffToEvents(timeOffRequests));
         setCounts({
           assignedJobs: assignedJobs.length,
           openJobs: openJobs.length,
@@ -362,7 +366,7 @@ export function Overview({
         <MonthView
           jobs={assignedForCalendar}
           anchorDay={anchorDay}
-          variant="list"
+          timeOffEvents={timeOffEvents}
           onSelectDay={(day: Date) => setSelectedDay(day)}
           onSelectJob={(job: Job) => onOpenJob?.(job.id)}
         />
