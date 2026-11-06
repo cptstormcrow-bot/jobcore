@@ -1414,6 +1414,10 @@ export function AdminFinanceRoot() {
           jobs={loadState.jobs.filter((job) => isBetaVisible(job, showTestJobs))}
           employees={loadState.employees}
           timeOffRequests={loadState.timeOffRequests}
+          lookupCustomer={async (id) => {
+            const c = await ports.customers.getById(id);
+            return c ? { name: c.name ?? null, phone: c.phone ?? null, address: c.address ?? null } : null;
+          }}
           onSelectJob={handleCalendarSelectJob}
           onSubmitTimeOff={async (draft, techId) => {
             await ports.timeOffAdmin.createBlackout(orgId!, techId, draft);

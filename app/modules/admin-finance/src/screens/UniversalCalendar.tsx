@@ -1,5 +1,5 @@
 // JobCore shared Universal Calendar (admin + tech) - month/week/day with blackout day-picking and time-off requests (replaces #0031).
-import React, { useState, type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { DayActionSheet, TimePicker, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
@@ -98,6 +98,8 @@ export interface UniversalCalendarProps {
   onRescheduleJob?: (job: Job, day: Date, time: string) => Promise<void>;
   /** Admin: Remove from schedule on the day sheet clears a job's slot. Throws on failure. */
   onClearJob?: (job: Job) => Promise<void>;
+  /** Host hook: looks up a job's customer so the day popup can show the real phone (jobs rows carry none). */
+  lookupCustomer?: (customerId: string) => Promise<{ name: string | null; phone: string | null; address: string | null } | null>;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -124,6 +126,31 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [popupDetail, setPopupDetail] = useState<ScheduleItemDetail | null>(null);
   const [popupRequestId, setPopupRequestId] = useState<string | null>(null);
+  const [customerInfo, setCustomerInfo] = useState<Record<string, { name: string | null; phone: string | null; address: string | null }>>({});
+  const { lookupCustomer } = props;
+  useEffect(() => {
+    if (!sheetDay || !lookupCustomer) return;
+    const ids = Array.from(
+      new Set(
+        jobs
+          .filter((j) => j.customerId && j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay) && !customerInfo[j.customerId] && !j.customerPhone?.trim())
+          .map((j) => j.customerId as string),
+      ),
+    );
+    if (ids.length === 0) return;
+    let live = true;
+    void Promise.all(ids.map((id) => lookupCustomer(id).then((c) => [id, c] as const).catch(() => [id, null] as const))).then((pairs) => {
+      if (!live) return;
+      setCustomerInfo((prev) => {
+        const next = { ...prev };
+        for (const [id, c] of pairs) if (c) next[id] = c;
+        return next;
+      });
+    });
+    return () => {
+      live = false;
+    };
+  }, [sheetDay, jobs, lookupCustomer, customerInfo]);
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
@@ -148,6 +175,16 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
     );
   // The grids label the address with the tech's name; the day popup shows the job's real address.
   const plainJobs = new Map(jobs.map((j) => [j.id, j]));
+  const withCustomer = (job: Job): Job => {
+    const c = job.customerId ? customerInfo[job.customerId] : undefined;
+    if (!c) return job;
+    return {
+      ...job,
+      customerName: job.customerName ?? c.name,
+      customerPhone: job.customerPhone?.trim() ? job.customerPhone : c.phone,
+      address: job.address?.trim() ? job.address : c.address,
+    };
+  };
   const timeOffEvents = toCalendarTimeOffEvents(timeOffRequests, techNameById).filter(
     (e) => !effectiveTechId || e.techId === effectiveTechId,
   );
@@ -458,7 +495,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         day={sheetDay}
         time={pickTime}
         onTimeChange={setPickTime}
-        jobs={sheetDay ? calendarJobs.map((j) => plainJobs.get(j.id) ?? j).filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
+        jobs={sheetDay ? calendarJobs.map((j) => withCustomer(plainJobs.get(j.id) ?? j)).filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
         onCopy={(text) => { void Clipboard.setStringAsync(text); }}
