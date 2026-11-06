@@ -4,8 +4,8 @@
  *
  * A `JobAction` target for the shared Job Detail screen: given the job already
  * selected on that screen, lets an admin pick a scheduled start date+time on an
- * inline month calendar with hour / minute / AM-PM columns (`SchedulePicker`
- * from `@jobcore/ui`) and save it. The SAVED slot is shown in bold above the
+ * window-filling month grid (`MonthView` list variant, same layout as #0011) with the
+ * hour picker (`TimePicker`) in the top row beside the buttons, and save it. The SAVED slot is shown in bold above the
  * calendar. Save / Clear / Cancel sit in a row at the top:
  *   - Save is enabled only when the picked start differs from the saved start.
  *   - Clear empties the picked start (draft only).
@@ -39,12 +39,15 @@ import {
   JobTitleBarHeader,
   formatJobHeaderLines,
   formatScheduleLabel,
-  SchedulePicker,
+  MonthView,
+  TimePicker,
   ScheduleItemPopup,
   formatSlotHeading,
   slotsEqual,
   slotDurationMinutes,
   deriveEndIso,
+  isoToLocalParts,
+  localPartsToIso,
   colors,
   spacing,
   compact,
@@ -54,6 +57,8 @@ import {
 } from '@jobcore/ui';
 import type { ScheduleItemDetail } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
+import { addMonths, format } from 'date-fns';
+import type { TimeOffEvent } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -115,6 +120,8 @@ export function JobScheduleScreen({
   const [feedTimeOff, setFeedTimeOff] = useState<TimeOffRequestAdmin[]>([]);
   const [feedRev, setFeedRev] = useState(0);
   const popupToken = useRef(0);
+  // The month shown (and the highlighted day) on the shared calendar layout.
+  const [anchorDay, setAnchorDay] = useState<Date>(() => (job.scheduledStart ? new Date(job.scheduledStart) : new Date()));
 
   // Re-sync the saved slot when the parent hands us a new schedule for this job.
   useEffect(() => {
@@ -163,6 +170,62 @@ export function JobScheduleScreen({
     employees: feedEmployees,
     currentJobId: job.id,
   });
+
+  // The calendar returns to the saved slot's month whenever the draft is reset.
+  useEffect(() => {
+    setAnchorDay(saved.start ? new Date(saved.start) : new Date());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pickerKey]);
+
+  // Same calendar layout as #0011: entries for every schedulable job (the current job shown at its draft slot) and blackouts.
+  const listedIds = new Set(items.filter((i) => i.id.startsWith('job:')).map((i) => i.id.slice(4)));
+  const calendarJobs: Job[] = feedJobs
+    .filter((j) => j.id !== job.id && listedIds.has(j.id))
+    .concat(draftStart ?[{ ...job, scheduledStart: draftStart, scheduledEnd: draftEnd }] : []);
+  const calendarTimeOff: TimeOffEvent[] =
+    showBlackouts === false
+      ? []
+      : feedTimeOff.map((r) => ({
+          id: r.id,
+          title: r.reason ?? 'Blackout',
+          description: r.reason,
+          eventTime: r.startDate,
+          techId: r.techId,
+          startDate: r.startDate,
+          endDate: r.endDate,
+        }));
+
+  const pickedTime = draftStart ? format(new Date(draftStart), 'h:mm a') : null;
+
+  function pickTime(time: string | null): void {
+    if (!time) return;
+    const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(time);
+    if (!m) return;
+    const h12 = Number(m[1]) % 12;
+    const hour24 = h12 + (m[3] === 'PM' ? 12 : 0);
+    const base = draftStart ? isoToLocalParts(draftStart) : null;
+    setDraftStart(
+      localPartsToIso({
+        year: base?.year ?? anchorDay.getFullYear(),
+        month: base?.month ?? anchorDay.getMonth(),
+        day: base?.day ?? anchorDay.getDate(),
+        hour24,
+        minute: Number(m[2]),
+      }),
+    );
+    setErrorText(null);
+  }
+
+  function pickDay(isoDay: string): void {
+    const [y, mo, d] = isoDay.split('-').map(Number);
+    if (!y || !mo || !d) return;
+    const base = draftStart ? isoToLocalParts(draftStart) : null;
+    setDraftStart(
+      localPartsToIso({ year: y, month: mo - 1, day: d, hour24: base?.hour24 ?? 9, minute: base?.minute ?? 0 }),
+    );
+    setAnchorDay(new Date(y, mo - 1, d));
+    setErrorText(null);
+  }
 
   function resetDraft(): void {
     setDraftStart(saved.start);
@@ -355,6 +418,9 @@ export function JobScheduleScreen({
             />
             <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
+            <View testID="schedule-hour-picker" style={styles.hourPicker}>
+              <TimePicker value={pickedTime} onChange={pickTime} />
+            </View>
           </View>
 
           <Text style={styles.hintText} testID="schedule-tech">
@@ -367,15 +433,32 @@ export function JobScheduleScreen({
             {formatSlotHeading(saved.start, saved.end)}
           </Text>
 
-          <SchedulePicker
-            key={pickerKey}
-            value={draftStart}
-            onChange={setDraftStart}
-            items={items}
-            showBlackouts={showBlackouts ?? true}
-            onSelectItem={handleSelectItem}
-            initialMonthIso={saved.start}
-          />
+          <View style={styles.navRow}>
+            <PayrollButton label="Prev" onPress={() => setAnchorDay(addMonths(anchorDay, -1))} testID="schedule-prev" />
+            <Text numberOfLines={1} style={styles.monthLabel}>{format(anchorDay, 'MMMM yyyy')}</Text>
+            <PayrollButton label="Next" onPress={() => setAnchorDay(addMonths(anchorDay, 1))} testID="schedule-next" />
+          </View>
+
+          <View testID="schedule-calendar" style={styles.calendarWrap}>
+            <MonthView
+              variant="list"
+              jobs={calendarJobs}
+              anchorDay={anchorDay}
+              timeOffEvents={calendarTimeOff}
+              onDayPress={pickDay}
+              onSelectJob={(j) =>
+                handleSelectItem({
+                  id: `job:${j.id}`,
+                  startIso: j.scheduledStart ?? '',
+                  endIso: j.scheduledEnd ?? null,
+                  isCurrent: j.id === job.id,
+                })
+              }
+              onSelectTimeOff={(ev) =>
+                handleSelectItem({ id: `blackout:${ev.id}`, startIso: String(ev.eventTime), endIso: null })
+              }
+            />
+          </View>
         </Card>
       </Root>
 
@@ -438,10 +521,26 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.sm,
+    flexGrow: 1,
   },
   card: {
     marginBottom: spacing.sm,
+    flexGrow: 1,
   },
+  hourPicker: { flexGrow: 1, flexShrink: 1, minWidth: 260 },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  monthLabel: {
+    color: colors.text,
+    fontSize: typography.text.title,
+    fontFamily: typography.fontFamily.headingBold,
+  },
+  calendarWrap: { flex: 1, minHeight: 480 },
   backRow: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
