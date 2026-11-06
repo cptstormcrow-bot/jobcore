@@ -37,6 +37,7 @@ import { moduleSwitcherItems } from '@jobcore/module-sdk';
 import type { PayoutBatch } from '../money/payout-batch';
 import { getModulePorts } from '../lib/module-ports';
 import { useModuleSession } from '../lib/module-session';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { awaitingCloseOut } from '../domain/closeout';
 import { buildOverviewCards } from '../domain/overview-cards';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -293,6 +294,16 @@ export function AdminFinanceRoot() {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, timeOffRequests } : prev));
     }, () => {});
   }
+
+  // The saved-copy revision moves on a drain, a foreground poll, or a changed fetch: reload the
+  // job list then, so another device's completion shows without leaving this screen.
+  const cacheRev = useReadCacheRevision();
+  const lastCacheRevRef = useRef(cacheRev);
+  useEffect(() => {
+    if (lastCacheRevRef.current === cacheRev) return;
+    lastCacheRevRef.current = cacheRev;
+    refreshJobs();
+  }, [cacheRev]);
 
   const hasFocusedOnceRef = useRef(false);
   useFocusEffect(

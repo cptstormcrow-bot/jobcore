@@ -16,6 +16,7 @@ import {
 export { buildReadCacheKey };
 
 const BACKGROUND_STALE_MS = 30_000;
+const FOREGROUND_REFRESH_MS = 45_000;
 const lastFetchAt = new Map<string, number>();
 const inflight = new Map<string, Promise<unknown>>();
 const failedKeys = new Set<string>();
@@ -209,8 +210,14 @@ export function ReadCacheProvider({ children }: { children: ReactNode }): ReactN
         bgAt = null;
       }
     });
+    // Foreground poll: another device's changes (a tablet completing a job) never reach this
+    // phone otherwise while it stays open on one screen. Only while active and online.
+    const poll = setInterval(() => {
+      if (AppState.currentState === 'active' && isOnlineNow()) invalidate();
+    }, FOREGROUND_REFRESH_MS);
     return () => {
       off();
+      clearInterval(poll);
       sub.remove();
       if (userId) clearStaleFor(userId);
     };
