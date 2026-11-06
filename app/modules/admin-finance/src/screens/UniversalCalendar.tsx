@@ -123,6 +123,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [pickTime, setPickTime] = useState<string | null>(null);
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [popupDetail, setPopupDetail] = useState<ScheduleItemDetail | null>(null);
+  const [popupRequestId, setPopupRequestId] = useState<string | null>(null);
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
@@ -156,7 +157,13 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
     if (!request) return;
     const whenLabel =
       request.startDate === request.endDate ? request.startDate : `${request.startDate} to ${request.endDate}`;
+    setPopupRequestId(request.id);
     setPopupDetail(blackoutScheduleDetail(request, techNameById.get(request.techId), whenLabel));
+  }
+
+  function closePopup(): void {
+    setPopupDetail(null);
+    setPopupRequestId(null);
   }
 
   function handlePrev(): void {
@@ -474,8 +481,20 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       <ScheduleItemPopup
         visible={popupDetail !== null}
         detail={popupDetail}
-        onClose={() => setPopupDetail(null)}
-        onOpenJob={() => setPopupDetail(null)}
+        onClose={closePopup}
+        onOpenJob={closePopup}
+        {...(role === 'admin' && props.onCancelTimeOff && popupRequestId
+          ? {
+              clearing: cancellingId === popupRequestId,
+              onClear: () => {
+                const id = popupRequestId;
+                void handleCancelRequest(id).then(() => {
+                  closePopup();
+                  setSheetDay(null);
+                });
+              },
+            }
+          : {})}
       />
     </View>
   );

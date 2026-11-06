@@ -24,15 +24,20 @@ export type ScheduleItemPopupProps = {
   detail: ScheduleItemDetail | null;
   onClose: () => void;
   onOpenJob?: (jobId: string) => void;
+  /** Time-off only: shows a Clear button that cancels the request (admin tools). */
+  onClear?: () => void;
+  clearing?: boolean;
 };
 
 function show(value: string | null | undefined): string {
   return value && value.trim() ? value : '-';
 }
 
-export function ScheduleItemPopup({ visible, detail, onClose, onOpenJob }: ScheduleItemPopupProps) {
+export function ScheduleItemPopup({ visible, detail, onClose, onOpenJob, onClear, clearing }: ScheduleItemPopupProps) {
   if (!detail) return null;
-  const rows: Array<{ label: string; value: string | null | undefined }> = [{ label: 'Name', value: detail.title }];
+  const rows: Array<{ label: string; value: string | null | undefined }> = [
+    { label: detail.kind === 'blackout' ? 'Requested by' : 'Name', value: detail.title },
+  ];
   if (detail.address !== undefined) rows.push({ label: 'Address', value: detail.address });
   if (detail.phone !== undefined) rows.push({ label: 'Phone', value: detail.phone });
   if (detail.description !== undefined) rows.push({ label: 'Description', value: detail.description });
@@ -67,6 +72,15 @@ export function ScheduleItemPopup({ visible, detail, onClose, onOpenJob }: Sched
                     onClose();
                     onOpenJob?.(jobId as string);
                   }}
+                />
+              ) : null}
+              {detail.kind === 'blackout' && onClear ? (
+                <PayrollButton
+                  label={clearing ? 'Clearing...' : 'Clear'}
+                  accessibilityLabel="Clear time-off"
+                  testID="schedule-item-popup-clear"
+                  disabled={!!clearing}
+                  onPress={onClear}
                 />
               ) : null}
               <PayrollButton
