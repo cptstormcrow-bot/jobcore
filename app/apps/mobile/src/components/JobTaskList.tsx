@@ -77,6 +77,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [scanMiss, setScanMiss] = useState(false);
   const [scanTitle, setScanTitle] = useState('');
   const [scanPrice, setScanPrice] = useState('');
+  const [confirmDel, setConfirmDel] = useState<string | null>(null); // two-tap delete on the row header
   const [open, setOpen] = useState<Record<string, boolean>>({}); // rolled-up rows show the title only (Jeff 2026-11-05)
   const edit = mode === 'edit';
   const isAdmin = session.status === 'authenticated' && (session.profile.role === 'owner' || session.profile.role === 'admin');
@@ -322,8 +323,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     const priceNum = typed ?? (!row.taskType && row.price != null ? row.price : null) ?? (cat?.rate != null ? Math.round(cat.rate * (row.quantity || 1) * 100) / 100 : null);
     return (
       <View key={row.id} style={[styles.row, dim && styles.dim]}>
+        <View style={styles.headWrap}>
         <Pressable
-          style={styles.head}
+          style={[styles.head, styles.flex]}
           disabled={!edit}
           onPress={() => setOpen((p) => ({ ...p, [row.id]: !p[row.id] }))}
           accessibilityRole="button"
@@ -339,6 +341,15 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             <Text style={styles.badge}>Qty {row.quantity}</Text>
           )}
         </Pressable>
+        {edit ? (
+          <PayrollButton
+            label={confirmDel === row.id ? 'Confirm' : 'Delete'}
+            onPress={() => {
+              if (confirmDel === row.id) { setConfirmDel(null); void remove(row); } else setConfirmDel(row.id);
+            }}
+          />
+        ) : null}
+        </View>
         {expanded ? (
         <>
         {edit && !dim && row.kind !== 'misc' ? (
@@ -471,7 +482,6 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             {!dim && isAdmin && row.taskType === 'assembly' && !row.serviceTaskId && (
               <PayrollButton label="To price sheet" onPress={() => void publish(row)} />
             )}
-            <PayrollButton label="Remove" onPress={() => void remove(row)} />
             <PayrollButton label="Add" textStyle={{ fontWeight: '700' }} onPress={() => void addMisc()} />
           </View>
         )}
@@ -582,6 +592,7 @@ const styles = StyleSheet.create({
   root: { gap: spacing.sm },
   row: { gap: spacing.xs, paddingVertical: spacing.xs },
   dim: { opacity: 0.5 },
+  headWrap: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   title: { flex: 1, fontWeight: '600', color: colors.text },
   badge: { color: colors.textMutedDark, fontSize: typography.text.hint },
