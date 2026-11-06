@@ -25,7 +25,7 @@ import {
   isSameDay,
   isBefore,
   isAfter,
-  isWithinInterval,
+  eachDayOfInterval,
 } from 'date-fns';
 import { CalendarHeader, type CalendarMode } from './CalendarHeader';
 import { WeekView, type TimeOffEvent } from './WeekView';
@@ -122,19 +122,15 @@ export function DateRangeCalendar({
       // Consumed by MonthView's range check; WeekView only reads eventTime.
       ...( { startDate: r.startDate, endDate: r.endDate } as any ),
     }));
-    const pendingKey = parsedStart !== null && parsedEnd !== null ? `${toIsoDate(parsedStart)}|${toIsoDate(parsedEnd)}` : null;
-    const alreadyMarked = pendingKey !== null && markedRanges.some((r) => `${r.startDate}|${r.endDate}` === pendingKey);
-    if (!alreadyMarked && parsedStart !== null && parsedEnd !== null && isWithinInterval(parsedEnd, { start: parsedStart, end: parsedEnd })) {
-      events.push({
-        id: '__pending-selection__',
-        title: 'Selected',
-        description: null,
-        eventTime: `${toIsoDate(parsedStart)}T00:00:00`,
-        ...( { startDate: toIsoDate(parsedStart), endDate: toIsoDate(parsedEnd) } as any ),
-      });
-    }
     return events;
-  }, [markedRanges, parsedStart, parsedEnd]);
+  }, [markedRanges]);
+
+  // The range being picked paints blue (the shared "selected" color), not red time-off.
+  const selectedDays: string[] = React.useMemo(() => {
+    if (parsedStart === null) return [];
+    const last = parsedEnd !== null && !isBefore(parsedEnd, parsedStart) ? parsedEnd : parsedStart;
+    return eachDayOfInterval({ start: parsedStart, end: last }).map(toIsoDate);
+  }, [startDate, endDate]);
 
   const label =
     mode === 'month'
@@ -165,6 +161,7 @@ export function DateRangeCalendar({
         mode={mode}
         onModeChange={setMode}
         label={label}
+        labelPosition="above"
         onPrev={handlePrev}
         onNext={handleNext}
         onToday={handleToday}
@@ -173,7 +170,14 @@ export function DateRangeCalendar({
       {mode === 'week' ? (
         <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={timeOffEvents} onSelectDay={handleSelectDay} />
       ) : (
-        <MonthView jobs={[]} anchorDay={anchorDay} timeOffEvents={timeOffEvents} onSelectDay={handleSelectDay} />
+        <MonthView
+          variant="tiles"
+          jobs={[]}
+          anchorDay={anchorDay}
+          timeOffEvents={timeOffEvents}
+          selectedDays={selectedDays}
+          onSelectDay={handleSelectDay}
+        />
       )}
 
       <Text style={styles.rangeSummary}>

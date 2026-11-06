@@ -214,12 +214,13 @@ export function BlackoutEditorScreen(props: BlackoutEditorScreenProps = {}) {
             label={format(anchorDay, mode === 'month' ? 'MMMM yyyy' : "'Week of' MMM d")}
             onPrev={() => step(-1)}
             onNext={() => step(1)}
+            labelPosition="above"
             onToday={() => setAnchorDay(new Date())}
           />
           {mode === 'week' ? (
             <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={openModal} />
           ) : (
-            <MonthView variant="list" jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={openModal} />
+            <MonthView variant="tiles"jobs={[]} anchorDay={anchorDay} timeOffEvents={events} onSelectTimeOff={onPickEvent} onSelectDay={openModal} />
           )}
         </View>
 

@@ -73,12 +73,13 @@ export function TimeOffTechCalendar({ rows, techs }: TimeOffTechCalendarProps) {
         label={format(anchorDay, mode === 'month' ? 'MMMM yyyy' : "'Week of' MMM d")}
         onPrev={() => step(-1)}
         onNext={() => step(1)}
+        labelPosition="above"
         onToday={() => setAnchorDay(new Date())}
       />
       {mode === 'week' ? (
         <WeekView jobs={[]} anchorDay={anchorDay} timeOffEvents={events} />
       ) : (
-        <MonthView variant="list" jobs={[]} anchorDay={anchorDay} timeOffEvents={events} />
+        <MonthView variant="tiles"jobs={[]} anchorDay={anchorDay} timeOffEvents={events} />
       )}
     </View>
   );

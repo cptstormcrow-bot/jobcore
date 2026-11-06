@@ -40,6 +40,9 @@ import {
   formatJobHeaderLines,
   formatScheduleLabel,
   MonthView,
+  WeekView,
+  DayView,
+  CalendarHeader,
   TimePicker,
   ScheduleItemPopup,
   formatSlotHeading,
@@ -57,7 +60,7 @@ import {
 } from '@jobcore/ui';
 import type { ScheduleItemDetail } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
-import { addMonths, format } from 'date-fns';
+import { addDays, addMonths, endOfWeek, format, startOfWeek } from 'date-fns';
 import type { TimeOffEvent } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
@@ -121,6 +124,7 @@ export function JobScheduleScreen({
   const [feedRev, setFeedRev] = useState(0);
   const popupToken = useRef(0);
   // The month shown (and the highlighted day) on the shared calendar layout.
+  const [calMode, setCalMode] = useState<'week' | 'month' | 'day'>('month');
   const [anchorDay, setAnchorDay] = useState<Date>(() => (job.scheduledStart ? new Date(job.scheduledStart) : new Date()));
 
   // Re-sync the saved slot when the parent hands us a new schedule for this job.
@@ -462,13 +466,45 @@ export function JobScheduleScreen({
             {formatSlotHeading(saved.start, saved.end)}
           </Text>
 
-          <View style={styles.navRow}>
-            <PayrollButton label="Prev" onPress={() => setAnchorDay(addMonths(anchorDay, -1))} testID="schedule-prev" />
-            <Text numberOfLines={1} style={styles.monthLabel}>{format(anchorDay, 'MMMM yyyy')}</Text>
-            <PayrollButton label="Next" onPress={() => setAnchorDay(addMonths(anchorDay, 1))} testID="schedule-next" />
-          </View>
+          <CalendarHeader
+            mode={calMode}
+            onModeChange={setCalMode}
+            label={
+              calMode === 'month'
+                ? format(anchorDay, 'MMMM yyyy')
+                : calMode === 'week'
+                  ? `${format(startOfWeek(anchorDay), 'MMM d')} – ${format(endOfWeek(anchorDay), 'MMM d, yyyy')}`
+                  : format(anchorDay, 'EEE, MMM d, yyyy')
+            }
+            labelPosition="above"
+            onPrev={() => setAnchorDay(calMode === 'month' ? addMonths(anchorDay, -1) : addDays(anchorDay, calMode === 'week' ? -7 : -1))}
+            onNext={() => setAnchorDay(calMode === 'month' ? addMonths(anchorDay, 1) : addDays(anchorDay, calMode === 'week' ? 7 : 1))}
+            onToday={() => setAnchorDay(new Date())}
+          />
 
           <View testID="schedule-calendar" style={styles.calendarWrap}>
+            {calMode === 'week' ? (
+              <WeekView
+                jobs={calendarJobs}
+                anchorDay={anchorDay}
+                timeOffEvents={calendarTimeOff}
+                onDayPress={(d) => pickDay(format(d, 'yyyy-MM-dd'))}
+              />
+            ) : calMode === 'day' ? (
+              <DayView
+                date={anchorDay}
+                jobs={calendarJobs}
+                timeOff={calendarTimeOff}
+                onJobPress={(j) =>
+                  handleSelectItem({
+                    id: `job:${j.id}`,
+                    startIso: j.scheduledStart ?? '',
+                    endIso: j.scheduledEnd ?? null,
+                    isCurrent: j.id === job.id,
+                  })
+                }
+              />
+            ) : (
             <MonthView
               variant="tiles"
               highlightTechId={job.assignedTechId ?? undefined}
@@ -488,6 +524,7 @@ export function JobScheduleScreen({
                 handleSelectItem({ id: `blackout:${ev.id}`, startIso: String(ev.eventTime), endIso: null })
               }
             />
+            )}
           </View>
 
           <View testID="schedule-hour-picker" style={styles.hourPicker}>
@@ -562,18 +599,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   hourPicker: { alignSelf: 'stretch', marginTop: spacing.xs, paddingTop: spacing.xs, borderTopWidth: 1, borderTopColor: colors.border },
-  navRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  monthLabel: {
-    color: colors.text,
-    fontSize: typography.text.title,
-    fontFamily: typography.fontFamily.headingBold,
-  },
   calendarWrap: {},
   backRow: {
     flexDirection: 'row',
