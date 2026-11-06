@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { DayActionSheet, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import { DayActionSheet, TimePicker, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, ScheduleItemDetail } from '@jobcore/ui';
 import { blackoutScheduleDetail, jobScheduleDetail } from '../domain/schedule-items';
 import type { Job } from '@jobcore/core';
@@ -119,6 +119,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [reqSaving, setReqSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [sheetDay, setSheetDay] = useState<Date | null>(null);
+  const [pickTime, setPickTime] = useState<string | null>(null);
   const [showBlackouts, setShowBlackouts] = useState(true);
   const [popupDetail, setPopupDetail] = useState<ScheduleItemDetail | null>(null);
 
@@ -327,6 +328,9 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
             <PayrollButton label="Add Blackout" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
           </View>
         ) : null}
+        <View testID="calendar-hour-picker" style={styles.hourPicker}>
+          <TimePicker value={pickTime} onChange={setPickTime} />
+        </View>
       </View>
       {pickDays ? (
         <View style={styles.pickBar}>
@@ -439,6 +443,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       )}
       <DayActionSheet
         day={sheetDay}
+        time={pickTime}
         jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
@@ -483,6 +488,7 @@ const styles = StyleSheet.create({
   returnText: { color: colors.primary },
   actionRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.xs },
   techSelect: { minWidth: 240 },
+  hourPicker: { flexGrow: 1, flexShrink: 1, minWidth: 260 },
   pickBar: {
     flexDirection: 'row',
     alignItems: 'center',

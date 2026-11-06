@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import type { Job } from '@jobcore/core';
 import { Text } from './Text';
 import { PayrollButton } from './PayrollButton';
+import { TimePicker } from './TimePicker';
 import { colors, radius, spacing, typography } from './tokens';
 
 export interface DayActionBlackout {
@@ -42,13 +43,11 @@ export interface DayActionSheetProps {
   onJobInfo?: (job: Job) => void;
   /** Tap a blackout row to see its details popup. */
   onBlackoutInfo?: (blackout: DayActionBlackout) => void;
-}
-
-const MINUTES = ['00', '15', '30', '45'];
-
-/** Replace the minutes of an "h:mm a" string. */
-function withMinute(time: string, mm: string): string {
-  return time.replace(/:\d\d/, `:${mm}`);
+  /**
+   * When the host screen owns the hour picker (the calendar header), it passes the picked time here
+   * and the sheet shows no picker of its own.
+   */
+  time?: string | null;
 }
 
 export function DayActionSheet({
@@ -67,9 +66,12 @@ export function DayActionSheet({
   onClearJob,
   onJobInfo,
   onBlackoutInfo,
+  time: hostTime,
 }: DayActionSheetProps) {
   // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
-  const [time, setTime] = React.useState<string | null>(null);
+  const [ownTime, setTime] = React.useState<string | null>(null);
+  const hostOwnsTime = hostTime !== undefined;
+  const time = hostOwnsTime ? hostTime : ownTime;
   const [pickedJobId, setPickedJobId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -186,35 +188,12 @@ export function DayActionSheet({
                     ))}
                   </View>
                 ) : null}
-                {onAddJob || (onConfirmSchedule && pickedJob) || (onRescheduleJob && jobs.length > 0) ? (
+                {!hostOwnsTime && (onAddJob || (onConfirmSchedule && pickedJob) || (onRescheduleJob && jobs.length > 0)) ? (
                   <View style={styles.timeBlock}>
-                    <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Start time (optional)'}</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {TIME_SLOTS.map((slot) => (
-                        <Pressable
-                          key={slot}
-                          onPress={() => setTime(time === slot ? null : slot)}
-                          style={[styles.chip, time === slot ? styles.chipOn : null]}
-                        >
-                          <Text numberOfLines={1} style={time === slot ? styles.chipTextOn : styles.chipText}>{slot}</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                    {time ? (
-                      <View style={styles.minuteRow}>
-                        <Text style={styles.timeLabel}>Minute</Text>
-                        {MINUTES.map((mm) => (
-                          <Pressable
-                            key={mm}
-                            onPress={() => setTime(withMinute(time, mm))}
-                            style={[styles.chip, time.includes(`:${mm}`) ? styles.chipOn : null]}
-                          >
-                            <Text style={time.includes(`:${mm}`) ? styles.chipTextOn : styles.chipText}>{`:${mm}`}</Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    ) : null}
+                    <TimePicker value={time} onChange={setTime} />
                   </View>
+                ) : hostOwnsTime ? (
+                  <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour at the top of the calendar'}</Text>
                 ) : null}
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={styles.actions}>
@@ -234,15 +213,6 @@ export function DayActionSheet({
     </Modal>
   );
 }
-
-/** Half-hour slots, 6:00 AM to 8:00 PM. */
-const TIME_SLOTS: string[] = (() => {
-  const out: string[] = [];
-  for (let m = 6 * 60; m <= 20 * 60; m += 30) {
-    out.push(format(new Date(2000, 0, 1, Math.floor(m / 60), m % 60), 'h:mm a'));
-  }
-  return out;
-})();
 
 const styles = StyleSheet.create({
   timeBlock: { marginTop: spacing.md },

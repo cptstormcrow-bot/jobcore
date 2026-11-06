@@ -81,7 +81,7 @@ export function MonthView({
   };
 
   const grid = (
-    <View>
+    <View style={listMode ? styles.gridFill : undefined}>
       <View style={styles.header}>
         {WEEKDAY_LABELS.map((label) => (
           <Text key={label} style={[styles.dayText, styles.dayTextMuted, { width: `${100 / 7}%` }]}>
@@ -90,7 +90,7 @@ export function MonthView({
         ))}
       </View>
       {rows.map((row) => (
-        <View key={row[0]!.toISOString()} style={styles.row}>
+        <View key={row[0]!.toISOString()} style={[styles.row, listMode && styles.rowFill]}>
           {row.map((day) => {
             const dayJobs = jobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day));
             const dayStart = startOfDay(day);
@@ -205,7 +205,7 @@ export function MonthView({
   if (listMode) {
     return (
       <View style={styles.verticalRoot}>
-        <ScrollView style={styles.verticalRoot}>{grid}</ScrollView>
+        <ScrollView style={styles.verticalRoot} contentContainerStyle={styles.scrollFill}>{grid}</ScrollView>
       </View>
     );
   }
@@ -284,6 +284,18 @@ const styles = StyleSheet.create({
   },
   cellList: {
     minHeight: 80,
+    padding: 2,
+  },
+  // List mode stretches the month to the window: the grid fills the scroll area and each week row shares the height.
+  scrollFill: {
+    flexGrow: 1,
+  },
+  gridFill: {
+    flex: 1,
+  },
+  rowFill: {
+    flex: 1,
+    minHeight: 80,
   },
   listItemRow: {
     flexDirection: 'row',
@@ -297,8 +309,9 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   listItemText: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.text,
+    flexShrink: 1,
   },
   timeOffListText: {
     color: colors.danger,

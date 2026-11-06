@@ -20,6 +20,7 @@ export * from './Toggle';
 export * from './WeekView';
 export * from './MonthView';
 export * from './DayActionSheet';
+export * from './TimePicker';
 export * from './DayView';
 export * from './CalendarHeader';
 export * from './DateRangeCalendar';
