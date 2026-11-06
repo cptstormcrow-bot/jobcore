@@ -64,11 +64,13 @@ export interface DayListProps {
    * so a parent screen's ScrollView (Overview #0054) scrolls it.
    */
   embedded?: boolean;
+  /** Rendered between the calendar and Previous Jobs, so Previous Jobs stays the last section (Overview #0054). */
+  children?: React.ReactNode;
 }
 
 export { isScheduledOnLocalDate, expandTimeOffToEvents } from './day-list-helpers';
 
-export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode, onSignIn, embedded }: DayListProps = {}): React.ReactElement {
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode, onSignIn, embedded, children }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const rev = useReadCacheRevision();
   const hasLoadedRef = useRef(false);
@@ -284,6 +286,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
           </Pressable>
         </Pressable>
       </Modal>
+      {children}
       <ScreenTitle title="Previous Jobs" />
       {previousJobs.length === 0 ? (
         <Text style={styles.emptyText}>No completed jobs yet.</Text>

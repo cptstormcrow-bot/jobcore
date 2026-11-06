@@ -354,8 +354,9 @@ export function Overview({
         showTestJobs={showTestJobsProp}
         defaultViewMode={defaultViewMode}
         onSignIn={onSignIn}
-      />
-      {/* One line per stat to drill into (Jeff 2026-11-06: "each need their own line... Not each their own cards"). */}
+      >
+      {/* One line per stat to drill into (Jeff 2026-11-06: "each need their own line... Not each their own cards").
+          Passed as DayList children so Previous Jobs stays the very bottom section (Jeff 2026-11-06). */}
       <View style={styles.lineList}>
         {groups.flatMap((group) =>
           group.stats.map((s) => {
@@ -384,6 +385,7 @@ export function Overview({
           }),
         )}
       </View>
+      </DayList>
     </ScrollView>
   );
 }
