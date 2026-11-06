@@ -49,6 +49,8 @@ export interface DayActionSheetProps {
   onJobInfo?: (job: Job) => void;
   /** Tap a blackout row to see its details popup. */
   onBlackoutInfo?: (blackout: DayActionBlackout) => void;
+  /** Admin only: shows a Clear button beside Time-off details that cancels that time-off request. */
+  onClearBlackout?: (blackout: DayActionBlackout) => void;
   /**
    * When the host screen owns the hour picker (the calendar header), it passes the picked time here
    * and the sheet shows no picker of its own.
@@ -72,6 +74,7 @@ export function DayActionSheet({
   onClearJob,
   onJobInfo,
   onBlackoutInfo,
+  onClearBlackout,
   time: hostTime,
   onCopy,
   onQuickTimeOff,
@@ -207,6 +210,9 @@ export function DayActionSheet({
                     </Pressable>
                     {onOpenBlackout ? (
                       <PayrollButton label="Time-off details" onPress={() => onOpenBlackout(b)} />
+                    ) : null}
+                    {onClearBlackout ? (
+                      <PayrollButton label="Clear" accessibilityLabel="Clear time-off" testID={`day-sheet-clear-${b.id}`} onPress={() => onClearBlackout(b)} />
                     ) : null}
                   </View>
                 ))}

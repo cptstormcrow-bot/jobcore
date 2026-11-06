@@ -459,6 +459,15 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         {...(props.onClearJob ? { onClearJob: props.onClearJob } : {})}
         onJobInfo={handleJobInfo}
         onBlackoutInfo={handleBlackoutInfo}
+        {...(role === 'admin' && props.onCancelTimeOff
+          ? {
+              onClearBlackout: (b: { id: string }) => {
+                const request = timeOffRequests.find((r) => b.id.startsWith(`${r.id}-`));
+                if (!request) return;
+                void handleCancelRequest(request.id).then(() => setSheetDay(null));
+              },
+            }
+          : {})}
         onAddJob={props.onAddJob ? (d, time) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId, time); } : undefined}
         onAddBlackout={(d) => {
           setSheetDay(null);

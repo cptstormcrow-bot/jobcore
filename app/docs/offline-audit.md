@@ -243,3 +243,4 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 
 113. On the #0011 Calendar, an admin can tap a red time-off day, open the time-off entry, see who requested it ("Requested by") and the dates and reason, and press Clear to cancel it. The red day goes away after the refresh. Test: sign in as admin, open Calendar, tap a red day, tap the time-off entry, press Clear; the day is no longer red.
 114. On the #0058 Job Schedule calendar, a cancelled or denied time-off request no longer shows as red days. Test: cancel a time-off request, open a job schedule (#0058); its days are no longer red.
+115. On the day sheet that opens when you tap a day (#0011), admins now see a Clear button right beside Time-off details on each time-off entry. Test: sign in as admin, tap a red day, press Clear; the day is no longer red.
