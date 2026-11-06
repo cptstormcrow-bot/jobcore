@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: typography.text.title,
     fontFamily: typography.fontFamily.headingBold,
-    marginBottom: compact.gap,
+    marginBottom: 0,
   },
   heading: {
     color: colors.text,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: compact.gap,
   },
   overlay: {
     flex: 1,
