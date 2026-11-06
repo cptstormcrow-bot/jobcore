@@ -30,11 +30,11 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!disabled }}
-      hitSlop={compact ? { top: 10, bottom: 10, left: 4, right: 4 } : { top: 6, bottom: 6, left: 4, right: 4 }}
+      hitSlop={compact ? { top: 11, bottom: 11, left: 8, right: 8 } :{ top: 6, bottom: 6, left: 4, right: 4 }}
       testID={testID}
       style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, compact ? styles.compact : null, style]}
     >
-      <Text numberOfLines={1} style={[styles.text, tone === 'danger' ? { color: colors.white } : null, textStyle]}>{label}</Text>
+      <Text numberOfLines={1} style={[styles.text, compact ? styles.compactText : null, tone === 'danger' ? { color: colors.white } : null, textStyle]}>{label}</Text>
     </Pressable>
   );
 }
@@ -52,7 +52,9 @@ const styles = StyleSheet.create({
   },
   // Gray outline so a grayed button stays visible on light screens (Jeff 2026-11-02); padding drops by the border so width holds.
   disabled: { backgroundColor: colors.sandDisabled, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11 },
-  compact: { height: 24 },
+  // Slim Delete: shorter, narrower padding and a smaller label so it stops reading as a full button (Jeff 2026-11-06).
+  compact: { height: 22, paddingHorizontal: 8, borderRadius: 5 },
+  compactText: { fontSize: 12, lineHeight: 14 },
   text: {
     color: '#000',
     fontSize: 13,
