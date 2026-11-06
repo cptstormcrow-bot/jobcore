@@ -131,7 +131,14 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const techNameById = new Map(techs.map((t) => [t.id, t.fullName]));
 
   const calendarJobs = jobs
-    .filter((job) => job.scheduledStart && (!effectiveTechId || job.assignedTechId === effectiveTechId))
+    .filter(
+      (job) =>
+        job.scheduledStart &&
+        job.status !== 'completed' &&
+        job.status !== 'archived' &&
+        job.status !== 'cancelled' &&
+        (!effectiveTechId || job.assignedTechId === effectiveTechId),
+    )
     .map((job) =>
       !effectiveTechId
         ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address ?? 'No address'}` }
