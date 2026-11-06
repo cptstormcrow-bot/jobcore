@@ -2,8 +2,9 @@
 import React, { useEffect, useRef, useState, type ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
-import { DayActionSheet, PayrollButton,SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
-import type { TimeOffEvent, CalendarMode } from '@jobcore/ui';
+import { DayActionSheet, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
+import type { TimeOffEvent, CalendarMode, ScheduleItemDetail } from '@jobcore/ui';
+import { blackoutScheduleDetail, jobScheduleDetail } from '../domain/schedule-items';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { togglePickedDay } from './blackout-calendar-logic';
@@ -92,6 +93,10 @@ export interface UniversalCalendarProps {
   schedulableJobs?: Job[];
   /** Admin: Confirm on the day sheet with a picked job and time schedules that job. Throws on failure. */
   onScheduleJob?: (job: Job, day: Date, time: string) => Promise<void>;
+  /** Admin: Move on the day sheet reschedules a job already on that day to the picked time. Throws on failure. */
+  onRescheduleJob?: (job: Job, day: Date, time: string) => Promise<void>;
+  /** Admin: Remove from schedule on the day sheet clears a job's slot. Throws on failure. */
+  onClearJob?: (job: Job) => Promise<void>;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -114,6 +119,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [reqSaving, setReqSaving] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [sheetDay, setSheetDay] = useState<Date | null>(null);
+  const [showBlackouts, setShowBlackouts] = useState(true);
+  const [popupDetail, setPopupDetail] = useState<ScheduleItemDetail | null>(null);
 
   const effectiveTechId = role === 'tech' ? viewerId : techFilter;
   const techs = employees.filter((e) => e.role === 'tech' && e.active);
@@ -137,6 +144,25 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const timeOffEvents = toCalendarTimeOffEvents(timeOffRequests, techNameById).filter(
     (e) => !effectiveTechId || e.techId === effectiveTechId,
   );
+
+  // #0058-style Show/Hide Blackouts: hides time-off from the grids only; the day sheet still lists them.
+  const shownTimeOff = showBlackouts ? timeOffEvents : [];
+
+  function handleJobInfo(job: Job): void {
+    if (!job.scheduledStart) return;
+    const whenLabel = formatSlotHeading(job.scheduledStart, job.scheduledEnd ?? null);
+    const tech = job.assignedTechId ? techNameById.get(job.assignedTechId) : undefined;
+    const detail = jobScheduleDetail(job, whenLabel);
+    setPopupDetail(tech ? { ...detail, title: `${detail.title} (${tech})` } : detail);
+  }
+
+  function handleBlackoutInfo(b: { id: string }): void {
+    const request = timeOffRequests.find((r) => b.id.startsWith(`${r.id}-`));
+    if (!request) return;
+    const whenLabel =
+      request.startDate === request.endDate ? request.startDate : `${request.startDate} to ${request.endDate}`;
+    setPopupDetail(blackoutScheduleDetail(request, techNameById.get(request.techId), whenLabel));
+  }
 
   function handlePrev(): void {
     setAnchor((prev) => (mode === 'month' ? subMonths(prev, 1) : mode === 'day' ? addDays(prev, -1) : subWeeks(prev, 1)));
@@ -285,6 +311,12 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         <View testID="calendar-blackouts-toggle">
           <PayrollButton label={pickDays ? 'Cancel' : 'Blackouts'} onPress={handleTogglePick} />
         </View>
+        <View testID="calendar-blackouts-visibility">
+          <PayrollButton
+            label={showBlackouts ? 'Hide Blackouts' : 'Show Blackouts'}
+            onPress={() => setShowBlackouts((v) => !v)}
+          />
+        </View>
         {props.onSubmitTimeOff ? (
           <View testID="calendar-timeoff-toggle">
             <PayrollButton label={requesting ? 'Cancel' : 'Request time off'} onPress={handleToggleRequest} />
@@ -370,7 +402,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           variant="list"
           jobs={calendarJobs}
           anchorDay={anchor}
-          timeOffEvents={timeOffEvents}
+          timeOffEvents={shownTimeOff}
           selectedDays={pickDays ? picked : [reqStart, reqEnd].filter((d) => d !== '')}
           onDayPress={dayPickActive ? handleDayPress : undefined}
           onSelectDay={(d) => {
@@ -387,7 +419,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         <WeekView
           jobs={calendarJobs}
           anchorDay={anchor}
-          timeOffEvents={timeOffEvents}
+          timeOffEvents={shownTimeOff}
           onSelectJob={onSelectJob}
           onDayPress={
             dayPickActive
@@ -402,7 +434,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       ) : (
         <>
           {props.renderDayActions?.(anchor)}
-          <DayView date={anchor} jobs={calendarJobs} timeOff={timeOffEvents} onJobPress={onSelectJob} />
+          <DayView date={anchor} jobs={calendarJobs} timeOff={shownTimeOff} onJobPress={onSelectJob} />
         </>
       )}
       <DayActionSheet
@@ -412,6 +444,10 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         onClose={() => setSheetDay(null)}
         schedulableJobs={(props.schedulableJobs ?? []).filter((j) => !effectiveTechId || j.assignedTechId === effectiveTechId)}
         {...(props.onScheduleJob ? { onConfirmSchedule: props.onScheduleJob } : {})}
+        {...(props.onRescheduleJob ? { onRescheduleJob: props.onRescheduleJob } : {})}
+        {...(props.onClearJob ? { onClearJob: props.onClearJob } : {})}
+        onJobInfo={handleJobInfo}
+        onBlackoutInfo={handleBlackoutInfo}
         onAddJob={props.onAddJob ? (d, time) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId, time); } : undefined}
         onAddBlackout={(d) => {
           setSheetDay(null);
@@ -430,6 +466,12 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
           props.onAddBlackout?.(ev?.techId ?? effectiveTechId, day ?? undefined);
         } : undefined}
         onOpenDayView={(d) => { setSheetDay(null); setAnchor(d); setMode('day'); }}
+      />
+      <ScheduleItemPopup
+        visible={popupDetail !== null}
+        detail={popupDetail}
+        onClose={() => setPopupDetail(null)}
+        onOpenJob={() => setPopupDetail(null)}
       />
     </View>
   );

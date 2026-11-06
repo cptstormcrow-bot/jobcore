@@ -233,6 +233,28 @@ export function JobScheduleScreen({
     await persist(null);
   }
 
+  // Jeff 2026-11-06: schedule the job for whichever tech is assigned, in one tap from the picked slot.
+  const assignedTech = job.assignedTechId ? feedEmployees.find((e) => e.id === job.assignedTechId) : undefined;
+  const techLabel = job.assignedTechId ? assignedTech?.fullName ?? 'assigned tech' : null;
+
+  function handleAddToSchedule(): void {
+    if (busy) return;
+    if (!job.assignedTechId) {
+      setErrorText('Assign a technician to this job before adding it to the schedule.');
+      return;
+    }
+    if (!draftStart) {
+      setErrorText('Pick a date and time on the calendar first.');
+      return;
+    }
+    if (!changed) {
+      setErrorText(null);
+      setNoticeText('Already on the schedule at that time.');
+      return;
+    }
+    handleSave();
+  }
+
   function handleSave(): void {
     if (busy || !changed) return;
     if (saved.start === null) {
@@ -325,10 +347,19 @@ export function JobScheduleScreen({
               disabled={!changed || busy}
               testID="schedule-save"
             />
+            <PayrollButton
+              label="Add to schedule"
+              onPress={handleAddToSchedule}
+              disabled={busy}
+              testID="schedule-add"
+            />
             <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
           </View>
 
+          <Text style={styles.hintText} testID="schedule-tech">
+            {techLabel ? `Technician: ${techLabel}` : 'No technician assigned yet.'}
+          </Text>
           {errorText && <Text style={styles.errorText}>{errorText}</Text>}
           {noticeText && !errorText && <Text style={styles.hintText}>{noticeText}</Text>}
 

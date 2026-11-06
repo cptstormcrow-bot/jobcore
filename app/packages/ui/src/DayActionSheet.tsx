@@ -34,6 +34,21 @@ export interface DayActionSheetProps {
   schedulableJobs?: Job[];
   /** Confirm with a picked job and time schedules that job on the tapped day. Should throw on failure. */
   onConfirmSchedule?: (job: Job, day: Date, time: string) => Promise<void>;
+  /** #0058 reschedule: move a scheduled job to the picked time on this day. Should throw on failure. */
+  onRescheduleJob?: (job: Job, day: Date, time: string) => Promise<void>;
+  /** #0058 clear: take a scheduled job off the schedule. Should throw on failure. */
+  onClearJob?: (job: Job) => Promise<void>;
+  /** Tap a job row to see its details popup (#0058 ScheduleItemPopup). */
+  onJobInfo?: (job: Job) => void;
+  /** Tap a blackout row to see its details popup. */
+  onBlackoutInfo?: (blackout: DayActionBlackout) => void;
+}
+
+const MINUTES = ['00', '15', '30', '45'];
+
+/** Replace the minutes of an "h:mm a" string. */
+function withMinute(time: string, mm: string): string {
+  return time.replace(/:\d\d/, `:${mm}`);
 }
 
 export function DayActionSheet({
@@ -48,13 +63,20 @@ export function DayActionSheet({
   onOpenDayView,
   schedulableJobs,
   onConfirmSchedule,
+  onRescheduleJob,
+  onClearJob,
+  onJobInfo,
+  onBlackoutInfo,
 }: DayActionSheetProps) {
   // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
   const [time, setTime] = React.useState<string | null>(null);
   const [pickedJobId, setPickedJobId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Pending reschedule/clear confirmation for one job (#0058 asks "Reschedule?" / "Remove from schedule?").
+  const [pending, setPending] = React.useState<{ jobId: string; kind: 'move' | 'clear' } | null>(null);
   React.useEffect(() => {
+    setPending(null);
     setTime(null);
     setPickedJobId(null);
     setError(null);
@@ -77,6 +99,21 @@ export function DayActionSheet({
     }
     onAddJob?.(d, t);
   };
+  const runPending = async (job: Job, d: Date): Promise<void> => {
+    if (!pending) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (pending.kind === 'move' && time && onRescheduleJob) await onRescheduleJob(job, d, time);
+      if (pending.kind === 'clear' && onClearJob) await onClearJob(job);
+      setPending(null);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not update the schedule.');
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <Modal visible={day !== null} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -89,23 +126,45 @@ export function DayActionSheet({
                   <Text style={styles.empty}>Nothing scheduled.</Text>
                 ) : null}
                 {jobs.map((job) => (
-                  <View key={job.id} style={styles.row}>
-                    <View style={styles.rowText}>
-                      <Text numberOfLines={1} style={styles.rowTitle}>{job.address ?? 'No address'}</Text>
-                      <Text numberOfLines={1} style={styles.rowMeta}>
-                        {[job.customerName, job.scheduledStart ? format(new Date(job.scheduledStart), 'h:mm a') : null]
-                          .filter(Boolean)
-                          .join('  •  ')}
-                      </Text>
+                  <View key={job.id} style={styles.jobBlock}>
+                    <View style={styles.rowInner}>
+                      <Pressable style={styles.rowText} onPress={onJobInfo ? () => onJobInfo(job) : undefined}>
+                        <Text numberOfLines={1} style={styles.rowTitle}>{job.address ?? 'No address'}</Text>
+                        <Text numberOfLines={1} style={styles.rowMeta}>
+                          {[job.customerName, job.scheduledStart ? format(new Date(job.scheduledStart), 'h:mm a') : null]
+                            .filter(Boolean)
+                            .join('  •  ')}
+                        </Text>
+                      </Pressable>
+                      {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
                     </View>
-                    {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
+                    {onRescheduleJob || onClearJob ? (
+                      pending?.jobId === job.id ? (
+                        <View style={styles.pendingRow}>
+                          <Text style={styles.rowMeta}>
+                            {pending.kind === 'move' ? `Reschedule to ${time}?` : 'Remove from schedule?'}
+                          </Text>
+                          {!busy ? <PayrollButton label="Yes" onPress={() => void runPending(job, day)} /> : null}
+                          <PayrollButton label="No" onPress={() => setPending(null)} />
+                        </View>
+                      ) : (
+                        <View style={styles.pendingRow}>
+                          {onRescheduleJob && time ? (
+                            <PayrollButton label={`Move to ${time}`} onPress={() => setPending({ jobId: job.id, kind: 'move' })} />
+                          ) : null}
+                          {onClearJob ? (
+                            <PayrollButton label="Remove from schedule" onPress={() => setPending({ jobId: job.id, kind: 'clear' })} />
+                          ) : null}
+                        </View>
+                      )
+                    ) : null}
                   </View>
                 ))}
                 {blackouts.map((b) => (
                   <View key={b.id} style={styles.row}>
-                    <View style={styles.rowText}>
+                    <Pressable style={styles.rowText} onPress={onBlackoutInfo ? () => onBlackoutInfo(b) : undefined}>
                       <Text numberOfLines={1} style={styles.blackoutTitle}>{b.title ?? 'Blackout'}</Text>
-                    </View>
+                    </Pressable>
                     {onOpenBlackout ? (
                       <PayrollButton label="Blackout details" onPress={() => onOpenBlackout(b)} />
                     ) : null}
@@ -127,7 +186,7 @@ export function DayActionSheet({
                     ))}
                   </View>
                 ) : null}
-                {onAddJob || (onConfirmSchedule && pickedJob) ? (
+                {onAddJob || (onConfirmSchedule && pickedJob) || (onRescheduleJob && jobs.length > 0) ? (
                   <View style={styles.timeBlock}>
                     <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Start time (optional)'}</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -141,6 +200,20 @@ export function DayActionSheet({
                         </Pressable>
                       ))}
                     </ScrollView>
+                    {time ? (
+                      <View style={styles.minuteRow}>
+                        <Text style={styles.timeLabel}>Minute</Text>
+                        {MINUTES.map((mm) => (
+                          <Pressable
+                            key={mm}
+                            onPress={() => setTime(withMinute(time, mm))}
+                            style={[styles.chip, time.includes(`:${mm}`) ? styles.chipOn : null]}
+                          >
+                            <Text style={time.includes(`:${mm}`) ? styles.chipTextOn : styles.chipText}>{`:${mm}`}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
                 ) : null}
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -217,6 +290,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.border,
   },
+  jobBlock: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border, paddingVertical: spacing.sm },
+  rowInner: { flexDirection: 'row', alignItems: 'center' },
+  pendingRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  minuteRow: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm },
   rowText: { flex: 1, marginRight: spacing.sm },
   rowTitle: { fontSize: typography.text.body, color: colors.text },
   rowMeta: { fontSize: 12, color: colors.textMuted },

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { format, parse } from 'date-fns';
-import { colors, deriveEndIso } from '@jobcore/ui';
+import { colors, deriveEndIso, formatSlotHeading, slotDurationMinutes } from '@jobcore/ui';
 import type { Job, JobStatus } from '@jobcore/core';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UniversalCalendar, parseCalendarDate, type UniversalCalendarEmployee } from '../../../../modules/admin-finance/src/screens/UniversalCalendar';
@@ -12,7 +12,7 @@ import type { TimeOffRequestAdmin } from '../../../../modules/admin-finance/src/
 import { setModuleSession as setAdminFinanceSourceModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
 import { useSession } from '../../src/lib/session';
 import { supabase } from '../../src/lib/supabase';
-import { createJobCardExtrasRepository, createJobRepository, createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
+import { createCalendarEventRepository, createJobCardExtrasRepository, createJobRepository, createTimeOffAdminRepository } from '../../src/lib/admin-finance-repos';
 import { createTimeOffRepository } from '../../src/lib/field-tech-repos';
 import { StaleDataHint } from '../../src/components/StaleDataHint';
 import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from '../../src/lib/read-cache';
@@ -295,6 +295,39 @@ export default function CalendarScreen() {
     setScheduleRev((n) => n + 1);
   };
 
+  // #0058-style move / remove from the #0011 day sheet (uber 78). Keeps the saved slot's length and
+  // logs a reschedule event like #0058 does.
+  const logReschedule = async (job: Job, oldStart: string, oldEnd: string | null, newStart: string, newEnd: string): Promise<void> => {
+    try {
+      await createCalendarEventRepository().create(job.organizationId, {
+        jobId: job.id,
+        kind: 'reschedule',
+        title: `Rescheduled: ${formatSlotHeading(oldStart, oldEnd)} -> ${formatSlotHeading(newStart, newEnd)}`,
+        eventTime: new Date().toISOString(),
+      });
+    } catch {
+      // the move itself is saved; the note is best-effort
+    }
+  };
+
+  const onRescheduleJob = async (job: Job, day: Date, time: string): Promise<void> => {
+    if (!job.scheduledStart) throw new Error('This job has no slot to move.');
+    const startDate = parse(time, 'h:mm a', day);
+    if (Number.isNaN(startDate.getTime())) throw new Error('Pick a valid start time.');
+    const scheduledStart = startDate.toISOString();
+    const scheduledEnd = deriveEndIso(scheduledStart, slotDurationMinutes(job.scheduledStart, job.scheduledEnd ?? null));
+    await createJobRepository().updateDetails(job.id, { scheduledStart, scheduledEnd });
+    await logReschedule(job, job.scheduledStart, job.scheduledEnd ?? null, scheduledStart, scheduledEnd);
+    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, scheduledStart, scheduledEnd } : j)));
+    setScheduleRev((n) => n + 1);
+  };
+
+  const onClearJob = async (job: Job): Promise<void> => {
+    await createJobRepository().updateDetails(job.id, { scheduledStart: null, scheduledEnd: null });
+    setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, scheduledStart: null, scheduledEnd: null } : j)));
+    setScheduleRev((n) => n + 1);
+  };
+
   const calendarNode = (
     <UniversalCalendar
         role={isAdminRole ? 'admin' : 'tech'}
@@ -312,6 +345,7 @@ export default function CalendarScreen() {
         }
         schedulableJobs={schedulableJobs}
         onScheduleJob={onScheduleJob}
+        {...(isAdminRole ? { onRescheduleJob, onClearJob } : {})}
         onSaveBlackouts={onSaveBlackouts}
         onSubmitTimeOff={onSubmitTimeOff}
         onCancelTimeOff={onCancelTimeOff}
