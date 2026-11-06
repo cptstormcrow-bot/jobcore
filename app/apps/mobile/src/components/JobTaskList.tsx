@@ -153,8 +153,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
 
   const addCatalog = (id: string) =>
     run(async () => {
-      const row = await repo.addTask(jobId, id, 1);
-      const rate = catalog.find((c) => c.id === id)?.rate;
+      const added = await repo.addTask(jobId, id, 1);
+      const entry = catalog.find((c) => c.id === id);
+      // The optimistic row carries an empty title; name it from the price-sheet entry so it is never untitled.
+      const row = added.title ? added : { ...added, title: entry?.name ?? 'Price-sheet task', name: entry?.name ?? added.name };
+      const rate = entry?.rate;
       if (rate != null) {
         // Firm price = sheet rate x quantity, frozen on the task at drop time.
         const price = Math.round(rate * 100) / 100;
