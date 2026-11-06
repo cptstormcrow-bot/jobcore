@@ -110,8 +110,10 @@ export default function CompleteJobRoute() {
     // One direct save (status + completedAt together) so the screen never waits on the queue.
     const saved = await saveJobStage(job.id, 'completed', { completedAt: new Date().toISOString() });
     await markPaidIfSettled(role ?? '', saved);
-    // The saved row drives the header, so the Complete stage turns green right away.
-    setLoaded((prev) => (prev.kind === 'ready' ? { kind: 'ready', job: saved } : prev));
+    // The saved row drives the header, so the Complete stage turns green right away. The screen
+    // switches to its completed view in place (same Completion instance, so the checked items stay
+    // on screen); it does not navigate away to Estimate #0057.
+    setLoaded((prev) => (prev.kind === 'ready' ? { kind: 'completed', job: saved } : prev));
   };
 
   // Reopen: clearing the start time then setting it again makes the DB open a fresh labor segment
@@ -175,7 +177,8 @@ ${loaded.reason}` : 'This job could not be loaded.'}
     body = (
       <Completion
         job={readyJob}
-        onDone={onDone}
+        // First completion stays on this screen so the checked items are visible (uber 140).
+        onDone={() => undefined}
         persistCompletion={persistCompletion}
         timeSpentSeconds={timeSpentSeconds}
         renderAfterPhotos={({ onCountChange, disabled }) => (
