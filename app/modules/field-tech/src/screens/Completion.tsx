@@ -238,7 +238,11 @@ export function Completion({
       if (!checklistSavedRef.current || (feeWanted && !feeSavedRef.current)) {
         // Best effort: offline with no cached estimate must not block completion; the fee is then skipped.
         try {
-          estimateExists = (await ports.estimates.getForJob(job.id)) !== null;
+          const existing = await ports.estimates.getForJob(job.id);
+          // The database only lets owner/admin/sales change an approved estimate (0093 gate, 42501),
+          // so a tech's fee write on one would be rejected on sync. Skip it instead.
+          const mayEditApproved = /admin|owner|sales/i.test(String(session.role));
+          estimateExists = existing !== null && (existing.status !== 'approved' || mayEditApproved);
         } catch {
           estimateExists = false;
         }
