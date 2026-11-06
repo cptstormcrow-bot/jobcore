@@ -1,6 +1,6 @@
 // JobCore screen #0001 - root-layout - Root Layout
 import React, { useEffect, useRef, useState, type ComponentProps } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform, BackHandler } from 'react-native';
 import { Redirect, Stack, useNavigationContainerRef, useRouter, useSegments, usePathname } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -66,6 +66,17 @@ function AuthGate() {
     return navRef.addListener('state', () => setNavigationReady(true));
   }, [navRef, navigationReady]);
   const router = useRouter();
+  // Last-resort Back: a screen with nothing underneath (deep link, job opened cold) goes to the landing screen, never out of the app.
+  useEffect(() => {
+    if (Platform.OS !== 'android') return undefined;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (router.canGoBack()) return false;
+      if (pathname === '/' || pathname.startsWith('/m/') || pathname === '/sign-in') return true;
+      router.replace('/');
+      return true;
+    });
+    return () => sub.remove();
+  }, [router, pathname]);
   const [checkingAgain, setCheckingAgain] = useState(false);
   const salesBlocked =
     state.status === 'authenticated' && state.profile.role === 'sales' && !onRecovery && !isSalesAllowed(pathname);

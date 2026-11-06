@@ -97,9 +97,9 @@ function FieldTechRoot(): React.ReactElement {
   React.useEffect(() => {
     if (Platform.OS !== 'android') return undefined;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Empty history on a non-home tab goes to Overview; only Overview itself lets Android leave.
+      // Empty history goes to Overview; on Overview Back does nothing. Android never closes the app from here.
       const prev = viewHistory.current.pop() ?? (prevView.current !== 'overview' ? 'overview' : undefined);
-      if (!prev) return false;
+      if (!prev) return true;
       poppingBack.current = true;
       setSubView(prev);
       return true;
