@@ -119,9 +119,11 @@ function Column(props: {
 export function TimePicker({ value, onChange, label }: TimePickerProps) {
   const parts = parse(value);
   const set = (patch: Partial<Parts>) => {
-    const base: Parts = parts ?? { hour: 9, minute: '00', meridiem: 'AM' };
+    const base: Parts = parts ?? { hour: 7, minute: '00', meridiem: 'AM' };
     onChange(join(snap({ ...base, ...patch })));
   };
+  // No time yet: the columns open on 7:00 AM (a preview only; the value stays empty until a column is tapped).
+  const shown: Parts = parts ?? { hour: 7, minute: '00', meridiem: 'AM' };
   const title = label ?? 'Start time';
   return (
     <View>
@@ -137,7 +139,7 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
         <Column
           title="Hour"
           values={HOURS}
-          selected={parts ? parts.hour : null}
+          selected={shown.hour}
           onPick={(v) => set({ hour: v as number })}
           testPrefix="time-hour"
           scroll
@@ -145,14 +147,14 @@ export function TimePicker({ value, onChange, label }: TimePickerProps) {
         <Column
           title="Min"
           values={MINUTES}
-          selected={parts ? parts.minute : null}
+          selected={shown.minute}
           onPick={(v) => set({ minute: v as string })}
           testPrefix="time-minute"
         />
         <Column
           title="AM/PM"
           values={MERIDIEMS}
-          selected={parts ? parts.meridiem : null}
+          selected={shown.meridiem}
           onPick={(v) => set({ meridiem: v as string })}
           testPrefix="time-meridiem"
         />
