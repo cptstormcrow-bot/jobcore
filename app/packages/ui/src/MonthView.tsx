@@ -149,19 +149,19 @@ export function MonthView({
                             { backgroundColor: JOB_STATUS_COLORS[item.status] ?? colors.primary },
                           ]}
                         />
-                        <Text numberOfLines={1} ellipsizeMode="tail" style={styles.listItemText}>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, selected && !picked && styles.dayTextSelected]}>
                           {(JOB_STATUS_GLYPHS[item.status] ?? '•') + ' ' + (item.address ?? 'No address')}
                         </Text>
                       </Pressable>
                     ) : (
                       <Pressable key={item.id} onPress={() => onSelectTimeOff?.(item)}>
-                        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, styles.timeOffListText]}>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, styles.timeOffListText, selected && !picked && styles.dayTextSelected]}>
                           {'• ' + (item.title ?? 'Time off')}
                         </Text>
                       </Pressable>
                     )
                   )}
-                  {overflowCount > 0 && <Text style={styles.moreText}>+{overflowCount} more</Text>}
+                  {overflowCount > 0 && <Text style={[styles.moreText, selected && !picked && styles.dayTextSelected]}>+{overflowCount} more</Text>}
                 </Pressable>
               );
             }
@@ -191,7 +191,7 @@ export function MonthView({
                       style={[styles.dot, { backgroundColor: JOB_STATUS_COLORS[job.status] ?? colors.primary }]}
                     />
                   ))}
-                  {dayJobs.length > 3 && <Text style={styles.moreText}>+{dayJobs.length - 3}</Text>}
+                  {dayJobs.length > 3 && <Text style={[styles.moreText, selected && !picked && styles.dayTextSelected]}>+{dayJobs.length - 3}</Text>}
                 </View>
                 {hasTimeOff && <View style={styles.timeOffBar} />}
               </Pressable>

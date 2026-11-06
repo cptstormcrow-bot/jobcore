@@ -180,3 +180,4 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 72. Job #9, Job screen (Job #0081 / Prem #0061 / Estimate #0057): move through the slide menu. The timeline dot for the screen in view now looks clearly bigger (about 40% larger than the others, not 20%), same colour; no other dot, line or label moves and the big dot is not cut off at the top or bottom. Replaces the size expectation in item 71.
 
 73. Calendar (#0011): tap any day. The selected day shows white numbers on the dark cell, even if that day has time off or jobs. A day shown as picked (sand background) keeps dark numbers.
+74. Calendar (#0011), admin login: tap a day that has time off or jobs. Every piece of text in the selected day is white on the dark cell, including time-off labels, job addresses and "+N more". A picked (sand) day keeps dark text.
