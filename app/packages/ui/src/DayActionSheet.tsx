@@ -180,12 +180,10 @@ export function DayActionSheet({
                           <Text style={styles.fieldLabel}>Address</Text>
                           <View style={styles.fieldValue}>{copyable(job.address ?? 'No address', styles.rowTitle, 'addr')}</View>
                         </View>
-                        {job.customerPhone ? (
-                          <View style={styles.fieldRow}>
-                            <Text style={styles.fieldLabel}>Phone</Text>
-                            <View style={styles.fieldValue}>{copyable(job.customerPhone, styles.rowTitle, 'phone')}</View>
-                          </View>
-                        ) : null}
+                        <View style={styles.fieldRow}>
+                          <Text style={styles.fieldLabel}>Phone</Text>
+                          <View style={styles.fieldValue}>{copyable(job.customerPhone?.trim() ? job.customerPhone : 'No phone', styles.rowTitle, 'phone')}</View>
+                        </View>
                         {job.description ? (
                           <View style={styles.fieldRow}>
                             <Text style={styles.fieldLabel}>Work</Text>
