@@ -88,7 +88,7 @@ const EMPTY_COUNTS: OverviewCounts = {
 };
 
 /**
- * Overview screen: a read-only wrapping grid of count cards summarizing the
+ * Overview screen: a read-only list of one-line count rows (one per stat, tap to drill in) summarizing the
  * signed-in tech's assigned jobs, time off, reimbursements, notes, photos,
  * and checklist instances. No forms, no writes, no navigation.
  */
@@ -355,14 +355,17 @@ export function Overview({
         defaultViewMode={defaultViewMode}
         onSignIn={onSignIn}
       />
-      {groups.map((group) => (
-        <View key={group.key} style={styles.groupCard}>
-          <Text style={styles.groupTitle}>{group.title}</Text>
-          <View style={styles.statsRow}>
-            {group.stats.map((s) => (
+      {/* One line per stat to drill into (Jeff 2026-11-06: "each need their own line... Not each their own cards"). */}
+      <View style={styles.lineList}>
+        {groups.flatMap((group) =>
+          group.stats.map((s) => {
+            const drills = s.key !== 'premsClaimed';
+            return (
               <Pressable
                 key={s.key}
-                style={styles.stat}
+                style={styles.line}
+                accessibilityRole={drills ? 'button' : undefined}
+                testID={`overview-line-${s.key}`}
                 onPress={() => {
                   if (s.key === 'timeOffPending' || s.key === 'timeOffApproved') {
                     onOpenTimeOff?.();
@@ -373,13 +376,14 @@ export function Overview({
                   }
                 }}
               >
-                <Text style={styles.statValue}>{s.value}</Text>
-                <Text style={styles.statLabel}>{s.label}</Text>
+                <Text numberOfLines={1} style={styles.lineLabel}>{`${group.title}: ${s.label}`}</Text>
+                <Text numberOfLines={1} style={styles.lineValue}>{String(s.value)}</Text>
+                <Text numberOfLines={1} style={styles.lineChevron}>{drills ? '›' : ' '}</Text>
               </Pressable>
-            ))}
-          </View>
-        </View>
-      ))}
+            );
+          }),
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -397,33 +401,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.md,
   },
-  groupCard: {
+  lineList: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.divider,
     borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     marginBottom: spacing.sm,
   },
-  groupTitle: {
+  line: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.divider,
+  },
+  lineLabel: {
+    flex: 1,
     fontSize: typography.size.label,
     fontWeight: '600',
-    marginBottom: spacing.xs,
   },
-  statsRow: {
-    flexDirection: 'row',
-  },
-  stat: {
-    flex: 1,
-  },
-  statValue: {
-    fontSize: typography.size.h4,
+  lineValue: {
+    fontSize: typography.size.label,
     fontWeight: '700',
+    marginLeft: spacing.sm,
   },
-  statLabel: {
-    fontSize: 12,
+  lineChevron: {
+    width: 16,
+    marginLeft: spacing.sm,
+    textAlign: 'right',
     color: colors.textMutedDark,
-    marginTop: 2,
   },
   cardValue: {
     fontSize: 22,
