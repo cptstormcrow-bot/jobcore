@@ -10,6 +10,8 @@ import { rememberAccount, listOfflineAccounts, clearActive, type OfflineSnapshot
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
 import { getCached, wipeAll } from './read-cache-store';
+import { discardAllFailed } from './offline-db';
+import { reportDeviceStatus } from './device-status-report';
 import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
 /* ------------------------------------------------------------------ *
@@ -513,6 +515,9 @@ export async function signUp(email: string, password: string): Promise<string | 
 export async function signOut(): Promise<string | null> {
   signOutIntent = true;
   try {
+    // Report the final sync state while still signed in, then drop this login's failed saves.
+    await reportDeviceStatus(true, true).catch(() => {});
+    await discardAllFailed().catch(() => {});
     // A global sign-out needs the network; with no service it fails WITHOUT clearing the
     // local session. Fall back to a local-scope sign-out so signing out always works.
     try {

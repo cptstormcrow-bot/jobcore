@@ -63,6 +63,10 @@ export async function discardFailed(_id: string): Promise<void> {
   // No-op on web.
 }
 
+export async function discardAllFailed(): Promise<void> {
+  // No-op on web.
+}
+
 export async function countStuck(): Promise<number> {
   return 0;
 }

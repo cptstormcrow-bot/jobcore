@@ -228,6 +228,12 @@ export async function discardFailed(id: string): Promise<void> {
   await db.runAsync(`delete from ${OFFLINE_QUEUE_TABLE} where id = ? and status = 'failed'`, id);
 }
 
+/** Drops every failed row. Run on sign-out: the queue is device-wide, so the next login must not inherit them. */
+export async function discardAllFailed(): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(`delete from ${OFFLINE_QUEUE_TABLE} where status = 'failed'`);
+}
+
 export async function markInflight(id: string): Promise<void> {
   const db = await getOfflineDb();
   await db.runAsync(

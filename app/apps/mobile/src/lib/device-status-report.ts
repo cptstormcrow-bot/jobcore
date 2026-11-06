@@ -45,6 +45,20 @@ function jobIdOf(payload: string): string | null {
   }
 }
 
+/** Field names a queued payload tried to write (top level plus a nested patch), so a blocked save names its columns. */
+function payloadKeysOf(payload: string): string[] {
+  try {
+    const p = JSON.parse(payload) as Record<string, unknown>;
+    const keys = new Set(Object.keys(p));
+    for (const nested of [p.patch, p.update, p.fields]) {
+      if (nested && typeof nested === 'object') Object.keys(nested as object).forEach((k) => keys.add(k));
+    }
+    return [...keys].slice(0, 30);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Sends this phone's queue counts to the server. Throttled to one send per
  * 15 seconds unless the online state changed. Offline phones skip the send;
@@ -68,6 +82,7 @@ export async function reportDeviceStatus(isOnline: boolean, force = false): Prom
     const items = rows.map((r) => ({
       op: r.op,
       job_id: jobIdOf(r.payload),
+      payload_keys: payloadKeysOf(r.payload),
       occurred_at: r.occurred_at,
       last_error: r.last_error ? r.last_error.slice(0, 300) : null,
     }));
