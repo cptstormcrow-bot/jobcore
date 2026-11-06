@@ -499,6 +499,28 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   return (
     <View style={styles.root}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
+      <Modal visible={camOpen} animationType="slide" onRequestClose={() => setCamOpen(false)}>
+        <View style={styles.camWrap}>
+          <CameraView
+            style={styles.camView}
+            facing="back"
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'itf14', 'qr', 'datamatrix'] }}
+            onBarcodeScanned={({ data }) => onBarcode(data)}
+          />
+          <View style={styles.actions}>
+            <PayrollButton label="Cancel" onPress={() => setCamOpen(false)} />
+          </View>
+        </View>
+      </Modal>
+      {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
+      {active.map((r) => renderRow(r, false))}
+      {deferred.length > 0 && (
+        <>
+          <Text style={styles.group}>Deferred</Text>
+          {deferred.map((r) => renderRow(r, true))}
+        </>
+      )}
+      {/* Assigned tasks first, then the price-sheet search and SKU scan (Jeff 2026-11-06, uber 83). */}
       {edit && search && (
         <View style={styles.search}>
           <TextField inline dense placeholder="Search price sheet" value={query} onChangeText={setQuery} />
@@ -531,27 +553,6 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             </View>
           )}
         </View>
-      )}
-      <Modal visible={camOpen} animationType="slide" onRequestClose={() => setCamOpen(false)}>
-        <View style={styles.camWrap}>
-          <CameraView
-            style={styles.camView}
-            facing="back"
-            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'itf14', 'qr', 'datamatrix'] }}
-            onBarcodeScanned={({ data }) => onBarcode(data)}
-          />
-          <View style={styles.actions}>
-            <PayrollButton label="Cancel" onPress={() => setCamOpen(false)} />
-          </View>
-        </View>
-      </Modal>
-      {empty && !edit ? <Text style={styles.notes}>No tasks yet.</Text> : null}
-      {active.map((r) => renderRow(r, false))}
-      {deferred.length > 0 && (
-        <>
-          <Text style={styles.group}>Deferred</Text>
-          {deferred.map((r) => renderRow(r, true))}
-        </>
       )}
       {edit && (
         // While the list is empty the hint shares the add line, and drops once a task exists (Jeff 2026-11-03).
