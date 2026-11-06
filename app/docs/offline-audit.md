@@ -232,3 +232,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 107. The white space between the "Schedule #0058" title and the button row (Save, Add to schedule, Clear, Cancel, Time-off) on #0058 Job schedule is reduced.
 
 108. The Time-off button on #0058 Job schedule now only shows when a technician is assigned to the job. #0011 Calendar (no job) keeps its Time-off button.
+
+109. On #0054 Overview, each job in the green-day popup now has an "Open Job #N" button that closes the popup and opens that job in the app.

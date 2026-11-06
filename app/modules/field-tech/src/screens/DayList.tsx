@@ -258,6 +258,14 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                           </Pressable>
                         ) : null}
                         <Text style={styles.window}>{job.requestedWindow ?? job.scheduledStart ?? 'Unscheduled'}</Text>
+                        <PayrollButton
+                          label={job.jobNumber != null ? `Open Job #${job.jobNumber}` : 'Open job'}
+                          testID={`day-popup-open-job-${job.id}`}
+                          onPress={() => {
+                            setSelectedDay(null);
+                            handleOpenJob(job);
+                          }}
+                        />
                       </View>
                     ))}
                   {timeOffEvents
