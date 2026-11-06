@@ -162,6 +162,7 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
                 {port.deleteWeek ? (
                   <PayrollButton
                     label={pendingDelete === key ? 'Tap again to delete' : 'Delete'}
+                    compact
                     onPress={() => tapDelete(w, key)}
                     disabled={busy}
                   />

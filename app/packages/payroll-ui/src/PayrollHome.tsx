@@ -114,6 +114,7 @@ export function PayrollHome({ port, userId, mode, renderRun, renderSettings, ini
               />
               <PayrollButton
                 label={confirmDelete ? 'Tap again to delete' : 'Delete'}
+                compact
                 onPress={() => {
                   if (!timeActions?.canDelete || timeActions?.busy) return;
                   if (!confirmDelete) {

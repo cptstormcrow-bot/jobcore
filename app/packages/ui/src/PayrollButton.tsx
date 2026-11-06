@@ -18,9 +18,11 @@ export interface PayrollButtonProps {
   tone?: 'default' | 'danger';
   /** Optional label override, e.g. a non-bold label on a dense screen. */
   textStyle?: StyleProp<TextStyle>;
+  /** Slimmer 24pt button (top and bottom padding removed) for Delete buttons that sit against a neighbour; hitSlop grows to keep 44pt. */
+  compact?: boolean;
 }
 
-export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style, tone, textStyle }: PayrollButtonProps) {
+export function PayrollButton({ label, onPress, disabled, accessibilityLabel, testID, style, tone, textStyle, compact }: PayrollButtonProps) {
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -28,9 +30,9 @@ export function PayrollButton({ label, onPress, disabled, accessibilityLabel, te
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: !!disabled }}
-      hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+      hitSlop={compact ? { top: 10, bottom: 10, left: 4, right: 4 } : { top: 6, bottom: 6, left: 4, right: 4 }}
       testID={testID}
-      style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, style]}
+      style={[styles.button, tone === 'danger' ? { backgroundColor: colors.danger } : null, disabled ? styles.disabled : null, compact ? styles.compact : null, style]}
     >
       <Text numberOfLines={1} style={[styles.text, tone === 'danger' ? { color: colors.white } : null, textStyle]}>{label}</Text>
     </Pressable>
@@ -50,6 +52,7 @@ const styles = StyleSheet.create({
   },
   // Gray outline so a grayed button stays visible on light screens (Jeff 2026-11-02); padding drops by the border so width holds.
   disabled: { backgroundColor: colors.sandDisabled, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 11 },
+  compact: { height: 24 },
   text: {
     color: '#000',
     fontSize: 13,

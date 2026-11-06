@@ -424,7 +424,7 @@ export function TimeEntryPanel(props: TimeEntryPanelProps) {
                     (e.status === 'rejected' && e.rejectionReason ? ' (' + e.rejectionReason + ')' : '')}
                 </Text>
                 {e.source === 'clock' && editable(e) ? (
-                  <PayrollButton label="Delete" onPress={() => run(() => port.upsertEntry({ ...e, minutes: 0 }))} />
+                  <PayrollButton compact label="Delete" onPress={() => run(() => port.upsertEntry({ ...e, minutes: 0 }))} />
                 ) : null}
               </View>
             ))}
