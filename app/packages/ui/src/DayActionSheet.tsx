@@ -10,6 +10,7 @@ import type { Job } from '@jobcore/core';
 import { Text } from './Text';
 import { PayrollButton } from './PayrollButton';
 import { TimePicker } from './TimePicker';
+import { formatPhone } from './telephony';
 import { colors, radius, spacing, typography } from './tokens';
 
 export interface DayActionBlackout {
@@ -46,7 +47,6 @@ export interface DayActionSheetProps {
   /** #0058 clear: take a scheduled job off the schedule. Should throw on failure. */
   onClearJob?: (job: Job) => Promise<void>;
   /** Tap a job row to see its details popup (#0058 ScheduleItemPopup). */
-  onJobInfo?: (job: Job) => void;
   /** Tap a blackout row to see its details popup. */
   onBlackoutInfo?: (blackout: DayActionBlackout) => void;
   /** Admin only: shows a Clear button beside Time-off details that cancels that time-off request. */
@@ -74,7 +74,6 @@ export function DayActionSheet({
   onConfirmSchedule,
   onRescheduleJob,
   onClearJob,
-  onJobInfo,
   onBlackoutInfo,
   onClearBlackout,
   time: hostTime,
@@ -182,7 +181,7 @@ export function DayActionSheet({
                         </View>
                         <View style={styles.fieldRow}>
                           <Text style={styles.fieldLabel}>Phone</Text>
-                          <View style={styles.fieldValue}>{copyable(job.customerPhone?.trim() ? job.customerPhone : 'No phone', styles.rowTitle, 'phone')}</View>
+                          <View style={styles.fieldValue}>{copyable(job.customerPhone?.trim() ? formatPhone(job.customerPhone) : 'No phone', styles.rowTitle, 'phone')}</View>
                         </View>
                         {job.description ? (
                           <View style={styles.fieldRow}>
@@ -192,10 +191,9 @@ export function DayActionSheet({
                         ) : null}
                       </View>
                     </View>
-                    {onJobInfo || onOpenJob ? (
-                      <View style={styles.pendingRow}>
-                        {onJobInfo ? <PayrollButton label="Info" onPress={() => onJobInfo(job)} /> : null}
-                        {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
+                    {onOpenJob ? (
+                      <View style={[styles.pendingRow, { justifyContent: 'flex-end' }]}>
+                        <PayrollButton label="Job details" onPress={() => onOpenJob(job)} />
                       </View>
                     ) : null}
                     {onRescheduleJob || onClearJob ? (

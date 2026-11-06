@@ -18,7 +18,7 @@ import type { StageKey } from '@jobcore/core';
 import { buildJobStageResults, type JobStageExtras } from '../../src/lib/job-stage-results';
 import { jobRuleColor, jobRuleState } from '../../src/lib/job-rule-color';
 import { usePaidInFull } from '../../src/lib/settle-on-completion';
-import { AppChrome, Breadcrumb, Checkbox, PayrollButton, ScreenTitleRow, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, telUrl, Text, useScreenNumber, BadgeTooltip } from '@jobcore/ui';
+import { AppChrome, Breadcrumb, Checkbox, PayrollButton, ScreenTitleRow, colors, DefaultTabBar, EmptyState, JobProgressBar, jobSubViewFor, LoadingState, spacing, confirmCall, Text, useScreenNumber, BadgeTooltip } from '@jobcore/ui';
 import type { MenuItem, JobActionStage } from '@jobcore/ui';
 import { JobDetail } from '../../src/components/JobDetail';
 import { JobHeader, JobSummaryRest, JobTechFields, type JobRegion } from '../../src/components/JobHeader';
@@ -1079,16 +1079,18 @@ export default function JobDrilldownScreen() {
 
   const handleContact = () => {
     if (!customer?.phone) return;
-    void Linking.openURL(telUrl(customer.phone));
-    if (job) {
-      const stamp = new Date().toISOString();
-      void writeThrough('job.mark_contacted', { jobId: job.id, contactedAt: stamp }, stamp, { contactedAt: stamp })
-        .then((res) => {
-          setStageExtras((prev) => (prev ? { ...prev, contactedAt: stamp } : prev));
-          if (res.status === 'queued') setActionError(QUEUED_COPY);
-        })
-        .catch((err) => setActionError(toUserMessage(err)));
-    }
+    // Always confirm before dialing; Contact is only stamped once the call is confirmed.
+    confirmCall(customer.phone, () => {
+      if (job) {
+        const stamp = new Date().toISOString();
+        void writeThrough('job.mark_contacted', { jobId: job.id, contactedAt: stamp }, stamp, { contactedAt: stamp })
+          .then((res) => {
+            setStageExtras((prev) => (prev ? { ...prev, contactedAt: stamp } : prev));
+            if (res.status === 'queued') setActionError(QUEUED_COPY);
+          })
+          .catch((err) => setActionError(toUserMessage(err)));
+      }
+    });
   };
 
   const [estimateFocus, setEstimateFocus] = useState<{ tab: 'tasks'; nonce: number } | undefined>(undefined);

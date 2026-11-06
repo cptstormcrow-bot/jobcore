@@ -4,7 +4,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { addDays, addMonths, addWeeks, subMonths, subWeeks, format, isSameDay, startOfMonth, startOfWeek, endOfWeek } from 'date-fns';
 import { DayActionSheet, TimePicker, PayrollButton, ScheduleItemPopup, formatSlotHeading, SAND_BG, TechSelect, TextField, WeekView, MonthView, DayView, CalendarHeader, colors, spacing, radius } from '@jobcore/ui';
 import type { TimeOffEvent, CalendarMode, ScheduleItemDetail } from '@jobcore/ui';
-import { blackoutScheduleDetail, jobScheduleDetail } from '../domain/schedule-items';
+import { blackoutScheduleDetail } from '../domain/schedule-items';
 import * as Clipboard from 'expo-clipboard';
 import type { Job } from '@jobcore/core';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
@@ -191,14 +191,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
 
   // #0058-style Show/Hide Time-off: hides time-off from the grids only; the day sheet still lists them.
   const shownTimeOff = showBlackouts ? timeOffEvents : [];
-
-  function handleJobInfo(job: Job): void {
-    if (!job.scheduledStart) return;
-    const whenLabel = formatSlotHeading(job.scheduledStart, job.scheduledEnd ?? null);
-    const tech = job.assignedTechId ? techNameById.get(job.assignedTechId) : undefined;
-    const detail = jobScheduleDetail(job, whenLabel);
-    setPopupDetail(tech ? { ...detail, title: `${detail.title} (${tech})` } : detail);
-  }
 
   function handleBlackoutInfo(b: { id: string }): void {
     const request = timeOffRequests.find((r) => b.id.startsWith(`${r.id}-`));
@@ -506,7 +498,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         {...(props.onScheduleJob ? { onConfirmSchedule: props.onScheduleJob } : {})}
         {...(props.onRescheduleJob ? { onRescheduleJob: props.onRescheduleJob } : {})}
         {...(props.onClearJob ? { onClearJob: props.onClearJob } : {})}
-        onJobInfo={handleJobInfo}
         onBlackoutInfo={handleBlackoutInfo}
         {...(role === 'admin' && props.onCancelTimeOff
           ? {

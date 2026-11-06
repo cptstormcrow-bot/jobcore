@@ -21,7 +21,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, Linking, StyleSheet } from 'react-native';
 
 import type { Job } from '@jobcore/core';
-import { PayrollButton, telUrl, colors, spacing, compact, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
+import { PayrollButton, confirmCall, colors, spacing, compact, typography, Text, JobHeaderBlock, JobTitleBarHeader, formatJobHeaderLines, formatScheduleLabel } from '@jobcore/ui';
 import { copyToClipboard } from '../lib/clipboard';
 import type { JobNote } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
@@ -108,7 +108,7 @@ export function FieldJobDetail({ jobId, customerPhone, onOpenCalendar }: FieldJo
 
   const handleCall = React.useCallback(() => {
     if (!resolvedPhone) return;
-    void Linking.openURL(telUrl(resolvedPhone));
+    confirmCall(resolvedPhone);
   }, [resolvedPhone]);
 
   const handleMap = React.useCallback(() => {

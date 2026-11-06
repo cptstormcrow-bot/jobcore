@@ -25,8 +25,8 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, Linking } from 'react-native';
-import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, typography, telUrl, Text } from '@jobcore/ui';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Card, PayrollButton, EmptyState, ScreenTitle, colors, spacing, typography, confirmCall, formatPhone, Text } from '@jobcore/ui';
 import type { Lead } from '../domain/lead';
 import { validateQualify } from '../domain/qualify';
 import type { ServiceArea } from '../data/ports';
@@ -117,9 +117,9 @@ export function QualifyScreen({ lead, serviceAreas = [], onSubmit, onCancel, dis
           {lead.phone ? (
             <Text
               style={[styles.meta, styles.phoneLink]}
-              onPress={() => Linking.openURL(telUrl(lead.phone as string))}
+              onPress={() => confirmCall(lead.phone as string)}
             >
-              {lead.phone}
+              {formatPhone(lead.phone)}
             </Text>
           ) : null}
           {lead.preferredDate ? (
