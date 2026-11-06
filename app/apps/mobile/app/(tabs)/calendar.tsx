@@ -161,7 +161,23 @@ export default function CalendarScreen() {
           fetchScheduledJobs,
         ).then((r) => r.data)
       : fetchScheduledJobs();
-    void Promise.all([load.catch(() => null), loadScheduled.catch(() => null)]).then(([rows, scheduled]) => {
+    // Customers carry the phone (and a fallback address) the day popup shows; jobs rows have neither.
+    interface CustomerLite { id: string; name: string | null; phone: string | null; address: string | null }
+    const fetchCustomers = async (): Promise<CustomerLite[]> => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, name, phone, address')
+        .eq('organization_id', orgId);
+      if (error || !data) throw error ?? new Error('customers read failed');
+      return data as unknown as CustomerLite[];
+    };
+    const loadCustomers = identity
+      ? cachedRead<CustomerLite[]>(
+          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.calendar.customers', { orgId }),
+          fetchCustomers,
+        ).then((r) => r.data)
+      : fetchCustomers();
+    void Promise.all([load.catch(() => null), loadScheduled.catch(() => null), loadCustomers.catch(() => null)]).then(([rows, scheduled, customers]) => {
       if (cancelled) return;
       if (!rows && !scheduled) {
         setJobs([]);
@@ -174,7 +190,19 @@ export default function CalendarScreen() {
       }
       // The jobs table is the source of truth for the schedule, so it wins over the embedded copy.
       for (const row of scheduled ?? []) jobMap.set(row.id, toJob(row));
-      setJobs(Array.from(jobMap.values()));
+      const customerById = new Map((customers ?? []).map((c) => [c.id, c]));
+      setJobs(
+        Array.from(jobMap.values()).map((job) => {
+          const c = job.customerId ? customerById.get(job.customerId) : undefined;
+          if (!c) return job;
+          return {
+            ...job,
+            customerName: c.name,
+            customerPhone: c.phone,
+            address: job.address?.trim() ? job.address : c.address,
+          };
+        }),
+      );
     });
     return () => {
       cancelled = true;

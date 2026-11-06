@@ -146,6 +146,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         ? { ...job, address: `${techNameById.get(job.assignedTechId ?? '') ?? 'Unassigned'}: ${job.address ?? 'No address'}` }
         : job,
     );
+  // The grids label the address with the tech's name; the day popup shows the job's real address.
+  const plainJobs = new Map(jobs.map((j) => [j.id, j]));
   const timeOffEvents = toCalendarTimeOffEvents(timeOffRequests, techNameById).filter(
     (e) => !effectiveTechId || e.techId === effectiveTechId,
   );
@@ -456,7 +458,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         day={sheetDay}
         time={pickTime}
         onTimeChange={setPickTime}
-        jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
+        jobs={sheetDay ? calendarJobs.map((j) => plainJobs.get(j.id) ?? j).filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
         onCopy={(text) => { void Clipboard.setStringAsync(text); }}
