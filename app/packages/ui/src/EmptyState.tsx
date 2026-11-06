@@ -8,7 +8,7 @@ import { colors, compact, spacing, typography } from './tokens';
 /** Signed-out button: any empty state whose message starts "Sign in to" gets a way out. */
 export function SignInButton() {
   const router = useRouter();
-  return <PayrollButton label="Sign in" onPress={() => router.replace('/sign-in')} style={{ marginTop: compact.section }} />;
+  return <PayrollButton label="Sign in" onPress={() => router.replace('/')} style={{ marginTop: compact.section }} />;
 }
 
 export interface EmptyStateProps {

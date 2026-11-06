@@ -122,7 +122,7 @@ function FieldTechRoot(): React.ReactElement {
     return React.createElement(
       View,
       { style: styles.screen },
-      React.createElement<DayListProps>(DayList, { onSignIn: () => router.replace('/sign-in' as never) }),
+      React.createElement<DayListProps>(DayList, { onSignIn: () => router.replace('/' as never) }),
     );
   }
 
@@ -259,7 +259,7 @@ function FieldTechRoot(): React.ReactElement {
         showTestJobs,
         onSelectJob: (job: Job) => router.push(('/job/' + job.id + '?panel=plan') as never),
         defaultViewMode: defaultMonthView ? 'month' : 'week',
-        onSignIn: () => router.replace('/sign-in' as never),
+        onSignIn: () => router.replace('/' as never),
       });
       break;
   }
