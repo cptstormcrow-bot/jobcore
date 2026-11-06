@@ -56,6 +56,8 @@ export interface DayActionSheetProps {
    * and the sheet shows no picker of its own.
    */
   time?: string | null;
+  /** With `time`: lets the sheet show a small picker to reschedule a job without leaving the popup. */
+  onTimeChange?: (time: string | null) => void;
 }
 
 export function DayActionSheet({
@@ -76,6 +78,7 @@ export function DayActionSheet({
   onBlackoutInfo,
   onClearBlackout,
   time: hostTime,
+  onTimeChange,
   onCopy,
   onQuickTimeOff,
 }: DayActionSheetProps) {
@@ -235,6 +238,11 @@ export function DayActionSheet({
                 {!hostOwnsTime && (onAddJob || (onConfirmSchedule && pickedJob) || (onRescheduleJob && jobs.length > 0)) ? (
                   <View style={styles.timeBlock}>
                     <TimePicker value={time} onChange={setTime} />
+                  </View>
+                ) : hostOwnsTime && onTimeChange && onRescheduleJob && jobs.length > 0 ? (
+                  <View style={styles.timeBlock}>
+                    <Text style={styles.timeLabel}>Reschedule: pick a new time, then tap Move</Text>
+                    <TimePicker value={time} onChange={onTimeChange} />
                   </View>
                 ) : hostOwnsTime ? (
                   <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour below the calendar'}</Text>
