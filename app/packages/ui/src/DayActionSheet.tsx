@@ -172,13 +172,26 @@ export function DayActionSheet({
                   <View key={job.id} style={styles.jobBlock}>
                     <View style={styles.rowInner}>
                       <View style={styles.rowText}>
-                        {job.customerName ? copyable(job.customerName, styles.rowTitle, 'name') : null}
-                        {copyable(job.address ?? 'No address', styles.rowTitle, 'addr')}
-                        {job.customerPhone ? copyable(job.customerPhone, styles.rowTitle, 'phone') : null}
+                        {job.customerName ? copyable(job.customerName, styles.jobName, 'name') : null}
                         {job.scheduledStart ? (
                           <Text style={styles.rowMeta}>{format(new Date(job.scheduledStart), 'h:mm a')}</Text>
                         ) : null}
-                        {job.description ? <Text style={styles.jobDesc}>{job.description}</Text> : null}
+                        <View style={styles.fieldRow}>
+                          <Text style={styles.fieldLabel}>Address</Text>
+                          <View style={styles.fieldValue}>{copyable(job.address ?? 'No address', styles.rowTitle, 'addr')}</View>
+                        </View>
+                        {job.customerPhone ? (
+                          <View style={styles.fieldRow}>
+                            <Text style={styles.fieldLabel}>Phone</Text>
+                            <View style={styles.fieldValue}>{copyable(job.customerPhone, styles.rowTitle, 'phone')}</View>
+                          </View>
+                        ) : null}
+                        {job.description ? (
+                          <View style={styles.fieldRow}>
+                            <Text style={styles.fieldLabel}>Work</Text>
+                            <Text style={[styles.fieldValue, styles.workText]}>{job.description}</Text>
+                          </View>
+                        ) : null}
                       </View>
                     </View>
                     {onJobInfo || onOpenJob ? (
@@ -328,6 +341,11 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, marginRight: spacing.sm },
   rowTitle: { fontSize: typography.text.body, color: colors.text },
   rowMeta: { fontSize: 12, color: colors.textMuted },
+  jobName: { fontSize: typography.text.body, fontWeight: '700', color: colors.text },
+  fieldRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing.xs },
+  fieldLabel: { width: 56, fontSize: 12, color: colors.textMuted, paddingTop: 2 },
+  fieldValue: { flex: 1 },
+  workText: { fontSize: typography.text.body, color: colors.text },
   jobDesc: { fontSize: 12, color: colors.text, marginTop: spacing.xs },
   blackoutTitle: { fontSize: typography.text.body, color: colors.danger },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },

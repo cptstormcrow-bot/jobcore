@@ -657,7 +657,8 @@ export default function JobDrilldownScreen() {
       const savedCustomer = await createCustomerRepository().saveForJob(job.id, customerPatch);
 
       const updatedJob = await createJobRepository().updateDetails(job.id, jobPatch);
-      if (updatedJob.customerId !== savedCustomer.id) {
+      const savedCustomerId = savedCustomer.id ?? updatedJob.customerId;
+      if (updatedJob.customerId !== savedCustomerId) {
         throw new Error('Customer saved but not linked to this job.');
       }
 
@@ -679,8 +680,8 @@ export default function JobDrilldownScreen() {
         setInvestigation(updatedInvestigation);
       }
       setJob(updatedJob);
-      setCustomer(savedCustomer);
-      setCustomerId(savedCustomer.id);
+      setCustomer(customer ? { ...customer, ...savedCustomer, id: savedCustomerId } : { ...savedCustomer, id: savedCustomerId });
+      setCustomerId(savedCustomerId);
       setDirty(false);
       setSaved(true);
       return true;

@@ -73,10 +73,26 @@ function lifecycleCols(patch: unknown): Row {
   return out;
 }
 
+const CUSTOMER_QUERIES = ['app.customers.byId', 'af.customers.getById'];
+// Customer cache keys carry the id as `customerId` (job screen) or `id` (repo getById); match whichever is present.
+const customerPatch = (idOf: (p: Record<string, unknown>) => string | undefined) =>
+  (p: Record<string, unknown>, rows: unknown, params?: Record<string, unknown>) => {
+    const id = idOf(p);
+    const keyId = params?.customerId ?? params?.id;
+    if (!id || keyId !== id || !isObj(p.patch)) return rows;
+    const cols = lifecycleCols(p.patch);
+    return mapRows(rows, () => true, (r) => ({ ...r, ...cols }));
+  };
+
 export const OP_PATCH_SPECS: OpPatchSpec[] = [
   { op: 'job.updateStatusAsTech', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.update_status', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'estimate_settings.fine_print_upsert', queries: ['af.estimates.finePrint'], patch: (p) => (typeof p.text === 'string' ? p.text : null) },
+  // Job details (address, description...) show on the job header the moment they are saved, not after the refetch.
+  { op: 'job.update_details', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => lifecycleCols(p.patch)) },
+  // Customer edits (name, phone, email, address): patch the cached customer so the reload right after Save shows the new values.
+  { op: 'job_customer.save', queries: CUSTOMER_QUERIES, patch: customerPatch((p) => str(p.customerId)) },
+  { op: 'customer.update', queries: CUSTOMER_QUERIES, patch: customerPatch((p) => str(p.id)) },
   { op: 'job.archive', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.unarchive', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => ({ status: p.status })) },
   { op: 'job.patch_lifecycle', queries: JOB_QUERIES, patch: jobPatch('jobId', (p) => lifecycleCols(p.patch)) },

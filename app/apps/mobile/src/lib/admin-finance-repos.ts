@@ -2350,8 +2350,10 @@ export function createCustomerRepository(): CustomerRepository {
 
     async saveForJob(jobId: string, patch: CustomerPatch): Promise<Customer> {
       const occurredAt = new Date().toISOString();
-      const optimistic = { ...patch } as never as Customer;
-      const result = await writeThrough('job_customer.save', { jobId, patch }, occurredAt, optimistic as never);
+      // Carry the job's current customer id: the cache patch needs it to find the customer row, and the job screen checks it.
+      const customerId = knownJobs.get(jobId)?.customerId ?? undefined;
+      const optimistic = { id: customerId, ...patch } as never as Customer;
+      const result = await writeThrough('job_customer.save', { jobId, patch, customerId }, occurredAt, optimistic as never);
       return result.data as Customer;
     },
   };

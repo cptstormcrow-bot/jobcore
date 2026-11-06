@@ -183,3 +183,20 @@ test('estimate fine print save: replaces the saved fine print', () => {
   assert.equal(run(op, 'af.estimates.finePrint', { text: 'New terms', updatedAt: 'x' }, 'Old terms'), 'New terms');
   assert.equal(run(op, 'af.estimates.finePrint', { text: 'First terms', updatedAt: 'x' }, null), 'First terms');
 });
+
+
+test('job details save: address and description show on the cached job right away (snake and camel keys)', () => {
+  const out = run('job.update_details', 'app.jobs.byId', { jobId: 'job-1', patch: { jobAddress: '1 Main St' } }, { id: 'job-1', job_address: 'old' }) as any;
+  assert.equal(out.jobAddress, '1 Main St');
+  assert.equal(out.job_address, '1 Main St');
+});
+
+test('job customer save: patches the cached customer so the header shows the new phone', () => {
+  const payload = { jobId: 'job-1', customerId: 'c1', patch: { phone: '555-0100' } };
+  const a = run('job_customer.save', 'app.customers.byId', payload, { id: 'c1', name: 'Ann', phone: 'old' }, { customerId: 'c1' }) as any;
+  assert.deepEqual([a.name, a.phone], ['Ann', '555-0100']);
+  const b = run('job_customer.save', 'af.customers.getById', payload, { id: 'c1', phone: 'old' }, { id: 'c1' }) as any;
+  assert.equal(b.phone, '555-0100');
+  const other = { id: 'c2', phone: 'x' };
+  assert.strictEqual(run('job_customer.save', 'app.customers.byId', payload, other, { customerId: 'c2' }), other);
+});
