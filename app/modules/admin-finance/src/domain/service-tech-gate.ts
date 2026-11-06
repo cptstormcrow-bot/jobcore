@@ -1,14 +1,14 @@
 /**
  * Service Tech assignment gate (screen #0057).
  *
- * Pure, dependency-free helper. Assigning a Service Tech is gated ONLY on
+ * Pure, dependency-free helper. Assigning a Service Tech opens once the estimate is Approved, or on
  * materials having arrived onsite, from either the estimate's Materials Onsite
  * checkbox or the Prem/investigation `materials_arrived` flag. A missing
  * estimate never blocks by itself. Unassigning is never gated, and Prem Tech
  * assignment is not gated.
  */
 
-export const SERVICE_TECH_GATE_HINT = 'Cannot assign Service Tech until materials arrive onsite.';
+export const SERVICE_TECH_GATE_HINT = 'Cannot assign Service Tech until the estimate is approved or materials arrive onsite.';
 
 /**
  * Returns true when either the estimate's `materialsOnsite` flag or the
@@ -16,8 +16,8 @@ export const SERVICE_TECH_GATE_HINT = 'Cannot assign Service Tech until material
  * or investigation, or an undefined, null or false flag, counts as not arrived.
  */
 export function canAssignServiceTech(
-  estimate: { materialsOnsite?: boolean } | null | undefined,
+  estimate: { materialsOnsite?: boolean; status?: string } | null | undefined,
   investigation?: { materialsArrived?: boolean | null } | null
 ): boolean {
-  return estimate?.materialsOnsite === true || investigation?.materialsArrived === true;
+  return estimate?.status === 'approved' || estimate?.materialsOnsite === true || investigation?.materialsArrived === true;
 }
