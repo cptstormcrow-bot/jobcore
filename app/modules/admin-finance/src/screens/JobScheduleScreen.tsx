@@ -6,9 +6,9 @@
  * selected on that screen, lets an admin pick a scheduled start date+time on an
  * window-filling month grid (`MonthView` list variant, same layout as #0011) with the
  * hour picker (`TimePicker`) in the top row beside the buttons, and save it. The SAVED slot is shown in bold above the
- * calendar. Save / Clear / Cancel sit in a row at the top:
+ * calendar. Save / Unschedule / Cancel sit in a row at the top:
  *   - Save is enabled only when the picked start differs from the saved start.
- *   - Clear empties the picked start (draft only).
+ *   - Unschedule (was Clear) empties the picked start (draft only).
  *   - Cancel discards the draft and returns the picker to the saved slot.
  * Changing an already-saved slot asks "Reschedule?" (Yes saves and logs a
  * `reschedule` calendar event; No behaves like Cancel). Clearing a saved slot
@@ -455,7 +455,7 @@ export function JobScheduleScreen({
               disabled={busy}
               testID="schedule-add"
             />
-            <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
+            <PayrollButton label="Unschedule" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
             {job.assignedTechId ? (
               <PayrollButton label="Time-off" onPress={() => void handleTimeOff()} disabled={busy} testID="schedule-timeoff" />
