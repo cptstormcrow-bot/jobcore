@@ -137,6 +137,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         job.status !== 'completed' &&
         job.status !== 'archived' &&
         job.status !== 'cancelled' &&
+        job.status !== 'closed' &&
+        job.status !== 'paid' &&
         (!effectiveTechId || job.assignedTechId === effectiveTechId),
     )
     .map((job) =>
