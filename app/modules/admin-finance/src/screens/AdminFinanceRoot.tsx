@@ -186,7 +186,7 @@ export function AdminFinanceRoot() {
     return map;
   }, [loadState]);
   const onOpenJob = (jobId: string) => router.push({ pathname: '/job/[jobId]', params: { jobId, panel: 'plan' } });
-  const [showTestJobs, setShowTestJobs] = useState(false);
+  const [showTestJobs, setShowTestJobs] = useState(true);
   const [showTestEmployees, setShowTestEmployees] = useState(true);
   const [editorIsTest, setEditorIsTest] = useState(false);
   const [editorPaidTravel, setEditorPaidTravel] = useState(false);
@@ -443,7 +443,7 @@ export function AdminFinanceRoot() {
     let cancelled = false;
     void (async () => {
       const [jobs, employees, employeesRoster] = await Promise.all([
-        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, false),
+        ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_JOBS, true),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES, true),
         ports.localPrefs.getBool(PREF_KEY_SHOW_TEST_EMPLOYEES_ROSTER, false),
       ]);

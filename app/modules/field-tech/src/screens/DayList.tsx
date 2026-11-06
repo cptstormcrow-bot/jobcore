@@ -83,7 +83,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
   }, [defaultViewMode]);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [fullTextJobId, setFullTextJobId] = useState<string | null>(null);
-  const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false)), [jobs, showTestJobs]);
+  const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? true)), [jobs, showTestJobs]);
   // The calendar and its day popup only show open work; finished jobs live under Previous Jobs.
   const calendarJobs = useMemo(() => visibleJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status)), [visibleJobs]);
   const assignedJobs = useMemo(() => listAssignedJobs(visibleJobs), [visibleJobs]);

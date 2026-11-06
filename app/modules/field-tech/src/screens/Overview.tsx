@@ -137,7 +137,7 @@ export function Overview({
     async function load(): Promise<void> {
       const allAssignedJobs = await jobs.listAssignedToTech(techId);
       const showTestJobs =
-        showTestJobsProp ?? (await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false));
+        showTestJobsProp ?? (await getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, true));
       let claimed: number | null = null;
       try {
         const premResult = await getModulePorts().premQueue.listOpen(techId);

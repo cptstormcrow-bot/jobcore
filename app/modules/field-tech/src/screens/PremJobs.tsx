@@ -39,7 +39,7 @@ export function PremJobs(): React.ReactElement {
       premQueueRepository
         .listOpen(session.userId)
         .then(async (result) => {
-          const showTestJobs = await getModulePorts().localPrefs.getBool('field-tech.jobs.show-test-jobs', false);
+          const showTestJobs = await getModulePorts().localPrefs.getBool('field-tech.jobs.show-test-jobs', true);
           if (cancelled) return;
           // A closed-out job never needs a Prem, even if its needs_prem_at flag was left set.
           // Beta/test jobs stay hidden unless "show test jobs" is on, same as every other tech list.

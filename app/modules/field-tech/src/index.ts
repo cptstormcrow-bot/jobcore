@@ -110,11 +110,11 @@ function FieldTechRoot(): React.ReactElement {
   useScreenNumber({ subView: subView === 'payroll' ? 'Payroll' : subView });
   const { showHelp } = useWalkthrough();
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
-  const [showTestJobs, setShowTestJobs] = React.useState(false);
+  const [showTestJobs, setShowTestJobs] = React.useState(true);
   const [defaultMonthView, setDefaultMonthView] = React.useState(true);
   const [drillLabel, setDrillLabel] = React.useState<string | null>(null);
   React.useEffect(() => {
-    void getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, false).then(setShowTestJobs);
+    void getModulePorts().localPrefs.getBool(SHOW_TEST_JOBS_KEY, true).then(setShowTestJobs);
     void getModulePorts().localPrefs.getBool(DEFAULT_MONTH_KEY, true).then(setDefaultMonthView);
   }, []);
   const session = getModuleSession();

@@ -31,7 +31,7 @@ export function ScreenNumberProvider({
   registry: RegistryEntry[];
   children?: React.ReactNode;
 }) {
-  const [enabled, setEnabledState] = useState(false);
+  const [enabled, setEnabledState] = useState(true);
   const [stack, setStack] = useState<SubViewOwner[]>([]);
   const subView = useMemo(() => currentSubView(stack), [stack]);
   const registerSubView = useCallback((id: string, sv: string | null) => {
@@ -43,7 +43,7 @@ export function ScreenNumberProvider({
 
   useEffect(() => {
     let cancelled = false;
-    Promise.resolve(getBoolPref(SHOW_SCREEN_NUMBERS_KEY, false))
+    Promise.resolve(getBoolPref(SHOW_SCREEN_NUMBERS_KEY, true))
       .then((v) => {
         if (!cancelled) setEnabledState(v === true);
       })
