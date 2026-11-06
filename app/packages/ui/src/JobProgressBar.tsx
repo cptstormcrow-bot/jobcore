@@ -18,10 +18,13 @@ export type JobProgressBarProps = {
   nextStep: string;
   onStagePress?: (key: string) => void;
   disabledKeys?: string[];
+  /** Stage key whose screen is currently in view; its dot renders 20% larger (double breadcrumb with the menu). */
+  activeKey?: string;
   testID?: string;
 };
 
 const DOT = 18;
+const DOT_ACTIVE = DOT * 1.2; // 21.6 - current-screen badge
 const STATE_COLOR: Record<StageState, string> = {
   gray: colors.textMuted,
   green: colors.success,
@@ -49,7 +52,7 @@ const SHARED_MENU = [
   'Prem, Estimate, Contact, Start and Complete stay green once done.',
 ];
 
-export function JobProgressBar({ stages, states, nextStep, onStagePress, disabledKeys, testID }: JobProgressBarProps) {
+export function JobProgressBar({ stages, states, nextStep, onStagePress, disabledKeys, activeKey, testID }: JobProgressBarProps) {
   const [legendOpen, setLegendOpen] = useState(false);
   const [tip, setTip] = useState<{ label: string; state: StageState; text: string; why: string; disabled: boolean } | null>(null);
   const stateAt = (i: number): StageState => states[i]?.state ?? 'gray';
@@ -73,7 +76,7 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
           <>
             <View style={styles.dotLine}>
               <View style={[styles.half, i > 0 && { backgroundColor: lineColor(i) }]} />
-              <View style={[styles.dot, { backgroundColor: STATE_COLOR[state] }]} />
+              <View style={[styles.dot, { backgroundColor: STATE_COLOR[state] }, stage.key === activeKey && styles.dotActive]} />
               <View style={[styles.half, i < stages.length - 1 && { backgroundColor: lineColor(i + 1) }]} />
             </View>
             <Text style={styles.label} numberOfLines={1}>{stage.label}</Text>
@@ -89,7 +92,7 @@ export function JobProgressBar({ stages, states, nextStep, onStagePress, disable
             onLongPress={() => setTip({ label: stage.label, state, text: stateText, why, disabled })}
             delayLongPress={350}
             accessibilityRole={tappable ? 'button' : undefined}
-            accessibilityLabel={`${stage.label}, ${STATE_WORD[state]}${why ? `, ${why}` : ''}`}
+            accessibilityLabel={`${stage.label}${stage.key === activeKey ? ', current screen' : ''}, ${STATE_WORD[state]}${why ? `, ${why}` : ''}`}
             accessibilityHint="Press and hold for details"
             accessibilityState={{ disabled }}
             style={[styles.cell, disabled && styles.disabled]}
@@ -157,6 +160,8 @@ const styles = StyleSheet.create({
   dotLine: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', height: 20 },
   half: { flex: 1, height: 4 },
   dot: { width: DOT, height: DOT, borderRadius: DOT / 2 },
+  // Grows from its centre inside the fixed 20px dotLine, so no other dot, connector or row shifts.
+  dotActive: { width: DOT_ACTIVE, height: DOT_ACTIVE, borderRadius: DOT_ACTIVE / 2 },
   label: {
     fontSize: typography.size.detail,
     color: colors.textLight,

@@ -1411,23 +1411,44 @@ ${body}`)) handleResetLaborTime();
     ...(currentJob.assignedTechId ? [] : ['startWork' as const]),
   ]);
 
+  // ONE source for "where am I" so the slider menu and the timeline dots always agree (Jeff 2026-11-06).
+  // A stage action in progress (Contact / Start / Complete / Paid) wins over the region underneath it.
+  const currentMenuId: string | null =
+    activeStage === 'contact' ? 'contact'
+    : activeStage === 'arrive' ? 'arrive'
+    : activeStage === 'complete' ? 'complete'
+    : activeStage === 'paid' || region === 'payment' ? 'paid'
+    : region === 'details' || region === 'plan' ? 'plan'
+    : region === 'evisit' ? 'evisit'
+    : region === 'estimate' ? 'estimate'
+    : region === 'assign' ? 'assign'
+    : region === 'schedule' ? 'schedule'
+    : region === 'photos' ? 'photos'
+    : region === 'closeout' ? 'closeout'
+    : null;
+  const MENU_TO_STAGE: Record<string, StageKey> = {
+    plan: 'job', evisit: 'prem', estimate: 'estimate', assign: 'assign', schedule: 'schedule',
+    contact: 'contact', arrive: 'startWork', complete: 'completeWork', paid: 'paid', closeout: 'closeout',
+  };
+  const currentStageKey = currentMenuId ? MENU_TO_STAGE[currentMenuId] : undefined; // Photos has no timeline dot.
+
   const jobDetailMenuItems: MenuItem[] = [
     // All Jobs (#0012) tops every job-timeline menu: Jeff's way back to the jobs list.
     // Techs have no #0012, so theirs opens the Field Tech Jobs tab; other roles get their Jobs tab.
     { id: 'all-jobs', helpId: 'jobs_list', label: 'All Jobs', onPress: () => router.replace((isAdmin ? `/m/admin-finance?view=jobs&ts=${Date.now()}` : role === 'tech' ? '/m/field-tech' : '/jobs') as never) },
-    { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: region === 'details' || region === 'plan' },
-    { id: 'evisit', helpId: 'job_prem', label: 'Prem', onPress: () => selectRegion('evisit'), isActive: region === 'evisit' },
-    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: region === 'estimate' && activeStage !== 'arrive' },
+    { id: 'plan', helpId: 'job_plan', label: 'Job', onPress: () => selectRegion('plan'), isActive: currentMenuId === 'plan' },
+    { id: 'evisit', helpId: 'job_prem', label: 'Prem', onPress: () => selectRegion('evisit'), isActive: currentMenuId === 'evisit' },
+    { id: 'estimate', helpId: 'approve_estimate', label: 'Estimate', onPress: () => selectRegion('estimate'), isActive: currentMenuId === 'estimate' },
     ...(!lockedStages.has('assign')
-      ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'assign' }] as MenuItem[]
+      ? [{ id: 'assign', helpId: 'assign', label: 'Assign', onPress: () => { selectRegion('assign'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: currentMenuId === 'assign' }] as MenuItem[]
       : []),
-    { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: region === 'schedule' },
-    { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: activeStage === 'contact' },
-    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork'), isActive: activeStage === 'arrive' },
-    { id: 'photos', helpId: 'job_photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: region === 'photos' && !activeStage },
-    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: activeStage === 'complete' },
+    { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: currentMenuId === 'schedule' },
+    { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: currentMenuId === 'contact' },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork'), isActive: currentMenuId === 'arrive' },
+    { id: 'photos', helpId: 'job_photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: currentMenuId === 'photos' },
+    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: currentMenuId === 'complete' },
     ...(!lockedStages.has('paid')
-      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: region === 'payment' }] as MenuItem[]
+      ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: currentMenuId === 'paid' }] as MenuItem[]
       : []),
     {
       id: 'configuration',
@@ -1439,7 +1460,7 @@ ${body}`)) handleResetLaborTime();
       ],
     },
     ...(!lockedStages.has('closeout')
-      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: region === 'closeout' }] as MenuItem[]
+      ? [{ id: 'closeout', helpId: 'job_closeout', label: 'Close-out', onPress: () => selectRegion('closeout'), isActive: currentMenuId === 'closeout' }] as MenuItem[]
       : []),
   ];
 
@@ -1483,6 +1504,7 @@ ${body}`)) handleResetLaborTime();
             nextStep={region === 'payment' || region === 'closeout' ? '' : (stageResults.nextStep ?? '')}
             onStagePress={handleStagePress}
             disabledKeys={[...lockedStages]}
+            activeKey={currentStageKey}
             testID="job-progress-bar"
           />
         ) : null}
