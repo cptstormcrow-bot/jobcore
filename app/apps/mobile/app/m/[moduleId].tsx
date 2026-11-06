@@ -1,5 +1,5 @@
 // JobCore screen #0005 - module-host - Module Host
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { getEnabledModules } from '@jobcore/module-sdk';
@@ -55,6 +55,11 @@ import { JobTaskList } from '../../src/components/JobTaskList';
 export default function ModuleScreen() {
   const { moduleId } = useLocalSearchParams<{ moduleId: string }>();
   const state = useSession();
+  // Cleanups below only clear the module sessions on a real sign-out. A remount of this route (stack
+  // navigation, hot reload) runs the OLD instance's cleanup after the NEW instance injected, which wiped
+  // the session and left 'Sign in to see your jobs.' on screen while signed in (uber 89).
+  const authedRef = useRef(false);
+  authedRef.current = state.status === 'authenticated';
 
   const module =
     state.status === 'authenticated'
@@ -93,6 +98,7 @@ export default function ModuleScreen() {
   useEffect(() => {
     if (module?.id !== 'admin-finance') return undefined;
     return () => {
+      if (authedRef.current) return;
       clearModuleSession();
       clearAdminFinanceSourceModuleSession();
     };
@@ -119,7 +125,7 @@ export default function ModuleScreen() {
   }
   useEffect(() => {
     if (module?.id !== 'field-tech') return undefined;
-    return () => clearFieldTechModuleSession();
+    return () => { if (!authedRef.current) clearFieldTechModuleSession(); };
   }, [module?.id]);
 
   // Host-side injection for the sales-marketing module's session + ports seams
@@ -139,7 +145,7 @@ export default function ModuleScreen() {
   }
   useEffect(() => {
     if (module?.id !== 'sales-marketing') return undefined;
-    return () => clearSalesMarketingModuleSession();
+    return () => { if (!authedRef.current) clearSalesMarketingModuleSession(); };
   }, [module?.id]);
 
   // Host-side injection for payment-review's Supabase client seam. See the

@@ -123,7 +123,7 @@ function FieldTechRoot(): React.ReactElement {
     return React.createElement(
       View,
       { style: styles.screen },
-      React.createElement(DayList, null),
+      React.createElement<DayListProps>(DayList, { onSignIn: () => router.replace('/sign-in' as never) }),
     );
   }
 

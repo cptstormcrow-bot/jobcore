@@ -57,11 +57,13 @@ export interface DayListProps {
   techId?: string;
   showTestJobs?: boolean;
   defaultViewMode?: 'week' | 'month';
+  /** Opens Sign In (#0003) from the signed-out placeholder. */
+  onSignIn?: () => void;
 }
 
 export { isScheduledOnLocalDate, expandTimeOffToEvents } from './day-list-helpers';
 
-export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode }: DayListProps = {}): React.ReactElement {
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode, onSignIn }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const rev = useReadCacheRevision();
   const hasLoadedRef = useRef(false);
@@ -121,6 +123,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyText}>Sign in to see your jobs.</Text>
+        {onSignIn ? <PayrollButton label="Sign in" onPress={onSignIn} /> : null}
       </View>
     );
   }
