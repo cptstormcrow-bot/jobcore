@@ -35,7 +35,7 @@ import { getModulePorts } from '../lib/module-ports';
 import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, compact, radius, type TimeOffEvent, Text, TruncatedText } from '@jobcore/ui';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
-import { isScheduledOnLocalDate, expandTimeOffToEvents, listAssignedJobs, listPreviousJobs } from './day-list-helpers';
+import { isScheduledOnLocalDate, expandTimeOffToEvents, listAssignedJobs, listPreviousJobs, CLOSED_JOB_STATUSES } from './day-list-helpers';
 
 /** Props for `DayList`. */
 export interface DayListProps {
@@ -84,6 +84,8 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [fullTextJobId, setFullTextJobId] = useState<string | null>(null);
   const visibleJobs = useMemo(() => jobs.filter((job) => isBetaVisible(job, showTestJobs ?? false)), [jobs, showTestJobs]);
+  // The calendar and its day popup only show open work; finished jobs live under Previous Jobs.
+  const calendarJobs = useMemo(() => visibleJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status)), [visibleJobs]);
   const assignedJobs = useMemo(() => listAssignedJobs(visibleJobs), [visibleJobs]);
   const previousJobs = useMemo(() => listPreviousJobs(visibleJobs, 10), [visibleJobs]);
   const timeOffEvents = useMemo(() => expandTimeOffToEvents(timeOffRequests), [timeOffRequests]);
@@ -209,7 +211,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
       {viewMode === 'week' ? (
         <View style={styles.weekStrip}>
           <WeekView
-            jobs={visibleJobs}
+            jobs={calendarJobs}
             anchorDay={anchorDay}
             timeOffEvents={timeOffEvents}
             onSelectJob={(job) => handleOpenJob(job)}
@@ -222,7 +224,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
           <MonthView
             variant="tiles"
             highlightTechId={techId ?? session?.userId}
-            jobs={visibleJobs}
+            jobs={calendarJobs}
             anchorDay={anchorDay}
             timeOffEvents={timeOffEvents}
             onSelectDay={(day) => {
@@ -243,7 +245,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
               {selectedDay !== null ? (
                 <>
                   <Text style={styles.modalTitle}>{format(selectedDay, 'EEEE, MMM d')}</Text>
-                  {visibleJobs
+                  {calendarJobs
                     .filter((job) => job.scheduledStart !== null && job.scheduledStart !== undefined && isSameDay(new Date(job.scheduledStart), selectedDay))
                     .sort((a, b) => new Date(a.scheduledStart as string).getTime() - new Date(b.scheduledStart as string).getTime())
                     .map((job) => (
