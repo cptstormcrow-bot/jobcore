@@ -97,6 +97,7 @@ export function DayActionSheet({
                   </View>
                 ) : null}
                 <View style={styles.actions}>
+                  {onAddJob && time ? <PayrollButton label="Confirm" onPress={() => onAddJob(day, time)} /> : null}
                   {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
                   {onAddBlackout ? <PayrollButton label="Add Blackout" onPress={() => onAddBlackout(day)} /> : null}
                   {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
