@@ -823,6 +823,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   async function handleMove(next: 'draft' | 'submitted' | 'approved'): Promise<void> {
     if (next !== 'draft' && !lineItems.some((item) => item.kind === 'labor')) {
+      // Was a silent return: Submit looked dead on an estimate with only materials (Job #116).
+      setActionState({ kind: 'failed', message: 'Add at least one labor line before submitting this estimate.' });
       return;
     }
     if (estimate && needsDownstreamWarning(estimate.status, next)) {
@@ -1013,7 +1015,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             <View style={styles.techLeftCol}>
             {estimate?.status !== 'submitted' && estimate?.status !== 'approved' && !lineItems.some((item) => item.kind === 'labor') ? (
               <Text style={styles.blankHint} testID="estimate-blank-hint">
-                Estimate is blank - fill it in.
+                {lineItems.length === 0 ? 'Estimate is blank - fill it in.' : 'Add a labor line to submit this estimate.'}
               </Text>
             ) : null}
             <View style={styles.trackingRow}>
