@@ -60,7 +60,7 @@ import {
 } from '@jobcore/ui';
 import type { ScheduleItemDetail } from '@jobcore/ui';
 import * as Clipboard from 'expo-clipboard';
-import { addDays, addMonths, endOfWeek, format, startOfWeek } from 'date-fns';
+import { addDays, addMonths, endOfWeek, format, isSameDay, startOfWeek } from 'date-fns';
 import type { TimeOffEvent } from '@jobcore/ui';
 import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
@@ -186,6 +186,12 @@ export function JobScheduleScreen({
   const calendarJobs: Job[] = feedJobs
     .filter((j) => j.id !== job.id && listedIds.has(j.id))
     .concat(draftStart ?[{ ...job, scheduledStart: draftStart, scheduledEnd: draftEnd }] : []);
+  // Month grid only: while a different day is being tried, the saved day keeps its green until Save moves it.
+  const savedGhost: Job[] =
+    saved.start && draftStart && !isSameDay(new Date(saved.start), new Date(draftStart))
+      ? [{ ...job, scheduledStart: saved.start, scheduledEnd: saved.end }]
+      : [];
+  const monthJobs: Job[] = calendarJobs.concat(savedGhost);
   const calendarTimeOff: TimeOffEvent[] =
     showBlackouts === false
       ? []
@@ -508,7 +514,7 @@ export function JobScheduleScreen({
             <MonthView
               variant="tiles"
               highlightTechId={job.assignedTechId ?? undefined}
-              jobs={calendarJobs}
+              jobs={monthJobs}
               anchorDay={anchorDay}
               timeOffEvents={calendarTimeOff}
               onDayPress={pickDay}
