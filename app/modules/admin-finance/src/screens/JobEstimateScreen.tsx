@@ -610,7 +610,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     (props.serviceAreas ?? []).find((a) => a.id === job.service_area_id) ??
     matchServiceAreaByZip(props.serviceAreas ?? [], extractZip(job.address), job.address);
 
-  async function handleBuildFromTasks(): Promise<void> {
+  async function handleBuildFromTasks(auto = false): Promise<void> {
+    if (buildingRef.current) return;
     let buildAdjustments: PriceSheetAreaAdjustment[] = [];
     if (resolvedServiceArea && props.priceSheets && props.priceSheetAreaAdjustments) {
       try {
@@ -656,9 +657,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       }
     }
     if (drafts.length === 0) {
-      setActionState({ kind: 'done', message: 'Every task already has a line.' });
+      if (!auto) setActionState({ kind: 'done', message: 'Every task already has a line.' });
       return;
     }
+    buildingRef.current = true;
     setActionState({ kind: 'working' });
     try {
       if (!estimate && !(await persist({ status: 'draft' }))) return;
@@ -669,10 +671,29 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       setLineItems((prev) => [...prev, ...added]);
       setActionState({ kind: 'done', message: `${added.length} line(s) built from tasks.` });
     } catch (error: unknown) {
+      autoBuildFailedRef.current = true;
       const message = error instanceof Error ? error.message : 'Could not build lines from tasks.';
       setActionState({ kind: 'failed', message });
+    } finally {
+      buildingRef.current = false;
     }
   }
+
+  // Build from tasks runs on its own: once the estimate has loaded, and again
+  // whenever the task list changes, any task without a line gets one. A failed
+  // auto-build is not retried until the task list changes again.
+  const buildingRef = useRef(false);
+  const autoBuildFailedRef = useRef(false);
+  const handleBuildRef = useRef(handleBuildFromTasks);
+  handleBuildRef.current = handleBuildFromTasks;
+  const autoBuildReady = editable && loadState.kind === 'loaded';
+  useEffect(() => {
+    autoBuildFailedRef.current = false;
+  }, [planTasks]);
+  useEffect(() => {
+    if (!autoBuildReady || autoBuildFailedRef.current) return;
+    void handleBuildRef.current(true);
+  }, [autoBuildReady, planTasks, lineItems.length]);
 
   function beginEdit(item: JobEstimateLineItem): void {
     setEditingId(item.id);
@@ -1073,14 +1094,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         {activeTab === 'tasks' && editable && props.renderTaskList ? (
         <Card style={styles.card}>
           {props.renderTaskList({ jobId: job.id, mode: 'edit', allowCatalog: true, source: 'estimate', onChange: (rows) => setPlanTasks(rows) })}
-          <PayrollButton
-            label={busy ? 'Building...' : 'Build from tasks'}
-            onPress={() => {
-              void handleBuildFromTasks();
-            }}
-            disabled={busy}
-            style={styles.action}
-          />
         </Card>
         ) : null}
 
@@ -1096,16 +1109,6 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   subtitle={t.kind === 'misc' ? 'Hourly · clock' : `Qty ${t.quantity}`}
                 />
               ))}
-              {editable ? (
-                <PayrollButton
-                  label={busy ? 'Building...' : 'Build from tasks'}
-                  onPress={() => {
-                    void handleBuildFromTasks();
-                  }}
-                  disabled={busy}
-                  style={styles.action}
-                />
-              ) : null}
             </View>
           ) : null}
         </Card>

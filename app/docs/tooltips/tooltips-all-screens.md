@@ -406,7 +406,6 @@ Form boxes where you type a name, phone or address are kept, since they don't do
 |---|---|---|
 | Back to Job | Button | Go back to the job. |
 | Check UPS | Button | Look up the package and see if it has arrived. |
-| Build from tasks | Button | Fill in the estimate from the tasks picked for this job. |
 | Edit | Button | Change this line. |
 | Delete | Button | Remove this line from the estimate. |
 | Add contingency | Button | Add a possible extra cost if something unexpected turns up. |

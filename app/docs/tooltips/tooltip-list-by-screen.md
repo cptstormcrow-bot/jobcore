@@ -479,7 +479,6 @@ Controls are pulled from the code, so a few labels show as `{...}` where the lab
 |---|---|---|
 | {onBack ? 'Back to Job' : 'Estimate'} | Button | No |
 | {checkingUps ? 'Checking...' : 'Check UPS'} | Button | No |
-| {busy ? 'Building...' : 'Build from tasks'} | Button | No |
 | Edit | Button | No |
 | Delete | Button | No |
 | {contingencyForm.index === null ? 'Add contingency' : 'Save'} | Button | No |
