@@ -1,4 +1,5 @@
 import React from 'react';
+import { isSameDay, isSameMonth, isSameWeek } from 'date-fns';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, radius, typography } from './tokens';
@@ -13,6 +14,12 @@ export interface CalendarHeaderProps {
   onNext: () => void;
   onToday: () => void;
   labelPosition?: 'above' | 'below';
+  /** The day the calendar is pointed at. When it falls in today's period the Today control shows today's date; otherwise it reads "Back to Today". */
+  anchorDay?: Date;
+}
+
+function todayDateLabel(): string {
+  return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 const MODES: { key: CalendarMode; title: string }[] = [
@@ -32,7 +39,12 @@ export function CalendarHeader({
   onNext,
   onToday,
   labelPosition = 'below',
+  anchorDay,
 }: CalendarHeaderProps): JSX.Element {
+  const now = new Date();
+  const atToday = anchorDay
+    ? mode === 'month' ? isSameMonth(anchorDay, now) : mode === 'week' ? isSameWeek(anchorDay, now) : isSameDay(anchorDay, now)
+    : false;
   const labelNode = (
     <Text style={styles.label} numberOfLines={1}>
       {label}
@@ -79,7 +91,9 @@ export function CalendarHeader({
             onPress={onToday}
             style={styles.navButton}
           >
-            <Text style={styles.navText}>Today</Text>
+            <Text style={styles.navText} numberOfLines={1}>
+              {atToday ? todayDateLabel() : 'Back to Today'}
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"

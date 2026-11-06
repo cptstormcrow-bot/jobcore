@@ -230,7 +230,7 @@ export function MonthView({
                       selected && hasTimeOff && styles.tileSelectedOff,
                     ]}
                   >
-                    <Text style={[styles.tileText, { fontSize: tileFont }, onColor && styles.tileTextOn, today && styles.dayTextToday]}>
+                    <Text style={[styles.tileText, { fontSize: tileFont }, onColor && styles.tileTextOn, today && styles.tileTextToday]}>
                       {format(day, 'd')}
                     </Text>
                     {badgeCount > 0 && (
@@ -291,23 +291,25 @@ export function MonthView({
 }
 
 const styles = StyleSheet.create({
+  // Flat calendar squares (Jeff 2026-11-06): no padding, radius or shadow; only a thin
+  // gray line (right and bottom edge of each square) separates the days.
   tileSlot: {
     width: `${100 / 7}%`,
-    padding: 2,
   },
   tile: {
     height: 46,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.divider,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tileFaded: { opacity: 0.4 },
-  tileToday: { borderWidth: 2, borderColor: colors.primary },
-  tileSelectedOff: { borderWidth: 3, borderColor: colors.info },
+  tileToday: {},
+  tileSelectedOff: {},
   tileText: { fontSize: 14, fontWeight: '600', color: colors.text },
   tileTextOn: { color: colors.white },
+  tileTextToday: { fontWeight: '900', textDecorationLine: 'underline' },
   tileBadge: {
     position: 'absolute',
     top: 2,
