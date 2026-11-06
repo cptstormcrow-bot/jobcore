@@ -8,6 +8,7 @@ import { ScreenTitle, colors, typography, spacing, Text, PayrollButton } from '@
 import type { PremQueueItem } from '../data/ports';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { premCardAction, premReportRoute, formatNeedsPremSince } from './prem-jobs-helpers';
+import { CLOSED_JOB_STATUSES } from './day-list-helpers';
 
 export function PremJobs(): React.ReactElement {
   const session = getModuleSession();
@@ -38,7 +39,8 @@ export function PremJobs(): React.ReactElement {
         .listOpen(session.userId)
         .then((result) => {
           if (cancelled) return;
-          setItems(result.items);
+          // A closed-out job never needs a Prem, even if its needs_prem_at flag was left set.
+          setItems(result.items.filter((item) => !CLOSED_JOB_STATUSES.has(item.job.status)));
           setUnavailable(result.unavailable);
           setError(null);
         })

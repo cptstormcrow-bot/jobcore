@@ -141,7 +141,7 @@ export function Overview({
       let claimed: number | null = null;
       try {
         const premResult = await getModulePorts().premQueue.listOpen(techId);
-        claimed = premResult.unavailable ? null : premResult.items.filter((item) => item.claimedByMe === true).length;
+        claimed = premResult.unavailable ? null : premResult.items.filter((item) => item.claimedByMe === true && !CLOSED_JOB_STATUSES.has(item.job.status)).length;
       } catch {
         claimed = null;
       }
