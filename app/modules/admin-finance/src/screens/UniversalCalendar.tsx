@@ -403,7 +403,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
       />
       {mode === 'month' ? (
         <MonthView
-          variant="list"
+          variant="tiles"
+          highlightTechId={effectiveTechId ?? undefined}
           jobs={calendarJobs}
           anchorDay={anchor}
           timeOffEvents={shownTimeOff}

@@ -441,7 +441,8 @@ export function JobScheduleScreen({
 
           <View testID="schedule-calendar" style={styles.calendarWrap}>
             <MonthView
-              variant="list"
+              variant="tiles"
+              highlightTechId={job.assignedTechId ?? undefined}
               jobs={calendarJobs}
               anchorDay={anchorDay}
               timeOffEvents={calendarTimeOff}

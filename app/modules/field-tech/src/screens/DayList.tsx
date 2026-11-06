@@ -220,6 +220,8 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
       ) : (
         <View style={styles.monthStrip}>
           <MonthView
+            variant="tiles"
+            highlightTechId={techId ?? session?.userId}
             jobs={visibleJobs}
             anchorDay={anchorDay}
             timeOffEvents={timeOffEvents}

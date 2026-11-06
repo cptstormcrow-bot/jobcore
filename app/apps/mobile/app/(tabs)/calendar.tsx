@@ -251,14 +251,14 @@ export default function CalendarScreen() {
     () =>
       jobs.filter(
         (j) =>
-          isAdminRole &&
+          (isAdminRole || j.assignedTechId === viewerId) &&
           j.assignedTechId &&
           !j.scheduledStart &&
           j.status !== 'completed' &&
           j.status !== 'cancelled' &&
           j.status !== 'paid',
       ),
-    [jobs, isAdminRole],
+    [jobs, isAdminRole, viewerId],
   );
   useEffect(() => {
     if (!orgId || unscheduledAssigned.length === 0) {
@@ -338,14 +338,18 @@ export default function CalendarScreen() {
         anchorDate={anchorDate}
         {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
         onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
-        onAddJob={(day, _techId, time) =>
-          router.push(
-            `/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}${time ? `&preferredTime=${encodeURIComponent(time)}` : ''}` as never,
-          )
-        }
+        {...(isAdminRole
+          ? {
+              onAddJob: (day: Date, _techId: string | null, time?: string | null) =>
+                router.push(
+                  `/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}${time ? `&preferredTime=${encodeURIComponent(time)}` : ''}` as never,
+                ),
+            }
+          : {})}
         schedulableJobs={schedulableJobs}
         onScheduleJob={onScheduleJob}
-        {...(isAdminRole ? { onRescheduleJob, onClearJob } : {})}
+        onRescheduleJob={onRescheduleJob}
+        onClearJob={onClearJob}
         onSaveBlackouts={onSaveBlackouts}
         onSubmitTimeOff={onSubmitTimeOff}
         onCancelTimeOff={onCancelTimeOff}
@@ -368,19 +372,7 @@ export default function CalendarScreen() {
   return (
     <View style={styles.screen}>
       <StaleDataHint queries={['app.jobs.calendar']} />
-      <UniversalCalendar
-        role={isAdminRole ? 'admin' : 'tech'}
-        viewerId={viewerId}
-        jobs={jobs}
-        employees={employees}
-        timeOffRequests={timeOffRequests}
-        anchorDate={anchorDate}
-        {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
-        onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
-        onSaveBlackouts={onSaveBlackouts}
-        onSubmitTimeOff={onSubmitTimeOff}
-        onCancelTimeOff={onCancelTimeOff}
-      />
+      {calendarNode}
     </View>
   );
 }

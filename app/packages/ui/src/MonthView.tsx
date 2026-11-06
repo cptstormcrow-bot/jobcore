@@ -26,7 +26,15 @@ export interface MonthViewProps {
   onSelectDay?: (day: Date) => void;
   onSelectJob?: (job: Job) => void;
   onSelectTimeOff?: (event: TimeOffEvent) => void;
-  variant?: 'dots' | 'list';
+  /**
+   * dots: day number + status dots (field-tech Overview look).
+   * list: window-filling cells with job rows.
+   * tiles: unified calendar look (Jeff 2026-11-06): colour-only rounded squares. Red = time off,
+   * green + count badge = jobs assigned to the viewer, blue = selected day / other jobs.
+   */
+  variant?: 'dots' | 'list' | 'tiles';
+  /** tiles only: jobs whose assignedTechId matches count green; unset means every job counts green. */
+  highlightTechId?: string;
   maxVisibleItems?: number;
   /** ISO day keys (yyyy-MM-dd) highlighted as picked, used by blackout day-picking mode. */
   selectedDays?: string[];
@@ -36,6 +44,9 @@ export interface MonthViewProps {
 
 /** Cell width (dp) under which list cells drop the address for a short time chip. 600dp wide / 7 is about 86. */
 const COMPACT_CELL_WIDTH = 80;
+
+/** Pale blue for days that hold only other people's jobs. */
+const TILE_OTHER_BG = '#DCEBFA';
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -47,6 +58,7 @@ export function MonthView({
   onSelectJob,
   onSelectTimeOff,
   variant = 'dots',
+  highlightTechId,
   maxVisibleItems,
   selectedDays,
   onDayPress,
@@ -96,7 +108,7 @@ export function MonthView({
     <View style={listMode ? styles.gridFill : undefined} onLayout={onGridLayout}>
       <View style={styles.header}>
         {WEEKDAY_LABELS.map((label) => (
-          <Text key={label} style={[styles.dayText, styles.dayTextMuted, { width: `${100 / 7}%` }]}>
+          <Text key={label} style={[styles.dayText, styles.dayTextMuted, variant === 'tiles' && { textAlign: 'center' }, { width: `${100 / 7}%` }]}>
             {label}
           </Text>
         ))}
@@ -180,6 +192,53 @@ export function MonthView({
               );
             }
 
+            if (variant === 'tiles') {
+              const mine = highlightTechId ? dayJobs.filter((j) => j.assignedTechId === highlightTechId) : dayJobs;
+              const others = dayJobs.length - mine.length;
+              const bg = picked
+                ? colors.sand
+                : selected
+                  ? colors.info
+                  : hasTimeOff
+                    ? colors.danger
+                    : mine.length > 0
+                      ? colors.success
+                      : others > 0
+                        ? TILE_OTHER_BG
+                        : colors.white;
+              const onColor = !picked && (selected || hasTimeOff || mine.length > 0);
+              const badgeCount = mine.length > 0 ? mine.length : 0;
+              return (
+                <View key={day.toISOString()} style={styles.tileSlot}>
+                  <Pressable
+                    onPress={() => pressDay(day)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      format(day, 'EEEE, MMMM d') +
+                      (hasTimeOff ? ', time off' : '') +
+                      (mine.length ? `, ${mine.length} job${mine.length === 1 ? '' : 's'}` : '')
+                    }
+                    style={[
+                      styles.tile,
+                      { backgroundColor: bg },
+                      !inMonth && styles.tileFaded,
+                      today && styles.tileToday,
+                      selected && hasTimeOff && styles.tileSelectedOff,
+                    ]}
+                  >
+                    <Text style={[styles.tileText, onColor && styles.tileTextOn, today && styles.dayTextToday]}>
+                      {format(day, 'd')}
+                    </Text>
+                    {badgeCount > 0 && (
+                      <View style={styles.tileBadge}>
+                        <Text style={styles.tileBadgeText}>{badgeCount > 9 ? '9+' : badgeCount}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </View>
+              );
+            }
+
             return (
               <Pressable
                 key={day.toISOString()}
@@ -228,6 +287,36 @@ export function MonthView({
 }
 
 const styles = StyleSheet.create({
+  tileSlot: {
+    width: `${100 / 7}%`,
+    padding: 2,
+  },
+  tile: {
+    height: 46,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.divider,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileFaded: { opacity: 0.4 },
+  tileToday: { borderWidth: 2, borderColor: colors.primary },
+  tileSelectedOff: { borderWidth: 3, borderColor: colors.info },
+  tileText: { fontSize: 14, fontWeight: '600', color: colors.text },
+  tileTextOn: { color: colors.white },
+  tileBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 3,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileBadgeText: { fontSize: 10, fontWeight: '800', color: colors.success },
   header: {
     flexDirection: 'row',
   },
