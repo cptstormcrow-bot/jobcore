@@ -629,18 +629,9 @@ export function AdminFinanceRoot() {
     if (oldPremTechId && oldPremTechId !== techId) {
       try {
         await ports.jobAssignments.removeInvestigator(job.id);
-      } catch {
-        // Checked by the re-read below.
-      }
-      let stillLinked: string | null = oldPremTechId;
-      try {
-        stillLinked = await ports.jobAssignments.getInvestigatorTechId(job.id);
-      } catch {
-        stillLinked = oldPremTechId;
-      }
-      if (stillLinked) {
-        const message =
-          "The current Prem tech couldn't be removed, so nothing was changed. Refresh and try again.";
+      } catch (error) {
+        // A removal that really fails throws; a re-read of the saved copy can lag and falsely fail a good one.
+        const message = friendlyAssignError(error);
         Alert.alert('Prem assignment failed', message);
         setBoardError(message);
         refreshInvestigatorTechIds();

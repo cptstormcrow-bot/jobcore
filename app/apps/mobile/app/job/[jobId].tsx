@@ -853,11 +853,7 @@ export default function JobDrilldownScreen() {
           fail(friendlyAssignError(err));
           return;
         }
-        const stillLinked = await assignments.getInvestigatorTechId(targetJobId);
-        if (stillLinked) {
-          fail("The current Prem tech couldn't be removed, so nothing was changed. Refresh the page and try again.");
-          return;
-        }
+        // No re-read check here either: a failed removal throws above; the saved copy can lag.
       }
       try {
         await assignments.create(orgId, {
@@ -938,12 +934,10 @@ export default function JobDrilldownScreen() {
     try {
       const assignments = createJobAssignmentRepository();
       if (kind === 'prem') {
+        // No re-read check: the read below is a saved copy that can still hold the old tech
+        // (or be overwritten by a slower background refresh), which wrongly failed a good removal.
+        // A removal that really fails throws, and the catch below shows that error.
         await assignments.removeForJob(job.id, 'investigator');
-        const stillLinked = await assignments.getInvestigatorTechId(job.id);
-        if (stillLinked) {
-          fail("The Prem tech couldn't be removed. Refresh the page and try again.");
-          return;
-        }
         setInvestigatorTechId(null);
         return;
       }
