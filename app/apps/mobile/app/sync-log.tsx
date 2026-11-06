@@ -3,8 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { AppChrome, Card, PayrollButton, colors, spacing, typography, Text } from '@jobcore/ui';
 
-import { clearSyncLog, listSyncLog } from '../src/lib/offline-db';
-import type { SyncLogRow } from '../src/lib/offline-db.types';
+import { clearSyncLog, discardStuck, listStuck, listSyncLog, retryStuck } from '../src/lib/offline-db';
+import type { QueueRow, SyncLogRow } from '../src/lib/offline-db.types';
+import { refetchAll } from '../src/lib/read-cache';
 import { failureMessage, opLabel, savedAtLabel } from '../src/lib/sync-issues';
 import { useSyncStatus } from '../src/lib/sync-status';
 
@@ -19,10 +20,12 @@ const KIND_LABEL: Record<SyncLogRow['kind'], string> = {
 export default function SyncLogScreen() {
   const { isSyncing, lastDrainAt } = useSyncStatus();
   const [rows, setRows] = useState<SyncLogRow[] | null>(null);
+  const [stuck, setStuck] = useState<QueueRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
+      setStuck(await listStuck(50));
       setRows(await listSyncLog());
       setError(null);
     } catch (e) {
@@ -55,6 +58,40 @@ export default function SyncLogScreen() {
     ]);
   };
 
+  const retryOne = (row: QueueRow) =>
+    void (async () => {
+      try {
+        await retryStuck(row.id);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'That did not work. Please try again.');
+      }
+      await load();
+    })();
+
+  const confirmDiscard = (row: QueueRow) => {
+    Alert.alert(
+      'Discard this change?',
+      `"${opLabel(row.op)}" saved ${savedAtLabel(row.occurred_at)} will be removed from this device and never sent. This cannot be undone.`,
+      [
+        { text: 'Keep', style: 'cancel' },
+        {
+          text: 'Discard',
+          style: 'destructive',
+          onPress: () =>
+            void (async () => {
+              try {
+                await discardStuck(row.id);
+                refetchAll();
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'That did not work. Please try again.');
+              }
+              await load();
+            })(),
+        },
+      ]
+    );
+  };
+
   const list = rows ?? [];
 
   return (
@@ -67,6 +104,24 @@ export default function SyncLogScreen() {
       />
       <ScrollView contentContainerStyle={styles.content}>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {stuck.length > 0 ? (
+          <Text style={styles.stuckHeading}>
+            Stuck: {stuck.length} {stuck.length === 1 ? 'change is' : 'changes are'} not sending
+          </Text>
+        ) : null}
+        {stuck.map((row) => (
+          <Card key={row.id} style={[styles.card, styles.stuckCard]}>
+            <Text style={styles.title} numberOfLines={2}>Stuck: {opLabel(row.op)}</Text>
+            <Text style={styles.meta}>
+              {savedAtLabel(row.occurred_at)} · tried {row.attempts} {row.attempts === 1 ? 'time' : 'times'}
+            </Text>
+            <Text style={styles.errorText}>{failureMessage(row.last_error)}</Text>
+            <View style={styles.actionRow}>
+              <PayrollButton label="Retry" onPress={() => retryOne(row)} />
+              <PayrollButton label="Discard" onPress={() => confirmDiscard(row)} />
+            </View>
+          </Card>
+        ))}
         {rows !== null && list.length === 0 ? (
           <Card>
             <Text style={styles.title}>No history yet</Text>
@@ -103,6 +158,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.offWhite },
   content: { padding: spacing.md, gap: spacing.sm },
   card: { gap: spacing.xs },
+  stuckHeading: { fontSize: typography.size.body, fontWeight: typography.weight.bold, color: colors.danger },
+  stuckCard: { borderWidth: 2, borderColor: colors.danger },
+  actionRow: { flexDirection: 'row', gap: spacing.sm },
   topRow: { gap: spacing.xs, marginBottom: spacing.xs },
   title: { fontSize: typography.size.body, fontWeight: typography.weight.bold, color: colors.text },
   meta: { fontSize: typography.size.small, color: colors.textMuted },

@@ -243,6 +243,21 @@ export async function discardFailed(id: string): Promise<void> {
   await db.runAsync(`delete from ${OFFLINE_QUEUE_TABLE} where id = ? and status = 'failed'`, id);
 }
 
+/** Retry one stuck change now (failed, or still pending after repeated tries): resets its count and backoff. */
+export async function retryStuck(id: string): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(
+    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = 0, next_attempt_at = null, inflight_at = null where id = ? and ${STUCK_WHERE}`,
+    id
+  );
+}
+
+/** Drop one stuck change (failed, or pending after repeated tries). Never a row that is being sent right now. */
+export async function discardStuck(id: string): Promise<void> {
+  const db = await getOfflineDb();
+  await db.runAsync(`delete from ${OFFLINE_QUEUE_TABLE} where id = ? and ${STUCK_WHERE}`, id);
+}
+
 /** Drops every failed row. Run on sign-out: the queue is device-wide, so the next login must not inherit them. */
 export async function discardAllFailed(): Promise<void> {
   const db = await getOfflineDb();

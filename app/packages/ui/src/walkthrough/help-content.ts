@@ -251,6 +251,16 @@ export const HELP_CARDS: WalkthroughStep[] = [
     whereScreen: 'Payroll',
   },
 
+  // Sync
+  {
+    id: 'sync_history',
+    kind: 'action',
+    title: 'Sync history',
+    body: 'Every send, retry and failure on this phone, newest first. Changes that are not sending show at the top in red under "Stuck", with the reason. Tap "Retry" to send one again now, or "Discard" (then confirm) to remove it from this phone for good.',
+    whereScreen: 'Sync history',
+    whereHint: 'Open Sync issues, then tap "Sync history".',
+  },
+
   // Job sections
   {
     id: 'job_plan',
