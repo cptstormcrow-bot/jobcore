@@ -318,6 +318,33 @@ export function JobScheduleScreen({
     handleSave();
   }
 
+  // Jeff 2026-11-06: Time-off books the assigned tech out for the picked day, like an assigned job.
+  async function handleTimeOff(): Promise<void> {
+    if (busy) return;
+    if (!job.assignedTechId) {
+      setErrorText('Assign a technician to this job before booking Time-off.');
+      return;
+    }
+    const day = draftStart ? new Date(draftStart) : anchorDay;
+    const iso = format(day, 'yyyy-MM-dd');
+    setBusy(true);
+    setErrorText(null);
+    setNoticeText(null);
+    try {
+      await getModulePorts().timeOffAdmin.createBlackout(job.organizationId, job.assignedTechId, {
+        startDate: iso,
+        endDate: iso,
+        reason: null,
+      });
+      setFeedRev((n) => n + 1);
+      setNoticeText(`Time-off booked for ${techLabel ?? 'the technician'} on ${format(day, 'EEEE, MMMM d yyyy')}.`);
+    } catch (error: unknown) {
+      setErrorText(error instanceof Error ? error.message : 'Could not book Time-off.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function handleSave(): void {
     if (busy || !changed) return;
     if (saved.start === null) {
@@ -418,6 +445,7 @@ export function JobScheduleScreen({
             />
             <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
+            <PayrollButton label="Time-off" onPress={() => void handleTimeOff()} disabled={busy} testID="schedule-timeoff" />
             <View testID="schedule-hour-picker" style={styles.hourPicker}>
               <TimePicker value={pickedTime} onChange={pickTime} />
             </View>

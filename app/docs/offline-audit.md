@@ -218,3 +218,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 100. On #0011 Calendar, tap an open day: a popup shows the full date, a Time-off button (sets that day red for the signed-in tech) and Close. A time-off day shows its title and notes. A day with jobs shows each job's Job #, name, address and phone (tap to copy) and the job description.
 
 101. The time picker on #0011 Calendar, the day popup and #0058 Job schedule is back to scrolling Hour, Min and AM/PM columns with the picked row highlighted in blue (no wrapped buttons). The month grid is unchanged. Works on phone and tablet widths.
+
+102. #0058 Job schedule now has Save, Add to schedule, Clear, Cancel and Time-off buttons. Time-off books the job's assigned tech out for the picked day (red on every calendar) and refreshes the calendar. It asks for a technician first if the job has none.
