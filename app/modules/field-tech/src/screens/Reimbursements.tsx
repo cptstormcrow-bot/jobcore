@@ -19,7 +19,7 @@ import { View, TextInput, FlatList, StyleSheet } from 'react-native';
 import type { ReimbursementRequest } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
-import { PayrollButton, colors, Text, spacing, radius, typography } from '@jobcore/ui';
+import { PayrollButton, SignInButton, colors, Text, spacing, radius, typography } from '@jobcore/ui';
 
 function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -130,6 +130,7 @@ export function Reimbursements(): React.ReactElement {
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyText}>Sign in to request a reimbursement.</Text>
+        <SignInButton />
       </View>
     );
   }

@@ -40,7 +40,7 @@ import { View, StyleSheet } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { makeIdempotencyKey } from '@jobcore/core';
 import type { NewQueuedMutation } from '@jobcore/core';
-import { ScreenTitle, PayrollButton, Checkbox, colors, spacing, typography, Text } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, SignInButton, Checkbox, colors, spacing, typography, Text } from '@jobcore/ui';
 
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
@@ -216,6 +216,7 @@ export function StartChecklist({ job, onDone }: StartChecklistProps): JSX.Elemen
     return (
       <View style={styles.container}>
         <Text style={styles.body}>Sign in to start this job.</Text>
+        <SignInButton />
       </View>
     );
   }

@@ -28,7 +28,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { ScreenTitle, colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -236,6 +236,7 @@ export function Overview({
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyText}>Sign in to view your overview.</Text>
+        {onSignIn ? <PayrollButton label="Sign in" onPress={onSignIn} /> : null}
       </View>
     );
   }
