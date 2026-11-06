@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet, type LayoutChangeEvent } from 'react-native';
 import { Text } from './Text';
 import {
   addDays,
@@ -34,6 +34,9 @@ export interface MonthViewProps {
   onDayPress?: (isoDay: string) => void;
 }
 
+/** Cell width (dp) under which list cells drop the address for a short time chip. 600dp wide / 7 is about 86. */
+const COMPACT_CELL_WIDTH = 80;
+
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export function MonthView({
@@ -44,10 +47,19 @@ export function MonthView({
   onSelectJob,
   onSelectTimeOff,
   variant = 'dots',
-  maxVisibleItems = 4,
+  maxVisibleItems,
   selectedDays,
   onDayPress,
 }: MonthViewProps) {
+  // Cell width drives the phone/tablet look (uber 85): a 7-column grid on a phone gives ~50dp cells, too narrow for an
+  // address, so below COMPACT_CELL_WIDTH a list cell shows a status-coloured time chip instead and fewer entries.
+  const [gridWidth, setGridWidth] = React.useState(0);
+  const onGridLayout = (e: LayoutChangeEvent) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    setGridWidth((prev) => (Math.abs(prev - w) > 1 ? w : prev));
+  };
+  const compact = gridWidth > 0 && gridWidth / 7 < COMPACT_CELL_WIDTH;
+  const visibleLimit = maxVisibleItems ?? (compact ? 3 : 4);
   const gridStart = startOfWeek(startOfMonth(anchorDay), { weekStartsOn: 0 });
   const gridEnd = endOfWeek(endOfMonth(anchorDay), { weekStartsOn: 0 });
 
@@ -81,7 +93,7 @@ export function MonthView({
   };
 
   const grid = (
-    <View style={listMode ? styles.gridFill : undefined}>
+    <View style={listMode ? styles.gridFill : undefined} onLayout={onGridLayout}>
       <View style={styles.header}>
         {WEEKDAY_LABELS.map((label) => (
           <Text key={label} style={[styles.dayText, styles.dayTextMuted, { width: `${100 / 7}%` }]}>
@@ -114,7 +126,7 @@ export function MonthView({
                 .filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), day))
                 .sort((a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime());
               const allItems = [...dayTimeOffList, ...dayJobsList];
-              const visibleItems = allItems.slice(0, maxVisibleItems);
+              const visibleItems = allItems.slice(0, visibleLimit);
               const overflowCount = allItems.length - visibleItems.length;
 
               return (
@@ -150,13 +162,15 @@ export function MonthView({
                           ]}
                         />
                         <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, selected && !picked && styles.dayTextSelected]}>
-                          {(JOB_STATUS_GLYPHS[item.status] ?? '•') + ' ' + (item.address ?? 'No address')}
+                          {compact
+                            ? format(new Date(item.scheduledStart!), 'h:mma').toLowerCase().replace(':00', '')
+                            : (JOB_STATUS_GLYPHS[item.status] ?? '•') + ' ' + (item.address ?? 'No address')}
                         </Text>
                       </Pressable>
                     ) : (
                       <Pressable key={item.id} onPress={() => onSelectTimeOff?.(item)}>
                         <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.listItemText, styles.timeOffListText, selected && !picked && styles.dayTextSelected]}>
-                          {'• ' + (item.title ?? 'Time off')}
+                          {compact ? '• Off' : '• ' + (item.title ?? 'Time off')}
                         </Text>
                       </Pressable>
                     )
