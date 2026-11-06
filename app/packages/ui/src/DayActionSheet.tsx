@@ -237,7 +237,7 @@ export function DayActionSheet({
                     <TimePicker value={time} onChange={setTime} />
                   </View>
                 ) : hostOwnsTime ? (
-                  <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour at the top of the calendar'}</Text>
+                  <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour below the calendar'}</Text>
                 ) : null}
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={styles.actions}>
