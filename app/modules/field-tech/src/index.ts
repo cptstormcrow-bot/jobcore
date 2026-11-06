@@ -56,12 +56,11 @@ export type { DayListProps } from './screens/DayList';
  * covers the screens that render with no per-job prop: the day's job list.
  * Time off lives on the shared #0011 calendar tab (screen #0031 retired).
  */
-type SubView = 'overview' | 'jobs' | 'reviews' | 'prems' | 'payroll';
+type SubView = 'overview' | 'reviews' | 'prems' | 'payroll';
 
 type HelpScreenKey = NonNullable<React.ComponentProps<typeof AppChrome>['helpContext']>['screenKey'];
 const HELP_SCREEN_KEYS: Record<SubView, HelpScreenKey> = {
   overview: 'ft-overview',
-  jobs: 'ft-jobs',
   prems: 'ft-prems',
   reviews: 'ft-reviews',
   payroll: 'ft-overview',
@@ -165,13 +164,6 @@ function FieldTechRoot(): React.ReactElement {
       },
     },
     {
-      id: 'jobs',
-      helpId: 'ft_jobs',
-      label: 'Jobs',
-      isActive: subView === 'jobs',
-      onPress: () => setSubView('jobs'),
-    },
-    {
       id: 'prems',
       helpId: 'ft_prems',
       label: 'Prems',
@@ -242,7 +234,6 @@ function FieldTechRoot(): React.ReactElement {
 
   const SUBVIEW_LABELS: Record<SubView, string> = {
     overview: 'Overview',
-    jobs: 'Assigned Jobs',
     reviews: 'Reviews',
     prems: 'Prems',
     payroll: 'Payroll',
@@ -259,22 +250,16 @@ function FieldTechRoot(): React.ReactElement {
     case 'payroll':
       content = React.createElement(Payroll, null);
       break;
-    case 'jobs':
-      content = React.createElement<DayListProps>(DayList, {
-        onSelectJob: (job: Job) => router.push(('/job/' + job.id + '?panel=plan') as never),
-        onOpenTimeOff: () => router.push('/calendar' as never),
-        showTestJobs,
-        defaultViewMode: defaultMonthView ? 'month' : 'week',
-      });
-      break;
     case 'overview':
     default:
       content = React.createElement<OverviewProps>(Overview, {
         onOpenJob: (jobId: string) => router.push(('/job/' + jobId) as never),
         onOpenTimeOff: () => router.push('/calendar' as never),
         onDrillChange: setDrillLabel,
-        onOpenJobs: () => setSubView('jobs'),
         showTestJobs,
+        onSelectJob: (job: Job) => router.push(('/job/' + job.id + '?panel=plan') as never),
+        defaultViewMode: defaultMonthView ? 'month' : 'week',
+        onSignIn: () => router.replace('/sign-in' as never),
       });
       break;
   }
@@ -291,7 +276,7 @@ function FieldTechRoot(): React.ReactElement {
       gearTitle: 'Configurations',
       helpContext: { screenKey: HELP_SCREEN_KEYS[subView] ?? 'ft-overview' },
       logoMenuItems,
-      optionsItems: subView === 'jobs' ? jobsOptions : [],
+      optionsItems: subView === 'overview' && !drillLabel ? jobsOptions : [],
       titleBar: { title: 'Field Tech', subtitle:
           subView === 'overview' && drillLabel
             ? drillLabel.replace(/^Assigned jobs$/i, 'Assigned Jobs')

@@ -21,14 +21,14 @@
 import * as React from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { format } from 'date-fns';
+import { DayList } from './DayList';
 
 import type { Job } from '@jobcore/core';
 import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { ScreenTitle, colors, spacing, Text, radius, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -37,8 +37,12 @@ export interface OverviewProps {
   onOpenJob?: (jobId: string) => void;
   onOpenTimeOff?: () => void;
   onDrillChange?: (drillLabel: string | null) => void;
-  onOpenJobs?: () => void;
   showTestJobs?: boolean;
+  /** Passed to the embedded #0025 list: row tap. */
+  onSelectJob?: (job: Job) => void;
+  defaultViewMode?: 'week' | 'month';
+  /** Opens Sign In (#0003) from the signed-out placeholder. */
+  onSignIn?: () => void;
 }
 
 type TileKey =
@@ -92,8 +96,10 @@ export function Overview({
   onOpenJob,
   onOpenTimeOff,
   onDrillChange,
-  onOpenJobs,
   showTestJobs: showTestJobsProp,
+  onSelectJob,
+  defaultViewMode,
+  onSignIn,
 }: OverviewProps = {}): React.ReactElement {
   const session = getModuleSession();
   const rev = useReadCacheRevision();
@@ -105,8 +111,6 @@ export function Overview({
   const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
-  // Completed/closed jobs are hidden from the Assigned Jobs list unless this flag is on (Jeff 2026-11-06).
-  const [showCompleted, setShowCompleted] = React.useState(false);
 
   const activeDrillLabel = activeTile ? activeTile.label : null;
   React.useEffect(() => {
@@ -335,44 +339,22 @@ export function Overview({
     );
   }
 
-  const assignedForList = (showCompleted ? jobLists.assigned : jobLists.open) ?? [];
-
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <ScreenTitle title="Overview" />
-      <View style={styles.groupCard}>
-        <Text style={styles.groupTitle}>Assigned Jobs</Text>
-        {assignedForList.length === 0 ? <Text style={styles.emptyText}>{showCompleted ? 'No assigned jobs.' : 'No open jobs.'}</Text> : null}
-        {assignedForList.map((job) => {
-          const when =
-            job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled');
-          return (
-            <Pressable key={job.id} onPress={() => onOpenJob?.(job.id)} style={styles.assignedRow}>
-              <View style={[styles.statusChip, { backgroundColor: JOB_STATUS_COLORS[job.status] }]} />
-              <Text style={styles.statusGlyph}>{JOB_STATUS_GLYPHS[job.status]}</Text>
-              <View style={styles.assignedBody}>
-                <Text style={styles.cardValue} numberOfLines={1}>
-                  {job.jobNumber != null ? `#${job.jobNumber} ` : ''}{job.customerName ?? 'No customer'}
-                </Text>
-                <Text style={styles.cardLabel} numberOfLines={1}>
-                  {(job.address ?? 'No address') + (job.customerPhone ? `  •  ${job.customerPhone}` : '') + `  •  ${when}`}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
-        <PayrollButton label={showCompleted ? 'Hide completed' : 'Show completed'} onPress={() => setShowCompleted((v) => !v)} style={styles.calendarLink} />
-        <PayrollButton label="Open calendar" onPress={() => onOpenJobs?.()} style={styles.calendarLink} />
-      </View>
+      {/* #0025 Assigned Jobs: calendar, open-job list and Previous Jobs live right here (merged 2026-11-06). */}
+      <DayList
+        embedded
+        onSelectJob={onSelectJob}
+        onOpenJob={onOpenJob}
+        onOpenTimeOff={onOpenTimeOff}
+        showTestJobs={showTestJobsProp}
+        defaultViewMode={defaultViewMode}
+        onSignIn={onSignIn}
+      />
       {groups.map((group) => (
         <View key={group.key} style={styles.groupCard}>
-          {group.key === 'jobs' ? (
-            <Pressable onPress={() => onOpenJobs?.()} accessibilityRole="button" accessibilityLabel="Open assigned jobs">
-              <Text style={styles.groupTitle}>{group.title}</Text>
-            </Pressable>
-          ) : (
-            <Text style={styles.groupTitle}>{group.title}</Text>
-          )}
+          <Text style={styles.groupTitle}>{group.title}</Text>
           <View style={styles.statsRow}>
             {group.stats.map((s) => (
               <Pressable
@@ -405,29 +387,6 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: spacing.md,
-  },
-  assignedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  assignedBody: {
-    flex: 1,
-  },
-  statusChip: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: spacing.xs,
-  },
-  statusGlyph: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.text,
-    marginRight: spacing.sm,
-  },
-  calendarLink: {
-    marginTop: spacing.xs,
   },
   centered: {
     flex: 1,

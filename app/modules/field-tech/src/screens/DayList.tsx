@@ -59,11 +59,16 @@ export interface DayListProps {
   defaultViewMode?: 'week' | 'month';
   /** Opens Sign In (#0003) from the signed-out placeholder. */
   onSignIn?: () => void;
+  /**
+   * When true the list renders as a plain View (no own ScrollView, no flex:1)
+   * so a parent screen's ScrollView (Overview #0054) scrolls it.
+   */
+  embedded?: boolean;
 }
 
 export { isScheduledOnLocalDate, expandTimeOffToEvents } from './day-list-helpers';
 
-export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode, onSignIn }: DayListProps = {}): React.ReactElement {
+export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTestJobs, defaultViewMode, onSignIn, embedded }: DayListProps = {}): React.ReactElement {
   const session = getModuleSession();
   const rev = useReadCacheRevision();
   const hasLoadedRef = useRef(false);
@@ -119,9 +124,11 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     };
   }, [session, techId, rev]);
 
+  const centeredStyle = embedded ? styles.centeredEmbedded : styles.centered;
+
   if (session === null) {
     return (
-      <View style={styles.centered}>
+      <View style={centeredStyle}>
         <Text style={styles.emptyText}>Sign in to see your jobs.</Text>
         {onSignIn ? <PayrollButton label="Sign in" onPress={onSignIn} /> : null}
       </View>
@@ -130,7 +137,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={centeredStyle}>
         <ActivityIndicator />
       </View>
     );
@@ -138,7 +145,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
 
   if (error !== null) {
     return (
-      <View style={styles.centered}>
+      <View style={centeredStyle}>
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
@@ -172,9 +179,15 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     </View>
   );
 
+  // Embedded (Overview #0054): a plain View so the parent's ScrollView scrolls; standalone: own ScrollView.
+  const Wrapper: React.ComponentType<any> = embedded ? View : ScrollView;
+  const wrapperProps = embedded
+    ? { style: styles.embeddedContent }
+    : { style: styles.screen, contentContainerStyle: styles.listContent };
+
   return (
-    <View style={styles.screen}>
-    <ScrollView style={styles.screen} contentContainerStyle={styles.listContent}>
+    <View style={embedded ? undefined : styles.screen}>
+    <Wrapper {...wrapperProps}>
       <ScreenTitle title="Assigned Jobs" />
       {assignedJobs.length === 0 ? (
         <Text style={styles.emptyText}>No assigned jobs.</Text>
@@ -276,7 +289,7 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
           </Pressable>
         ))
       )}
-    </ScrollView>
+    </Wrapper>
     </View>
   );
 }
@@ -335,6 +348,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.md,
   },
+  centeredEmbedded: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
   emptyText: {
     fontSize: typography.text.body,
     color: colors.textMutedDark,
@@ -345,6 +363,9 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: spacing.md,
+  },
+  embeddedContent: {
+    paddingTop: spacing.sm,
   },
   row: {
     flexDirection: 'row',
