@@ -230,3 +230,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 106. The gap between the calendar and the Start time picker is closed up and a line now separates them (#0011 Calendar, #0058 Job schedule).
 
 107. The white space between the "Schedule #0058" title and the button row (Save, Add to schedule, Clear, Cancel, Time-off) on #0058 Job schedule is reduced.
+
+108. The Time-off button on #0058 Job schedule now only shows when a technician is assigned to the job. #0011 Calendar (no job) keeps its Time-off button.

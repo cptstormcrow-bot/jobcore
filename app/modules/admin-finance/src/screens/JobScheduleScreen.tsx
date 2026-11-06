@@ -445,7 +445,9 @@ export function JobScheduleScreen({
             />
             <PayrollButton label="Clear" onPress={handleClear} disabled={busy} testID="schedule-clear" />
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={busy} testID="schedule-cancel" />
-            <PayrollButton label="Time-off" onPress={() => void handleTimeOff()} disabled={busy} testID="schedule-timeoff" />
+            {job.assignedTechId ? (
+              <PayrollButton label="Time-off" onPress={() => void handleTimeOff()} disabled={busy} testID="schedule-timeoff" />
+            ) : null}
           </View>
 
           <Text style={styles.hintText} testID="schedule-tech">
