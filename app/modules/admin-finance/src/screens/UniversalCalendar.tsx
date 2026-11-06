@@ -87,7 +87,7 @@ export interface UniversalCalendarProps {
   /** Admin hook: when set, an "Add Blackout" button opens the host's blackout editor for the filtered tech. */
   onAddBlackout?: (techId: string | null, day?: Date) => void;
   /** Host hook: when set, the day sheet shows Add Job; receives the tapped day and the filtered tech. */
-  onAddJob?: (day: Date, techId: string | null) => void;
+  onAddJob?: (day: Date, techId: string | null, time?: string | null) => void;
   /** Rendered directly above the day timeline in Day mode only; receives the anchored day. */
   renderDayActions?: (day: Date) => ReactNode;
 }
@@ -406,7 +406,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         jobs={sheetDay ? calendarJobs.filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
-        onAddJob={props.onAddJob ? (d) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId); } : undefined}
+        onAddJob={props.onAddJob ? (d, time) => { setSheetDay(null); props.onAddJob?.(d, effectiveTechId, time); } : undefined}
         onAddBlackout={(d) => {
           setSheetDay(null);
           if (props.onAddBlackout) { props.onAddBlackout(effectiveTechId, d); return; }

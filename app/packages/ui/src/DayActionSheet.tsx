@@ -23,7 +23,7 @@ export interface DayActionSheetProps {
   blackouts: DayActionBlackout[];
   onClose: () => void;
   /** Omit to hide the Add Job button. */
-  onAddJob?: (day: Date) => void;
+  onAddJob?: (day: Date, time: string | null) => void;
   /** Omit to hide the Add Blackout button. */
   onAddBlackout?: (day: Date) => void;
   onOpenJob?: (job: Job) => void;
@@ -43,6 +43,9 @@ export function DayActionSheet({
   onOpenBlackout,
   onOpenDayView,
 }: DayActionSheetProps) {
+  // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
+  const [time, setTime] = React.useState<string | null>(null);
+  React.useEffect(() => setTime(null), [day]);
   return (
     <Modal visible={day !== null} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -50,7 +53,7 @@ export function DayActionSheet({
           <ScrollView>
             {day !== null ? (
               <>
-                <Text style={styles.title}>{format(day, 'EEEE, MMM d')}</Text>
+                <Text style={styles.title}>{`Scheduled: ${format(day, 'EEEE MMM d')}`}</Text>
                 {jobs.length === 0 && blackouts.length === 0 ? (
                   <Text style={styles.empty}>Nothing scheduled.</Text>
                 ) : null}
@@ -77,8 +80,24 @@ export function DayActionSheet({
                     ) : null}
                   </View>
                 ))}
+                {onAddJob ? (
+                  <View style={styles.timeBlock}>
+                    <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Start time (optional)'}</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      {TIME_SLOTS.map((slot) => (
+                        <Pressable
+                          key={slot}
+                          onPress={() => setTime(time === slot ? null : slot)}
+                          style={[styles.chip, time === slot ? styles.chipOn : null]}
+                        >
+                          <Text numberOfLines={1} style={time === slot ? styles.chipTextOn : styles.chipText}>{slot}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+                ) : null}
                 <View style={styles.actions}>
-                  {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day)} /> : null}
+                  {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
                   {onAddBlackout ? <PayrollButton label="Add Blackout" onPress={() => onAddBlackout(day)} /> : null}
                   {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
                   <PayrollButton label="Close" onPress={onClose} />
@@ -92,7 +111,29 @@ export function DayActionSheet({
   );
 }
 
+/** Half-hour slots, 6:00 AM to 8:00 PM. */
+const TIME_SLOTS: string[] = (() => {
+  const out: string[] = [];
+  for (let m = 6 * 60; m <= 20 * 60; m += 30) {
+    out.push(format(new Date(2000, 0, 1, Math.floor(m / 60), m % 60), 'h:mm a'));
+  }
+  return out;
+})();
+
 const styles = StyleSheet.create({
+  timeBlock: { marginTop: spacing.md },
+  timeLabel: { fontSize: 12, color: colors.textMuted, marginBottom: spacing.xs },
+  chip: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginRight: spacing.xs,
+  },
+  chipOn: { backgroundColor: colors.text, borderColor: colors.text },
+  chipText: { fontSize: typography.text.body, color: colors.text },
+  chipTextOn: { fontSize: typography.text.body, color: colors.white },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

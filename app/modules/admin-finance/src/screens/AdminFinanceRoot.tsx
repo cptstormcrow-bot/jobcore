@@ -1417,7 +1417,11 @@ export function AdminFinanceRoot() {
             refreshJobs();
           }}
           onAddBlackout={(techId, day) => handleAddBlackout(techId ?? undefined, day)}
-          onAddJob={(day) => router.push(`/job/new?preferredDate=${formatIsoDay(day, 'yyyy-MM-dd')}` as never)}
+          onAddJob={(day, _techId, time) =>
+            router.push(
+              `/job/new?preferredDate=${formatIsoDay(day, 'yyyy-MM-dd')}${time ? `&preferredTime=${encodeURIComponent(time)}` : ''}` as never,
+            )
+          }
         />
         )
       ) : (

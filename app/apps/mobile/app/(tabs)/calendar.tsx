@@ -253,7 +253,11 @@ export default function CalendarScreen() {
         anchorDate={anchorDate}
         {...(showReturn ? { onReturn, returnLabel: jobIdParam ? 'Job' : 'Back' } : {})}
         onSelectJob={(job) => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })}
-        onAddJob={(day) => router.push(`/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}` as never)}
+        onAddJob={(day, _techId, time) =>
+          router.push(
+            `/job/new?preferredDate=${format(day, 'yyyy-MM-dd')}${time ? `&preferredTime=${encodeURIComponent(time)}` : ''}` as never,
+          )
+        }
         onSaveBlackouts={onSaveBlackouts}
         onSubmitTimeOff={onSubmitTimeOff}
         onCancelTimeOff={onCancelTimeOff}
