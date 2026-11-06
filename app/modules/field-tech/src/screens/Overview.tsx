@@ -146,8 +146,10 @@ export function Overview({
         claimed = null;
       }
       const assignedJobs = allAssignedJobs
-        .filter((job) => isBetaVisible(job, showTestJobs));
-      const openJobs = assignedJobs.filter((job) => !CLOSED_JOB_STATUSES.has(job.status));
+        .filter((job) => isBetaVisible(job, showTestJobs))
+        // A closed-out job (completed/paid/closed/declined) never belongs on the tech's Overview.
+        .filter((job) => !CLOSED_JOB_STATUSES.has(job.status));
+      const openJobs = assignedJobs;
 
       const [timeOffRequests, reimbursementRequests, notesByJob, photosByJob, checklistByJob] =
         await Promise.all([
