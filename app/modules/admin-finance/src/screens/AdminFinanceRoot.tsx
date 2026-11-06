@@ -1090,7 +1090,8 @@ export function AdminFinanceRoot() {
                         right={(
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                             {dots}
-                            {canArchive && !awaitingCloseOut(job) ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
+                            {/* Test jobs (Joe Blow) can be archived at any status so they never need a close-out first (uber 141). */}
+                            {canArchive && (!awaitingCloseOut(job) || job.isBeta) ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
                             <PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />
                           </View>
                         )}
