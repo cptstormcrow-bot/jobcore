@@ -105,6 +105,8 @@ export function Overview({
   const [premsClaimed, setPremsClaimed] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  // Completed/closed jobs are hidden from the Assigned Jobs list unless this flag is on (Jeff 2026-11-06).
+  const [showCompleted, setShowCompleted] = React.useState(false);
 
   const activeDrillLabel = activeTile ? activeTile.label : null;
   React.useEffect(() => {
@@ -333,14 +335,14 @@ export function Overview({
     );
   }
 
-  const assignedForList = jobLists.assigned ?? [];
+  const assignedForList = (showCompleted ? jobLists.assigned : jobLists.open) ?? [];
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <ScreenTitle title="Overview" />
       <View style={styles.groupCard}>
         <Text style={styles.groupTitle}>Assigned Jobs</Text>
-        {assignedForList.length === 0 ? <Text style={styles.emptyText}>No assigned jobs.</Text> : null}
+        {assignedForList.length === 0 ? <Text style={styles.emptyText}>{showCompleted ? 'No assigned jobs.' : 'No open jobs.'}</Text> : null}
         {assignedForList.map((job) => {
           const when =
             job.requestedWindow ?? (job.scheduledStart ? format(new Date(job.scheduledStart), 'EEE M/d h:mm a') : 'Unscheduled');
@@ -359,6 +361,7 @@ export function Overview({
             </Pressable>
           );
         })}
+        <PayrollButton label={showCompleted ? 'Hide completed' : 'Show completed'} onPress={() => setShowCompleted((v) => !v)} style={styles.calendarLink} />
         <PayrollButton label="Open calendar" onPress={() => onOpenJobs?.()} style={styles.calendarLink} />
       </View>
       {groups.map((group) => (
