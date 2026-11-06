@@ -253,14 +253,14 @@ export function DayActionSheet({
                     <PayrollButton label="Confirm" onPress={() => void confirm(day, time)} />
                   ) : null}
                   {onAddJob ? <PayrollButton label="Add Job" onPress={() => onAddJob(day, time)} /> : null}
+                  {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
+                  <PayrollButton label="Cancel" onPress={onClose} />
                   {onQuickTimeOff && blackouts.length === 0 && !busy ? (
                     <PayrollButton label="Time-off" onPress={() => void quickTimeOff(day)} />
                   ) : null}
                   {onAddBlackout && !onQuickTimeOff ? (
                     <PayrollButton label="Add Time-off" onPress={() => onAddBlackout(day)} />
                   ) : null}
-                  {onOpenDayView ? <PayrollButton label="Open day view" onPress={() => onOpenDayView(day)} /> : null}
-                  <PayrollButton label="Close" onPress={onClose} />
                 </View>
               </>
             ) : null}
