@@ -77,6 +77,8 @@ export function nextCloseOutStatus(job: Pick<Job, 'status'>): JobStatus | null {
 export function closeOutBlockers(job: Job, ctx: Ctx): string[] {
   if (!awaitingCloseOut(job)) {
     // #0018 always opens now, so a not-yet-completed job needs a reason for the disabled button.
+    // An archived job is out of the close-out flow: Close Out would be rejected, so say so instead of leaving the button live (Job #3, #0018).
+    if (job.status === 'archived') return ['This job is archived. Restore it from Archived before closing it out.'];
     return CLOSED.has(job.status) ? [] : ['Job must be completed before it can be closed out.'];
   }
   const next = NEXT_CLOSE_OUT_STATUS[job.status];

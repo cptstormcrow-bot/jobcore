@@ -1098,7 +1098,7 @@ export function AdminFinanceRoot() {
                         right={(
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                             {dots}
-                            {canArchive ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
+                            {canArchive && !awaitingCloseOut(job) ? <PayrollButton label="Archive" testID={`job-archive-${job.id}`} disabled={archiveBusyId !== null} onPress={() => { void archiveJob(job); }} /> : null}
                             <PayrollButton label="Detail" onPress={() => router.push({ pathname: '/job/[jobId]', params: { jobId: job.id, panel: 'plan' } })} />
                           </View>
                         )}
