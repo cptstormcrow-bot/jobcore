@@ -73,7 +73,12 @@ function FieldRow({
         onChangeText={onChangeText}
         multiline={multiline}
         scrollEnabled={multiline ? false : undefined}
-        onContentSizeChange={multiline ? (e) => setGrowHeight(e.nativeEvent.contentSize.height + 8) : undefined}
+        onContentSizeChange={multiline ? (e) => {
+          // Exact content height, and only when it changed: padding it (+8) made the box
+          // taller than its content, which re-fired this event forever on web.
+          const next = Math.ceil(e.nativeEvent.contentSize.height);
+          setGrowHeight((prev) => (prev === next ? prev : next));
+        } : undefined}
         accessibilityLabel={label}
       />
     </View>
