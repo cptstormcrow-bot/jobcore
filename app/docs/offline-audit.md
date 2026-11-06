@@ -236,3 +236,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 109. On #0054 Overview, each job in the green-day popup now has an "Open Job #N" button that closes the popup and opens that job in the app.
 
 110. Time-off has no approval step (first come, first served). The assignment warning on the board (#0051 area) now says "This tech has time off during this window." for any time-off request that is not denied, instead of separate approved and pending wording. New requests were already decided on entry by the database (migration 0019), so no approve or deny screen exists. Test: assign a job to a tech who has time off on that day; the warning reads "has time off".
+
+111. The #0011 Calendar tab now reads every scheduled job straight from the jobs table, in addition to the calendar log. A job that was scheduled without a log entry (for example Job #4, Nov 25, closed out) never reached the grid, so its day square stayed white with no green badge. Test: open Calendar as admin, go to Nov 25; the square is green with a count badge.

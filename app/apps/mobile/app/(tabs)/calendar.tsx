@@ -137,6 +137,17 @@ export default function CalendarScreen() {
       if (error || !data) throw error ?? new Error('calendar_events read failed');
       return data as unknown as CalendarEventRow[];
     };
+    // Every scheduled job, straight from `jobs`. calendar_events only has a row when an app flow
+    // logged one, so a job scheduled without a log row (closed jobs included) never reached the grid.
+    const fetchScheduledJobs = async (): Promise<JobRow[]> => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(JOB_ROW_COLUMNS)
+        .eq('organization_id', orgId)
+        .not('scheduled_start', 'is', null);
+      if (error || !data) throw error ?? new Error('scheduled jobs read failed');
+      return data as unknown as JobRow[];
+    };
     const identity = getReadCacheIdentity();
     const load = identity
       ? cachedRead<CalendarEventRow[]>(
@@ -144,21 +155,27 @@ export default function CalendarScreen() {
           fetchLive,
         ).then((r) => r.data)
       : fetchLive();
-    void load
-      .catch(() => null)
-      .then((rows) => {
-        if (cancelled) return;
-        if (!rows) {
-          setJobs([]);
-          return;
-        }
-        // calendar_events is append-only; dedupe job-linked rows to one job per job_id.
-        const jobMap = new Map<string, Job>();
-        for (const row of rows) {
-          if (row.job_id && row.jobs) jobMap.set(row.job_id, toJob(row.jobs));
-        }
-        setJobs(Array.from(jobMap.values()));
-      });
+    const loadScheduled = identity
+      ? cachedRead<JobRow[]>(
+          buildReadCacheKey(identity.orgId, identity.userId, 'app.jobs.calendar.scheduled', { orgId }),
+          fetchScheduledJobs,
+        ).then((r) => r.data)
+      : fetchScheduledJobs();
+    void Promise.all([load.catch(() => null), loadScheduled.catch(() => null)]).then(([rows, scheduled]) => {
+      if (cancelled) return;
+      if (!rows && !scheduled) {
+        setJobs([]);
+        return;
+      }
+      // calendar_events is append-only; dedupe job-linked rows to one job per job_id.
+      const jobMap = new Map<string, Job>();
+      for (const row of rows ?? []) {
+        if (row.job_id && row.jobs) jobMap.set(row.job_id, toJob(row.jobs));
+      }
+      // The jobs table is the source of truth for the schedule, so it wins over the embedded copy.
+      for (const row of scheduled ?? []) jobMap.set(row.id, toJob(row));
+      setJobs(Array.from(jobMap.values()));
+    });
     return () => {
       cancelled = true;
     };
