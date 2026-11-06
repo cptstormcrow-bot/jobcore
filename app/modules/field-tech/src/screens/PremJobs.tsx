@@ -9,6 +9,7 @@ import type { PremQueueItem } from '../data/ports';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { premCardAction, premReportRoute, formatNeedsPremSince } from './prem-jobs-helpers';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
+import { isBetaVisible } from '@jobcore/core';
 
 export function PremJobs(): React.ReactElement {
   const session = getModuleSession();
@@ -37,10 +38,16 @@ export function PremJobs(): React.ReactElement {
       const { premQueue: premQueueRepository } = getModulePorts();
       premQueueRepository
         .listOpen(session.userId)
-        .then((result) => {
+        .then(async (result) => {
+          const showTestJobs = await getModulePorts().localPrefs.getBool('field-tech.jobs.show-test-jobs', false);
           if (cancelled) return;
           // A closed-out job never needs a Prem, even if its needs_prem_at flag was left set.
-          setItems(result.items.filter((item) => !CLOSED_JOB_STATUSES.has(item.job.status)));
+          // Beta/test jobs stay hidden unless "show test jobs" is on, same as every other tech list.
+          setItems(
+            result.items.filter(
+              (item) => !CLOSED_JOB_STATUSES.has(item.job.status) && isBetaVisible(item.job, showTestJobs),
+            ),
+          );
           setUnavailable(result.unavailable);
           setError(null);
         })
