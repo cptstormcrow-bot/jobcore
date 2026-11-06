@@ -490,7 +490,7 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         jobs={sheetDay ? calendarJobs.map((j) => withCustomer(plainJobs.get(j.id) ?? j)).filter((j) => j.scheduledStart && isSameDay(new Date(j.scheduledStart), sheetDay)) : []}
         blackouts={sheetDay ? timeOffEvents.filter((e) => isSameDay(new Date(e.eventTime), sheetDay)) : []}
         onClose={() => setSheetDay(null)}
-        onCopy={(text) => { void Clipboard.setStringAsync(text); }}
+        onCopy={async (text) => { await Clipboard.setStringAsync(text); }}
         {...(effectiveTechId
           ? { onQuickTimeOff: (d: Date) => onSaveBlackouts([format(d, 'yyyy-MM-dd')], effectiveTechId) }
           : {})}

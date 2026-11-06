@@ -22,7 +22,7 @@ export interface DayActionBlackout {
 
 export interface DayActionSheetProps {
   /** Tap-to-copy for job name, address and phone. Omit and those lines are plain text. */
-  onCopy?: (text: string) => void;
+  onCopy?: (text: string) => void | Promise<void>;
   /** One-tap Time-off for the logged-in tech: sets this day red. Should throw on failure. */
   onQuickTimeOff?: (day: Date) => Promise<void> | void;
   /** The tapped day. null hides the sheet. */
@@ -82,17 +82,30 @@ export function DayActionSheet({
   onQuickTimeOff,
 }: DayActionSheetProps) {
   const [copied, setCopied] = React.useState<string | null>(null);
-  const copyLine = (text: string): void => {
-    onCopy?.(text);
-    setCopied(text);
+  // The clipboard can fail (web on plain http, a denied permission), so await it and say what happened.
+  const copyLine = async (text: string): Promise<void> => {
+    try {
+      await onCopy?.(text);
+      setCopied(text);
+    } catch {
+      setCopied(`!${text}`);
+    }
   };
-  const copyable = (text: string, style: object, key: string, lines = 0): JSX.Element =>
-    onCopy ? (
-      <Pressable key={key} accessibilityRole="button" accessibilityLabel={`Copy ${text}`} onPress={() => copyLine(text)}>
-        <Text numberOfLines={lines} style={style}>{copied === text ? `${text}  (copied)` : text}</Text>
+  const copyable = (text: string, style: object, key: string, canCopy = true): JSX.Element =>
+    onCopy && canCopy ? (
+      <Pressable
+        key={key}
+        accessibilityRole="button"
+        accessibilityLabel={`Copy ${text}`}
+        hitSlop={6}
+        onPress={() => void copyLine(text)}
+      >
+        <Text style={style}>
+          {copied === text ? `${text}  (copied)` : copied === `!${text}` ? `${text}  (copy failed)` : text}
+        </Text>
       </Pressable>
     ) : (
-      <Text key={key} numberOfLines={lines} style={style}>{text}</Text>
+      <Text key={key} style={style}>{text}</Text>
     );
   // Optional start time for Add Job, e.g. "9:00 AM". Cleared each time the sheet opens on a new day.
   const [ownTime, setTime] = React.useState<string | null>(null);
@@ -158,9 +171,11 @@ export function DayActionSheet({
   };
   return (
     <Modal visible={day !== null} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <ScrollView>
+      <View style={styles.overlay}>
+        {/* The backdrop sits behind the sheet, so taps inside the sheet (copy, buttons) are never swallowed. */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
+        <View style={styles.sheet}>
+          <ScrollView keyboardShouldPersistTaps="handled">
             {day !== null ? (
               <>
                 <Text style={styles.title}>{format(day, 'EEEE, MMMM d, yyyy')}</Text>
@@ -176,30 +191,37 @@ export function DayActionSheet({
                           <Text style={styles.rowMeta}>{format(new Date(job.scheduledStart), 'h:mm a')}</Text>
                         ) : null}
                         <View style={styles.fieldRow}>
-                          <Text style={styles.fieldLabel}>Address</Text>
-                          <View style={styles.fieldValue}>{copyable(job.address ?? 'No address', styles.rowTitle, 'addr')}</View>
+                          <Text numberOfLines={1} style={styles.fieldLabel}>Address</Text>
+                          <View style={styles.fieldValue}>{copyable(job.address ?? 'No address', styles.rowTitle, 'addr', !!job.address)}</View>
                         </View>
                         <View style={styles.fieldRow}>
-                          <Text style={styles.fieldLabel}>Phone</Text>
-                          <View style={styles.fieldValue}>{copyable(job.customerPhone?.trim() ? formatPhone(job.customerPhone) : 'No phone', styles.rowTitle, 'phone')}</View>
+                          <Text numberOfLines={1} style={styles.fieldLabel}>Phone</Text>
+                          <View style={styles.fieldValue}>
+                            {copyable(
+                              job.customerPhone?.trim() ? formatPhone(job.customerPhone) : 'No phone',
+                              styles.rowTitle,
+                              'phone',
+                              !!job.customerPhone?.trim(),
+                            )}
+                          </View>
                         </View>
-                        {job.description ? (
+                        {job.description || onOpenJob ? (
                           <View style={styles.fieldRow}>
-                            <Text style={styles.fieldLabel}>Work</Text>
-                            <Text style={[styles.fieldValue, styles.workText]}>{job.description}</Text>
+                            <Text numberOfLines={1} style={styles.fieldLabel}>Work</Text>
+                            <Text style={[styles.fieldValue, styles.workText]}>{job.description ?? ''}</Text>
+                            {onOpenJob ? (
+                              <View style={styles.detailsBtn}>
+                                <PayrollButton label="Job details" onPress={() => onOpenJob(job)} />
+                              </View>
+                            ) : null}
                           </View>
                         ) : null}
                       </View>
                     </View>
-                    {onOpenJob ? (
-                      <View style={[styles.pendingRow, { justifyContent: 'flex-end' }]}>
-                        <PayrollButton label="Job details" onPress={() => onOpenJob(job)} />
-                      </View>
-                    ) : null}
                     {onRescheduleJob || onClearJob ? (
                       pending?.jobId === job.id ? (
                         <View style={styles.pendingRow}>
-                          <Text style={styles.rowMeta}>
+                          <Text numberOfLines={1} style={styles.rowMeta}>
                             {pending.kind === 'move' ? `Reschedule to ${time}?` : 'Remove from schedule?'}
                           </Text>
                           {!busy ? <PayrollButton label="Yes" onPress={() => void runPending(job, day)} /> : null}
@@ -219,22 +241,26 @@ export function DayActionSheet({
                   </View>
                 ))}
                 {blackouts.map((b) => (
-                  <View key={b.id} style={styles.row}>
-                    <Pressable style={styles.rowText} onPress={onBlackoutInfo ? () => onBlackoutInfo(b) : undefined}>
-                      <Text style={styles.blackoutTitle}>{b.title ?? 'Time-off'}</Text>
+                  <View key={b.id} style={styles.jobBlock}>
+                    <Pressable onPress={onBlackoutInfo ? () => onBlackoutInfo(b) : undefined}>
+                      <Text numberOfLines={1} style={styles.blackoutTitle}>{b.title ?? 'Time-off'}</Text>
                       {b.description ? <Text style={styles.jobDesc}>{b.description}</Text> : null}
                     </Pressable>
-                    {onOpenBlackout ? (
-                      <PayrollButton label="Time-off details" onPress={() => onOpenBlackout(b)} />
-                    ) : null}
-                    {onClearBlackout ? (
-                      <PayrollButton label="Clear" accessibilityLabel="Clear time-off" testID={`day-sheet-clear-${b.id}`} onPress={() => onClearBlackout(b)} />
+                    {onOpenBlackout || onClearBlackout ? (
+                      <View style={styles.pendingRow}>
+                        {onOpenBlackout ? (
+                          <PayrollButton label="Time-off details" onPress={() => onOpenBlackout(b)} />
+                        ) : null}
+                        {onClearBlackout ? (
+                          <PayrollButton label="Clear" accessibilityLabel="Clear time-off" testID={`day-sheet-clear-${b.id}`} onPress={() => onClearBlackout(b)} />
+                        ) : null}
+                      </View>
                     ) : null}
                   </View>
                 ))}
                 {readyJobs.length > 0 ? (
                   <View style={styles.timeBlock}>
-                    <Text style={styles.timeLabel}>Ready to schedule (tap one, pick a time, Confirm)</Text>
+                    <Text numberOfLines={1} style={styles.timeLabel}>Ready to schedule: tap one, pick a time</Text>
                     {readyJobs.map((job) => (
                       <Pressable
                         key={job.id}
@@ -254,11 +280,11 @@ export function DayActionSheet({
                   </View>
                 ) : hostOwnsTime && onTimeChange && onRescheduleJob && jobs.length > 0 ? (
                   <View style={styles.timeBlock}>
-                    <Text style={styles.timeLabel}>Reschedule: pick a new time, then tap Move</Text>
+                    <Text numberOfLines={1} style={styles.timeLabel}>Reschedule: pick a time, tap Move</Text>
                     <TimePicker value={time} onChange={onTimeChange} />
                   </View>
                 ) : hostOwnsTime ? (
-                  <Text style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour below the calendar'}</Text>
+                  <Text numberOfLines={1} style={styles.timeLabel}>{time ? `Start time: ${time}` : 'Pick an hour below the calendar'}</Text>
                 ) : null}
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
                 <View style={styles.actions}>
@@ -278,8 +304,8 @@ export function DayActionSheet({
               </>
             ) : null}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -341,6 +367,7 @@ const styles = StyleSheet.create({
   fieldRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: spacing.xs },
   fieldLabel: { width: 56, fontSize: 12, color: colors.textMuted, paddingTop: 2 },
   fieldValue: { flex: 1 },
+  detailsBtn: { marginLeft: spacing.sm, flexShrink: 0 },
   workText: { fontSize: typography.text.body, color: colors.text },
   jobDesc: { fontSize: 12, color: colors.text, marginTop: spacing.xs },
   blackoutTitle: { fontSize: typography.text.body, color: colors.danger },
