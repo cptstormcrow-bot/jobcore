@@ -1,6 +1,7 @@
 // JobCore screen #0004 - sign-up - Sign Up
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
 
@@ -8,7 +9,9 @@ import { signUp } from '../src/lib/session';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
-  const [email, setEmail] = useState('');
+  // #0060 Accept hands the device to an invitee with their invited email prefilled.
+  const params = useLocalSearchParams<{ email?: string }>();
+  const [email, setEmail] = useState(typeof params.email === 'string' ? params.email : '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

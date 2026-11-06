@@ -28,7 +28,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { View, ScrollView, StyleSheet, Alert, Text, BackHandler, Platform, Pressable } from 'react-native';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { format as formatIsoDay } from 'date-fns';
-import { Card, ListItem, PayrollButton, BadgeTooltip, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, colors, spacing, radius, typography } from '@jobcore/ui';
+import { Card, ListItem, PayrollButton, BadgeTooltip, EmptyState, LoadingState, ErrorState, AppChrome, confirmAsync, notifyAsync, useScreenNumber, useDrawerSignOut, colors, spacing, radius, typography } from '@jobcore/ui';
 import type { MenuItem } from '@jobcore/ui';
 import { buildAdminFinanceMenuItems, isAdminFinanceView } from '../menu';
 import type { Job, JobStatus, Profile } from '@jobcore/core';
@@ -155,6 +155,7 @@ const SCREEN_NUMBER_KEY: Record<string, string> = { payroll: 'Payroll', payrollR
 
 export function AdminFinanceRoot() {
   const router = useRouter();
+  const drawerSignOut = useDrawerSignOut();
   const [subView, setSubView] = useState<SubView>('overview');
   // Deep-link seam: the app's "Jobs" entries (module tab bar, #0009 redirect) push
   // /m/admin-finance?view=jobs&ts=<nonce>. The nonce changes the params on every tap,
@@ -1299,6 +1300,17 @@ export function AdminFinanceRoot() {
         <EmployeeInvitationsScreen
           invitations={ports.invitations}
           onBack={handleBackToRoster}
+          onAccept={
+            drawerSignOut
+              ? (inviteeEmail) => {
+                  // Sign the admin out first (the auth gate bounces signed-in users off Sign Up), then open #0004 prefilled.
+                  void (async () => {
+                    await drawerSignOut();
+                    router.replace({ pathname: '/sign-up', params: { email: inviteeEmail } } as never);
+                  })();
+                }
+              : undefined
+          }
         />
       ) : subView === 'employee-detail' ? (
         selectedEmployee ? (

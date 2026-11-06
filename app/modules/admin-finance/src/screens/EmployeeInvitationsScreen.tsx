@@ -28,6 +28,12 @@ export interface EmployeeInvitationsScreenProps {
   invitations?: InvitationRepository;
   /** Fired when the user navigates back out of this screen. */
   onBack?: () => void;
+  /**
+   * Accept an invitee on this device: the host signs the admin out and opens Sign Up (#0004) with
+   * the invited email filled in, so the new employee sets a password and gets the normal first-login.
+   * Omit to hide the Accept button.
+   */
+  onAccept?: (email: string) => void;
 }
 
 type LoadState =
@@ -37,7 +43,8 @@ type LoadState =
   | { kind: 'failed'; message: string };
 
 export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps = {}) {
-  const { invitations: invitationRepository, onBack } = props;
+  const { invitations: invitationRepository, onBack, onAccept } = props;
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [revokeErrors, setRevokeErrors] = useState<Record<string, string>>({});
   const [email, setEmail] = useState('');
@@ -211,14 +218,36 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
                 title={invitation.email}
                 subtitle={invitation.role}
                 right={
-                  <PayrollButton
-                    label="Revoke"
-                    onPress={() => {
-                      void handleRevoke(invitation.id);
-                    }}
-                  />
+                  <View style={styles.rowActions}>
+                    {onAccept ? (
+                      <PayrollButton label="Accept" onPress={() => setConfirmingId(invitation.id)} />
+                    ) : null}
+                    <PayrollButton
+                      label="Revoke"
+                      onPress={() => {
+                        void handleRevoke(invitation.id);
+                      }}
+                    />
+                  </View>
                 }
               />
+              {confirmingId === invitation.id && onAccept ? (
+                <View style={styles.confirm}>
+                  <Text style={styles.note}>
+                    {`Hand this device to ${invitation.email}? You will be signed out and Sign Up opens with their email filled in.`}
+                  </Text>
+                  <View style={styles.rowActions}>
+                    <PayrollButton
+                      label="Yes"
+                      onPress={() => {
+                        setConfirmingId(null);
+                        onAccept(invitation.email);
+                      }}
+                    />
+                    <PayrollButton label="No" onPress={() => setConfirmingId(null)} />
+                  </View>
+                </View>
+              ) : null}
               {revokeErrors[invitation.id] ? <ErrorState message={revokeErrors[invitation.id]} /> : null}
             </View>
           ))}
@@ -259,6 +288,16 @@ const styles = StyleSheet.create({
   },
   action: {
     marginBottom: spacing.sm,
+  },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  confirm: {
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.sm,
+    gap: spacing.xs,
   },
   note: {
     color: colors.textMuted,

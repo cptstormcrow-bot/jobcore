@@ -239,7 +239,7 @@ export default function RootLayout() {
             {/* Mount order: Session -> SyncStatus -> ReadCache -> AuthGate. */}
             <SyncStatusProvider>
               <SyncOptionsProvider>
-                <DrawerSignOutProvider onSignOut={() => void signOut()}>
+                <DrawerSignOutProvider onSignOut={async () => { await signOut(); }}>
                   <ReadCacheProvider>
                     <StatusBar style="auto" />
                     <AuthGate />
