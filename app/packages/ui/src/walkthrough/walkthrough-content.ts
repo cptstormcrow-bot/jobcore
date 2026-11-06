@@ -47,6 +47,7 @@ export type WalkthroughStepId =
   | 'account'
   | 'profile'
   | 'settings'
+  | 'sync_history'
   | 'help_general';
 
 export type ScreenKey =
