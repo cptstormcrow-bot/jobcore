@@ -87,7 +87,7 @@ export function DayActionSheet({
     onCopy?.(text);
     setCopied(text);
   };
-  const copyable = (text: string, style: object, key: string, lines = 1): JSX.Element =>
+  const copyable = (text: string, style: object, key: string, lines = 0): JSX.Element =>
     onCopy ? (
       <Pressable key={key} accessibilityRole="button" accessibilityLabel={`Copy ${text}`} onPress={() => copyLine(text)}>
         <Text numberOfLines={lines} style={style}>{copied === text ? `${text}  (copied)` : text}</Text>
@@ -173,16 +173,20 @@ export function DayActionSheet({
                     <View style={styles.rowInner}>
                       <View style={styles.rowText}>
                         {job.customerName ? copyable(job.customerName, styles.rowTitle, 'name') : null}
-                        {copyable(job.address ?? 'No address', styles.rowTitle, 'addr', 2)}
+                        {copyable(job.address ?? 'No address', styles.rowTitle, 'addr')}
                         {job.customerPhone ? copyable(job.customerPhone, styles.rowTitle, 'phone') : null}
                         {job.scheduledStart ? (
                           <Text style={styles.rowMeta}>{format(new Date(job.scheduledStart), 'h:mm a')}</Text>
                         ) : null}
                         {job.description ? <Text style={styles.jobDesc}>{job.description}</Text> : null}
                       </View>
-                      {onJobInfo ? <PayrollButton label="Info" onPress={() => onJobInfo(job)} /> : null}
-                      {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
                     </View>
+                    {onJobInfo || onOpenJob ? (
+                      <View style={styles.pendingRow}>
+                        {onJobInfo ? <PayrollButton label="Info" onPress={() => onJobInfo(job)} /> : null}
+                        {onOpenJob ? <PayrollButton label="Job details" onPress={() => onOpenJob(job)} /> : null}
+                      </View>
+                    ) : null}
                     {onRescheduleJob || onClearJob ? (
                       pending?.jobId === job.id ? (
                         <View style={styles.pendingRow}>
