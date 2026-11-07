@@ -496,7 +496,7 @@ export async function resetPassword(email: string): Promise<string | null> {
  */
 export async function signUp(email: string, password: string): Promise<string | null> {
   try {
-    const { error } = await withTimeout(
+    const { data, error } = await withTimeout(
       supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -504,10 +504,34 @@ export async function signUp(email: string, password: string): Promise<string | 
       15000,
       'Timed out reaching the server. Check your connection and retry.',
     );
-    return error ? error.message : null;
+    if (error) return error.message;
+    // No session back means the server wants the email confirmed (or the account was just made and must sign in).
+    return data.session ? null : SIGN_UP_NEEDS_SIGN_IN;
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.';
     return message;
+  }
+}
+
+/** signUp() result when the account exists but no session started yet (not an error). */
+export const SIGN_UP_NEEDS_SIGN_IN = 'SIGN_UP_NEEDS_SIGN_IN';
+
+/** True when a sign-in error is Supabase's "email not confirmed" block. */
+export function isEmailNotConfirmed(message: string): boolean {
+  return /email not confirmed/i.test(message);
+}
+
+/** Re-send the sign-up confirmation email. Returns an error message, or `null` on success. */
+export async function resendConfirmation(email: string): Promise<string | null> {
+  try {
+    const { error } = await withTimeout(
+      supabase.auth.resend({ type: 'signup', email: email.trim() }),
+      15000,
+      'Timed out reaching the server. Check your connection and retry.',
+    );
+    return error ? error.message : null;
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Could not send the email. Please try again.';
   }
 }
 

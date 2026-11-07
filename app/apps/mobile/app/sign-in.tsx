@@ -8,7 +8,7 @@ import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact,
 
 import NetInfo from '@react-native-community/netinfo';
 
-import { signIn, enterOfflineSession, consumeOfflineLaunch } from '../src/lib/session';
+import { signIn, isEmailNotConfirmed, resendConfirmation, enterOfflineSession, consumeOfflineLaunch } from '../src/lib/session';
 import { listOfflineAccounts, offlineSignIn, PIN_MAX, type OfflineAccount } from '../src/lib/offline-auth';
 
 const RECENT_EMAILS_KEY = 'jobcore.recentEmails';
@@ -67,6 +67,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [recentEmails, setRecentEmails] = useState<string[]>([]);
@@ -309,7 +310,26 @@ export default function SignInScreen() {
           />
         </View>
 
-        {error !== null ? <ErrorState title="Sign-in failed" message={error} /> : null}
+        {error !== null && isEmailNotConfirmed(error) ? (
+          <Card style={[styles.card, styles.signUpLink]}>
+            <Text style={styles.heading}>Email not confirmed yet</Text>
+            <Text style={styles.label}>
+              Open the confirmation email we sent and tap its link, then sign in again. No email? Resend it.
+            </Text>
+            <PayrollButton
+              label={resent ? 'Sent - check your email' : 'Resend confirmation email'}
+              disabled={busy || resent || email.trim().length === 0}
+              onPress={() => {
+                void resendConfirmation(email).then((m) => {
+                  if (m === null) setResent(true);
+                  else setError(m);
+                });
+              }}
+            />
+          </Card>
+        ) : error !== null ? (
+          <ErrorState title="Sign-in failed" message={error} />
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );

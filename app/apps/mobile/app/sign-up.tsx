@@ -1,11 +1,11 @@
 // JobCore screen #0004 - sign-up - Sign Up
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, ErrorState, PayrollButton, ScreenTitle, colors, spacing, compact, typography, radius, Text } from '@jobcore/ui';
 
-import { signUp } from '../src/lib/session';
+import { signUp, SIGN_UP_NEEDS_SIGN_IN } from '../src/lib/session';
 
 export default function SignUpScreen() {
   const insets = useSafeAreaInsets();
@@ -16,6 +16,8 @@ export default function SignUpScreen() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [done, setDone] = useState(false);
+  const router = useRouter();
 
   const canSubmit = email.length > 0 && password.length > 0 && !busy;
 
@@ -25,7 +27,10 @@ export default function SignUpScreen() {
     const message = await signUp(email, password);
     // On success the session listener swaps the route out from under us; only
     // the failure path needs to touch state here.
-    if (message !== null) {
+    if (message === SIGN_UP_NEEDS_SIGN_IN) {
+      setDone(true);
+      setBusy(false);
+    } else if (message !== null) {
       setError(message);
       setBusy(false);
     }
@@ -43,7 +48,17 @@ export default function SignUpScreen() {
           You need an invitation from your admin first. Sign up with the exact email they invited.
         </Text>
 
-        <Card style={styles.card}>
+        {done ? (
+          <Card style={styles.card}>
+            <Text style={styles.label}>Account created</Text>
+            <Text style={styles.notice}>
+              If a confirmation email arrives, tap its link first; then go back and sign in with {email.trim()}.
+            </Text>
+            <PayrollButton label="Go to sign in" onPress={() => router.replace('/sign-in')} style={styles.submit} />
+          </Card>
+        ) : null}
+
+        <Card style={[styles.card, done ? { display: 'none' } : null]}>
           <Text style={styles.label}>Email</Text>
           <TextInput
             value={email}
