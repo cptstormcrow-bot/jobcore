@@ -114,7 +114,7 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
   const [techInstructions, setTechInstructions] = React.useState('');
   const [estimate, setEstimate] = React.useState<JobEstimate | null>(null);
   const [materialsOnsiteLocal, setMaterialsOnsiteLocal] = React.useState<boolean | null>(null);
-  const [savingOnsite, setSavingOnsite] = React.useState(false);
+  const onsiteSeq = React.useRef(0);
   const [trackingInput, setTrackingInput] = React.useState('');
   const [checkingUps, setCheckingUps] = React.useState(false);
   const [trackingMessage, setTrackingMessage] = React.useState<string | null>(null);
@@ -207,18 +207,17 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
 
   const handleMaterialsOnsite = React.useCallback(
     (next: boolean) => {
-      if (savingOnsite) return;
-      setSavingOnsite(true);
+      // Uber 160: never locked. Each tap saves; only the latest tap clears the local value.
+      const seq = ++onsiteSeq.current;
       setMaterialsOnsiteLocal(next);
       persistEstimate({ materialsOnsite: next })
-        .then(() => setMaterialsOnsiteLocal(null))
+        .then(() => { if (seq === onsiteSeq.current) setMaterialsOnsiteLocal(null); })
         .catch((err: unknown) => {
-          setMaterialsOnsiteLocal(null);
+          if (seq === onsiteSeq.current) setMaterialsOnsiteLocal(null);
           setError(err instanceof Error ? err.message : 'Failed to save materials status.');
-        })
-        .finally(() => setSavingOnsite(false));
+        });
     },
-    [savingOnsite, persistEstimate],
+    [persistEstimate],
   );
 
   const handleTrackingBlur = React.useCallback(() => {
@@ -370,7 +369,6 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
             label="Materials Onsite?"
             variant="check"
             checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
-            disabled={savingOnsite}
             onChange={handleMaterialsOnsite}
           />
           <Text style={{ color: colors.textMuted }}>{'•'}</Text>

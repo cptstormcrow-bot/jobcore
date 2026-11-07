@@ -66,8 +66,6 @@ export interface JobEstimateScreenProps {
   serviceAreas?: ServiceArea[];
   /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
   embedded?: boolean;
-  /** Whether Materials Onsite? can be toggled. Defaults to `editable`; techs may still tick it (uber 159). */
-  materialsEditable?: boolean;
   /** Job already started: the Draft/Submitted/Approved chips are redundant, so they are hidden and the host shows the total on its title line. */
   jobStarted?: boolean;
   /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
@@ -381,7 +379,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTabNonce]);
   const [materialsOnsiteLocal, setMaterialsOnsiteLocal] = useState<boolean | null>(null);
-  const materialsInFlight = useRef(false);
+  const materialsInFlight = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -1087,14 +1085,12 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   label="Materials Onsite?"
                   variant="check"
                   checked={materialsOnsiteLocal ?? !!estimate?.materialsOnsite}
-                  disabled={!(props.materialsEditable ?? editable)}
                   onChange={(next) => {
-                    if (materialsInFlight.current) return;
-                    materialsInFlight.current = true;
+                    // Uber 160: never locked; the latest tap wins.
+                    const seq = ++materialsInFlight.current;
                     setMaterialsOnsiteLocal(next);
                     void persist({ materialsOnsite: next }).finally(() => {
-                      materialsInFlight.current = false;
-                      setMaterialsOnsiteLocal(null);
+                      if (seq === materialsInFlight.current) setMaterialsOnsiteLocal(null);
                     });
                   }}
                 />

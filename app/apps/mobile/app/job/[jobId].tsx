@@ -1695,7 +1695,6 @@ ${body}`)) handleResetLaborTime();
             }
             serviceAreas={serviceAreas}
             editable={!isTechEstimate}
-            materialsEditable
             jobStarted={jobStarted}
             onChrome={setEstimateChrome}
             focusTab={estimateFocus}
