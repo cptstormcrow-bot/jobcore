@@ -198,7 +198,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
     return (
       <View style={styles.screen}>
         <ScreenTitle title="Employee Invitations" />
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
           {inviteForm}
           <EmptyState title="Employee Invitations" message="This organization has no pending invitations." />
         </ScrollView>
@@ -209,7 +209,7 @@ export function EmployeeInvitationsScreen(props: EmployeeInvitationsScreenProps 
   return (
     <View style={styles.screen}>
       <ScreenTitle title="Employee Invitations" />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         {inviteForm}
         <Card style={styles.card}>
           {loadState.invitations.map((invitation) => (

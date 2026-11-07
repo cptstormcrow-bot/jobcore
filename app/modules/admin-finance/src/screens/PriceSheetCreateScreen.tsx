@@ -70,7 +70,7 @@ export function PriceSheetCreateScreen({ onCreated, onCancel }: PriceSheetCreate
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Text style={styles.title}>New price sheet</Text>
 

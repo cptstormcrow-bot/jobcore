@@ -131,7 +131,7 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
       <PayrollButton label="Create job" onPress={handleCreateJob} disabled={submitting} />
     </View>
     {readinessHint ? <Text style={[styles.guidance, styles.hintPad]}>{readinessHint}</Text> : null}
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+    <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll} contentContainerStyle={styles.content}>
       <ScreenTitle eyebrow="Lead" title="Edit lead" subtitle={lead.sourceForm ?? undefined} />
       <Card style={styles.card}>
         <View style={styles.inlineRow}>

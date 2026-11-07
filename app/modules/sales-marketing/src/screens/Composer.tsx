@@ -342,7 +342,7 @@ export function Composer({
   const captionTooLong = caption.length > guidance.maxCaptionChars;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       <ScreenTitle title="Compose Post" />
       <View style={styles.badge}>
         <Text style={styles.badgeText}>Pitch angle: {pitchAngle}</Text>

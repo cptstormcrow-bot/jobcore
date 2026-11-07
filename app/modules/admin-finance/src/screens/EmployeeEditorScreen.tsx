@@ -644,7 +644,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         {actionState.kind === 'done' ? <Text style={styles.note}>{actionState.message}</Text> : null}
       </View>
       <DefaultTabBar tabs={EMP_TAB_ITEMS} activeId={activeTab} onChange={setActiveTab} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         {activeTab === 'email' && isEditMode ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Email</Text>

@@ -1141,7 +1141,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <ScreenTitle title="Price Sheet Editor" />
         <Card style={styles.card}>
           <Pressable onPress={() => setHelpOpen((o) => !o)} accessibilityRole="button" accessibilityState={{ expanded: helpOpen }} style={styles.helpHeader}>

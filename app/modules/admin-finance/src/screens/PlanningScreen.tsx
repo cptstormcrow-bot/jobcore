@@ -285,7 +285,7 @@ export function PlanningScreen({ jobs, jobPlanning: jobPlanningProp, jobPlanning
   if (!selectedJobId) {
     return (
       <View style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
           <Card style={styles.card}>
             {jobs.map((job) => (
               <ListItem

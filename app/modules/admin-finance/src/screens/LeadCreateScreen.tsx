@@ -93,7 +93,7 @@ export function LeadCreateScreen({ onCreated, onCancel }: LeadCreateScreenProps)
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Text style={styles.title}>New lead</Text>
           <Text style={styles.guidance}>

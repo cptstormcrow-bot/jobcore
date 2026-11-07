@@ -85,7 +85,7 @@ export function JobCreateScreen({ onCreated, onCancel }: JobCreateScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <Card style={styles.card}>
           <Text style={styles.title}>New job</Text>
 
