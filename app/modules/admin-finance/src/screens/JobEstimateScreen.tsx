@@ -66,6 +66,8 @@ export interface JobEstimateScreenProps {
   serviceAreas?: ServiceArea[];
   /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
   embedded?: boolean;
+  /** Whether Materials Onsite? can be toggled. Defaults to `editable`; techs may still tick it (uber 159). */
+  materialsEditable?: boolean;
   /** Job already started: the Draft/Submitted/Approved chips are redundant, so they are hidden and the host shows the total on its title line. */
   jobStarted?: boolean;
   /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
@@ -108,6 +110,8 @@ export interface EstimateChrome {
   onTabChange: (id: string) => void;
   /** The formatted estimate total, so a host can show it on its own title line (started jobs). */
   totalText?: string;
+  /** Started jobs: the host renders the copy-link button centered on its title line (uber 159). */
+  copyLink?: { label: string; disabled: boolean; onPress: () => void };
 }
 
 /** In-flight write state, independent of the load state. */
@@ -934,11 +938,16 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         setActiveTab(key as EstimateTab);
       },
       totalText: chromeTotal,
+      copyLink: {
+        label: busy ? 'Working...' : 'Copy Estimate',
+        disabled: busy || !linkEnabled,
+        onPress: () => { void handleShareRef.current(); },
+      },
     });
     return () => {
       onChromeRef.current?.(null);
     };
-  }, [chromeStatus, chromePdf, editable, hasChrome, activeTab, chromeTotal]);
+  }, [chromeStatus, chromePdf, editable, hasChrome, activeTab, chromeTotal, busy, linkEnabled]);
 
   function handlePrint(): void {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -974,9 +983,10 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     </View>
   );
 
+  const buttonInHost = !!props.jobStarted && embedded && hasChrome;
   const linkControl = (
     <View style={styles.linkRowHug} testID="estimate-link-row">
-      <Pressable
+      {buttonInHost ? null : <Pressable
         testID="estimate-link-button"
         accessibilityRole="button"
         accessibilityLabel="Copy estimate link"
@@ -985,8 +995,8 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         onPress={() => { void handleShare(); }}
         style={[styles.linkChip, (busy || !linkEnabled) && styles.linkChipDisabled]}
       >
-        <Text style={styles.linkChipLabel} numberOfLines={1}>{busy ? 'Working...' : 'Copy estimate link'}</Text>
-      </Pressable>
+        <Text style={styles.linkChipLabel} numberOfLines={1}>{busy ? 'Working...' : 'Copy Estimate'}</Text>
+      </Pressable>}
       {!linkEnabled ? <Text style={styles.note}>{ESTIMATE_LABELS.linkAfterSubmit}</Text> : null}
       {linkCopied ? <Text style={styles.note}>Link copied</Text> : null}
       {shareError ? <ErrorState message={shareError} /> : null}
@@ -1077,7 +1087,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
                   label="Materials Onsite?"
                   variant="check"
                   checked={materialsOnsiteLocal ?? !!estimate?.materialsOnsite}
-                  disabled={!editable}
+                  disabled={!(props.materialsEditable ?? editable)}
                   onChange={(next) => {
                     if (materialsInFlight.current) return;
                     materialsInFlight.current = true;

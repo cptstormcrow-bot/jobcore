@@ -8,12 +8,13 @@ import { colors, compact, spacing, typography } from './tokens';
  * left-justified and any action buttons (Save, Cancel, Reset ...) sit at the right on
  * the same line. One row, min 32 high.
  */
-export type ScreenTitleRowProps = { title: string; right?: React.ReactNode; testID?: string };
+export type ScreenTitleRowProps = { title: string; center?: React.ReactNode; right?: React.ReactNode; testID?: string };
 
-export function ScreenTitleRow({ title, right, testID }: ScreenTitleRowProps) {
+export function ScreenTitleRow({ title, center, right, testID }: ScreenTitleRowProps) {
   return (
     <View style={styles.row} testID={testID}>
       <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      {center ? <View style={styles.center}>{center}</View> : null}
       {right ? <View style={styles.right}>{right}</View> : null}
     </View>
   );
@@ -36,5 +37,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.headingBold,
     textAlign: 'left',
   },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', marginHorizontal: spacing.sm },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginLeft: spacing.sm, flexShrink: 0 },
 });

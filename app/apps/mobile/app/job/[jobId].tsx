@@ -1535,6 +1535,13 @@ ${body}`)) handleResetLaborTime();
           ? `> ${leadTask.title}${leadTask.more > 0 ? ` +${leadTask.more}` : ''}`
           : region === 'estimate' && jobStarted ? 'Tasks' : (REGION_TITLES[region] ?? 'Job')}
         testID="job-screen-title"
+        center={region === 'estimate' && jobStarted && estimateChrome?.copyLink ? (
+          <PayrollButton
+            label={estimateChrome.copyLink.label}
+            onPress={estimateChrome.copyLink.onPress}
+            disabled={estimateChrome.copyLink.disabled}
+          />
+        ) : undefined}
         right={region === 'details' || region === 'plan' ? (
           <>
             <PayrollButton label="Cancel" onPress={handleCancel} disabled={saving} />
@@ -1688,6 +1695,7 @@ ${body}`)) handleResetLaborTime();
             }
             serviceAreas={serviceAreas}
             editable={!isTechEstimate}
+            materialsEditable
             jobStarted={jobStarted}
             onChrome={setEstimateChrome}
             focusTab={estimateFocus}
