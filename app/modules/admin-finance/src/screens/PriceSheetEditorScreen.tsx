@@ -379,6 +379,7 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
           value={addServiceId || null}
           options={services.map((s) => ({ label: s.name, value: s.id }))}
           placeholder="Select a service"
+          darkPlaceholder
           onChange={setAddServiceId}
         />
         <PayrollButton
@@ -686,6 +687,7 @@ function RateRowsCard({
         value={serviceIdInput || null}
         options={services.map((s) => ({ label: s.name, value: s.id }))}
         placeholder="Select a service"
+        darkPlaceholder
         onChange={handleServiceChange}
       />
       <Select

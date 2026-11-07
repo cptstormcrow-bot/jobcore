@@ -24,6 +24,8 @@ export interface SelectProps {
   narrow?: boolean;
   /** Label left of the trigger on one line. Default true (Jeff 2026-11-05); pass false to stack. */
   inline?: boolean;
+  /** Show the placeholder in the normal dark text color instead of muted gray (Jeff 2026-11-07). */
+  darkPlaceholder?: boolean;
 }
 
 export function Select({
@@ -38,6 +40,7 @@ export function Select({
   compact = false,
   narrow = false,
   inline = true,
+  darkPlaceholder = false,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
@@ -52,7 +55,7 @@ export function Select({
         accessibilityState={{ disabled }}
         style={[styles.trigger, compact && styles.triggerCompact, inline && !!label && styles.triggerInline, disabled && styles.disabled]}
       >
-        <Text style={[styles.triggerText, !selected && styles.placeholderText]} numberOfLines={1}>
+        <Text style={[styles.triggerText, !selected && !darkPlaceholder && styles.placeholderText]} numberOfLines={1}>
           {selected ? selected.label : placeholder}
         </Text>
         <Text
