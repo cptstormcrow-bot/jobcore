@@ -23,6 +23,7 @@ import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate, typography } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
+import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PaymentsScreenProps {
@@ -31,12 +32,14 @@ export interface PaymentsScreenProps {
   /** Display names keyed by employee id; an unmatched confirmer renders as `Unknown tech`. */
   employeeNames?: Record<string, string>;
   onOpenJob?: (jobId: string) => void;
+  /** Approved reimbursements offset the manually confirmed total. */
+  reimbursements?: ReimbursementRepo;
 }
 
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[] }
+  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number }
   | { kind: 'failed'; message: string };
 
 const UNKNOWN_CONFIRMER_LABEL = 'Unknown tech';
@@ -60,7 +63,7 @@ function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob }: PaymentsScreenProps = {}) {
+export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob, reimbursements: reimbursementsRepository }: PaymentsScreenProps = {}) {
   const renderJobTitle = (jobId: string) => {
     const label = formatJobNumberLabel(jobNumbers?.[jobId]);
     if (!onOpenJob) {
@@ -86,9 +89,16 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
     Promise.all([
       paymentsRepository.listNeedingAttention(session.org.id),
       paymentsRepository.listManuallyConfirmed(session.org.id),
+      // Uber 170: approved reimbursements offset payments; amounts are cents.
+      reimbursementsRepository
+        ? reimbursementsRepository
+            .listForOrganization(session.org.id)
+            .then((items) => items.filter((i) => i.status === 'approved').reduce((s, i) => s + i.amount, 0) / 100)
+            .catch(() => 0)
+        : Promise.resolve(0),
     ])
-      .then(([needsAttention, manuallyConfirmed]) => {
-        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed }); }
+      .then(([needsAttention, manuallyConfirmed, reimbursed]) => {
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -187,6 +197,20 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
               {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0))}
             </Text>
           </View>
+        ) : null}
+        {confirmedGroups.size > 0 || loadState.reimbursed > 0 ? (
+          <>
+            <View style={styles.totalRow} testID="reimbursed-total">
+              <Text style={styles.groupTitle}>Less approved reimbursements</Text>
+              <Text style={styles.groupTitle}>-{formatAmount(loadState.reimbursed)}</Text>
+            </View>
+            <View style={styles.totalRow} testID="net-total">
+              <Text style={styles.groupTitle}>Net</Text>
+              <Text style={styles.groupTitle}>
+                {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - loadState.reimbursed)}
+              </Text>
+            </View>
+          </>
         ) : null}
       </View>
     </View>
