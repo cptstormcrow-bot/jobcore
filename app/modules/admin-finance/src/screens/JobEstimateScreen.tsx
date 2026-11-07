@@ -144,6 +144,9 @@ function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
+/** Dollar text to a number, tolerating a leading $ and commas (NaN when not a number). */
+const dollarsInputToNumber = (t: string): number => { const s = t.trim().replace(/[$,\s]/g, ''); return s === '' ? Number.NaN : Number(s); };
+
 export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const { job, onBack, embedded } = props;
   const editable = props.editable ?? true;
@@ -563,7 +566,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     const descriptionValue = over?.description ?? descriptionInput;
     const pickedId = over ? over.serviceTaskId : pickedServiceTaskId;
     const quantity = Number(over?.quantity ?? quantityInput);
-    const unitCost = Number(over?.unitCost ?? unitCostInput);
+    const unitCost = dollarsInputToNumber(over?.unitCost ?? unitCostInput);
     if (!descriptionValue.trim()) {
       setActionState({ kind: 'failed', message: 'Enter a description.' });
       return;
@@ -723,7 +726,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
 
   function readEditDraft(): { description: string; quantity: number; unitCost: number } | null {
     const quantity = Number(editQuantityInput);
-    const unitCost = Number(editUnitCostInput);
+    const unitCost = dollarsInputToNumber(editUnitCostInput);
     if (!editDescriptionInput.trim() || Number.isNaN(quantity) || Number.isNaN(unitCost)) {
       setActionState({ kind: 'failed', message: 'Enter a valid description, quantity, and unit cost.' });
       return null;

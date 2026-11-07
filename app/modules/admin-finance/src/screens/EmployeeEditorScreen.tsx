@@ -140,6 +140,9 @@ type ActionState =
   | { kind: 'failed'; message: string }
   | { kind: 'done'; message: string };
 
+/** Dollar text to a number, tolerating a leading $ and commas (NaN when not a number). */
+const dollarsInputToNumber = (t: string): number => { const s = t.trim().replace(/[$,\s]/g, ''); return s === '' ? Number.NaN : Number(s); };
+
 export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const {
     employees: employeeRepository,
@@ -322,7 +325,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   // Send the commission columns only when the admin touched them (or a contractor's must be cleared), so a save that never mentions commission still works before migration 0106 is applied.
   const commissionTouched = commissionEnabled !== initial.commissionEnabled || commissionPercentInput !== initial.commissionPercent || (!commissionEligible && commissionEnabled) || (devCommission && commissionEnabled);
   const basePayRaw = hourlyRateInput;
-  const basePayNumber = basePayRaw.trim() === '' ? NaN : Number(basePayRaw);
+  const basePayNumber = dollarsInputToNumber(basePayRaw);
   const basePayText = devCommission
     ? 'Base Pay: commission'
     : Number.isFinite(basePayNumber) && basePayNumber >= 0 ? `Base Pay: $${basePayNumber.toFixed(2)}` : 'Base Pay: $--.--';
@@ -417,7 +420,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
     setActionState({ kind: 'working' });
     try {
       const initialRateCents = (profile as unknown as { defaultHourlyRateCents?: number }).defaultHourlyRateCents ?? DEFAULT_HOURLY_RATE_CENTS;
-      const newRateCents = Number.isNaN(Number(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(Number(hourlyRateInput) * 100);
+      const newRateCents = Number.isNaN(dollarsInputToNumber(hourlyRateInput)) ? DEFAULT_HOURLY_RATE_CENTS : Math.round(dollarsInputToNumber(hourlyRateInput) * 100);
       const rateViaSetter = !!onSetRate && newRateCents !== initialRateCents;
       await employeeRepository.updateEmployee(profile.id, {
         fullName: fullNameInput,
