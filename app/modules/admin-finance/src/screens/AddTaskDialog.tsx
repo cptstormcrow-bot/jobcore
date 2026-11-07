@@ -40,7 +40,7 @@ export type AddTaskDialogProps = {
 };
 
 function parsePriceToCents(raw: string): { ok: true; value: number | null } | { ok: false; reason: string } {
-  const trimmed = raw.trim();
+  const trimmed = raw.trim().replace(/[$,\s]/g, '');
   if (trimmed === '') return { ok: true, value: null };
   const n = Number(trimmed);
   if (!Number.isFinite(n)) return { ok: false, reason: 'Price must be a number ≥ 0.' };
