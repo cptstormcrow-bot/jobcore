@@ -689,6 +689,8 @@ export interface JobAssignmentRepository {
 /** Read + idempotent insert access to public.contractor_payouts (migration 0054). */
 export interface ContractorPayoutRepository {
   listForJob(jobId: string): Promise<Array<{ techId: string; amountCents: number; status: string }>>;
+  /** Every payout row for the organization (cents); feeds the Payments #0063 cash-flow offset. */
+  listForOrganization(orgId: string): Promise<Array<{ techId: string; amountCents: number; status: string }>>;
   /** Check-then-insert: skips techIds already holding a row for the job. A duplicate-key race (the (job_id, tech_id) unique key from migration 0108) counts as success once every wanted tech has a row. Returns rows inserted. */
   createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number>;
 }

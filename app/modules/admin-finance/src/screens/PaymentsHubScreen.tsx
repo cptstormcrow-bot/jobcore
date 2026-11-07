@@ -19,7 +19,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { colors, spacing, DefaultTabBar } from '@jobcore/ui';
-import type { PaymentsRepository } from '../data/ports';
+import type { PaymentsRepository, ContractorPayoutRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatch } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
@@ -39,6 +39,7 @@ export interface PaymentsHubScreenProps {
   payments?: PaymentsRepository;
   reimbursements?: ReimbursementRepo;
   payoutBatches?: PayoutBatchRepo;
+  contractorPayouts?: ContractorPayoutRepository;
   selectedPayoutBatch: PayoutBatch | null;
   onSelectPayoutBatch: (batch: PayoutBatch) => void;
   onBackFromPayoutBatch: () => void;
@@ -55,6 +56,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     payments,
     reimbursements,
     payoutBatches,
+    contractorPayouts,
     selectedPayoutBatch,
     onSelectPayoutBatch,
     onBackFromPayoutBatch,
@@ -79,7 +81,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     <View style={styles.screen}>
       <DefaultTabBar tabs={HUB_TABS} activeId={activeKey} onChange={setActiveKey} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {activeKey === 'payments' ? <PaymentsScreen payments={payments} jobNumbers={jobNumbers} onOpenJob={onOpenJob} employeeNames={employeeNames} reimbursements={reimbursements} payoutBatches={payoutBatches} /> : null}
+        {activeKey === 'payments' ? <PaymentsScreen payments={payments} jobNumbers={jobNumbers} onOpenJob={onOpenJob} employeeNames={employeeNames} reimbursements={reimbursements} payoutBatches={payoutBatches} contractorPayouts={contractorPayouts} /> : null}
         {activeKey === 'reimbursements' ? <ReimbursementQueueScreen reimbursements={reimbursements} /> : null}
         {activeKey === 'payoutBatches' ? (
           selectedPayoutBatch ? (

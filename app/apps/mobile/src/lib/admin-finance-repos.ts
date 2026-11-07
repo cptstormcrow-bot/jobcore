@@ -970,6 +970,20 @@ export function createContractorPayoutRepository(): ContractorPayoutRepository {
   return {
     listForJob: listRows,
 
+    // Uber 174: every contractor payout row for the org, feeding the "Less contractor payouts" line on Payments #0063.
+    async listForOrganization(orgId: string): Promise<Array<{ techId: string; amountCents: number; status: string }>> {
+      const { data, error } = await supabase
+        .from('contractor_payouts')
+        .select('tech_id, amount_cents, status')
+        .eq('organization_id', orgId);
+      if (error) throw new Error(`list contractor payouts failed: ${error.message}`);
+      return ((data ?? []) as Array<{ tech_id: string; amount_cents: number; status: string }>).map((r) => ({
+        techId: r.tech_id,
+        amountCents: r.amount_cents,
+        status: r.status,
+      }));
+    },
+
     async createForJob(jobId: string, rows: Array<{ techId: string; amountCents: number }>): Promise<number> {
       requireOnline('record contractor payouts');
       if (rows.length === 0) return 0;

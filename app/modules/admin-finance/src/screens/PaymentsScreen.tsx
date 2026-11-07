@@ -22,7 +22,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useReadCacheRevision } from '../lib/read-cache';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate, typography } from '@jobcore/ui';
-import type { Payment, PaymentsRepository } from '../data/ports';
+import type { Payment, PaymentsRepository, ContractorPayoutRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import { getModuleSession } from '../lib/module-session';
@@ -37,12 +37,14 @@ export interface PaymentsScreenProps {
   reimbursements?: ReimbursementRepo;
   /** Payroll (hours, commission, bonus on payout batch lines) also offsets the manually confirmed total. */
   payoutBatches?: PayoutBatchRepo;
+  /** Contractor checks paid out (flooring, plumbing, other skills) also offset the collected total. */
+  contractorPayouts?: ContractorPayoutRepository;
 }
 
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number; payroll: number; batchReimbursed: number }
+  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number; payroll: number; batchReimbursed: number; contractors: number }
   | { kind: 'failed'; message: string };
 
 const UNKNOWN_CONFIRMER_LABEL = 'Unknown tech';
@@ -66,7 +68,7 @@ function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob, reimbursements: reimbursementsRepository, payoutBatches: payoutBatchRepository }: PaymentsScreenProps = {}) {
+export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob, reimbursements: reimbursementsRepository, payoutBatches: payoutBatchRepository, contractorPayouts: contractorPayoutRepository }: PaymentsScreenProps = {}) {
   const renderJobTitle = (jobId: string) => {
     const label = formatJobNumberLabel(jobNumbers?.[jobId]);
     if (!onOpenJob) {
@@ -112,9 +114,16 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             })
             .catch(() => ({ payroll: 0, batchReimbursed: 0 }))
         : Promise.resolve({ payroll: 0, batchReimbursed: 0 }),
+      // Uber 174: contractor checks actually paid out (status 'paid'; cents -> dollars) offset the collected total.
+      contractorPayoutRepository
+        ? contractorPayoutRepository
+            .listForOrganization(session.org.id)
+            .then((rows) => rows.filter((r) => r.status === 'paid').reduce((s, r) => s + r.amountCents, 0) / 100)
+            .catch(() => 0)
+        : Promise.resolve(0),
     ])
-      .then(([needsAttention, manuallyConfirmed, reimbursed, batch]) => {
-        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed, payroll: batch.payroll, batchReimbursed: batch.batchReimbursed }); }
+      .then(([needsAttention, manuallyConfirmed, reimbursed, batch, contractors]) => {
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed, payroll: batch.payroll, batchReimbursed: batch.batchReimbursed, contractors }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -125,7 +134,7 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
     return () => {
       cancelled = true;
     };
-  }, [session, paymentsRepository, reimbursementsRepository, payoutBatchRepository, rev]);
+  }, [session, paymentsRepository, reimbursementsRepository, payoutBatchRepository, contractorPayoutRepository, rev]);
 
   if (!session) {
     return (
@@ -162,7 +171,7 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
   const confirmedGroups = groupByConfirmedBy(loadState.manuallyConfirmed);
   // Approved reimbursements already paid inside payout batches are part of Payroll; only the rest is netted here.
   const reimbursedOutsideBatches = Math.max(0, loadState.reimbursed - loadState.batchReimbursed);
-  const netTotal = loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - reimbursedOutsideBatches - loadState.payroll;
+  const netTotal = loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - reimbursedOutsideBatches - loadState.payroll - loadState.contractors;
 
   return (
     <View style={styles.screen}>
@@ -217,7 +226,7 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             </Text>
           </View>
         ) : null}
-        {confirmedGroups.size > 0 || loadState.reimbursed > 0 || loadState.payroll > 0 ? (
+        {confirmedGroups.size > 0 || loadState.reimbursed > 0 || loadState.payroll > 0 || loadState.contractors > 0 ? (
           <>
             <View style={styles.totalRow} testID="reimbursed-total">
               <Text style={styles.groupTitle}>Less approved reimbursements (not in batches)</Text>
@@ -226,6 +235,10 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             <View style={styles.totalRow} testID="payroll-total">
               <Text style={styles.groupTitle}>Less payroll (full batches)</Text>
               <Text style={styles.groupTitle}>-{formatAmount(loadState.payroll)}</Text>
+            </View>
+            <View style={styles.totalRow} testID="contractor-total">
+              <Text style={styles.groupTitle}>Less contractor payouts (paid)</Text>
+              <Text style={styles.groupTitle}>-{formatAmount(loadState.contractors)}</Text>
             </View>
             <View style={styles.totalRow} testID="net-total">
               <Text style={styles.groupTitle}>Net</Text>

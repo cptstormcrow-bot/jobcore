@@ -1227,6 +1227,7 @@ export function AdminFinanceRoot() {
           payments={ports.payments}
           reimbursements={ports.reimbursements}
           payoutBatches={ports.payoutBatches}
+          contractorPayouts={ports.contractorPayouts}
           selectedPayoutBatch={selectedPayoutBatch}
           onSelectPayoutBatch={handleSelectPayoutBatch}
           onBackFromPayoutBatch={handleBackToPayoutBatches}
