@@ -14,7 +14,7 @@ export function ScreenTitleRow({ title, center, right, testID }: ScreenTitleRowP
   return (
     <View style={styles.row} testID={testID}>
       <Text style={styles.title} numberOfLines={1}>{title}</Text>
-      {center ? <View style={styles.center}>{center}</View> : null}
+      {center ? <View style={styles.center} pointerEvents="box-none">{center}</View> : null}
       {right ? <View style={styles.right}>{right}</View> : null}
     </View>
   );
@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.headingBold,
     textAlign: 'left',
   },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', marginHorizontal: spacing.sm },
+  // Uber 161: centered on the whole row (the screen), not in the leftover space between title and right slot.
+  center: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   right: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginLeft: spacing.sm, flexShrink: 0 },
 });
