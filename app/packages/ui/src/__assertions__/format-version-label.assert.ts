@@ -11,3 +11,6 @@ test('version without build', () => {
 test('null info', () => {
   assert.equal(formatVersionLabel(null), 'Version unknown');
 });
+test('version with build on its own line', () => {
+  assert.equal(formatVersionLabel({ version: '0.2.0', build: '5' }, '\n'), 'Version 0.2.0\n(build 5)');
+});

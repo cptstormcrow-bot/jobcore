@@ -173,7 +173,7 @@ export default function SettingsScreen() {
         title="Settings"
         message="Settings are coming soon."
       />
-      <Text style={styles.version}>{formatVersionLabel(appVersion)}</Text>
+      <Text style={styles.version}>{formatVersionLabel(appVersion, '\n')}</Text>
     </View>
   );
 }
