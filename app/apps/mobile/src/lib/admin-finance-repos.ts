@@ -749,10 +749,22 @@ export function createEmployeeRepository(): EmployeeRepository {
     },
     async getPrivate(profileId) {
       // Live read only: profile_private (SSN/emergency data) is never written to the plaintext read cache.
-      const { data, error } = await supabase.from('profile_private').select('ssn_last4, emergency_contact_name, emergency_contact_phone').eq('profile_id', profileId).maybeSingle();
+      const { data, error } = await supabase.from('profile_private').select('*').eq('profile_id', profileId).maybeSingle();
       if (error) throw new Error(`getPrivate failed: ${error.message}`);
       if (!data) return null;
-      return { ssnLast4: data.ssn_last4 ?? null, emergencyContactName: data.emergency_contact_name ?? null, emergencyContactPhone: data.emergency_contact_phone ?? null };
+      return {
+        ssnLast4: data.ssn_last4 ?? null,
+        emergencyContactName: data.emergency_contact_name ?? null,
+        emergencyContactPhone: data.emergency_contact_phone ?? null,
+        contractorNumber: data.contractor_number ?? null,
+        contactName: data.contact_name ?? null,
+        contactPhone: data.contact_phone ?? null,
+        contactEmail: data.contact_email ?? null,
+        addressStreet: data.address_street ?? null,
+        addressCity: data.address_city ?? null,
+        addressState: data.address_state ?? null,
+        addressZip: data.address_zip ?? null,
+      };
     },
     async upsertPrivate(profileId, organizationId, patch) {
       requireOnline('save private employee details');
@@ -761,6 +773,11 @@ export function createEmployeeRepository(): EmployeeRepository {
       if (patch.ssnLast4 !== undefined) row.ssn_last4 = patch.ssnLast4;
       if (patch.emergencyContactName !== undefined) row.emergency_contact_name = patch.emergencyContactName;
       if (patch.emergencyContactPhone !== undefined) row.emergency_contact_phone = patch.emergencyContactPhone;
+      const cols: Array<[keyof ProfilePrivate, string]> = [
+        ['contractorNumber', 'contractor_number'], ['contactName', 'contact_name'], ['contactPhone', 'contact_phone'], ['contactEmail', 'contact_email'],
+        ['addressStreet', 'address_street'], ['addressCity', 'address_city'], ['addressState', 'address_state'], ['addressZip', 'address_zip'],
+      ];
+      for (const [k, c] of cols) if (patch[k] !== undefined) row[c] = patch[k];
       const { error } = await supabase.from('profile_private').upsert(row, { onConflict: 'profile_id' });
       if (error) throw new Error(`upsertPrivate failed: ${error.message}`);
     },

@@ -78,6 +78,10 @@ const ROLE_OPTIONS = [
   { label: 'sales', value: 'sales' },
 ];
 
+/** Contractor 1099 details (admin-only, migration 0129). */
+interface C1099 { number: string; name: string; phone: string; email: string; street: string; city: string; state: string; zip: string }
+const EMPTY_C1099: C1099 = { number: '', name: '', phone: '', email: '', street: '', city: '', state: '', zip: '' };
+
 type EmpTab = 'email' | 'detail' | 'pay' | 'role' | 'areas' | 'skills';
 
 const WORKER_TYPE_OPTIONS = [
@@ -195,6 +199,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const [ecNameInput, setEcNameInput] = useState('');
   const [ecPhoneInput, setEcPhoneInput] = useState('');
   const [privateState, setPrivateState] = useState<'loading' | 'loaded' | 'failed'>(isEditMode ? 'loading' : 'loaded');
+  const [c1099, setC1099] = useState<C1099>(EMPTY_C1099);
+  const [c1099Initial, setC1099Initial] = useState<C1099>(EMPTY_C1099);
 
   const [assignedSkillIds, setAssignedSkillIds] = useState<Set<string>>(new Set());
   const [skillActionState, setSkillActionState] = useState<Record<string, ActionState>>({});
@@ -238,6 +244,12 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       setEcNameInput(r?.emergencyContactName ?? '');
       setEcPhoneInput(r?.emergencyContactPhone ?? '');
       setPrivateInitial({ ssn: r?.ssnLast4 ?? '', ecName: r?.emergencyContactName ?? '', ecPhone: r?.emergencyContactPhone ?? '' });
+      const loaded: C1099 = {
+        number: r?.contractorNumber ?? '', name: r?.contactName ?? '', phone: r?.contactPhone ?? '', email: r?.contactEmail ?? '',
+        street: r?.addressStreet ?? '', city: r?.addressCity ?? '', state: r?.addressState ?? '', zip: r?.addressZip ?? '',
+      };
+      setC1099(loaded);
+      setC1099Initial(loaded);
       setPrivateState('loaded');
     }).catch(() => {
       if (cancelled) return;
@@ -319,7 +331,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
   const privateDirty =
     isEditMode &&
     privateState === 'loaded' &&
-    (ssnLast4Input !== privateInitial.ssn || ecNameInput !== privateInitial.ecName || ecPhoneInput !== privateInitial.ecPhone);
+    (ssnLast4Input !== privateInitial.ssn || ecNameInput !== privateInitial.ecName || ecPhoneInput !== privateInitial.ecPhone || (workerTypeInput === 'contractor' && JSON.stringify(c1099) !== JSON.stringify(c1099Initial)));
   const emailDirty = isEditMode
     ? emailActionState.kind !== 'done' && changeEmailInput.trim() !== (profile?.email ?? '').trim()
     : emailInput !== '' || roleInput !== 'tech';
@@ -444,6 +456,18 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
           ssnLast4: ssnLast4Input || null,
           emergencyContactName: ecNameInput || null,
           emergencyContactPhone: ecPhoneInput || null,
+          ...(workerTypeInput === 'contractor'
+            ? {
+                contractorNumber: c1099.number.trim() || null,
+                contactName: c1099.name.trim() || null,
+                contactPhone: c1099.phone.trim() || null,
+                contactEmail: c1099.email.trim() || null,
+                addressStreet: c1099.street.trim() || null,
+                addressCity: c1099.city.trim() || null,
+                addressState: c1099.state.trim() || null,
+                addressZip: c1099.zip.trim() || null,
+              }
+            : {}),
         });
       } else if (privateState === 'failed') {
         throw new Error('Private details could not be loaded; they will not be changed by Save.');
@@ -774,6 +798,32 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
                   keyboardType="phone-pad"
                 />
               </View>
+              {workerTypeInput === 'contractor' ? (
+                <>
+                  {([
+                    ['number', 'Contractor #:', 'Contractor number (type in)', 'default'],
+                    ['name', '1099 name:', 'Contact name', 'default'],
+                    ['phone', '1099 phone:', 'Contact phone', 'phone-pad'],
+                    ['email', '1099 email:', 'Contact email', 'email-address'],
+                    ['street', 'Street:', 'Street address', 'default'],
+                    ['city', 'City:', 'City', 'default'],
+                    ['state', 'State:', 'State', 'default'],
+                    ['zip', 'ZIP:', 'ZIP code', 'number-pad'],
+                  ] as const).map(([key, label, placeholder, kb]) => (
+                    <View key={key} style={styles.inlineRow}>
+                      <Text style={styles.labelInline} numberOfLines={1}>{label}</Text>
+                      <TextInput
+                        style={[styles.input, styles.inlineInput]}
+                        placeholder={placeholder}
+                        value={c1099[key]}
+                        onChangeText={(t) => setC1099((p) => ({ ...p, [key]: t }))}
+                        keyboardType={kb}
+                        autoCapitalize={key === 'email' ? 'none' : 'sentences'}
+                      />
+                    </View>
+                  ))}
+                </>
+              ) : null}
               <Select
                 label="Vehicle Status"
                 value={vehicleStatusInput}

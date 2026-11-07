@@ -138,6 +138,13 @@ export function EmployeeDetailScreen(props: EmployeeDetailScreenProps) {
           <InfoRow label="Driver's License" value={maskDriversLicense(employee.driversLicenseNumber)} />
           <InfoRow label="SSN" value={privFailed ? 'Unavailable' : maskSsn(priv?.ssnLast4 ?? null)} />
           <InfoRow label="Emergency Contact" value={privFailed ? 'Unavailable' : (priv?.emergencyContactName ? [priv.emergencyContactName, priv.emergencyContactPhone].filter(Boolean).join(' · ') : 'Not on file')} />
+          {employee.workerType === 'contractor' ? (
+            <>
+              <InfoRow label="Contractor #" value={privFailed ? 'Unavailable' : (priv?.contractorNumber || 'Not on file')} />
+              <InfoRow label="1099 Contact" value={privFailed ? 'Unavailable' : ([priv?.contactName, priv?.contactPhone, priv?.contactEmail].filter(Boolean).join(' · ') || 'Not on file')} />
+              <InfoRow label="1099 Address" value={privFailed ? 'Unavailable' : ([priv?.addressStreet, [priv?.addressCity, priv?.addressState].filter(Boolean).join(', '), priv?.addressZip].filter(Boolean).join(' · ') || 'Not on file')} />
+            </>
+          ) : null}
           <InfoRow label="Vehicle Status" value={employee.vehicleStatus ?? 'Not set'} />
           <InfoRow label="Tool Status" value={employee.toolStatus ?? 'Not set'} />
           <InfoRow

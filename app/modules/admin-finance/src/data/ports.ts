@@ -435,6 +435,15 @@ export interface ProfilePrivate {
   ssnLast4: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
+  /** Contractor 1099 details (migration 0129); admin-only, typed in. */
+  contractorNumber?: string | null;
+  contactName?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  addressStreet?: string | null;
+  addressCity?: string | null;
+  addressState?: string | null;
+  addressZip?: string | null;
 }
 
 /** Read/write access to organization employees (`Profile` rows). */
