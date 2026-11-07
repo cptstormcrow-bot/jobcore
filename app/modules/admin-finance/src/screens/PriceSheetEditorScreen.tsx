@@ -400,8 +400,7 @@ function ServiceTasksCard({
         darkPlaceholder
         onChange={(value) => {
           if (value === NEW_ENTRY) {
-            if (addServiceId) setAddDialogVisible(true);
-            else setStatusMessage('Pick a service first, then choose New Task.');
+            setAddDialogVisible(true);
             return;
           }
           setAddServiceId(value);
@@ -412,6 +411,9 @@ function ServiceTasksCard({
       <AddTaskDialog
         visible={addDialogVisible}
         serviceName={addServiceName}
+        serviceOptions={services.map((s) => ({ label: s.name, value: s.id }))}
+        serviceId={addServiceId || null}
+        onServiceChange={setAddServiceId}
         onCancel={() => setAddDialogVisible(false)}
         onCreate={({ name, extra }) => {
           if (!organizationId || !addServiceId) {

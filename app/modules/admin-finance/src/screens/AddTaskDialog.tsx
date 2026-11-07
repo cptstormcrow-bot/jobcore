@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, View, Pressable, ScrollView, StyleSheet } from 'react-native';
 import {
   PayrollButton,
+  Select,
   Text,
   TextField,
   Toggle,
@@ -23,6 +24,10 @@ import type { ServiceTask } from '../data/ports';
 export type AddTaskDialogProps = {
   visible: boolean;
   serviceName?: string;
+  /** When given, the dialog shows a service chooser so a task can be added with no service picked first. */
+  serviceOptions?: Array<{ label: string; value: string }>;
+  serviceId?: string | null;
+  onServiceChange?: (serviceId: string) => void;
   onCancel: () => void;
   onCreate: (input: {
     name: string;
@@ -58,7 +63,17 @@ function parseNonNegativeInt(raw: string): { ok: true; value: number | null } | 
   return { ok: true, value: n };
 }
 
-export function AddTaskDialog({ visible, serviceName, onCancel, onCreate, onCreated, testID }: AddTaskDialogProps) {
+export function AddTaskDialog({
+  visible,
+  serviceName,
+  serviceOptions,
+  serviceId,
+  onServiceChange,
+  onCancel,
+  onCreate,
+  onCreated,
+  testID,
+}: AddTaskDialogProps) {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [minutes, setMinutes] = useState('');
@@ -92,6 +107,10 @@ export function AddTaskDialog({ visible, serviceName, onCancel, onCreate, onCrea
 
   const handleCreate = async () => {
     const trimmedName = name.trim();
+    if (serviceOptions && !serviceId) {
+      setError('Pick a service first.');
+      return;
+    }
     if (trimmedName === '') {
       setError('Name is required.');
       return;
@@ -137,6 +156,17 @@ export function AddTaskDialog({ visible, serviceName, onCancel, onCreate, onCrea
         <View style={styles.sheet}>
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator>
             <Text style={styles.title}>{title}</Text>
+
+            {serviceOptions ? (
+              <Select
+                value={serviceId || null}
+                options={serviceOptions}
+                placeholder="Select a service"
+                darkPlaceholder
+                onChange={(v) => onServiceChange?.(v)}
+                style={styles.field}
+              />
+            ) : null}
 
             <TextField inline label="Name" value={name} onChangeText={setName} placeholder="Task name" style={styles.field} />
             <TextField inline
