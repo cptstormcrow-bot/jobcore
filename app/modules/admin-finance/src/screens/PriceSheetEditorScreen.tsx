@@ -155,7 +155,14 @@ function draftFromTask(task: ServiceTask): ServiceTaskDraft {
   };
 }
 
-function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasksRepoPort }) {
+function ServiceTasksCard({
+  serviceTasksRepo,
+  refreshKey = 0,
+}: {
+  serviceTasksRepo: ServiceTasksRepoPort;
+  /** Bumped by the parent when a task is created or re-priced elsewhere on the screen. */
+  refreshKey?: number;
+}) {
   const session = useModuleSession();
   const organizationId = session?.org.id;
   const [tasks, setTasks] = useState<ServiceTask[]>([]);
@@ -189,7 +196,7 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
     return () => {
       cancelled = true;
     };
-  }, [serviceTasksRepo, organizationId]);
+  }, [serviceTasksRepo, organizationId, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -440,10 +447,12 @@ function RateRowsCard({
   sheet,
   ratesRepo,
   serviceTasksRepo,
+  onTasksChanged,
 }: {
   sheet: PriceSheet;
   ratesRepo?: PriceSheetRatesPort;
   serviceTasksRepo: ServiceTasksRepoPort;
+  onTasksChanged?: () => void;
 }) {
   const session = useModuleSession();
   const organizationId = session?.org.id;
@@ -541,6 +550,21 @@ function RateRowsCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceTasksRepo, organizationId, serviceIdInput]);
 
+  // Rows that name a task must show it even when the cached/optimistic row has no
+  // task name yet, so load task names for every service that has a rate row.
+  useEffect(() => {
+    const ids = Array.from(new Set(rates.filter((r) => r.taskId).map((r) => r.serviceId)));
+    ids.forEach((id) => void ensureTaskOptionsForService(id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rates, organizationId]);
+
+  const taskNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    Object.values(taskOptionsByService).forEach((list) => list.forEach((t) => map.set(t.id, t.name)));
+    taskOptions.forEach((t) => map.set(t.id, t.name));
+    return map;
+  }, [taskOptionsByService, taskOptions]);
+
   async function ensureTaskOptionsForService(serviceId: string) {
     if (!organizationId || taskOptionsByService[serviceId]) return;
     const result = await serviceTasksRepo.list(organizationId, serviceId);
@@ -570,18 +594,25 @@ function RateRowsCard({
       return;
     }
     setActionState({ kind: 'loading' });
-    const result = await ratesRepo.save(sheet.id, serviceIdInput, taskIdInput, timingInput, amount, minutes);
+    // A specific task means a flat job price: it lives on the task in the Service
+    // Tasks list. "All tasks" is the service's general hourly rate row.
+    const result = taskIdInput
+      ? await serviceTasksRepo.updateServiceTask(taskIdInput, { priceCents: amount, estimatedMinutes: minutes })
+      : await ratesRepo.save(sheet.id, serviceIdInput, null, timingInput, amount, minutes);
     if (!result.ok) {
       setActionState({ kind: 'failed', message: result.reason });
       return;
     }
+    if (taskIdInput) onTasksChanged?.();
     const savedServiceName = serviceNameById.get(serviceIdInput) ?? serviceIdInput;
     setServiceIdInput('');
     setAmountInput('');
     setMinutesInput('');
     setTaskIdInput(null);
     setActionState({ kind: 'idle' });
-    setStatusMessage(`Saved rate for ${savedServiceName} at ${new Date().toLocaleTimeString()}`);
+    setStatusMessage(
+      `${taskIdInput ? 'Saved flat price in Service Tasks for' : 'Saved rate for'} ${savedServiceName} at ${new Date().toLocaleTimeString()}`
+    );
     void reload();
   }
 
@@ -655,7 +686,9 @@ function RateRowsCard({
       {rates.map((rate) => (
         <AccordionEditRow
           key={rate.id}
-          title={`${serviceNameById.get(rate.serviceId) ?? rate.serviceId} · ${rate.taskName ?? 'All tasks'}`}
+          title={`${serviceNameById.get(rate.serviceId) ?? rate.serviceId} · ${
+            rate.taskName ?? (rate.taskId ? taskNameById.get(rate.taskId) ?? 'Task' : 'All tasks')
+          }`}
           subtitle={`${rate.attachTiming} · $${centsToDollarsText(rate.amount)} per hour`}
           expanded={expandedRateId === rate.id}
           onToggle={() => handleToggleRate(rate.id)}
@@ -702,7 +735,9 @@ function RateRowsCard({
         </AccordionEditRow>
       ))}
 
-      <Text style={styles.note}>One rate per service + timing; the task labels that rate.</Text>
+      <Text style={styles.note}>
+        All tasks = the service's hourly rate. Pick a task to set its flat job price in Service Tasks.
+      </Text>
       <Select
         value={serviceIdInput || null}
         options={[
@@ -737,18 +772,20 @@ function RateRowsCard({
         }}
       />
       {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
-      <Select
-        label="Timing"
-        value={timingInput}
-        options={ATTACH_TIMING_OPTIONS}
-        onChange={setTimingInput}
-        style={styles.action}
-      />
+      {taskIdInput ? null : (
+        <Select
+          label="Timing"
+          value={timingInput}
+          options={ATTACH_TIMING_OPTIONS}
+          onChange={setTimingInput}
+          style={styles.action}
+        />
+      )}
       <View style={styles.inlineRow}>
         <Text style={styles.labelInline} numberOfLines={1}>Amount:</Text>
         <TextInput
           style={[styles.input, styles.inlineInput]}
-          placeholder="Rate ($ per hour)"
+          placeholder={taskIdInput ? 'Flat price ($)' : 'Rate ($ per hour)'}
           value={amountInput}
           keyboardType="decimal-pad"
           onChangeText={setAmountInput}
@@ -807,6 +844,7 @@ function RateRowsCard({
         }}
         onCreated={(task) => {
           setAddTaskDialogVisible(false);
+          onTasksChanged?.();
           setTaskIdInput(task.id);
           setTaskOptions((prev) => [...prev, { id: task.id, name: task.name }]);
           setTaskOptionsByService((prev) => ({
@@ -930,6 +968,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [reloadTick, setReloadTick] = useState(0);
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
   const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
+  const [taskListVersion, setTaskListVersion] = useState(0);
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState<string>('__all__');
   const [adjustmentTypeInput, setAdjustmentTypeInput] = useState<'percent' | 'flat'>('percent');
@@ -1481,10 +1520,17 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
           </Card>
         ) : null}
 
-        {serviceTasksRepo ? <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} /> : null}
+        {serviceTasksRepo ? (
+          <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} refreshKey={taskListVersion} />
+        ) : null}
 
         {sheet ? (
-          <RateRowsCard sheet={sheet} ratesRepo={ratesRepo} serviceTasksRepo={serviceTasksRepo} />
+          <RateRowsCard
+            sheet={sheet}
+            ratesRepo={ratesRepo}
+            serviceTasksRepo={serviceTasksRepo}
+            onTasksChanged={() => setTaskListVersion((v) => v + 1)}
+          />
         ) : null}
       </ScrollView>
     </View>
