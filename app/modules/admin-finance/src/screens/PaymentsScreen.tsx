@@ -160,15 +160,16 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
           <EmptyState title="No manual confirmations" message="No manually confirmed payments yet." />
         ) : (
           Array.from(confirmedGroups.entries()).map(([techId, groupedPayments]) => (
-            <Card key={techId} style={styles.card}>
+            <Card key={techId} style={styles.compactCard}>
               <Text style={styles.groupTitle}>{employeeNames?.[techId] ?? 'Unknown tech'}</Text>
               {groupedPayments.map((payment) => (
-                <View key={payment.id} style={styles.row}>
-                  {renderJobTitle(payment.jobId)}
-                  <Text style={styles.detail}>
-                    {formatAmount(payment.amount)}
-                    {payment.confirmedAt ? ` — ${formatCreatedDate(payment.confirmedAt)}` : ''}
+                <View key={payment.id} style={styles.bulletRow} testID={`manual-payment-${payment.id}`}>
+                  <Text style={styles.bullet}>•</Text>
+                  <View style={styles.jobCell}>{renderJobTitle(payment.jobId)}</View>
+                  <Text style={styles.dateCell} numberOfLines={1}>
+                    {payment.confirmedAt ? formatCreatedDate(payment.confirmedAt) : ''}
                   </Text>
+                  <Text style={styles.amountCell} numberOfLines={1}>{formatAmount(payment.amount)}</Text>
                 </View>
               ))}
             </Card>
@@ -210,6 +211,34 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     fontWeight: '600',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  // Uber 166: manually confirmed payments - no card padding, one bulleted line per payment.
+  compactCard: {
+    marginBottom: spacing.xs,
+    padding: spacing.xs,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  bullet: {
+    width: 14,
+    color: colors.textLight,
+  },
+  jobCell: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  dateCell: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.textLight,
+  },
+  amountCell: {
+    flex: 1,
+    textAlign: 'right',
+    fontWeight: '600',
   },
 });
