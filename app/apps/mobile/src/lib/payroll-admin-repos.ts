@@ -12,6 +12,7 @@ import type {
   AdminReimbursement,
 } from '../../../../packages/payroll-ui/src/port';
 import { requireOnline } from './offline-mutations';
+import { payrollExportFileName, writeAndSharePayrollExport } from './payroll-export-io';
 import { readCachedOr, toPayrollTimeEntry } from './payroll-repos';
 import type { PayrollRepoSession } from './payroll-repos';
 
@@ -351,6 +352,34 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
         { onConflict: 'batch_id,format,source_hash', ignoreDuplicates: true },
       );
       check(error);
+
+      // Turn the canonical doc into the file QuickBooks reads and hand it to the admin.
+      const start = exp.periodStart;
+      const end = exp.periodEnd;
+      if (format === 'generic_csv') {
+        await writeAndSharePayrollExport(format, start, end, wageEngine.toGenericCsv(exp));
+      } else if (format === 'iif_timeact') {
+        await writeAndSharePayrollExport(format, start, end, wageEngine.toIifTimeact(exp));
+      } else {
+        const { data: acctData, error: aErr } = await supabase.from('payroll_qb_account_map').select('*').maybeSingle();
+        check(aErr);
+        const a = (acctData ?? {}) as Row;
+        const accounts = {
+          wages_expense: a.wages_expense ?? 'Payroll Expenses',
+          reimbursement_expense: a.reimbursement_expense ?? 'Reimbursements',
+          payroll_payable: a.payroll_payable ?? 'Payroll Liabilities',
+        };
+        if (format === 'iif_journal') {
+          await writeAndSharePayrollExport(format, start, end, wageEngine.toIifGeneralJournal(exp, accounts));
+        } else {
+          const parts = wageEngine.toQboJournalCsv(exp, accounts);
+          for (let i = 0; i < parts.length; i++) {
+            const base = payrollExportFileName(format, start, end);
+            const name = parts.length > 1 ? base.replace(/\.csv$/, `-part${i + 1}.csv`) : base;
+            await writeAndSharePayrollExport(format, start, end, parts[i] ?? '', name);
+          }
+        }
+      }
       return exp;
     },
 

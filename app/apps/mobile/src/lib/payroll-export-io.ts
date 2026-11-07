@@ -3,6 +3,7 @@
  * writes it to the cache directory as UTF-8 and opens the share sheet.
  * No Supabase, no React.
  */
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
@@ -61,11 +62,23 @@ export async function writeAndSharePayrollExport(
   periodStart: string,
   periodEnd: string,
   content: string,
+  fileNameOverride?: string,
 ): Promise<string> {
-  const uri = await writePayrollExport(
-    payrollExportFileName(format, periodStart, periodEnd),
-    content,
-  );
+  const fileName = fileNameOverride ?? payrollExportFileName(format, periodStart, periodEnd);
+  if (Platform.OS === 'web') {
+    // Browser: no share sheet, so save the file through a download link.
+    const blob = new Blob([content], { type: payrollExportMimeType(format) });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    return fileName;
+  }
+  const uri = await writePayrollExport(fileName, content);
   await sharePayrollExport(uri, format);
   return uri;
 }

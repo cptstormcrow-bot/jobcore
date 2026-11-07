@@ -24,7 +24,8 @@ type IsoDate = PayrollDateRange['from'];
 const FORMATS: { key: PayrollExportFormat; label: string }[] = [
   { key: 'generic_csv', label: 'Generic CSV' },
   { key: 'qbo_journal_csv', label: 'QBO journal CSV' },
-  { key: 'iif_journal', label: 'IIF' },
+  { key: 'iif_journal', label: 'IIF journal' },
+  { key: 'iif_timeact', label: 'IIF hours' },
 ];
 
 const DATE_RE =/^\d{4}-\d{2}-\d{2}$/;
@@ -126,7 +127,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
     setStatus('Exporting...');
     try {
       const doc = await exportRun.call(payroll, batchId, format);
-      setStatus(`Exported ${doc.lines.length} line(s) for ${doc.periodStart} to ${doc.periodEnd}.`);
+      setStatus(`Exported ${doc.lines.length} line(s) for ${doc.periodStart} to ${doc.periodEnd}. The file was saved or shared for QuickBooks.`);
     } catch (e) {
       setStatus(`Export failed: ${errorText(e)}`);
     } finally {

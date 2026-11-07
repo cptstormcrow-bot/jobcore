@@ -143,10 +143,10 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
               <View style={{ flex: 1 }}>
                 <Text>{w.employeeName}</Text>
                 <Text>{w.weekStart + ' to ' + w.weekEnd}</Text>
-                <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + w.status}</Text>
+                <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + (w.status === 'draft' ? 'draft (not submitted)' : w.status)}</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-                {w.status === 'submitted' ? (
+                {w.status === 'submitted' || w.status === 'draft' ? (
                   <PayrollButton label="Approve" onPress={() => approve(w)} disabled={busy} />
                 ) : null}
                 {w.status === 'submitted' || w.status === 'approved' ? (
