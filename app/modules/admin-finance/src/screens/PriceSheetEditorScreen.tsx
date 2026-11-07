@@ -392,19 +392,22 @@ function ServiceTasksCard({
 
       <Select
         value={addServiceId || null}
-        options={services.map((s) => ({ label: s.name, value: s.id }))}
+        options={[
+          { label: 'New Task', value: NEW_ENTRY },
+          ...services.map((s) => ({ label: s.name, value: s.id })),
+        ]}
         placeholder="Select a service"
         darkPlaceholder
-        onChange={setAddServiceId}
+        onChange={(value) => {
+          if (value === NEW_ENTRY) {
+            if (addServiceId) setAddDialogVisible(true);
+            else setStatusMessage('Pick a service first, then choose New Task.');
+            return;
+          }
+          setAddServiceId(value);
+        }}
         style={styles.action}
       />
-      <View style={styles.actionRow}>
-        <PayrollButton
-          label="New Task"
-          onPress={() => setAddDialogVisible(true)}
-          disabled={!addServiceId}
-        />
-      </View>
 
       <AddTaskDialog
         visible={addDialogVisible}
