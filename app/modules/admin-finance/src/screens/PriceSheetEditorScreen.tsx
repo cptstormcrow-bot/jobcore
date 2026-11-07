@@ -151,6 +151,7 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
   const [tasks, setTasks] = useState<ServiceTask[]>([]);
   const [loadState, setLoadState] = useState<ServiceTasksCardState>({ kind: 'idle' });
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([]);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ServiceTaskDraft | null>(null);
   const [addServiceId, setAddServiceId] = useState('');
@@ -266,20 +267,30 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
       {loadState.kind === 'loading' ? <LoadingState label="Loading service tasks..." /> : null}
       {loadState.kind === 'failed' ? <ErrorState message={loadState.message} /> : null}
 
-      {sortedTasks.map((task) => (
-        <AccordionEditRow
-          key={task.id}
-          title={task.name}
-          subtitle={formatServiceTaskNumber(task)}
-          tag={task.active === false ? 'Inactive' : undefined}
-          expanded={expandedTaskId === task.id}
-          onToggle={() => handleToggleRow(task)}
-          onSave={() => handleSaveRow(task)}
-          onCancel={handleCancelRow}
-          onDelete={() => handleDeleteRow(task.id)}
-          testID={`service-task-${task.id}`}
-        >
-          {draft && expandedTaskId === task.id ? (
+      {/* Uber 165: compact bulleted list, one line per task; tap a task to edit it in a popup. */}
+      <View style={styles.bulletList}>
+        {sortedTasks.map((task) => (
+          <Pressable
+            key={task.id}
+            onPress={() => { setTaskError(null); handleToggleRow(task); }}
+            style={styles.bulletRow}
+            accessibilityRole="button"
+            testID={`service-task-${task.id}`}
+          >
+            <Text style={[styles.bulletText, task.active === false ? styles.bulletInactive : undefined]} numberOfLines={1}>
+              {`•  ${task.name}  ${formatServiceTaskNumber(task)}${task.active === false ? '  (Inactive)' : ''}`}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+      {(() => {
+        const editing = sortedTasks.find((t) => t.id === expandedTaskId) ?? null;
+        return (
+          <Modal visible={editing !== null && draft !== null} transparent animationType="fade" onRequestClose={handleCancelRow}>
+            <View style={styles.popupBackdrop}>
+              <View style={styles.popupCard}>
+                <ScrollView keyboardShouldPersistTaps="handled">
+                {draft ? (
             <View>
               <View style={styles.inlineRow}>
                 <Text style={styles.labelInline} numberOfLines={1}>Name:</Text>
@@ -348,9 +359,19 @@ function ServiceTasksCard({ serviceTasksRepo }: { serviceTasksRepo: ServiceTasks
                 style={styles.toggleRow}
               />
             </View>
-          ) : null}
-        </AccordionEditRow>
-      ))}
+                ) : null}
+                </ScrollView>
+                {taskError ? <ErrorState message={taskError} /> : null}
+                <View style={styles.actionRow}>
+                  <PayrollButton label="Delete" onPress={() => { if (editing) void handleDeleteRow(editing.id).then((r) => { if (!r.ok) setTaskError(r.reason ?? 'Could not delete.'); }); }} />
+                  <PayrollButton label="Cancel" onPress={handleCancelRow} />
+                  <PayrollButton label="Save" onPress={() => { if (editing) void handleSaveRow(editing).then((r) => { if (!r.ok) setTaskError(r.reason ?? 'Could not save.'); }); }} />
+                </View>
+              </View>
+            </View>
+          </Modal>
+        );
+      })()}
 
       <View style={styles.actionRow}>
         <Select
@@ -1369,6 +1390,10 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 export default PriceSheetEditorScreen;
 
 const styles = StyleSheet.create({
+  bulletList: { marginBottom: spacing.xs },
+  bulletRow: { minHeight: 32, justifyContent: 'center', paddingVertical: 2 },
+  bulletText: { fontSize: typography.size.label, color: colors.text },
+  bulletInactive: { color: colors.textMuted },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.xs },
   areaChip: {
     flexBasis: '48%', flexGrow: 1, minHeight: 32, justifyContent: 'center',
