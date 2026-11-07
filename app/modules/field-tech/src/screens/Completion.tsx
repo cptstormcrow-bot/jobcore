@@ -36,7 +36,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import type { Job } from '@jobcore/core';
 import { PayrollButton, Checkbox, TextField, colors, spacing, typography, Text } from '@jobcore/ui';
 
@@ -95,6 +95,7 @@ export function Completion({
   canReopen = false,
   onReopen,
 }: CompletionProps): JSX.Element {
+  const { width } = useWindowDimensions();
   const [materialsOnsite, setMaterialsOnsite] = useState(false);
   const [movedUpstairs, setMovedUpstairs] = useState(false);
   const [damageChecked, setDamageChecked] = useState(false);
@@ -411,6 +412,25 @@ export function Completion({
     );
   }
 
+  // Uber 163: on a small phone the Complete button drops to its own line below the title so it never truncates.
+  const smallPhone = width < 400;
+  const buttons = (
+    <View style={styles.titleRight}>
+      {alreadyCompleted && canReopen && onReopen ? (
+        <PayrollButton
+          label={reopening ? 'Reopening…' : 'Not Completed'}
+          onPress={() => void handleReopen()}
+          disabled={reopening || submitting}
+        />
+      ) : null}
+      <PayrollButton
+        label={submitLabel}
+        onPress={() => void handleSubmit()}
+        disabled={!canSubmit || reopening}
+      />
+    </View>
+  );
+
   return (
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" contentContainerStyle={styles.container}>
       {/* #0024 title row (Jeff 2026-11-05): Job Checklist left, Time Spent centered (small), buttons right. */}
@@ -419,21 +439,9 @@ export function Completion({
           <Text style={styles.heading} numberOfLines={1}>Job Checklist</Text>
         </View>
         <Text style={styles.timeSpent} numberOfLines={1}>{`Time Spent: ${formatTimeSpent(timeSpentSeconds)}`}</Text>
-        <View style={styles.titleRight}>
-          {alreadyCompleted && canReopen && onReopen ? (
-            <PayrollButton
-              label={reopening ? 'Reopening…' : 'Not Completed'}
-              onPress={() => void handleReopen()}
-              disabled={reopening || submitting}
-            />
-          ) : null}
-          <PayrollButton
-            label={submitLabel}
-            onPress={() => void handleSubmit()}
-            disabled={!canSubmit || reopening}
-          />
-        </View>
+        {smallPhone ? null : buttons}
       </View>
+      {smallPhone ? <View style={styles.buttonsRow}>{buttons}</View> : null}
 
       {error !== null ? (
         <Text accessibilityRole="alert" style={styles.errorText}>
@@ -476,6 +484,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   titleLeft: { flex: 1, alignItems: 'flex-start' },
+  buttonsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: spacing.xs },
   titleRight: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: spacing.xs },
   timeSpent: {
     fontSize: 11,
