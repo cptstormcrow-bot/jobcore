@@ -1540,6 +1540,7 @@ ${body}`)) handleResetLaborTime();
             label={estimateChrome.copyLink.label}
             onPress={estimateChrome.copyLink.onPress}
             disabled={estimateChrome.copyLink.disabled}
+            style={{ alignSelf: 'center' }}
           />
         ) : undefined}
         right={region === 'details' || region === 'plan' ? (
