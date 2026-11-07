@@ -647,7 +647,7 @@ function RateRowsCard({
         <AccordionEditRow
           key={rate.id}
           title={`${serviceNameById.get(rate.serviceId) ?? rate.serviceId} · ${rate.taskName ?? 'All tasks'}`}
-          subtitle={`${rate.attachTiming} · ${centsToDollarsText(rate.amount)}`}
+          subtitle={`${rate.attachTiming} · $${centsToDollarsText(rate.amount)} per hour`}
           expanded={expandedRateId === rate.id}
           onToggle={() => handleToggleRate(rate.id)}
           onSave={() => handleSaveEdit(rate)}
@@ -674,7 +674,7 @@ function RateRowsCard({
             <Text style={styles.labelInline} numberOfLines={1}>Amount:</Text>
             <TextInput
               style={[styles.input, styles.inlineInput]}
-              placeholder="Amount ($)"
+              placeholder="Rate ($ per hour)"
               value={editAmount}
               keyboardType="decimal-pad"
               onChangeText={setEditAmount}
@@ -723,7 +723,7 @@ function RateRowsCard({
         <Text style={styles.labelInline} numberOfLines={1}>Amount:</Text>
         <TextInput
           style={[styles.input, styles.inlineInput]}
-          placeholder="Amount ($)"
+          placeholder="Rate ($ per hour)"
           value={amountInput}
           keyboardType="decimal-pad"
           onChangeText={setAmountInput}
