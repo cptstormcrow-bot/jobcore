@@ -45,6 +45,7 @@ import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import { planPublish } from '../money/publish-plan';
 import { getModuleSession, useModuleSession } from '../lib/module-session';
 import { parseAdjustmentPercent } from '../domain/parse-adjustment-percent';
+import { parseMoneyToCents, centsToDollarsText as rateCentsToText } from '../domain/parse-money';
 import { AccordionEditRow } from './AccordionEditRow';
 import { AddTaskDialog } from './AddTaskDialog';
 import { formatServiceTaskNumber } from '../domain/format-service-task-number';
@@ -544,11 +545,21 @@ function RateRowsCard({
   }
 
   async function handleSave() {
-    if (!ratesRepo || !serviceIdInput) return;
-    const amount = Number(amountInput);
-    if (Number.isNaN(amount)) return;
-    const minutes = minutesInput === '' ? null : Number(minutesInput);
-    if (minutes !== null && Number.isNaN(minutes)) return;
+    if (!ratesRepo) return;
+    if (!serviceIdInput) {
+      setActionState({ kind: 'failed', message: 'Select a service first.' });
+      return;
+    }
+    const amount = parseMoneyToCents(amountInput);
+    if (amount === null) {
+      setActionState({ kind: 'failed', message: 'Enter the amount as dollars, like 95 or 95.00.' });
+      return;
+    }
+    const minutes = minutesInput.trim() === '' ? null : Number(minutesInput.replace(/\s*min(utes?)?\s*$/i, ''));
+    if (minutes !== null && Number.isNaN(minutes)) {
+      setActionState({ kind: 'failed', message: 'Enter minutes as a number, like 60.' });
+      return;
+    }
     setActionState({ kind: 'loading' });
     const result = await ratesRepo.save(sheet.id, serviceIdInput, taskIdInput, timingInput, amount, minutes);
     if (!result.ok) {
@@ -574,7 +585,7 @@ function RateRowsCard({
     if (rate) {
       setEditTaskId(rate.taskId ?? null);
       setEditTiming(rate.attachTiming);
-      setEditAmount(String(rate.amount));
+      setEditAmount(rateCentsToText(rate.amount));
       setEditMinutes(rate.timeEstimateMinutes != null ? String(rate.timeEstimateMinutes) : '');
       void ensureTaskOptionsForService(rate.serviceId);
     }
@@ -586,9 +597,9 @@ function RateRowsCard({
     serviceId: string;
   }): Promise<{ ok: boolean; reason?: string }> {
     if (!ratesRepo) return { ok: false, reason: 'Rates unavailable' };
-    const amount = Number(editAmount);
-    if (Number.isNaN(amount)) return { ok: false, reason: 'Amount must be a number.' };
-    const minutes = editMinutes === '' ? null : Number(editMinutes);
+    const amount = parseMoneyToCents(editAmount);
+    if (amount === null) return { ok: false, reason: 'Enter the amount as dollars, like 95 or 95.00.' };
+    const minutes = editMinutes.trim() === '' ? null : Number(editMinutes.replace(/\s*min(utes?)?\s*$/i, ''));
     if (minutes !== null && Number.isNaN(minutes)) return { ok: false, reason: 'Minutes must be a number.' };
     const result = await ratesRepo.save(sheet.id, rate.serviceId, editTaskId, editTiming, amount, minutes, rate.id);
     if (!result.ok) {
