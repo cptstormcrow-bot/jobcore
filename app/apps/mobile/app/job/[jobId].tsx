@@ -366,6 +366,8 @@ export default function JobDrilldownScreen() {
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
+  /** Lead task title and how many more follow it; a started job's #0041 title line shows it as "> Title" (uber 157). */
+  const [leadTask, setLeadTask] = useState<{ title: string; more: number } | null>(null);
   const [standardMinutes, setStandardMinutes] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -894,11 +896,14 @@ export default function JobDrilldownScreen() {
     // New Job has no real id yet ("new" is not a uuid), so skip the lookup.
     if (!jobId || isCreate) {
       setTotalTaskMinutes(0);
+      setLeadTask(null);
       return undefined;
     }
     let cancelled = false;
     void createJobPlanTasksRepository().listForJob(jobId).then((rows) => {
       if (cancelled) return;
+      const live = rows.filter((r) => r.active !== false).slice().sort((a, b) => a.sortOrder - b.sortOrder);
+      setLeadTask(live.length > 0 ? { title: live[0]!.title, more: live.length - 1 } : null);
       const sum = rows.reduce(
         (acc, row) => acc + (row.kind === 'misc' ? (row.estimatedMinutes ?? 0) : (row.estimatedMinutes ?? 0) * row.quantity),
         0,
@@ -1526,7 +1531,9 @@ ${body}`)) handleResetLaborTime();
         </View>
       ) : null}
       <ScreenTitleRow
-        title={REGION_TITLES[region] ?? 'Job'}
+        title={region === 'estimate' && jobStarted && leadTask
+          ? `> ${leadTask.title}${leadTask.more > 0 ? ` +${leadTask.more}` : ''}`
+          : region === 'estimate' && jobStarted ? 'Tasks' : (REGION_TITLES[region] ?? 'Job')}
         testID="job-screen-title"
         right={region === 'details' || region === 'plan' ? (
           <>
@@ -1537,7 +1544,7 @@ ${body}`)) handleResetLaborTime();
           </>
         ) : region === 'estimate' && jobStarted && estimateChrome?.totalText ? (
           <Text numberOfLines={1} style={styles.titleTotal} testID="estimate-title-total">
-            {`Total Estimate: ${estimateChrome.totalText}`}
+            {`Total: ${estimateChrome.totalText}`}
           </Text>
         ) : undefined}
       />
