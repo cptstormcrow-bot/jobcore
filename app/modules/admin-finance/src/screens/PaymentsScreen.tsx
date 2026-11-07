@@ -42,7 +42,7 @@ export interface PaymentsScreenProps {
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number; payroll: number }
+  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number; payroll: number; batchReimbursed: number }
   | { kind: 'failed'; message: string };
 
 const UNKNOWN_CONFIRMER_LABEL = 'Unknown tech';
@@ -99,18 +99,22 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             .then((items) => items.filter((i) => i.status === 'approved').reduce((s, i) => s + i.amount, 0) / 100)
             .catch(() => 0)
         : Promise.resolve(0),
-      // Uber 172: payroll (hours + commission + bonus; reimbursements are netted separately) in cents.
+      // Uber 173: payroll is the full payout-batch total (cents -> dollars); the reimbursements already inside the batches are tracked so they are not netted twice.
       payoutBatchRepository
         ? payoutBatchRepository
             .listForOrganization(session.org.id)
-            .then((batches) =>
-              batches.reduce((s, b) => s + b.lines.reduce((t, l) => t + l.hoursAmount + l.commissionAmount + l.bonusAmount, 0), 0) / 100,
-            )
-            .catch(() => 0)
-        : Promise.resolve(0),
+            .then((batches) => {
+              const lines = batches.flatMap((b) => b.lines);
+              return {
+                payroll: lines.reduce((s, l) => s + l.totalAmount, 0) / 100,
+                batchReimbursed: lines.reduce((s, l) => s + l.reimbursementAmount, 0) / 100,
+              };
+            })
+            .catch(() => ({ payroll: 0, batchReimbursed: 0 }))
+        : Promise.resolve({ payroll: 0, batchReimbursed: 0 }),
     ])
-      .then(([needsAttention, manuallyConfirmed, reimbursed, payroll]) => {
-        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed, payroll }); }
+      .then(([needsAttention, manuallyConfirmed, reimbursed, batch]) => {
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed, payroll: batch.payroll, batchReimbursed: batch.batchReimbursed }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -156,6 +160,9 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
   }
 
   const confirmedGroups = groupByConfirmedBy(loadState.manuallyConfirmed);
+  // Approved reimbursements already paid inside payout batches are part of Payroll; only the rest is netted here.
+  const reimbursedOutsideBatches = Math.max(0, loadState.reimbursed - loadState.batchReimbursed);
+  const netTotal = loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - reimbursedOutsideBatches - loadState.payroll;
 
   return (
     <View style={styles.screen}>
@@ -213,18 +220,16 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
         {confirmedGroups.size > 0 || loadState.reimbursed > 0 || loadState.payroll > 0 ? (
           <>
             <View style={styles.totalRow} testID="reimbursed-total">
-              <Text style={styles.groupTitle}>Less approved reimbursements</Text>
-              <Text style={styles.groupTitle}>-{formatAmount(loadState.reimbursed)}</Text>
+              <Text style={styles.groupTitle}>Less approved reimbursements (not in batches)</Text>
+              <Text style={styles.groupTitle}>-{formatAmount(reimbursedOutsideBatches)}</Text>
             </View>
             <View style={styles.totalRow} testID="payroll-total">
-              <Text style={styles.groupTitle}>Less payroll</Text>
+              <Text style={styles.groupTitle}>Less payroll (full batches)</Text>
               <Text style={styles.groupTitle}>-{formatAmount(loadState.payroll)}</Text>
             </View>
             <View style={styles.totalRow} testID="net-total">
               <Text style={styles.groupTitle}>Net</Text>
-              <Text style={styles.groupTitle}>
-                {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - loadState.reimbursed - loadState.payroll)}
-              </Text>
+              <Text style={styles.groupTitle}>{formatAmount(netTotal)}</Text>
             </View>
           </>
         ) : null}

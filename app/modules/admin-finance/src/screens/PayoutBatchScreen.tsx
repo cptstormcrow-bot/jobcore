@@ -22,10 +22,13 @@ import { View, StyleSheet } from 'react-native';
 import { Card, ListItem, PayrollButton, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, typography, Text } from '@jobcore/ui';
 import type { PayoutBatch, FrozenPayoutLine } from '../money/payout-batch';
 import type { PayoutBatchRepo } from '../data/payout-batch-repo';
+import type { PaymentsRepository } from '../data/ports';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PayoutBatchScreenProps {
   payoutBatches?: PayoutBatchRepo;
+  /** Manually confirmed payments feed the "Difference vs Payout Batches" line. */
+  payments?: PaymentsRepository;
   onSelectBatch?: (batch: PayoutBatch) => void;
 }
 
@@ -46,8 +49,10 @@ function formatAmount(amountCents: number): string {
 }
 
 export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
-  const { payoutBatches: payoutBatchRepository, onSelectBatch } = props;
+  const { payoutBatches: payoutBatchRepository, payments: paymentsRepository, onSelectBatch } = props;
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
+  // Manually confirmed total in cents; null until loaded (or when unavailable).
+  const [manualCents, setManualCents] = useState<number | null>(null);
   const [approveActions, setApproveActions] = useState<Record<string, ApproveActionState>>({});
 
   const session = getModuleSession();
@@ -78,6 +83,24 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
       cancelled = true;
     };
   }, [session, payoutBatchRepository, rev]);
+
+  useEffect(() => {
+    if (!session || !paymentsRepository) {
+      return;
+    }
+    let cancelled = false;
+    paymentsRepository
+      .listManuallyConfirmed(session.org.id)
+      .then((list) => {
+        if (!cancelled) setManualCents(Math.round(list.reduce((s, p) => s + p.amount, 0) * 100));
+      })
+      .catch(() => {
+        if (!cancelled) setManualCents(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, paymentsRepository, rev]);
 
   function handleMarkPaid(batch: PayoutBatch) {
     if (!payoutBatchRepository || !batch.id) {
@@ -212,6 +235,11 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
         <Text style={styles.lineText} testID="batches-total">
           All batches total {formatAmount(loadState.batches.reduce((s, b) => s + b.lines.reduce((t, l) => t + l.totalAmount, 0), 0))}
         </Text>
+        {manualCents !== null ? (
+          <Text style={styles.lineText} testID="batches-difference">
+            Difference vs Payout Batches {formatAmount(manualCents - loadState.batches.reduce((s, b) => s + b.lines.reduce((t, l) => t + l.totalAmount, 0), 0))}
+          </Text>
+        ) : null}
         {loadState.batches.map((batch, batchIndex) => {
           const batchTotal = batch.lines.reduce((sum, line) => sum + line.totalAmount, 0);
           const approveState = batch.id ? approveActions[batch.id] : undefined;

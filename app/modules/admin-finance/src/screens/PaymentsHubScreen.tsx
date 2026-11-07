@@ -85,7 +85,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
           selectedPayoutBatch ? (
             <PayoutBatchDetailScreen batch={selectedPayoutBatch} onBack={onBackFromPayoutBatch} />
           ) : (
-            <PayoutBatchScreen payoutBatches={payoutBatches} onSelectBatch={onSelectPayoutBatch} />
+            <PayoutBatchScreen payoutBatches={payoutBatches} payments={payments} onSelectBatch={onSelectPayoutBatch} />
           )
         ) : null}
       </ScrollView>
