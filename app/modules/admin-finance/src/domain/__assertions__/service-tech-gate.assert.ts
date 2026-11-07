@@ -17,6 +17,13 @@ test('scheduling needs Materials Onsite checked (uber 156)', () => {
   assert.ok(SCHEDULE_MATERIALS_HINT.length > 0);
 });
 
+test('Prem materials arrived also opens scheduling (uber 158)', () => {
+  assert.equal(canScheduleJob({ materialsOnsite: false }, { materialsArrived: true }), true);
+  assert.equal(canScheduleJob({ materialsOnsite: false }, { materialsArrived: false }), false);
+  assert.equal(canScheduleJob({ materialsOnsite: false }, null), false);
+  assert.equal(canScheduleJob({}, { materialsArrived: null }), false);
+});
+
 test('true only when materialsOnsite is true', () => {
   assert.equal(canAssignServiceTech({ materialsOnsite: true }), true);
   assert.equal(canAssignServiceTech({ materialsOnsite: false }), false);

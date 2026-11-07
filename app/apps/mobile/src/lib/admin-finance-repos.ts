@@ -411,7 +411,8 @@ export function createJobRepository(): JobRepository {
       // Clearing a slot is never gated; an unreadable estimate does not block.
       if (patch.scheduledStart) {
         const est = await createEstimateRepository().getForJob(jobId).catch(() => null);
-        if (!canScheduleJob(est)) throw new Error(SCHEDULE_MATERIALS_HINT);
+        const inv = await createJobInvestigationRepository().getForJob(jobId).catch(() => null);
+        if (!canScheduleJob(est, inv)) throw new Error(SCHEDULE_MATERIALS_HINT);
       }
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), ...patch } as never as Job;

@@ -364,8 +364,11 @@ export function JobScheduleScreen({
     // Uber 156: Materials Onsite must be checked on the estimate. Checked before the
     // Reschedule dialog so the refusal shows first; the repo repeats the check for every path.
     setErrorText(null);
-    void getModulePorts().estimates.getForJob(job.id).catch(() => null).then((est) => {
-      if (!canScheduleJob(est)) {
+    void Promise.all([
+      getModulePorts().estimates.getForJob(job.id).catch(() => null),
+      getModulePorts().investigations.getForJob(job.id).catch(() => null),
+    ]).then(([est, inv]) => {
+      if (!canScheduleJob(est, inv)) {
         setErrorText(SCHEDULE_MATERIALS_HINT);
         return;
       }

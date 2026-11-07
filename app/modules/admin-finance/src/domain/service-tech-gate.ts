@@ -17,8 +17,13 @@ export const SCHEDULE_MATERIALS_HINT = 'Check Materials Onsite on the estimate b
  * estimate's Materials Onsite box is unchecked. Like the Service Tech gate, a job with no
  * estimate row is not blocked by this alone. Removing a job from the schedule is never gated.
  */
-export function canScheduleJob(estimate: { materialsOnsite?: boolean } | null | undefined): boolean {
-  return !estimate || estimate.materialsOnsite === true;
+export function canScheduleJob(
+  estimate: { materialsOnsite?: boolean } | null | undefined,
+  investigation?: { materialsArrived?: boolean | null } | null
+): boolean {
+  // Uber 158 (Jeff 2026-11-07): the Prem "materials arrived" flag and the estimate's Materials
+  // Onsite box are the same thing, so either one being true opens scheduling.
+  return !estimate || estimate.materialsOnsite === true || investigation?.materialsArrived === true;
 }
 
 /**
