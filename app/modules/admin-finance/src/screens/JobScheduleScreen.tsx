@@ -66,6 +66,7 @@ import type { Job } from '@jobcore/core';
 import type { JobRepository } from '../data/ports';
 import type { TimeOffRequestAdmin } from '../data/time-off-repo';
 import { getModulePorts } from '../lib/module-ports';
+import { canScheduleJob, SCHEDULE_MATERIALS_HINT } from '../domain/service-tech-gate';
 import {
   blackoutScheduleDetail,
   buildScheduleItems,
@@ -356,13 +357,21 @@ export function JobScheduleScreen({
       setNoticeText('Already on the schedule at that time.');
       return;
     }
-    if (saved.start === null) {
-      void persist(draftStart);
-    } else if (draftStart === null) {
+    if (draftStart === null) {
       setConfirmKind('remove');
-    } else {
-      setConfirmKind('reschedule');
+      return;
     }
+    // Uber 156: Materials Onsite must be checked on the estimate. Checked before the
+    // Reschedule dialog so the refusal shows first; the repo repeats the check for every path.
+    setErrorText(null);
+    void getModulePorts().estimates.getForJob(job.id).catch(() => null).then((est) => {
+      if (!canScheduleJob(est)) {
+        setErrorText(SCHEDULE_MATERIALS_HINT);
+        return;
+      }
+      if (saved.start === null) void persist(draftStart);
+      else setConfirmKind('reschedule');
+    });
   }
 
   function handleSelectItem(item: { id: string; startIso: string; endIso: string | null; isCurrent?: boolean }): void {

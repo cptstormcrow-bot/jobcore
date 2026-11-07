@@ -10,6 +10,17 @@
 
 export const SERVICE_TECH_GATE_HINT = 'Cannot assign Service Tech until the estimate is approved or materials arrive onsite.';
 
+export const SCHEDULE_MATERIALS_HINT = 'Check Materials Onsite on the estimate before saving it to the schedule.';
+
+/**
+ * Scheduling gate (Jeff 2026-11-06, uber 156): a job cannot be put on the schedule while the
+ * estimate's Materials Onsite box is unchecked. Like the Service Tech gate, a job with no
+ * estimate row is not blocked by this alone. Removing a job from the schedule is never gated.
+ */
+export function canScheduleJob(estimate: { materialsOnsite?: boolean } | null | undefined): boolean {
+  return !estimate || estimate.materialsOnsite === true;
+}
+
 /**
  * Returns true when either the estimate's `materialsOnsite` flag or the
  * investigation's `materialsArrived` flag is exactly `true`. A missing estimate

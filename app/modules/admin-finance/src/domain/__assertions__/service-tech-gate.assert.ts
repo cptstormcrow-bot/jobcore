@@ -6,7 +6,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { canAssignServiceTech, SERVICE_TECH_GATE_HINT } from '../service-tech-gate';
+import { canAssignServiceTech, canScheduleJob, SCHEDULE_MATERIALS_HINT, SERVICE_TECH_GATE_HINT } from '../service-tech-gate';
+
+test('scheduling needs Materials Onsite checked (uber 156)', () => {
+  assert.equal(canScheduleJob({ materialsOnsite: true }), true);
+  assert.equal(canScheduleJob({ materialsOnsite: false }), false);
+  assert.equal(canScheduleJob({}), false);
+  assert.equal(canScheduleJob(null), true);
+  assert.equal(canScheduleJob(undefined), true);
+  assert.ok(SCHEDULE_MATERIALS_HINT.length > 0);
+});
 
 test('true only when materialsOnsite is true', () => {
   assert.equal(canAssignServiceTech({ materialsOnsite: true }), true);

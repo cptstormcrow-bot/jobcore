@@ -114,6 +114,7 @@ import type {
 import { toJob, toAuditLogEntry, toPayment, toCustomer, isVehicleStatus, isToolStatus, DuplicateInvitationError, toLead, toLeadRowPatch, toCloseOutFailure } from '../../../../modules/admin-finance/src/data/ports';
 import type { ModulePorts, CloseOutPhotoRepository } from '../../../../modules/admin-finance/src/lib/module-ports';
 import { getModuleSession } from '../../../../modules/admin-finance/src/lib/module-session';
+import { canScheduleJob, SCHEDULE_MATERIALS_HINT } from '../../../../modules/admin-finance/src/domain/service-tech-gate';
 import { buildJobTimeline } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { JobTimelineItem, JobTimelineSources } from '../../../../modules/admin-finance/src/domain/job-timeline';
 import type { JobTimelineRepository } from '../../../../modules/admin-finance/src/data/ports';
@@ -405,6 +406,13 @@ export function createJobRepository(): JobRepository {
     },
 
     async updateDetails(jobId: string, patch: JobDetailsPatch): Promise<Job> {
+      // Uber 156: every schedule path ends here, so a job cannot be put on the
+      // schedule (a start time being set) while Materials Onsite is unchecked.
+      // Clearing a slot is never gated; an unreadable estimate does not block.
+      if (patch.scheduledStart) {
+        const est = await createEstimateRepository().getForJob(jobId).catch(() => null);
+        if (!canScheduleJob(est)) throw new Error(SCHEDULE_MATERIALS_HINT);
+      }
       const occurredAt = new Date().toISOString();
       const optimistic = { ...(knownJobs.get(jobId) ?? { id: jobId }), ...patch } as never as Job;
       const res = await writeThrough('job.update_details', { jobId, patch, base: captureJobEditBase(knownJobs.get(jobId), DETAILS_COLS) }, occurredAt, optimistic);

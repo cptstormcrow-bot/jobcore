@@ -121,7 +121,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'calendar',
     kind: 'info',
     title: 'Calendar',
-    body: 'See scheduled work by day or week.\n- Colors are only on the day squares: blue is the selected day, red is time-off, green is your assigned jobs with a count number.\n- Tap a day for its buttons: Add Job, Cancel and Time-off. You can only schedule jobs assigned to you.\n- Use the previous, next and today controls at the top to move around.\n- Use the toggles to show or hide "Jobs", "Time Off", and "Show Test Jobs".\n- Tap "Time-off" to see every scheduled time-off and tick or untick each tech (all on by default).\n- Tap "Add Time-off" to block out dates for a tech.',
+    body: 'See scheduled work by day or week.\n- Colors are only on the day squares: blue is the selected day, red is time-off, green is your assigned jobs with a count number.\n- Tap a day for its buttons: Add Job, Cancel and Time-off. You can only schedule jobs assigned to you.\n- A job cannot be scheduled until "Materials Onsite" is checked on its estimate.\n- Use the previous, next and today controls at the top to move around.\n- Use the toggles to show or hide "Jobs", "Time Off", and "Show Test Jobs".\n- Tap "Time-off" to see every scheduled time-off and tick or untick each tech (all on by default).\n- Tap "Add Time-off" to block out dates for a tech.',
     whereScreen: 'Calendar',
     context: { screens: ['calendar'] },
   },
