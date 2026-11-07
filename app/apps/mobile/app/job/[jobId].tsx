@@ -1475,6 +1475,8 @@ ${body}`)) handleResetLaborTime();
   // checkbox on the Job tab, not a menu item. AppChrome adds the line, Sign out (#0096), then Configuration (#0097) last.
   const adminJobMenuItems: MenuItem[] = jobDetailMenuItems;
   const isTech = role === 'tech';
+  // Once Start is pressed the Estimate Draft/Submitted/Approved chips are redundant (Jeff 2026-11-06).
+  const jobStarted = job?.status === 'in_progress' || job?.status === 'completed' || job?.status === 'paid' || job?.status === 'closed';
   const techJobMenuItems: MenuItem[] = jobDetailMenuItems;
 
   return (
@@ -1533,6 +1535,10 @@ ${body}`)) handleResetLaborTime();
             {isAdmin ? <PayrollButton label="Reset" onPress={confirmResetTime} /> : null}
             {canResetLaborTime ? <PayrollButton label="Reset time" onPress={confirmResetLaborTime} /> : null}
           </>
+        ) : region === 'estimate' && jobStarted && estimateChrome?.totalText ? (
+          <Text numberOfLines={1} style={styles.titleTotal} testID="estimate-title-total">
+            {`Total Estimate: ${estimateChrome.totalText}`}
+          </Text>
         ) : undefined}
       />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
@@ -1675,6 +1681,7 @@ ${body}`)) handleResetLaborTime();
             }
             serviceAreas={serviceAreas}
             editable={!isTechEstimate}
+            jobStarted={jobStarted}
             onChrome={setEstimateChrome}
             focusTab={estimateFocus}
             beforePhotoSlot={
@@ -1762,6 +1769,7 @@ const REGION_TITLES: Record<string, string> = {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.offWhite },
+  titleTotal: { color: colors.text, fontSize: 16, fontWeight: '700' },
   rule: { height: 3, backgroundColor: colors.text, width: '100%', marginTop: Math.round(spacing.sm * 0.67) },
   scrollBody: { flex: 1 },
   scrollContent: { paddingBottom: spacing.sm },

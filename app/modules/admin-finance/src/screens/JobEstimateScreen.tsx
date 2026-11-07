@@ -66,6 +66,8 @@ export interface JobEstimateScreenProps {
   serviceAreas?: ServiceArea[];
   /** Inlined inside a host screen's own scroll view: suppresses the Back row and renders a plain `View` root instead of `ScrollView`. */
   embedded?: boolean;
+  /** Job already started: the Draft/Submitted/Approved chips are redundant, so they are hidden and the host shows the total on its title line. */
+  jobStarted?: boolean;
   /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
   editable?: boolean;
   /** Publishes the header-right status control and options-menu items to the host; null on unmount. */
@@ -104,6 +106,8 @@ export interface EstimateChrome {
   tabs: { id: string; label: string }[];
   activeTab: string;
   onTabChange: (id: string) => void;
+  /** The formatted estimate total, so a host can show it on its own title line (started jobs). */
+  totalText?: string;
 }
 
 /** In-flight write state, independent of the load state. */
@@ -905,6 +909,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const chromeStatus = estimate?.status ?? null;
   const chromePdf = estimate?.pdfDelivery ?? false;
   const hasChrome = !!props.onChrome;
+  const chromeTotal = totalText;
   useEffect(() => {
     const publish = onChromeRef.current;
     if (!publish) return undefined;
@@ -928,11 +933,12 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
       onTabChange: (key: string) => {
         setActiveTab(key as EstimateTab);
       },
+      totalText: chromeTotal,
     });
     return () => {
       onChromeRef.current?.(null);
     };
-  }, [chromeStatus, chromePdf, editable, hasChrome, activeTab]);
+  }, [chromeStatus, chromePdf, editable, hasChrome, activeTab, chromeTotal]);
 
   function handlePrint(): void {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1006,7 +1012,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         <View style={styles.summaryRow} testID="estimate-summary-row">
           <View style={[styles.summaryCell, styles.summaryCellWide]}>
             <View style={styles.statusRow} testID="estimate-status-row">
-            <View style={styles.statusControlWrap}>
+            {props.jobStarted ? null : <View style={styles.statusControlWrap}>
             <EstimateStatusControl
               status={estimate?.status ?? 'draft'}
               allowed={
@@ -1023,13 +1029,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
               }}
               testID="estimate-status-control"
             />
-            </View>
+            </View>}
             <View style={styles.statusCenterGroup} testID="estimate-center-group">
               {embedded ? linkControl : null}
-              <View style={styles.totalInline} testID="estimate-total">
+              {props.jobStarted && embedded ? null : <View style={styles.totalInline} testID="estimate-total">
                 <Text style={styles.totalLabel} numberOfLines={1}>Total Estimate:</Text>
                 <Text style={styles.cellValue} numberOfLines={1}>{totalText}</Text>
-              </View>
+              </View>}
             </View>
             </View>
             <View style={styles.techColumns}>
