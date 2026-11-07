@@ -123,7 +123,8 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [sheetDay, setSheetDay] = useState<Date | null>(null);
   const [pickTime, setPickTime] = useState<string | null>(null);
-  const [showBlackouts, setShowBlackouts] = useState(true);
+  // Time-off is always shown now: the Hide/Show and Request time off buttons were removed (Jeff 2026-11-07).
+  const showBlackouts = true;
   const [popupDetail, setPopupDetail] = useState<ScheduleItemDetail | null>(null);
   const [popupRequestId, setPopupRequestId] = useState<string | null>(null);
   const [customerInfo, setCustomerInfo] = useState<Record<string, { name: string | null; phone: string | null; address: string | null }>>({});
@@ -247,19 +248,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
     setPickDays((v) => !v);
   }
 
-  function handleToggleRequest(): void {
-    setError(null);
-    if (requesting) {
-      setReqStart('');
-      setReqEnd('');
-      setReqReason('');
-    } else {
-      setPickDays(false);
-      setPicked([]);
-    }
-    setRequesting((v) => !v);
-  }
-
   function fillRequestDay(isoDay: string): void {
     if (!reqStart || reqEnd) {
       setReqStart(isoDay);
@@ -353,17 +341,6 @@ export function UniversalCalendar(props: UniversalCalendarProps): React.JSX.Elem
         <View testID="calendar-blackouts-toggle">
           <PayrollButton label={pickDays ? 'Cancel' : 'Time-off'} onPress={handleTogglePick} />
         </View>
-        <View testID="calendar-blackouts-visibility">
-          <PayrollButton
-            label={showBlackouts ? 'Hide Time-off' : 'Show Time-off'}
-            onPress={() => setShowBlackouts((v) => !v)}
-          />
-        </View>
-        {props.onSubmitTimeOff ? (
-          <View testID="calendar-timeoff-toggle">
-            <PayrollButton label={requesting ? 'Cancel' : 'Request time off'} onPress={handleToggleRequest} />
-          </View>
-        ) : null}
         {props.onAddBlackout && !dayPickActive ? (
           <View testID="calendar-add-blackout">
             <PayrollButton label="Add Time-off" onPress={() => props.onAddBlackout?.(effectiveTechId)} />
