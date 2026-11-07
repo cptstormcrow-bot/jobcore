@@ -1337,6 +1337,27 @@ export function createServiceTasksRepository() {
         { ok: true, value: { id: taskId, ...patch } } as never,
       )).data as Awaited<ReturnType<typeof updateServiceTaskRepo>>;
     },
+    async createService(
+      organizationId: string,
+      name: string,
+    ): Promise<{ ok: true; value: { id: string; name: string } } | { ok: false; reason: string }> {
+      const trimmed = name.trim();
+      if (trimmed === '') return { ok: false, reason: 'Service name is required.' };
+      const existing = await this.listServices(organizationId);
+      if (existing.some((s) => s.name.trim().toLowerCase() === trimmed.toLowerCase())) {
+        return { ok: false, reason: `A service named "${trimmed}" already exists.` };
+      }
+      const id = newClientId();
+      try {
+        await writeThrough('service.create', { id, name: trimmed }, new Date().toISOString(), {
+          ok: true,
+          value: { id, name: trimmed },
+        } as never);
+      } catch (err) {
+        return { ok: false, reason: err instanceof Error ? err.message : 'Could not add the service.' };
+      }
+      return { ok: true, value: { id, name: trimmed } };
+    },
     async listServices(organizationId: string): Promise<Array<{ id: string; name: string }>> {
       return readCachedOr('af.serviceTasks.listServices', { organizationId }, async () => {
         const { data, error } = await supabase

@@ -212,6 +212,14 @@ test('price_sheet_rate.create: appends to its sheet only, once', () => {
   const other: unknown[] = [];
   assert.strictEqual(run(op, RATES, RATE, other, { priceSheetId: 's2' }), other);
 });
+test('service.create: adds to both service lists, sorted, once', () => {
+  const rows = [{ id: 'a', name: 'Zed' }];
+  for (const q of ['af.serviceTasks.listServices', 'af.planTasks.listServices']) {
+    const out = run('service.create', q, { id: 'b', name: 'Alpha' }, rows) as any[];
+    assert.deepStrictEqual(out.map((r) => r.name), ['Alpha', 'Zed']);
+    assert.deepStrictEqual(run('service.create', q, { id: 'b', name: 'Alpha' }, out), out);
+  }
+});
 test('price_sheet_rate.update: edits the row in place', () => {
   const rows = [{ ...RATE, taskName: 'T' }];
   const out = run('price_sheet_rate.update', RATES, { ...RATE, amount: 12000 }, rows) as any[];

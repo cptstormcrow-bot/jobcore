@@ -49,6 +49,7 @@ export interface PriceSheetAreaAdjustmentUpsertPayload {
 export interface PriceSheetAreaAdjustmentDeletePayload { id: string }
 export interface PriceSheetStandardDurationUpsertPayload { standardMinutes: number; updatedAt: string }
 export interface EstimateFinePrintUpsertPayload { text: string; updatedAt: string }
+export interface ServiceCreatePayload { id: string; name: string }
 export interface ServiceTaskCreatePayload { id: string; serviceId: string; name: string; extra?: ServiceTaskExtra }
 export interface ServiceTaskUpdatePayload { id: string; patch: ServiceTaskExtra & { name?: string } }
 export interface ServiceTaskDeletePayload { id: string }
@@ -183,6 +184,16 @@ export const ADMIN_FINANCE_OP_HANDLERS: Record<string, OpHandler<any>> = {
       { organization_id: orgId, fine_print_template: p.text, updated_at: p.updatedAt },
       { onConflict: 'organization_id' },
     );
+    if (error) throw error;
+    return APPLIED;
+  },
+
+  'service.create': async (p: ServiceCreatePayload, { supabase, orgId }) => {
+    const { error } = await supabase.from('services').insert({
+      id: p.id,
+      organization_id: orgId,
+      name: p.name,
+    });
     if (error) throw error;
     return APPLIED;
   },

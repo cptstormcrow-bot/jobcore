@@ -327,6 +327,18 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
     },
   },
   {
+    op: 'service.create',
+    queries: ['af.serviceTasks.listServices', 'af.planTasks.listServices'],
+    patch: (p, rows) => {
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id)) return rows;
+      const row: Row = { id: p.id, name: p.name };
+      if (!Array.isArray(rows)) return rows === null || rows === undefined ? [row] : rows;
+      return [...rows, row].sort((a, b) =>
+        String(isObj(a) ? a.name : '').localeCompare(String(isObj(b) ? b.name : '')),
+      );
+    },
+  },
+  {
     op: 'price_sheet_rate.update',
     queries: ['af.rates.list'],
     patch: (p, rows) =>

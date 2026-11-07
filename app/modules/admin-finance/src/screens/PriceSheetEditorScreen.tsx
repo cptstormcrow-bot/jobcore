@@ -48,6 +48,7 @@ import { parseAdjustmentPercent } from '../domain/parse-adjustment-percent';
 import { parseMoneyToCents, centsToDollarsText as rateCentsToText } from '../domain/parse-money';
 import { AccordionEditRow } from './AccordionEditRow';
 import { AddTaskDialog } from './AddTaskDialog';
+import { AddServiceDialog } from './AddServiceDialog';
 import { formatServiceTaskNumber } from '../domain/format-service-task-number';
 
 /** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
@@ -98,6 +99,10 @@ interface ServiceTasksRepoPort {
   ): Promise<CalculationResult<ServiceTask>>;
   remove(taskId: string): Promise<CalculationResult<void>>;
   listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+  createService(
+    organizationId: string,
+    name: string,
+  ): Promise<{ ok: true; value: { id: string; name: string } } | { ok: false; reason: string }>;
 }
 
 const HELP_BULLETS = [
@@ -465,6 +470,7 @@ function RateRowsCard({
 
   const [autoOpenedServiceIds, setAutoOpenedServiceIds] = useState<Set<string>>(new Set());
   const [addTaskDialogVisible, setAddTaskDialogVisible] = useState(false);
+  const [addServiceDialogVisible, setAddServiceDialogVisible] = useState(false);
 
   const serviceNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -701,6 +707,7 @@ function RateRowsCard({
         darkPlaceholder
         onChange={handleServiceChange}
       />
+      <PayrollButton label="+ Add Service" onPress={() => setAddServiceDialogVisible(true)} />
       <Select
         label="Task"
         value={taskIdInput ?? ''}
@@ -750,6 +757,26 @@ function RateRowsCard({
       {actionState.kind === 'failed' ? <ErrorState message={actionState.message} /> : null}
       {statusMessage ? <Text style={styles.note}>{statusMessage}</Text> : null}
 
+      <AddServiceDialog
+        visible={addServiceDialogVisible}
+        onCancel={() => setAddServiceDialogVisible(false)}
+        onCreate={(name) => {
+          if (!organizationId) {
+            return Promise.resolve({ ok: false as const, reason: 'No organization.' });
+          }
+          return serviceTasksRepo.createService(organizationId, name);
+        }}
+        onCreated={(svc) => {
+          setAddServiceDialogVisible(false);
+          setServices((prev) =>
+            prev.some((s) => s.id === svc.id)
+              ? prev
+              : [...prev, svc].sort((a, b) => a.name.localeCompare(b.name)),
+          );
+          handleServiceChange(svc.id);
+          setStatusMessage(`Added service ${svc.name}`);
+        }}
+      />
       <AddTaskDialog
         visible={addTaskDialogVisible}
         serviceName={serviceNameById.get(serviceIdInput)}

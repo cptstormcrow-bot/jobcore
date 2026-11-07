@@ -103,6 +103,10 @@ export interface ModulePorts {
   serviceTasks: {
     list(organizationId: string, serviceId?: string): Promise<CalculationResult<ServiceTask[]>>;
     listServices(organizationId: string): Promise<Array<{ id: string; name: string }>>;
+    createService(
+      organizationId: string,
+      name: string,
+    ): Promise<{ ok: true; value: { id: string; name: string } } | { ok: false; reason: string }>;
     save(
       organizationId: string,
       serviceId: string,
