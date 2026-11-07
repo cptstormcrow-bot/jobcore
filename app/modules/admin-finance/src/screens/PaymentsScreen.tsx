@@ -24,6 +24,7 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Card, EmptyState, LoadingState, ErrorState, ScreenTitle, colors, spacing, Text, formatJobNumberLabel, formatCreatedDate, typography } from '@jobcore/ui';
 import type { Payment, PaymentsRepository } from '../data/ports';
 import type { ReimbursementRepo } from '../data/reimbursement-repo';
+import type { PayoutBatchRepo } from '../data/payout-batch-repo';
 import { getModuleSession } from '../lib/module-session';
 
 export interface PaymentsScreenProps {
@@ -34,12 +35,14 @@ export interface PaymentsScreenProps {
   onOpenJob?: (jobId: string) => void;
   /** Approved reimbursements offset the manually confirmed total. */
   reimbursements?: ReimbursementRepo;
+  /** Payroll (hours, commission, bonus on payout batch lines) also offsets the manually confirmed total. */
+  payoutBatches?: PayoutBatchRepo;
 }
 
 type LoadState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number }
+  | { kind: 'loaded'; needsAttention: Payment[]; manuallyConfirmed: Payment[]; reimbursed: number; payroll: number }
   | { kind: 'failed'; message: string };
 
 const UNKNOWN_CONFIRMER_LABEL = 'Unknown tech';
@@ -63,7 +66,7 @@ function formatAmount(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob, reimbursements: reimbursementsRepository }: PaymentsScreenProps = {}) {
+export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, employeeNames, onOpenJob, reimbursements: reimbursementsRepository, payoutBatches: payoutBatchRepository }: PaymentsScreenProps = {}) {
   const renderJobTitle = (jobId: string) => {
     const label = formatJobNumberLabel(jobNumbers?.[jobId]);
     if (!onOpenJob) {
@@ -96,9 +99,18 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             .then((items) => items.filter((i) => i.status === 'approved').reduce((s, i) => s + i.amount, 0) / 100)
             .catch(() => 0)
         : Promise.resolve(0),
+      // Uber 172: payroll (hours + commission + bonus; reimbursements are netted separately) in cents.
+      payoutBatchRepository
+        ? payoutBatchRepository
+            .listForOrganization(session.org.id)
+            .then((batches) =>
+              batches.reduce((s, b) => s + b.lines.reduce((t, l) => t + l.hoursAmount + l.commissionAmount + l.bonusAmount, 0), 0) / 100,
+            )
+            .catch(() => 0)
+        : Promise.resolve(0),
     ])
-      .then(([needsAttention, manuallyConfirmed, reimbursed]) => {
-        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed }); }
+      .then(([needsAttention, manuallyConfirmed, reimbursed, payroll]) => {
+        if (!cancelled) { hasLoadedRef.current = true; setLoadState({ kind: 'loaded', needsAttention, manuallyConfirmed, reimbursed, payroll }); }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -109,7 +121,7 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
     return () => {
       cancelled = true;
     };
-  }, [session, paymentsRepository, rev]);
+  }, [session, paymentsRepository, reimbursementsRepository, payoutBatchRepository, rev]);
 
   if (!session) {
     return (
@@ -198,16 +210,20 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             </Text>
           </View>
         ) : null}
-        {confirmedGroups.size > 0 || loadState.reimbursed > 0 ? (
+        {confirmedGroups.size > 0 || loadState.reimbursed > 0 || loadState.payroll > 0 ? (
           <>
             <View style={styles.totalRow} testID="reimbursed-total">
               <Text style={styles.groupTitle}>Less approved reimbursements</Text>
               <Text style={styles.groupTitle}>-{formatAmount(loadState.reimbursed)}</Text>
             </View>
+            <View style={styles.totalRow} testID="payroll-total">
+              <Text style={styles.groupTitle}>Less payroll</Text>
+              <Text style={styles.groupTitle}>-{formatAmount(loadState.payroll)}</Text>
+            </View>
             <View style={styles.totalRow} testID="net-total">
               <Text style={styles.groupTitle}>Net</Text>
               <Text style={styles.groupTitle}>
-                {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - loadState.reimbursed)}
+                {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0) - loadState.reimbursed - loadState.payroll)}
               </Text>
             </View>
           </>

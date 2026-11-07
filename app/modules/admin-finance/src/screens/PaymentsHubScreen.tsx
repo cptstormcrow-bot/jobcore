@@ -79,7 +79,7 @@ export function PaymentsHubScreen(props: PaymentsHubScreenProps) {
     <View style={styles.screen}>
       <DefaultTabBar tabs={HUB_TABS} activeId={activeKey} onChange={setActiveKey} />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {activeKey === 'payments' ? <PaymentsScreen payments={payments} jobNumbers={jobNumbers} onOpenJob={onOpenJob} employeeNames={employeeNames} reimbursements={reimbursements} /> : null}
+        {activeKey === 'payments' ? <PaymentsScreen payments={payments} jobNumbers={jobNumbers} onOpenJob={onOpenJob} employeeNames={employeeNames} reimbursements={reimbursements} payoutBatches={payoutBatches} /> : null}
         {activeKey === 'reimbursements' ? <ReimbursementQueueScreen reimbursements={reimbursements} /> : null}
         {activeKey === 'payoutBatches' ? (
           selectedPayoutBatch ? (
