@@ -209,6 +209,9 @@ export function PayoutBatchScreen(props: PayoutBatchScreenProps = {}) {
       <View style={styles.content}>
         <ScreenTitle title="Payout Batches" />
         <Text style={styles.groupHeading}>Payout Batches</Text>
+        <Text style={styles.lineText} testID="batches-total">
+          All batches total {formatAmount(loadState.batches.reduce((s, b) => s + b.lines.reduce((t, l) => t + l.totalAmount, 0), 0))}
+        </Text>
         {loadState.batches.map((batch, batchIndex) => {
           const batchTotal = batch.lines.reduce((sum, line) => sum + line.totalAmount, 0);
           const approveState = batch.id ? approveActions[batch.id] : undefined;

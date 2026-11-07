@@ -161,7 +161,12 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
         ) : (
           Array.from(confirmedGroups.entries()).map(([techId, groupedPayments]) => (
             <Card key={techId} style={styles.compactCard}>
-              <Text style={styles.groupTitle}>{employeeNames?.[techId] ?? 'Unknown tech'}</Text>
+              <View style={styles.groupHead}>
+                <Text style={styles.groupTitle}>{employeeNames?.[techId] ?? 'Unknown tech'}</Text>
+                <Text style={styles.groupTitle} testID={`manual-subtotal-${techId}`}>
+                  {formatAmount(groupedPayments.reduce((sum, p) => sum + p.amount, 0))}
+                </Text>
+              </View>
               {groupedPayments.map((payment) => (
                 <View key={payment.id} style={styles.bulletRow} testID={`manual-payment-${payment.id}`}>
                   <Text style={styles.bullet}>•</Text>
@@ -175,6 +180,14 @@ export function PaymentsScreen({ payments: paymentsRepository, jobNumbers, emplo
             </Card>
           ))
         )}
+        {confirmedGroups.size > 0 ? (
+          <View style={styles.totalRow} testID="manual-total">
+            <Text style={styles.groupTitle}>Total manually confirmed</Text>
+            <Text style={styles.groupTitle}>
+              {formatAmount(loadState.manuallyConfirmed.reduce((sum, p) => sum + p.amount, 0))}
+            </Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
@@ -212,6 +225,17 @@ const styles = StyleSheet.create({
   groupTitle: {
     fontWeight: '600',
     marginBottom: spacing.xs,
+  },
+  // Uber 170: per-tech subtotal on the title line and a grand total that adds up.
+  groupHead: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xs,
+    paddingTop: spacing.xs,
   },
   // Uber 166: manually confirmed payments - no card padding, one bulleted line per payment.
   compactCard: {
