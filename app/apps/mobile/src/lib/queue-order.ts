@@ -74,6 +74,31 @@ export function filterRunnable<R extends OrderRow>(rows: readonly R[], currentUs
   return out;
 }
 
+/**
+ * May a new change be sent straight away (inline) while other changes wait? Only when nothing
+ * open touches its records. `open` is every pending and inflight row. A stuck or slow change
+ * on another job must not make this save say "Saved on this device" while fully online
+ * (Jeff 2026-11-06). A change with unknown records waits for everything, and a row being sent
+ * with unknown records holds everything, same as filterRunnable.
+ */
+export function canSendInline(
+  open: readonly (Pick<QueueRow, 'op' | 'payload' | 'status'> & { user_id?: string | null })[],
+  next: Pick<QueueRow, 'op' | 'payload'> & { user_id?: string | null }
+): boolean {
+  if (open.length === 0) return true;
+  const keys = groupOf(next);
+  if (keys.length === 0) return false;
+  for (const row of open) {
+    const rk = groupOf(row);
+    if (rk.length === 0) {
+      if (row.status === 'inflight') return false;
+      continue;
+    }
+    if (rk.some((k) => keys.includes(k))) return false;
+  }
+  return true;
+}
+
 /** Runs the given jobs one after another, in call order, even when one throws. */
 export function makeLock(): <T>(fn: () => Promise<T>) => Promise<T> {
   let tail: Promise<unknown> = Promise.resolve();

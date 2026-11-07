@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { filterRunnable, groupOf, makeLock, planStageSave } from './queue-order';
+import { canSendInline, filterRunnable, groupOf, makeLock, planStageSave } from './queue-order';
 import type { QueueStatus } from './offline-db.types';
 
 type Row = { id: string; op: string; payload: string; status: QueueStatus; user_id?: string | null };
@@ -118,4 +118,19 @@ test('stage save queues behind an unsent create, a note, or a lifecycle change i
 test('stage save ignores failed rows and other jobs', () => {
   const rows = [row('1', 'job.update_status', { jobId: 'j1' }, 'failed'), row('2', 'job_note.add', { jobId: 'j2' }, 'inflight')];
   assert.deepEqual(planStageSave(rows, 'j1', []), { mustQueue: false, dropIds: [] });
+});
+
+test('canSendInline: a stuck row on another job does not make an online save queue', () => {
+  const stuck = [row('1', 'job.assign', { id: 'j1' }, 'pending', 'u1')];
+  assert.equal(canSendInline([], { op: 'job_note.add', payload: JSON.stringify({ jobId: 'j2' }) }), true);
+  assert.equal(canSendInline(stuck, { op: 'job_note.add', payload: JSON.stringify({ jobId: 'j2' }) }), true);
+  // same job waits, so order holds
+  assert.equal(canSendInline(stuck, { op: 'job_note.add', payload: JSON.stringify({ jobId: 'j1' }) }), false);
+  // unknown records wait for everything
+  assert.equal(canSendInline(stuck, { op: 'x', payload: 'not json' }), false);
+  // an unknown row being sent holds everything; one only waiting does not
+  const unknownInflight = [row('2', 'x', {}, 'inflight')];
+  assert.equal(canSendInline(unknownInflight, { op: 'job_note.add', payload: JSON.stringify({ jobId: 'j2' }) }), false);
+  const unknownPending = [row('3', 'x', {}, 'pending')];
+  assert.equal(canSendInline(unknownPending, { op: 'job_note.add', payload: JSON.stringify({ jobId: 'j2' }) }), true);
 });

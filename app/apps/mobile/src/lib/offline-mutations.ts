@@ -1,11 +1,11 @@
 import './offline-ops/register';
 import { Platform } from 'react-native';
 import { classifyReplayError } from '@jobcore/core';
-import { countPending, enqueue, markDone, markFailed, markRetry, send } from './offline-db';
+import { countPending, enqueue, listOpen, markDone, markFailed, markRetry, send } from './offline-db';
 import { UnknownOpError } from './offline-ops';
 import { newClientId } from './ids';
 import { getReadCacheIdentity, patchReadCache } from './read-cache';
-import { makeLock } from './queue-order';
+import { canSendInline, makeLock } from './queue-order';
 import { isOnlineNow, requestDrain } from './sync-events';
 
 export const QUEUED_COPY = 'Saved on this device — will sync when back online';
@@ -61,11 +61,11 @@ export async function writeThrough<T>(
   // An inline row goes in already inflight, so a drain starting now can't send it too.
   const id = newClientId();
   const wasEmpty = await queueLock(async () => {
-    const empty = isOnlineNow() && (await countPending()) === 0;
-    await enqueue(
-      { id, op, payload: JSON.stringify(payload), occurredAt },
-      { inflight: empty, userId: getReadCacheIdentity()?.userId ?? null }
-    );
+    const userId = getReadCacheIdentity()?.userId ?? null;
+    const body = JSON.stringify(payload);
+    // Only changes to the same records make this one wait; an unrelated stuck row must not.
+    const empty = isOnlineNow() && canSendInline(await listOpen(), { op, payload: body, user_id: userId });
+    await enqueue({ id, op, payload: body, occurredAt }, { inflight: empty, userId });
     return empty;
   });
 
