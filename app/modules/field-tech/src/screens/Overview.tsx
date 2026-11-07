@@ -344,7 +344,7 @@ export function Overview({
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <ScreenTitle title="Overview" />
+      {/* No "Overview" title: the tab already names the screen (Jeff 2026-11-07). */}
       {/* #0025 Assigned Jobs: calendar, open-job list and Previous Jobs live right here (merged 2026-11-06). */}
       <DayList
         embedded
