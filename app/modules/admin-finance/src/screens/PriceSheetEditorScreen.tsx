@@ -1372,6 +1372,19 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
           </Card>
         ) : null}
 
+        {serviceTasksRepo ? (
+          <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} refreshKey={taskListVersion} />
+        ) : null}
+
+        {sheet ? (
+          <RateRowsCard
+            sheet={sheet}
+            ratesRepo={ratesRepo}
+            serviceTasksRepo={serviceTasksRepo}
+            onTasksChanged={() => setTaskListVersion((v) => v + 1)}
+          />
+        ) : null}
+
         {areaAdjustmentsRepo ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Price Area Adjustments</Text>
@@ -1524,19 +1537,6 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               <Text style={styles.note}>{areaAdjustmentState.message}</Text>
             ) : null}
           </Card>
-        ) : null}
-
-        {serviceTasksRepo ? (
-          <ServiceTasksCard serviceTasksRepo={serviceTasksRepo} refreshKey={taskListVersion} />
-        ) : null}
-
-        {sheet ? (
-          <RateRowsCard
-            sheet={sheet}
-            ratesRepo={ratesRepo}
-            serviceTasksRepo={serviceTasksRepo}
-            onTasksChanged={() => setTaskListVersion((v) => v + 1)}
-          />
         ) : null}
       </ScrollView>
     </View>
