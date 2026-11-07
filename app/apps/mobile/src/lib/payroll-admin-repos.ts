@@ -127,12 +127,15 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
 
     async approveWeek(forUserId, range) {
       requireOnline('approve this week');
-      const { error } = await supabase.rpc('approve_timesheet', {
+      const { data, error } = await supabase.rpc('approve_timesheet', {
         p_user_id: forUserId,
         p_week_start: range.from,
         p_week_end: range.to,
       });
       check(error);
+      if (data === 0) {
+        throw new Error('Nothing was approved. Draft hours need migration 0131 pushed, or the week has no approvable entries.');
+      }
     },
 
     async rejectWeek(forUserId, range, reason) {

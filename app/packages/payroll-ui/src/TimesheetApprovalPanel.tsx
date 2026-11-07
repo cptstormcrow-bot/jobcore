@@ -146,23 +146,18 @@ export function TimesheetApprovalPanel({ port, weekStartDow }: TimesheetApproval
                 <Text>{'Total ' + fmt(weekMinutes(w)) + ' - ' + (w.status === 'draft' ? 'draft (not submitted)' : w.status)}</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-                {w.status === 'submitted' || w.status === 'draft' ? (
-                  <PayrollButton label="Approve" onPress={() => approve(w)} disabled={busy} />
-                ) : null}
-                {w.status === 'submitted' || w.status === 'approved' ? (
-                  <PayrollButton
-                    label="Kick back"
-                    onPress={() => {
-                      setRejecting(key);
-                      setReason('');
-                    }}
-                    disabled={busy}
-                  />
-                ) : null}
+                <PayrollButton label="Approve" onPress={() => approve(w)} disabled={busy} />
+                <PayrollButton
+                  label="Kick back"
+                  onPress={() => {
+                    setRejecting(key);
+                    setReason('');
+                  }}
+                  disabled={busy}
+                />
                 {port.deleteWeek ? (
                   <PayrollButton
-                    label={pendingDelete === key ? 'Tap again to delete' : 'Delete'}
-                    compact
+                    label={pendingDelete === key ? 'Tap again' : 'Delete'}
                     onPress={() => tapDelete(w, key)}
                     disabled={busy}
                   />
