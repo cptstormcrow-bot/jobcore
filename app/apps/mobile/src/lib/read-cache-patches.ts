@@ -312,6 +312,31 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
     queries: ['af.estimates.listLineItems'],
     patch: (p, rows) => dropWhere(rows, idIs(str(p.lineItemId))),
   },
+  // Price Sheet Editor (#0020): a saved/deleted rate must show on the reload right after Save, not after a manual refresh.
+  {
+    op: 'price_sheet_rate.create',
+    queries: ['af.rates.list'],
+    patch: (p, rows, params) => {
+      if (params?.priceSheetId !== undefined && params.priceSheetId !== p.priceSheetId) return rows;
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === p.id)) return rows;
+      const row: Row = {
+        id: p.id, priceSheetId: p.priceSheetId, serviceId: p.serviceId, attachTiming: p.attachTiming,
+        amount: p.amount, taskId: p.taskId ?? null, timeEstimateMinutes: p.timeEstimateMinutes ?? null, taskName: null,
+      };
+      return Array.isArray(rows) ? [...rows, row] : rows === null || rows === undefined ? [row] : rows;
+    },
+  },
+  {
+    op: 'price_sheet_rate.update',
+    queries: ['af.rates.list'],
+    patch: (p, rows) =>
+      mapRows(rows, idIs(p.id), (r) => ({
+        ...r, serviceId: p.serviceId, attachTiming: p.attachTiming, amount: p.amount,
+        taskId: p.taskId ?? null, timeEstimateMinutes: p.timeEstimateMinutes ?? null,
+        taskName: (p.taskId ?? null) === (r.taskId ?? null) ? r.taskName ?? null : null,
+      })),
+  },
+  { op: 'price_sheet_rate.delete', queries: ['af.rates.list'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
 ];
 
 export function findPatchSpecs(op: string): OpPatchSpec[] {

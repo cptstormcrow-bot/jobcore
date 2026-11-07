@@ -200,3 +200,24 @@ test('job customer save: patches the cached customer so the header shows the new
   const other = { id: 'c2', phone: 'x' };
   assert.strictEqual(run('job_customer.save', 'app.customers.byId', payload, other, { customerId: 'c2' }), other);
 });
+
+const RATES = 'af.rates.list';
+const RATE = { id: 'r1', priceSheetId: 's1', serviceId: 'svc', taskId: null, attachTiming: 'pre', amount: 9500, timeEstimateMinutes: 60 };
+test('price_sheet_rate.create: appends to its sheet only, once', () => {
+  const op = 'price_sheet_rate.create';
+  const out = run(op, RATES, RATE, [], { priceSheetId: 's1' }) as any[];
+  assert.equal(out.length, 1);
+  assert.equal(out[0].amount, 9500);
+  assert.deepStrictEqual(run(op, RATES, RATE, out, { priceSheetId: 's1' }), out);
+  const other: unknown[] = [];
+  assert.strictEqual(run(op, RATES, RATE, other, { priceSheetId: 's2' }), other);
+});
+test('price_sheet_rate.update: edits the row in place', () => {
+  const rows = [{ ...RATE, taskName: 'T' }];
+  const out = run('price_sheet_rate.update', RATES, { ...RATE, amount: 12000 }, rows) as any[];
+  assert.equal(out[0].amount, 12000);
+  assert.equal(out[0].taskName, 'T');
+});
+test('price_sheet_rate.delete: drops the row', () => {
+  assert.deepStrictEqual(run('price_sheet_rate.delete', RATES, { id: 'r1' }, [{ id: 'r1' }, { id: 'r2' }]), [{ id: 'r2' }]);
+});
