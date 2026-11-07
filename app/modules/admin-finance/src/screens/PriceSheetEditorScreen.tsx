@@ -36,7 +36,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, TextInput, Pressable, Modal } from 'react-native';
 import { PayrollButton, Card, Checkbox, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitle, Select, Toggle, colors, spacing, compact, typography, Text } from '@jobcore/ui';
 import type { PriceSheet, PriceSheetStatus, CalculationResult, PriceSheetRate } from '../money/types';
 import type { PriceSheetRepository, ServiceArea, ServiceTask, PriceSheetStandardDuration } from '../data/ports';
@@ -846,6 +846,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
+  const [popupError, setPopupError] = useState<string | null>(null);
   const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState<string>('__all__');
@@ -1220,27 +1221,38 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
               />
             )}
 
-            {areaAdjustments.length > 0
-              ? areaAdjustments
+            {/* Uber 164: one-line chips, two columns; tap one to adjust its percent in a popup. */}
+            {areaAdjustments.length > 0 ? (
+              <View style={styles.chipGrid}>
+                {areaAdjustments
                   .filter((adjustment) => selectedAreaId === '__all__' || adjustment.serviceAreaId === selectedAreaId)
                   .map((adjustment) => (
-                    <AccordionEditRow
+                    <Pressable
                       key={adjustment.id}
-                      title={areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}
-                      subtitle={formatSignedAdjustmentSubtitle(adjustment.adjustmentType, adjustment.adjustmentValue)}
-                      expanded={expandedAdjustmentId === adjustment.id}
-                      onToggle={() => {
-                        if (expandedAdjustmentId === adjustment.id) {
-                          setExpandedAdjustmentId(null);
-                        } else {
-                          startRowEdit(adjustment);
-                        }
+                      onPress={() => {
+                        setPopupError(null);
+                        startRowEdit(adjustment);
                       }}
-                      onSave={() => handleRowSave(adjustment)}
-                      onCancel={() => setExpandedAdjustmentId(null)}
-                      onDelete={() => handleRowDelete(adjustment)}
+                      style={styles.areaChip}
+                      accessibilityRole="button"
                       testID={`area-adjustment-row-${adjustment.id}`}
                     >
+                      <Text style={styles.areaChipText} numberOfLines={1}>
+                        {`${areaNameById.get(adjustment.serviceAreaId) ?? adjustment.serviceAreaId}  ${formatSignedAdjustment(adjustment.adjustmentType, adjustment.adjustmentValue)}`}
+                      </Text>
+                    </Pressable>
+                  ))}
+              </View>
+            ) : null}
+            {(() => {
+              const editing = areaAdjustments.find((item) => item.id === expandedAdjustmentId) ?? null;
+              return (
+                <Modal visible={editing !== null} transparent animationType="fade" onRequestClose={() => setExpandedAdjustmentId(null)}>
+                  <View style={styles.popupBackdrop}>
+                    <View style={styles.popupCard}>
+                      <Text style={styles.heading} numberOfLines={1}>
+                        {editing ? areaNameById.get(editing.serviceAreaId) ?? editing.serviceAreaId : ''}
+                      </Text>
                       <Select
                         label="Type"
                         value={rowDraftType}
@@ -1272,9 +1284,17 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
                           keyboardType="numeric"
                         />
                       </View>
-                    </AccordionEditRow>
-                  ))
-              : null}
+                      {popupError ? <ErrorState message={popupError} /> : null}
+                      <View style={styles.actionRow}>
+                        <PayrollButton label="Delete" onPress={() => { if (editing) void handleRowDelete(editing).then((r) => { if (!r.ok) setPopupError(r.reason ?? 'Could not delete.'); }); }} />
+                        <PayrollButton label="Cancel" onPress={() => setExpandedAdjustmentId(null)} />
+                        <PayrollButton label="Save" onPress={() => { if (editing) void handleRowSave(editing).then((r) => { if (!r.ok) setPopupError(r.reason ?? 'Could not save.'); }); }} />
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
+              );
+            })()}
 
             <Select
               label="Type"
@@ -1349,6 +1369,14 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
 export default PriceSheetEditorScreen;
 
 const styles = StyleSheet.create({
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.xs },
+  areaChip: {
+    flexBasis: '48%', flexGrow: 1, minHeight: 32, justifyContent: 'center',
+    paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.border, borderRadius: 6, backgroundColor: colors.white,
+  },
+  areaChipText: { fontSize: typography.size.label, color: colors.text },
+  popupBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: spacing.md },
+  popupCard: { backgroundColor: colors.white, borderRadius: 8, padding: spacing.md },
   inlineRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   inlineRowTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, marginTop: spacing.sm },
   labelInline: { fontSize: typography.size.label, color: colors.textMuted },
