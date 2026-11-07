@@ -53,3 +53,10 @@ test('Unicode minus sign (U+2212) parses to a signed negative number', () => {
 test('explicit leading plus parses to a positive number', () => {
   assert.equal(parseAdjustmentPercent('+20'), 20);
 });
+
+test('dollar sign and commas are ignored (flat adjustments)', () => {
+  assert.equal(parseAdjustmentPercent('$25'), 25);
+  assert.equal(parseAdjustmentPercent('$1,250.50'), 1250.5);
+  assert.equal(parseAdjustmentPercent('+$25'), 25);
+  assert.equal(parseAdjustmentPercent('-$25'), -25);
+});

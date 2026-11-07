@@ -21,7 +21,7 @@
  */
 export function parseAdjustmentPercent(input: string): number | null {
   const stripped = input
-    .replace(/%/g, '')
+    .replace(/[%$,]/g, '')
     .replace(/−/g, '-')
     .replace(/\s/g, '')
     .replace(/^\+/, '');
