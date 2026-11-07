@@ -130,7 +130,7 @@ import type {
   PriceSheetRow,
   PriceSheetRateRow,
 } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
-import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, listAreaAdjustments, saveAreaAdjustment, deleteAreaAdjustment as deleteAreaAdjustmentRepo, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, updateServiceTask as updateServiceTaskRepo, deleteServiceTask as deleteServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
+import { toPriceSheet, toPriceSheetRate, toPriceSheetRateWithTask, applyPublishPlanViaRpc, unpublishPriceSheetViaRpc, listAreaAdjustments, saveAreaAdjustment, deleteAreaAdjustment as deleteAreaAdjustmentRepo, listServiceTasks as listServiceTasksRepo, saveServiceTask as saveServiceTaskRepo, updateServiceTask as updateServiceTaskRepo, deleteServiceTask as deleteServiceTaskRepo, saveRate as saveRateRepo, deleteRate as deleteRateRepo } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import type { PriceSheetRateWithTaskRow } from '../../../../modules/admin-finance/src/data/price-sheet-repo';
 import { getStandardDuration, upsertStandardDuration } from '../../../../modules/admin-finance/src/data/price-sheet-standard-duration-repo';
 import type {
@@ -1175,6 +1175,15 @@ export function createPriceSheetPublishRepository(): PriceSheetRepo {
       if (!result.ok) {
         logSyncFailure('admin-finance-repos.applyPublishPlan', result.reason, { organizationId, plan });
         throw new Error(`applyPublishPlan failed: ${result.reason}`);
+      }
+    },
+
+    async unpublishPriceSheet(organizationId: string, priceSheetId: string): Promise<void> {
+      requireOnline('unpublish a price sheet');
+      const result = await unpublishPriceSheetViaRpc(supabase as unknown as Parameters<typeof unpublishPriceSheetViaRpc>[0], priceSheetId);
+      if (!result.ok) {
+        logSyncFailure('admin-finance-repos.unpublishPriceSheet', result.reason, { organizationId, priceSheetId });
+        throw new Error(`unpublishPriceSheet failed: ${result.reason}`);
       }
     },
   };

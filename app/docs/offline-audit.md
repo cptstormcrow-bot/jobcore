@@ -49,7 +49,7 @@ This is a code audit. Items marked untested go on the next APK's uber test plan.
 | Estimate fine print (#0065 Settings) | Works offline | New in this pass. Filled in the background while online, for owners and admins. |
 | Estimate links (send to customer) | Needs internet | The link is made by the server. |
 | Save a line to the price sheet | Needs internet | Changes the shared price sheet. |
-| #0019 Price Sheets, #0020 Price Sheet Editor | Saved data | Rates read offline, and the active sheet's rates are filled in the background while online for every role. Publishing needs internet. |
+| #0019 Price Sheets, #0020 Price Sheet Editor | Saved data | Rates read offline, and the active sheet's rates are filled in the background while online for every role. Publishing and unpublishing need internet. |
 | #0053 New Price Sheet | Needs internet | Publishing is server-checked. |
 
 ## Leads and planning
@@ -337,3 +337,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 174. **#0063 Payments: contractor checks paid out offset the collected total.** Under "Less payroll (full batches)" the Payments tab now shows "Less contractor payouts (paid)" (contractor payouts marked paid, cents converted to dollars) and Net subtracts it, so Net shows cash flow. Test: open #0063 as Admin, mark a contractor payout paid on a job (Job #N), return to the Payments tab and check Net dropped by that amount.
 
 175. **#0043 Employee editor / #0042 Employee detail: contractor 1099 details (Admin only).** For a worker whose type is Contractor, #0043 shows typed-in Contractor #, 1099 name/phone/email, and street/city/state/ZIP; #0042 shows them as "Contractor #", "1099 Contact", "1099 Address". Stored on the admin-only profile_private table (migration 0129, written but NOT live until Jeff says "push 0129"), read live and never cached. Test: after 0129 is live, open #0043 for a contractor, type the details, Save, reopen #0042 and confirm they show; confirm an employee (non-contractor) shows none of these rows.
+
+176. **#0020 Price Sheet Editor: Unpublish the live sheet back to Draft.** A Published sheet now shows an "Unpublish" button (tap, then "Confirm unpublish" or "Cancel"); it sends the sheet back to Draft so it can be edited or swapped for another sheet and re-published. Past pay does not move (commissions keep their saved amounts). Needs internet; uses migration 0130 (Jeff said "push 0130"; the build thread pushes it). Test: open #0019 as Admin, open the Published sheet to #0020, tap Unpublish then Confirm unpublish, check the status shows Draft, go back to #0019 and confirm it sits under Drafts, then tap Publish on #0020 and confirm it is Published again.

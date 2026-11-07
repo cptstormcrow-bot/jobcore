@@ -105,6 +105,7 @@ const HELP_BULLETS = [
   'Drafts are private — nothing in a draft changes what techs see until you tap Publish.',
   'Edit the Published version to change live prices; each change goes live as soon as it saves.',
   'Publish makes a draft live and archives the previous Published version.',
+  'Unpublish sends the live sheet back to Draft so you can edit it or swap in another sheet.',
   'Price Area Adjustments raise or lower every price on this sheet for the selected service areas, by percent or a flat amount.',
 ];
 
@@ -868,6 +869,8 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'idle' });
   const [actionState, setActionState] = useState<ActionState>({ kind: 'idle' });
   const [popupError, setPopupError] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
+  const [confirmUnpublish, setConfirmUnpublish] = useState(false);
   const [areaAdjustmentState, setAreaAdjustmentState] = useState<ActionState>({ kind: 'idle' });
   const [areaAdjustments, setAreaAdjustments] = useState<PriceSheetAreaAdjustment[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState<string>('__all__');
@@ -913,7 +916,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
     return () => {
       cancelled = true;
     };
-  }, [session, priceSheetRepository, priceSheetId]);
+  }, [session, priceSheetRepository, priceSheetId, reloadTick]);
 
   useEffect(() => {
     if (!session) {
@@ -1031,6 +1034,23 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
       onPublished?.(target.id);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not publish the price sheet.';
+      setActionState({ kind: 'failed', message });
+    }
+  }
+
+  async function handleUnpublish(target: PriceSheet): Promise<void> {
+    if (!publishRepo) return;
+    setConfirmUnpublish(false);
+    setActionState({ kind: 'working' });
+    try {
+      await publishRepo.unpublishPriceSheet(target.organizationId, target.id);
+      setActionState({
+        kind: 'done',
+        message: 'Unpublished. This sheet is now a Draft; publish it again any time.',
+      });
+      setReloadTick((tick) => tick + 1);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not unpublish the price sheet.';
       setActionState({ kind: 'failed', message });
     }
   }
@@ -1184,6 +1204,32 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
             />
           </View>
         ) : null}
+        {sheet.status === 'published' ? (
+          <View style={styles.actionRow}>
+            {confirmUnpublish ? (
+              <>
+                <PayrollButton
+                  label="Confirm unpublish"
+                  onPress={() => {
+                    void handleUnpublish(sheet);
+                  }}
+                  disabled={!publishRepo || busy}
+                />
+                <PayrollButton
+                  label="Cancel"
+                  onPress={() => setConfirmUnpublish(false)}
+                  disabled={busy}
+                />
+              </>
+            ) : (
+              <PayrollButton
+                label={busy ? 'Working...' : 'Unpublish'}
+                onPress={() => setConfirmUnpublish(true)}
+                disabled={!publishRepo || busy}
+              />
+            )}
+          </View>
+        ) : null}
         {sheet.status === 'draft' ? (
           <Text style={styles.note}>
             Changes in each section save as you go — techs keep seeing the published sheet until
@@ -1192,7 +1238,7 @@ export function PriceSheetEditorScreen(props: PriceSheetEditorScreenProps) {
         ) : (
           <Text style={styles.note}>
             {sheet.status === 'published'
-              ? 'This version is live. Changes in each section save as you go and go live as soon as they save.'
+              ? 'This version is live. Changes in each section save as you go and go live as soon as they save. Unpublish sends it back to Draft so you can edit it or swap in another sheet.'
               : 'This version is archived, so techs and estimates no longer use it. Create a new price sheet to change prices.'}
           </Text>
         )}

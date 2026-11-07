@@ -165,6 +165,13 @@ export interface PriceSheetRepo {
    * adapter wires this method to that function.
    */
   applyPublishPlan(organizationId: string, plan: PublishPlan): Promise<void>;
+
+  /**
+   * Unpublishes the live price sheet (published -> draft) through the
+   * `unpublish_price_sheet` RPC (migration 0130), so no sheet is live until
+   * a sheet is published again.
+   */
+  unpublishPriceSheet(organizationId: string, priceSheetId: string): Promise<void>;
 }
 
 /* ------------------------------------------------------------------ *
@@ -210,6 +217,25 @@ export async function applyPublishPlanViaRpc(
   requireOnline('Publishing a price sheet');
   const { error } = await client.rpc('publish_price_sheet', {
     p_price_sheet_id: plan.toPublish.priceSheetId,
+  });
+  if (error) {
+    return { ok: false, reason: error.message };
+  }
+  return { ok: true, value: undefined };
+}
+
+/**
+ * Unpublishes a price sheet by invoking the admin-only
+ * `unpublish_price_sheet(uuid)` RPC (0130_unpublish_price_sheet.sql), which
+ * moves the sheet from published back to draft.
+ */
+export async function unpublishPriceSheetViaRpc(
+  client: SupabaseRpcClient,
+  priceSheetId: string,
+): Promise<CalculationResult<void>> {
+  requireOnline('Unpublishing a price sheet');
+  const { error } = await client.rpc('unpublish_price_sheet', {
+    p_price_sheet_id: priceSheetId,
   });
   if (error) {
     return { ok: false, reason: error.message };
