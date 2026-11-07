@@ -49,6 +49,9 @@ import { parseMoneyToCents, centsToDollarsText as rateCentsToText } from '../dom
 import { AccordionEditRow } from './AccordionEditRow';
 import { AddTaskDialog } from './AddTaskDialog';
 import { AddServiceDialog } from './AddServiceDialog';
+
+/** Picker value for the "New Service" / "New Task" rows at the top of the lists. */
+const NEW_ENTRY = '__new__';
 import { formatServiceTaskNumber } from '../domain/format-service-task-number';
 
 /** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
@@ -702,23 +705,38 @@ function RateRowsCard({
       <Text style={styles.note}>One rate per service + timing; the task labels that rate.</Text>
       <Select
         value={serviceIdInput || null}
-        options={services.map((s) => ({ label: s.name, value: s.id }))}
+        options={[
+          { label: 'New Service', value: NEW_ENTRY },
+          ...services.map((s) => ({ label: s.name, value: s.id })),
+        ]}
         placeholder="Select a service"
         darkPlaceholder
-        onChange={handleServiceChange}
+        onChange={(value) => {
+          if (value === NEW_ENTRY) {
+            setAddServiceDialogVisible(true);
+            return;
+          }
+          handleServiceChange(value);
+        }}
       />
-      <PayrollButton label="+ Add Service" onPress={() => setAddServiceDialogVisible(true)} />
       <Select
         label="Task"
         value={taskIdInput ?? ''}
-        options={[{ label: 'All tasks', value: '' }, ...addFormTaskOptions.map((t) => ({ label: t.name, value: t.id }))]}
+        options={[
+          ...(serviceIdInput ? [{ label: 'New Task', value: NEW_ENTRY }] : []),
+          { label: 'All tasks', value: '' },
+          ...addFormTaskOptions.map((t) => ({ label: t.name, value: t.id })),
+        ]}
         placeholder="All tasks"
-        onChange={(value) => setTaskIdInput(value === '' ? null : value)}
+        onChange={(value) => {
+          if (value === NEW_ENTRY) {
+            setAddTaskDialogVisible(true);
+            return;
+          }
+          setTaskIdInput(value === '' ? null : value);
+        }}
       />
       {taskLoadError ? <ErrorState message={taskLoadError} /> : null}
-      {serviceIdInput && taskOptions.length === 0 && !taskLoadError ? (
-        <PayrollButton label="+ Add Task" onPress={() => setAddTaskDialogVisible(true)} />
-      ) : null}
       <Select
         label="Timing"
         value={timingInput}
