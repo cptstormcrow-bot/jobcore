@@ -71,6 +71,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
   const [hours, setHours] = useState<HoursCheckRow[] | null>(null);
   const [available, setAvailable] = useState<AvailableRow[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [runs, setRuns] = useState<Array<{ batchId: string; from: string; to: string; createdAt: string; employees: number }> | null>(null);
 
   const dateOk = DATE_RE.test(weekStart) && !Number.isNaN(Date.parse(weekStart));
   // What can go into this week's run: approved hours and approved reimbursements per employee.
@@ -113,6 +114,21 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
       setStatus(`Could not list what is available: ${errorText(e)}`);
     }
   };
+
+  // Closed runs, newest first, so an earlier run can be exported again.
+  const loadRuns = async () => {
+    if (!payroll || !payroll.listRuns) return;
+    try {
+      setRuns(await payroll.listRuns());
+    } catch (e) {
+      setStatus(`Could not list past runs: ${errorText(e)}`);
+    }
+  };
+
+  useEffect(() => {
+    void loadRuns();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     setAvailable(null);
@@ -178,6 +194,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
       setBatchId(res.batchId);
       setStatus(`Run closed for ${available ? picked.size : 'everyone'} (batch ${res.batchId}).`);
       void loadAvailable();
+      void loadRuns();
     } catch (e) {
       setStatus(`Close failed: ${errorText(e)}`);
     } finally {
@@ -185,12 +202,15 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
     }
   };
 
-  const onExport = async () => {
-    if (!exportRun || !batchId) return;
+  const onExport = () => (batchId ? onExportRun(batchId) : Promise.resolve());
+
+  // Export any closed run (this visit's or an earlier one) in the selected format.
+  const onExportRun = async (id: string) => {
+    if (!exportRun) return;
     setBusy(true);
     setStatus('Exporting...');
     try {
-      const doc = await exportRun.call(payroll, batchId, format);
+      const doc = await exportRun.call(payroll, id, format);
       setStatus(`Exported ${doc.lines.length} line(s) for ${doc.periodStart} to ${doc.periodEnd}. The file was saved or shared for QuickBooks.`);
     } catch (e) {
       setStatus(`Export failed: ${errorText(e)}`);
@@ -273,6 +293,24 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
               );
             })
           )}
+        </View>
+      ) : null}
+      {runs && runs.length > 0 ? (
+        <View style={{ marginTop: spacing.md }}>
+          <Text style={{ fontWeight: '600' }} numberOfLines={1}>Past runs</Text>
+          {runs.map((r) => (
+            <View key={r.batchId} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs }}>
+              <View style={{ flex: 1 }}>
+                <Text numberOfLines={1}>{`${r.from} to ${r.to}`}</Text>
+                <Text numberOfLines={1}>{`${r.employees} employee(s) - closed ${r.createdAt.slice(0, 10)}`}</Text>
+              </View>
+              <PayrollButton
+                label="Export"
+                onPress={() => void onExportRun(r.batchId)}
+                disabled={busy || !exportRun}
+              />
+            </View>
+          ))}
         </View>
       ) : null}
       {hours ? (

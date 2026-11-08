@@ -242,6 +242,36 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
 
     listPaidCoverage: () => loadPaidCoverage(),
 
+    async listRuns() {
+      requireOnline('list past runs');
+      const { data: batches, error: bErr } = await supabase
+        .from('payout_batches')
+        .select('id, period_start, period_end, created_at')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      check(bErr);
+      const list = (batches ?? []) as Row[];
+      if (list.length === 0) return [];
+      const { data: lines, error: lErr } = await supabase
+        .from('payout_lines')
+        .select('payout_batch_id')
+        .in('payout_batch_id', list.map((b) => b.id as string));
+      check(lErr);
+      const counts = new Map<string, number>();
+      for (const l of (lines ?? []) as Row[]) {
+        const k = l.payout_batch_id as string;
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+      return list.map((b) => ({
+        batchId: b.id as string,
+        from: b.period_start as wageEngine.IsoDate,
+        to: b.period_end as wageEngine.IsoDate,
+        createdAt: b.created_at as string,
+        employees: counts.get(b.id as string) ?? 0,
+      }));
+    },
+
     async closeRun(range, opts) {
       requireOnline('close the payroll run');
       const only = opts?.userIds ? new Set(opts.userIds) : null;

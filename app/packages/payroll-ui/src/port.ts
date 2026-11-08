@@ -186,6 +186,8 @@ export interface PayrollAdminPort {
   closeRun?(range: PayrollDateRange, opts?: { userIds?: string[] }): Promise<{ batchId: string }>;
   /** Employee-day spans already paid in a closed run, so hours are never counted twice. */
   listPaidCoverage?(): Promise<Array<{ userId: string; from: wageEngine.IsoDate; to: wageEngine.IsoDate }>>;
+  /** Closed runs, newest first, so one can be exported again later. */
+  listRuns?(): Promise<Array<{ batchId: string; from: wageEngine.IsoDate; to: wageEngine.IsoDate; createdAt: string; employees: number }>>;
   /** Export a closed run in a format. */
   exportRun?(batchId: string, format: PayrollExportFormat): Promise<wageEngine.CanonicalPayrollExport>;
   /** Read the QuickBooks account map. */
