@@ -229,3 +229,26 @@ test('price_sheet_rate.update: edits the row in place', () => {
 test('price_sheet_rate.delete: drops the row', () => {
   assert.deepStrictEqual(run('price_sheet_rate.delete', RATES, { id: 'r1' }, [{ id: 'r1' }, { id: 'r2' }]), [{ id: 'r2' }]);
 });
+
+const TASKS = 'af.serviceTasks.list';
+test('service_task.create: new task reads back with its price, once, in its service only (uber 203)', () => {
+  const p = { id: 't1', serviceId: 'svc', name: 'Assemble', extra: { priceCents: 62500, estimatedMinutes: 90 } };
+  const out = run('service_task.create', TASKS, p, [], { organizationId: 'o1', serviceId: null }) as any[];
+  assert.equal(out.length, 1);
+  assert.equal(out[0].priceCents, 62500);
+  assert.equal(out[0].estimatedMinutes, 90);
+  assert.equal(out[0].active, true);
+  assert.deepStrictEqual(run('service_task.create', TASKS, p, out, { organizationId: 'o1', serviceId: null }), out);
+  const other: unknown[] = [];
+  assert.strictEqual(run('service_task.create', TASKS, p, other, { organizationId: 'o1', serviceId: 'svc2' }), other);
+});
+test('service_task.update: re-priced task reads back with the new price; other fields kept', () => {
+  const rows = [{ id: 't1', name: 'Assemble', priceCents: null, details: 'd' }, { id: 't2', name: 'Other', priceCents: 100 }];
+  const out = run('service_task.update', TASKS, { id: 't1', patch: { priceCents: 62500 } }, rows) as any[];
+  assert.equal(out[0].priceCents, 62500);
+  assert.equal(out[0].details, 'd');
+  assert.equal(out[1].priceCents, 100);
+});
+test('service_task.delete: drops the task', () => {
+  assert.deepStrictEqual(run('service_task.delete', TASKS, { id: 't1' }, [{ id: 't1' }, { id: 't2' }]), [{ id: 't2' }]);
+});

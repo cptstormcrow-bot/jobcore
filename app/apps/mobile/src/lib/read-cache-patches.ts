@@ -349,6 +349,51 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
       })),
   },
   { op: 'price_sheet_rate.delete', queries: ['af.rates.list'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
+  // Service tasks (#0071 / Price Sheet Editor): a created or re-priced task must read back with its price,
+  // not as the stale cached row with no price (uber 203).
+  {
+    op: 'service_task.create',
+    queries: ['af.serviceTasks.list'],
+    patch: (p, rows, params) => {
+      const id = str(p.id);
+      if (!id) return rows;
+      if (params?.serviceId != null && params.serviceId !== p.serviceId) return rows;
+      if (Array.isArray(rows) && rows.some((r) => isObj(r) && r.id === id)) return rows;
+      const x = isObj(p.extra) ? p.extra : {};
+      const row: Row = {
+        id,
+        organizationId: params?.organizationId ?? null,
+        serviceId: p.serviceId,
+        name: p.name,
+        estimatedMinutes: x.estimatedMinutes ?? null,
+        rate: x.rate ?? null,
+        category: x.category ?? null,
+        active: x.active ?? true,
+        priceCents: x.priceCents ?? null,
+        details: x.details ?? null,
+        materials: x.materials ?? null,
+        taskNumber: null,
+      };
+      return Array.isArray(rows) ? [...rows, row] : rows === null || rows === undefined ? [row] : rows;
+    },
+  },
+  {
+    op: 'service_task.update',
+    queries: ['af.serviceTasks.list'],
+    patch: (p, rows) => {
+      const id = str(p.id);
+      if (!id || !isObj(p.patch)) return rows;
+      const patch = p.patch;
+      return mapRows(rows, idIs(id), (r) => {
+        const next: Row = { ...r };
+        for (const k of ['name', 'estimatedMinutes', 'rate', 'category', 'active', 'priceCents', 'details', 'materials']) {
+          if (k in patch) next[k] = patch[k];
+        }
+        return next;
+      });
+    },
+  },
+  { op: 'service_task.delete', queries: ['af.serviceTasks.list'], patch: (p, rows) => dropWhere(rows, idIs(p.id)) },
 ];
 
 export function findPatchSpecs(op: string): OpPatchSpec[] {
