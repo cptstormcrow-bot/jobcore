@@ -16,17 +16,19 @@ Live project: `vogkxkcceahtwyovpxsg`. Seeded 2026-10-24 from `npx supabase migra
 - Never push without Jeff's explicit per-push approval that names the migration numbers.
 - A plain `db push` applies ALL pending migrations, so list the pending ones first (`npx supabase migration list`, then `db push --dry-run`).
 
-Past pushes: OK 17 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
+Past pushes: OK 18 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 ## Future (planned / pending push)
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
+| 0138_job_plan_task_instructions_url.sql | Instructions URL on every Job Details task (uber 220): job_plan_tasks.instructions_url, backfill, assign trigger, publish_assembly_task copies the link up. Needs 0137 (live). | Planned, NOT pushed. Needs Jeff's explicit 'push 0138'. | 2026-11-08 |
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-11-08 | 0137_service_task_instructions_url.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('go with migration 0137') | Pushed alone: 0138 was moved out of the folder for the push and restored after; confirmed in migration list (Local and Remote both show 0137, 0138 remote empty). |
 | 2026-11-08 | 0136_lead_tech_runs_job_taps.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 136') | Pre-check and `db push --dry-run` listed only 0136; `db push` applied it, EXIT=0. Post-check query: job_step_requests table gone, job_step_gate / job_step_pending / clear_job_step_requests / sync_helper_time_segments functions gone, triggers zjobs_clear_step_requests and job_assignments_helper_segments gone, sync_job_time_segments no longer mentions helper. Lead tech alone starts and stops the job; each tech's hours come from their own clock-in. Not yet tested on device (uber 213). |
 | 2026-11-08 | 0134_job_assignments_helper_tech.sql, 0135_helper_two_tap_gate.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 134 and 135 please') | Both applied together. 0135's gate objects and 0134's helper segment trigger were dropped later by 0136. The helper kind on job_assignments stays live. |
 | 2026-11-07 | 0131_approve_draft_timesheets.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push migration 0131') | `migration list --linked` pre-check and `db push --linked --dry-run` listed only 0131 pending; `db push --linked` printed 'Applying migration 0131_approve_draft_timesheets.sql... Finished supabase db push.' EXIT=0. Post-check: `migration list --linked` shows 0131 in both columns; pg_get_functiondef of approve_timesheet now contains 'draft'. Admin Approve on #0088 now covers draft and submitted hours. Not yet tested live (uber 191-194). |
