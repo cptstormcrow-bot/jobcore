@@ -50,9 +50,15 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.headingBold,
     fontWeight: '700',
     fontSize: 16,
+    // Explicit lineHeight + no Android font padding so the "?" sits centred and is not clipped at the bottom
+    // of the circle (Jeff 2026-11-08, same cause as the calendar job-count badge).
+    lineHeight: 20,
+    textAlign: 'center',
+    includeFontPadding: false,
     color: colors.primary,
   },
   helpCircleTextSm: {
     fontSize: 12,
+    lineHeight: 16,
   },
 });

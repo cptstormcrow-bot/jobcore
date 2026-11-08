@@ -378,3 +378,5 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 204. **Prelim / investigation changes from a tech assigned as installer no longer get stuck.** Saving the Prelim (job_investigations) failed with "new row violates row-level security policy" for any tech assigned to the job as installer, because the rule only allowed investigators (Job #116 has Jeff as installer). Migration 0133 lets any tech assigned to the job read, create and update its investigation row. Needs "push 0133"; stuck changes then go through on Retry.
 
 205. **Calendar job-count badge no longer clips the number.** The green-day badge was a 16dp circle holding a 10dp digit, and Android font padding pushed the digit down so its bottom was cut off. The badge is now 20dp with an explicit line height and no extra font padding. Needs the next APK build.
+
+206. **Help "?" circle no longer clips the question mark.** Same cause as 205: the heading font padded the glyph downward inside the circle. The "?" now has an explicit line height and no extra Android font padding (both sizes). Needs the next APK build.
