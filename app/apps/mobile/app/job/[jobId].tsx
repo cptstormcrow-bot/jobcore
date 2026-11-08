@@ -341,6 +341,12 @@ export default function JobDrilldownScreen() {
   const [createNeedsPrem, setCreateNeedsPrem] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  // Uber 202: every form edit bumps editVersionRef; a save records the version it
+  // started with, so edits typed while a save is in flight are never marked clean.
+  const formRef = useRef(form);
+  formRef.current = form;
+  const editVersionRef = useRef(0);
+  const savedVersionRef = useRef(0);
 
   // Tech-assignment section: active-tech roster for the org, and any
   // in-flight/error state for an assignment tap, kept separate from the
@@ -637,6 +643,8 @@ export default function JobDrilldownScreen() {
     if (!org?.id) return false;
     setSaving(true);
     setSaveError(null);
+    const startVersion = editVersionRef.current;
+    const form = formRef.current; // latest values, never a stale render closure
     try {
       const jobPatch: JobDetailsPatch = {
         address: form.address,
@@ -684,8 +692,11 @@ export default function JobDrilldownScreen() {
       setJob(updatedJob);
       setCustomer(customer ? { ...customer, ...savedCustomer, id: savedCustomerId } : { ...savedCustomer, id: savedCustomerId });
       setCustomerId(savedCustomerId);
-      setDirty(false);
-      setSaved(true);
+      savedVersionRef.current = startVersion;
+      if (editVersionRef.current === startVersion) {
+        setDirty(false);
+        setSaved(true);
+      }
       return true;
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Save failed.');
@@ -699,7 +710,15 @@ export default function JobDrilldownScreen() {
   // resolves `true` on success, `false` on failure, so callers can gate
   // navigation on save success.
   const handleSaveEdit = async (): Promise<boolean> => {
-    if (saveInFlightRef.current) return saveInFlightRef.current;
+    // A Save during an in-flight save waits for it, then saves again if the form
+    // changed meanwhile (the old behaviour returned the old promise and dropped
+    // the newer edits).
+    let waited = false;
+    while (saveInFlightRef.current) {
+      waited = true;
+      if (!(await saveInFlightRef.current)) return false;
+    }
+    if (waited && savedVersionRef.current === editVersionRef.current) return true;
     const p = runSaveEdit().finally(() => {
       if (saveInFlightRef.current === p) saveInFlightRef.current = null;
     });
@@ -1022,6 +1041,7 @@ export default function JobDrilldownScreen() {
       }
       return merged;
     });
+    editVersionRef.current += 1;
     setDirty(true);
     leaveAfterFailRef.current = false;
     setSaved(false);
