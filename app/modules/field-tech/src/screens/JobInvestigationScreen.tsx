@@ -371,9 +371,11 @@ export function JobInvestigationScreen({ jobId, onBack, embedded = false, onOpen
             checked={materialsOnsiteLocal ?? estimate?.materialsOnsite ?? false}
             onChange={handleMaterialsOnsite}
           />
-          <Text style={{ color: colors.textMuted }}>{'•'}</Text>
-          <TextField inline
-            label="UPS tracking number"
+        </View>
+        <View style={styles.trackingRow}>
+          <TextField
+            inline={false}
+            placeholder="UPS tracking #"
             value={trackingInput}
             onChangeText={setTrackingInput}
             onBlur={handleTrackingBlur}
@@ -533,8 +535,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginTop: compact.gap,
   },
+  // Field takes all width left of the button; 190px floor fits 12+ characters even on the narrowest phone.
   trackingField: {
     flex: 1,
+    minWidth: 190,
   },
   trackingButton: {},
   card: {
