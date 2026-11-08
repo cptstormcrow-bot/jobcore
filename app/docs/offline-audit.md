@@ -414,3 +414,7 @@ Jeff: "second tap". Both techs' hours start/stop at the confirming (second) tap,
 Supersedes 210-212. Screen #0041 (job detail): Start and Complete are single taps again, no "Waiting on your partner", no "Confirm Start / Complete", no admin override alert. Only the lead tech (or an admin) can use Start and Complete; a Helper Tech's two buttons are disabled so they just watch. A job with no lead tech yet leaves them enabled as before. Each tech's paid hours come from their own clock-in, so migration 0136 (unpushed until Jeff names it) drops the 0135 gate objects and stops the job taps from writing hours rows for the helper. The helper assignment and access (0134 RLS) stay.
 
 Test recipe (after Jeff names 0136): lead taps Start and Complete and the job moves; the helper's device shows the job with Start and Complete greyed; the helper's hours do not change from the lead's taps. Untested on device; belongs in the next uber test plan (uber 213).
+
+### 214 - Helper Tech is view-only
+A Helper Tech (job_assignments.kind = 'helper', not the lead) can open and browse the job (screen #0041). Start and Complete keep their normal look but only show a View only notice; every region except Estimate ignores touches (pointerEvents none), and Estimate is not editable. Client-side only; no migration, RLS unchanged. Jeff 2026-11-08.
+

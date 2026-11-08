@@ -1217,6 +1217,12 @@ export default function JobDrilldownScreen() {
   // watches the screen; each tech's own hours come from their own clock-in, not from these taps.
   const myId = session.status === 'authenticated' ? session.profile.id : null;
   const canRunLifecycle = isAdmin || !job?.assignedTechId || job.assignedTechId === myId;
+  // Helper Tech is view-only (Jeff 2026-11-08): browse the job, change nothing. Start/Complete keep their
+  // normal look but only explain; touches on every region except Estimate pass through to the scroll view.
+  const isViewOnlyHelper = !isAdmin && myId !== null && helperTechId === myId && job?.assignedTechId !== myId;
+  const showViewOnlyNotice = (): void => {
+    Alert.alert('View only', 'You are the Helper Tech on this job. You can look at everything; the lead Service Tech makes the changes.');
+  };
 
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
@@ -1551,9 +1557,9 @@ ${body}`)) handleResetLaborTime();
       : []),
     { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: currentMenuId === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: currentMenuId === 'contact' },
-    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork') || !canRunLifecycle, isActive: currentMenuId === 'arrive' },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { if (isViewOnlyHelper) { showViewOnlyNotice(); return; } setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork') && !isViewOnlyHelper, isActive: currentMenuId === 'arrive' },
     { id: 'photos', helpId: 'job_photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: currentMenuId === 'photos' },
-    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, disabled: !canRunLifecycle, isActive: currentMenuId === 'complete' },
+    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { if (isViewOnlyHelper) { showViewOnlyNotice(); return; } setActiveStage('complete'); void handleComplete(); }, disabled: false, isActive: currentMenuId === 'complete' },
     ...(!lockedStages.has('paid')
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: currentMenuId === 'paid' }] as MenuItem[]
       : []),
@@ -1652,6 +1658,7 @@ ${body}`)) handleResetLaborTime();
         ) : undefined}
       />
       <ScrollView ref={scrollRef} style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
+        <View pointerEvents={isViewOnlyHelper && region !== 'estimate' ? 'none' : 'auto'}>
         {region === 'payment' && (estimate?.summary?.trim() || currentJob.description?.trim()) ? (
           <Text style={{ paddingHorizontal: spacing.md, marginTop: spacing.xs }}>
             {estimate?.summary?.trim() || currentJob.description?.trim()}
@@ -1802,7 +1809,7 @@ ${body}`)) handleResetLaborTime();
               />
             }
             serviceAreas={serviceAreas}
-            editable={!isTechEstimate}
+            editable={!isTechEstimate && !isViewOnlyHelper}
             statusEditable
             jobStarted={jobStarted}
             onChrome={setEstimateChrome}
@@ -1870,6 +1877,7 @@ ${body}`)) handleResetLaborTime();
             </View>
           </>
         )}
+        </View>
       </ScrollView>
       {/* 'details' region (JobOverviewRegion) owns its own Cancel/Save; no parent footer. */}
     </View>
