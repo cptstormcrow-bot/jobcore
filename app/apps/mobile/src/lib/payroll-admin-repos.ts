@@ -215,8 +215,10 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       check(error);
     },
 
-    async closeRun(range) {
+    async closeRun(range, opts) {
       requireOnline('close the payroll run');
+      const only = opts?.userIds ? new Set(opts.userIds) : null;
+      if (only && only.size === 0) throw new Error('Pick at least one employee for the run.');
       const [settings, names] = await Promise.all([loadSettings(), nameMap()]);
 
       const { data: entryData, error: entryErr } = await supabase
@@ -245,6 +247,7 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       const minutesByUser = new Map<string, Map<string, number>>();
       for (const r of (entryData ?? []) as Row[]) {
         const e = toPayrollTimeEntry(r);
+        if (only && !only.has(e.userId)) continue;
         let byDate = minutesByUser.get(e.userId);
         if (!byDate) {
           byDate = new Map();
@@ -262,6 +265,7 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
 
       const reimbByUser = new Map<string, { ids: string[]; cents: number }>();
       for (const r of (reimbData ?? []) as Row[]) {
+        if (only && !only.has(r.user_id)) continue;
         const cur = reimbByUser.get(r.user_id) ?? { ids: [], cents: 0 };
         cur.ids.push(r.id);
         cur.cents += r.amount_cents as number;

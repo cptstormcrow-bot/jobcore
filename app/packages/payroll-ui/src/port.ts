@@ -179,8 +179,11 @@ export interface PayrollAdminPort {
   deleteWeek?(userId: string, range: PayrollDateRange): Promise<void>;
   /** Set a user's hourly rate from a date. */
   setRate?(userId: string, hourlyRateCents: number, effectiveFrom: wageEngine.IsoDate): Promise<void>;
-  /** Close a payroll run for a range. */
-  closeRun?(range: PayrollDateRange): Promise<{ batchId: string }>;
+  /**
+   * Close a payroll run for a range. When `opts.userIds` is given, only those
+   * employees' approved hours and approved reimbursements go into the run.
+   */
+  closeRun?(range: PayrollDateRange, opts?: { userIds?: string[] }): Promise<{ batchId: string }>;
   /** Export a closed run in a format. */
   exportRun?(batchId: string, format: PayrollExportFormat): Promise<wageEngine.CanonicalPayrollExport>;
   /** Read the QuickBooks account map. */

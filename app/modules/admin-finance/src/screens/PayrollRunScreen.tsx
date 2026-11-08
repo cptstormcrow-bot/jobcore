@@ -5,7 +5,7 @@
  * (`closeRun`, `exportRun`); renders a short message when they are absent.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { EmptyState, PayrollButton, Text, TextField, selectedStyle, useScreenNumber, spacing } from '@jobcore/ui';
 import type { PayrollDateRange, PayrollExportFormat } from '@jobcore/payroll-ui';
@@ -39,6 +39,18 @@ function formatHm(min: number, signed = false): string {
   return `${sign}${h}:${m < 10 ? '0' : ''}${m}`;
 }
 
+interface AvailableRow {
+  userId: string;
+  name: string;
+  approvedMin: number;
+  waitingMin: number;
+  reimbCents: number;
+}
+
+function money(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
 function addDays(iso: string, days: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
@@ -57,6 +69,54 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [hours, setHours] = useState<HoursCheckRow[] | null>(null);
+  const [available, setAvailable] = useState<AvailableRow[] | null>(null);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+
+  const dateOk = DATE_RE.test(weekStart) && !Number.isNaN(Date.parse(weekStart));
+  // What can go into this week's run: approved hours and approved reimbursements per employee.
+  const loadAvailable = async () => {
+    if (!payroll || !payroll.listTeamEntries || !dateOk) return;
+    const range: PayrollDateRange = { from: weekStart as IsoDate, to: addDays(weekStart, 6) as IsoDate };
+    try {
+      const [weeks, reimbs] = await Promise.all([
+        payroll.listTeamEntries(range),
+        payroll.listAllReimbursements ? payroll.listAllReimbursements() : Promise.resolve([]),
+      ]);
+      const map = new Map<string, AvailableRow>();
+      const row = (userId: string, name: string) => {
+        let r = map.get(userId);
+        if (!r) {
+          r = { userId, name, approvedMin: 0, waitingMin: 0, reimbCents: 0 };
+          map.set(userId, r);
+        }
+        return r;
+      };
+      for (const w of weeks) {
+        for (const e of w.entries) {
+          if (e.workDate < range.from || e.workDate > range.to || e.status === 'rejected') continue;
+          const r = row(w.userId, w.employeeName);
+          if (e.status === 'approved') r.approvedMin += e.minutes;
+          else r.waitingMin += e.minutes;
+        }
+      }
+      for (const m of reimbs) {
+        if (m.status !== 'approved') continue;
+        row(m.userId, m.employeeName).reimbCents += m.amountCents;
+      }
+      const rows = [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+      setAvailable(rows);
+      setPicked(new Set(rows.filter((r) => r.approvedMin > 0 || r.reimbCents > 0).map((r) => r.userId)));
+    } catch (e) {
+      setStatus(`Could not list what is available: ${errorText(e)}`);
+    }
+  };
+
+  useEffect(() => {
+    setAvailable(null);
+    setBatchId(null);
+    if (dateOk) void loadAvailable();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekStart]);
 
   if (!payroll || !session) {
     return (
@@ -111,9 +171,10 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         from: weekStart as IsoDate,
         to: addDays(weekStart, 6) as IsoDate,
       };
-      const res = await closeRun.call(payroll, range);
+      const res = await closeRun.call(payroll, range, available ? { userIds: [...picked] } : undefined);
       setBatchId(res.batchId);
-      setStatus(`Run closed (batch ${res.batchId}).`);
+      setStatus(`Run closed for ${available ? picked.size : 'everyone'} (batch ${res.batchId}).`);
+      void loadAvailable();
     } catch (e) {
       setStatus(`Close failed: ${errorText(e)}`);
     } finally {
@@ -155,7 +216,7 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         <PayrollButton
           label="Close run"
           onPress={onClose}
-          disabled={busy || !validDate || !closeRun}
+          disabled={busy || !validDate || !closeRun || (available !== null && picked.size === 0)}
         />
         {FORMATS.map((f) => (
           <PayrollButton
@@ -172,6 +233,45 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
         />
       </View>
       {status ? <Text>{status}</Text> : null}
+      {available ? (
+        <View style={{ marginTop: spacing.md }}>
+          <Text style={{ fontWeight: '600' }} numberOfLines={1}>Available for this run</Text>
+          {available.length === 0 ? (
+            <Text>Nothing approved for this week yet</Text>
+          ) : (
+            available.map((r) => {
+              const ready = r.approvedMin > 0 || r.reimbCents > 0;
+              const on = picked.has(r.userId);
+              return (
+                <View key={r.userId} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs }}>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1}>{r.name || 'Unknown'}</Text>
+                    <Text numberOfLines={1}>
+                      {`Approved ${formatHm(r.approvedMin)}`}
+                      {r.reimbCents > 0 ? ` + ${money(r.reimbCents)} reimb.` : ''}
+                      {r.waitingMin > 0 ? ` (${formatHm(r.waitingMin)} not approved)` : ''}
+                    </Text>
+                  </View>
+                  {ready ? (
+                    <PayrollButton
+                      label={on ? 'In run' : 'Left out'}
+                      style={selectedStyle(on)}
+                      onPress={() => {
+                        const next = new Set(picked);
+                        if (on) next.delete(r.userId);
+                        else next.add(r.userId);
+                        setPicked(next);
+                      }}
+                    />
+                  ) : (
+                    <Text numberOfLines={1}>Not ready</Text>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </View>
+      ) : null}
       {hours ? (
         <ScrollView style={{ marginTop: spacing.md }}>
           <Text style={{ fontWeight: '600' }} numberOfLines={1}>Hours check: timesheet vs job clock</Text>
