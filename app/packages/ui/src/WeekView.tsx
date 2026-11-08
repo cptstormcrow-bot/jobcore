@@ -4,7 +4,7 @@
 // of its own, it just draws whatever lists it's handed.
 import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { Text } from './Text';
-import { colors, typography, spacing, radius } from './tokens';
+import { colors, typography, spacing } from './tokens';
 import type { Job } from '@jobcore/core';
 import { addDays, startOfWeek, format, isSameDay } from 'date-fns';
 import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS } from './job-status-colors';
@@ -150,8 +150,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   card: {
+    // Flat (uber 224): no rounded corners; a thin gray line under each job.
     backgroundColor: colors.surfaceAlt,
-    borderRadius: radius.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.divider,
     padding: 2,
     marginTop: 2,
   },

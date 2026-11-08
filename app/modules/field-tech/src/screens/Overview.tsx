@@ -28,7 +28,7 @@ import { isBetaVisible } from '@jobcore/core';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { CLOSED_JOB_STATUSES } from './day-list-helpers';
-import { ScreenTitle, PayrollButton, colors, spacing, Text, radius, typography } from '@jobcore/ui';
+import { ScreenTitle, PayrollButton, colors, spacing, Text, typography } from '@jobcore/ui';
 
 /** Same pref key the Jobs screen (DayList) uses for showing test jobs. */
 const SHOW_TEST_JOBS_KEY = 'field-tech.jobs.show-test-jobs';
@@ -404,9 +404,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   lineList: {
-    borderWidth: StyleSheet.hairlineWidth,
+    // Flat (uber 224): no box or rounded corners, only thin gray lines between rows.
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.divider,
-    borderRadius: radius.sm,
     marginBottom: spacing.sm,
   },
   line: {
