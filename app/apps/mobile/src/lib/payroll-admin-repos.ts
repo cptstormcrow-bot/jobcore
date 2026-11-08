@@ -57,6 +57,31 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
     return new Map(((data ?? []) as Row[]).map((r) => [r.id as string, (r.full_name ?? '') as string]));
   }
 
+  async function loadPaidCoverage() {
+    const { data: batches, error: bErr } = await supabase
+      .from('payout_batches')
+      .select('id, period_start, period_end')
+      .eq('organization_id', orgId);
+    check(bErr);
+    const list = (batches ?? []) as Row[];
+    if (list.length === 0) return [];
+    const { data: lines, error: lErr } = await supabase
+      .from('payout_lines')
+      .select('payout_batch_id, user_id, regular_minutes, ot_minutes, dt_minutes')
+      .in('payout_batch_id', list.map((b) => b.id as string));
+    check(lErr);
+    const byId = new Map(list.map((b) => [b.id as string, b]));
+    const out: Array<{ userId: string; from: wageEngine.IsoDate; to: wageEngine.IsoDate }> = [];
+    for (const l of (lines ?? []) as Row[]) {
+      // Only lines that actually paid hours cover those days.
+      if (((l.regular_minutes ?? 0) + (l.ot_minutes ?? 0) + (l.dt_minutes ?? 0)) <= 0) continue;
+      const b = byId.get(l.payout_batch_id as string);
+      if (!b) continue;
+      out.push({ userId: l.user_id as string, from: b.period_start as wageEngine.IsoDate, to: b.period_end as wageEngine.IsoDate });
+    }
+    return out;
+  }
+
   return {
     async listTeamEntries(range: PayrollDateRange): Promise<TeamWeek[]> {
       return readCachedOr('pr.admin.teamEntries', { orgId, from: range.from, to: range.to }, async () => {
@@ -215,11 +240,13 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       check(error);
     },
 
+    listPaidCoverage: () => loadPaidCoverage(),
+
     async closeRun(range, opts) {
       requireOnline('close the payroll run');
       const only = opts?.userIds ? new Set(opts.userIds) : null;
       if (only && only.size === 0) throw new Error('Pick at least one employee for the run.');
-      const [settings, names] = await Promise.all([loadSettings(), nameMap()]);
+      const [settings, names, covered] = await Promise.all([loadSettings(), nameMap(), loadPaidCoverage()]);
 
       const { data: entryData, error: entryErr } = await supabase
         .from('payroll_time_entries')
@@ -248,6 +275,8 @@ export function buildPayrollAdminMembers(supabase: SupabaseClient, session: Payr
       for (const r of (entryData ?? []) as Row[]) {
         const e = toPayrollTimeEntry(r);
         if (only && !only.has(e.userId)) continue;
+        // Hours already paid in an earlier run are never counted again.
+        if (covered.some((c) => c.userId === e.userId && e.workDate >= c.from && e.workDate <= c.to)) continue;
         let byDate = minutesByUser.get(e.userId);
         if (!byDate) {
           byDate = new Map();

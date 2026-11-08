@@ -184,6 +184,8 @@ export interface PayrollAdminPort {
    * employees' approved hours and approved reimbursements go into the run.
    */
   closeRun?(range: PayrollDateRange, opts?: { userIds?: string[] }): Promise<{ batchId: string }>;
+  /** Employee-day spans already paid in a closed run, so hours are never counted twice. */
+  listPaidCoverage?(): Promise<Array<{ userId: string; from: wageEngine.IsoDate; to: wageEngine.IsoDate }>>;
   /** Export a closed run in a format. */
   exportRun?(batchId: string, format: PayrollExportFormat): Promise<wageEngine.CanonicalPayrollExport>;
   /** Read the QuickBooks account map. */

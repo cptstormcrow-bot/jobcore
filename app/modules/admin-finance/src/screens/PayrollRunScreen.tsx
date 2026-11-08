@@ -78,9 +78,10 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
     if (!payroll || !payroll.listTeamEntries || !dateOk) return;
     const range: PayrollDateRange = { from: weekStart as IsoDate, to: addDays(weekStart, 6) as IsoDate };
     try {
-      const [weeks, reimbs] = await Promise.all([
+      const [weeks, reimbs, covered] = await Promise.all([
         payroll.listTeamEntries(range),
         payroll.listAllReimbursements ? payroll.listAllReimbursements() : Promise.resolve([]),
+        payroll.listPaidCoverage ? payroll.listPaidCoverage() : Promise.resolve([]),
       ]);
       const map = new Map<string, AvailableRow>();
       const row = (userId: string, name: string) => {
@@ -94,6 +95,8 @@ export function PayrollRunScreen(props: PayrollRunScreenProps = {}) {
       for (const w of weeks) {
         for (const e of w.entries) {
           if (e.workDate < range.from || e.workDate > range.to || e.status === 'rejected') continue;
+          // Already paid in an earlier run: do not show or count it again.
+          if (covered.some((c) => c.userId === w.userId && e.workDate >= c.from && e.workDate <= c.to)) continue;
           const r = row(w.userId, w.employeeName);
           if (e.status === 'approved') r.approvedMin += e.minutes;
           else r.waitingMin += e.minutes;
