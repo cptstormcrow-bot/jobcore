@@ -47,6 +47,7 @@ import type {
 import type { PriceSheetAreaAdjustment } from '../data/price-sheet-repo';
 import type { PriceSheetRate, CalculationResult } from '../money/types';
 import { getModulePorts } from '../lib/module-ports';
+import { useReadCacheRevision } from '../lib/read-cache';
 import { getModuleSession } from '../lib/module-session';
 import { approveEstimate } from '../flows/approve-estimate';
 import { submitEstimate } from '../flows/submit-estimate';
@@ -344,27 +345,35 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     };
   }, [props.priceSheetAreaAdjustments, activeSheetId, selectedAreaId]);
 
+  // Uber 200: the read cache serves the saved copy first, then refreshes in the background and bumps
+  // this revision. Reload on a bump so a change made elsewhere (e.g. a repaired $0 line) shows without reopening.
+  const cacheRev = useReadCacheRevision();
+  const loadedOnceRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
-    setLoadState({ kind: 'loading' });
+    const silent = loadedOnceRef.current;
+    if (!silent) setLoadState({ kind: 'loading' });
     Promise.all([estimates.getForJob(job.id), estimates.listLineItems(job.id)])
       .then(([loadedEstimate, loadedLineItems]) => {
         if (cancelled) return;
         setEstimate(loadedEstimate);
-        setTrackingInput(loadedEstimate?.trackingNumber ?? '');
-        setFinePrintInput(isUnsetFinePrint(loadedEstimate?.finePrint) ? '' : loadedEstimate?.finePrint ?? '');
+        if (!silent) {
+          setTrackingInput(loadedEstimate?.trackingNumber ?? '');
+          setFinePrintInput(isUnsetFinePrint(loadedEstimate?.finePrint) ? '' : loadedEstimate?.finePrint ?? '');
+        }
         setLineItems(loadedLineItems);
+        loadedOnceRef.current = true;
         setLoadState({ kind: 'loaded' });
       })
       .catch((error: unknown) => {
-        if (cancelled) return;
+        if (cancelled || silent) return;
         const message = error instanceof Error ? error.message : 'Could not load the estimate.';
         setLoadState({ kind: 'failed', message });
       });
     return () => {
       cancelled = true;
     };
-  }, [estimates, job.id]);
+  }, [estimates, job.id, cacheRev]);
 
   const busy = actionState.kind === 'working';
 
