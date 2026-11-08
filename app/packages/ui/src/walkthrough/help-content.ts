@@ -13,7 +13,7 @@ export const HELP_CARDS: WalkthroughStep[] = [
     id: 'af_leads',
     kind: 'action',
     title: 'Leads',
-    body: 'New requests waiting to become jobs. Tap "New Lead" to add one, or open a lead to edit it and qualify it.',
+    body: 'New requests waiting to become jobs.\n1. Where leads come from: customers fill out the form on your website, and each one shows up here by itself. You can also tap "New Lead" to add one by hand.\n2. The number next to Leads on the Main Menu is how many leads nobody has worked yet. It goes down when a lead is qualified or turned into a job.\n3. Open a lead and call the customer. Fix anything they correct, like the address or the day they want.\n4. After the call, tap "Convert" on the lead. It makes a new job from the lead and takes you to it.\n5. If the job card says "Needs service area", the zip code did not match any of your areas. Open the job and fix the address, or pick the service area, so the right techs can be offered.',
     context: { screens: ['af-leads'] },
   },
   {
