@@ -372,26 +372,38 @@ export function setSessionRecoverer(fn: (() => Promise<boolean>) | null): void {
 }
 
 /** The current user id, restoring the live session first if it is missing (never throws). */
+// Why the last attempt found no session (uber 226): shown on the sync error so one screenshot of
+// #0098/#0100 says which step failed instead of just "no authenticated session".
+let lastSessionTrace = '';
 async function ensureSessionUserId(): Promise<string | null> {
+  const trace: string[] = [];
   try {
     const first = await supabase.auth.getSession();
     if (first.data.session?.user?.id) return first.data.session.user.id;
+    trace.push(`get:${first.error ? first.error.message : 'none'}`);
     const refreshed = await supabase.auth.refreshSession();
     if (refreshed.data.session?.user?.id) return refreshed.data.session.user.id;
-    if (sessionRecoverer && (await sessionRecoverer())) {
+    trace.push(`refresh:${refreshed.error ? refreshed.error.message : 'none'}`);
+    if (!sessionRecoverer) {
+      trace.push('recover:not-registered');
+    } else if (await sessionRecoverer()) {
       const again = await supabase.auth.getSession();
-      return again.data.session?.user?.id ?? null;
+      if (again.data.session?.user?.id) return again.data.session.user.id;
+      trace.push('recover:ok-but-no-session');
+    } else {
+      trace.push('recover:failed');
     }
-  } catch {
-    // fall through: still no session
+  } catch (err) {
+    trace.push(`threw:${err instanceof Error ? err.message : String(err)}`);
   }
+  lastSessionTrace = trace.join(' | ').slice(0, 200);
   return null;
 }
 
 async function buildContext(): Promise<OpContext> {
   const userId = await ensureSessionUserId();
   if (!userId) {
-    const e = new Error('offline drain: no authenticated session');
+    const e = new Error(`offline drain: no authenticated session (${lastSessionTrace})`);
     (e as Error & { status?: number }).status = 401;
     throw e;
   }
