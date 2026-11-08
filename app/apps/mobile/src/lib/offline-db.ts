@@ -375,19 +375,31 @@ export function setSessionRecoverer(fn: (() => Promise<boolean>) | null): void {
 // Why the last attempt found no session (uber 226): shown on the sync error so one screenshot of
 // #0098/#0100 says which step failed instead of just "no authenticated session".
 let lastSessionTrace = '';
+// Uber 227: no auth step may hang the drain. A stuck getSession/refreshSession used to pin
+// `drainPromise` forever, so Send now returned the same stuck drain and the saved error never changed.
+const STEP_TIMEOUT_MS = 8000;
+function withTimeout<T>(label: string, p: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(`${label} timed out`)), STEP_TIMEOUT_MS);
+    p.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); }
+    );
+  });
+}
 async function ensureSessionUserId(): Promise<string | null> {
   const trace: string[] = [];
   try {
-    const first = await supabase.auth.getSession();
+    const first = await withTimeout('get', supabase.auth.getSession());
     if (first.data.session?.user?.id) return first.data.session.user.id;
     trace.push(`get:${first.error ? first.error.message : 'none'}`);
-    const refreshed = await supabase.auth.refreshSession();
+    const refreshed = await withTimeout('refresh', supabase.auth.refreshSession());
     if (refreshed.data.session?.user?.id) return refreshed.data.session.user.id;
     trace.push(`refresh:${refreshed.error ? refreshed.error.message : 'none'}`);
     if (!sessionRecoverer) {
       trace.push('recover:not-registered');
-    } else if (await sessionRecoverer()) {
-      const again = await supabase.auth.getSession();
+    } else if (await withTimeout('recover', sessionRecoverer())) {
+      const again = await withTimeout('get2', supabase.auth.getSession());
       if (again.data.session?.user?.id) return again.data.session.user.id;
       trace.push('recover:ok-but-no-session');
     } else {
@@ -442,12 +454,19 @@ export { groupOf };
 
 let drainPromise: Promise<DrainResult> | null = null;
 
+let drainStartedAt = 0;
+const DRAIN_STALE_MS = 90_000;
+
 export function drainOfflineQueue(): Promise<DrainResult> {
+  // Uber 227: a drain stuck for 90 s is abandoned so Send now starts a fresh one.
+  if (drainPromise && Date.now() - drainStartedAt > DRAIN_STALE_MS) drainPromise = null;
   if (drainPromise) return drainPromise;
   if (!isOnlineNow()) {
     return Promise.resolve({ sent: 0, failed: 0, retried: 0, skipped: 0, aborted: 'offline' });
   }
-  drainPromise = (async () => {
+  drainStartedAt = Date.now();
+  const mine: { p: Promise<DrainResult> | null } = { p: null };
+  mine.p = (async () => {
     try {
       // One read of pending + inflight: an inflight row (a save being sent from a screen)
       // holds back later changes to its records, and another person's changes wait for them.
@@ -529,10 +548,11 @@ export function drainOfflineQueue(): Promise<DrainResult> {
       }
       return result;
     } finally {
-      drainPromise = null;
+      if (drainPromise === mine.p) drainPromise = null;
     }
   })();
-  return drainPromise;
+  drainPromise = mine.p;
+  return mine.p;
 }
 
 /** @deprecated kept for the current `_layout.tsx` caller; use drainOfflineQueue. */
