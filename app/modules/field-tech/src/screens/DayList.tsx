@@ -33,6 +33,7 @@ import { addDays, addMonths, format, isSameDay } from 'date-fns';
 import { getModuleSession } from '../lib/module-session';
 import { getModulePorts } from '../lib/module-ports';
 import { JOB_STATUS_COLORS, JOB_STATUS_GLYPHS, ScreenTitle, WeekView, MonthView, DefaultTabBar, PayrollButton, colors, typography, spacing, compact, radius, type TimeOffEvent, Text, TruncatedText } from '@jobcore/ui';
+import { isActiveTimeOffStatus } from '../data/ports';
 import type { TimeOffRequest } from '../data/ports';
 import { copyToClipboard } from '../lib/clipboard';
 import { isScheduledOnLocalDate, expandTimeOffToEvents, listAssignedJobs, listPreviousJobs, CLOSED_JOB_STATUSES } from './day-list-helpers';
@@ -165,6 +166,34 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
     setSelectedDay(day);
   };
 
+  // Time-off from the day popup (#0054): the DB trigger approves it on the spot (no approval step).
+  const dayKey = (day: Date) => format(day, 'yyyy-MM-dd');
+  const timeOffCoveringDay = (day: Date) =>
+    timeOffRequests.find((r) => isActiveTimeOffStatus(r.status) && r.startDate <= dayKey(day) && dayKey(day) <= r.endDate);
+  const handleBookTimeOff = async (day: Date) => {
+    if (session === null) return;
+    try {
+      const created = await getModulePorts().timeOff.create(session.org.id,techId ?? session.userId, {
+        startDate: dayKey(day),
+        endDate: dayKey(day),
+        reason: null,
+      });
+      setTimeOffRequests((prev) => [...prev, created]);
+      setSelectedDay(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not book time-off.');
+    }
+  };
+  const handleCancelTimeOff = async (request: TimeOffRequest) => {
+    try {
+      await getModulePorts().timeOff.cancel(request.id);
+      setTimeOffRequests((prev) => prev.map((r) => (r.id === request.id ? { ...r, status: 'cancelled' } : r)));
+      setSelectedDay(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not cancel time-off.');
+    }
+  };
+
   const renderJobRow = (job: Job) => <AssignedJobRow key={job.id} job={job} onOpen={handleOpenJob} />;
 
   const step = (dir: 1 | -1) =>
@@ -279,6 +308,24 @@ export function DayList({ onSelectJob, onOpenJob, onOpenTimeOff, techId, showTes
                         <Text style={styles.modalTimeOffText}>{event.description ?? 'Day off'}</Text>
                       </View>
                     ))}
+                  {(() => {
+                    const offRequest = timeOffCoveringDay(selectedDay);
+                    if (offRequest !== undefined) {
+                      return (
+                        <PayrollButton
+                          label="Cancel Time-off"
+                          testID="day-popup-cancel-time-off"
+                          onPress={() => void handleCancelTimeOff(offRequest)}
+                        />
+                      );
+                    }
+                    const hasJob = calendarJobs.some(
+                      (job) => job.scheduledStart != null && isSameDay(new Date(job.scheduledStart), selectedDay),
+                    );
+                    return hasJob ? null : (
+                      <PayrollButton label="Time Off" testID="day-popup-time-off" onPress={() => void handleBookTimeOff(selectedDay)} />
+                    );
+                  })()}
                   <PayrollButton label="Close" style={styles.modalCloseButton} onPress={() => setSelectedDay(null)} />
                 </>
               ) : null}

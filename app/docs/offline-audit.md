@@ -418,3 +418,7 @@ Test recipe (after Jeff names 0136): lead taps Start and Complete and the job mo
 ### 214 - Helper Tech is view-only
 A Helper Tech (job_assignments.kind = 'helper', not the lead) can open and browse the job (screen #0041). Start and Complete keep their normal look but only show a View only notice; every region except Estimate ignores touches (pointerEvents none), and Estimate is not editable. Client-side only; no migration, RLS unchanged. Jeff 2026-11-08.
 
+
+### 216 - Time Off from the day popup (#0054)
+
+Tapping a day with no assignment shows a Time Off button; it calls `timeOff.create` (queued through `writeThrough`, auto-approved by the 0019 trigger). A day already in time-off shows Cancel Time-off instead (`timeOff.cancel`). Both patch the local list so the square changes at once. Offline-safe: both writes use the existing queued ops.
