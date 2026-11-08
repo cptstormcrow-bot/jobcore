@@ -136,6 +136,8 @@ export function JobHeader({
 
 export default JobHeader;
 
+const HELPER_TECH_GATE_HINT = 'Assign a Service Tech first, then add a Helper Tech.';
+
 export type JobSummaryRestProps = {
   job: Job;
   serviceAreaName?: string | null;
@@ -144,6 +146,11 @@ export type JobSummaryRestProps = {
   serviceTechId?: string | null;
   premTechName?: string | null;
   serviceTechName?: string | null;
+  helperTechId?: string | null;
+  helperTechName?: string | null;
+  onRequestAssignHelper?: (techId: string | null) => void;
+  helperBusy?: boolean;
+  hideHelperTech?: boolean;
   onRequestAssignPrem?: (techId: string | null) => void;
   onRequestAssignService?: (techId: string | null) => void;
   premBusy?: boolean;
@@ -221,6 +228,11 @@ export type JobTechFieldsProps = Pick<
   | 'serviceTechId'
   | 'premTechName'
   | 'serviceTechName'
+  | 'helperTechId'
+  | 'helperTechName'
+  | 'onRequestAssignHelper'
+  | 'helperBusy'
+  | 'hideHelperTech'
   | 'onRequestAssignPrem'
   | 'onRequestAssignService'
   | 'premBusy'
@@ -242,6 +254,11 @@ export function JobTechFields({
   serviceTechId = null,
   premTechName = null,
   serviceTechName = null,
+  helperTechId = null,
+  helperTechName = null,
+  onRequestAssignHelper,
+  helperBusy,
+  hideHelperTech = false,
   onRequestAssignPrem,
   onRequestAssignService,
   premBusy,
@@ -287,6 +304,16 @@ export function JobTechFields({
         disabledWhenUnassigned={!serviceGateOpen}
         blockedMessage={SERVICE_TECH_GATE_HINT}
       />}
+      {hideHelperTech || (!helperTechId && !onRequestAssignHelper) ? null : <TechRow
+        label="Helper Tech"
+        techId={helperTechId}
+        techName={helperTechName}
+        techs={techs}
+        onRequest={onRequestAssignHelper}
+        busy={helperBusy}
+        disabledWhenUnassigned={!serviceTechId}
+        blockedMessage={HELPER_TECH_GATE_HINT}
+      />}
       {hideServiceArea ? null : <View style={styles.techRow}>
         {serviceAreaName ? (
           <Text style={[styles.summaryLine, styles.serviceAreaText]}>Service Area: {serviceAreaName}</Text>
@@ -305,6 +332,11 @@ export function JobSummaryRest({
   serviceTechId = null,
   premTechName = null,
   serviceTechName = null,
+  helperTechId = null,
+  helperTechName = null,
+  onRequestAssignHelper,
+  helperBusy,
+  hideHelperTech = false,
   onRequestAssignPrem,
   onRequestAssignService,
   premBusy,
@@ -331,6 +363,11 @@ export function JobSummaryRest({
             serviceTechId={serviceTechId}
             premTechName={premTechName}
             serviceTechName={serviceTechName}
+            helperTechId={helperTechId}
+            helperTechName={helperTechName}
+            onRequestAssignHelper={onRequestAssignHelper}
+            helperBusy={helperBusy}
+            hideHelperTech={hideHelperTech}
             onRequestAssignPrem={onRequestAssignPrem}
             onRequestAssignService={onRequestAssignService}
             premBusy={premBusy}

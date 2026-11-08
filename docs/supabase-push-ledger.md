@@ -22,7 +22,7 @@ Past pushes: OK 17 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| (none pending) | | | |
+| 0134_job_assignments_helper_tech.sql | Adds a Helper Tech (second Service Tech) to a job: allows job_assignments kind 'helper', mirrors the job's Travel/Start/Complete times into the helper's own hour segments (paid at the helper's own rate), and opens/closes a segment when a helper is added or removed mid-job. | Written, NOT pushed. Needs Jeff to name 0134. | 2026-11-08 |
 
 ## Past (pushes and attempts)
 

@@ -387,3 +387,10 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 - PIN sign-in now goes live immediately (recoverOnline) instead of waiting for a connectivity change.
 - A password sign-in that times out or hits a network error opens the PIN panel automatically when the device remembers an account.
 - Test: turn on wifi with no internet (or airplane mode), try the password, confirm the PIN panel opens; sign in with the PIN, then restore service and confirm changes sync with no prompt.
+
+## 209 - Helper Tech (second Service Tech) on a job (2026-11-08)
+- Job screen #0041 gets a Helper Tech row under Service Tech (admin only, same picker and Reassign confirm, Unassigned removes it). Stored as a job_assignments row with kind 'helper'; Service Tech is unchanged.
+- The helper sees the same job on their own device (existing tech RLS joins job_assignments). They watch and help; only the lead Service Tech can Start, Complete or Reset time (Jeff 2026-11-08).
+- Helper hours mirror the job's Travel/Start/Complete times in the helper's own hour segments and are paid at their own rate. Needs migration 0134 (NOT pushed; awaiting Jeff's number).
+- Assigning writes through the offline queue like other assignments.
+- Test (after 0134 is live): assign a Helper on a job, sign in as the helper on another device, confirm the job shows; lead taps Start and Complete, confirm both techs get hours; helper tapping Start shows 'Lead tech only'.

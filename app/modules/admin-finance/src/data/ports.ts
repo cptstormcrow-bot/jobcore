@@ -676,7 +676,7 @@ export interface JobAssignmentDraft {
   jobId: string;
   techId: string;
   assignedAt: string;
-  kind?: 'installer' | 'investigator';
+  kind?: 'installer' | 'investigator' | 'helper';
 }
 
 /**
@@ -690,7 +690,7 @@ export interface JobAssignmentRepository {
   removeInvestigator(jobId: string): Promise<void>;
   listInvestigatorTechIds(jobIds: string[]): Promise<Record<string, string>>;
   /** Deletes every assignment row (installer and investigator) for the job; used by unassign. Deletes only rows of the given kind, so unassigning Service never removes the Prem (investigator) row. */
-  removeForJob(jobId: string, kind: 'installer' | 'investigator'): Promise<void>;
+  removeForJob(jobId: string, kind: 'installer' | 'investigator' | 'helper'): Promise<void>;
   /** Every assignment row (tech id + kind) of the job. */
   listForJob(jobId: string): Promise<Array<{ techId: string; kind: string }>>;
 }

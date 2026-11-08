@@ -58,7 +58,7 @@ export interface JobResetTimelinePayload { jobId: string }
 
 export interface JobAssignmentCreatePayload { id: string; organizationId: string; draft: JobAssignmentDraft }
 export interface JobAssignmentRemoveInvestigatorPayload { jobId: string }
-export interface JobAssignmentRemoveForJobPayload { jobId: string; kind?: 'installer' | 'investigator' }
+export interface JobAssignmentRemoveForJobPayload { jobId: string; kind?: 'installer' | 'investigator' | 'helper' }
 
 export interface LeadCreatePayload { id: string; draft: NewLeadDraft }
 export interface LeadUpdatePayload { leadId: string; patch: LeadPatch; base?: RecordEditBase }

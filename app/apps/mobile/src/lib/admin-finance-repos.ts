@@ -948,7 +948,7 @@ export function createJobAssignmentRepository(): JobAssignmentRepository {
       }, {});
     },
 
-    async removeForJob(jobId: string, kind: 'installer' | 'investigator'): Promise<void> {
+    async removeForJob(jobId: string, kind: 'installer' | 'investigator' | 'helper'): Promise<void> {
       await writeThrough(
         'job_assignment.remove_for_job',
         { jobId, kind },

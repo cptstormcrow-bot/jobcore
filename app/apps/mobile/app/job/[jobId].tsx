@@ -354,7 +354,7 @@ export default function JobDrilldownScreen() {
   // failure doesn't clobber (or get clobbered by) a Save-button failure.
   const [techs, setTechs] = useState<Profile[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
-  const [pendingAssign, setPendingAssign] = useState<{ kind: 'prem' | 'service'; techId: string | null } | null>(null);
+  const [pendingAssign, setPendingAssign] = useState<{ kind: 'prem' | 'service' | 'helper'; techId: string | null } | null>(null);
   useEffect(() => { setPendingAssign(null); }, [jobId]);
   const [estimate, setEstimate] = useState<JobEstimate | null>(null);
   const [investigation, setInvestigation] = useState<JobInvestigation | null>(null);
@@ -371,6 +371,7 @@ export default function JobDrilldownScreen() {
   useEffect(() => { setActionError(null); }, [jobId]);
   const [saved, setSaved] = useState(false);
   const [investigatorTechId, setInvestigatorTechId] = useState<string | null>(null);
+  const [helperTechId, setHelperTechId] = useState<string | null>(null);
   const [totalTaskMinutes, setTotalTaskMinutes] = useState<number>(0);
   /** Lead task title and how many more follow it; a started job's #0041 title line shows it as "> Title" (uber 157). */
   const [leadTask, setLeadTask] = useState<{ title: string; more: number } | null>(null);
@@ -466,6 +467,7 @@ export default function JobDrilldownScreen() {
       setEstimate(null);
       setInvestigation(null);
       setInvestigatorTechId(null);
+      setHelperTechId(null);
       return undefined;
     }
     let cancelled = false;
@@ -480,6 +482,15 @@ export default function JobDrilldownScreen() {
       if (!cancelled) setInvestigation(null);
     });
     setInvestigatorTechId(null);
+    setHelperTechId(null);
+    void createJobAssignmentRepository()
+      .listForJob(job.id)
+      .then((rows) => {
+        if (!cancelled) setHelperTechId(rows.find((r) => r.kind === 'helper')?.techId ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setHelperTechId(null);
+      });
     void createJobAssignmentRepository()
       .getInvestigatorTechId(job.id)
       .then((value) => {
@@ -911,6 +922,59 @@ export default function JobDrilldownScreen() {
     }
   };
 
+  // Helper Tech (second Service Tech): a job_assignments row with kind 'helper'.
+  // Reassigning is delete-then-insert; the lead Service Tech (jobs.assigned_tech_id) is untouched.
+  const handleAssignHelper = async (techId: string): Promise<void> => {
+    if (!isAdmin) return;
+    if (!job || !org?.id) return;
+    if (techId === job.assignedTechId) {
+      setActionError('The Helper Tech must be a different person than the Service Tech.');
+      return;
+    }
+    const orgId = org.id;
+    const targetJobId = job.id;
+    const previousTechId = helperTechId;
+    setAssigning(techId);
+    setActionError(null);
+    const assignments = createJobAssignmentRepository();
+    try {
+      if (previousTechId && previousTechId !== techId) {
+        await assignments.removeForJob(targetJobId, 'helper');
+        setHelperTechId(null);
+      }
+      try {
+        await assignments.create(orgId, {
+          jobId: targetJobId,
+          techId,
+          assignedAt: new Date().toISOString(),
+          kind: 'helper',
+        });
+      } catch (err) {
+        setActionError(friendlyAssignError(err));
+        if (previousTechId && previousTechId !== techId) {
+          try {
+            await assignments.create(orgId, {
+              jobId: targetJobId,
+              techId: previousTechId,
+              assignedAt: new Date().toISOString(),
+              kind: 'helper',
+            });
+            setHelperTechId(previousTechId);
+          } catch {
+            setHelperTechId(null);
+          }
+        }
+        return;
+      }
+      setHelperTechId(techId);
+      setActionError(null);
+    } catch (err) {
+      setActionError(friendlyAssignError(err));
+    } finally {
+      setAssigning(null);
+    }
+  };
+
   useEffect(() => {
     // New Job has no real id yet ("new" is not a uuid), so skip the lookup.
     if (!jobId || isCreate) {
@@ -946,7 +1010,7 @@ export default function JobDrilldownScreen() {
   // (Select option { label: 'Unassigned', value: '' }); approved jobs persist
   // the clear via patchScheduling; unassigning an investigator calls
   // removeInvestigator (reassignment is delete-then-insert in the repo's create()).
-  const handleUnassign = async (kind: 'prem' | 'service'): Promise<void> => {
+  const handleUnassign = async (kind: 'prem' | 'service' | 'helper'): Promise<void> => {
     if (!isAdmin) return;
     if (!job) return;
     if (session.status !== 'authenticated' || !org?.id) return;
@@ -957,6 +1021,11 @@ export default function JobDrilldownScreen() {
     };
     try {
       const assignments = createJobAssignmentRepository();
+      if (kind === 'helper') {
+        await assignments.removeForJob(job.id, 'helper');
+        setHelperTechId(null);
+        return;
+      }
       if (kind === 'prem') {
         // No re-read check: the read below is a saved copy that can still hold the old tech
         // (or be overwritten by a slower background refresh), which wrongly failed a good removal.
@@ -1144,8 +1213,18 @@ export default function JobDrilldownScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
+  // The senior (lead Service Tech) starts and stops the job; a Helper Tech watches and helps (Jeff 2026-11-08).
+  const isHelperOnly =
+    session.status === 'authenticated' && !isAdmin && !!helperTechId && helperTechId === session.profile.id;
+  const helperWatchOnly = (): boolean => {
+    if (!isHelperOnly) return false;
+    Alert.alert('Lead tech only', 'Your lead Service Tech starts and finishes this job. Follow along here and help on site.');
+    return true;
+  };
+
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
+    if (helperWatchOnly()) return;
     if (!(job.assignedTechId)) {
       Alert.alert('Installer tech required', 'An installer tech must be assigned to this job before Start can be marked.');
       return;
@@ -1177,6 +1256,7 @@ export default function JobDrilldownScreen() {
 
   const handleComplete = () => {
     if (!job) return;
+    if (helperWatchOnly()) return;
     router.push({ pathname: '/job/complete/[jobId]', params: { jobId: job.id } } as never);
   };
 
@@ -1424,6 +1504,7 @@ ${body}`)) handleResetLaborTime();
   // single ScrollView whose body switches on `region`.
   const currentJob = job as Job;
   const premTechName = investigatorTechId ? techs.find((t) => t.id === investigatorTechId)?.fullName ?? investigatorTechId : null;
+  const helperTechName = helperTechId ? techs.find((t) => t.id === helperTechId)?.fullName ?? helperTechId : null;
   const serviceTechName = currentJob.assignedTechId ? techs.find((t) => t.id === currentJob.assignedTechId)?.fullName ?? currentJob.assignedTechId : null;
   const currentServiceAreaName =
     (currentJob.service_area_id
@@ -1593,6 +1674,9 @@ ${body}`)) handleResetLaborTime();
           serviceTechId={currentJob.assignedTechId ?? null}
           premTechName={premTechName}
           serviceTechName={serviceTechName}
+          helperTechId={helperTechId}
+          helperTechName={helperTechName}
+          helperBusy={assigning !== null}
           premBusy={assigning !== null}
           serviceBusy={assigning !== null}
           serviceGateOpen={serviceGateOpen}
@@ -1608,6 +1692,7 @@ ${body}`)) handleResetLaborTime();
             ? {
                 techs: eligibleTechOptions,
                 onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                onRequestAssignHelper: (techId: string | null) => setPendingAssign({ kind: 'helper', techId }),
                 onRequestAssignService: (techId: string | null) => {
                   if (techId !== null && !serviceGateOpen) return;
                   setPendingAssign({ kind: 'service', techId });
@@ -1621,8 +1706,8 @@ ${body}`)) handleResetLaborTime();
           title="Reassign job?"
           message={(() => {
             if (!pendingAssign) return '';
-            const role = pendingAssign.kind === 'prem' ? 'Prem Tech' : 'Service Tech';
-            const curId = pendingAssign.kind === 'prem' ? investigatorTechId : currentJob.assignedTechId ?? null;
+            const role = pendingAssign.kind === 'prem' ? 'Prem Tech' : pendingAssign.kind === 'helper' ? 'Helper Tech' : 'Service Tech';
+            const curId = pendingAssign.kind === 'prem' ? investigatorTechId : pendingAssign.kind === 'helper' ? helperTechId : currentJob.assignedTechId ?? null;
             const nameOf = (id: string | null | undefined) => (id ? techs.find((t) => t.id === id)?.fullName ?? id : '');
             if (pendingAssign.techId === null) return `Remove ${nameOf(curId)} as ${role}?`;
             if (curId && curId !== pendingAssign.techId) return `Replace ${nameOf(curId)} with ${nameOf(pendingAssign.techId)} as ${role}?`;
@@ -1633,6 +1718,10 @@ ${body}`)) handleResetLaborTime();
             const p = pendingAssign;
             setPendingAssign(null);
             if (!p) return;
+            if (p.kind === 'helper') {
+              void (p.techId ? handleAssignHelper(p.techId) : handleUnassign('helper'));
+              return;
+            }
             void (p.kind === 'prem'
               ? (p.techId ? handleAssignInvestigator(p.techId) : handleUnassign('prem'))
               : (p.techId ? (serviceGateOpen ? handleAssignInstaller(p.techId) : undefined) : handleUnassign('service')));
@@ -1698,6 +1787,9 @@ ${body}`)) handleResetLaborTime();
                 serviceTechId={currentJob.assignedTechId ?? null}
                 premTechName={premTechName}
                 serviceTechName={serviceTechName}
+                helperTechId={helperTechId}
+                helperTechName={helperTechName}
+                helperBusy={assigning !== null}
                 premBusy={assigning !== null}
                 serviceBusy={assigning !== null}
                 serviceGateOpen={serviceGateOpen}
@@ -1706,6 +1798,7 @@ ${body}`)) handleResetLaborTime();
                   ? {
                       techs: eligibleTechOptions,
                       onRequestAssignPrem: (techId: string | null) => setPendingAssign({ kind: 'prem', techId }),
+                      onRequestAssignHelper: (techId: string | null) => setPendingAssign({ kind: 'helper', techId }),
                       onRequestAssignService: (techId: string | null) => {
                         if (techId !== null && !serviceGateOpen) return;
                         setPendingAssign({ kind: 'service', techId });
