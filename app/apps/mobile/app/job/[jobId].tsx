@@ -1213,61 +1213,10 @@ export default function JobDrilldownScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  // Two-tap Start / Complete (Jeff 2026-11-08): with a Helper Tech on the job, the first tech's tap only
-  // records a request; the other tech's tap on their own device concurs and the step really happens.
+  // Lead tech (or admin) alone starts and stops the job with the app (Jeff 2026-11-08). A Helper Tech
+  // watches the screen; each tech's own hours come from their own clock-in, not from these taps.
   const myId = session.status === 'authenticated' ? session.profile.id : null;
-  const [pendingSteps, setPendingSteps] = useState<{ step: string; techId: string }[]>([]);
-  const refreshPendingSteps = useCallback(async (): Promise<void> => {
-    if (!job?.id || !helperTechId) {
-      setPendingSteps([]);
-      return;
-    }
-    const { data } = await supabase.rpc('job_step_pending', { p_job_id: job.id });
-    setPendingSteps(((data as { step: string; tech_id: string }[] | null) ?? []).map((r) => ({ step: r.step, techId: r.tech_id })));
-  }, [job?.id, helperTechId]);
-  useEffect(() => {
-    if (!helperTechId) return undefined;
-    void refreshPendingSteps();
-    const timer = setInterval(() => void refreshPendingSteps(), 10000);
-    return () => clearInterval(timer);
-  }, [helperTechId, refreshPendingSteps]);
-  const partnerPending = (step: 'start' | 'complete'): boolean =>
-    pendingSteps.some((r) => r.step === step && r.techId !== myId);
-
-  // true = go ahead and do the real step now; false = this tap was recorded and the partner must concur.
-  const passStepGate = async (step: 'start' | 'complete'): Promise<boolean> => {
-    if (!job || !helperTechId) return true;
-    const { data, error } = await supabase.rpc('job_step_gate', { p_job_id: job.id, p_step: step });
-    if (error) {
-      Alert.alert('Needs a connection', 'Starting or finishing with a Helper Tech needs a signal so both phones agree. Try again when you are online.');
-      return false;
-    }
-    void refreshPendingSteps();
-    if (data === 'waiting' && isAdmin) {
-      const verb = step === 'start' ? 'Start' : 'Complete';
-      const alone = await new Promise<boolean>((resolve) => {
-        Alert.alert(
-          'Waiting on a tech',
-          `A tech needs to tap ${verb} to confirm with you. Or ${verb.toLowerCase()} it now by yourself.`,
-          [
-            { text: 'Wait for tech', style: 'cancel', onPress: () => resolve(false) },
-            { text: `${verb} now`, onPress: () => resolve(true) },
-          ],
-          { cancelable: false },
-        );
-      });
-      if (!alone) return false;
-      const res = await supabase.rpc('job_step_gate', { p_job_id: job.id, p_step: step, p_override: true });
-      void refreshPendingSteps();
-      return !res.error;
-    }
-    if (data === 'waiting') {
-      const who = step === 'start' ? 'start' : 'finish';
-      Alert.alert('Waiting on your partner', `Your partner needs to tap ${step === 'start' ? 'Start' : 'Complete'} on their device to ${who} this job together.`);
-      return false;
-    }
-    return true;
-  };
+  const canRunLifecycle = isAdmin || !job?.assignedTechId || job.assignedTechId === myId;
 
   const handleArrive = async (): Promise<void> => {
     if (!job) return;
@@ -1279,7 +1228,6 @@ export default function JobDrilldownScreen() {
     setActionError(null);
     try {
       if (!job.inProgressAt) {
-        if (!(await passStepGate('start'))) return;
         const nowIso = new Date().toISOString();
         const patch = { enRouteAt: job.enRouteAt ?? nowIso, inProgressAt: nowIso };
         await createJobRepository().patchLifecycle(job.id, patch);
@@ -1303,7 +1251,6 @@ export default function JobDrilldownScreen() {
 
   const handleComplete = async (): Promise<void> => {
     if (!job) return;
-    if (!(await passStepGate('complete'))) return;
     router.push({ pathname: '/job/complete/[jobId]', params: { jobId: job.id } } as never);
   };
 
@@ -1604,9 +1551,9 @@ ${body}`)) handleResetLaborTime();
       : []),
     { id: 'schedule', helpId: 'job_schedule', label: 'Schedule', onPress: () => selectRegion('schedule'), isActive: currentMenuId === 'schedule' },
     { id: 'contact', helpId: 'contact', label: 'Contact', onPress: () => { setActiveStage('contact'); handleContact(); }, isActive: currentMenuId === 'contact' },
-    { id: 'arrive', helpId: 'arrive', label: partnerPending('start') && !job?.inProgressAt ? 'Confirm Start' : 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork'), isActive: currentMenuId === 'arrive' },
+    { id: 'arrive', helpId: 'arrive', label: 'Start', onPress: () => { setActiveStage('arrive'); void handleArrive(); }, disabled: lockedStages.has('startWork') || !canRunLifecycle, isActive: currentMenuId === 'arrive' },
     { id: 'photos', helpId: 'job_photos', label: 'Photos', onPress: () => { selectRegion('photos'); scrollRef.current?.scrollTo({ y: 0, animated: true }); }, isActive: currentMenuId === 'photos' },
-    { id: 'complete', helpId: 'complete', label: partnerPending('complete') ? 'Confirm Complete' : 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, isActive: currentMenuId === 'complete' },
+    { id: 'complete', helpId: 'complete', label: 'Complete', onPress: () => { setActiveStage('complete'); void handleComplete(); }, disabled: !canRunLifecycle, isActive: currentMenuId === 'complete' },
     ...(!lockedStages.has('paid')
       ? [{ id: 'paid', helpId: 'paid', label: 'Paid', onPress: () => { selectRegion('payment'); setActiveStage('paid'); }, isActive: currentMenuId === 'paid' }] as MenuItem[]
       : []),

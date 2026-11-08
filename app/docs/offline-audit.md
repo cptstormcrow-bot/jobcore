@@ -408,3 +408,9 @@ On a job with a Helper Tech an admin's Start/Complete tap pairs with a tech's ta
 ## 212 - Hours run from the second tap (2026-11-08)
 
 Jeff: "second tap". Both techs' hours start/stop at the confirming (second) tap, not each tech's own tap. Migration 0136 drops the first-tapper re-stamp from 0135 (unpushed until Jeff names 0136); no app code change.
+
+## 213 - Lead tech alone starts and stops the job; gates removed (2026-11-08)
+
+Supersedes 210-212. Screen #0041 (job detail): Start and Complete are single taps again, no "Waiting on your partner", no "Confirm Start / Complete", no admin override alert. Only the lead tech (or an admin) can use Start and Complete; a Helper Tech's two buttons are disabled so they just watch. A job with no lead tech yet leaves them enabled as before. Each tech's paid hours come from their own clock-in, so migration 0136 (unpushed until Jeff names it) drops the 0135 gate objects and stops the job taps from writing hours rows for the helper. The helper assignment and access (0134 RLS) stay.
+
+Test recipe (after Jeff names 0136): lead taps Start and Complete and the job moves; the helper's device shows the job with Start and Complete greyed; the helper's hours do not change from the lead's taps. Untested on device; belongs in the next uber test plan (uber 213).
