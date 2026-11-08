@@ -394,3 +394,10 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 - Helper hours mirror the job's Travel/Start/Complete times in the helper's own hour segments and are paid at their own rate. Needs migration 0134 (NOT pushed; awaiting Jeff's number).
 - Assigning writes through the offline queue like other assignments.
 - Test (after 0134 is live): assign a Helper on a job, sign in as the helper on another device, confirm the job shows; lead taps Start and Complete, confirm both techs get hours; helper tapping Start shows 'Lead tech only'.
+
+## 210 - Two-tap Start / Complete with a Helper Tech (2026-11-08)
+
+Screen #0041 (job detail). On a job with a Helper Tech, Start and Complete need both techs: the first tap calls `job_step_gate` (migration 0135, NOT pushed) and shows "Waiting on your partner"; the partner's menu then reads "Confirm Start" / "Confirm Complete", and their tap makes the real change. The old "Lead tech only" alert is gone. Jobs with no helper, and admins, stay single-tap. Online-only: with no signal the gate shows "Needs a connection" and does nothing. Each tech's hours follow the second tap through the 0134 trigger.
+
+Test recipe (after Jeff names 0134 and 0135): two tech logins on one job with a helper. Tech A taps Start and sees the waiting message. Tech B's Start reads Confirm Start; tapping it starts the job. Repeat for Complete. Untested on device; belongs in the next uber test plan.
+

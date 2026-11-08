@@ -23,6 +23,7 @@ Past pushes: OK 17 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
 | 0134_job_assignments_helper_tech.sql | Adds a Helper Tech (second Service Tech) to a job: allows job_assignments kind 'helper', mirrors the job's Travel/Start/Complete times into the helper's own hour segments (paid at the helper's own rate), and opens/closes a segment when a helper is added or removed mid-job. | Written, NOT pushed. Needs Jeff to name 0134. | 2026-11-08 |
+| 0135_helper_two_tap_gate.sql | Two-tap Start / Complete when a job has a Helper Tech: a small requests table plus job_step_gate / job_step_pending functions, so the first tech's tap records a request and the partner's tap on their own device lets the step happen. Jobs without a helper stay single-tap. | Written, NOT pushed. Needs Jeff to name 0135. | 2026-11-08 |
 
 ## Past (pushes and attempts)
 
