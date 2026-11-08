@@ -59,6 +59,10 @@ export async function retryAllFailed(): Promise<void> {
   // No-op on web.
 }
 
+export async function probeSessionAndStamp(): Promise<string | null> {
+  return null; // web is always signed in live; nothing to stamp
+}
+
 export async function discardFailed(_id: string): Promise<void> {
   // No-op on web.
 }

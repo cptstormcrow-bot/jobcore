@@ -3,7 +3,7 @@ import { AppState, Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
 import { useSession } from './session';
-import { countFailed, countPending, countStuck, drainOfflineQueue, listFailed, retryAllFailed, unstickAll as unstickAllRows } from './offline-db';
+import { countFailed, countPending, countStuck, drainOfflineQueue, listFailed, probeSessionAndStamp, retryAllFailed, unstickAll as unstickAllRows } from './offline-db';
 import { registerDrainRequester, setOnlineNow, subscribeDrainComplete } from './sync-events';
 import { warmSavedData, type WarmSession } from './warm-cache';
 import { reportDeviceStatus } from './device-status-report';
@@ -211,7 +211,16 @@ export function SyncStatusProvider({ children }: { children: React.ReactNode }) 
     } catch {
       // keep rows as they are; the next connect retries again
     }
-    if (aliveRef.current) setLastError(null);
+    // Uber 228: check the sign-in now and put the live result on the waiting cards.
+    let probed: string | null = null;
+    if (Platform.OS !== 'web' && onlineRef.current) {
+      try {
+        probed = await probeSessionAndStamp();
+      } catch {
+        // the drain below still runs and reports its own result
+      }
+    }
+    if (aliveRef.current) setLastError(probed);
     await recount();
     trigger();
   }, [recount, trigger]);

@@ -412,6 +412,27 @@ async function ensureSessionUserId(): Promise<string | null> {
   return null;
 }
 
+/**
+ * Uber 228: Send now checks the sign-in itself, right away, and writes the live result onto every
+ * waiting change. The "Waiting" cards (#0098) show each row's saved error, which used to change only
+ * when a row got all the way to a send; a drain that never started left the old text up for days.
+ * Returns the error text written, or null when a live session exists (stale no-session text cleared).
+ */
+export async function probeSessionAndStamp(): Promise<string | null> {
+  const userId = await ensureSessionUserId();
+  const db = await getOfflineDb();
+  if (userId) {
+    await db.runAsync(
+      `update ${OFFLINE_QUEUE_TABLE} set last_error = null where status = 'pending' and last_error like '%no authenticated session%'`
+    );
+    return null;
+  }
+  const at = new Date().toLocaleTimeString();
+  const msg = `offline drain: no authenticated session (${lastSessionTrace}) [checked ${at}]`;
+  await db.runAsync(`update ${OFFLINE_QUEUE_TABLE} set last_error = ? where status = 'pending'`, msg);
+  return msg;
+}
+
 async function buildContext(): Promise<OpContext> {
   const userId = await ensureSessionUserId();
   if (!userId) {
