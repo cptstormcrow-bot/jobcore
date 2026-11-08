@@ -15,8 +15,8 @@ import {
 
 export { buildReadCacheKey };
 
-const BACKGROUND_STALE_MS = 30_000;
-const FOREGROUND_REFRESH_MS = 45_000;
+const BACKGROUND_STALE_MS = 5_000;
+const FOREGROUND_REFRESH_MS = 20_000;
 const lastFetchAt = new Map<string, number>();
 const inflight = new Map<string, Promise<unknown>>();
 const failedKeys = new Set<string>();

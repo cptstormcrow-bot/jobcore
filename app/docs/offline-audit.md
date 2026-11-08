@@ -422,3 +422,6 @@ A Helper Tech (job_assignments.kind = 'helper', not the lead) can open and brows
 ### 216 - Time Off from the day popup (#0054)
 
 Tapping a day with no assignment shows a Time Off button; it calls `timeOff.create` (queued through `writeThrough`, auto-approved by the 0019 trigger). A day already in time-off shows Cancel Time-off instead (`timeOff.cancel`). Both patch the local list so the square changes at once. Offline-safe: both writes use the existing queued ops.
+
+### 217 - Faster device-to-device refresh
+Open screens now re-check for other devices' changes every 20 s (was 45 s), and returning to the app after 5 s or more away refreshes at once (was 30 s). Screens only redraw when the data actually changed. Offline behaviour, queued writes and sign-in are untouched.
