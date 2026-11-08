@@ -71,6 +71,8 @@ export interface JobEstimateScreenProps {
   jobStarted?: boolean;
   /** When false: read-only display (tech view); mutating controls are hidden. Default true. */
   editable?: boolean;
+  /** Lets the status chips (Submit / Approve) work when `editable` is false. Defaults to `editable`. */
+  statusEditable?: boolean;
   /** Publishes the header-right status control and options-menu items to the host; null on unmount. */
   onChrome?: (chrome: EstimateChrome | null) => void;
   /** Optional node rendered right-aligned under the Check UPS row in the first summary cell (e.g. a tech picker). */
@@ -151,6 +153,8 @@ const dollarsInputToNumber = (t: string): number => { const s = t.trim().replace
 export function JobEstimateScreen(props: JobEstimateScreenProps) {
   const { job, onBack, embedded } = props;
   const editable = props.editable ?? true;
+  // Status chips (submit / approve) stay live for a tech even though lines are read-only (Jeff 2026-11-08).
+  const statusEditable = props.statusEditable ?? editable;
   const estimates = props.estimates ?? getModulePorts().estimates;
 
   // Prem-investigation red flags, loaded once per job; load errors are ignored.
@@ -1059,13 +1063,13 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
             <EstimateStatusControl
               status={estimate?.status ?? 'draft'}
               allowed={
-                editable
+                statusEditable
                   ? estimate
                     ? allowedEstimateMoves('admin', estimate.status)
                     : (['draft', 'submitted', 'approved'] as ReturnType<typeof allowedEstimateMoves>)
                   : []
               }
-              readOnly={!editable}
+              readOnly={!statusEditable}
               busy={moving}
               onSelect={(next) => {
                 void handleMove(next);
