@@ -143,7 +143,14 @@ export default function SignInScreen() {
     // On success the session listener swaps the route out from under us; only
     // the failure path needs to touch state here.
     if (message !== null) {
-      setError(message);
+      // Weak or no signal (wifi with no internet, a timeout): do not strand the user on a password
+      // error. If this device remembers an account, open the PIN sign-in right away.
+      if (accounts.length > 0 && /timed out|network|failed to fetch|connection|unreachable/i.test(message)) {
+        setOfflineOpen(true);
+        setError('Could not reach the service. Sign in with your PIN below, or retry.');
+      } else {
+        setError(message);
+      }
       setBusy(false);
     } else {
       void writeRecentEmail(email);

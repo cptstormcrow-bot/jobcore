@@ -382,3 +382,8 @@ Confirm button (added to 76): once a start time is chosen, a Confirm button appe
 206. **Help "?" circle no longer clips the question mark.** Same cause as 205: the heading font padded the glyph downward inside the circle. The "?" now has an explicit line height and no extra Android font padding (both sizes). Needs the next APK build.
 
 207. **The phone no longer loses its login ("offline drain: no authenticated session").** A phone that signed in with its PIN (no service at the time) ran from a saved copy of the account with no live server login, and only a change in connectivity ever tried to restore it, so queued changes stalled and screens showed stale amounts. Now the live login is restored automatically from the remembered account whenever it is missing: when the app returns to the foreground, when back online, and at the moment a queued change is sent (refresh first, then the saved account's tokens). Changes stay queued if the server truly rejects the saved login. Needs the next APK build. Test: sign in on the phone, background the app for a while, reopen it, and confirm Job Details changes sync with no sign-in prompt.
+
+## 208 - Sign-in is the same online, offline, or in between (2026-11-08)
+- PIN sign-in now goes live immediately (recoverOnline) instead of waiting for a connectivity change.
+- A password sign-in that times out or hits a network error opens the PIN panel automatically when the device remembers an account.
+- Test: turn on wifi with no internet (or airplane mode), try the password, confirm the PIN panel opens; sign in with the PIN, then restore service and confirm changes sync with no prompt.

@@ -315,6 +315,9 @@ export function SessionProvider({ children }: SessionProviderProps) {
         organization: snap.organization,
         fromCache: true,
       });
+      // Signed in with the PIN but the service is reachable (or only half reachable): go live right
+      // away instead of waiting for a connectivity change. Harmless when truly offline (it just fails).
+      void recoverOnline();
     };
 
     // Cold start that cannot reach the server: if any account is remembered on this device,
