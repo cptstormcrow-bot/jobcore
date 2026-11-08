@@ -401,3 +401,6 @@ Screen #0041 (job detail). On a job with a Helper Tech, Start and Complete need 
 
 Test recipe (after Jeff names 0134 and 0135): two tech logins on one job with a helper. Tech A taps Start and sees the waiting message. Tech B's Start reads Confirm Start; tapping it starts the job. Repeat for Complete. Untested on device; belongs in the next uber test plan.
 
+## 211 - Admin counts as a tap; each tech's hours run from their own tap (2026-11-08)
+
+On a job with a Helper Tech an admin's Start/Complete tap pairs with a tech's tap (either order); the admin can choose Start now / Complete now to act alone (override). The first tapper's segment is re-stamped to their own tap time (migration 0135, unpushed). The tap is online-only: offline the tech sees Needs a connection, because a confirm needs both phones to agree.

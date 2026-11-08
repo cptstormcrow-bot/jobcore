@@ -1236,13 +1236,31 @@ export default function JobDrilldownScreen() {
 
   // true = go ahead and do the real step now; false = this tap was recorded and the partner must concur.
   const passStepGate = async (step: 'start' | 'complete'): Promise<boolean> => {
-    if (!job || !helperTechId || isAdmin) return true;
+    if (!job || !helperTechId) return true;
     const { data, error } = await supabase.rpc('job_step_gate', { p_job_id: job.id, p_step: step });
     if (error) {
       Alert.alert('Needs a connection', 'Starting or finishing with a Helper Tech needs a signal so both phones agree. Try again when you are online.');
       return false;
     }
     void refreshPendingSteps();
+    if (data === 'waiting' && isAdmin) {
+      const verb = step === 'start' ? 'Start' : 'Complete';
+      const alone = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Waiting on a tech',
+          `A tech needs to tap ${verb} to confirm with you. Or ${verb.toLowerCase()} it now by yourself.`,
+          [
+            { text: 'Wait for tech', style: 'cancel', onPress: () => resolve(false) },
+            { text: `${verb} now`, onPress: () => resolve(true) },
+          ],
+          { cancelable: false },
+        );
+      });
+      if (!alone) return false;
+      const res = await supabase.rpc('job_step_gate', { p_job_id: job.id, p_step: step, p_override: true });
+      void refreshPendingSteps();
+      return !res.error;
+    }
     if (data === 'waiting') {
       const who = step === 'start' ? 'start' : 'finish';
       Alert.alert('Waiting on your partner', `Your partner needs to tap ${step === 'start' ? 'Start' : 'Complete'} on their device to ${who} this job together.`);

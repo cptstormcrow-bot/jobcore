@@ -6,6 +6,9 @@
 -- lifecycle write itself is still the existing tech-whitelisted jobs update, so
 -- the job's start/complete time is the second tap and both techs' segments
 -- (0134 trigger) follow it.
+-- An admin counts as one of the two taps (pairs with the lead or helper tech);
+-- p_override lets an admin start/finish alone. Each tech's hours run from their
+-- OWN tap: the first tapper's segment is re-stamped to their request time.
 -- NOT applied live yet; held until Jeff names this number.
 
 begin;
@@ -22,7 +25,8 @@ alter table public.job_step_requests enable row level security;
 -- No direct policies: all access is through the security-definer functions below.
 
 -- 'proceed' (do the real write now) or 'waiting' (your request is recorded).
-create or replace function public.job_step_gate(p_job_id uuid, p_step text)
+drop function if exists public.job_step_gate(uuid, text);
+create or replace function public.job_step_gate(p_job_id uuid, p_step text, p_override boolean default false)
 returns text
 language plpgsql
 security definer
@@ -41,10 +45,7 @@ begin
   if not found or v_job.organization_id <> public.current_org_id() then
     raise exception 'job_step_gate: job not found';
   end if;
-  if public.is_org_admin() then
-    return 'proceed';
-  end if;
-  if not (v_job.assigned_tech_id = v_uid or exists (
+  if not public.is_org_admin() and not (v_job.assigned_tech_id = v_uid or exists (
     select 1 from public.job_assignments a
     where a.job_id = p_job_id and a.tech_id = v_uid and a.kind = 'helper')) then
     raise exception 'job_step_gate: not a tech on this job';
@@ -56,6 +57,10 @@ begin
     return 'proceed';
   end if;
   if p_step = 'start' and v_job.in_progress_at is not null then
+    return 'proceed';
+  end if;
+  if p_override and public.is_org_admin() then
+    delete from public.job_step_requests where job_id = p_job_id and step = p_step;
     return 'proceed';
   end if;
 
@@ -95,23 +100,45 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_req public.job_step_requests%rowtype;
 begin
   if new.in_progress_at is not null and old.in_progress_at is null then
+    select * into v_req from public.job_step_requests where job_id = new.id and step = 'start';
+    if found then
+      update public.job_time_segments
+      set ended_at = greatest(started_at, v_req.requested_at)
+      where job_id = new.id and tech_id = v_req.tech_id
+        and reason_code = 'travel' and ended_at > v_req.requested_at;
+      update public.job_time_segments
+      set started_at = v_req.requested_at
+      where job_id = new.id and tech_id = v_req.tech_id
+        and reason_code = 'job_labor' and started_at > v_req.requested_at;
+    end if;
     delete from public.job_step_requests where job_id = new.id and step = 'start';
   end if;
   if new.completed_at is not null and old.completed_at is null then
+    select * into v_req from public.job_step_requests where job_id = new.id and step = 'complete';
+    if found then
+      update public.job_time_segments
+      set ended_at = greatest(started_at, v_req.requested_at)
+      where job_id = new.id and tech_id = v_req.tech_id
+        and reason_code = 'job_labor' and ended_at > v_req.requested_at;
+    end if;
     delete from public.job_step_requests where job_id = new.id and step = 'complete';
   end if;
   return new;
 end;
 $$;
 
+-- Named to sort AFTER sync_job_time_segments_trg so the segments exist when we re-stamp them.
 drop trigger if exists jobs_clear_step_requests on public.jobs;
-create trigger jobs_clear_step_requests
+drop trigger if exists zjobs_clear_step_requests on public.jobs;
+create trigger zjobs_clear_step_requests
   after update on public.jobs
   for each row execute function public.clear_job_step_requests();
 
-grant execute on function public.job_step_gate(uuid, text) to authenticated;
+grant execute on function public.job_step_gate(uuid, text, boolean) to authenticated;
 grant execute on function public.job_step_pending(uuid) to authenticated;
 
 commit;
