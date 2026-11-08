@@ -314,15 +314,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    paddingHorizontal: 3,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 4,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tileBadgeText: { fontSize: 10, fontWeight: '800', color: colors.success },
+  // Explicit lineHeight + no Android font padding: with a 10dp font in a 16dp circle the digit's descent was clipped
+  // at the bottom (Jeff 2026-11-08). The circle is now 20dp and the digit is centred in a line box that fits it.
+  tileBadgeText: { fontSize: 11, lineHeight: 14, fontWeight: '800', color: colors.success, textAlign: 'center', includeFontPadding: false },
   header: {
     flexDirection: 'row',
   },
