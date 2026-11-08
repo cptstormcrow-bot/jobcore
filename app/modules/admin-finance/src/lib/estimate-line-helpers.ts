@@ -66,6 +66,17 @@ export interface LineDraftFromTask {
   materialsNote: string | undefined;
 }
 
+/**
+ * Per-unit price for a price-sheet task. The catalog rate wins; when the task's
+ * catalog row carries no rate (the price sheet holds it, and the task's frozen
+ * price is rate x quantity) fall back to price / quantity, else 0.
+ */
+export function taskBaseUnitCost(task: { rate?: number | null; price?: number | null; quantity?: number | null }): number {
+  if (task.rate != null) return task.rate;
+  const q = typeof task.quantity === 'number' && task.quantity > 0 ? task.quantity : 1;
+  return task.price != null && task.price > 0 ? Math.round((task.price / q) * 100) / 100 : 0;
+}
+
 /** Same defaults as Build-from-tasks: kind labor, description = title, quantity > 0 else 1. */
 export function taskToLineDraft(task: PlanTaskLike): LineDraftFromTask {
   const q = task.quantity;

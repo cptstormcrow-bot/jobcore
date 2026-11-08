@@ -26,7 +26,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Card, ListItem, EmptyState, LoadingState, ErrorState, ScreenTitleRow, DefaultTabBar, Select, TextField, colors, spacing, radius, compact, typography, Text, EstimateStatusControl, Checkbox } from '@jobcore/ui';
 import { PayrollButton } from '@jobcore/ui';
 import { extractZip, matchServiceAreaByZip } from '../domain/job-detail-helpers';
-import { findCatalogDuplicate, isLineStale, taskToLineDraft } from '../lib/estimate-line-helpers';
+import { findCatalogDuplicate, isLineStale, taskBaseUnitCost, taskToLineDraft } from '../lib/estimate-line-helpers';
 import type { MenuItem } from '@jobcore/ui';
 import { ESTIMATE_LABELS, DEFAULT_FINE_PRINT_PLACEHOLDER, computeTotals, formatMoney, isUnsetFinePrint } from '../domain/estimate-layout';
 import { allowedEstimateMoves, needsDownstreamWarning } from '@jobcore/core';
@@ -640,7 +640,7 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
     const drafts: JobEstimateLineItemDraft[] = priceSheetTasks.map((t) => {
       const unitCost = buildAdjustments
         .filter((adjustment) => adjustment.serviceAreaId === resolvedServiceArea?.id)
-        .reduce((value, adjustment) => applyDollarAdjustment(value, adjustment), t.rate ?? 0);
+        .reduce((value, adjustment) => applyDollarAdjustment(value, adjustment), taskBaseUnitCost(t));
       const base = taskToLineDraft(t);
       return {
         ...base,
@@ -665,8 +665,31 @@ export function JobEstimateScreen(props: JobEstimateScreenProps) {
         });
       }
     }
+    // A line built at $0 for a task that does carry a price (older builds read only the
+    // catalog rate) is repaired here, once, so the estimate total picks the price up.
+    const stale = lineItems.filter((i) => {
+      if (!i.jobPlanTaskId || !(i.unitCost === 0) || i.lineTotal !== 0) return false;
+      const t = visibleTasks.find((v) => v.id === i.jobPlanTaskId);
+      return !!t && !!t.serviceTaskId && taskBaseUnitCost(t) > 0;
+    });
+    if (stale.length > 0 && !buildingRef.current) {
+      buildingRef.current = true;
+      try {
+        const fixed: JobEstimateLineItem[] = [];
+        for (const i of stale) {
+          const t = visibleTasks.find((v) => v.id === i.jobPlanTaskId)!;
+          const unitCost = taskBaseUnitCost(t);
+          fixed.push(await estimates.updateLineItem(i.id, { unitCost, lineTotal: i.quantity * unitCost }));
+        }
+        setLineItems((prev) => prev.map((p) => fixed.find((f) => f.id === p.id) ?? p));
+      } catch {
+        autoBuildFailedRef.current = true;
+      } finally {
+        buildingRef.current = false;
+      }
+    }
     if (drafts.length === 0) {
-      if (!auto) setActionState({ kind: 'done', message: 'Every task already has a line.' });
+      if (!auto && stale.length === 0) setActionState({ kind: 'done', message: 'Every task already has a line.' });
       return;
     }
     buildingRef.current = true;
