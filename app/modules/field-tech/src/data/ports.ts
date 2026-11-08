@@ -958,6 +958,8 @@ export interface JobPlanTaskSummary {
   unit: string | null;
   area: string | null;
   materialsNote: string | null;
+  /** Optional link to instructions (PDF, video, web page). */
+  instructionsUrl?: string | null;
   /** ISO timestamp of the last content change. */
   contentUpdatedAt: string;
 }

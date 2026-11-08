@@ -1470,6 +1470,8 @@ export interface JobPlanTaskRow {
   unit: string | null;
   area: string | null;
   materialsNote: string | null;
+  /** Optional link to instructions (PDF, video, YouTube); copied from the price sheet on assign. */
+  instructionsUrl?: string | null;
   taskType: JobPlanTaskType | null;
   sku: string | null;
   price: number | null;
@@ -1501,6 +1503,7 @@ export interface JobPlanTaskPatch {
   unit?: string | null;
   area?: string | null;
   materialsNote?: string | null;
+  instructionsUrl?: string | null;
   taskType?: JobPlanTaskType | null;
   sku?: string | null;
   price?: number | null;
@@ -1541,6 +1544,7 @@ export interface JobPlanTasksRepository {
       unit?: string | null;
       area?: string | null;
       materialsNote?: string | null;
+      instructionsUrl?: string | null;
       taskType?: JobPlanTaskType | null;
       sku?: string | null;
       price?: number | null;

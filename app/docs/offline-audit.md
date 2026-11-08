@@ -428,3 +428,6 @@ Open screens now re-check for other devices' changes every 20 s (was 45 s), and 
 
 ### 219 - Job timeline keeps its green (Job #116)
 The Job Details timeline (screen #0041) no longer drops the Prem and Estimate green when a read fails or comes back empty; it keeps the last good answer for that job. It also re-reads whenever the shared read cache learns something new (20 s refresh, return to the app, a save), so fresh data redraws the timeline. Switching jobs starts clean. Offline: a cached or failed read never blanks a finished step.
+
+### 220 - Instructions URL on every task
+The link now lives on the Job Details task row (`job_plan_tasks.instructions_url`, migration 0138), not just the price-sheet catalog. Admin edit writes through `jobPlanTaskUpdate` (queued, offline-safe) and also updates the catalog for linked tasks. Assign copies the catalog link via a before-insert trigger; publish/approve copies the row link up to `service_tasks`. Tech read falls back to the old column list until 0138 is live. No new queued op kinds.

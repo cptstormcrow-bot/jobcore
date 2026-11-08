@@ -3156,6 +3156,7 @@ type JobPlanTaskDbRow = {
   unit?: string | null;
   area?: string | null;
   materials_note?: string | null;
+  instructions_url?: string | null;
   task_type?: JobPlanTaskType | null;
   sku?: string | null;
   price?: number | null;
@@ -3203,6 +3204,7 @@ function toJobPlanTaskRow(row: JobPlanTaskDbRow): JobPlanTaskRow {
     unit: row.unit ?? null,
     area: row.area ?? null,
     materialsNote: row.materials_note ?? null,
+    instructionsUrl: row.instructions_url ?? null,
     taskType: row.task_type ?? null,
     sku: row.sku ?? null,
     price: row.price == null ? null : Number(row.price),
@@ -3365,6 +3367,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
         unit: input.unit ?? null,
         area: input.area ?? null,
         materialsNote: input.materialsNote ?? null,
+        instructionsUrl: input.instructionsUrl ?? null,
         taskType: input.taskType ?? null,
         sku: input.sku ?? null,
         price: input.price ?? null,
@@ -3390,6 +3393,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           unit: input.unit ?? null,
           area: input.area ?? null,
           materialsNote: input.materialsNote ?? null,
+          instructionsUrl: input.instructionsUrl ?? null,
           taskType: input.taskType ?? null,
           sku: input.sku ?? null,
           price: input.price ?? null,

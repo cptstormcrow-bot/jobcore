@@ -131,16 +131,22 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
     Linking.openURL(url).catch(() => setError('Could not open that link.'));
   }
 
-  async function saveUrl(row: JobPlanTaskRow, cat: ServiceTaskCatalogEntry) {
+  // Every task carries its own link. A linked task also writes it to the price sheet so it sticks for next time.
+  async function saveUrl(row: JobPlanTaskRow, cat?: ServiceTaskCatalogEntry) {
     const raw = urlDrafts[row.id];
     if (raw === undefined) return;
     const next = normalizeInstructionsUrl(raw);
     setUrlDrafts((p) => { const { [row.id]: _x, ...rest } = p; return rest; });
-    if ((cat.instructionsUrl ?? null) === next) return;
-    setCatalog((c) => c.map((x) => (x.id === cat.id ? { ...x, instructionsUrl: next } : x)));
+    const current = row.instructionsUrl ?? cat?.instructionsUrl ?? null;
+    if (current === next) return;
+    if (cat) setCatalog((c) => c.map((x) => (x.id === cat.id ? { ...x, instructionsUrl: next } : x)));
     await run(async () => {
-      const res = await createServiceTasksRepository().updateServiceTask(cat.id, { instructionsUrl: next });
-      if (res && (res as { ok?: boolean }).ok === false) throw new Error('Could not save the link.');
+      await repo.updateTask(row.id, { instructionsUrl: next });
+      replaceRow(row.id, { instructionsUrl: next });
+      if (cat && isAdmin && (cat.instructionsUrl ?? null) !== next) {
+        const res = await createServiceTasksRepository().updateServiceTask(cat.id, { instructionsUrl: next });
+        if (res && (res as { ok?: boolean }).ok === false) throw new Error('Could not save the link.');
+      }
     }, 'Could not save the link.');
   }
 
@@ -342,6 +348,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       : '';
     const expanded = !edit || !!open[row.id];
     const cat = row.serviceTaskId ? catalog.find((c) => c.id === row.serviceTaskId) : undefined;
+    const rowUrl = row.instructionsUrl ?? cat?.instructionsUrl ?? null;
     const typed = taskTotal(row.taskType, row.price, row.hourlyRate, row.extrasCost, row.estimatedMinutes);
     const priceNum = typed ?? (!row.taskType && row.price != null ? row.price : null) ?? (cat?.rate != null ? Math.round(cat.rate * (row.quantity || 1) * 100) / 100 : null);
     return (
@@ -380,9 +387,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
             onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, qty: t } }))}
             onBlur={() => void saveQty(row)} />
         ) : null}
-        {edit && !dim && isAdmin && cat ? (
+        {edit && !dim && isAdmin ? (
           <TextField inline dense label="URL" labelStyle={styles.lbl} placeholder="Instructions link" autoCapitalize="none" autoCorrect={false} keyboardType="url"
-            value={urlDrafts[row.id] ?? cat.instructionsUrl ?? ''}
+            value={urlDrafts[row.id] ?? rowUrl ?? ''}
             onChangeText={(t) => setUrlDrafts((p) => ({ ...p, [row.id]: t }))}
             onBlur={() => void saveUrl(row, cat)} />
         ) : null}
@@ -501,9 +508,9 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         {edit && !dim ? null : detail ? (
           <Text style={styles.notes}>{detail}</Text>
         ) : null}
-        {cat?.instructionsUrl ? (
-          <Pressable onPress={() => openUrl(cat.instructionsUrl as string)} accessibilityRole="link" accessibilityLabel="Open instructions">
-            <Text style={styles.link} numberOfLines={1}>Instructions ▸ {cat.instructionsUrl}</Text>
+        {rowUrl ? (
+          <Pressable onPress={() => openUrl(rowUrl)} accessibilityRole="link" accessibilityLabel="Open instructions">
+            <Text style={styles.link} numberOfLines={1}>Instructions ▸ {rowUrl}</Text>
           </Pressable>
         ) : null}
         {row.priceStatus === 'pending' ? (

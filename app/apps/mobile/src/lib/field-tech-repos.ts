@@ -1129,15 +1129,16 @@ export function createJobPlanTaskRepository(): JobPlanTaskRepository {
     async listForJob(jobId: string): Promise<JobPlanTaskSummary[]> {
       return readCachedOr('ft.planTasks.listForJob', { jobId }, async () => {
         const { organizationId } = requireModuleSession();
-        const { data, error } = await supabase
-          .from('job_plan_tasks')
-          .select('id,title,kind,status,sort_order,unit,area,materials_note,content_updated_at')
-          .eq('job_id', jobId)
-          .eq('organization_id', organizationId)
-          .order('sort_order', { ascending: true });
+        const base = 'id,title,kind,status,sort_order,unit,area,materials_note,content_updated_at';
+        const run = (cols: string) =>
+          supabase.from('job_plan_tasks').select(cols).eq('job_id', jobId).eq('organization_id', organizationId)
+            .order('sort_order', { ascending: true });
+        let { data, error } = await run(`${base},instructions_url`);
+        // Until migration 0138 is live the link column is missing: read without it.
+        if (error && /instructions_url/.test(error.message)) ({ data, error } = await run(base));
         if (error) throw new Error(`listJobPlanTasks failed: ${error.message}`);
         return (
-          (data ?? []) as Array<{
+          (data ?? []) as unknown as Array<{
             id: string;
             title: string;
             kind: string;
@@ -1145,6 +1146,7 @@ export function createJobPlanTaskRepository(): JobPlanTaskRepository {
             unit?: string | null;
             area?: string | null;
             materials_note?: string | null;
+            instructions_url?: string | null;
             content_updated_at?: string | null;
           }>
         ).map((r) => ({
@@ -1155,6 +1157,7 @@ export function createJobPlanTaskRepository(): JobPlanTaskRepository {
           unit: r.unit ?? null,
           area: r.area ?? null,
           materialsNote: r.materials_note ?? null,
+          instructionsUrl: r.instructions_url ?? null,
           contentUpdatedAt: r.content_updated_at ?? new Date(0).toISOString(),
         }));
       }, []);

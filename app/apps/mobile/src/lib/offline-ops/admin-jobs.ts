@@ -72,13 +72,13 @@ export interface JobCustomerSavePayload { jobId: string; patch: CustomerPatch }
 export interface JobPlanTaskCreatePayload {
   id: string; organizationId: string; jobId: string; serviceTaskId: string | null; quantity?: number;
   kind?: 'misc'; title?: string; notes?: string; estimatedMinutes?: number; source?: string;
-  unit?: string | null; area?: string | null; materialsNote?: string | null;
+  unit?: string | null; area?: string | null; materialsNote?: string | null; instructionsUrl?: string | null;
   taskType?: string | null; sku?: string | null; price?: number | null; priceStatus?: string | null; hourlyRate?: number | null; extrasCost?: number | null;
   contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null;
 }
 export interface JobPlanTaskUpdatePayload {
   taskRowId: string;
-  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null;
+  patch: { quantity?: number; notes?: string | null; title?: string; estimatedMinutes?: number | null; sortOrder?: number; status?: string; unit?: string | null; area?: string | null; materialsNote?: string | null; instructionsUrl?: string | null;
     taskType?: string | null; sku?: string | null; price?: number | null; priceStatus?: string | null; hourlyRate?: number | null; extrasCost?: number | null;
     contractorName?: string | null; contractorContact?: string | null; contractorLicense?: string | null };
   updatedAt: string;
@@ -381,6 +381,7 @@ const jobPlanTaskCreate: OpHandler<JobPlanTaskCreatePayload> = async (p, ctx) =>
   if (p.unit !== undefined) row.unit = p.unit;
   if (p.area !== undefined) row.area = p.area;
   if (p.materialsNote !== undefined) row.materials_note = p.materialsNote;
+  if (p.instructionsUrl !== undefined) row.instructions_url = p.instructionsUrl;
   if (p.taskType !== undefined) row.task_type = p.taskType;
   if (p.sku !== undefined) row.sku = p.sku;
   if (p.price !== undefined) row.price = p.price;
@@ -406,6 +407,7 @@ const jobPlanTaskUpdate: OpHandler<JobPlanTaskUpdatePayload> = async ({ taskRowI
   if (patch.unit !== undefined) row.unit = patch.unit;
   if (patch.area !== undefined) row.area = patch.area;
   if (patch.materialsNote !== undefined) row.materials_note = patch.materialsNote;
+  if (patch.instructionsUrl !== undefined) row.instructions_url = patch.instructionsUrl;
   if (patch.taskType !== undefined) row.task_type = patch.taskType;
   if (patch.sku !== undefined) row.sku = patch.sku;
   if (patch.price !== undefined) row.price = patch.price;
