@@ -33,6 +33,8 @@ export type MenuActionItem = {
   dividerAbove?: boolean;
   /** 'danger' renders the label bold red (e.g. Sync while writes are failing). */
   tone?: 'danger';
+  /** Small count pill after the label (e.g. unworked Leads). Hidden when 0 or unset. */
+  badge?: number;
 };
 export type MenuToggleItem = {
   id: string;
@@ -148,6 +150,7 @@ function MenuRow({
           >
             {item.kind === 'toggle' ? (item.checked ? <Text style={styles.toggleChecked}>{'■  '}</Text> : '☐  ') : ''}{item.label}
             {hasSubmenu ? (expanded ? '  ▾' : '  ▸') : ''}
+            {item.kind !== 'toggle' && item.badge ? `  (${item.badge > 99 ? '99+' : item.badge})` : ''}
           </Text>
           {item.helpId ? (
             <View style={{ position: 'absolute', right: spacing.md, top: 0, bottom: 0, justifyContent: 'center' }}>

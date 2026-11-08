@@ -21,6 +21,8 @@ export interface LeadEditScreenProps {
   lead: Lead;
   onSaved?: (lead: Lead) => void;
   onCreateJob?: (lead: Lead) => void;
+  /** Website leads: convert straight to a `new` job. Resolves to a message to show, or null. */
+  onConvert?: (lead: Lead) => Promise<string | null>;
   onBack?: () => void;
 }
 
@@ -29,7 +31,7 @@ function textOrNull(value: string): string | null {
   return trimmed === '' ? null : trimmed;
 }
 
-export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditScreenProps) {
+export function LeadEditScreen({ lead, onSaved, onCreateJob, onConvert, onBack }: LeadEditScreenProps) {
   const session = getModuleSession();
   const ports = getModulePorts();
 
@@ -119,6 +121,21 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
     setReadinessHint('Add ' + labels.join(' and ') + ' to create a job.');
   }
 
+  async function handleConvert() {
+    const saved = await save();
+    if (!saved || !onConvert) return;
+    setSubmitting(true);
+    try {
+      setReadinessHint(await onConvert(saved));
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to convert lead.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const canConvertHere = !!onConvert && !!lead.leadId && !lead.convertedJobId;
+
   if (!session) {
     return <EmptyState title="No active session" message="Sign in to edit this lead." />;
   }
@@ -129,6 +146,7 @@ export function LeadEditScreen({ lead, onSaved, onCreateJob, onBack }: LeadEditS
       <PayrollButton label="Back" onPress={() => onBack?.()} />
       <PayrollButton label="Save" onPress={handleSave} disabled={!canSubmit} />
       <PayrollButton label="Create job" onPress={handleCreateJob} disabled={submitting} />
+      {canConvertHere ? <PayrollButton label="Convert" onPress={handleConvert} disabled={submitting} /> : null}
     </View>
     {readinessHint ? <Text style={[styles.guidance, styles.hintPad]}>{readinessHint}</Text> : null}
     <ScrollView keyboardShouldPersistTaps="handled" style={styles.scroll} contentContainerStyle={styles.content}>

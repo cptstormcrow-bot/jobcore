@@ -53,6 +53,8 @@ import { UniversalCalendar } from './UniversalCalendar';
 import { QualifyScreen, type QualifyAxisSelection } from './QualifyScreen';
 import { LeadCreateScreen } from './LeadCreateScreen';
 import { LeadEditScreen } from './LeadEditScreen';
+import { convertLead } from '../flows/convert-lead';
+import { NEEDS_SERVICE_AREA_LABEL, countUnworkedLeads, needsServiceArea } from '../domain/convert-lead';
 import { ArchivedJobsScreen } from './ArchivedJobsScreen';
 import { PlanningScreen } from './PlanningScreen';
 import { JobEstimateScreen } from './JobEstimateScreen';
@@ -282,10 +284,22 @@ export function AdminFinanceRoot() {
     }
   }
 
+  // Admin-only badge on the Leads menu item: leads not yet qualified or converted.
+  const [unworkedLeads, setUnworkedLeads] = useState(0);
+  const isLeadAdmin = session?.role === 'owner' || session?.role === 'admin';
+  function refreshLeadCount() {
+    if (!orgId || !isLeadAdmin) return;
+    void ports.leads.listForOrganization(orgId).then((leads) => setUnworkedLeads(countUnworkedLeads(leads)), () => {});
+  }
+  useEffect(() => {
+    refreshLeadCount();
+  }, [orgId, isLeadAdmin]);
+
   function refreshJobs() {
     if (!orgId) {
       return;
     }
+    refreshLeadCount();
     void jobRepository.listForOrganization(orgId).then((jobs) => {
       setLoadState((prev) => (prev.kind === 'loaded' ? { ...prev, jobs } : prev));
       void loadCardExtras(jobs);
@@ -776,6 +790,22 @@ export function AdminFinanceRoot() {
     });
   }
 
+  async function handleConvertLead(lead: Lead): Promise<string | null> {
+    const result = await convertLead(lead, {
+      jobs: jobRepository,
+      leads: ports.leads,
+      customers: ports.customers,
+      serviceAreas: loadState.kind === 'loaded' ? loadState.serviceAreas : [],
+      now: () => new Date().toISOString(),
+    });
+    if (!result.ok) return result.reason;
+    await refreshJobs();
+    setSelectedLead(result.lead);
+    return result.needsServiceArea
+      ? NEEDS_SERVICE_AREA_LABEL + ': job created. Open the job and pick its service area.'
+      : 'Converted. The new job is in your Jobs list.';
+  }
+
   function handleQualifyCancel() {
     setQualifyError(null);
     setSubView('leadEdit');
@@ -1019,7 +1049,7 @@ export function AdminFinanceRoot() {
         titleBar={{ title: 'Admin & Finance', subtitle: currentScreenLabel }}
         menuItems={buildAdminFinanceMenuItems((v) => goTop(v)).map((item) => ({
           ...item,
-          ...(item.id === 'leadInbox' ? { helpId: 'create' } : item.id === 'payments' ? { helpId: 'payroll_rollup' } : {}),
+          ...(item.id === 'leadInbox' ? { helpId: 'create', badge: isLeadAdmin ? unworkedLeads : 0 } : item.id === 'payments' ? { helpId: 'payroll_rollup' } : {}),
           isActive: (TOP[subView] ?? subView) === item.id,
         }))}
       />
@@ -1080,7 +1110,7 @@ export function AdminFinanceRoot() {
                       : null;
                     const jobLabel = job.jobNumber != null ? `Job #${job.jobNumber}` : null;
                     const workDescription = summarizeWorkDescription(cardExtras.titles[job.id] ?? [], job.description, { maxChars: 60 });
-                    const footer = [jobLabel, workDescription || null, techName].filter(Boolean).join(' · ') || undefined;
+                    const footer = [jobLabel, workDescription || null, techName, job.source === 'website' && needsServiceArea(job) ? NEEDS_SERVICE_AREA_LABEL : null].filter(Boolean).join(' · ') || undefined;
                     const cardFlags = cardExtras.flags[job.id];
                     const dots = cardFlags?.premCompleted || cardFlags?.estimateApproved ? (
                       <>
@@ -1134,6 +1164,7 @@ export function AdminFinanceRoot() {
               setSelectedLead(saved);
               setSubView('qualify');
             }}
+            onConvert={handleConvertLead}
             onBack={() => {
               setSelectedLead(null);
               setSubView('leadInbox');

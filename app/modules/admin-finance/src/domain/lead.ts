@@ -42,6 +42,12 @@ export interface LeadRow {
   qualified_at: string | null;
   converted_job_id: string | null;
   created_at: string;
+  /** Website intake (0139). Optional so older rows and fixtures still type-check. */
+  lead_id?: string | null;
+  zip?: string | null;
+  service_area?: string | null;
+  ingress_instructions?: string | null;
+  is_test?: boolean;
 }
 
 /** Domain `Lead` — camelCase mirror of `LeadRow`. */
@@ -63,6 +69,12 @@ export interface Lead {
   qualifiedAt: string | null;
   convertedJobId: string | null;
   createdAt: string;
+  /** Website intake id, zip, named service area, gate/entry notes, test flag (0139). */
+  leadId?: string | null;
+  zip?: string | null;
+  serviceArea?: string | null;
+  ingressInstructions?: string | null;
+  isTest?: boolean;
 }
 
 /**
@@ -90,5 +102,10 @@ export function toLead(row: LeadRow): Lead {
     qualifiedAt: row.qualified_at,
     convertedJobId: row.converted_job_id,
     createdAt: row.created_at,
+    leadId: row.lead_id ?? null,
+    zip: row.zip ?? null,
+    serviceArea: row.service_area ?? null,
+    ingressInstructions: row.ingress_instructions ?? null,
+    isTest: row.is_test ?? false,
   };
 }

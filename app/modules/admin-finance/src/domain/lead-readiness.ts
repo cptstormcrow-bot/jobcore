@@ -50,6 +50,7 @@ export function classifyLead(lead: Lead): LeadStatus {
   return missingFields(lead).length === 0 ? 'ready' : 'needs_info';
 }
 
-function isMissing(value: string | null): boolean {
-  return value === null || value.trim().length === 0;
+function isMissing(value: string | boolean | null | undefined): boolean {
+  if (typeof value === 'boolean') return false;
+  return value === null || value === undefined || value.trim().length === 0;
 }
