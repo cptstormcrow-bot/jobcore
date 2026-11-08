@@ -124,8 +124,17 @@ export async function markFailed(
 // runs the op handler against the live session (same OpContext as native).
 let cachedOrg: { userId: string; orgId: string } | null = null;
 
+// Same hook as native (see offline-db.ts): the session layer registers a live-session restorer.
+let sessionRecoverer: (() => Promise<boolean>) | null = null;
+export function setSessionRecoverer(fn: (() => Promise<boolean>) | null): void {
+  sessionRecoverer = fn;
+}
+
 async function buildContext(): Promise<OpContext> {
-  const { data, error } = await supabase.auth.getSession();
+  let { data, error } = await supabase.auth.getSession();
+  if ((error || !data.session?.user?.id) && sessionRecoverer && (await sessionRecoverer().catch(() => false))) {
+    ({ data, error } = await supabase.auth.getSession());
+  }
   const userId = data.session?.user?.id;
   if (error || !userId) {
     const e = new Error('offline send: no authenticated session');

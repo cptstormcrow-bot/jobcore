@@ -6,11 +6,12 @@ import type { Organization, Profile, Role } from '@jobcore/core';
 import NetInfo from '@react-native-community/netinfo';
 
 import { supabase } from './supabase';
-import { rememberAccount, listOfflineAccounts, clearActive, type OfflineSnapshot } from './offline-auth';
+import { AppState } from 'react-native';
+import { rememberAccount, listOfflineAccounts, clearActive, loadActiveSnapshot, type OfflineSnapshot } from './offline-auth';
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
 import { getCached, wipeAll } from './read-cache-store';
-import { discardAllFailed } from './offline-db';
+import { discardAllFailed, setSessionRecoverer } from './offline-db';
 import { reportDeviceStatus } from './device-status-report';
 import { isVehicleStatus, isToolStatus } from '../../../../modules/admin-finance/src/data/ports';
 
@@ -377,29 +378,54 @@ export function SessionProvider({ children }: SessionProviderProps) {
     });
 
     // Back online while running from a snapshot: re-establish the live session in the background.
-    const recoverOnline = async () => {
-      const snap = offlineSnapRef.current;
-      if (!snap || cancelledRef.current) return;
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
+    // Restore the live Supabase session from the remembered account (snapshot tokens). Used when
+    // back online, when the app returns to the foreground, and by the offline drain when it finds
+    // no session (so a phone never needs a manual re-sign-in). Returns true when a session exists.
+    let recovering: Promise<boolean> | null = null;
+    const recoverOnline = (): Promise<boolean> => {
+      if (recovering) return recovering;
+      recovering = (async () => {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            if (offlineSnapRef.current) {
+              offlineSnapRef.current = null;
+              await runCheck();
+            }
+            return true;
+          }
+          // Prefer the in-memory snapshot; fall back to the saved active-account snapshot so a
+          // lost/torn SecureStore session while "signed in" is healed too.
+          const snap = offlineSnapRef.current ?? (await loadActiveSnapshot());
+          if (!snap || cancelledRef.current) return false;
+          const { error } = await supabase.auth.setSession({
+            access_token: snap.session.access_token,
+            refresh_token: snap.session.refresh_token,
+          });
+          // On success SIGNED_IN drives a live resolve. On failure stay as-is; the PIN path still works.
+          if (error) return false;
           offlineSnapRef.current = null;
-          await runCheck();
-          return;
+          return true;
+        } catch {
+          return false; // still offline or token revoked: keep running from the snapshot
         }
-        const { error } = await supabase.auth.setSession({
-          access_token: snap.session.access_token,
-          refresh_token: snap.session.refresh_token,
-        });
-        // On success SIGNED_IN drives a live resolve. On failure stay offline; the PIN path still works.
-        if (!error) offlineSnapRef.current = null;
-      } catch {
-        // still offline or token revoked: keep running from the snapshot
-      }
+      })().finally(() => {
+        recovering = null;
+      });
+      return recovering;
     };
     const unsubscribeNet = NetInfo.addEventListener((net) => {
       if (net.isConnected && offlineSnapRef.current) void recoverOnline();
     });
+    // Coming back to the app is the moment a stale session shows up: heal it right then.
+    const appStateSub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') return;
+      void (async () => {
+        const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+        if (!data.session && stateRef.current.status === 'authenticated') await recoverOnline();
+      })();
+    });
+    setSessionRecoverer(recoverOnline);
 
     bridge = {
       enter: enterFromSnapshot,
@@ -412,6 +438,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
     return () => {
       cancelledRef.current = true;
       bridge = null;
+      setSessionRecoverer(null);
+      appStateSub.remove();
       unsubscribeNet();
       subscription.subscription.unsubscribe();
     };

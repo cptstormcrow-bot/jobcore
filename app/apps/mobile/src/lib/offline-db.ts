@@ -360,10 +360,34 @@ export async function clearSyncLog(): Promise<void> {
 
 let cachedOrg: { userId: string; orgId: string } | null = null;
 
+// The session layer registers a function that restores the live Supabase session from the
+// remembered account (PIN/offline sign-in leaves none). Kept as a hook so this file never
+// imports session.tsx (which imports this file).
+let sessionRecoverer: (() => Promise<boolean>) | null = null;
+export function setSessionRecoverer(fn: (() => Promise<boolean>) | null): void {
+  sessionRecoverer = fn;
+}
+
+/** The current user id, restoring the live session first if it is missing (never throws). */
+async function ensureSessionUserId(): Promise<string | null> {
+  try {
+    const first = await supabase.auth.getSession();
+    if (first.data.session?.user?.id) return first.data.session.user.id;
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.data.session?.user?.id) return refreshed.data.session.user.id;
+    if (sessionRecoverer && (await sessionRecoverer())) {
+      const again = await supabase.auth.getSession();
+      return again.data.session?.user?.id ?? null;
+    }
+  } catch {
+    // fall through: still no session
+  }
+  return null;
+}
+
 async function buildContext(): Promise<OpContext> {
-  const { data, error } = await supabase.auth.getSession();
-  const userId = data.session?.user?.id;
-  if (error || !userId) {
+  const userId = await ensureSessionUserId();
+  if (!userId) {
     const e = new Error('offline drain: no authenticated session');
     (e as Error & { status?: number }).status = 401;
     throw e;
@@ -416,8 +440,7 @@ export function drainOfflineQueue(): Promise<DrainResult> {
       const open = await db.getAllAsync<QueueRow>(
         `select ${QUEUE_COLUMNS} from ${OFFLINE_QUEUE_TABLE} where status in ('pending', 'inflight') order by occurred_at asc, rowid asc`
       );
-      const { data: sess } = await supabase.auth.getSession();
-      const pending = filterRunnable(open, sess.session?.user?.id ?? null);
+      const pending = filterRunnable(open, open.length > 0 ? await ensureSessionUserId() : null);
       // Core's DrainRow is camelCase (occurredAt) + next_attempt_at; map the SQL rows.
       const rows = pending.map((r) => ({
         id: r.id,
