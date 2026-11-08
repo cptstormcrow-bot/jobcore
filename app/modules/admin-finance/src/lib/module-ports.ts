@@ -119,6 +119,7 @@ export interface ModulePorts {
         priceCents?: number | null;
         details?: string | null;
         materials?: string | null;
+        instructionsUrl?: string | null;
       }
     ): Promise<CalculationResult<ServiceTask>>;
     remove(taskId: string): Promise<CalculationResult<void>>;
@@ -133,6 +134,7 @@ export interface ModulePorts {
         priceCents?: number | null;
         details?: string | null;
         materials?: string | null;
+        instructionsUrl?: string | null;
       }
     ): Promise<CalculationResult<ServiceTask>>;
   };

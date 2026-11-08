@@ -1443,6 +1443,8 @@ export interface ServiceTask {
   priceCents?: number | null;
   details?: string | null;
   materials?: string | null;
+  /** Link to .pdf / video instructions (migration 0137); opened from Job Details. */
+  instructionsUrl?: string | null;
   /** service_tasks.task_number (migration 0067); display via formatServiceTaskNumber. */
   taskNumber?: number | null;
 }
@@ -1522,6 +1524,7 @@ export interface ServiceTaskCatalogEntry {
   /** Price sheet (#0019) Details / Materials text, shown in the #0061 item sheet. */
   details?: string | null;
   materials?: string | null;
+  instructionsUrl?: string | null;
 }
 
 export interface JobPlanTasksRepository {

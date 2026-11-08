@@ -53,6 +53,7 @@ import { AddServiceDialog } from './AddServiceDialog';
 /** Picker value for the "New Service" / "New Task" rows at the top of the lists. */
 const NEW_ENTRY = '__new__';
 import { formatServiceTaskNumber } from '../domain/format-service-task-number';
+import { normalizeInstructionsUrl } from '../domain/normalize-instructions-url';
 
 /** Rates port shape (`module-ports.ts:75-85`). Do not widen — `JobEstimateScreen.tsx:46` shares it. */
 interface PriceSheetRatesPort {
@@ -85,6 +86,7 @@ interface ServiceTasksRepoPort {
       priceCents?: number | null;
       details?: string | null;
       materials?: string | null;
+      instructionsUrl?: string | null;
     }
   ): Promise<CalculationResult<ServiceTask>>;
   updateServiceTask(
@@ -98,6 +100,7 @@ interface ServiceTasksRepoPort {
       priceCents?: number | null;
       details?: string | null;
       materials?: string | null;
+      instructionsUrl?: string | null;
     }
   ): Promise<CalculationResult<ServiceTask>>;
   remove(taskId: string): Promise<CalculationResult<void>>;
@@ -140,6 +143,7 @@ type ServiceTaskDraft = {
   category: string;
   details: string;
   materials: string;
+  instructionsUrl: string;
   active: boolean;
 };
 
@@ -151,6 +155,7 @@ function draftFromTask(task: ServiceTask): ServiceTaskDraft {
     category: task.category ?? '',
     details: task.details ?? '',
     materials: task.materials ?? '',
+    instructionsUrl: task.instructionsUrl ?? '',
     active: task.active ?? true,
   };
 }
@@ -257,6 +262,7 @@ function ServiceTasksCard({
       category: draft.category.trim() === '' ? null : draft.category,
       details: draft.details.trim() === '' ? null : draft.details,
       materials: draft.materials.trim() === '' ? null : draft.materials,
+      instructionsUrl: normalizeInstructionsUrl(draft.instructionsUrl),
       active: draft.active,
     });
     if (!result.ok) return { ok: false, reason: result.reason };
@@ -358,6 +364,18 @@ function ServiceTasksCard({
                   multiline
                   numberOfLines={3}
                   onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, materials: text } : prev))}
+                />
+              </View>
+              <View style={styles.inlineRow}>
+                <Text style={styles.labelInline} numberOfLines={1}>URL:</Text>
+                <TextInput
+                  style={[styles.input, styles.inlineInput]}
+                  placeholder="Instructions link (PDF, video, YouTube)"
+                  value={draft.instructionsUrl}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  onChangeText={(text) => setDraft((prev) => (prev ? { ...prev, instructionsUrl: text } : prev))}
                 />
               </View>
               <View style={styles.inlineRow}>

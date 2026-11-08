@@ -372,6 +372,7 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
         priceCents: x.priceCents ?? null,
         details: x.details ?? null,
         materials: x.materials ?? null,
+        instructionsUrl: x.instructionsUrl ?? null,
         taskNumber: null,
       };
       return Array.isArray(rows) ? [...rows, row] : rows === null || rows === undefined ? [row] : rows;
@@ -386,7 +387,7 @@ export const OP_PATCH_SPECS: OpPatchSpec[] = [
       const patch = p.patch;
       return mapRows(rows, idIs(id), (r) => {
         const next: Row = { ...r };
-        for (const k of ['name', 'estimatedMinutes', 'rate', 'category', 'active', 'priceCents', 'details', 'materials']) {
+        for (const k of ['name', 'estimatedMinutes', 'rate', 'category', 'active', 'priceCents', 'details', 'materials', 'instructionsUrl']) {
           if (k in patch) next[k] = patch[k];
         }
         return next;

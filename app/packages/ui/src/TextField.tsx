@@ -10,6 +10,8 @@ export interface TextFieldProps {
   onBlur?: () => void;
   placeholder?: string;
   keyboardType?: import('react-native').KeyboardTypeOptions;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
   multiline?: boolean;
   disabled?: boolean;
   error?: string;
@@ -29,6 +31,8 @@ export function TextField({
   onBlur,
   placeholder,
   keyboardType,
+  autoCapitalize,
+  autoCorrect,
   multiline = false,
   disabled = false,
   error,
@@ -55,6 +59,8 @@ export function TextField({
         onBlur={onBlur}
         placeholder={placeholder}
         keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
         placeholderTextColor={colors.textMuted}
         multiline={multiline}
         editable={!disabled}

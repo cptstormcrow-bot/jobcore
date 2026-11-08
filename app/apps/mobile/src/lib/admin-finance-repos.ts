@@ -1293,6 +1293,7 @@ export function createServiceTasksRepository() {
         priceCents?: number | null;
         details?: string | null;
         materials?: string | null;
+        instructionsUrl?: string | null;
       }
     ) {
       const occurredAt = new Date().toISOString();
@@ -1327,6 +1328,7 @@ export function createServiceTasksRepository() {
         priceCents?: number | null;
         details?: string | null;
         materials?: string | null;
+        instructionsUrl?: string | null;
       }
     ) {
       const occurredAt = new Date().toISOString();
@@ -3246,6 +3248,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           details: string | null;
           materials: string | null;
           sku: string | null;
+          instructions_url?: string | null;
         };
         let rows: CatalogRow[] | null = null;
         const viaRpc = await supabase.rpc('price_sheet_lookup');
@@ -3272,6 +3275,7 @@ export function createJobPlanTasksRepository(): JobPlanTasksRepository {
           details: row.details ?? null,
           materials: row.materials ?? null,
           sku: row.sku ?? null,
+          instructionsUrl: row.instructions_url ?? null,
         }));
       }, []);
     },

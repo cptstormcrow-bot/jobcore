@@ -457,6 +457,7 @@ export interface ServiceTaskRow {
   task_number?: number | null;
   details?: string | null;
   materials?: string | null;
+  instructions_url?: string | null;
 }
 
 /** Map a `service_tasks` row to the domain `ServiceTask` (`../data/ports.ts`). */
@@ -473,6 +474,7 @@ export function toServiceTask(row: ServiceTaskRow): ServiceTask {
     priceCents: row.price_cents ?? null,
     details: row.details ?? null,
     materials: row.materials ?? null,
+    instructionsUrl: row.instructions_url ?? null,
     taskNumber: row.task_number ?? null,
   };
 }
@@ -513,6 +515,7 @@ export async function saveServiceTask(
     priceCents?: number | null;
     details?: string | null;
     materials?: string | null;
+    instructionsUrl?: string | null;
   },
   clientId?: string
 ): Promise<CalculationResult<ServiceTask>> {
@@ -543,6 +546,9 @@ export async function saveServiceTask(
     }
     if ('materials' in extra) {
       insertObj.materials = extra.materials;
+    }
+    if ('instructionsUrl' in extra) {
+      insertObj.instructions_url = extra.instructionsUrl;
     }
   }
   const { data, error } = await client
@@ -595,6 +601,7 @@ export async function updateServiceTask(
     priceCents?: number | null;
     details?: string | null;
     materials?: string | null;
+    instructionsUrl?: string | null;
   }
 ): Promise<CalculationResult<ServiceTask>> {
   const updateObj: Record<string, unknown> = {};
@@ -621,6 +628,9 @@ export async function updateServiceTask(
   }
   if ('materials' in patch) {
     updateObj.materials = patch.materials;
+  }
+  if ('instructionsUrl' in patch) {
+    updateObj.instructions_url = patch.instructionsUrl;
   }
   const { data, error } = await client
     .from('service_tasks')

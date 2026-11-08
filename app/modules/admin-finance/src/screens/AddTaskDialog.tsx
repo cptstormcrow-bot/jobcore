@@ -20,6 +20,7 @@ import {
   radius,
 } from '@jobcore/ui';
 import type { ServiceTask } from '../data/ports';
+import { normalizeInstructionsUrl } from '../domain/normalize-instructions-url';
 
 export type AddTaskDialogProps = {
   visible: boolean;
@@ -36,6 +37,7 @@ export type AddTaskDialogProps = {
       priceCents?: number | null;
       details?: string | null;
       materials?: string | null;
+      instructionsUrl?: string | null;
       category?: string | null;
       active?: boolean;
     };
@@ -79,6 +81,7 @@ export function AddTaskDialog({
   const [minutes, setMinutes] = useState('');
   const [details, setDetails] = useState('');
   const [materials, setMaterials] = useState('');
+  const [instructionsUrl, setInstructionsUrl] = useState('');
   const [category, setCategory] = useState('');
   const [active, setActive] = useState(true);
   const [pending, setPending] = useState(false);
@@ -90,6 +93,7 @@ export function AddTaskDialog({
     setMinutes('');
     setDetails('');
     setMaterials('');
+    setInstructionsUrl('');
     setCategory('');
     setActive(true);
     setPending(false);
@@ -134,6 +138,7 @@ export function AddTaskDialog({
         priceCents: priceResult.value,
         details: details.trim() === '' ? null : details,
         materials: materials.trim() === '' ? null : materials,
+        instructionsUrl: normalizeInstructionsUrl(instructionsUrl),
         category: category.trim() === '' ? null : category,
         active,
       },
@@ -196,6 +201,16 @@ export function AddTaskDialog({
               value={materials}
               onChangeText={setMaterials}
               multiline
+              style={styles.field}
+            />
+            <TextField inline
+              label="URL"
+              value={instructionsUrl}
+              onChangeText={setInstructionsUrl}
+              placeholder="Instructions link (PDF, video, YouTube)"
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
               style={styles.field}
             />
             <Toggle label="Active" value={active} onChange={setActive} style={styles.field} />

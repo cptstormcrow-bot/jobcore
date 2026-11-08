@@ -2,10 +2,11 @@
 // Mutations go through createJobPlanTasksRepository(), which already routes via writeThrough (offline queue).
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PayrollButton, colors, Select, spacing, Text, TextField, typography } from '@jobcore/ui';
 import type { JobPlanTaskRow, JobPlanTaskType, ServiceTaskCatalogEntry } from '../../../../modules/admin-finance/src/data/ports';
-import { createJobPlanTasksRepository } from '../lib/admin-finance-repos';
+import { createJobPlanTasksRepository, createServiceTasksRepository } from '../lib/admin-finance-repos';
+import { normalizeInstructionsUrl } from '../../../../modules/admin-finance/src/domain/normalize-instructions-url';
 import { useSession } from '../lib/session';
 
 export type JobTaskListProps = {
@@ -65,6 +66,7 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
   const [rows, setRows] = useState<JobPlanTaskRow[]>([]);
   const [catalog, setCatalog] = useState<ServiceTaskCatalogEntry[]>([]);
   const [drafts, setDrafts] = useState<Record<string, TaskDraft>>({});
+  const [urlDrafts, setUrlDrafts] = useState<Record<string, string>>({}); // admin-typed instructions URL per job row (lives on the price-sheet task)
   const [newTitle, setNewTitle] = useState('');
   const [newMinutes, setNewMinutes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -123,6 +125,24 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
       cancelled = true;
     };
   }, [orgId, repo]);
+
+  function openUrl(url: string) {
+    // Hand off to the device: its default browser, PDF viewer or video app takes it.
+    Linking.openURL(url).catch(() => setError('Could not open that link.'));
+  }
+
+  async function saveUrl(row: JobPlanTaskRow, cat: ServiceTaskCatalogEntry) {
+    const raw = urlDrafts[row.id];
+    if (raw === undefined) return;
+    const next = normalizeInstructionsUrl(raw);
+    setUrlDrafts((p) => { const { [row.id]: _x, ...rest } = p; return rest; });
+    if ((cat.instructionsUrl ?? null) === next) return;
+    setCatalog((c) => c.map((x) => (x.id === cat.id ? { ...x, instructionsUrl: next } : x)));
+    await run(async () => {
+      const res = await createServiceTasksRepository().updateServiceTask(cat.id, { instructionsUrl: next });
+      if (res && (res as { ok?: boolean }).ok === false) throw new Error('Could not save the link.');
+    }, 'Could not save the link.');
+  }
 
   async function run(fn: () => Promise<void>, msg: string) {
     try {
@@ -356,18 +376,26 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         {expanded ? (
         <>
         {edit && !dim && row.kind !== 'misc' ? (
-          <TextField inline dense label="Quantity" keyboardType="number-pad" value={d.qty}
+          <TextField inline dense label="Quantity" labelStyle={styles.lbl} keyboardType="number-pad" value={d.qty}
             onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, qty: t } }))}
             onBlur={() => void saveQty(row)} />
         ) : null}
+        {edit && !dim && isAdmin && cat ? (
+          <TextField inline dense label="URL" labelStyle={styles.lbl} placeholder="Instructions link" autoCapitalize="none" autoCorrect={false} keyboardType="url"
+            value={urlDrafts[row.id] ?? cat.instructionsUrl ?? ''}
+            onChangeText={(t) => setUrlDrafts((p) => ({ ...p, [row.id]: t }))}
+            onBlur={() => void saveUrl(row, cat)} />
+        ) : null}
         {edit && !dim && !prem ? (
-          <TextField inline dense label="SKU" value={d.sku}
+          <TextField inline dense label="SKU" labelStyle={styles.lbl} value={d.sku}
             onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, sku: t } }))}
             onBlur={() => void saveType(row)} />
         ) : null}
         {edit && !dim ? (
           <TextField inline
             dense
+            label="Notes"
+            labelStyle={styles.lbl}
             placeholder="Notes"
             value={d.notes}
             onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, notes: t } }))}
@@ -403,11 +431,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
                     }}
                   />
                   {mode === 'hourly' ? (
-                    <TextField inline dense label="Hourly rate $" keyboardType="decimal-pad" value={d.rate}
+                    <TextField inline dense label="Hourly rate $" labelStyle={styles.lbl} keyboardType="decimal-pad" value={d.rate}
                       onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, rate: t } }))}
                       onBlur={() => void saveType(row)} />
                   ) : (
-                    <TextField inline dense label="Fixed price $" keyboardType="decimal-pad" value={d.price}
+                    <TextField inline dense label="Fixed Labor $" labelStyle={styles.lbl} keyboardType="decimal-pad" value={d.price}
                       onChangeText={(t) => setDrafts((p) => ({ ...p, [row.id]: { ...d, price: t } }))}
                       onBlur={() => void saveType(row)} />
                   )}
@@ -472,6 +500,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
         ) : null}
         {edit && !dim ? null : detail ? (
           <Text style={styles.notes}>{detail}</Text>
+        ) : null}
+        {cat?.instructionsUrl ? (
+          <Pressable onPress={() => openUrl(cat.instructionsUrl as string)} accessibilityRole="link" accessibilityLabel="Open instructions">
+            <Text style={styles.link} numberOfLines={1}>Instructions ▸ {cat.instructionsUrl}</Text>
+          </Pressable>
         ) : null}
         {row.priceStatus === 'pending' ? (
           <Text style={styles.notes}>Pending HQ approval{row.sku ? ` · SKU ${row.sku}` : ''}</Text>
@@ -573,6 +606,11 @@ export function JobTaskList({ jobId, mode, allowCatalog = false, source = 'plan'
                 {picked.rate != null ? <Text style={styles.notes}>Rate: ${picked.rate}</Text> : null}
                 {picked.details ? <Text style={styles.sheetText}>Details: {picked.details}</Text> : null}
                 {picked.materials ? <Text style={styles.sheetText}>Materials: {picked.materials}</Text> : null}
+                {picked.instructionsUrl ? (
+                  <Pressable onPress={() => openUrl(picked.instructionsUrl as string)} accessibilityRole="link">
+                    <Text style={[styles.sheetText, styles.link]} numberOfLines={1}>Instructions ▸ {picked.instructionsUrl}</Text>
+                  </Pressable>
+                ) : null}
               </ScrollView>
             ) : null}
             <PayrollButton
@@ -603,6 +641,8 @@ const styles = StyleSheet.create({
   notes: { color: colors.textMutedDark, fontSize: typography.text.hint },
   arrow: { fontSize: typography.text.title + 6, fontWeight: '600', color: colors.text },
   qty: { width: 80 },
+  lbl: { width: 104 }, // same label column on every field so inputs line up across rows
+  link: { color: colors.primary, fontSize: typography.text.hint, textDecorationLine: 'underline' },
   actions: { flexDirection: 'row', gap: spacing.sm },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   flex: { flex: 1 },

@@ -30,6 +30,7 @@ export interface ServiceTaskExtra {
   priceCents?: number | null;
   details?: string | null;
   materials?: string | null;
+  instructionsUrl?: string | null;
 }
 
 export interface PriceSheetCreatePayload { id: string; version: number; status?: string }
@@ -80,6 +81,7 @@ const SERVICE_TASK_COLUMNS: Record<string, string> = {
   priceCents: 'price_cents',
   details: 'details',
   materials: 'materials',
+  instructionsUrl: 'instructions_url',
 };
 
 function serviceTaskColumns(src: Record<string, unknown> | undefined): Record<string, unknown> {
