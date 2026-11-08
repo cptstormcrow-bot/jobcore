@@ -285,8 +285,11 @@ export async function markRetry(
   info: { errorClass: ReplayErrorClass | string; message: string; nextAttemptAt: string }
 ): Promise<void> {
   const db = await getOfflineDb();
+  // Uber 225: "no authenticated session" is the phone's missing login, not a failed send, so it
+  // must not push the change toward "stuck" on #0100.
+  const bump = /no authenticated session/i.test(info.message) ? 0 : 1;
   await db.runAsync(
-    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = attempts + 1, last_error = ?, error_class = ?, next_attempt_at = ?, inflight_at = null where id = ?`,
+    `update ${OFFLINE_QUEUE_TABLE} set status = 'pending', attempts = attempts + ${bump}, last_error = ?, error_class = ?, next_attempt_at = ?, inflight_at = null where id = ?`,
     info.message,
     info.errorClass,
     info.nextAttemptAt,

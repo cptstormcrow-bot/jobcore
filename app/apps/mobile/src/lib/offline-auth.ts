@@ -163,6 +163,31 @@ export async function rememberAccount(snapshot: OfflineSnapshot): Promise<void> 
   }
 }
 
+/**
+ * Keep the saved sign-in tokens current (uber 225). Supabase rotates the refresh token on every
+ * refresh, and the saved snapshot is what restores a live session after a PIN sign-in or a lost
+ * SecureStore session. Called straight from the auth listener (SIGNED_IN / TOKEN_REFRESHED) so the
+ * snapshot never keeps a used-up refresh token, even when the full profile re-resolve fails.
+ * Only updates an account that is already remembered; never creates one.
+ */
+export async function updateSnapshotSession(session: OfflineSnapshot['session']): Promise<void> {
+  try {
+    const userId = session.user.id;
+    const key = `${SNAP_PREFIX}${userId}`;
+    const snap = await loadSnapshot(userId);
+    if (!snap) return;
+    if (
+      snap.session.access_token === session.access_token &&
+      snap.session.refresh_token === session.refresh_token
+    ) {
+      return;
+    }
+    await chunkedSet(key, JSON.stringify({ ...snap, session }));
+  } catch {
+    // best-effort, same as rememberAccount
+  }
+}
+
 export async function setPin(userId: string, pin: string): Promise<string | null> {
   if (!isValidPin(pin)) return `PIN must be ${PIN_MIN} to ${PIN_MAX} digits.`;
   try {

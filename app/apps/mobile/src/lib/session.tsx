@@ -7,7 +7,7 @@ import NetInfo from '@react-native-community/netinfo';
 
 import { supabase } from './supabase';
 import { AppState } from 'react-native';
-import { rememberAccount, listOfflineAccounts, clearActive, loadActiveSnapshot, type OfflineSnapshot } from './offline-auth';
+import { rememberAccount, updateSnapshotSession, listOfflineAccounts, clearActive, loadActiveSnapshot, type OfflineSnapshot } from './offline-auth';
 import { writeThrough } from './offline-mutations';
 import { cachedRead } from './read-cache';
 import { getCached, wipeAll } from './read-cache-store';
@@ -365,6 +365,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
     const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
       // Re-resolve from scratch on every auth transition; the listener fires for
       // SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED and USER_UPDATED alike.
+      // Uber 225: write the rotated tokens into the saved snapshot first, before anything that can fail.
+      if (session && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        void updateSnapshotSession(session);
+      }
       void (async () => {
         if (!session) {
           // While running from a saved snapshot there is no live session to lose.
