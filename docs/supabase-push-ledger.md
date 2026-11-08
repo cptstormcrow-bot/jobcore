@@ -22,12 +22,13 @@ Past pushes: OK 18 · FAILED 1 · PARTIAL 0 · UNKNOWN 2
 
 | Migration | Purpose | Status & who must approve | Added |
 |-----------|---------|---------------------------|-------|
-| 0138_job_plan_task_instructions_url.sql | Instructions URL on every Job Details task (uber 220): job_plan_tasks.instructions_url, backfill, assign trigger, publish_assembly_task copies the link up. Needs 0137 (live). | Planned, NOT pushed. Needs Jeff's explicit 'push 0138'. | 2026-11-08 |
+| (none pending) | | | |
 
 ## Past (pushes and attempts)
 
 | Date | Migrations | Result | Pushed by / session | Notes or error |
 |------|------------|--------|---------------------|----------------|
+| 2026-11-08 | 0138_job_plan_task_instructions_url.sql, 0139_lead_intake.sql | OK (found live) | Not this session; most likely Jeff (not recorded) | Read-only `npx supabase migration list` run from app/ on 2026-11-08 showed Local and Remote both present for 0138 and 0139. Moved from Future to Past; the push itself was not seen. |
 | 2026-11-08 | 0137_service_task_instructions_url.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('go with migration 0137') | Pushed alone: 0138 was moved out of the folder for the push and restored after; confirmed in migration list (Local and Remote both show 0137, 0138 remote empty). |
 | 2026-11-08 | 0136_lead_tech_runs_job_taps.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 136') | Pre-check and `db push --dry-run` listed only 0136; `db push` applied it, EXIT=0. Post-check query: job_step_requests table gone, job_step_gate / job_step_pending / clear_job_step_requests / sync_helper_time_segments functions gone, triggers zjobs_clear_step_requests and job_assignments_helper_segments gone, sync_job_time_segments no longer mentions helper. Lead tech alone starts and stops the job; each tech's hours come from their own clock-in. Not yet tested on device (uber 213). |
 | 2026-11-08 | 0134_job_assignments_helper_tech.sql, 0135_helper_two_tap_gate.sql | OK | This JobCore session (UI thread), on Jeff's explicit go ('push 134 and 135 please') | Both applied together. 0135's gate objects and 0134's helper segment trigger were dropped later by 0136. The helper kind on job_assignments stays live. |
