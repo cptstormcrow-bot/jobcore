@@ -192,7 +192,8 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
 
   const [serviceAreaList, setServiceAreaList] = useState<ServiceArea[]>([]);
   const [assignedServiceAreaIds, setAssignedServiceAreaIds] = useState<Set<string>>(new Set());
-  const [serviceAreaActionState, setServiceAreaActionState] = useState<Record<string, ActionState>>({});
+  const [areasLoaded, setAreasLoaded] = useState(false);
+  const [serviceAreaActionState,setServiceAreaActionState] = useState<Record<string, ActionState>>({});
 
   const [addressInput, setAddressInput] = useState((profile as unknown as { address?: string })?.address ?? '');
   const [driversLicenseInput, setDriversLicenseInput] = useState((profile as unknown as { driversLicenseNumber?: string })?.driversLicenseNumber ?? '');
@@ -282,6 +283,7 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
         .filter((row) => row.techId === profile!.id)
         .map((row) => row.skill);
       setAssignedSkillIds(new Set(skillIds));
+      setAreasLoaded(true);
     }
     void load();
     return () => {
@@ -672,6 +674,19 @@ export function EmployeeEditorScreen(props: EmployeeEditorScreenProps) {
       </View>
       <DefaultTabBar tabs={EMP_TAB_ITEMS} activeId={activeTab} onChange={setActiveTab} />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
+        {/* Uber 199: a tech with no service areas is hidden from every job's tech picker, so remind at edit/invite time. */}
+        {roleInput === 'tech' && (!isEditMode || areasLoaded) && (!isEditMode || assignedServiceAreaIds.size === 0) && activeTab !== 'areas' ? (
+          <Text style={styles.warning}>
+            {isEditMode
+              ? 'No service areas set. This tech will not appear in any job\'s tech list until you add areas on the Service Areas tab.'
+              : 'Reminder: once this employee accepts the invitation, add their service areas (Service Areas tab) or they will not appear in any job\'s tech list.'}
+          </Text>
+        ) : null}
+        {activeTab === 'areas' && isEditMode && roleInput === 'tech' && areasLoaded && assignedServiceAreaIds.size === 0 ? (
+          <Text style={styles.warning}>
+            No service areas set. Pick at least one below, or this tech will not appear in any job's tech list.
+          </Text>
+        ) : null}
         {activeTab === 'email' && isEditMode ? (
           <Card style={styles.card}>
             <Text style={styles.heading}>Email</Text>
