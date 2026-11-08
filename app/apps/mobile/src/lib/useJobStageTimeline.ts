@@ -8,7 +8,7 @@ import {
   createJobAssignmentRepository,
 } from './admin-finance-repos';
 import { supabase } from './supabase';
-import { buildReadCacheKey, cachedRead, getReadCacheIdentity } from './read-cache';
+import { buildReadCacheKey, cachedRead, getReadCacheIdentity, useReadCacheRevision } from './read-cache';
 import { buildJobStageResults, type JobStageExtras } from './job-stage-results';
 import { usePaidInFull } from './settle-on-completion';
 
@@ -22,24 +22,27 @@ export function useJobStageTimeline(job: Job | null, enabled: boolean) {
 
   const paidInFull = usePaidInFull(enabled ? job : null);
   const jobId = job?.id;
+  // Re-read whenever the shared read cache learns something new (20 s refresh, return to app, a save).
+  const cacheRevision = useReadCacheRevision();
+  // A different job starts clean; the same job keeps its last good answer (see below).
+  useEffect(() => {
+    setEstimate(null);
+    setInvestigation(null);
+    setInvestigatorTechId(null);
+    setStageExtras(null);
+  }, [jobId]);
   useEffect(() => {
     if (!enabled || !jobId) return undefined;
     let cancelled = false;
     void createEstimateRepository().getForJob(jobId).then((v) => {
-      if (!cancelled) setEstimate(v);
-    }).catch(() => {
-      if (!cancelled) setEstimate(null);
-    });
+      if (!cancelled) setEstimate((prev) => v ?? prev);
+    }).catch(() => { /* keep the last good estimate: a failed read must not drop the green */ });
     void createJobInvestigationRepository().getForJob(jobId).then((v) => {
-      if (!cancelled) setInvestigation(v);
-    }).catch(() => {
-      if (!cancelled) setInvestigation(null);
-    });
+      if (!cancelled) setInvestigation((prev) => v ?? prev);
+    }).catch(() => { /* keep the last good Prem report */ });
     void createJobAssignmentRepository().getInvestigatorTechId(jobId).then((v) => {
-      if (!cancelled) setInvestigatorTechId(v);
-    }).catch(() => {
-      if (!cancelled) setInvestigatorTechId(null);
-    });
+      if (!cancelled) setInvestigatorTechId((prev) => v ?? prev);
+    }).catch(() => { /* keep the last good investigator */ });
     const fetchLive = async () => {
       const [jobRes, photoRes, leadRes] = await Promise.all([
         supabase.from('jobs').select('contacted_at, stage_marks, upstream_changed_at, created_at').eq('id', jobId).maybeSingle(),
@@ -71,7 +74,7 @@ export function useJobStageTimeline(job: Job | null, enabled: boolean) {
       });
     })();
     return () => { cancelled = true; };
-  }, [enabled, jobId]);
+  }, [enabled, jobId, cacheRevision]);
 
   const stageResults = useMemo(
     () => (enabled ? buildJobStageResults({ job, estimate, investigation, investigatorTechId, stageExtras, paidInFull }) : null),

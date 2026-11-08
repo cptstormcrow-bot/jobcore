@@ -425,3 +425,6 @@ Tapping a day with no assignment shows a Time Off button; it calls `timeOff.crea
 
 ### 217 - Faster device-to-device refresh
 Open screens now re-check for other devices' changes every 20 s (was 45 s), and returning to the app after 5 s or more away refreshes at once (was 30 s). Screens only redraw when the data actually changed. Offline behaviour, queued writes and sign-in are untouched.
+
+### 219 - Job timeline keeps its green (Job #116)
+The Job Details timeline (screen #0041) no longer drops the Prem and Estimate green when a read fails or comes back empty; it keeps the last good answer for that job. It also re-reads whenever the shared read cache learns something new (20 s refresh, return to the app, a save), so fresh data redraws the timeline. Switching jobs starts clean. Offline: a cached or failed read never blanks a finished step.
